@@ -1,9 +1,24 @@
-head	1.68;
+head	1.71;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.71
+date	2004.05.03.20.23.57;	author papowell;	state Exp;
+branches;
+next	1.70;
+
+1.70
+date	2004.04.27.21.24.45;	author papowell;	state Exp;
+branches;
+next	1.69;
+
+1.69
+date	2004.03.24.20.40.28;	author papowell;	state Exp;
+branches;
+next	1.68;
 
 1.68
 date	2004.02.24.19.37.24;	author papowell;	state Exp;
@@ -351,7 +366,7 @@ desc
 @
 
 
-1.68
+1.71
 log
 @Update
 @
@@ -392,6 +407,30 @@ ci:
 realclean mostlyclean distclean clean:
 	cd FreeBSD-4.ports.systutils.LPRng; make clean
 @
+
+
+1.70
+log
+@Update
+@
+text
+@@
+
+
+1.69
+log
+@Update
+@
+text
+@@
+
+
+1.68
+log
+@Update
+@
+text
+@@
 
 
 1.67

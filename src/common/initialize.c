@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
+"$Id: initialize.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 #include "lp.h"
 #include "defs.h"
@@ -165,18 +165,18 @@ void Setup_configuration()
 
 	/* Get default configuration file information */
 #ifdef DMALLOC
-	extern int _dmalloc_outfile_fd;
-	extern char *_dmalloc_logpath;
+	extern int dmalloc_outfile_fd;
+	extern char *dmalloc_logpath;
 	char buffer[SMALLBUFFER];
 
 	safestrdup("DMALLOC",__FILE__,__LINE__);
-	if( _dmalloc_logpath && _dmalloc_outfile_fd < 0 ){
-		_dmalloc_outfile_fd = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		Max_open(_dmalloc_outfile_fd);
+	if( dmalloc_logpath && dmalloc_outfile_fd < 0 ){
+		dmalloc_outfile_fd = open( dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		Max_open(dmalloc_outfile_fd);
 	}
 	SNPRINTF(buffer,sizeof(buffer))"*** Setup_configuration: pid %d\n", getpid() );
-	Write_fd_str(_dmalloc_outfile_fd,buffer);
-	DEBUG1("Setup_configuration: _dmalloc_outfile fd %d", _dmalloc_outfile_fd);
+	Write_fd_str(dmalloc_outfile_fd,buffer);
+	DEBUG1("Setup_configuration: dmalloc_outfile fd %d", dmalloc_outfile_fd);
 #endif
 
 	Init_line_list(&raw);

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.68 2004/02/24 19:37:35 papowell Exp $";
+"$Id: sendreq.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
 
 
 #include "lp.h"
@@ -72,7 +72,7 @@ int Send_request(
 	int output					/* output on this FD */
 	)
 {
-	char errormsg[LARGEBUFFER];
+	char errormsg[LARGEBUFFER], errmsg[SMALLBUFFER];
 	char *cmd = 0;
 	int status = -1, sock = -1, err;
 	char *real_host = 0;
@@ -132,14 +132,15 @@ int Send_request(
 	cmd = safeextend2(cmd,"\n", __FILE__,__LINE__ );
 	errno = 0;
 
+	errmsg[0] = 0;
 	sock = Link_open_list( RemoteHost_DYN,
-		&real_host, connnect_timeout, 0, Unix_socket_path_DYN );
+		&real_host, connnect_timeout, 0, Unix_socket_path_DYN , errmsg, sizeof(errmsg) );
 	err = errno;
 	if( sock < 0 ){
 		char *msg = "";
 		SNPRINTF( errormsg, sizeof(errormsg)-2)
 			"cannot open connection - %s",
-			err?Errormsg(err):"bad or missing hostname" );
+			errmsg[0]?errmsg:( err?Errormsg(err):"bad or missing hostname" ) );
 		if( !Is_server ){
 			int v = safestrlen(errormsg);
 			SNPRINTF( errormsg+v, sizeof(errormsg)-v)

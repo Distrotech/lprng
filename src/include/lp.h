@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.68 2004/02/24 19:37:37 papowell Exp $
+ * $Id: lp.h,v 1.71 2004/05/03 20:24:05 papowell Exp $
  ***************************************************************************/
 
 
@@ -357,12 +357,14 @@ EXTERN char* Lpr_opts_DYN;		/* addional options for LPR */
 EXTERN int Lpr_send_try_DYN; /* number of times for lpr to try sending job */
 EXTERN char* Mail_from_DYN;
 EXTERN char* Mail_operator_on_error_DYN;
+
+EXTERN int Max_accounting_file_size_DYN;	/* maximum accounting file size */
 EXTERN int Max_connect_interval_DYN;	/* maximum connect interval */
 EXTERN int Max_copies_DYN; /* maximum copies allowed */
 EXTERN int Max_datafiles_DYN; /* maximum datafiles */
 EXTERN int Max_job_size_DYN; /* maximum job size (1Kb blocks, 0 = unlimited) */
-EXTERN int Max_accounting_file_size_DYN;	/* maximum accounting file size */
 EXTERN int Max_log_file_size_DYN;	/* maximum log file size */
+EXTERN int Max_move_count_DYN;	/* maximum number of moves or forwards */
 EXTERN int Max_servers_active_DYN;	/* maximum number of servers active */
 EXTERN int Max_status_line_DYN; /* maximum status line size */
 EXTERN int Max_status_size_DYN;
@@ -372,6 +374,7 @@ EXTERN int Min_printable_count_DYN; /* minimum printable characters for printabl
 EXTERN int Min_status_size_DYN;
 EXTERN int Minfree_DYN; /* minimum space (Kb) to be left in spool filesystem */
 EXTERN int Minfree_DYN; /**/
+
 EXTERN int Ms_time_resolution_DYN;
 EXTERN int Network_connect_grace_DYN; /* grace period for reconnections */
 EXTERN char* New_debug_DYN; /* debug level set for queue handler */

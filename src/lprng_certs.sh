@@ -142,10 +142,10 @@ defaults() {
 			eval v="\$$i"
 			echo $i $v
 		done
-		echo -n "save new values? [No/yes/again (No default)] "
+		echo -n "save default values? [Yes/no/again (Yes default)] "
 		read VAR
 		case "$VAR" in
-			[yY]* )
+			[yY]* | "" )
 				cp /dev/null ${CA_DEFAULTS}
 				for i in $names ; do
 					eval v="\$$i"
@@ -154,7 +154,7 @@ defaults() {
 				finished=1;
 				break;
 				;;
-			[nN]* | "" )
+			[nN]* )
 				finished=1;
 				break;
 				;;
@@ -349,7 +349,7 @@ Email_val="name@snakeoil.dom"
 
 case "$1" in
 	--TEMP=* )
-		s=`expr "$1" : "--TEMP=\(.*\)"`
+		s=`expr "X$1" : "X--TEMP=\(.*\)"`
 		CA_DIR="$s/ssl.ca"
 		CA_CERT="$s/ssl.ca/ca.crt"
 		CA_KEY="$s/ssl.ca/ca.key"

@@ -44,6 +44,7 @@ fix () {
 }
 echo "Installing configuration files"
 init=${DESTDIR}/etc/rc.d/init.d/lpd
+if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
 if [ -f /etc/redhat-release ] ; then
 	f=init.redhat;
 elif [ -d /lib/lsb ] ; then

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.68 2004/02/24 19:37:37 papowell Exp $
+ * $Id: getqueue.h,v 1.71 2004/05/03 20:24:04 papowell Exp $
  ***************************************************************************/
 
 
@@ -97,6 +97,7 @@ EXTERN const char * MAILNAME			DEFINE( = "M" );
 EXTERN const char * MAIL_FD				DEFINE( = "mail_fd" );
 EXTERN const char * MOVE				DEFINE( = "move" );
 EXTERN const char * MOVE_DEST			DEFINE( = "move_dest" );
+EXTERN const char * MOVE_COUNT			DEFINE( = "move_count" );
 EXTERN const char * MSG					DEFINE( = "msg" );
 EXTERN const char * NAME				DEFINE( = "name" );
 EXTERN const char * NEW_DEST			DEFINE( = "new_dest" );

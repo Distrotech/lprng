@@ -1,5 +1,5 @@
 PACKAGE=LPRng
-VERSION=3.8.26
+VERSION=3.8.27
 RELEASE=1
 RPM=/usr/src/redhat/RPMS/i386/${PACKAGE}-${VERSION}-${RELEASE}.i386.rpm
 CONFIGURE_ARGS=--prefix=/usr --sysconfdir=/etc --with-filterdir=/usr/libexec/filters --with-ld_library_path=/lib:/usr/lib:/usr/local/lib --with-filter_path=/bin:/usr/bin:/usr/libexec:/usr/local/libexec:/usr/sbin:/var/spool/bin

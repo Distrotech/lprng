@@ -73,6 +73,7 @@ startserver(){
 
 # we use the /usr/local/etc/rc.d method to start
 init=${DESTDIR}/usr/local/etc/rc.d/lprng.sh
+if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
 
 # we have to take them from one place and put in another
 if [ "X$MAKEPACKAGE" = "XYES" ] ; then

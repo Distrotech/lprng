@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: child.c,v 1.68 2004/02/24 19:37:31 papowell Exp $";
+"$Id: child.c,v 1.71 2004/05/03 20:24:01 papowell Exp $";
 
 
 #include "lp.h"
@@ -272,8 +272,8 @@ plp_signal_t cleanup (int passed_signal)
 	/* first we try to close all the output ports */
 	for( i = 3; i < Max_fd; ++i ){
 #ifdef DMALLOC
-		extern int _dmalloc_outfile_fd;
-		if( i == _dmalloc_outfile_fd ) continue;
+		extern int dmalloc_outfile_fd;
+		if( i == dmalloc_outfile_fd ) continue;
 #endif
 		close(i);
 	}
@@ -314,16 +314,16 @@ void Dump_unfreed_mem(char *title)
 		title, getpid() );
 #if defined(DMALLOC)
 	{
-	extern int _dmalloc_outfile_fd;
-	extern char *_dmalloc_logpath;
+	extern int dmalloc_outfile_fd;
+	extern char *dmalloc_logpath;
 
-	if( _dmalloc_logpath && _dmalloc_outfile_fd < 0 ){
-		_dmalloc_outfile_fd = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		Max_open( _dmalloc_outfile_fd );
+	if( dmalloc_logpath && dmalloc_outfile_fd < 0 ){
+		dmalloc_outfile_fd = open( dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		Max_open( dmalloc_outfile_fd );
 	}
 	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %d\n",
 		title, getpid() );
-	Write_fd_str(_dmalloc_outfile_fd, buffer );
+	Write_fd_str(dmalloc_outfile_fd, buffer );
 	if(Outbuf) free(Outbuf); Outbuf = 0;
 	if(Inbuf) free(Inbuf); Inbuf = 0;
 	Clear_tempfile_list();
@@ -337,7 +337,7 @@ void Dump_unfreed_mem(char *title)
     Clear_var_list( Pc_var_list, 0 );
     Clear_var_list( DYN_var_list, 0 );
 	dmalloc_log_unfreed();
-	Write_fd_str(_dmalloc_outfile_fd, "***\n" );
+	Write_fd_str(dmalloc_outfile_fd, "***\n" );
 	exit(Errorcode);
 	}
 #endif

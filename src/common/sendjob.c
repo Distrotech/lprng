@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.68 2004/02/24 19:37:35 papowell Exp $";
+"$Id: sendjob.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
 
 
 #include "lp.h"
@@ -81,7 +81,7 @@ int Send_job( struct job *job, struct job *logjob,
 	char *real_host = 0, *save_host = 0;
 	int status = 0, err, errcount = 0, n, len;
 	char msg[SMALLBUFFER];
-	char error[LARGEBUFFER];
+	char error[LARGEBUFFER], errmsg[SMALLBUFFER];
 	struct security *security = 0;
 	struct line_list info;
  
@@ -135,16 +135,17 @@ int Send_job( struct job *job, struct job *logjob,
 
 	errno = 0;
 
+	errmsg[0] = 0;
 	sock = Link_open_list( RemoteHost_DYN,
-		&real_host, connect_timeout_len, 0, Unix_socket_path_DYN );
-
+		&real_host, connect_timeout_len, 0, Unix_socket_path_DYN, errmsg, sizeof(errmsg) );
 	err = errno;
+
 	DEBUG4("Send_job: socket %d", sock );
 	if( sock < 0 ){
 		++errcount;
 		status = LINK_OPEN_FAIL;
 		msg[0] = 0;
-		if( !Is_server && err ){
+		if( !Is_server ){
 			SNPRINTF( msg, sizeof(msg))
 			"\nMake sure the remote host supports the LPD protocol");
 			if( geteuid() && getuid() ){
@@ -155,7 +156,7 @@ int Send_job( struct job *job, struct job *logjob,
 		}
 		SNPRINTF( error, sizeof(error)-2)
 			"cannot open connection to %s - %s%s", RemoteHost_DYN,
-				err?Errormsg(err):"bad or missing hostname?", msg );
+				errmsg[0]?errmsg:(err?Errormsg(err):"bad or missing hostname?"), msg );
 		if( Is_server && Retry_NOLINK_DYN ){
 			if( connect_interval > 0 ){
 				n = (connect_interval * (1 << (errcount - 1)));

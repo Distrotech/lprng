@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd_logger.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -172,10 +172,11 @@ void Logger( struct line_list *args )
 	char inbuffer[LARGEBUFFER];
 	char outbuffer[LARGEBUFFER];
 	int outlen = 0, input_read = 0;
-	char host[SMALLBUFFER];
+	char host[SMALLBUFFER], errmsg[SMALLBUFFER];
 	int status_fd = -1;
 	int input_fd = -1;
 	struct stat statb;
+	int errlen = sizeof(errmsg);
 
 	Errorcode = JABORT;
 
@@ -260,7 +261,7 @@ void Logger( struct line_list *args )
 			DEBUGF(DLOG2)("Logger: writefd fd %d, max timeout %d, left %d",
 					writefd, timeout, left );
 			if( left <= 0 || writefd == -2 ){
-				writefd = Link_open(host, Connect_timeout_DYN, 0, 0 );
+				writefd = Link_open(host, Connect_timeout_DYN, 0, 0, errmsg, errlen );
 				DEBUGF(DLOG2)("Logger: open fd %d", writefd );
 				if( writefd >= 0 ){
 					Set_nonblock_io( writefd );

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms.in,v 1.68 2004/02/24 19:37:21 papowell Exp $
+# $Id: lpd.perms.in,v 1.71 2004/05/03 20:23:56 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -16,7 +16,7 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.8.26
+## VERSION=3.8.27
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files

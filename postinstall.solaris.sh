@@ -40,6 +40,7 @@ fix () {
 }
 echo "Installing configuration files"
 init=${DESTDIR}/etc/init.d/lprng
+if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
 if [ -f lpd.perms ] ; then fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"; fi;
 if [ -f lpd.conf ] ; then fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}"; fi;
 if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}"; fi;
@@ -63,8 +64,8 @@ if [ "$INIT" != no ] ; then
 		s=${DESTDIR}/etc/$i;
 		if [ ! -d `dirname $s` ] ; then mkdir -p `dirname $s` ; fi;
 		rm -f $s;
-		echo ln -s ../init.d/lprng $s;
-		ln -s ../init.d/lprng $s;
+		echo ln -s $init $s;
+		ln -s $init $s;
 	done
 	if [ "$MAKEPACKAGE" != "YES" ]; then
 		if grep '^printer' /etc/inetd.conf >/dev/null; then

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
+"$Id: getqueue.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 /***************************************************************************
@@ -63,7 +63,6 @@ int Scan_queue( struct line_list *spool_control,
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
-	struct line_list directory_files;
 	char *hf_name;
 	int c, printable, held, move, error, done, p, h, m, e, dn;
 	int remove_prefix_len = safestrlen( remove_prefix );
@@ -72,7 +71,6 @@ int Scan_queue( struct line_list *spool_control,
 
 	c = printable = held = move = error = done = 0;
 	Init_job( &job );
-	Init_line_list(&directory_files);
 	if( pprintable ) *pprintable = 0;
 	if( pheld ) *pheld = 0;
 	if( pmove ) *pmove = 0;
@@ -82,38 +80,33 @@ int Scan_queue( struct line_list *spool_control,
 	Free_line_list(sort_order);
 
 	if( !(dir = opendir( "." )) ){
-		return(1);
+		LOGERR(LOG_INFO)"Scan_queue: cannot open '.'" );
+		return( 1 );
 	}
 
 	hf_name = 0;
-	while(1){
-		while( (d = readdir(dir)) ){
-			hf_name = d->d_name;
-			DEBUG5("Scan_queue: found file '%s'", hf_name );
-			if(
-				(remove_prefix_len && !strncmp( hf_name, remove_prefix, remove_prefix_len ) )
-				|| (remove_suffix_len 
-					&& !strcmp( hf_name+strlen(hf_name)-remove_suffix_len, remove_suffix ))
-			){
-				DEBUG1("Scan_queue: removing file '%s'", hf_name );
-				unlink( hf_name );
-				continue;
-			} else if(    (cval(hf_name+0) == 'h')
-				&& (cval(hf_name+1) == 'f')
-				&& isalpha(cval(hf_name+2))
-				&& isdigit(cval(hf_name+3))
-				){
-				break;
-			}
+	while( (d = readdir(dir)) ){
+		hf_name = d->d_name;
+		DEBUG5("Scan_queue: found file '%s'", hf_name );
+		if(
+			(remove_prefix_len && !strncmp( hf_name, remove_prefix, remove_prefix_len ) )
+			|| (remove_suffix_len 
+				&& !strcmp( hf_name+strlen(hf_name)-remove_suffix_len, remove_suffix ))
+		){
+			DEBUG1("Scan_queue: removing file '%s'", hf_name );
+			unlink( hf_name );
+			continue;
+		} else if(  !(   (cval(hf_name+0) == 'h')
+			&& (cval(hf_name+1) == 'f')
+			&& isalpha(cval(hf_name+2))
+			&& isdigit(cval(hf_name+3))
+			) ){
+			continue;
 		}
-		/* found them all */
-		if( d == 0 ){
-			break;
-		}
-
-		Free_job( &job );
 
 		DEBUG2("Scan_queue: processing file '%s'", hf_name );
+
+		Free_job( &job );
 
 		/* read the hf file and get the information */
 		Get_hold_file( &job, hf_name, 1 );
@@ -144,7 +137,6 @@ int Scan_queue( struct line_list *spool_control,
 	closedir(dir);
 
 	Free_job(&job);
-	Free_line_list(&directory_files);
 
 	if(DEBUGL5){
 		LOGDEBUG("Scan_queue: final values" );

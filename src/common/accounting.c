@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.68 2004/02/24 19:37:31 papowell Exp $";
+"$Id: accounting.c,v 1.71 2004/05/03 20:24:01 papowell Exp $";
 
 
 #include "lp.h"
@@ -127,12 +127,12 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			char *host = Accounting_file_DYN;
 			
 			DEBUG2("Do_accounting: connecting to '%s'",host);
-			if( (tempfd = Link_open(host,timeout,0, 0 )) < 0 ){
+			if( (tempfd = Link_open(host,timeout,0, 0, msg, sizeof(msg) )) < 0 ){
 				err = errno;
 				Errorcode= JFAIL;
 				LOGERR_DIE(LOG_INFO)
 					_("connection to accounting server '%s' failed '%s'"),
-					Accounting_file_DYN, Errormsg(err) );
+					Accounting_file_DYN, msg);
 			}
 			DEBUG2("Setup_accounting: socket %d", tempfd );
 			if( Write_fd_str( tempfd, args.list[0] ) < 0 ){

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd_remove.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
 
 
 #include "lp.h"
@@ -195,7 +195,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	Perm_check.user = 0;
 
 	control_perm = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
-	DEBUGF(DLPRM2)("Job_status: permission '%s'", perm_str(control_perm));
+	DEBUGF(DLPRM2)("Job_remove: permission '%s'", perm_str(control_perm));
 
 	if( control_perm != P_ACCEPT ) control_perm = 0;
 

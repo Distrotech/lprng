@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
+"$Id: linelist.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -73,21 +73,14 @@ int Lastchar( char *s )
  * Memory Allocation Routines
  * - same as malloc, realloc, but with error messages
  */
-#if defined(DMALLOC)
-#undef malloc
-#define malloc(size) \
-  _malloc_leap(file, line, size)
-#undef calloc
-#define calloc(count, size) \
-  _calloc_leap(file, line, count, size)
-#undef realloc
-#define realloc(ptr, size) \
-  _realloc_leap(file, line, ptr, size)
-#endif
 void *malloc_or_die( size_t size, const char *file, int line )
 {
     void *p;
+#if defined(DMALLOC)
+    p = dmalloc_malloc(file, line, size, DMALLOC_FUNC_MALLOC,0,0);
+#else
     p = malloc(size);
+#endif
     if( p == 0 ){
         LOGERR_DIE(LOG_INFO) "malloc of %d failed, file '%s', line %d",
 			size, file, line );
@@ -101,9 +94,13 @@ void *realloc_or_die( void *p, size_t size, const char *file, int line )
 {
 	void *orig = p;
 	if( p == 0 ){
-		p = malloc(size);
+		p = malloc_or_die(size, file, line);
 	} else {
+#if defined(DMALLOC)
+		p = dmalloc_realloc(file, line, p, size, DMALLOC_FUNC_REALLOC,0);
+#else
 		p = realloc(p, size);
+#endif
 	}
     if( p == 0 ){
         LOGERR(LOG_INFO) "realloc of 0x%lx, new size %d failed, file '%s', line %d",
@@ -3743,10 +3740,10 @@ void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
 	Set_flag_value(args,DEBUGFV,DbgFlag);
 #ifdef DMALLOC
 	{
-		extern int _dmalloc_outfile_fd;
-		if( _dmalloc_outfile_fd > 0 ){
+		extern int dmalloc_outfile_fd;
+		if( dmalloc_outfile_fd > 0 ){
 			Set_decimal_value(args,DMALLOC_OUTFILE,passfd->count);
-			passfd->list[passfd->count++] = Cast_int_to_voidstar(_dmalloc_outfile_fd);
+			passfd->list[passfd->count++] = Cast_int_to_voidstar(dmalloc_outfile_fd);
 		}
 	}
 #endif
@@ -3837,8 +3834,8 @@ void Do_work( char *name, struct line_list *args )
 	DbgFlag= Find_flag_value( args, DEBUGFV );
 #ifdef DMALLOC
 	{
-		extern int _dmalloc_outfile_fd;
-		_dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE);
+		extern int dmalloc_outfile_fd;
+		dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE);
 	}
 #endif
 	if( !safestrcasecmp(name,"logger") ) proc = Logger;

@@ -1,3 +1,36 @@
+Version LPRng-3.8.27 - Wed Apr 21 11:32:41 PDT 2004
+
+  Fixed:  'Missing HOLD_FILE' logic error fixed in lpd_rcvjob.c
+   (Noted by: Mark Tamisiea <tamisiea@jilau1.Colorado.EDU>)
+   (And another suggestion by: Christian Reiber <chrei@krischan.org>)
+
+  Fixed: configure with-initpath
+    --with-initpath=PATH now works correctly
+   (Reported by: Jeff Bastian <jmbastia@ti.com>)
+
+  Fixed (well, clarified):
+   Errormsg() now checks for a 'null' error string and provides
+   a printable version of errno for logging.
+
+  Edited the Scan_queue() function to print error message and removed
+   some dead code.
+    (Inspired by comments from: Russell Adams <RLAdams@Kelsey-Seybold.com>)
+
+  lpc MOVE could result in endless loop.
+    (Problem reported by: Wichert Akkerman <wichert@wiggy.net> to 
+	  Debian bug list, forwarded by: Craig Small <csmall at : enc.com.au>)
+
+  lpc MOVE will now start printing job in destination, rather than just copying
+    and preserving status of last operation.
+
+  Added detailed error message for connection failure.
+    (Inspired by comments by: Russell Adams <RLAdams@Kelsey-Seybold.com>)
+
+  Found a really small (1 byte) memory leak in LPD.  Solves the mystery of
+    the server dying with malloc failed messages.
+    (Information supplied by: Russell Adams <RLAdams@Kelsey-Seybold.com>)
+
+
 Version LPRng-3.8.26 - Tue Feb 3 16:58:00 PST 2004
   ADDITION to UTILS:
     VeryFlexibleChooser.pl script uses SNMP to get printer

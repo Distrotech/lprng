@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 1.68 2004/02/24 19:37:37 papowell Exp $
+ * $Id: linksupport.h,v 1.71 2004/05/03 20:24:05 papowell Exp $
  ***************************************************************************/
 
 
@@ -28,16 +28,17 @@ int Link_setkeepalive( int sock );
 int connect_timeout( int timeout,
 	int sock, struct sockaddr *name, int namelen);
 int getconnection ( char *xhostname,
-	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path );
+	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path,
+	char *errmsg, int errlen );
 void Set_linger( int sock, int n );
 int Link_listen( char *port_name );
 int Unix_link_listen( char *unix_socket_path );
 int Link_open(char *host, int timeout, struct sockaddr *bindto,
-	char *unix_socket_path );
+	char *unix_socket_path, char *errmsg, int errlen );
 int Link_open_type(char *host, int timeout, int connection_type,
-	struct sockaddr *bindto, char * unix_socket_path );
+	struct sockaddr *bindto, char * unix_socket_path, char *errmsg, int errlen );
 int Link_open_list( char *hostlist, char **result,
-	int timeout, struct sockaddr *bindto, char *unix_socket_path );
+	int timeout, struct sockaddr *bindto, char *unix_socket_path, char *errmsg, int errlen );
 void Link_close( int timeout, int *sock );
 int Link_send( char *host, int *sock, int timeout,
 	char *sendstr, int count, int *ack );

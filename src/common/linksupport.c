@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
+"$Id: linksupport.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 /***************************************************************************
@@ -217,7 +217,8 @@ int connect_timeout( int timeout,
 }
 
 int getconnection ( char *xhostname,
-	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path )
+	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path,
+	char *errmsg, int errlen )
 {
 	int sock;	         /* socket */
 	int i, err;            /* ACME Generic Integers */
@@ -260,12 +261,14 @@ int getconnection ( char *xhostname,
 			LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
 		dest_sin.sin_family = LookupHost_IP.h_addrtype;
 		if( LookupHost_IP.h_length > (int)sizeof( dest_sin.sin_addr ) ){
+			Errorcode = JABORT;
 			FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
 		}
 		memcpy( &dest_sin.sin_addr,
 			LookupHost_IP.h_addr_list.list[address_count],
 			LookupHost_IP.h_length );
 	} else if( inet_pton( AF_Protocol(), hostname, &dest_sin.sin_addr ) != 1 ){
+		(void) SNPRINTF (errmsg, errlen) "getconnection: cannot get address for '%s'", hostname );
 		DEBUGF(DNW2)("getconnection: cannot get address for '%s'", hostname );
 		return( LINK_OPEN_FAIL );
 	}
@@ -337,6 +340,9 @@ int getconnection ( char *xhostname,
 	if( ISNULL(dest_port) ) dest_port = Lpd_port_DYN;
 	dest_sin.sin_port = Link_dest_port_num(dest_port);
 	if( dest_sin.sin_port == 0 ){
+		(void) SNPRINTF (errmsg, errlen)
+		"getconnection: using illegal port '%s' for connection to '%s'!\n",
+			dest_port, hostname );
 		LOGMSG(LOG_INFO)
 		"getconnection: using illegal port '%s' for connection to '%s'!\n",
 			dest_port, hostname );
@@ -792,30 +798,30 @@ int Unix_link_listen( char *unix_socket_path )
 }
 
 int Link_open(char *host, int timeout, struct sockaddr *bindto,
-	char *unix_socket_path )
+	char *unix_socket_path, char *errmsg, int errlen )
 {
 	int sock;
 	DEBUGF(DNW4) ("Link_open: host '%s', timeout %d",
 		host, timeout);
-	sock = Link_open_type( host, timeout, SOCK_STREAM, bindto, unix_socket_path );
+	sock = Link_open_type( host, timeout, SOCK_STREAM, bindto, unix_socket_path, errmsg, errlen );
 	DEBUGF(DNW4) ("Link_open: socket %d", sock );
 	return(sock);
 }
 
 int Link_open_type(char *host, int timeout, int connection_type,
-	struct sockaddr *bindto, char * unix_socket_path )
+	struct sockaddr *bindto, char * unix_socket_path, char *errmsg, int errlen )
 {
 	int sock = -1;
 	DEBUGF(DNW4)(
 		"Link_open_type: host '%s', timeout %d, type %d",
 		host, timeout, connection_type );
-	sock = getconnection( host, timeout, connection_type, bindto, unix_socket_path );
+	sock = getconnection( host, timeout, connection_type, bindto, unix_socket_path, errmsg, errlen );
 	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
 }
 
 int Link_open_list( char *hostlist, char **result,
-	int timeout, struct sockaddr *bindto, char *unix_socket_path )
+	int timeout, struct sockaddr *bindto, char *unix_socket_path, char *errmsg, int errlen )
 {
 	int sock = -1, i, err = 0;
 	struct line_list list;
@@ -831,7 +837,7 @@ int Link_open_list( char *hostlist, char **result,
 	err = errno = 0;
 	for( i = 0; sock < 0 && i < list.count; ++i ){
 		DEBUGF(DNW4) ("Link_open_list: host trying '%s'", list.list[i] );
-		sock = getconnection( list.list[i], timeout, SOCK_STREAM, bindto, unix_socket_path );
+		sock = getconnection( list.list[i], timeout, SOCK_STREAM, bindto, unix_socket_path, errmsg, errlen );
 		err = errno;
 		DEBUGF(DNW4) ("Link_open_list: result host '%s' socket %d", list.list[i], sock );
 		if( sock >= 0 ){

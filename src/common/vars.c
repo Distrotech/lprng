@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.68 2004/02/24 19:37:36 papowell Exp $";
+"$Id: vars.c,v 1.71 2004/05/03 20:24:04 papowell Exp $";
 
 
 /* force local definitions */
@@ -357,6 +357,8 @@ struct keywords Pc_var_list[] = {
 { "max_datafiles", 0, INTEGER_K, &Max_datafiles_DYN,0,0,"=52"},
    /* maximum log file size in Kbytes; 0 means no limit on size */
 { "max_log_file_size", 0, INTEGER_K, &Max_log_file_size_DYN,0,0,"=1000"},
+   /* maximum number of moves or forwards for a job; 0 means no limit */
+{ "max_move_count", 0, INTEGER_K, &Max_move_count_DYN,0,0,"=10"},
    /* maximum number of servers that can be active */
 { "max_servers_active", 0, INTEGER_K, &Max_servers_active_DYN,1,0,"=1024"},
    /* maximum length of status line */

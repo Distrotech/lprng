@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: ssl_auth.c,v 1.37 2004/02/24 19:37:35 papowell Exp $";
+"$Id: ssl_auth.c,v 1.40 2004/05/03 20:24:03 papowell Exp $";
 
 
 #include "lp.h"
@@ -335,44 +335,43 @@ void Get_cert_info( SSL *ssl, struct line_list *info )
 {
 	X509 *peer;
 	STACK_OF(X509) *sk;
-	int i;
+	int i, n;
 	char *certs = 0;
 	char buffer[SMALLBUFFER];
 
 	sk=SSL_get_peer_cert_chain(ssl);
-	if( sk && sk_X509_num(sk) ){
-		for( i = 0; i < sk_X509_num(sk); ++i ){
+	if( sk && (n = sk_X509_num(sk)) > 0 ){
+		for( i = n-1; i >= 0; --i ){
 			peer = sk_X509_value(sk,i);
 			if( X509_NAME_oneline( X509_get_subject_name( peer ),
 				buffer, sizeof(buffer) ) ){
-				DEBUG1("Open_SSL_connection: level [%d] subject '%s'", i, buffer );
-				if( i == 0 && info ){
+				DEBUG1("Get_cert_info: level [%d of %d] subject '%s'", i, n, buffer );
+				if( i == n-1 && info ){
 					Set_str_value(info,AUTHFROM,buffer);
 				}
-				if( i ) certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
+				certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
 			}
-			if( X509_NAME_oneline( X509_get_issuer_name( peer ),
+			if( 0 && X509_NAME_oneline( X509_get_issuer_name( peer ),
 				buffer, sizeof(buffer) ) ){
-				DEBUG1("Open_SSL_connection: level [%d] issuer '%s'", i, buffer );
+				DEBUG1("Get_cert_info: level [%d of %d] issuer '%s'", i, n, buffer );
 				certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
 			}
 		}
-	} else {
-		peer = SSL_get_peer_certificate(ssl);
-		if( peer ){
-			if( X509_NAME_oneline( X509_get_subject_name( peer ),
-				buffer, sizeof(buffer) ) ){
-				DEBUG1("Open_SSL_connection: peer subject '%s'", buffer );
-				if( info ){
-					Set_str_value(info,AUTHFROM,buffer);
-				}
-				certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
+	}
+	peer = SSL_get_peer_certificate(ssl);
+	if( peer ){
+		if( X509_NAME_oneline( X509_get_subject_name( peer ),
+			buffer, sizeof(buffer) ) ){
+			DEBUG1("Get_cert_info: peer subject '%s'", buffer );
+			if( info ){
+				Set_str_value(info,AUTHFROM,buffer);
 			}
-			if( X509_NAME_oneline( X509_get_issuer_name( peer ),
-				buffer, sizeof(buffer) ) ){
-				DEBUG1("Open_SSL_connection: peer issuer '%s'", buffer );
-				certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
-			}
+			certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
+		}
+		if( X509_NAME_oneline( X509_get_issuer_name( peer ),
+			buffer, sizeof(buffer) ) ){
+			DEBUG1("Get_cert_info: peer issuer '%s'", buffer );
+			certs = safeextend3( certs, buffer, "\n", __FILE__,__LINE__ );
 		}
 	}
 	if( info ){
@@ -473,13 +472,13 @@ int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
 	int status = 0;
 
 	/* we get the SSL context.  No connection yet */
-	DEBUG1("Accept_ssl_connection: starting, ctx 0x%lx, sock %d", Cast_ptr_to_long(ctx), sock);
+	DEBUG1("Accept_SSL_connection: starting, ctx 0x%lx, sock %d", Cast_ptr_to_long(ctx), sock);
 	
 	ssl = SSL_new(ctx);
-	DEBUG1("Accept_ssl_connection: SSL_new 0x%lx", Cast_ptr_to_long(ssl) );
+	DEBUG1("Accept_SSL_connection: SSL_new 0x%lx", Cast_ptr_to_long(ssl) );
 	if( !ssl ){
 		Set_ERR_str( "Accept_SSL_connection: SSL_new failed", errmsg, errlen );
-		DEBUG1("Accept_ssl_connection: '%s'", errmsg);
+		DEBUG1("Accept_SSL_connection: '%s'", errmsg);
 		status = -1;
 		goto done;
 	}
@@ -489,7 +488,7 @@ int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
 	 */
 	if( !(bio = BIO_new_socket(sock, BIO_NOCLOSE)) ){
 		Set_ERR_str( "Accept_SSL_connection: BIO_new_socket failed", errmsg, errlen );
-		DEBUG1("Accept_ssl_connection: '%s'", errmsg);
+		DEBUG1("Accept_SSL_connection: '%s'", errmsg);
 		status = -1;
 		goto done;
 	}
@@ -497,13 +496,13 @@ int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
 
 	/* if you get any sort of error, give up */
 	finished = wait_for_read = wait_for_write = 0;
-	DEBUG1("Accept_ssl_connection: loop");
+	DEBUG1("Accept_SSL_connection: loop");
 	while(!finished){
 		if( wait_for_read || wait_for_write ){
 			fd_set readfds, writefds, exceptfds;	/* for select() */
 			struct timeval tv, *tm = 0;
 
-			DEBUG1("Accept_ssl_connection: need to wait for IO");
+			DEBUG1("Accept_SSL_connection: need to wait for IO");
 			memset(&tv,0,sizeof(tv));
 			tv.tv_sec = timeout;
 			if( timeout ) tm = &tv;
@@ -600,7 +599,7 @@ int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
 }
 
 /*
- * get a line termianted with \n into the buffer of size len
+ * get a line terminated with \n into the buffer of size len
  *  - reads at most len-1 chars to make sure a terminating 0
  * can be appended
  *  returns: 0 - success

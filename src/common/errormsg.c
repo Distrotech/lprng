@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: errormsg.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
+"$Id: errormsg.c,v 1.71 2004/05/03 20:24:01 papowell Exp $";
 
 
 #include "lp.h"
@@ -68,14 +68,14 @@ const char * Errormsg ( int err )
 # if defined(HAVE_SYS_ERRLIST)
 		if (err >= 0 && err < num_errors) {
 			cp = sys_errlist[err];
-		} else
-# endif
-		{
-			static char msgbuf[32];     /* holds "errno=%d". */
-			(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
-			cp = msgbuf;
 		}
+# endif
 #endif
+	}
+	if( !cp ){
+		static char msgbuf[32];     /* holds "errno=%d". */
+		(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
+		cp = msgbuf;
 	}
     return (cp);
 }
@@ -366,7 +366,8 @@ const char * Errormsg ( int err )
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) VSNPRINTF (s, n) msg, ap);
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		if( err ) (void) SNPRINTF (s, n) " - %s", Errormsg (err));
+		if( err ) (void) SNPRINTF(s, n) " (errno %d)", err);
+		if( err ) (void) SNPRINTF(s, n) " - %s", Errormsg (err));
 		log_backend (kind, log_buf);
 		in_log = 0;
 	}

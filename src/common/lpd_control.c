@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd_control.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -688,6 +688,8 @@ int Do_control_file( int action, int *sock,
 			Set_flag_value(&job.info,PRIORITY_TIME,0 );
 			Set_flag_value(&job.info,DONE_TIME,0 );
 			Set_flag_value(&job.info,REMOVE_TIME,0 );
+			Set_flag_value(&job.info,ERROR_TIME,0 );
+			Set_str_value(&job.info,ERROR,0 );
 			setmessage( &job, TRACE, "LPC move" );
 			break;
 		case OP_RELEASE:

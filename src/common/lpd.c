@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -62,6 +62,7 @@
  *
  ****************************************************************************/
 
+	static char *malloc_area;
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -351,23 +352,53 @@ int main(int argc, char *argv[], char *envp[])
 		first_scan = 0;
 	}
 
+	malloc_area = sbrk(0);
+
+#ifdef DMALLOC
+	DEBUG1( "lpd: LOOP START - sbrk 0x%lx", (long)malloc_area );
+	{
+		extern int dmalloc_outfile_fd;
+		char buffer[128];
+		SNPRINTF(buffer,sizeof(buffer)) "lpd: LOOP START - sbrk 0x%lx\n", (long)malloc_area );
+		Write_fd_str(dmalloc_outfile_fd, buffer );
+		dmalloc_log_unfreed();
+	}
+#endif
+
+
 	do{
 		struct timeval timeval, *timeout;
 		time_t this_time = time( (void *)0 );
 		int elapsed_time;
 
+#ifdef DMALLOC
+		/* check for memory leaks */
+		{
+			char *s = sbrk(0);
+			int n = s - malloc_area;
+			DEBUG1("lpd: LOOP - sbrk 0x%lx", (long)s );
+			if( n > 1024 ){
+				extern int dmalloc_outfile_fd;
+				char buffer[128];
+				SNPRINTF(buffer,sizeof(buffer)) "lpd: LOOP sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+				Write_fd_str(dmalloc_outfile_fd, buffer );
+				dmalloc_log_unfreed();
+				DEBUG1( "lpd: LOOP sbrk reports 0x%lx, or %d more memory", (long)s, n );
+				malloc_area += n;
+			}
+		}
+#endif
+
 		/* set up the timeout values */
 
 		timeout = 0;
 		memset(&timeval, 0, sizeof(timeval));
-
-		DEBUG1("lpd: LOOP START");
 		if(DEBUGL3){ int fd; fd = dup(0); LOGDEBUG("lpd: next fd %d",fd); close(fd); };
 
 		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_pid %d, start_fd %d, Started_server %d",
 			Poll_time_DYN, Force_poll_DYN, start_pid, start_fd, Started_server );
 
-		if(DEBUGL2)Dump_line_list("lpd - Servers_line_list",&Servers_line_list );
+		if(DEBUGL1)Dump_line_list("lpd - Servers_line_list",&Servers_line_list );
 
 		/*
 		 * collect zombies.  If one exits, you can set last_fork_pid_value
@@ -467,6 +498,25 @@ int main(int argc, char *argv[], char *envp[])
 				}
 				server_to_start = 0;
 			}
+
+#ifdef DMALLOC
+			/* check for memory leaks */
+			{
+				char *s = sbrk(0);
+				int n = s - malloc_area;
+				DEBUG1("lpd: BEFORE POLL SERVICE - sbrk 0x%lx, cnt %d", (long)s, Servers_line_list.count );
+				if( n > 1024 ){
+					extern int dmalloc_outfile_fd;
+					char buffer[128];
+					SNPRINTF(buffer,sizeof(buffer)) "lpd: BEFORE POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+					Write_fd_str(dmalloc_outfile_fd, buffer );
+					dmalloc_log_unfreed();
+					DEBUG1( "lpd: BEFORE POLL SERVICE sbrk reports 0x%lx, or %d more memory", (long)s, n );
+					malloc_area += n;
+				}
+			}
+#endif
+
 			while( (elapsed_time > Poll_start_interval_DYN || forced_start )
 				&& Servers_line_list.count > 0 && server_processes_started < Poll_servers_started_DYN
 				&& number_of_servers + server_processes_started < max_servers-4 ){
@@ -514,6 +564,25 @@ int main(int argc, char *argv[], char *envp[])
 					Remove_line_list( &Servers_line_list, doit );
 				}
 			}
+
+#ifdef DMALLOC
+			/* check for memory leaks */
+			{
+				char *s = sbrk(0);
+				int n = s - malloc_area;
+				DEBUG1("lpd: AFTER POLL SERVICE - sbrk 0x%lx, cnt %d", (long)s, Servers_line_list.count );
+				if( n > 1024 ){
+					extern int dmalloc_outfile_fd;
+					char buffer[128];
+					SNPRINTF(buffer,sizeof(buffer)) "lpd: AFTER POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+					Write_fd_str(dmalloc_outfile_fd, buffer );
+					dmalloc_log_unfreed();
+					DEBUG1( "lpd: AFTER POLL SERVICE sbrk reports 0x%lx, or %d more memory", (long)s, n );
+					malloc_area += n;
+				}
+			}
+#endif
+
 		}
 		/* we see if we have any work to do
 		 * and then schedule a timeout if necessary to start a process
@@ -582,7 +651,7 @@ int main(int argc, char *argv[], char *envp[])
 			int i;
 			LOGDEBUG( "lpd: select returned %d, error '%s'",
 				fd_available, Errormsg(err) );
-			for(i=0; i < max_socks; ++i ){
+			for(i=0; fd_available > 0 && i < max_socks; ++i ){
 				if( FD_ISSET( i, &readfds ) ){
 					LOGDEBUG( "lpd: fd %d readable", i );
 				}
@@ -793,6 +862,7 @@ int Read_server_status( int fd )
 		if(DEBUGL1)Dump_line_list("Read_server_status - input", &l );
 		for( count = 0; count < l.count; ++count ){ 
 			name = l.list[count];
+			if( ISNULL(name) ) continue;
 			found = 0;
 			for( n = 0;!found && n < Servers_line_list.count; ++n ){
 				found = !safestrcasecmp( Servers_line_list.list[n], name);
@@ -802,7 +872,27 @@ int Read_server_status( int fd )
 			}
 			Started_server = 1;
 		}
+		Free_line_list(&l);
 	}
+	Free_line_list(&l);
+
+#ifdef DMALLOC
+	{
+		char *s = sbrk(0);
+		int n = s - malloc_area;
+		DEBUG1("lpd: READ_SERVER_STATUS - sbrk 0x%lx, cnt %d", (long)s, Servers_line_list.count );
+		if( n > 1024 ){
+			extern int dmalloc_outfile_fd;
+			char buffer[128];
+			SNPRINTF(buffer,sizeof(buffer)) "lpd: READ_SERVER_STATSUS sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+			Write_fd_str(dmalloc_outfile_fd, buffer );
+			dmalloc_log_unfreed();
+			DEBUG1( "lpd: READ_SERVER_STATUS sbrk reports 0x%lx, or %d more memory", (long)s, n );
+			malloc_area += n;
+		}
+	}
+#endif
+
 	if(DEBUGL2)Dump_line_list("Read_server_status - waiting for start",
 			&Servers_line_list );
 	return(fd);

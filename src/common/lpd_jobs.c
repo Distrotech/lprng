@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -565,7 +565,8 @@ int Do_queue_jobs( char *name, int subserver )
 	/* get new job values */
 	if( Scan_queue( &Spool_control, &Sort_order,
 			&printable, &held, &move, 1, &error, &done, 0, 0 ) ){
-		LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
+		Errorcode = JFAIL;
+		FATAL(LOG_ERR)"Do_queue_jobs: cannot read queue directory '%s'",
 			Spool_dir_DYN );
 	}
 
@@ -1025,6 +1026,15 @@ int Do_queue_jobs( char *name, int subserver )
 		}
 
 		/*
+		 * check for circular forwarding of jobs
+		 */
+		if( Max_move_count_DYN > 0 && Find_flag_value(&job.info,MOVE_COUNT) > Max_move_count_DYN ){
+			Errorcode = JABORT;
+			FATAL(LOG_ERR)
+				_("Do_queue_jobs: FORWARDING LOOP - '%s'"), hf_name);
+		}
+
+		/*
 		 * set the hold file information
 		 */
 
@@ -1056,6 +1066,12 @@ int Do_queue_jobs( char *name, int subserver )
 			fd = -1;
 		}
 
+		/*
+		 * at this point, if use_subserver != 0, then we can start up
+		 * a subserver process.  We can move the job to the spool queue of the
+		 * subserver process.  This job should have all of the characteristics
+		 * of a new job for this queue
+		 */
 		if( use_subserver > 0 ){
 			if( !Move_job( &job, sp, buffer, sizeof(buffer)) ){
 				/* now we deal with the job in the original queue */
@@ -1066,9 +1082,17 @@ int Do_queue_jobs( char *name, int subserver )
 			jobs_printed = 1;
 			continue;
 		} else if( move_dest ){
-			struct line_list new_sp;
+			/*
+			 * we are moving a job to another queue.  This can be done
+			 * by either linking or copying files.  The destination can be either
+			 * a local queue or a remote printer
+			 */
+			static struct line_list new_sp; /* we are going to set a pointer to this */
 			Init_line_list(&new_sp);
 			savename = safestrdup(Printer_DYN,__FILE__,__LINE__);
+			/*
+			 * is it a remote printer?
+			 */
 			if( safestrchr(move_dest ,'@') ){
 				hf_name = Find_str_value(&job.info,HF_NAME);
 				id = Find_str_value(&job.info,IDENTIFIER);
@@ -1102,10 +1126,11 @@ int Do_queue_jobs( char *name, int subserver )
 				servers.list[0] = (void *)sp;
 			} else if( Setup_printer( move_dest, errmsg, errlen, 1 ) ){
 				/* we failed to find the destination directory */
-				SNPRINTF(buffer,sizeof(buffer)) "move destination '%s' setup failed - %s'",
+				SNPRINTF(buffer,sizeof(buffer)) "dest '%s' setup failed - %s'",
 						move_dest, errmsg );
 				Set_str_value(&job.info,ERROR,buffer);
 				Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+				Set_hold_file(&job, 0, 0 );
 			} else {
 				/* we found to find the destination directory */
 				Set_str_value(&new_sp,PRINTER,Printer_DYN);
@@ -1116,14 +1141,20 @@ int Do_queue_jobs( char *name, int subserver )
 					FATAL(LOG_ERR) "Do_queue_jobs: move_dest subserver '%s' setup failed '%s'",
 						savename, errmsg );
 				}
-				if( !Move_job( &job, &new_sp, buffer, sizeof(buffer)) ){
+				if( !safestrcmp( Printer_DYN, move_dest ) ){
+					/* we are moving to the same spool queue */
+					SNPRINTF(buffer,sizeof(buffer)) "loop moving '%s' to '%s'",
+							move_dest, Printer_DYN );
+					Set_str_value(&job.info,ERROR,buffer);
+					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+					Set_hold_file(&job, 0, 0 );
+				} else if( !Move_job( &job, &new_sp, buffer, sizeof(buffer)) ){
 					Set_flag_value(&job.info,DONE_TIME,time((void *)0));
 					setstatus( &job, "%s@%s: job '%s' moved",
 						Printer_DYN, FQDNHost_FQDN, id );
-					pr = Find_str_value(sp,PRINTER);
 					/* send a request to start the queue server */
-					SNPRINTF( buffer, sizeof(buffer)) "%s\n", pr );
-					DEBUG1("Do_queue_jobs: sending '%s' to LPD", pr );
+					SNPRINTF( buffer, sizeof(buffer)) "%s\n", move_dest );
+					DEBUG1("Do_queue_jobs: sending '%s' to LPD", move_dest );
 					if( Write_fd_str( Lpd_request, buffer ) < 0 ){
 						Errorcode = JABORT;
 						LOGERR_DIE(LOG_ERR) _("Do_queue_jobs: write to fd '%d' failed"),
@@ -2148,6 +2179,8 @@ void Setup_user_reporting( struct job *job )
 	char *host = Find_str_value(&job->info,MAILNAME);
 	char *port = 0, *protocol = "UDP", *s;
 	int prot_num = SOCK_DGRAM;
+	char errmsg[SMALLBUFFER];
+
 
 	DEBUG1("Setup_user_reporting: Allow_user_logging %d, host '%s'",
 		Allow_user_logging_DYN, host );
@@ -2173,7 +2206,7 @@ void Setup_user_reporting( struct job *job )
 		
 	DEBUG3("setup_logger_fd: host '%s', port '%s', protocol %d",
 		host, port, prot_num );
-	Mail_fd = Link_open_type(host, 10, prot_num, 0, 0 );
+	Mail_fd = Link_open_type(host, 10, prot_num, 0, 0, errmsg, sizeof(errmsg) );
 	DEBUG3("Setup_user_reporting: Mail_fd '%d'", Mail_fd );
 
 	if( Mail_fd > 0 && prot_num == SOCK_STREAM && Exit_linger_timeout_DYN > 0 ){
@@ -2368,10 +2401,12 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	int attempt, err = 0, n, device_fd, c, in[2], pid, readable, mask;
 	struct stat statb;
 	time_t tm;
-	char tm_str[32];
+	char tm_str[32], errmsg[SMALLBUFFER];
 	char *host, *port, *filter;
 	struct line_list args;
+	int errlen = sizeof(errmsg);
 
+	errmsg[0] = 0;
 	Init_line_list(&args);
 	host = port = filter = 0;
 	*filterpid = 0;
@@ -2388,6 +2423,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	*poll_for_status = 0;
 	/* we repeat until we get the device or exceed maximum attempts */
 	for( attempt = 0; device_fd < 0 && (max_attempts <= 0 || attempt < max_attempts); ++attempt ){
+		errmsg[0] = 0;
 		if( grace ) plp_sleep(grace);
 		c = lp_device[0];
 		switch( c ){
@@ -2470,7 +2506,8 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 					Printer_DYN, lp_device );
 			}
 			DEBUG1( "Printer_open: doing link open '%s'", lp_device );
-			*status_fd = device_fd = Link_open( host, connect_tmout, 0, 0 );
+			SETSTATUS(job)"opening TCP/IP connection to %s", host );
+			*status_fd = device_fd = Link_open( host, connect_tmout, 0, 0, errmsg, errlen );
             err = errno;
 			break;
 		}
@@ -2484,13 +2521,13 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 				n = interval*( 1 << n );
 				if( max_interval > 0 && n > max_interval ) n = max_interval;
 				setstatus( job, "cannot open '%s' - '%s', attempt %d, sleeping %d",
-						lp_device, Errormsg( err), attempt+1, n );
+						lp_device, errmsg[0]?errmsg:Errormsg( err), attempt+1, n );
 				if( n > 0 ){
 					plp_sleep(n);
 				}
 			} else {
 				setstatus( job, "cannot open '%s' - '%s', attempt %d",
-						lp_device, Errormsg( err), attempt+1 );
+						lp_device, errmsg[0]?errmsg:Errormsg( err), attempt+1 );
 			}
 		}
 	}
@@ -2957,7 +2994,8 @@ int Remove_done_jobs( void )
 /*
  * move the job to a new spool queue
  *  This will only work if the queue/printer is on the same
- *  host
+ *  host.  We will set up a job in the new spool queue that
+ *  appears to sent directly to the spool queue.
  */
 
 int Move_job(struct job *job, struct line_list *sp,
@@ -2975,7 +3013,19 @@ int Move_job(struct job *job, struct line_list *sp,
 
 	Init_job(&jcopy);
 	Copy_job(&jcopy,job);
+
 	Set_str_value(&jcopy.info,SERVER,0);
+	Set_str_value(&jcopy.info,MOVE,0);
+	Set_str_value(&jcopy.info,DONE_TIME,0);
+	Set_str_value(&jcopy.info,HOLD_TIME,0);
+	Set_str_value(&jcopy.info,PRIORITY_TIME, 0 );
+	Set_str_value(&jcopy.info,ERROR_TIME, 0 );
+	Set_str_value(&jcopy.info,ERROR, 0 );
+	Set_str_value(&jcopy.info,DESTINATION, 0 );
+	Set_str_value(&jcopy.info,DESTINATIONS, 0 );
+
+	i = Find_flag_value(&jcopy.info,MOVE_COUNT);
+	Set_flag_value(&jcopy.info,MOVE_COUNT,i+1);
 
 	if(DEBUGL2)Dump_job("Move_job: use_subserver copy", &jcopy );
 
@@ -3006,7 +3056,7 @@ int Move_job(struct job *job, struct line_list *sp,
 					datafile, pr, sd );
 				Set_str_value(&job->info,ERROR,errmsg);
 				fail = 1;
-				break;
+				goto move_error;
 			}
 		}
 	}

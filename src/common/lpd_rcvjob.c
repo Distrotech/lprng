@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -358,13 +358,12 @@ int Receive_job( int *sock, char *input )
 		if( filetype == CONTROL_FILE ){
 			DEBUGF(DRECV2)("Receive_job: receiving new control file, old job.info.count %d, old files.count %d",
 				job.info.count, files.count );
-			if( job.info.count ){
+			if( hold_fd > 0 ){
 				/* we received another control file, finish this job up */
 				if( !discarding_large_job ){
 					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
 						goto error;
 					}
-					Set_str_value(&job.info,INCOMING_TIME,0);
 				} else {
 					SNPRINTF( error, errlen)
 						_("size %0.3fK exceeds %dK"),
@@ -395,14 +394,11 @@ int Receive_job( int *sock, char *input )
 				goto error;
 			}
 			if( files.count ){
-				/* we have datafiles, FOLLOWED by a control file,
-					followed (possibly) by another control file */
-				/* we receive another control file */
+				/* we have datafiles, FOLLOWED by a control file */
 				if( !discarding_large_job ){
 					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
 						goto error;
 					}
-					Set_str_value(&job.info,INCOMING_TIME,0);
 				} else {
 					SNPRINTF( error, errlen)
 						_("size %0.3fK exceeds %dK"),
@@ -434,27 +430,28 @@ int Receive_job( int *sock, char *input )
 
 	DEBUGF(DRECV2)("Receive_job: eof on transfer, job.info.count %d, files.count %d",
 		job.info.count, files.count );
-	if( !discarding_large_job ){
-		if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
-			goto error;
+	if( hold_fd > 0 ){
+		if( !discarding_large_job ){
+			if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+				goto error;
+			}
+		} else {
+			SNPRINTF( error, errlen)
+				_("size %0.3fK exceeds %dK"),
+				jobsize/1024, Max_job_size_DYN );
+			Set_str_value(&job.info,ERROR,error);
+			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+			Set_str_value(&job.info,INCOMING_TIME,0);
+			error[0] = 0;
+			if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+				SNPRINTF( error,errlen)
+					"Error setting up hold file - %s",
+					Errormsg( errno ) );
+				goto error;
+			}
+			if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+			discarding_large_job = 0;
 		}
-		Set_str_value(&job.info,INCOMING_TIME,0);
-	} else {
-		SNPRINTF( error, errlen)
-			_("size %0.3fK exceeds %dK"),
-			jobsize/1024, Max_job_size_DYN );
-		Set_str_value(&job.info,ERROR,error);
-		Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
-		Set_str_value(&job.info,INCOMING_TIME,0);
-		error[0] = 0;
-		if( (status = Set_hold_file( &job, 0, hold_fd )) ){
-			SNPRINTF( error,errlen)
-				"Error setting up hold file - %s",
-				Errormsg( errno ) );
-			goto error;
-		}
-		if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
-		discarding_large_job = 0;
 	}
 
  error:
@@ -478,7 +475,6 @@ int Receive_job( int *sock, char *input )
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
 		Link_close( Send_query_rw_timeout_DYN, sock );
 	} else {
-		Set_str_value(&job.info,INCOMING_TIME,0);
 		Link_close( Send_query_rw_timeout_DYN, sock );
 		/* update the spool queue */
 		Get_spool_control( Queue_control_file_DYN, &Spool_control );

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: atalkprint,v 1.68 2004/02/24 19:37:27 papowell Exp $
+# $Id: atalkprint,v 1.71 2004/05/03 20:23:59 papowell Exp $
 # This is a template file for hooking up printing to a remote
 #  printer that needs a communication program
 #
