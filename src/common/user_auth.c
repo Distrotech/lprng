@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.15 2003/01/17 23:01:26 papowell Exp $
+ * $Id: user_auth.c,v 1.17 2003/04/15 23:37:42 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -673,7 +673,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		goto error;
 	}
 
-	if( lseek( tempfd, 0, SEEK_SET ) < 0 ){
+	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
 		SNPRINTF(errmsg,errlen)
 			"md5_send: seek failed - '%s'", Errormsg(errno) );
 		goto error;

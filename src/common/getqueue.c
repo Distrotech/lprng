@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.46 2003/01/17 23:01:24 papowell Exp $";
+"$Id: getqueue.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
 
 
 /***************************************************************************
@@ -168,16 +168,20 @@ int Scan_queue( struct line_list *spool_control,
  *  Get an image of a file from an fd
  */
 
-char *Get_fd_image( int fd, int maxsize )
+char *Get_fd_image( int fd, off_t maxsize )
 {
 	char *s = 0;
 	struct stat statb;
 	char buffer[LARGEBUFFER];
-	int n, len;
+	int n;
+	off_t len;
 
 	DEBUG3("Get_fd_image: fd %d", fd );
 
-	lseek(fd, 0, SEEK_SET);
+	if( lseek(fd, 0, SEEK_SET) == -1 ){
+		Errorcode = JFAIL;
+		LOGERR_DIE(LOG_INFO)"Get_fd_image: lseek failed" );
+	}
 	if( maxsize && fstat(fd, &statb) == 0
 		&& maxsize< statb.st_size/1024 ){
 		lseek(fd, -maxsize*1024, SEEK_END);
@@ -202,7 +206,7 @@ char *Get_fd_image( int fd, int maxsize )
  *  Get an image of a file
  */
 
-char *Get_file_image( const char *file, int maxsize )
+char *Get_file_image( const char *file, off_t maxsize )
 {
 	char *s = 0;
 	struct stat statb;
@@ -1410,6 +1414,7 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	char *s;
 	char buffer[SMALLBUFFER];
 	char destbuffer[SMALLBUFFER];
+	struct stat statb; 
 	int n, printable = 0, held = 0, move = 0, error = 0, done = 0,destination, destinations;
 
 	if(DEBUGL4)Dump_job("Job_printable - job info",job);
@@ -1430,8 +1435,17 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))
 		&& kill( n, 0 ) == 0 ){
 		int delta;
-		n = Find_flag_value(&job->info,START_TIME,Value_sep);
-		delta = time((void *)0) - n;
+		time_t now = time((void *)0);
+		time_t last_change = Find_flag_value(&job->info,START_TIME,Value_sep);
+		if( !ISNULL(Status_file_DYN) && !stat( Status_file_DYN, &statb )
+			&& last_change < statb.st_mtime ){
+			last_change = statb.st_mtime;
+		}
+		if( !ISNULL(Log_file_DYN) && !stat( Log_file_DYN, &statb )
+			&& last_change < statb.st_mtime ){
+			last_change = statb.st_mtime;
+		}
+		delta = now - last_change;
 		if( Stalled_time_DYN && delta > Stalled_time_DYN ){
 			SNPRINTF( buffer, sizeof(buffer))
 				"stalled(%dsec)", delta );
@@ -1880,6 +1894,8 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		s = job->info.list[i];
 		if( s && (c = s[0]) && isupper(c) && c != 'N' && c != 'U'
 			&& s[1] == '=' ){
+			/* remove banner from control file */
+			if( c == 'L' && Suppress_header_DYN && !Always_banner_DYN ) continue;
 			s[1] = 0;
 			Add_line_list( &controlfile, s, Value_sep, 1, 1 );
 			Set_str_value(&controlfile,s,s+2);

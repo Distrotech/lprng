@@ -4,8 +4,8 @@
 #: src/common/lpc.c:276 src/common/lpc.c:437 src/common/lpq.c:529
 msgid ""
 msgstr ""
-"Project-Id-Version: LPRng 3.8.20\n"
-"POT-Creation-Date: 2003-01-15 21:10-0800\n"
+"Project-Id-Version: LPRng 3.8.21\n"
+"POT-Creation-Date: 2003-04-15 15:41-0700\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -989,11 +989,11 @@ msgstr "Service_worker: ne peut mettre à jour le fichier reteniu pour '%s'"
 msgid "job '%s' removed- status expired"
 msgstr "travail '%s' enlevé"
 
-#: src/common/lpd_rcvjob.c:136 src/common/lpd_rcvjob.c:489
+#: src/common/lpd_rcvjob.c:136 src/common/lpd_rcvjob.c:491
 msgid "bad command line"
 msgstr "mauvaise ligne de commande"
 
-#: src/common/lpd_rcvjob.c:140 src/common/lpd_rcvjob.c:493
+#: src/common/lpd_rcvjob.c:140 src/common/lpd_rcvjob.c:495
 msgid "bad printer name"
 msgstr "mauvais nom d'imprimante"
 
@@ -1002,7 +1002,7 @@ msgstr "mauvais nom d'imprimante"
 msgid "%s: cannot set up print queue"
 msgstr "%s: ne peut initialiser la file d'impression"
 
-#: src/common/lpd_rcvjob.c:184 src/common/lpd_rcvjob.c:536
+#: src/common/lpd_rcvjob.c:184 src/common/lpd_rcvjob.c:538
 #: src/common/lpd_secure.c:189
 #, c-format
 msgid "%s: spooling disabled"
@@ -1023,88 +1023,88 @@ msgstr "Do_queue_jobs: ne peut ouvrir fichier de blocage '%s'"
 msgid "Receive_job: cannot lock lockfile '%s'"
 msgstr "Do_queue_jobs: ne peut ouvrir fichier de blocage '%s'"
 
-#: src/common/lpd_rcvjob.c:268
+#: src/common/lpd_rcvjob.c:270
 #, c-format
 msgid "%s: Receive_job - bad control line '%s', len %0.0f, name '%s'"
 msgstr ""
 "%s: Receive_job - mauvaise ligne de commande '%s', len %0.0f, name '%s'"
 
-#: src/common/lpd_rcvjob.c:284
+#: src/common/lpd_rcvjob.c:286
 #, fuzzy, c-format
 msgid "%s: job size %0.3fK is larger than %d K"
 msgstr "%s: taille du travail %0.0f plus grande que %d K"
 
-#: src/common/lpd_rcvjob.c:290 src/common/lpd_rcvjob.c:554
+#: src/common/lpd_rcvjob.c:292 src/common/lpd_rcvjob.c:556
 #: src/common/lpd_secure.c:203
 #, c-format
 msgid "%s: insufficient file space"
 msgstr "%s: espace de fichier insuffisant"
 
-#: src/common/lpd_rcvjob.c:303 src/common/lpd_rcvjob.c:606
+#: src/common/lpd_rcvjob.c:305 src/common/lpd_rcvjob.c:608
 #, c-format
 msgid "%s: sending ACK 0 for '%s' failed"
 msgstr "%s: envoi de ACK 0 pour '%s' a échoué"
 
-#: src/common/lpd_rcvjob.c:331 src/common/lpd_rcvjob.c:579
+#: src/common/lpd_rcvjob.c:333 src/common/lpd_rcvjob.c:581
 #, c-format
 msgid "%s: transfer of '%s' from '%s' failed"
 msgstr "%s: transfert de '%s' depuis '%s' a échoué"
 
-#: src/common/lpd_rcvjob.c:429
+#: src/common/lpd_rcvjob.c:431
 #, fuzzy, c-format
 msgid "Receive_jobs: write to fd '%d' failed"
 msgstr "Do_queue_control: écriture sur '%d' a échoué"
 
-#: src/common/lpd_rcvjob.c:500
+#: src/common/lpd_rcvjob.c:502
 #, c-format
 msgid "%s: cannot set up printer"
 msgstr "%s: ne peut initialiser l'imprimante"
 
-#: src/common/lpd_rcvjob.c:548
+#: src/common/lpd_rcvjob.c:550
 #, fuzzy, c-format
 msgid "%s: job size %0.3f is larger than %dK"
 msgstr "%s: taille du travail %0.0f plus grande que %dK"
 
-#: src/common/lpd_rcvjob.c:568
+#: src/common/lpd_rcvjob.c:570
 #, c-format
 msgid "%s: Receive_block_job: sending ACK 0 failed"
 msgstr "%s: Receive_block_job: envoi ACK 0 a échoué"
 
-#: src/common/lpd_rcvjob.c:589
+#: src/common/lpd_rcvjob.c:591
 #, c-format
 msgid "Receive_block_job: lseek failed '%s'"
 msgstr "Receive_block_job: lseek a échoué '%s'"
 
-#: src/common/lpd_rcvjob.c:636
+#: src/common/lpd_rcvjob.c:638
 #, fuzzy, c-format
 msgid "Receive_block_jobs: write to fd '%d' failed"
 msgstr "Do_queue_control: écriture sur '%d' a échoué"
 
-#: src/common/lpd_rcvjob.c:698 src/common/lpd_rcvjob.c:742
+#: src/common/lpd_rcvjob.c:700 src/common/lpd_rcvjob.c:744
 #, c-format
 msgid "Scan_block_file: lseek failed '%s'"
 msgstr "Scan_block_file: lseek a échoué '%s'"
 
-#: src/common/lpd_rcvjob.c:713
+#: src/common/lpd_rcvjob.c:715
 #, c-format
 msgid "bad length information '%s'"
 msgstr "mauvaise longueur d'information '%s'"
 
-#: src/common/lpd_rcvjob.c:730
+#: src/common/lpd_rcvjob.c:732
 #, c-format
 msgid "Scan_block_file: read failed '%s'"
 msgstr "Scan_block_file: read a échoué '%s'"
 
-#: src/common/lpd_rcvjob.c:735
+#: src/common/lpd_rcvjob.c:737
 msgid "Scan_block_file: read unexecpted EOF"
 msgstr "Scan_block_file: read EOF intempestif"
 
-#: src/common/lpd_rcvjob.c:870
+#: src/common/lpd_rcvjob.c:872
 #, c-format
 msgid "%s: no permission to print"
 msgstr "%s: pas d'autorisation pour imprimer"
 
-#: src/common/lpd_rcvjob.c:1302
+#: src/common/lpd_rcvjob.c:1306
 #, c-format
 msgid "Get_route: no identifier for '%s'"
 msgstr ""

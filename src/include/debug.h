@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: debug.h,v 1.46 2003/01/17 23:01:26 papowell Exp $
+ * $Id: debug.h,v 1.48 2003/04/15 23:37:43 papowell Exp $
  ***************************************************************************/
 
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
 
 
 #include "lp.h"
@@ -223,8 +223,10 @@ int Receive_job( int *sock, char *input )
 
 		DEBUGF(DRECV1)( "Receive_job: read from %s- status %d read %d bytes '%s'",
 				FQDNRemote_FQDN, status, rlen, line );
+#if 0
 		LOGMSG(LOG_INFO) "Receive_job: read from %s- status %d read %d bytes '%s'",
 				FQDNRemote_FQDN, status, rlen, line );
+#endif
 
 
 		if( rlen == 0 || status ){
@@ -1066,7 +1068,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
  error:
 	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 	if( status ){
-		LOGMSG(LOG_INFO) "Check_for_missing files: FAIL '%s' %s", transfername, error);
+		LOGMSG(LOG_INFO) "Check_for_missing_files: FAIL '%s' %s", transfername, error);
 		/* we need to unlink the data files */
 		openname = Find_str_value(&job->info,OPENNAME,Value_sep);
 		transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
@@ -1082,7 +1084,9 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		openname = Find_str_value(&job->info,HF_NAME,Value_sep);
 		if( openname ) unlink(openname);
 	} else {
-		LOGMSG(LOG_INFO) "Check_for_missing files: SUCCESS '%s'", transfername);
+		/*
+		LOGMSG(LOG_INFO) "Check_for_missing_files: SUCCESS '%s'", transfername);
+		*/
 		setmessage( job, "STATE", "CREATE" );
 	}
 

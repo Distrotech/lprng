@@ -71,6 +71,7 @@ TROOT=/var/tmp/$(DISTNAME)
 OLDDIRS=/tmp/OLDDIRS-$(DISTNAME)
 
 checkit:
+	v=`pkg_info | sed -n '/LPRng/s/ .*//p'`; if [ -n "$v" ] ; then pkg_delete $v; fi
 	${MAKE} makesum
 	${MAKE} -f Makefile.build plist
 	-${MAKE} deinstall
@@ -78,9 +79,9 @@ checkit:
 	${MAKE} reinstall
 	${MAKE} package
 	${MAKE} deinstall
-	for i in `ls` ; do case $$i in *.tgz | *.tbz2 ) pkg_add $$i; esac;  done
+	for i in LPRng*z*; do echo $$i; if [ -f "$$i" ] ; then pkg_add $$i; fi; done
 	${MAKE} deinstall
-	for i in `ls` ; do case $$i in *.tgz | *.tbz2 ) pkg_add $$i; esac;  done
+	for i in LPRng*z*; do echo $$i; if [ -f "$$i" ] ; then pkg_add $$i; fi; done
 	pkg_delete ${DISTNAME}
 	${MAKE} -f Makefile.build port
 

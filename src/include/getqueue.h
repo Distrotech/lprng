@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.46 2003/01/17 23:01:26 papowell Exp $
+ * $Id: getqueue.h,v 1.48 2003/04/15 23:37:43 papowell Exp $
  ***************************************************************************/
 
 
@@ -149,8 +149,8 @@ int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
 		int only_queue_process, int *perr, int *pdone,
 		const char *remove_prefix, const char *remove_suffix );
-char *Get_fd_image( int fd, int maxsize );
-char *Get_file_image( const char *file, int maxsize );
+char *Get_fd_image( int fd, off_t maxsize );
+char *Get_file_image( const char *file, off_t maxsize );
 int Get_fd_image_and_split( int fd,
 	int maxsize, int clean,
 	struct line_list *l, const char *sep,

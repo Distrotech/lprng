@@ -1,7 +1,25 @@
+Version LPRng-3.8.21 - Mon Mar 17 07:06:57 PST 2003
+
+  The LPQ 'stalled' indication is now based on status information updates,
+  rather than the job run time.  If there has been no status update for the
+  specified stall time, i.e. - log file (lf=...) or status file (ps=...) then
+  the stalled indication will be displayed.
+
+  Karol Lewandowski discovered that psbanner, a printer filter that
+  creates a PostScript format banner and is part of LPRng, insecurely
+  creates a temporary file for debugging purpose when it is configured
+  as filter. The program does not check whether this file already
+  exists or is linked to another place writes its current environment
+  and called arguments to the file unconditionally with the user
+  id daemon.
+    -- reported by security.debian.org
+    -- Debian Security Advisory DSA 285-1
+      Fixed.
+
 Version LPRng-3.8.20 - Tue Jan 7 09:18:15 PST 2003
 
-  The lpd.conf now has (EMPTY STRING) for defaults which are
-  empty strings... My Bad.  Patrick
+  The lpd.conf now uses (EMPTY STRING) for defaults which are
+  empty strings... Before it was '0'. Oops.  Patrick
 
   At the request of Karl Kopper <karl@unfiw.com> I reviewed the issues
   of queue starting,  polling the queues for done jobs, and other

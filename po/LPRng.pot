@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-01-15 21:10-0800\n"
+"POT-Creation-Date: 2003-04-15 15:41-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -936,11 +936,11 @@ msgstr ""
 msgid "job '%s' removed- status expired"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:136 src/common/lpd_rcvjob.c:489
+#: src/common/lpd_rcvjob.c:136 src/common/lpd_rcvjob.c:491
 msgid "bad command line"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:140 src/common/lpd_rcvjob.c:493
+#: src/common/lpd_rcvjob.c:140 src/common/lpd_rcvjob.c:495
 msgid "bad printer name"
 msgstr ""
 
@@ -949,7 +949,7 @@ msgstr ""
 msgid "%s: cannot set up print queue"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:184 src/common/lpd_rcvjob.c:536
+#: src/common/lpd_rcvjob.c:184 src/common/lpd_rcvjob.c:538
 #: src/common/lpd_secure.c:189
 #, c-format
 msgid "%s: spooling disabled"
@@ -970,87 +970,87 @@ msgstr ""
 msgid "Receive_job: cannot lock lockfile '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:268
+#: src/common/lpd_rcvjob.c:270
 #, c-format
 msgid "%s: Receive_job - bad control line '%s', len %0.0f, name '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:284
+#: src/common/lpd_rcvjob.c:286
 #, c-format
 msgid "%s: job size %0.3fK is larger than %d K"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:290 src/common/lpd_rcvjob.c:554
+#: src/common/lpd_rcvjob.c:292 src/common/lpd_rcvjob.c:556
 #: src/common/lpd_secure.c:203
 #, c-format
 msgid "%s: insufficient file space"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:303 src/common/lpd_rcvjob.c:606
+#: src/common/lpd_rcvjob.c:305 src/common/lpd_rcvjob.c:608
 #, c-format
 msgid "%s: sending ACK 0 for '%s' failed"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:331 src/common/lpd_rcvjob.c:579
+#: src/common/lpd_rcvjob.c:333 src/common/lpd_rcvjob.c:581
 #, c-format
 msgid "%s: transfer of '%s' from '%s' failed"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:429
+#: src/common/lpd_rcvjob.c:431
 #, c-format
 msgid "Receive_jobs: write to fd '%d' failed"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:500
+#: src/common/lpd_rcvjob.c:502
 #, c-format
 msgid "%s: cannot set up printer"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:548
+#: src/common/lpd_rcvjob.c:550
 #, c-format
 msgid "%s: job size %0.3f is larger than %dK"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:568
+#: src/common/lpd_rcvjob.c:570
 #, c-format
 msgid "%s: Receive_block_job: sending ACK 0 failed"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:589
+#: src/common/lpd_rcvjob.c:591
 #, c-format
 msgid "Receive_block_job: lseek failed '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:636
+#: src/common/lpd_rcvjob.c:638
 #, c-format
 msgid "Receive_block_jobs: write to fd '%d' failed"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:698 src/common/lpd_rcvjob.c:742
+#: src/common/lpd_rcvjob.c:700 src/common/lpd_rcvjob.c:744
 #, c-format
 msgid "Scan_block_file: lseek failed '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:713
+#: src/common/lpd_rcvjob.c:715
 #, c-format
 msgid "bad length information '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:730
+#: src/common/lpd_rcvjob.c:732
 #, c-format
 msgid "Scan_block_file: read failed '%s'"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:735
+#: src/common/lpd_rcvjob.c:737
 msgid "Scan_block_file: read unexecpted EOF"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:870
+#: src/common/lpd_rcvjob.c:872
 #, c-format
 msgid "%s: no permission to print"
 msgstr ""
 
-#: src/common/lpd_rcvjob.c:1302
+#: src/common/lpd_rcvjob.c:1306
 #, c-format
 msgid "Get_route: no identifier for '%s'"
 msgstr ""
