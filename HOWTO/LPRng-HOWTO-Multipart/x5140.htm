@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Problems With Network Print Servers</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printer Communication and Protocols "
     href="printercomm.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -98,14 +98,16 @@
         <p>This is the result of a defective or buggy TCP/IP
         stacks. A common problem is the habit that some Network
         Print Servers occaisionally discard data at the end of a
-        print job when a network connection is <i class=
-        "EMPHASIS">half-closed</i>. A <i class=
-        "EMPHASIS">half-closed</i> connection is one where one end
-        of the sending connection indicates that no further data
-        will be sent. Unfortunately, the Network Print Server will
-        then try to close the connection in the other direction.
-        When this does not immediately succeed, it will terminate
-        the network connection, discarding any unprinted data.</p>
+        print job when a network connection is <span class=
+        "emphasis"><i class="EMPHASIS">half-closed</i></span>. A
+        <span class="emphasis"><i class=
+        "EMPHASIS">half-closed</i></span> connection is one where
+        one end of the sending connection indicates that no further
+        data will be sent. Unfortunately, the Network Print Server
+        will then try to close the connection in the other
+        direction. When this does not immediately succeed, it will
+        terminate the network connection, discarding any unprinted
+        data.</p>
 
         <p>The <tt class="LITERAL">half_close</tt> flag can be used
         to solve this problem. See <a href="normalterm.htm">Normal

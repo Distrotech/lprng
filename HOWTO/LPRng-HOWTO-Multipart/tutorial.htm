@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Print Spooling Tutorial</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="PREVIOUS" title="AppleTalk Support " href=
     "appletalk.htm">
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -107,10 +107,11 @@
         </dl>
       </div>
 
-      <p>A print spooler is a program that accepts <i class=
-      "EMPHASIS">print jobs</i> (which are usually one or more
-      files) from a program or network interface, stores them in a
-      <i class="EMPHASIS">spool queue</i>, and then sends them to a
+      <p>A print spooler is a program that accepts <span class=
+      "emphasis"><i class="EMPHASIS">print jobs</i></span> (which
+      are usually one or more files) from a program or network
+      interface, stores them in a <span class="emphasis"><i class=
+      "EMPHASIS">spool queue</i></span>, and then sends them to a
       printer or another print spooler. Usually there are
       facilities to submit jobs, check on the current job status,
       remove jobs from spool queues, and perform administrative
@@ -161,17 +162,19 @@
         <p>The <b class="APPLICATION">lpd</b> server sorts the
         queue entries and determines the print order. It will
         select a job to be printed, open a connection to the
-        printer, and then use a <i class="EMPHASIS">filter</i>
-        program to convert the file contents into a format suitable
-        for the printer. If the file does not need conversion, then
-        the <b class="APPLICATION">lpd</b> server will send the
-        file directly to the printer.</p>
+        printer, and then use a <span class="emphasis"><i class=
+        "EMPHASIS">filter</i></span> program to convert the file
+        contents into a format suitable for the printer. If the
+        file does not need conversion, then the <b class=
+        "APPLICATION">lpd</b> server will send the file directly to
+        the printer.</p>
 
-        <p>The <b class="APPLICATION">lpd</b> server can also <i
-        class="EMPHASIS">forward</i> jobs to another print server
-        over a network connection, optionally sending them through
-        a filter as well. The destination server can in turn
-        forward the job or send it to a printer.</p>
+        <p>The <b class="APPLICATION">lpd</b> server can also <span
+        class="emphasis"><i class="EMPHASIS">forward</i></span>
+        jobs to another print server over a network connection,
+        optionally sending them through a filter as well. The
+        destination server can in turn forward the job or send it
+        to a printer.</p>
 
         <p>The protocol or commands used to do this job forward and
         transfer are specified by <a href=

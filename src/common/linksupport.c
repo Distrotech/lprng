@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
+"$Id: linksupport.c,v 1.30 2002/05/06 01:06:40 papowell Exp $";
 
 
 /***************************************************************************
@@ -1460,10 +1460,10 @@ int AF_Protocol(void)
 	return( inet_aton( strptr, addr ) );
 #else
 #if !defined(INADDR_NONE)
-#define INADDR_NONE (-1)
+#define INADDR_NONE 0xffffffff
 #endif
 	if( inet_addr( strptr ) != INADDR_NONE ){
-		((unsigned long *)addr)[0] = inet_addr( strptr );
+		((struct in_addr *)addr)->s_addr = inet_addr(strptr);
 		return(1);
 	}
 	return(0);

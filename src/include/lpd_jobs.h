@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_jobs.h,v 1.27 2002/04/01 17:54:58 papowell Exp $
+ * $Id: lpd_jobs.h,v 1.30 2002/05/06 01:06:43 papowell Exp $
  ***************************************************************************/
 
 
@@ -39,6 +39,6 @@ void Add_banner_to_job( struct job *job );
 void Fix_bq_format( int format, struct line_list *datafile );
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
 void Service_queue( struct line_list *args );
-void Remove_done_jobs( void );
+int Remove_done_jobs( void );
 
 #endif

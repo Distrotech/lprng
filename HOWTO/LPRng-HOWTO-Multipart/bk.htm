@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Forwarding Jobs</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Job Processing" href="jobsteps.htm">
     <link rel="PREVIOUS" title="Abnormal Termination " href=
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,38 +44,45 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">bk</tt><i class=
-          "EMPHASIS">Berkeley compatible control file</i></p>
+          <p><tt class="LITERAL">bk</tt><span class="emphasis"><i
+          class="EMPHASIS">Berkeley compatible control
+          file</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bq_format=</tt><i class=
-          "EMPHASIS">format of filtered output</i></p>
+          <p><tt class="LITERAL">bq_format=</tt><span class=
+          "emphasis"><i class="EMPHASIS">format of filtered
+          output</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">lpd_bounce</tt><i class=
-          "EMPHASIS">filter job and transfer output</i></p>
+          <p><tt class="LITERAL">lpd_bounce</tt><span class=
+          "emphasis"><i class="EMPHASIS">filter job and transfer
+          output</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">control_filter=</tt><i class=
-          "EMPHASIS">Control file filter</i></p>
+          <p><tt class="LITERAL">control_filter=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Control file
+          filter</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">control_file_line_order=</tt><i
-          class="EMPHASIS">Control file line order</i></p>
+          <p><tt class="LITERAL">control_file_line_order=</tt><span
+          class="emphasis"><i class="EMPHASIS">Control file line
+          order</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">nline_after_file</tt><i class=
-          "EMPHASIS">N line after data file</i></p>
+          <p><tt class="LITERAL">nline_after_file</tt><span class=
+          "emphasis"><i class="EMPHASIS">N line after data
+          file</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">send_data_first</tt><i class=
-          "EMPHASIS">send data files first</i></p>
+          <p><tt class="LITERAL">send_data_first</tt><span class=
+          "emphasis"><i class="EMPHASIS">send data files
+          first</i></span></p>
         </li>
       </ul>
       <br>
@@ -117,11 +124,11 @@
       implementations of RFC1179, it will try to accept a job even
       under the most severe abuse of the protocol. However, other
       spoolers are not so forgiving. Some spoolers require that the
-      contents of the control file be in <i class=
-      "EMPHASIS">exactly</i> the order that the original 1988 BSD
-      <b class="APPLICATION">lpr</b> software generated them. While
-      some entries can be missing, all the entries present in the
-      file must be in an explicit order.</p>
+      contents of the control file be in <span class="emphasis"><i
+      class="EMPHASIS">exactly</i></span> the order that the
+      original 1988 BSD <b class="APPLICATION">lpr</b> software
+      generated them. While some entries can be missing, all the
+      entries present in the file must be in an explicit order.</p>
 
       <p>The <tt class="LITERAL">bk</tt> (Berkeley <b class=
       "APPLICATION">lpd</b> compatible control file) option causes
@@ -138,16 +145,16 @@
       after the data file entry.</p>
 
       <p>However, there are some very odd commercial
-      implementations that require <i class="EMPHASIS">more</i>
-      information than is present. To assist with this, the <tt
-      class="LITERAL">control_filter</tt> option can be used. This
-      specifies a program that will process the control file before
-      it is sent to a remote destination. The <tt class=
-      "LITERAL">control_filter</tt> program is run with the
-      standard set of filter options. <span class=
-      "ACRONYM">STDIN</span> is attached to the control file and
-      the <span class="ACRONYM">STDOUT</span> will be used as the
-      control file value sent to the remote host.</p>
+      implementations that require <span class="emphasis"><i class=
+      "EMPHASIS">more</i></span> information than is present. To
+      assist with this, the <tt class="LITERAL">control_filter</tt>
+      option can be used. This specifies a program that will
+      process the control file before it is sent to a remote
+      destination. The <tt class="LITERAL">control_filter</tt>
+      program is run with the standard set of filter options. <span
+      class="ACRONYM">STDIN</span> is attached to the control file
+      and the <span class="ACRONYM">STDOUT</span> will be used as
+      the control file value sent to the remote host.</p>
 
       <p>The exit code of the <tt class=
       "LITERAL">control_filter</tt> is used to determine whether to

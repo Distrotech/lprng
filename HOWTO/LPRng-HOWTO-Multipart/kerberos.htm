@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Using Kerberos 5 for Authentication</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Permissions and Authentication " href=
     "permsref.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,9 +44,11 @@
 
       <p><b class="APPLICATION">LPRng</b> Kerberos 5 authentication
       is based on the Kerberos5-1.2.4 release as of 3 March 2020.
-      The distribution was obtained from MIT from the <i class=
-      "EMPHASIS"><a href="http://web.mit.edu/kerberos/www/" target=
-      "_top">http://web.mit.edu/kerberos/www/</a></i> Website.</p>
+      The distribution was obtained from MIT from the <span class=
+      "emphasis"><i class="EMPHASIS"><a href=
+      "http://web.mit.edu/kerberos/www/" target=
+      "_top">http://web.mit.edu/kerberos/www/</a></i></span>
+      Website.</p>
 
       <p>The following sections briefly describes how to set up and
       test the Kerberos software and then how to configure <b
@@ -273,53 +275,59 @@
 
         <ul>
           <li>
-            <p><tt class="LITERAL">auth=kerberos5</tt><i class=
-            "EMPHASIS">use Kerberos5 authentication</i></p>
+            <p><tt class="LITERAL">auth=kerberos5</tt><span class=
+            "emphasis"><i class="EMPHASIS">use Kerberos5
+            authentication</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">kerberos_id=</tt><i class=
-            "EMPHASIS">server prinicpal name (for client
-            use)</i></p>
-          </li>
-
-          <li>
-            <p><tt class=
-            "LITERAL">kerberos_server_principal=</tt><i class=
-            "EMPHASIS">alias for kerberos_id</i></p>
-          </li>
-
-          <li>
-            <p><tt class="LITERAL">kerberos_forward_id=</tt><i
-            class="EMPHASIS">destination server used by
-            server</i></p>
+            <p><tt class="LITERAL">kerberos_id=</tt><span class=
+            "emphasis"><i class="EMPHASIS">server prinicpal name
+            (for client use)</i></span></p>
           </li>
 
           <li>
             <p><tt class=
-            "LITERAL">kerberos_forward_principal=</tt><i class=
-            "EMPHASIS">alias for kerberos_forward_id</i></p>
+            "LITERAL">kerberos_server_principal=</tt><span class=
+            "emphasis"><i class="EMPHASIS">alias for
+            kerberos_id</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">kerberos_keytab=</tt><i class=
-            "EMPHASIS">location of the lpd server keytab
-            file</i></p>
+            <p><tt class="LITERAL">kerberos_forward_id=</tt><span
+            class="emphasis"><i class="EMPHASIS">destination server
+            used by server</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">kerberos_service=</tt><i class=
-            "EMPHASIS">service to be used</i></p>
+            <p><tt class=
+            "LITERAL">kerberos_forward_principal=</tt><span class=
+            "emphasis"><i class="EMPHASIS">alias for
+            kerberos_forward_id</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">kerberos_life=</tt><i class=
-            "EMPHASIS">lpd server ticket lifetime</i></p>
+            <p><tt class="LITERAL">kerberos_keytab=</tt><span
+            class="emphasis"><i class="EMPHASIS">location of the
+            lpd server keytab file</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">kerberos_renew=</tt><i class=
-            "EMPHASIS">lpd server ticket renew</i></p>
+            <p><tt class="LITERAL">kerberos_service=</tt><span
+            class="emphasis"><i class="EMPHASIS">service to be
+            used</i></span></p>
+          </li>
+
+          <li>
+            <p><tt class="LITERAL">kerberos_life=</tt><span class=
+            "emphasis"><i class="EMPHASIS">lpd server ticket
+            lifetime</i></span></p>
+          </li>
+
+          <li>
+            <p><tt class="LITERAL">kerberos_renew=</tt><span class=
+            "emphasis"><i class="EMPHASIS">lpd server ticket
+            renew</i></span></p>
           </li>
         </ul>
         <br>

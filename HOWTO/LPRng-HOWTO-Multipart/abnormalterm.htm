@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Abnormal Termination</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Job Processing" href="jobsteps.htm">
     <link rel="PREVIOUS" title="Normal Termination" href=
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,49 +44,57 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">mail_from=</tt><i class=
-          "EMPHASIS">Mail from user name</i></p>
+          <p><tt class="LITERAL">mail_from=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Mail from user
+          name</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">mail_operator_on_error=</tt><i
-          class="EMPHASIS">Mail to operator on error</i></p>
+          <p><tt class="LITERAL">mail_operator_on_error=</tt><span
+          class="emphasis"><i class="EMPHASIS">Mail to operator on
+          error</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">send_try=</tt><i class=
-          "EMPHASIS">Maximum printing or transfer attempts</i></p>
+          <p><tt class="LITERAL">send_try=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Maximum printing or
+          transfer attempts</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">save_on_error</tt> FLAG <i class=
-          "EMPHASIS">Do not delete on error</i></p>
+          <p><tt class="LITERAL">save_on_error</tt> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Do not delete on
+          error</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">done_jobs=N</tt><i class=
-          "EMPHASIS">Save status of last N jobs</i></p>
+          <p><tt class="LITERAL">done_jobs=N</tt><span class=
+          "emphasis"><i class="EMPHASIS">Save status of last N
+          jobs</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">done_jobs_max_age=N</tt><i class=
-          "EMPHASIS">Remove status when older than N
-          seconds</i></p>
+          <p><tt class="LITERAL">done_jobs_max_age=N</tt><span
+          class="emphasis"><i class="EMPHASIS">Remove status when
+          older than N seconds</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">send_failure_action=</tt><i class=
-          "EMPHASIS">Action on Failure</i></p>
+          <p><tt class="LITERAL">send_failure_action=</tt><span
+          class="emphasis"><i class="EMPHASIS">Action on
+          Failure</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">sendmail=</tt><i class=
-          "EMPHASIS">sendmail path name and options</i></p>
+          <p><tt class="LITERAL">sendmail=</tt><span class=
+          "emphasis"><i class="EMPHASIS">sendmail path name and
+          options</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">stop_on_abort</tt> FLAG <i class=
-          "EMPHASIS">Stop processing queue on filter abort</i></p>
+          <p><tt class="LITERAL">stop_on_abort</tt> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Stop processing
+          queue on filter abort</i></span></p>
         </li>
       </ul>
       <br>
@@ -114,11 +122,12 @@
           "LITERAL">mail_operator_on_error</tt> value, the
           specified operator will be mailed an error indication.
           The <tt class="LITERAL">sendmail</tt> option specifies
-          the pathname of the <i class="EMPHASIS">sendmail</i>
-          program and the options needed to have it read mail
-          addresses from its standard input. For example, <tt
-          class="LITERAL">sendmail=/usr/sbin/sendmail -oi -t</tt>
-          is a commonly used set of options.</p>
+          the pathname of the <span class="emphasis"><i class=
+          "EMPHASIS">sendmail</i></span> program and the options
+          needed to have it read mail addresses from its standard
+          input. For example, <tt class=
+          "LITERAL">sendmail=/usr/sbin/sendmail -oi -t</tt> is a
+          commonly used set of options.</p>
         </li>
 
         <li>

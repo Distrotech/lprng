@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Job Transfer</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="RFC 1179 - Line Printer Daemon Protocol "
     href="rfc1179ref.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -45,18 +45,21 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">longnumber</tt> FLAG <i class=
-          "EMPHASIS">Long job number (6 digits)</i></p>
+          <p><tt class="LITERAL">longnumber</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Long job number (6
+          digits)</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">send_data_first</tt> FLAG <i
-          class="EMPHASIS">Send data files first</i></p>
+          <p><tt class="LITERAL">send_data_first</tt> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Send data files
+          first</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">use_shorthost</tt><i class=
-          "EMPHASIS">Use short hostname</i></p>
+          <p><tt class="LITERAL">use_shorthost</tt><span class=
+          "emphasis"><i class="EMPHASIS">Use short
+          hostname</i></span></p>
         </li>
       </ul>
       <br>
@@ -234,13 +237,13 @@
       <br>
       <br>
 
-      <p><b class="APPLICATION">LPRng</b> will <i class=
-      "EMPHASIS">accept</i> jobs whether they are sent control or
-      data files first. By default, it sends the control file
-      first, followed by the data file. If the destination system
-      requires that the data files be sent first, the <tt class=
-      "LITERAL">send_data_first</tt> printcap option can be used to
-      force data files to be sent first.</p>
+      <p><b class="APPLICATION">LPRng</b> will <span class=
+      "emphasis"><i class="EMPHASIS">accept</i></span> jobs whether
+      they are sent control or data files first. By default, it
+      sends the control file first, followed by the data file. If
+      the destination system requires that the data files be sent
+      first, the <tt class="LITERAL">send_data_first</tt> printcap
+      option can be used to force data files to be sent first.</p>
 
       <p>RFC1179 states that: <a name="AEN9952"></a></p>
 
@@ -252,10 +255,11 @@
       <br>
       <br>
 
-      <p>The <i class="EMPHASIS">should</i> in this wording
-      indicates that this is simply a guideline, and that other
-      formats are possible. Some of the major problems with this
-      format are as follows:</p>
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">should</i></span> in this wording indicates that
+      this is simply a guideline, and that other formats are
+      possible. Some of the major problems with this format are as
+      follows:</p>
 
       <ol type="1">
         <li>

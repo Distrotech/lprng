@@ -5,7 +5,7 @@
     <title>Updating Print Spooler Software and Startup
     Scripts</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Installation" href="installation.htm">
     <link rel="PREVIOUS" title="Installation Problems" href=
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -68,24 +68,27 @@
         "LITERAL">Linux</tt>, and <tt class="LITERAL">BSD</tt>
         derived systems such as <tt class="LITERAL">BSDi</tt>, <tt
         class="LITERAL">FreeBSD</tt>, <tt class=
-        "LITERAL">OpenBSD</tt>, and others use a version of the <i
-        class="EMPHASIS">legacy</i> or <i class=
-        "EMPHASIS">vintage</i> <b class="APPLICATION">lpd</b> print
-        server and the <b class="APPLICATION">lpr</b>, <b class=
-        "APPLICATION">lprm</b>, <b class="APPLICATION">lpq</b>, and
-        <b class="APPLICATION">lpc</b> client programs. By
-        convention, most of the printing related programs are in
-        the <tt class="FILENAME">/usr/bin</tt>, <tt class=
+        "LITERAL">OpenBSD</tt>, and others use a version of the
+        <span class="emphasis"><i class=
+        "EMPHASIS">legacy</i></span> or <span class="emphasis"><i
+        class="EMPHASIS">vintage</i></span> <b class=
+        "APPLICATION">lpd</b> print server and the <b class=
+        "APPLICATION">lpr</b>, <b class="APPLICATION">lprm</b>, <b
+        class="APPLICATION">lpq</b>, and <b class=
+        "APPLICATION">lpc</b> client programs. By convention, most
+        of the printing related programs are in the <tt class=
+        "FILENAME">/usr/bin</tt>, <tt class=
         "FILENAME">/usr/sbin</tt>, <tt class=
         "FILENAME">/usr/libexec</tt>, and <tt class=
         "FILENAME">/usr/ucb</tt> directories.</p>
 
         <p>The <b class="APPLICATION">lpd</b> print spooler is
         started by either the <tt class="COMMAND">rc</tt> startup
-        script or by a <i class="EMPHASIS">startup script</i> file
-        in the <tt class="FILENAME">/etc/rc.d/init.d</tt> or <tt
-        class="FILENAME">/etc/init.d</tt> directory. You can first
-        locate the startup commands as follows.</p>
+        script or by a <span class="emphasis"><i class=
+        "EMPHASIS">startup script</i></span> file in the <tt class=
+        "FILENAME">/etc/rc.d/init.d</tt> or <tt class=
+        "FILENAME">/etc/init.d</tt> directory. You can first locate
+        the startup commands as follows.</p>
 
         <ol type="1">
           <li>
@@ -275,8 +278,9 @@
         "APPLICATION">LPRng</b> can be correctly installed. While
         there is no simple and reliable method of shutting down a
         running <tt class="LITERAL">lpsched</tt> process and the
-        associated network services, it is simple to <i class=
-        "EMPHASIS">prevent</i> the process from being started.</p>
+        associated network services, it is simple to <span class=
+        "emphasis"><i class="EMPHASIS">prevent</i></span> the
+        process from being started.</p>
 
         <p>The <tt class="FILENAME">preinstall.solaris</tt> script
         is a file in the <b class="APPLICATION">LPRng</b>

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Simple Client Printcap Entry&#13;</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printcap Database " href=
     "printcapref.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,23 +46,25 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">client</tt> FLAG <i class=
-          "EMPHASIS">client printcap entry</i></p>
+          <p><tt class="LITERAL">client</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">client printcap
+          entry</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">lp=</tt><i class=
-          "EMPHASIS">destination printer information</i></p>
+          <p><tt class="LITERAL">lp=</tt><span class="emphasis"><i
+          class="EMPHASIS">destination printer
+          information</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">rm=</tt><i class="EMPHASIS">remote
-          host (machine)</i></p>
+          <p><tt class="LITERAL">rm=</tt><span class="emphasis"><i
+          class="EMPHASIS">remote host (machine)</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">rp=</tt><i class="EMPHASIS">remote
-          printer</i></p>
+          <p><tt class="LITERAL">rp=</tt><span class="emphasis"><i
+          class="EMPHASIS">remote printer</i></span></p>
         </li>
       </ul>
       <br>
@@ -73,8 +75,10 @@
       introduce some of the <b class="APPLICATION">LPRng</b>
       network configuration options. Here is a simple printcap file
       used to provide client programs (<tt class="LITERAL">lpr,
-      lprm,</tt> etc) with <i class="EMPHASIS">remote printer</i>
-      and <i class="EMPHASIS">server</i> information.</p>
+      lprm,</tt> etc) with <span class="emphasis"><i class=
+      "EMPHASIS">remote printer</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">server</i></span>
+      information.</p>
 
       <div class="INFORMALEXAMPLE">
         <a name="AEN5472"></a>
@@ -96,15 +100,17 @@
       <ol type="1">
         <li>
           <p>Lines starting with a <tt class="LITERAL">#</tt> sign
-          are comments, and all leading and trailing <i class=
-          "EMPHASIS">whitespace</i>, i.e. - spaces, tabs, etc, are
-          ignored. Empty lines are ignored as well.</p>
+          are comments, and all leading and trailing <span class=
+          "emphasis"><i class="EMPHASIS">whitespace</i></span>,
+          i.e. - spaces, tabs, etc, are ignored. Empty lines are
+          ignored as well.</p>
         </li>
 
         <li>
-          <p>A printcap entry starts with the printcap entry <i
-          class="EMPHASIS">name</i>, followed by one or more <i
-          class="EMPHASIS">aliases</i>, followed by one or more
+          <p>A printcap entry starts with the printcap entry <span
+          class="emphasis"><i class="EMPHASIS">name</i></span>,
+          followed by one or more <span class="emphasis"><i class=
+          "EMPHASIS">aliases</i></span>, followed by one or more
           options. In the above example we have three printcap
           entries: <tt class="LITERAL">lp1</tt> with an alias <tt
           class="LITERAL">printer1</tt> and <tt class=
@@ -157,17 +163,18 @@
           <p>The use of the legacy <tt class=
           "LITERAL">option#value</tt> form is <span class=
           "ACRONYM">NOT</span> recommended as some preprocessors
-          and database systems will treat <i class="EMPHASIS">#</i>
-          as the start of a comment and delete the remainder of the
-          line. This has caused great consternation for sysadmins
-          who wonder why their NIS distributed printcap entries
-          have been mysteriously truncated.</p>
+          and database systems will treat <span class="emphasis"><i
+          class="EMPHASIS">#</i></span> as the start of a comment
+          and delete the remainder of the line. This has caused
+          great consternation for sysadmins who wonder why their
+          NIS distributed printcap entries have been mysteriously
+          truncated.</p>
         </li>
 
         <li>
-          <p>If you want to set a string option to <i class=
-          "EMPHASIS">empty</i> value, use <tt class=
-          "LITERAL">option=</tt>. The <tt class=
+          <p>If you want to set a string option to <span class=
+          "emphasis"><i class="EMPHASIS">empty</i></span> value,
+          use <tt class="LITERAL">option=</tt>. The <tt class=
           "LITERAL">option</tt> will set it to <tt class=
           "LITERAL">1</tt>. If an option value contains a colon,
           then use the C (or Perl or Tck/Tk) string escape <tt
@@ -302,15 +309,16 @@
 
         <li>
           <p>The <tt class="LITERAL">force_localhost@</tt> literal
-          is an example of a <i class="EMPHASIS">flag</i> option.
-          The <tt class="LITERAL">@</tt> sets the literal value to
-          0 (false). We set <tt class=
-          "LITERAL">force_localhost</tt> to false, which now allows
-          the <b class="APPLICATION">LPRng</b> clients to connect
-          directly to the specified remote printer. In this
-          example, the <tt class="FILENAME">hp.private</tt> could
-          be a HP LaserJet Printer with a JetDirect interface,
-          which supports the RFC1179 protocol.</p>
+          is an example of a <span class="emphasis"><i class=
+          "EMPHASIS">flag</i></span> option. The <tt class=
+          "LITERAL">@</tt> sets the literal value to 0 (false). We
+          set <tt class="LITERAL">force_localhost</tt> to false,
+          which now allows the <b class="APPLICATION">LPRng</b>
+          clients to connect directly to the specified remote
+          printer. In this example, the <tt class=
+          "FILENAME">hp.private</tt> could be a HP LaserJet Printer
+          with a JetDirect interface, which supports the RFC1179
+          protocol.</p>
         </li>
 
         <li>

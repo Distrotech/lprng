@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
+"$Id: lpr.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -133,6 +133,7 @@ int main(int argc, char *argv[], char *envp[])
 		newargs.list[newargs.count] = 0;
 		if(DEBUGL1)Dump_line_list("lpr - new options",&newargs );
 		Optind = 0;
+		Files.count = 0;
 		Getopt(0,0,0);
 		Get_parms(newargs.count, newargs.list);      /* scan input args */
 		newargs.count = 0;

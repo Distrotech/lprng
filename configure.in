@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.10
+VERSION=3.8.11
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -266,6 +266,7 @@ DONE_JOBS="$withval", DONE_JOBS="1",
 )
 AC_MSG_RESULT("$DONE_JOBS")
 AC_SUBST(DONE_JOBS)
+
 
 dnl  done_jobs_max_age value
 dnl
@@ -1378,6 +1379,26 @@ AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- END OF GENERAL CONFIGURATION   ---------------------------
+
+dnl check to see if tcp wrappers required
+AC_MSG_CHECKING(use tcp wrappers)
+AC_ARG_ENABLE( tcpwrappers,
+[  --enable-tcpwrappers             use tcp wrappers (-lwrap)],
+[
+ AC_CHECK_HEADERS(tcpd.h,
+  [AC_DEFINE(HAVE_TCPD_H)],
+  [AC_MSG_ERROR(tcpd.h not found)]
+ )
+ AC_CHECK_LIB(wrap, request_init,
+  [LIBS="-lwrap $LIBS"],
+  AC_MSG_ERROR(request_init not found in -wrap library)
+ )
+ AC_DEFINE(TCPWRAPPERS)
+],
+[
+ AC_MSG_RESULT(no);dnl
+]
+)
 
 dnl ----------------------------------------------------------------------------
 dnl ---------------- START OF KERBEROS -----------------------------------------

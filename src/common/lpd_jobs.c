@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -189,7 +189,6 @@ int cmp_server( const void *left, const void *right, const void *p )
 {   
     struct line_list *l, *r;
 	int tr, tl;
-	tr = (int)p;
 	l = ((struct line_list **)left)[0];
 	r = ((struct line_list **)right)[0];
 	tl = Find_flag_value(l,DONE_TIME,Value_sep);
@@ -1280,6 +1279,10 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 			status = JFAIL;
 			LOGERR(LOG_INFO)"Remote_job: close(%d) failed",
 				tempfd);
+		}
+		if( statb.st_size == 0 ){
+			LOGMSG( LOG_ERR) "Remote_job: zero length job after filtering");
+			status = JABORT;
 		}
 		if( status ) goto exit;
 		job_size = statb.st_size;
@@ -2375,24 +2378,19 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 		case '|':
 #if !defined(HAVE_SOCKETPAIR)
 			FATAL(LOG_ERR)"Printer_open: requires socketpair() system call for output device to be filter");
-			if( pipe( in ) == -1 ){
-				Errorcode = JFAIL;
-				LOGERR_DIE(LOG_INFO)"Printer_open: pipe() failed");
-			}
 #else
 			if( socketpair( AF_UNIX, SOCK_STREAM, 0, in ) == -1 ){
 				Errorcode = JFAIL;
-				LOGERR_DIE(LOG_INFO)"Printer_open: socketpair() failed");
+				LOGERR_DIE(LOG_INFO)"Printer_open: socketpair() for filter input failed");
 			}
 #endif
 			Max_open(in[0]); Max_open(in[1]);
-			DEBUG3("Printer_open: fd in[%d,%d]",
-				in[0], in[1] );
+			DEBUG3("Printer_open: fd in[%d,%d]", in[0], in[1] );
 			/* set up file descriptors */
 			Free_line_list(&args);
 			Check_max(&args,10);
 			args.list[args.count++] = Cast_int_to_voidstar(in[0]);	/* stdin */
-			args.list[args.count++] = Cast_int_to_voidstar(1);		/* stdout */
+			args.list[args.count++] = Cast_int_to_voidstar(in[0]);	/* stdout */
 			args.list[args.count++] = Cast_int_to_voidstar(in[0]);	/* stderr */
 			if( (pid = Make_passthrough( lp_device, Filter_options_DYN, &args,
 					job, 0 )) < 0 ){
@@ -2404,7 +2402,8 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			Free_line_list(&args);
 
 			*filterpid = pid;
-			*status_fd = device_fd = in[1];
+			device_fd = in[1];
+			*status_fd = in[1];
 			if( (close( in[0] ) == -1 ) ){
 				LOGERR_DIE(LOG_INFO)"Printer_open: close(%d) failed", in[0]);
 			}
@@ -2442,6 +2441,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 				if( isatty( device_fd ) ){
 					Do_stty( device_fd );
 				}
+				*status_fd = device_fd;
 			}
 			break;
 		default:
@@ -2484,36 +2484,40 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 		}
 	}
 	if( device_fd >= 0 ){
-		/* we can only read status from a device, fifo, or socket */
-		if( (mask = fcntl( device_fd, F_GETFL, 0 )) == -1 ){
-			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) "Printer_open: cannot fcntl fd %d", device_fd );
+		int fd = *status_fd;
+		if( fstat( fd, &statb ) < 0 ) {
+			LOGERR_DIE(LOG_INFO)"Printer_open: fstat() on status_fd %d failed", fd);
 		}
-		DEBUG2( "Printer_open: fd %d fcntl 0%o", device_fd, mask );
+		/* we can only read status from a device, fifo, or socket */
+		if( (mask = fcntl( fd, F_GETFL, 0 )) == -1 ){
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_ERR) "Printer_open: cannot fcntl fd %d", fd );
+		}
+		DEBUG2( "Printer_open: status_fd %d fcntl 0%o", fd, mask );
 		mask &= O_ACCMODE;
 		/* first, check to see if we have RD or RW */
-		readable = 0;
+		readable = 1;
 		switch( mask ){
-		case O_RDONLY:
-			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) "Printer_open: fd %d is READ ONLY", device_fd );
-			break;
 		case O_WRONLY:
-			DEBUG2( "Printer_open: WRONLY");
-			break;
-		case O_RDWR:
-			DEBUG2( "Printer_open: RDWR");
-			readable = 1;
+			readable = 0;
+			if( fd == device_fd ){
+				*status_fd = -1;
+			} else {
+				Errorcode = JABORT;
+				FATAL(LOG_ERR) "Printer_open: LOGIC ERROR: status_fd %d WRITE ONLY", fd );
+			}
 			break;
 		}
-		if( readable
-		&& ( S_ISCHR(statb.st_mode )
-		  || S_ISFIFO(statb.st_mode )
-		  || S_ISSOCK(statb.st_mode ) ) ){
-			*status_fd = device_fd;
-			if( S_ISCHR(statb.st_mode) && !isatty(device_fd) ){
-				*poll_for_status = 1;
-			}
+		/* we handle the case where we have a device like a parallel port
+		 *  or a USB port which does NOT support 'select()'
+		 * AND where there may be some really strange status at the end
+		 * of the printing operation
+		 * AND we cannot close the connection UNTIL we get the status
+		 *   This is really silly but we need to handle it.  Note that the
+		 *   IFHP filter has to do exactly the same thing... Sigh...
+		 */
+		if( readable && S_ISCHR(statb.st_mode) && !isatty(device_fd) ){
+			*poll_for_status = 1;
 		}
 	}
 	if( host ) free( host ); host = 0;
@@ -2853,15 +2857,16 @@ void Service_queue( struct line_list *args )
 }
 
 
-void Remove_done_jobs( void )
+int Remove_done_jobs( void )
 {
 	struct job job;
 	char *id;
 	time_t tm;
+	int removed = 0;
 	int job_index, pid, printable, held, move, error, done, remove_count;
 	if( Save_when_done_DYN || Save_on_error_DYN
 		|| !(Done_jobs_DYN > 0 || Done_jobs_max_age_DYN > 0) ){
-		return;
+		return( 0 );
 	}
 
 	time( &tm );
@@ -2897,6 +2902,7 @@ void Remove_done_jobs( void )
 			   || (done && (tm - done) > Done_jobs_max_age_DYN) ) ){
 			setstatus( &job, _("job '%s' removed- status expired"), id );
 			Remove_job( &job );
+			removed = 1;
 			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 			continue;
 		}
@@ -2905,8 +2911,10 @@ void Remove_done_jobs( void )
 		} else if( remove_count == 0 ){
 			setstatus( &job, _("job '%s' removed"), id );
 			Remove_job( &job );
+			removed = 1;
 			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 		}
 	}
 	Free_job(&job);
+	return( removed );
 }

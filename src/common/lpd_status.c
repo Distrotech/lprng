@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
+"$Id: lpd_status.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -25,6 +25,7 @@
 #include "lockfile.h"
 #include "errorcodes.h"
 
+#include "lpd_jobs.h"
 #include "lpd_status.h"
 
 /**** ENDINCLUDE ****/
@@ -509,6 +510,10 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	/* get the spool entries */
 	Free_line_list( &outbuf );
 	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 0 );
+	/* check for done jobs, remove any if there are some */
+	if( Remove_done_jobs() ){
+		Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 0 );
+	}
 
 	DEBUGF(DLPQ3)("Get_queue_status: total files %d", Sort_order.count );
 	DEBUGFC(DLPQ3)Dump_line_list("Get_queue_status- Sort_order", &Sort_order );

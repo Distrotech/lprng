@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
+"$Id: linelist.c,v 1.30 2002/05/06 01:06:40 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -373,7 +373,7 @@ char *Add_line_list( struct line_list *l, char *str,
 	char *s = 0;
 	int c = 0, cmp, mid;
 	if(DEBUGL5){
-		char b[40];
+		char b[48];
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
@@ -411,7 +411,7 @@ char *Add_line_list( struct line_list *l, char *str,
 			l->list[mid] = str;
 		}
 	}
-	/* if(DEBUGL4)Dump_line_list("Add_line_list: result", l); */
+	if(DEBUGL5)Dump_line_list("Add_line_list: result", l);
 	return( str );
 }
 
@@ -549,10 +549,9 @@ void Split( struct line_list *l, char *str, const char *sep,
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
-		LOGDEBUG("Split: str 0x%lx '%s', sep '%s', sort %d, keysep '%s', uniq %d, trim %d",
-			Cast_ptr_to_long(str), b, sep, sort, keysep, uniq, trim );
+		LOGDEBUG("Split: str 0x%lx '%s', sep '%s', escape '%s', sort %d, keysep '%s', uniq %d, trim %d",
+			Cast_ptr_to_long(str), b, sep, escape, sort, keysep, uniq, trim );
 	}
-	if( str == 0 || *str == 0 ) return;
 	for( ; str && *str; str = end ){
 		end = 0;
 		t = str;
@@ -1553,6 +1552,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 	if( (s = safestrpbrk(str, ":")) ){
 		c = *s; *s = 0;
 		Split(&opts,s+1,":",1,Value_sep,0,1,0,":");
+#if 0
 		for( i = 0; i < opts.count; ++i ){
 			t = opts.list[i];  
 			while( t && (t = strstr(t,"\\:")) ){
@@ -1560,6 +1560,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 				++t;
 			}
 		}
+#endif
 	}
 	Split(&l,str,"|",0,0,0,1,0,0);
 	if( s ) *s = c;
@@ -1839,7 +1840,7 @@ void Find_pc_info( char *name,
 		u = pc.list[start];
 		c = 0;
 		if( (t = safestrpbrk(u,":")) ){
-			Split(&l, t+1, ":", 1, Value_sep, 0, 1, 0,0);
+			Split(&l, t+1, ":", 1, Value_sep, 0, 1, 0,":");
 		}
 		if( aliases ){
 			if( t ){

@@ -66,7 +66,7 @@ ALLDIRS= ${DIRS} ${SRC}/TESTSUPPORT ${SRC}/HOWTO
 
 all: ${DIRS} ${FILES}
 
-SCRIPTS=init.bsdi init.freebsd init.linux init.redhat init.solaris ltmain postinstall.bsdi postinstall.freebsd postinstall.generic postinstall.linux postinstall.solaris postremove.generic postremove.solaris preinstall.solaris preremove.freebsd preremove.generic preremove.linux preremove.solaris
+SCRIPTS=init.bsdi init.freebsd init.linux init.redhat init.linuxsb init.solaris ltmain postinstall.bsdi postinstall.freebsd postinstall.generic postinstall.linux postinstall.solaris postremove.generic postremove.solaris preinstall.solaris preremove.freebsd preremove.generic preremove.linux preremove.solaris
 
 $(SCRIPTS): header
 	cat header ${SRC}/$@.sh >$@

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Job State</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Spool Queues and Files" href=
     "spoolqueue.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,8 +44,9 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">ah</tt> FLAG <i class=
-          "EMPHASIS">Automatically hold jobs</i></p>
+          <p><tt class="LITERAL">ah</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Automatically hold
+          jobs</i></span></p>
         </li>
       </ul>
       <br>
@@ -62,7 +63,8 @@
 
         <li>
           <p>Held. Once a job is submitted, it can either be
-          printed or <i class="EMPHASIS">held</i>. The <tt class=
+          printed or <span class="emphasis"><i class=
+          "EMPHASIS">held</i></span>. The <tt class=
           "LITERAL">ah</tt> printcap option specifies that all jobs
           are automatically held on submission. The <tt class=
           "COMMAND">lpc release</tt> and <tt class="COMMAND">lpc
@@ -78,8 +80,9 @@
 
         <li>
           <p>Pending. Jobs which can be printed but are not active.
-          This can be due to the printer being busy or the job <i
-          class="EMPHASIS">class</i> not being printed.</p>
+          This can be due to the printer being busy or the job
+          <span class="emphasis"><i class=
+          "EMPHASIS">class</i></span> not being printed.</p>
         </li>
 
         <li>
@@ -92,11 +95,11 @@
 
         <li>
           <p>Done. Jobs which have completed printing, but which
-          are not yet removed from the print queue. See the <i
-          class="EMPHASIS"><a href=
-          "normalterm.htm">save_when_done</a></i> flag for more
-          information. The <b class="APPLICATION">lprm</b> command
-          can remove these jobs.</p>
+          are not yet removed from the print queue. See the <span
+          class="emphasis"><i class="EMPHASIS"><a href=
+          "normalterm.htm">save_when_done</a></i></span> flag for
+          more information. The <b class="APPLICATION">lprm</b>
+          command can remove these jobs.</p>
         </li>
       </ol>
       <br>

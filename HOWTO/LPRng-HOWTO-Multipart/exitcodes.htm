@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Filter Exit Codes</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Filters " href="filters.htm">
     <link rel="PREVIOUS" title="Filters " href="filters.htm">
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -132,14 +132,15 @@
 
         <p>The <span class="ACRONYM">JNOSPOOL</span> and <span
         class="ACRONYM">JNOPRINT</span> are used as part of the
-        management of load balancing queues and the <i class=
-        "EMPHASIS">check idle</i> filter. <b class=
-        "APPLICATION">LPRng</b> has the ability to run a program to
-        check to see if a spool queue is available for printing on
-        a dynamic basis. If the filter that does this checking
-        exits with <span class="ACRONYM">JNOSPOOL</span> or <span
-        class="ACRONYM">JNOPRINT</span> then jobs should not be
-        sent to the spool queue.</p>
+        management of load balancing queues and the <span class=
+        "emphasis"><i class="EMPHASIS">check idle</i></span>
+        filter. <b class="APPLICATION">LPRng</b> has the ability to
+        run a program to check to see if a spool queue is available
+        for printing on a dynamic basis. If the filter that does
+        this checking exits with <span class=
+        "ACRONYM">JNOSPOOL</span> or <span class=
+        "ACRONYM">JNOPRINT</span> then jobs should not be sent to
+        the spool queue.</p>
       </div>
 
       <div class="SECT2">
@@ -171,14 +172,15 @@
         print queue, but marked as <tt class=
         "LITERAL">unprintable</tt>.</p>
 
-        <p>When a <i class="EMPHASIS">round-robin retry</i> print
-        scheduling algorithm is used, if there are no other jobs
-        available for printing then the jobs that failed with <span
-        class="ACRONYM">JFAILNORETRY</span> are retried. Thus, jobs
-        that are submitted go to the head of the queue for
-        printing, and jobs that are pending for repeat are printed
-        after them. This algorithm is deprecated, and that the
-        details of this algorithm are undocumented.</p>
+        <p>When a <span class="emphasis"><i class=
+        "EMPHASIS">round-robin retry</i></span> print scheduling
+        algorithm is used, if there are no other jobs available for
+        printing then the jobs that failed with <span class=
+        "ACRONYM">JFAILNORETRY</span> are retried. Thus, jobs that
+        are submitted go to the head of the queue for printing, and
+        jobs that are pending for repeat are printed after them.
+        This algorithm is deprecated, and that the details of this
+        algorithm are undocumented.</p>
       </div>
 
       <div class="SECT2">

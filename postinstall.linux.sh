@@ -43,8 +43,10 @@ init=${DESTDIR}/etc/rc.d/init.d/lpd
 if [ "X$MAKEINSTALL" = "XYES" ] ; then
 	if [ "$INIT" != "no" ] ; then
 		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-	        if [ -f /etc/redhat-release -a -f /sbin/chkconfig ] ; then
+        if [ -f /etc/redhat-release ] ; then
 			cp init.redhat $init;
+		elif [ -d /lib/lsb ] ; then
+			cp init.linuxsb $init;
 		else
 			cp init.linux $init;
 		fi

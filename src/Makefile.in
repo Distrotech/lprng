@@ -252,7 +252,7 @@ liblpr.la: $(LIBLPR_OBJS)
 	$(LINK) $(LIBLPR_OBJS) -rpath ${libdir}
 
 lpd: $(LPD_OBJS) liblpr.la
-	$(LINK) ${LPD_OBJS} liblpr.la $(LIBS)
+	$(LINK) ${LPD_OBJS} liblpr.la $(LIBS) -lwrap
 lpr: $(LPR_OBJS) liblpr.la
 	$(LINK) ${LPR_OBJS} liblpr.la $(LIBS)
 lpq: $(LPQ_OBJS) liblpr.la

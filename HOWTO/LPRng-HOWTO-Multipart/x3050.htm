@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Printcap Basics</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -162,10 +162,11 @@
 
       <p>The <tt class="COMMAND">lpc client all</tt> command shows
       all of the configuration and printcap information, and is the
-      handiest one for system debugging and diagnostics. The <i
-      class="EMPHASIS">Name</i> information is the names of the
-      printcap entries that have been found in the database and is
-      listed in sorted order. The <i class="EMPHASIS">All</i> are
+      handiest one for system debugging and diagnostics. The <span
+      class="emphasis"><i class="EMPHASIS">Name</i></span>
+      information is the names of the printcap entries that have
+      been found in the database and is listed in sorted order. The
+      <span class="emphasis"><i class="EMPHASIS">All</i></span> are
       entries that correspond to actual queues or printers and are
       listed in the order that they appear in the printcap or
       according to an order specified by the system administrator.
@@ -207,15 +208,16 @@
         printcap entry.</p>
 
         <p>Our example shows the use of the <tt class=
-        "LITERAL">tc</tt> (<i class="EMPHASIS">t</i>ermcap in<i
-        class="EMPHASIS">c</i>lude) facility. The <tt class=
+        "LITERAL">tc</tt> (<span class="emphasis"><i class=
+        "EMPHASIS">t</i></span>ermcap in<span class="emphasis"><i
+        class="EMPHASIS">c</i></span>lude) facility. The <tt class=
         "LITERAL">:tc</tt> value is a list of printcap entries that
-        should be prefixed to the <i class="EMPHASIS">start</i> of
-        the printcap entry in which it appears. This allows options
-        to be set in the printcap entry which will override the
-        values in the <tt class="LITERAL">:tc</tt> included entry.
-        For convenience, the options are displayed in sorted
-        order.</p>
+        should be prefixed to the <span class="emphasis"><i class=
+        "EMPHASIS">start</i></span> of the printcap entry in which
+        it appears. This allows options to be set in the printcap
+        entry which will override the values in the <tt class=
+        "LITERAL">:tc</tt> included entry. For convenience, the
+        options are displayed in sorted order.</p>
 
         <p>The <b class="APPLICATION">LPRng</b> clients and <b
         class="APPLICATION">lpd</b> server may require a different
@@ -468,11 +470,11 @@
         of the printcap entry and the name of the entry is written
         to the filter's <span class="ACRONYM">STDIN</span>. If the
         entry is not found, then the wildcard printcap entry will
-        be requested. The <tt class="LITERAL">-P</tt> literal is <i
-        class="EMPHASIS">not</i> set to <tt class="LITERAL">*</tt>,
-        as this has the possibility of opening a security loophole
-        when a shell script parses the filter's command line
-        options.</p>
+        be requested. The <tt class="LITERAL">-P</tt> literal is
+        <span class="emphasis"><i class="EMPHASIS">not</i></span>
+        set to <tt class="LITERAL">*</tt>, as this has the
+        possibility of opening a security loophole when a shell
+        script parses the filter's command line options.</p>
 
         <p>You restore the original <tt class=
         "FILENAME">lpd.conf</tt> file to restore the system to
@@ -533,13 +535,15 @@
         can be created. The first example shows how to create a
         simple way to send a file directly to a remote print queue
         after passing it through a filter. This is usually called
-        <i class="EMPHASIS">client side</i> filtering.</p>
+        <span class="emphasis"><i class="EMPHASIS">client
+        side</i></span> filtering.</p>
 
         <p>The second example is more interesting. Here we do the
         same thing, but we open a connection to the remote port on
         a host and send the print job. We do not spool the print
-        job but send it directly. This is called <i class=
-        "EMPHASIS">lightweight lpr</i> printing.</p>
+        job but send it directly. This is called <span class=
+        "emphasis"><i class="EMPHASIS">lightweight lpr</i></span>
+        printing.</p>
 
         <p>While the user printcap file is read after the system
         printcap file, the order of printcap entries is modified so

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -394,11 +394,16 @@ int Receive_job( int *sock, char *input )
 		if( Lpq_status_file_DYN ){
 			unlink( Lpq_status_file_DYN );
 		}
-		if( Server_queue_name_DYN ){
-			Do_queue_jobs( Server_queue_name_DYN, 0);
-		} else {
-			Do_queue_jobs( Printer_DYN, 0);
+		s = Server_queue_name_DYN;
+		if( !s ) s = Printer_DYN;
+
+		SNPRINTF( line, sizeof(line)) "\n" );
+		DEBUGF(DRECV1)("Receive_jobs: starting '%s'", s );
+		if( Write_fd_str( Lpd_request, line ) < 0 ){
+			LOGERR_DIE(LOG_ERR) _("Receive_jobs: write to fd '%d' failed"),
+				Lpd_request );
 		}
+		Do_queue_jobs( s, 0 );
 	}
 	cleanup( 0 );
 	return(0);

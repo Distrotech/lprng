@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Routing Jobs To Print Queues</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -42,14 +42,15 @@
       <h1 class="SECT1"><a name="AEN3641">4.18. Routing Jobs To
       Print Queues</a></h1>
 
-      <p>A <i class="EMPHASIS">routing queue</i> is similar in
-      concept to a load balance queue in that it transfers a job to
-      a (different) print queue, but the job destination is chosen
-      at the time the job is submitted to the queue rather than at
-      the time the job is removed from the queue. A routing queue
-      can modify the job control file, multiple copies of the same
-      job can be sent to the same or different printers, and the
-      job can be held, rejected, or processed immediately.</p>
+      <p>A <span class="emphasis"><i class="EMPHASIS">routing
+      queue</i></span> is similar in concept to a load balance
+      queue in that it transfers a job to a (different) print
+      queue, but the job destination is chosen at the time the job
+      is submitted to the queue rather than at the time the job is
+      removed from the queue. A routing queue can modify the job
+      control file, multiple copies of the same job can be sent to
+      the same or different printers, and the job can be held,
+      rejected, or processed immediately.</p>
 
       <p>Edit the printcap file so it have the contents indicated
       below, create the <tt class="FILENAME">/tmp/lp2</tt> and <tt

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Fixing Bad Control Files and Metacharacters</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="lpr - Job Spooler Program" href=
     "lpr.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,9 +46,9 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">safe_chars=</tt><i class=
-          "EMPHASIS">additional safe characters for control
-          file</i></p>
+          <p><tt class="LITERAL">safe_chars=</tt><span class=
+          "emphasis"><i class="EMPHASIS">additional safe characters
+          for control file</i></span></p>
         </li>
       </ul>
       <br>
@@ -74,13 +74,13 @@
       with all known RFC1179 implementations.</p>
 
       <p>For some installations, the default set of safe characters
-      may be overly restrictive. For example, <i class=
-      "EMPHASIS">vintage</i> software may generate files with <tt
-      class="LITERAL">#</tt> characters in the <tt class=
-      "LITERAL">J</tt> line of the control file. The replacement of
-      this character by underscore (<tt class="LITERAL">_</tt>) may
-      cause other applications which use the control file
-      information to stop working. The <tt class=
+      may be overly restrictive. For example, <span class=
+      "emphasis"><i class="EMPHASIS">vintage</i></span> software
+      may generate files with <tt class="LITERAL">#</tt> characters
+      in the <tt class="LITERAL">J</tt> line of the control file.
+      The replacement of this character by underscore (<tt class=
+      "LITERAL">_</tt>) may cause other applications which use the
+      control file information to stop working. The <tt class=
       "LITERAL">:safe_chars</tt> option allows the user to specify
       an additional set of safe characters in the <tt class=
       "FILENAME">lpd.conf</tt> configuration file(s).</p>

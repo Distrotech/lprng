@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>RFC 1179 - Line Printer Daemon Protocol</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="PREVIOUS" title="\LPRng accounting.pl Utility" href=
     "x9588.htm">
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -78,13 +78,13 @@
       LPRng_DOC/rfc1179 directory, or from one of many sites which
       mirror the RFCs.</p>
 
-      <p>This RFC is an <i class="EMPHASIS">informational</i> RFC,
-      which means that the information in it is meant as a guide to
-      users, and not as a fixed standard. In addition, the RFC
-      tried to document the behavior of the BSD <b class=
-      "APPLICATION">lpd</b> print server, and left out many details
-      dealing with error recover, error messages, extensions to the
-      protocol, etc.</p>
+      <p>This RFC is an <span class="emphasis"><i class=
+      "EMPHASIS">informational</i></span> RFC, which means that the
+      information in it is meant as a guide to users, and not as a
+      fixed standard. In addition, the RFC tried to document the
+      behavior of the BSD <b class="APPLICATION">lpd</b> print
+      server, and left out many details dealing with error recover,
+      error messages, extensions to the protocol, etc.</p>
 
       <p>In this section, I will try to explain what RFC1179
       specifies as a protocol, and many of the problems encountered
@@ -98,36 +98,40 @@
 
         <ul>
           <li>
-            <p><tt class="LITERAL">lpd_port=</tt><i class=
-            "EMPHASIS">Port for <b class="APPLICATION">lpd</b> to
-            accept connection</i></p>
+            <p><tt class="LITERAL">lpd_port=</tt><span class=
+            "emphasis"><i class="EMPHASIS">Port for <b class=
+            "APPLICATION">lpd</b> to accept
+            connection</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">originate_port=</tt><i class=
-            "EMPHASIS">Ports to originate connections on</i></p>
+            <p><tt class="LITERAL">originate_port=</tt><span class=
+            "emphasis"><i class="EMPHASIS">Ports to originate
+            connections on</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">reuse_addr</tt> FLAG <i class=
-            "EMPHASIS">Set SO_REUSEADDR flag on connection</i></p>
+            <p><tt class="LITERAL">reuse_addr</tt> FLAG <span
+            class="emphasis"><i class="EMPHASIS">Set SO_REUSEADDR
+            flag on connection</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">retry_econnrefused</tt> FLAG <i
-            class="EMPHASIS">Retry on connect ECONNREFUSED
-            error</i></p>
+            <p><tt class="LITERAL">retry_econnrefused</tt> FLAG
+            <span class="emphasis"><i class="EMPHASIS">Retry on
+            connect ECONNREFUSED error</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">retry_nolink</tt> FLAG <i class=
-            "EMPHASIS">Retry on device open or connection
-            ffailure</i></p>
+            <p><tt class="LITERAL">retry_nolink</tt> FLAG <span
+            class="emphasis"><i class="EMPHASIS">Retry on device
+            open or connection ffailure</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">socket_linger=</tt><i class=
-            "EMPHASIS">socket linger timeout</i></p>
+            <p><tt class="LITERAL">socket_linger=</tt><span class=
+            "emphasis"><i class="EMPHASIS">socket linger
+            timeout</i></span></p>
           </li>
         </ul>
         <br>
@@ -150,10 +154,12 @@
 
         <p>RFC1179 explicitly states that all connections to port
         515 must originate from ports 721-731. The reason for this
-        restriction is due to the UNIX concept of <i class=
-        "EMPHASIS">reserved</i> and <i class=
-        "EMPHASIS">privileged</i> ports. By convention, ports in
-        the range 1-1023 can only <i class="EMPHASIS">bound</i> by
+        restriction is due to the UNIX concept of <span class=
+        "emphasis"><i class="EMPHASIS">reserved</i></span> and
+        <span class="emphasis"><i class=
+        "EMPHASIS">privileged</i></span> ports. By convention,
+        ports in the range 1-1023 can only <span class=
+        "emphasis"><i class="EMPHASIS">bound</i></span> by
         processes whose Effective User ID (EUID) is 0 (root). This,
         ordinary users could not originate a connection from the
         reserved or privileged port range.</p>
@@ -174,28 +180,30 @@
         <p>The restriction of originating ports to 721-731 causes
         another set of problems. Part of the TCP/IP protocol is
         concerned with avoiding communications problems resulting
-        from the arrival of old or <i class="EMPHASIS">stale</i>
-        packets. When a connection between <tt class=
-        "LITERAL">sourcehost, sourceport</tt> and <tt class=
-        "LITERAL">desthost, destport</tt> is made, a set of
-        sequence numbers is established and used for sending and
+        from the arrival of old or <span class="emphasis"><i class=
+        "EMPHASIS">stale</i></span> packets. When a connection
+        between <tt class="LITERAL">sourcehost, sourceport</tt> and
+        <tt class="LITERAL">desthost, destport</tt> is made, a set
+        of sequence numbers is established and used for sending and
         acknowledgement of data. When the connection terminates,
         the TCP/IP protocol restricts the establishment of a new
         connection between <tt class="LITERAL">sourcehost,
         sourceport</tt> and <tt class="LITERAL">desthost,
-        destport</tt> for a period long enough for all <i class=
-        "EMPHASIS">stale</i> packets to be removed from the system.
-        This is approximately 10 minutes long.</p>
+        destport</tt> for a period long enough for all <span class=
+        "emphasis"><i class="EMPHASIS">stale</i></span> packets to
+        be removed from the system. This is approximately 10
+        minutes long.</p>
 
         <p>In order to simplify assignments of ports, timing out
         connections, and other matters, many TCP/IP packages do
-        keep track of explicit connections <i class=
-        "EMPHASIS">originating</i> from a port, but simply prevent
-        the port from being reused for either origination or
-        reception of a connection. They do, however, keep track of
-        the active connections <i class="EMPHASIS">to</i> a port,
-        and perform timeouts on these. This is usually much simpler
-        to implement, as it can be done with a list attached to the
+        keep track of explicit connections <span class=
+        "emphasis"><i class="EMPHASIS">originating</i></span> from
+        a port, but simply prevent the port from being reused for
+        either origination or reception of a connection. They do,
+        however, keep track of the active connections <span class=
+        "emphasis"><i class="EMPHASIS">to</i></span> a port, and
+        perform timeouts on these. This is usually much simpler to
+        implement, as it can be done with a list attached to the
         port.</p>
 
         <p>This implementation method creates some problems when a
@@ -241,9 +249,10 @@
         should be <tt class="LITERAL">originate_port=721 731</tt>,
         but it turns out that most BSD <b class=
         "APPLICATION">lpd</b> based implementations only check for
-        a <i class="EMPHASIS">reserved</i> originating port. By
-        using 512 ports we get a greatly reduced rate of errors due
-        to lack of ports due to pending timeouts.</p>
+        a <span class="emphasis"><i class=
+        "EMPHASIS">reserved</i></span> originating port. By using
+        512 ports we get a greatly reduced rate of errors due to
+        lack of ports due to pending timeouts.</p>
 
         <p>However, on some systems which are acting as servers for
         a large number of printers even increasing this port range

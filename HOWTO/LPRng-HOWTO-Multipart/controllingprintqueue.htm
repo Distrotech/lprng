@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Controlling the Print Queue</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -94,33 +94,37 @@
       select print queue. The <tt class="LITERAL">all</tt> queue
       name selects all print queues for display. As shown in the
       above example, both print queues have printing and spooling
-      enabled and there are no jobs in the print queue. The <i
-      class="EMPHASIS">Server</i> and <i class=
-      "EMPHASIS">Subserver</i> information shows if there is a
-      process which is printing jobs, and its helper process that
+      enabled and there are no jobs in the print queue. The <span
+      class="emphasis"><i class="EMPHASIS">Server</i></span> and
+      <span class="emphasis"><i class=
+      "EMPHASIS">Subserver</i></span> information shows if there is
+      a process which is printing jobs, and its helper process that
       does the actual communication with the printer.</p>
 
       <p>It might be puzzling at first why <b class=
       "APPLICATION">LPRng</b> uses two processes for this
       operation, but the reason is very simple. Many operating
-      system implementations have <i class="EMPHASIS">memory
-      leaks</i> that cause the actual process size to grow as it
-      runs. This is especially true if a large number of databases
-      such as the password, Domain Name Server, or other system
-      database is consulted frequently with different queries.
-      Since this is usually done quite a lot by the process which
-      deals with the actual printing, the printing process would
-      soon grow very large and then die when it could no longer
-      obtain more memory. The <i class="EMPHASIS">Server</i>
-      process will fork or create a child process <i class=
-      "EMPHASIS">Subserver</i> process that is responsible for the
-      printing of a single job. When the job printing has been
-      completed, the <i class="EMPHASIS">Subserver</i> process will
-      exit and the <i class="EMPHASIS">Server</i> process will then
-      create another child until there are no more jobs to be
-      printed. The <i class="EMPHASIS">Redirect</i> and <i class=
-      "EMPHASIS">Debug</i> fields will be discussed in later
-      sections.</p>
+      system implementations have <span class="emphasis"><i class=
+      "EMPHASIS">memory leaks</i></span> that cause the actual
+      process size to grow as it runs. This is especially true if a
+      large number of databases such as the password, Domain Name
+      Server, or other system database is consulted frequently with
+      different queries. Since this is usually done quite a lot by
+      the process which deals with the actual printing, the
+      printing process would soon grow very large and then die when
+      it could no longer obtain more memory. The <span class=
+      "emphasis"><i class="EMPHASIS">Server</i></span> process will
+      fork or create a child process <span class="emphasis"><i
+      class="EMPHASIS">Subserver</i></span> process that is
+      responsible for the printing of a single job. When the job
+      printing has been completed, the <span class="emphasis"><i
+      class="EMPHASIS">Subserver</i></span> process will exit and
+      the <span class="emphasis"><i class=
+      "EMPHASIS">Server</i></span> process will then create another
+      child until there are no more jobs to be printed. The <span
+      class="emphasis"><i class="EMPHASIS">Redirect</i></span> and
+      <span class="emphasis"><i class="EMPHASIS">Debug</i></span>
+      fields will be discussed in later sections.</p>
 
       <p>Now let's use the basic spool queue control commands:</p>
 
@@ -197,22 +201,26 @@
       <br>
 
       <p>The <b class="APPLICATION">lpc</b> status shows that we
-      have two jobs spooled. The <i class="EMPHASIS">Rank</i> field
-      shows the order, the <tt class="FILENAME">Owner/ID</tt> shows
-      the unique job ID that is assigned to the job and the <i
-      class="EMPHASIS">Class</i> field is the job class (this may
-      be changed with the <tt class="COMMAND">lpr -C class</tt>
-      option). The <i class="EMPHASIS">Job</i> field shows the <i
-      class="EMPHASIS">job number</i> assigned to this job in this
-      particular spool queue. While the <span class=
-      "ACRONYM">ID</span> value never changes as a job moves
-      through the <b class="APPLICATION">LPRng</b> system, the <i
-      class="EMPHASIS">job number</i> is specific to a particular
-      spool queue and may change if a job is <i class=
-      "EMPHASIS">forwarded</i> to another spool queue that has a
-      job with the same job number. The <i class=
-      "EMPHASIS">Size</i> field is the total number of printable
-      bytes in the job, and the <i class="EMPHASIS">Time</i> field
+      have two jobs spooled. The <span class="emphasis"><i class=
+      "EMPHASIS">Rank</i></span> field shows the order, the <tt
+      class="FILENAME">Owner/ID</tt> shows the unique job ID that
+      is assigned to the job and the <span class="emphasis"><i
+      class="EMPHASIS">Class</i></span> field is the job class
+      (this may be changed with the <tt class="COMMAND">lpr -C
+      class</tt> option). The <span class="emphasis"><i class=
+      "EMPHASIS">Job</i></span> field shows the <span class=
+      "emphasis"><i class="EMPHASIS">job number</i></span> assigned
+      to this job in this particular spool queue. While the <span
+      class="ACRONYM">ID</span> value never changes as a job moves
+      through the <b class="APPLICATION">LPRng</b> system, the
+      <span class="emphasis"><i class="EMPHASIS">job
+      number</i></span> is specific to a particular spool queue and
+      may change if a job is <span class="emphasis"><i class=
+      "EMPHASIS">forwarded</i></span> to another spool queue that
+      has a job with the same job number. The <span class=
+      "emphasis"><i class="EMPHASIS">Size</i></span> field is the
+      total number of printable bytes in the job, and the <span
+      class="emphasis"><i class="EMPHASIS">Time</i></span> field
       shows the timestamp associated with the job.</p>
 
       <p>Now let's start the print queue and watch what
@@ -252,12 +260,13 @@
       <br>
       <br>
 
-      <p>The <i class="EMPHASIS">Rank</i> value of the first job
-      has been changed to <tt class="LITERAL">active</tt> and there
-      is new <i class="EMPHASIS">Status</i> information. If we use
-      <tt class="COMMAND">lpq -ll</tt> we can see the times that
-      the various print operations are carried out, and details of
-      their success or failure.</p>
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">Rank</i></span> value of the first job has been
+      changed to <tt class="LITERAL">active</tt> and there is new
+      <span class="emphasis"><i class="EMPHASIS">Status</i></span>
+      information. If we use <tt class="COMMAND">lpq -ll</tt> we
+      can see the times that the various print operations are
+      carried out, and details of their success or failure.</p>
 
       <p>We can also use the <b class="APPLICATION">lpc</b> command
       to see the status of a particular job. We can select jobs by
@@ -343,7 +352,8 @@
       <br>
 
       <p>You can use the <b class="APPLICATION">lpc</b> command in
-      <i class="EMPHASIS">interactive</i> mode:</p>
+      <span class="emphasis"><i class=
+      "EMPHASIS">interactive</i></span> mode:</p>
 
       <div class="INFORMALEXAMPLE">
         <a name="AEN2072"></a>

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
+"$Id: lpd_control.c,v 1.30 2002/05/06 01:06:40 papowell Exp $";
 
 
 #include "lp.h"
@@ -516,7 +516,7 @@ void Do_queue_control( char *user, int action, int *sock,
 				SNPRINTF(msg,sizeof(msg))_(
 				"WARNING: the main load balance server may have exited before\n"
 				"it could be informed that there were new jobs.\n"
-                "Please use 'lpc start %s' to start the server"),
+                "Please use 'lpc start %s' to start the server\n"),
 					Server_queue_name_DYN );
 				Write_fd_str(*sock,msg);
 			}

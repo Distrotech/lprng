@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.27 2002/04/01 17:54:57 papowell Exp $
+ * $Id: lp.h,v 1.30 2002/05/06 01:06:43 papowell Exp $
  ***************************************************************************/
 
 
@@ -410,6 +410,8 @@ EXTERN int Page_x_DYN; /* page width in pixels (horizontal) */
 EXTERN int Page_y_DYN; /* page length in pixels (vertical) */
 EXTERN char* Pass_env_DYN;		/* pass these environment variables */
 EXTERN int Poll_time_DYN; /* force polling job queues */
+EXTERN int Poll_start_interval_DYN; /* interval between trying to start servers */
+EXTERN int Poll_servers_started_DYN; /* maximum servers to start at one time */
 EXTERN char* Pr_program_DYN; /* pr program for p format */
 EXTERN char* Prefix_Z_DYN; /* prefix -Z options on outgoing or filter*/
 EXTERN char* Prefix_option_to_option_DYN; /* prefix option to option, ie, "z,o" */

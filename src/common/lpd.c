@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
+"$Id: lpd.c,v 1.30 2002/05/06 01:06:40 papowell Exp $";
 
 
 #include "lp.h"
@@ -37,6 +37,13 @@
  char* Lpd_listen_port_arg;	/* command line listent port value */
  char* Lpd_port_arg;	/* command line port value */
  char* Lpd_socket_arg; /* command line unix socket value */
+
+#if HAVE_TCPD_H
+#include <tcpd.h>
+ int allow_severity = LOG_INFO;
+ int deny_severity = LOG_WARNING;
+#endif
+
 
 /**** ENDINCLUDE ****/
 
@@ -67,6 +74,7 @@ int main(int argc, char *argv[], char *envp[])
 	int err, newsock;
  	time_t last_time;	/* time that last Start_all was done */
  	time_t this_time;	/* current time */
+	time_t servers_started_time;	/* time servers were started */
 	plp_status_t status;
 	int max_servers = 0;
 	int start_fd = 0;
@@ -230,9 +238,6 @@ int main(int argc, char *argv[], char *envp[])
 	 * you need to fork to allow the regular user to continue
 	 * you put the child in its separate process group as well
 	 */
-	Name = "MAIN";
-	setproctitle( "lpd %s", Name  );
-
 	if( (pid = dofork(1)) < 0 ){
 		LOGERR_DIE(LOG_ERR) _("lpd: main() dofork failed") );
 	} else if( pid ){
@@ -309,11 +314,8 @@ int main(int argc, char *argv[], char *envp[])
 	DEBUG1( "lpd: maximum servers %d", max_servers );
 
 	/*
-	 * clean out the current queues
+	 * set up the select parameters
 	 */
- 	last_time = time( (void *)0 );
-
-	/* set up the wait activity */
 
 	FD_ZERO( &defreadfds );
 	if( sock > 0 ) FD_SET( sock, &defreadfds );
@@ -325,6 +327,8 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	last_time = time( (void *)0 );
+ 	servers_started_time = 0;
+
 	last_fork_pid_value = start_fd = Start_all(first_scan);
 	Fork_error( last_fork_pid_value );
 	if( start_fd > 0 ){
@@ -370,8 +374,8 @@ int main(int argc, char *argv[], char *envp[])
 			m = (this_time - last_time);
 			timeval.tv_sec = Poll_time_DYN - m;
 			timeout = &timeval;
-			DEBUG2("lpd: from last poll %d, to next poll %d",
-				m, (int)timeval.tv_sec );
+			DEBUG1("lpd: Poll_time_DYN %d, from last poll %d, to next poll %d",
+				Poll_time_DYN, m, (int)timeval.tv_sec );
 			if( m >= Poll_time_DYN ){
 				if( Started_server || Force_poll_DYN ){
 					last_fork_pid_value = start_fd = Start_all(first_scan);
@@ -392,9 +396,15 @@ int main(int argc, char *argv[], char *envp[])
 		n = Countpid();
 		max_servers = Get_max_servers();
 		DEBUG1("lpd: max_servers %d, active %d", max_servers, n );
+		m = 0;
 
 		/* allow a little space for people to send commands */
-		while( last_fork_pid_value > 0 && Servers_line_list.count > 0 && n < max_servers-4 ){ 
+		this_time = time( (void *)0 );
+		while( this_time - servers_started_time > Poll_start_interval_DYN
+			&& last_fork_pid_value > 0 && Servers_line_list.count > 0
+			&& m < Poll_servers_started_DYN
+			&& n + m < max_servers-4 ){ 
+			servers_started_time = this_time;
 			s = Servers_line_list.list[0];
 			DEBUG1("lpd: starting server '%s'", s );
 			Set_str_value(&args,PRINTER,s);
@@ -403,13 +413,18 @@ int main(int argc, char *argv[], char *envp[])
 			Free_line_list(&args);
 			if( pid > 0 ){
 				Remove_line_list( &Servers_line_list, 0 );
-				++Started_server;
-				++n;
+				Started_server = 1;
+				++m;
 			}
 		}
+		if( Servers_line_list.count > 0 && timeout == 0 ){
+			memset(&timeval, 0, sizeof(timeval));
+			timeval.tv_sec = Poll_start_interval_DYN;
+			timeout = &timeval;
+		}
 
-		DEBUG1("lpd: last_fork_pid_value %d, processes %d active, max %d",
-			last_fork_pid_value, n, max_servers );
+		DEBUG1("lpd: started_server %d, last_fork_pid_value %d, processes %d active, max %d",
+			Started_server, last_fork_pid_value, n, max_servers );
 		/* do not accept incoming call if no worker available */
 		readfds = defreadfds;
 		if( n >= max_servers || last_fork_pid_value < 0 ){
@@ -489,6 +504,22 @@ int main(int argc, char *argv[], char *envp[])
 			err = errno;
 			DEBUG1("lpd: connection fd %d", newsock );
 			if( newsock > 0 ){
+#if defined(TCPWRAPPERS)
+/*
+ * libwrap/tcp_wrappers:
+ * draht@suse.de, Mon Jan 28 2002
+ */
+
+			    struct request_info wrap_req;
+
+			    request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
+			    fromhost(&wrap_req);
+			    openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
+			    if (hosts_access(&wrap_req)) {
+				/* We accept. */
+				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
+#endif
+
 				pid = Start_worker( "server", &args, newsock );
 				if( pid < 0 ){
 					LOGERR(LOG_INFO) _("lpd: fork() failed") );
@@ -496,6 +527,14 @@ int main(int argc, char *argv[], char *envp[])
 				} else {
 					DEBUG1( "lpd: listener pid %d running", pid );
 				}
+#if defined(TCPWRAPPERS)
+			    } else { /* we do not accept the connection: */
+				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
+			    }
+/* 
+ * end libwrap
+ */
+#endif
 				close( newsock );
 				Free_line_list(&args);
 			} else {
@@ -510,6 +549,22 @@ int main(int argc, char *argv[], char *envp[])
 			err = errno;
 			DEBUG1("lpd: unix socket connection fd %d", newsock );
 			if( newsock > 0 ){
+#if defined(TCPWRAPPERS)
+/*
+ * libwrap/tcp_wrappers:
+ * draht@suse.de, Mon Jan 28 2002
+ */
+
+			    struct request_info wrap_req;
+
+			    request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
+			    fromhost(&wrap_req);
+			    openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
+			    if (hosts_access(&wrap_req)) {
+				/* We accept. */
+				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
+#endif
+
 				pid = Start_worker( "server", &args, newsock );
 				if( pid < 0 ){
 					LOGERR(LOG_INFO) _("lpd: fork() failed") );
@@ -517,6 +572,15 @@ int main(int argc, char *argv[], char *envp[])
 				} else {
 					DEBUG1( "lpd: listener pid %d running", pid );
 				}
+#if defined(TCPWRAPPERS)
+			    } else { /* we do not accept the connection: */
+				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
+			    }
+/* 
+ * end libwrap
+ */
+#endif
+
 				close( newsock );
 				Free_line_list(&args);
 			} else {
@@ -686,6 +750,7 @@ int Read_server_status( int fd )
 			fd = 0;
 			break;
 		}
+		Started_server = 1;
 		buffer[status] = 0;
 		/* we split up read line and record information */
 		Split(&l,buffer,Whitespace,0,0,0,0,0,0);

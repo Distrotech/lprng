@@ -5,7 +5,7 @@
     <title>Filter Command Line Options and Environment
     Variables</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Filters " href="filters.htm">
     <link rel="PREVIOUS" title="Chaining Filters " href=
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,65 +46,71 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">bk_filter_options=</tt><i class=
-          "EMPHASIS">Backwards Compatible Filter options</i></p>
+          <p><tt class="LITERAL">bk_filter_options=</tt><span
+          class="emphasis"><i class="EMPHASIS">Backwards Compatible
+          Filter options</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bk_of_filter_options=</tt><i
-          class="EMPHASIS">Backwards Compatible OF Filter
-          options</i></p>
+          <p><tt class="LITERAL">bk_of_filter_options=</tt><span
+          class="emphasis"><i class="EMPHASIS">Backwards Compatible
+          OF Filter options</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bkf</tt> FLAG <i class=
-          "EMPHASIS">Backwards Compatible Filters</i></p>
+          <p><tt class="LITERAL">bkf</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Backwards Compatible
+          Filters</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">filter_ld_path=</tt><i class=
-          "EMPHASIS">Filter LD_LIBRARY_PATH environment</i></p>
+          <p><tt class="LITERAL">filter_ld_path=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Filter LD_LIBRARY_PATH
+          environment</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">filter_options=</tt><i class=
-          "EMPHASIS">Filter options</i></p>
+          <p><tt class="LITERAL">filter_options=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Filter
+          options</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">filter_path=</tt><i class=
-          "EMPHASIS">Filter PATH environment</i></p>
+          <p><tt class="LITERAL">filter_path=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Filter PATH
+          environment</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">of_filter_options=</tt><i class=
-          "EMPHASIS">OF Filter options</i></p>
+          <p><tt class="LITERAL">of_filter_options=</tt><span
+          class="emphasis"><i class="EMPHASIS">OF Filter
+          options</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">pass_env=</tt><i class=
-          "EMPHASIS">Environment variables to copy to Filter
-          environment</i></p>
+          <p><tt class="LITERAL">pass_env=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Environment variables to
+          copy to Filter environment</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">pl=</tt><i class="EMPHASIS">line
-          count for page</i></p>
+          <p><tt class="LITERAL">pl=</tt><span class="emphasis"><i
+          class="EMPHASIS">line count for page</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">pw=</tt><i class="EMPHASIS">column
-          count for page</i></p>
+          <p><tt class="LITERAL">pw=</tt><span class="emphasis"><i
+          class="EMPHASIS">column count for page</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">px=</tt><i class="EMPHASIS">pixel
-          width for page</i></p>
+          <p><tt class="LITERAL">px=</tt><span class="emphasis"><i
+          class="EMPHASIS">pixel width for page</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">py=</tt><i class="EMPHASIS">pixel
-          length for page</i></p>
+          <p><tt class="LITERAL">py=</tt><span class="emphasis"><i
+          class="EMPHASIS">pixel length for page</i></span></p>
         </li>
       </ul>
       <br>
@@ -187,20 +193,20 @@
         <li>
           <p><tt class="LITERAL">$-</tt> or <tt class=
           "LITERAL">-$</tt> Flag. This flag suppresses appending
-          options to the filter command line. If the <i class=
-          "EMPHASIS">$-</i> or <tt class="LITERAL">-$</tt> flag is
-          not present, the <tt class="LITERAL">:filter_options</tt>
-          or <tt class="LITERAL">:of_filter_options</tt> for the
-          <tt class="OPTION">:of</tt> filter values are appended to
-          the filter command line. If the <tt class=
-          "LITERAL">:bkf</tt> (Berkeley <b class=
-          "APPLICATION">lpd</b> filter compatible flag) is <tt
-          class="LITERAL">TRUE</tt> then the <tt class=
-          "LITERAL">:bk_filter_options</tt> and <tt class=
-          "LITERAL">:bk_of_filter_options</tt> values are used
-          instead of the <tt class="LITERAL">:filter_options</tt>
-          and <tt class="LITERAL">:of_filter_options</tt>
-          values.</p>
+          options to the filter command line. If the <span class=
+          "emphasis"><i class="EMPHASIS">$-</i></span> or <tt
+          class="LITERAL">-$</tt> flag is not present, the <tt
+          class="LITERAL">:filter_options</tt> or <tt class=
+          "LITERAL">:of_filter_options</tt> for the <tt class=
+          "OPTION">:of</tt> filter values are appended to the
+          filter command line. If the <tt class="LITERAL">:bkf</tt>
+          (Berkeley <b class="APPLICATION">lpd</b> filter
+          compatible flag) is <tt class="LITERAL">TRUE</tt> then
+          the <tt class="LITERAL">:bk_filter_options</tt> and <tt
+          class="LITERAL">:bk_of_filter_options</tt> values are
+          used instead of the <tt class=
+          "LITERAL">:filter_options</tt> and <tt class=
+          "LITERAL">:of_filter_options</tt> values.</p>
 
           <div class="TABLE">
             <a name="PRINTFILTERCOMMAND"></a>

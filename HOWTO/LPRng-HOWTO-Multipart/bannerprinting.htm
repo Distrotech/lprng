@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Printing Banners</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Job Processing" href="jobsteps.htm">
     <link rel="PREVIOUS" title="Opening the Output Device " href=
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -45,55 +45,60 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">ab</tt> FLAG <i class=
-          "EMPHASIS">Always print banner (default FALSE)</i></p>
+          <p><tt class="LITERAL">ab</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Always print banner
+          (default FALSE)</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">be=</tt><i class="EMPHASIS">End
-          banner generator program</i></p>
+          <p><tt class="LITERAL">be=</tt><span class="emphasis"><i
+          class="EMPHASIS">End banner generator
+          program</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bl=</tt><i class="EMPHASIS">Short
-          banner line format</i></p>
+          <p><tt class="LITERAL">bl=</tt><span class="emphasis"><i
+          class="EMPHASIS">Short banner line format</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bp=</tt><i class="EMPHASIS">Banner
-          generator program</i></p>
+          <p><tt class="LITERAL">bp=</tt><span class="emphasis"><i
+          class="EMPHASIS">Banner generator program</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">bs=</tt><i class="EMPHASIS">Start
-          banner generator</i></p>
+          <p><tt class="LITERAL">bs=</tt><span class="emphasis"><i
+          class="EMPHASIS">Start banner generator</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">generate_banner</tt> FLAG <i
-          class="EMPHASIS">Generate banner for forwarded
-          jobs</i></p>
+          <p><tt class="LITERAL">generate_banner</tt> FLAG <span
+          class="emphasis"><i class="EMPHASIS">Generate banner for
+          forwarded jobs</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">hl</tt> FLAG <i class=
-          "EMPHASIS">Banner (header) Last</i></p>
+          <p><tt class="LITERAL">hl</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Banner (header)
+          Last</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">of=</tt><i class="EMPHASIS">Banner
-          and File Separator Filter</i></p>
+          <p><tt class="LITERAL">of=</tt><span class="emphasis"><i
+          class="EMPHASIS">Banner and File Separator
+          Filter</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">sb</tt> FLAG <i class=
-          "EMPHASIS">Short banner (default FALSE)</i></p>
+          <p><tt class="LITERAL">sb</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Short banner (default
+          FALSE)</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">sh</tt> FLAG <i class=
-          "EMPHASIS">Suppress header (banners) (default
-          FALSE)</i></p>
+          <p><tt class="LITERAL">sh</tt> FLAG <span class=
+          "emphasis"><i class="EMPHASIS">Suppress header (banners)
+          (default FALSE)</i></span></p>
         </li>
       </ul>
       <br>
@@ -106,10 +111,10 @@
       responsibilities. In the original BSD print spoolers, the
       philosophy was that banner printing should be delegated to
       the filters, as they were the most aware of the capabilities
-      of the printers. This required an <i class="EMPHASIS">out of
-      band</i> method to convey banner printing information to the
-      filter, and resulted in a complicated interface. The original
-      interface was:</p>
+      of the printers. This required an <span class="emphasis"><i
+      class="EMPHASIS">out of band</i></span> method to convey
+      banner printing information to the filter, and resulted in a
+      complicated interface. The original interface was:</p>
 
       <ol type="1">
         <li>
@@ -119,12 +124,13 @@
         </li>
 
         <li>
-          <p>The print spooling software would send a special <i
-          class="EMPHASIS">single line</i> of information telling
-          it what the banner information should be. Note that this
-          line was never documented except for the source code, and
-          was inconsistent from version to version. Also, there was
-          no indication of what to do with additional lines, if
+          <p>The print spooling software would send a special <span
+          class="emphasis"><i class="EMPHASIS">single
+          line</i></span> of information telling it what the banner
+          information should be. Note that this line was never
+          documented except for the source code, and was
+          inconsistent from version to version. Also, there was no
+          indication of what to do with additional lines, if
           any.</p>
         </li>
 
@@ -164,15 +170,15 @@
         <li>
           <p>If the <tt class="LITERAL">sh</tt> (suppress header)
           flag is true, no banner is printed, and the actions in
-          this section are skipped. No <i class="EMPHASIS">banner
-          information line</i> is generated for the <tt class=
-          "LITERAL">:of</tt> filter, and no banner printing program
-          is invoked. If there is an <tt class="LITERAL">:of</tt>
-          filter and it is expecting such a line and you have <tt
-          class="LITERAL">ld</tt> or <tt class="LITERAL">tr</tt>
-          information then you may get unexpected results
-          (actually, catastrophic failure is a better term, but I
-          digress).</p>
+          this section are skipped. No <span class="emphasis"><i
+          class="EMPHASIS">banner information line</i></span> is
+          generated for the <tt class="LITERAL">:of</tt> filter,
+          and no banner printing program is invoked. If there is an
+          <tt class="LITERAL">:of</tt> filter and it is expecting
+          such a line and you have <tt class="LITERAL">ld</tt> or
+          <tt class="LITERAL">tr</tt> information then you may get
+          unexpected results (actually, catastrophic failure is a
+          better term, but I digress).</p>
         </li>
 
         <li>
@@ -238,9 +244,10 @@
         <li>
           <p>If no banner printing program is specified and we have
           <tt class="LITERAL">sb@</tt> (no short banner) then we
-          skip banner generation, i.e. - we do <i class=
-          "EMPHASIS">not</i> send a banner generation line to the
-          output (<tt class="LITERAL">:of</tt> filter).</p>
+          skip banner generation, i.e. - we do <span class=
+          "emphasis"><i class="EMPHASIS">not</i></span> send a
+          banner generation line to the output (<tt class=
+          "LITERAL">:of</tt> filter).</p>
         </li>
 
         <li>
@@ -252,8 +259,9 @@
           made the first (default) or last (<tt class=
           "LITERAL">hl</tt> flag or <tt class="LITERAL">be=...</tt>
           present) file in a job. This option has no effect in
-          other types of queues. See the <i class="EMPHASIS"><a
-          href="translateformat.htm">translate_format</a></i>
+          other types of queues. See the <span class="emphasis"><i
+          class="EMPHASIS"><a href=
+          "translateformat.htm">translate_format</a></i></span>
           option as well.</p>
         </li>
       </ol>

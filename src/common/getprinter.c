@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
+"$Id: getprinter.c,v 1.30 2002/05/06 01:06:40 papowell Exp $";
 
 
 #include "lp.h"
@@ -112,6 +112,8 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				*s++ = 0;
 				Set_DYN(&Lpd_port_DYN,s);
 			}
+			/* force connection via TCP/IP */
+			Set_DYN(&Unix_socket_path_DYN, 0 );
 			goto done;
 		}
 		/* we search for the values in the printcap */
@@ -170,6 +172,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				if( (s = safestrchr(RemoteHost_DYN,'%')) ){
 					*s++ = 0;
 					Set_DYN(&Lpd_port_DYN,s);
+					Set_DYN(&Unix_socket_path_DYN, 0 );
 				}
 				goto done;
 			}
@@ -190,6 +193,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				if( (s = safestrchr(RemoteHost_DYN+1,'%')) ){
 					*s++ = 0;
 					Set_DYN(&Lpd_port_DYN,s);
+					Set_DYN(&Unix_socket_path_DYN, 0 );
 				}
 			}
 		}
@@ -247,6 +251,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		if( (s = safestrchr(RemoteHost_DYN,'%')) ){
 			*s++ = 0;
 			Set_DYN(&Lpd_port_DYN,s);
+			Set_DYN(&Unix_socket_path_DYN, 0 );
 		}
 		Set_DYN(&Lp_device_DYN,0);
 	} else if( Lp_device_DYN ){
@@ -339,7 +344,7 @@ void Show_formatted_info( void )
 	s = Join_line_list_with_sep(&PC_alias_line_list,"|");
 	if( Write_fd_str( 1, s ) < 0 ) cleanup(0);
 	if(s) free(s); s = 0;
-	Escape_colons( &PC_entry_line_list );
+	/* Escape_colons( &PC_entry_line_list ); */
 	s = Join_line_list_with_sep(&PC_entry_line_list,"\n :");
 	Expand_percent( &s );
 	if( s ){

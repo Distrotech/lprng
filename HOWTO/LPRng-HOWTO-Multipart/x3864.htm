@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Debugging, Tracing, and Log Files</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -55,9 +55,10 @@
       diagnosis.</p>
 
       <p>The approach used by <b class="APPLICATION">LPRng</b> is
-      to produce <i class="EMPHASIS">trace</i> output for the <b
-      class="APPLICATION">LPRng</b> clients or <i class=
-      "EMPHASIS">log</i> files for the <b class=
+      to produce <span class="emphasis"><i class=
+      "EMPHASIS">trace</i></span> output for the <b class=
+      "APPLICATION">LPRng</b> clients or <span class="emphasis"><i
+      class="EMPHASIS">log</i></span> files for the <b class=
       "APPLICATION">lpd</b> server that show the various events or
       flow of information through the <b class=
       "APPLICATION">LPRng</b> system. There are several classes or
@@ -118,12 +119,14 @@
       -D3</tt>, and so forth to see the increasing amount of detail
       that you get.</p>
 
-      <p>The <i class="EMPHASIS">network</i> and <i class=
-      "EMPHASIS">database</i> debug flags turn on debugging for the
-      network facilities and the database (<tt class=
-      "FILENAME">lpd.conf</tt>, <tt class="FILENAME">printcap</tt>,
-      and <tt class="FILENAME">lpd.perms</tt>) lookups. Lets see
-      what <tt class="COMMAND">lpr -Dnetwork</tt> shows us:</p>
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">network</i></span> and <span class="emphasis"><i
+      class="EMPHASIS">database</i></span> debug flags turn on
+      debugging for the network facilities and the database (<tt
+      class="FILENAME">lpd.conf</tt>, <tt class=
+      "FILENAME">printcap</tt>, and <tt class=
+      "FILENAME">lpd.perms</tt>) lookups. Lets see what <tt class=
+      "COMMAND">lpr -Dnetwork</tt> shows us:</p>
 
       <div class="INFORMALEXAMPLE">
         <a name="AEN3904"></a>
@@ -184,19 +187,19 @@
 
       <p>If you need to trace the activities of the <b class=
       "APPLICATION">lpd</b> server, it becomes a little more
-      complex. The lpd server has a single <i class=
-      "EMPHASIS">listening</i> process that forks and creates
-      individual processes to handle incoming requests. Debug or
-      diagnose the main process actions by using <tt class=
-      "COMMAND">lpd -D...</tt>. You may also want to use <tt class=
-      "COMMAND">lpd -F</tt> to keep the server in the foreground so
-      you can kill it off easily. Needless to say, you should also
-      redirect the <span class="ACRONYM">STDERR</span> and <span
-      class="ACRONYM">STDOUT</span> so that it goes to a file so
-      that you can examine the voluminous records at your leisure.
-      The following shows a typical main <b class=
-      "APPLICATION">lpd</b> process debugging session using the C
-      Shell.</p>
+      complex. The lpd server has a single <span class=
+      "emphasis"><i class="EMPHASIS">listening</i></span> process
+      that forks and creates individual processes to handle
+      incoming requests. Debug or diagnose the main process actions
+      by using <tt class="COMMAND">lpd -D...</tt>. You may also
+      want to use <tt class="COMMAND">lpd -F</tt> to keep the
+      server in the foreground so you can kill it off easily.
+      Needless to say, you should also redirect the <span class=
+      "ACRONYM">STDERR</span> and <span class=
+      "ACRONYM">STDOUT</span> so that it goes to a file so that you
+      can examine the voluminous records at your leisure. The
+      following shows a typical main <b class="APPLICATION">lpd</b>
+      process debugging session using the C Shell.</p>
 
       <div class="INFORMALEXAMPLE">
         <a name="AEN3925"></a>
@@ -247,10 +250,11 @@
       <p>This method is extremely difficult to use, as all of the
       output produced by the server and its subprocesses is sent to
       a single output file. If we want to debug the actions
-      concerning a single queue, then we can use the queue <i
-      class="EMPHASIS">log file</i> and <tt class="COMMAND">lpc
-      debug</tt> command instead. The following options control
-      debugging of an individual print queue.</p>
+      concerning a single queue, then we can use the queue <span
+      class="emphasis"><i class="EMPHASIS">log file</i></span> and
+      <tt class="COMMAND">lpc debug</tt> command instead. The
+      following options control debugging of an individual print
+      queue.</p>
 
       <div class="VARIABLELIST">
         <dl>
@@ -391,9 +395,10 @@
       class="APPLICATION">lprm</b>, or <b class=
       "APPLICATION">lpq</b> request.</p>
 
-      <p>The <i class="EMPHASIS">log</i> option is used to test
-      various logging facilities and is usually not used for
-      general purpose debugging.</p>
+      <p>The <span class="emphasis"><i class=
+      "EMPHASIS">log</i></span> option is used to test various
+      logging facilities and is usually not used for general
+      purpose debugging.</p>
     </div>
 
     <div class="NAVFOOTER">

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
+"$Id: sendjob.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -466,6 +466,14 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 		} else {
 			fd = Checkread( openname, &statb );
 			sendsize = size = statb.st_size;
+			if( statb.st_size == 0 ){
+				SNPRINTF(error,sizeof(error))
+				"zero length file '%s'", transfername );
+				status = JABORT;
+				Set_str_value(&job->info,ERROR,error);
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
+				goto error;
+			}
 		}
 		if( count == job->datafiles.count -1 && final_filter ){
 			size = 0;

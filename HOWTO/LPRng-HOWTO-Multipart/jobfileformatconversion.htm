@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Job File Format Conversion with Filters</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -66,13 +66,14 @@
       <br>
       <br>
 
-      <p>This simple <i class="EMPHASIS">tutorial</i> example
-      suffers from some serious problems. If you accidentally send
-      a non-PostScript file to the printer GhostScript will detect
-      this and exit with an error message but only after trying to
-      interpret the input file as PostScript. If the input file was
-      a text file, this can result in literally thousands of error
-      messages and hundreds of pages of useless output.</p>
+      <p>This simple <span class="emphasis"><i class=
+      "EMPHASIS">tutorial</i></span> example suffers from some
+      serious problems. If you accidentally send a non-PostScript
+      file to the printer GhostScript will detect this and exit
+      with an error message but only after trying to interpret the
+      input file as PostScript. If the input file was a text file,
+      this can result in literally thousands of error messages and
+      hundreds of pages of useless output.</p>
 
       <p>In order to make a more robust filter we need to meet the
       following minimum requirements:</p>
@@ -101,18 +102,19 @@
       <p>The <b class="APPLICATION">ifhp</b> Print Filter program
       is a companion to the <b class="APPLICATION">LPRng</b>
       software and does this type of operation. If you are using
-      Linux, then you may find the <i class="EMPHASIS">RedHat Print
-      Filters</i> (<a href="http://www.debian.org" target=
+      Linux, then you may find the <span class="emphasis"><i class=
+      "EMPHASIS">RedHat Print Filters</i></span> (<a href=
+      "http://www.debian.org" target=
       "_top">http://www.debian.org</a>) installed and in use on
-      your system. The <i class="EMPHASIS">magicfilter</i>
-      developed by H. Peter Anvin <a href="http://www.debian.org"
-      target="_top">http://www.debian.org</a> is distributed with
-      Debian Linux. The <b class="APPLICATION">apsfilter</b> by
-      Andreas Klemm <a href=
-      "http://www.freebsd.org/~andreas/index.html" target=
-      "_top">http://www.freebsd.org/~andreas/index.html</a> is also
-      widely used, although now most of its functionality is
-      directly available in <b class="APPLICATION">LPRng</b>.
+      your system. The <span class="emphasis"><i class=
+      "EMPHASIS">magicfilter</i></span> developed by H. Peter Anvin
+      <a href="http://www.debian.org" target=
+      "_top">http://www.debian.org</a> is distributed with Debian
+      Linux. The <b class="APPLICATION">apsfilter</b> by Andreas
+      Klemm <a href="http://www.freebsd.org/~andreas/index.html"
+      target="_top">http://www.freebsd.org/~andreas/index.html</a>
+      is also widely used, although now most of its functionality
+      is directly available in <b class="APPLICATION">LPRng</b>.
       Finally, the <b class="APPLICATION">a2ps</b> (Ascii to
       PostScript) converter by <a href="demaille@inf.enst.fr"
       target="_top">Akim Demaille</a> and <a href="santana@st.com"
@@ -128,9 +130,9 @@
         with File Format Detection</a></h2>
 
         <p>Since this is a tutorial, we will demonstrate a simple
-        way to make your own <i class="EMPHASIS">multi-format</i>
-        print filter, and provide insight into how more complex
-        filters work.</p>
+        way to make your own <span class="emphasis"><i class=
+        "EMPHASIS">multi-format</i></span> print filter, and
+        provide insight into how more complex filters work.</p>
 
         <p>The <a href="installation.htm#FILEPROG">file</a> utility
         developed by Ian F. Darwin uses a database of file
@@ -342,10 +344,10 @@
 
         <ol type="1">
           <li>
-            <p>The printer must be put into a known <i class=
-            "EMPHASIS">initial</i> state by sending it the
-            appropriate reset strings or performing a correct set
-            of IO operations.</p>
+            <p>The printer must be put into a known <span class=
+            "emphasis"><i class="EMPHASIS">initial</i></span> state
+            by sending it the appropriate reset strings or
+            performing a correct set of IO operations.</p>
           </li>
 
           <li>
@@ -493,12 +495,12 @@
             <tbody>
               <tr>
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">model=</tt><i class=
-                "EMPHASIS">name</i></td>
+                "LITERAL">model=</tt><span class="emphasis"><i
+                class="EMPHASIS">name</i></span></td>
 
-                <td align="LEFT" valign="TOP">Use <i class=
-                "EMPHASIS">name</i> entry in <tt class=
-                "LITERAL">ifhp.conf</tt></td>
+                <td align="LEFT" valign="TOP">Use <span class=
+                "emphasis"><i class="EMPHASIS">name</i></span>
+                entry in <tt class="LITERAL">ifhp.conf</tt></td>
               </tr>
 
               <tr>
@@ -514,8 +516,8 @@
                 <td align="LEFT" valign="TOP"><tt class=
                 "LITERAL">sync</tt>, <tt class=
                 "LITERAL">sync@</tt>, <tt class=
-                "LITERAL">sync=</tt><i class=
-                "EMPHASIS">(ps|pjl)</i> </td>
+                "LITERAL">sync=</tt><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
 
                 <td align="LEFT" valign="TOP">Printer does or does
                 not indicate ready to operate at start of job, or
@@ -527,8 +529,8 @@
                 <td align="LEFT" valign="TOP"><tt class=
                 "LITERAL">pagecount</tt>, <tt class=
                 "LITERAL">pagecount@</tt>, <tt class=
-                "LITERAL">pagecount=</tt><i class=
-                "EMPHASIS">(ps|pjl)</i> </td>
+                "LITERAL">pagecount=</tt><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
 
                 <td align="LEFT" valign="TOP">Printer does or does
                 not have pagecount support, or use PostScript or
@@ -539,8 +541,8 @@
                 <td align="LEFT" valign="TOP"><tt class=
                 "LITERAL">waitend</tt>, <tt class=
                 "LITERAL">waitend@</tt>, <tt class=
-                "LITERAL">waitend=</tt><i class=
-                "EMPHASIS">(ps|pjl)</i> </td>
+                "LITERAL">waitend=</tt><span class="emphasis"><i
+                class="EMPHASIS">(ps|pjl)</i></span> </td>
 
                 <td align="LEFT" valign="TOP">Wait or do not wait
                 for end of job, or send PostScript or PJL code
@@ -550,9 +552,9 @@
           </table>
         </div>
 
-        <p>The <tt class="LITERAL">model=</tt><i class=
-        "EMPHASIS">name</i> entry is used to specify the
-        configuration entry in the <tt class=
+        <p>The <tt class="LITERAL">model=</tt><span class=
+        "emphasis"><i class="EMPHASIS">name</i></span> entry is
+        used to specify the configuration entry in the <tt class=
         "LITERAL">ifhp.conf</tt> file to be used by <b class=
         "APPLICATION">ifhp</b>. This entry usually has all of the
         specific information needed by the <b class=
@@ -561,9 +563,10 @@
         <p>The <tt class="LITERAL">status</tt> option is the most
         common option usually provided in a printcap entry. This
         option is needed when the communication with the printer is
-        <i class="EMPHASIS">write-only</i> and no status
-        information will be returned. If a printer normally
-        supports returning status information then the <tt class=
+        <span class="emphasis"><i class=
+        "EMPHASIS">write-only</i></span> and no status information
+        will be returned. If a printer normally supports returning
+        status information then the <tt class=
         "LITERAL">ifhp.conf</tt> configuration entry will indicate
         this and the <b class="APPLICATION">ifhp</b> filter will
         try to get status. When no status is returned it will
@@ -575,14 +578,14 @@
         and <tt class="LITERAL">waitend@</tt></p>
 
         <p>The <tt class="LITERAL">sync</tt> option is used to
-        cause <b class="APPLICATION">ifhp</b> to wait for an <i
-        class="EMPHASIS">end of job</i> indication from the printer
-        before starting the next job. This is usually done in order
-        to make sure that all jobs have been flushed from a printer
-        before starting another job. If you specify <tt class=
-        "LITERAL">sync@</tt> then you may get slightly faster
-        startup but at the expense of losing the ends of previous
-        print jobs.</p>
+        cause <b class="APPLICATION">ifhp</b> to wait for an <span
+        class="emphasis"><i class="EMPHASIS">end of job</i></span>
+        indication from the printer before starting the next job.
+        This is usually done in order to make sure that all jobs
+        have been flushed from a printer before starting another
+        job. If you specify <tt class="LITERAL">sync@</tt> then you
+        may get slightly faster startup but at the expense of
+        losing the ends of previous print jobs.</p>
 
         <p>The <tt class="LITERAL">pagecount</tt> option is used to
         cause <b class="APPLICATION">ifhp</b> to get the value of a
@@ -595,13 +598,13 @@
         do not want page counts.</p>
 
         <p>Finally, <tt class="LITERAL">waitend</tt> option is used
-        to cause <b class="APPLICATION">ifhp</b> to wait for an <i
-        class="EMPHASIS">end of job</i> indication from the printer
-        before exiting. If you specify <tt class=
-        "LITERAL">waitend@</tt> then the filter will exit
-        immediately after sending the job, but you will possibly
-        lose any error information or status reports from the
-        printer.</p>
+        to cause <b class="APPLICATION">ifhp</b> to wait for an
+        <span class="emphasis"><i class="EMPHASIS">end of
+        job</i></span> indication from the printer before exiting.
+        If you specify <tt class="LITERAL">waitend@</tt> then the
+        filter will exit immediately after sending the job, but you
+        will possibly lose any error information or status reports
+        from the printer.</p>
 
         <p>For a complete list of all of the <b class=
         "APPLICATION">ifhp</b> options please see the IFHP
@@ -613,9 +616,9 @@
         LF to CR-LF Conversion With lpf</a></h2>
 
         <p>When printing to vintage hard copy devices or to
-        printers that support a <i class="EMPHASIS">text</i> mode,
-        many UNIX users discover that their output suffers from a
-        case of the jaggies.</p>
+        printers that support a <span class="emphasis"><i class=
+        "EMPHASIS">text</i></span> mode, many UNIX users discover
+        that their output suffers from a case of the jaggies.</p>
 
         <div class="INFORMALEXAMPLE">
           <a name="AEN2924"></a>
@@ -756,11 +759,11 @@
         server will take actions to filter it and then send it to
         the printing device.</p>
 
-        <p>However, we can also have <i class="EMPHASIS">store and
-        forward</i> spool queues. These queue act to simply buffer
-        jobs and then forward them to another spooler. The
-        following printcap entry shows how you can specify a store
-        and forward queue.</p>
+        <p>However, we can also have <span class="emphasis"><i
+        class="EMPHASIS">store and forward</i></span> spool queues.
+        These queue act to simply buffer jobs and then forward them
+        to another spooler. The following printcap entry shows how
+        you can specify a store and forward queue.</p>
 
         <div class="INFORMALEXAMPLE">
           <a name="AEN2982"></a>
@@ -957,12 +960,12 @@
 
         <p>We have displayed a bit more status information so that
         we can see what the actions the <tt class="LITERAL">lp</tt>
-        queue carries out. It first <i class=
-        "EMPHASIS">processes</i> the job data file using the <b
-        class="APPLICATION">testf</b> filter and puts the results
-        in a temporary file. Then it sends the contents of the
-        temporary file to the <tt class="LITERAL">lp2</tt> queue.
-        The <tt class="LITERAL">lp2</tt> queue receives the
+        queue carries out. It first <span class="emphasis"><i
+        class="EMPHASIS">processes</i></span> the job data file
+        using the <b class="APPLICATION">testf</b> filter and puts
+        the results in a temporary file. Then it sends the contents
+        of the temporary file to the <tt class="LITERAL">lp2</tt>
+        queue. The <tt class="LITERAL">lp2</tt> queue receives the
         converted job file and then prints it to the <tt class=
         "FILENAME">/tmp/lp2</tt> file in turn.</p>
 

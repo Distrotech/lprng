@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Job Files</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Spool Queues and Files" href=
     "spoolqueue.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -42,18 +42,21 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">longnumber</tt><i class=
-          "EMPHASIS">long job number</i></p>
+          <p><tt class="LITERAL">longnumber</tt><span class=
+          "emphasis"><i class="EMPHASIS">long job
+          number</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">default_priority=</tt><i class=
-          "EMPHASIS">default job priority</i></p>
+          <p><tt class="LITERAL">default_priority=</tt><span class=
+          "emphasis"><i class="EMPHASIS">default job
+          priority</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">nline_after_file</tt><i class=
-          "EMPHASIS">N line after data file</i></p>
+          <p><tt class="LITERAL">nline_after_file</tt><span class=
+          "emphasis"><i class="EMPHASIS">N line after data
+          file</i></span></p>
         </li>
       </ul>
       <br>
@@ -98,9 +101,10 @@
       <p>Following this are a set of entries about each of the
       various files to be printed. These lines start with a lower
       case letter, followed by the print file name. The lower case
-      letter is the <i class="EMPHASIS">format</i> to be used to
-      process the file. See <a href="printingjob.htm">print file
-      formats</a> for more information about its use.</p>
+      letter is the <span class="emphasis"><i class=
+      "EMPHASIS">format</i></span> to be used to process the file.
+      See <a href="printingjob.htm">print file formats</a> for more
+      information about its use.</p>
 
       <div class="TABLE">
         <a name="CFLINE"></a>
@@ -305,23 +309,26 @@
       class="LITERAL">U</tt> lines are associated with a print
       file. The <tt class="LITERAL">N</tt> line is the original
       name of the print file. By default, <b class=
-      "APPLICATION">LPRng</b> places this line <i class=
-      "EMPHASIS">before</i> the corresponding data file. You can
-      use the <tt class="LITERAL">nline_after_file</tt> option to
-      have <b class="APPLICATION">LPRng</b> place the N line after
-      the data file line. The <tt class="LITERAL">U</tt> line
-      originally was used to indicate that the named file was to be
-      unlinked after printing. This information is now ignored by
-      <b class="APPLICATION">LPRng</b>. These lines are always
-      grouped with a print file entry.</p>
+      "APPLICATION">LPRng</b> places this line <span class=
+      "emphasis"><i class="EMPHASIS">before</i></span> the
+      corresponding data file. You can use the <tt class=
+      "LITERAL">nline_after_file</tt> option to have <b class=
+      "APPLICATION">LPRng</b> place the N line after the data file
+      line. The <tt class="LITERAL">U</tt> line originally was used
+      to indicate that the named file was to be unlinked after
+      printing. This information is now ignored by <b class=
+      "APPLICATION">LPRng</b>. These lines are always grouped with
+      a print file entry.</p>
 
       <p>The names of control and data files follow a very strict
       pattern. Control files have the format <tt class=
       "LITERAL">cfX</tt><tt class=
-      "REPLACEABLE"><i>number</i></tt><i class="EMPHASIS">host</i>,
-      where X is an upper case letter, <i class=
-      "EMPHASIS">number</i> is (usually) a 3 digit number, and <i
-      class="EMPHASIS">host</i> is the host name. <a href=
+      "REPLACEABLE"><i>number</i></tt><span class="emphasis"><i
+      class="EMPHASIS">host</i></span>, where X is an upper case
+      letter, <span class="emphasis"><i class=
+      "EMPHASIS">number</i></span> is (usually) a 3 digit number,
+      and <span class="emphasis"><i class=
+      "EMPHASIS">host</i></span> is the host name. <a href=
       "rfc1179.htm">RFC1179</a> restricted the total length of the
       control file name to 32 characters; <b class=
       "APPLICATION">LPRng</b> has a much looser limit.</p>
@@ -329,22 +336,24 @@
       <p>Data file names must follow the same pattern as the
       control file name, and have the format <tt class=
       "LITERAL">dfX</tt><tt class=
-      "REPLACEABLE"><i>number</i></tt><i class="EMPHASIS">host</i>.
-      The X can be in the range A-Za-z, allowing at most 52 data
-      files for a job. The <i class="EMPHASIS">number</i> and <i
-      class="EMPHASIS">host</i> must be identical to the
-      corresponding control file.</p>
+      "REPLACEABLE"><i>number</i></tt><span class="emphasis"><i
+      class="EMPHASIS">host</i></span>. The X can be in the range
+      A-Za-z, allowing at most 52 data files for a job. The <span
+      class="emphasis"><i class="EMPHASIS">number</i></span> and
+      <span class="emphasis"><i class="EMPHASIS">host</i></span>
+      must be identical to the corresponding control file.</p>
 
       <p>By convention, <b class="APPLICATION">LPRng</b> uses the X
       of the control file name to set a priority for the job. A job
       with control file name <tt class="LITERAL">cfA...</tt> will
-      have <i class="EMPHASIS">lower</i> format than a job with
-      format <tt class="LITERAL">cfB...</tt>, and so forth. The <b
-      class="APPLICATION">lpr</b> program uses the first letter of
-      the class name or an explicit priority value to set the
-      letter value. If none of these are specified, then the <tt
-      class="LITERAL">default_priority</tt> value from the
-      configuration or printcap entry is used.</p>
+      have <span class="emphasis"><i class=
+      "EMPHASIS">lower</i></span> format than a job with format <tt
+      class="LITERAL">cfB...</tt>, and so forth. The <b class=
+      "APPLICATION">lpr</b> program uses the first letter of the
+      class name or an explicit priority value to set the letter
+      value. If none of these are specified, then the <tt class=
+      "LITERAL">default_priority</tt> value from the configuration
+      or printcap entry is used.</p>
 
       <p>The job number is usually a 3 digit value. However, in
       systems where a large number of jobs are spooled and need to

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Submitting Jobs and Service Requests</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Job Processing" href="jobsteps.htm">
     <link rel="PREVIOUS" title="Job Processing" href=
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -45,9 +45,9 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">lpd_port=</tt><i class=
-          "EMPHASIS">Listening Port for <b class=
-          "APPLICATION">lpd</b></i></p>
+          <p><tt class="LITERAL">lpd_port=</tt><span class=
+          "emphasis"><i class="EMPHASIS">Listening Port for <b
+          class="APPLICATION">lpd</b></i></span></p>
         </li>
       </ul>
       <br>
@@ -64,19 +64,21 @@
       name the name of a service; The port corresponding to the
       service name is used. The <tt class="LITERAL">printer</tt>
       services port is 515. If the port binding operation is
-      successful and the server has not been request to run in <i
-      class="EMPHASIS">foreground</i> mode by the <tt class=
+      successful and the server has not been request to run in
+      <span class="emphasis"><i class=
+      "EMPHASIS">foreground</i></span> mode by the <tt class=
       "LITERAL">-F</tt> command line option, then a child process
       is forked and the parent process will exit. The child process
       then takes steps to disconnect itself from the control
       terminal of the process that started it.</p>
 
       <p>The main <b class="APPLICATION">lpd</b> process will then
-      start a <i class="EMPHASIS">queue checking</i> process that
-      will check all of the spool queues used by the server for
-      queues that have pending jobs. This process sends a message
-      to the main <b class="APPLICATION">lpd</b> process requesting
-      that it start a service process for this queue.</p>
+      start a <span class="emphasis"><i class="EMPHASIS">queue
+      checking</i></span> process that will check all of the spool
+      queues used by the server for queues that have pending jobs.
+      This process sends a message to the main <b class=
+      "APPLICATION">lpd</b> process requesting that it start a
+      service process for this queue.</p>
 
       <p>The <b class="APPLICATION">lpd</b> process will then sit
       in a loop waiting for one of the following events:</p>

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Force Connection to Localhost</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title=
     "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -48,9 +48,9 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">force_localhost</tt> FLAG <i
-          class="EMPHASIS">force localhost to be remote
-          host</i></p>
+          <p><tt class="LITERAL">force_localhost</tt> FLAG <span
+          class="emphasis"><i class="EMPHASIS">force localhost to
+          be remote host</i></span></p>
         </li>
       </ul>
       <br>
@@ -60,10 +60,10 @@
       "APPLICATION">lpd</b> print server to be running on each
       host. During the initial stages of development and
       deployment, the default <b class="APPLICATION">LPRng</b>
-      configuration and deployment was to always allow <i class=
-      "EMPHASIS">lightweight</i> operation, that is, clients would
-      always connect to the remote host specified in the
-      printcap.</p>
+      configuration and deployment was to always allow <span class=
+      "emphasis"><i class="EMPHASIS">lightweight</i></span>
+      operation, that is, clients would always connect to the
+      remote host specified in the printcap.</p>
 
       <p>While this default was appropriate for experienced system
       administrators, novice administrators or those who had
@@ -79,12 +79,13 @@
       or <span class="ACRONYM">TRUE</span>. When this option is
       <span class="ACRONYM">TRUE</span>, then all <b class=
       "APPLICATION">LPRng</b> clients will connect to the server on
-      the localhost, <i class="EMPHASIS">unless</i> they use the
-      <tt class="COMMAND">lpr -Pserver@host</tt> command line form.
-      If lightweight operation is wanted, the administrator can
-      either compile the <b class="APPLICATION">LPRng</b> software
-      with the appropriate value or can explicitly set the <tt
-      class="LITERAL">force_localhost@</tt> flag.</p>
+      the localhost, <span class="emphasis"><i class=
+      "EMPHASIS">unless</i></span> they use the <tt class=
+      "COMMAND">lpr -Pserver@host</tt> command line form. If
+      lightweight operation is wanted, the administrator can either
+      compile the <b class="APPLICATION">LPRng</b> software with
+      the appropriate value or can explicitly set the <tt class=
+      "LITERAL">force_localhost@</tt> flag.</p>
 
       <div class="INFORMALEXAMPLE">
         <a name="AEN4143"></a>

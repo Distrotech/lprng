@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Single Printcap File for Large Installation</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printcap Database " href=
     "printcapref.htm">
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -69,14 +69,14 @@
       <br>
 
       <p>The above example has some interesting effects. The <tt
-      class="LITERAL">pattern</tt> is used as a <i class=
-      "EMPHASIS">glob</i> pattern and is applied to the fully
-      qualified domain name (FQDN) of the host reading the printcap
-      file. For example, <tt class="FILENAME">*.eng.site.com</tt>
-      would match host <tt class="FILENAME">h1.eng.site.com</tt>
-      but would not match <tt class=
-      "FILENAME">h1.admin.site.com</tt>. Thus, the effects of the
-      first couple of entries would be to specify that the <tt
+      class="LITERAL">pattern</tt> is used as a <span class=
+      "emphasis"><i class="EMPHASIS">glob</i></span> pattern and is
+      applied to the fully qualified domain name (FQDN) of the host
+      reading the printcap file. For example, <tt class=
+      "FILENAME">*.eng.site.com</tt> would match host <tt class=
+      "FILENAME">h1.eng.site.com</tt> but would not match <tt
+      class="FILENAME">h1.admin.site.com</tt>. Thus, the effects of
+      the first couple of entries would be to specify that the <tt
       class="LITERAL">pr1</tt> and <tt class="LITERAL">pr2</tt>
       printers on the <tt class="LITERAL">eng</tt> hosts would be
       <tt class="LITERAL">pr1@serverhost1</tt>, and on the <tt

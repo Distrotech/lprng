@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
+"$Id: vars.c,v 1.30 2002/05/06 01:06:42 papowell Exp $";
 
 
 /* force local definitions */
@@ -301,7 +301,11 @@ struct keywords Pc_var_list[] = {
 { "lpd_listen_port", 0, STRING_K, &Lpd_listen_port_DYN,0,0,0},
    /*  lpd pathname for server use */
 { "lpd_path", 0,  STRING_K,  &Lpd_path_DYN,0,0,0},
-   /*  interval in secs between starting up all servers */
+   /* max number of queues to start at a time */
+{ "lpd_poll_servers_started", 0, INTEGER_K, &Poll_servers_started_DYN,1,0,"=10"},
+   /*  interval in secs between starting small numbers of queue servers */
+{ "lpd_poll_start_interval", 0,  INTEGER_K,  &Poll_start_interval_DYN,0,0,"=10"},
+   /*  interval in secs between servicing all queues */
 { "lpd_poll_time", 0,  INTEGER_K,  &Poll_time_DYN,0,0,"=600"},
    /* lpd port */
 { "lpd_port", 0, STRING_K, &Lpd_port_DYN,0,0,"=515"},

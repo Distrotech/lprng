@@ -5,7 +5,7 @@
     <title>Moving Jobs From Queue to Queue and Redirecting
     Queues</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -22,8 +22,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -111,11 +111,12 @@
 
       <p>We first stop the queues so that the jobs will remain in
       them. We then use the <tt class="COMMAND">lpc move fromqueue
-      id toqueue</tt> command to select a job in the <i class=
-      "EMPHASIS">fromqueue</i> and move it to the <i class=
-      "EMPHASIS">toqueue</i>. A list of job numbers, job IDs, or
-      glob patterns to match job IDs can be used to select the
-      job.</p>
+      id toqueue</tt> command to select a job in the <span class=
+      "emphasis"><i class="EMPHASIS">fromqueue</i></span> and move
+      it to the <span class="emphasis"><i class=
+      "EMPHASIS">toqueue</i></span>. A list of job numbers, job
+      IDs, or glob patterns to match job IDs can be used to select
+      the job.</p>
 
       <p>The <tt class="COMMAND">lpc redirect fromqueue
       toqueue</tt> will cause all incoming jobs to be redirected to

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>User Identification</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title=
     "LPRng Clients - lpr, lprm, lpq, lpc, lpstat " href=
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -48,8 +48,9 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">allow_user_setting=</tt><i class=
-          "EMPHASIS">privileged users</i></p>
+          <p><tt class="LITERAL">allow_user_setting=</tt><span
+          class="emphasis"><i class="EMPHASIS">privileged
+          users</i></span></p>
         </li>
       </ul>
       <br>
@@ -72,9 +73,10 @@
       users to cause the client software to use the <tt class=
       "LITERAL">name</tt> value as the originator and <tt class=
       "LITERAL">host</tt> as the machine name. This allows
-      privileged users to <i class="EMPHASIS">impersonate</i> other
-      users. This is most useful for programs such as Samba and
-      PCNFS, which need to act as proxies for users.</p>
+      privileged users to <span class="emphasis"><i class=
+      "EMPHASIS">impersonate</i></span> other users. This is most
+      useful for programs such as Samba and PCNFS, which need to
+      act as proxies for users.</p>
 
       <p>By default, ROOT (UID 0) is the only user that can
       masquerade as another user. The <tt class=

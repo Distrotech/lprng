@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Print Job Filters</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -42,11 +42,12 @@
       <h1 class="SECT1"><a name="PRINTJOBFILTERS">4.9. Print Job
       Filters</a></h1>
 
-      <p>A printer usually understands one or more <i class=
-      "EMPHASIS">Print Job Languages</i>. Files sent to this
-      printer must be in one of these languages and have the
-      appropriate <i class="EMPHASIS">job format</i>. The most
-      common Print Job Languages are <a href=
+      <p>A printer usually understands one or more <span class=
+      "emphasis"><i class="EMPHASIS">Print Job
+      Languages</i></span>. Files sent to this printer must be in
+      one of these languages and have the appropriate <span class=
+      "emphasis"><i class="EMPHASIS">job format</i></span>. The
+      most common Print Job Languages are <a href=
       "x290.htm#POSTSCRIPT">PostScript</a> and <a href=
       "x290.htm#PCL">PCL</a>. Text files are PCL with no special
       PCL control sequences.</p>
@@ -54,36 +55,41 @@
       <p>In order for a printer to reliably print a job it needs to
       be reset to a known configuration and then at the end of job
       having it flush all of the output to the printing device.
-      This is done by sending it <i class="EMPHASIS">start of
-      job</i> and <i class="EMPHASIS">end of job</i> commands.
-      These commands differ from printer to printer and depend on
-      the print job language as well. Some <i class=
-      "EMPHASIS">vintage</i> line printers also have a set of
-      proprietary <i class="EMPHASIS">escape sequences</i> that are
-      used to set up margins, form size, and other printing
-      characteristics. Usually a <i class="EMPHASIS">setup
-      string</i> with these escape sequences must be sent to the
-      printer before a file can be printed.</p>
+      This is done by sending it <span class="emphasis"><i class=
+      "EMPHASIS">start of job</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">end of job</i></span>
+      commands. These commands differ from printer to printer and
+      depend on the print job language as well. Some <span class=
+      "emphasis"><i class="EMPHASIS">vintage</i></span> line
+      printers also have a set of proprietary <span class=
+      "emphasis"><i class="EMPHASIS">escape sequences</i></span>
+      that are used to set up margins, form size, and other
+      printing characteristics. Usually a <span class="emphasis"><i
+      class="EMPHASIS">setup string</i></span> with these escape
+      sequences must be sent to the printer before a file can be
+      printed.</p>
 
       <p>When sending a job to the printer the print spooler will
-      first process the job using a <i class="EMPHASIS">print job
-      filter</i> or <i class="EMPHASIS">filter</i> program. This
-      program reads the job file and then produces output in the
-      format required for the printer.</p>
+      first process the job using a <span class="emphasis"><i
+      class="EMPHASIS">print job filter</i></span> or <span class=
+      "emphasis"><i class="EMPHASIS">filter</i></span> program.
+      This program reads the job file and then produces output in
+      the format required for the printer.</p>
 
       <p>When a print job is created the files in the print job are
-      assigned a <i class="EMPHASIS">format</i>. This format was
-      meant as a guide to the print spooler and was to be used to
-      select the filter program for the files in the job. The
-      format was a lower case letter; the <tt class=
-      "LITERAL">f</tt> is the de<tt class="LITERAL">f</tt>ault
-      format and indicates normal processing and the <tt class=
-      "LITERAL">l</tt> format indicates a literal or binary file.
-      Job files that are flagged as having literal or binary format
-      are usually passed directly to the printer or have at the
-      most a minimal amount of processing. See <a href=
-      "printjobformats.htm">Print Job Formats</a> for more
-      information about formats and their use with filters.</p>
+      assigned a <span class="emphasis"><i class=
+      "EMPHASIS">format</i></span>. This format was meant as a
+      guide to the print spooler and was to be used to select the
+      filter program for the files in the job. The format was a
+      lower case letter; the <tt class="LITERAL">f</tt> is the
+      de<tt class="LITERAL">f</tt>ault format and indicates normal
+      processing and the <tt class="LITERAL">l</tt> format
+      indicates a literal or binary file. Job files that are
+      flagged as having literal or binary format are usually passed
+      directly to the printer or have at the most a minimal amount
+      of processing. See <a href="printjobformats.htm">Print Job
+      Formats</a> for more information about formats and their use
+      with filters.</p>
 
       <p>There are two ways to specify filters: the default <tt
       class="LITERAL">:filter=...</tt> option and the more specific
@@ -132,12 +138,13 @@
       <br>
 
       <p>Let us carefully examine the script line by line. The
-      first couple of lines are <i class=
-      "EMPHASIS">boilerplate</i>. You should <i class=
-      "EMPHASIS">always</i> set the <tt class="ENVAR">PATH</tt>
-      value in a filter script or use full pathnames for executable
-      programs. This is a good practice as it ensures that only the
-      specified directories will be searched for commands.</p>
+      first couple of lines are <span class="emphasis"><i class=
+      "EMPHASIS">boilerplate</i></span>. You should <span class=
+      "emphasis"><i class="EMPHASIS">always</i></span> set the <tt
+      class="ENVAR">PATH</tt> value in a filter script or use full
+      pathnames for executable programs. This is a good practice as
+      it ensures that only the specified directories will be
+      searched for commands.</p>
 
       <p>The next lines echo the command line arguments to file
       descriptor 2 (<span class="ACRONYM">STDERR</span>) and to
@@ -316,11 +323,11 @@
 
         <p>When you submit a print job the <b class=
         "APPLICATION">lpd</b> print spooler stores it in the spool
-        queue as two or more files: a <i class=
-        "EMPHASIS">control</i> file that contains information about
-        the job and the <i class="EMPHASIS">data</i> files that
-        contain the information to be printed. Here is sample
-        control file:</p>
+        queue as two or more files: a <span class="emphasis"><i
+        class="EMPHASIS">control</i></span> file that contains
+        information about the job and the <span class="emphasis"><i
+        class="EMPHASIS">data</i></span> files that contain the
+        information to be printed. Here is sample control file:</p>
 
         <div class="INFORMALEXAMPLE">
           <a name="AEN2224"></a>
@@ -354,8 +361,9 @@
         line options. The <tt class="LITERAL">N</tt> values are the
         names of the files that are printed. The <tt class=
         "LITERAL">U</tt> indicates a data file is in a job and is
-        present to meet RCF1179 and <i class="EMPHASIS">vintage</i>
-        print spooler requirements.</p>
+        present to meet RCF1179 and <span class="emphasis"><i
+        class="EMPHASIS">vintage</i></span> print spooler
+        requirements.</p>
 
         <div class="TABLE">
           <a name="FILTEROPTIONSTABLE"></a>
@@ -378,19 +386,20 @@
                 <td align="LEFT" valign="TOP">&nbsp;</td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-P</tt><i class=
-                "EMPHASIS">Printer</i></td>
+                "LITERAL">-P</tt><span class="emphasis"><i class=
+                "EMPHASIS">Printer</i></span></td>
 
                 <td align="LEFT" valign="TOP">Print queue name -
                 printcap information</td>
               </tr>
 
               <tr>
-                <td align="LEFT" valign="TOP"><i class=
-                "EMPHASIS">H</i></td>
+                <td align="LEFT" valign="TOP"><span class=
+                "emphasis"><i class="EMPHASIS">H</i></span></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-H</tt><i class="EMPHASIS">Host</i></td>
+                "LITERAL">-H</tt><span class="emphasis"><i class=
+                "EMPHASIS">Host</i></span></td>
 
                 <td align="LEFT" valign="TOP">Host Name</td>
               </tr>
@@ -400,7 +409,8 @@
                 "LITERAL">P</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-n</tt><i class="EMPHASIS">User</i></td>
+                "LITERAL">-n</tt><span class="emphasis"><i class=
+                "EMPHASIS">User</i></span></td>
 
                 <td align="LEFT" valign="TOP">User Login Name of
                 job originator</td>
@@ -411,8 +421,8 @@
                 "LITERAL">J</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-J</tt><i class="EMPHASIS">Job
-                name</i></td>
+                "LITERAL">-J</tt><span class="emphasis"><i class=
+                "EMPHASIS">Job name</i></span></td>
 
                 <td align="LEFT" valign="TOP">lpr -J option or file
                 name</td>
@@ -423,7 +433,8 @@
                 "LITERAL">C</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-C</tt><i class="EMPHASIS">Class</i></td>
+                "LITERAL">-C</tt><span class="emphasis"><i class=
+                "EMPHASIS">Class</i></span></td>
 
                 <td align="LEFT" valign="TOP">Print class (lpr -C
                 option)</td>
@@ -434,8 +445,8 @@
                 "LITERAL">L</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-L</tt><i class=
-                "EMPHASIS">Banner</i></td>
+                "LITERAL">-L</tt><span class="emphasis"><i class=
+                "EMPHASIS">Banner</i></span></td>
 
                 <td align="LEFT" valign="TOP">Banner page
                 request</td>
@@ -446,7 +457,8 @@
                 "LITERAL">A</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-A</tt><i class="EMPHASIS">Jobid</i></td>
+                "LITERAL">-A</tt><span class="emphasis"><i class=
+                "EMPHASIS">Jobid</i></span></td>
 
                 <td align="LEFT" valign="TOP">Job Id</td>
               </tr>
@@ -456,7 +468,8 @@
                 "LITERAL">D</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-D</tt><i class="EMPHASIS">Date</i></td>
+                "LITERAL">-D</tt><span class="emphasis"><i class=
+                "EMPHASIS">Date</i></span></td>
 
                 <td align="LEFT" valign="TOP">Date or time
                 information</td>
@@ -467,7 +480,8 @@
                 "LITERAL">Q</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-Q</tt><i class="EMPHASIS">Queue</i></td>
+                "LITERAL">-Q</tt><span class="emphasis"><i class=
+                "EMPHASIS">Queue</i></span></td>
 
                 <td align="LEFT" valign="TOP">Original Print queue
                 job was sent to</td>
@@ -478,8 +492,8 @@
                 "LITERAL">N</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-N</tt><i class=
-                "EMPHASIS">Filename</i></td>
+                "LITERAL">-N</tt><span class="emphasis"><i class=
+                "EMPHASIS">Filename</i></span></td>
 
                 <td align="LEFT" valign="TOP">Filename</td>
               </tr>
@@ -489,7 +503,8 @@
                 "LITERAL">f,l,p,...</tt></td>
 
                 <td align="LEFT" valign="TOP"><tt class=
-                "LITERAL">-F</tt><i class="EMPHASIS">f</i></td>
+                "LITERAL">-F</tt><span class="emphasis"><i class=
+                "EMPHASIS">f</i></span></td>
 
                 <td align="LEFT" valign="TOP">Datafile format</td>
               </tr>
@@ -520,11 +535,11 @@
         </div>
         Sometimes we want to pass only a small subset of these
         command line options to a filter or provide them in a
-        specific order in order to be compatible with <i class=
-        "EMPHASIS">legacy</i> print filters. <b class=
-        "APPLICATION">LPRng</b> provides several different ways to
-        do this and we will explore how to control command line
-        options.<br>
+        specific order in order to be compatible with <span class=
+        "emphasis"><i class="EMPHASIS">legacy</i></span> print
+        filters. <b class="APPLICATION">LPRng</b> provides several
+        different ways to do this and we will explore how to
+        control command line options.<br>
         <br>
 
         <p>If the filter entry starts with <tt class=
@@ -591,24 +606,25 @@
         <p>Command line options can be grouped and passed as a
         single argument by enclosing them in single or double
         quotes. You should be aware that <b class=
-        "APPLICATION">LPRng</b> has an <i class=
-        "EMPHASIS">extremely</i> primitive way of handling quotes.
-        When the <tt class="COMMAND">/bin/sh -c</tt> parameter is
-        not used, the the command line is broken on spaces and each
-        unit is passed as an individual argument. If the first
-        character after a space is a quote (single or double), the
-        next quote is found, and then entire element is then used
-        as a single parameter. Substitution of <tt class=
-        "LITERAL">$X</tt> parameters is then done. As a special
-        case, when you have a <tt class="LITERAL">$0X</tt>, this
-        causes a split and all of the string previous and including
-        the <tt class="LITERAL">-X</tt> flag is passed as a single
-        option and all of the option value and following are passed
-        as another option. If the result of the expansion is a zero
-        length parameter then it is removed from the parameter
-        list. When the <tt class="COMMAND">/bin/sh -c</tt> is used
-        the command line is not broken, and all non-empty option
-        values are enclosed in single quotes.</p>
+        "APPLICATION">LPRng</b> has an <span class="emphasis"><i
+        class="EMPHASIS">extremely</i></span> primitive way of
+        handling quotes. When the <tt class="COMMAND">/bin/sh
+        -c</tt> parameter is not used, the the command line is
+        broken on spaces and each unit is passed as an individual
+        argument. If the first character after a space is a quote
+        (single or double), the next quote is found, and then
+        entire element is then used as a single parameter.
+        Substitution of <tt class="LITERAL">$X</tt> parameters is
+        then done. As a special case, when you have a <tt class=
+        "LITERAL">$0X</tt>, this causes a split and all of the
+        string previous and including the <tt class=
+        "LITERAL">-X</tt> flag is passed as a single option and all
+        of the option value and following are passed as another
+        option. If the result of the expansion is a zero length
+        parameter then it is removed from the parameter list. When
+        the <tt class="COMMAND">/bin/sh -c</tt> is used the command
+        line is not broken, and all non-empty option values are
+        enclosed in single quotes.</p>
 
         <p>The <tt class="LITERAL">${name}</tt> option is used to
         pass a printcap option value. For example, you can pass the
@@ -642,14 +658,15 @@
         <br>
         <br>
 
-        <p>If we have a <i class="EMPHASIS">legacy</i> print filter
-        that was originally written for the <span class=
-        "ACRONYM">BSD</span> print spooler, then we may find that
-        it requires a small number of command line options in a
-        very specific order. We can use the <tt class=
-        "LITERAL">:bkf</tt> (BSD Kompatible Filter or BacKwards
-        compatible Filter) flag to pass suitable options. Modify
-        the printcap entry to have the following form:</p>
+        <p>If we have a <span class="emphasis"><i class=
+        "EMPHASIS">legacy</i></span> print filter that was
+        originally written for the <span class="ACRONYM">BSD</span>
+        print spooler, then we may find that it requires a small
+        number of command line options in a very specific order. We
+        can use the <tt class="LITERAL">:bkf</tt> (BSD Kompatible
+        Filter or BacKwards compatible Filter) flag to pass
+        suitable options. Modify the printcap entry to have the
+        following form:</p>
 
         <div class="INFORMALEXAMPLE">
           <a name="AEN2373"></a>
@@ -855,10 +872,11 @@
         <br>
         <br>
 
-        <p>As you can see, there are <i class="EMPHASIS">empty</i>
-        parameters passed to the filter. This is due to the
-        combination of the <tt class="LITERAL">$'{form}</tt> and
-        using the <tt class="LITERAL">:filter=(...)</tt> form.</p>
+        <p>As you can see, there are <span class="emphasis"><i
+        class="EMPHASIS">empty</i></span> parameters passed to the
+        filter. This is due to the combination of the <tt class=
+        "LITERAL">$'{form}</tt> and using the <tt class=
+        "LITERAL">:filter=(...)</tt> form.</p>
       </div>
 
       <div class="SECT2">
@@ -1152,9 +1170,10 @@
         values of our command line and printcap options. It is left
         as an exercise for the reader to add the necessary <tt
         class="LITERAL">export</tt> statements to cause these
-        values to be exported to subshells. It is <i class=
-        "EMPHASIS">not</i> recommended that a wholesale export of
-        the shell variables be done, but only selected ones.</p>
+        values to be exported to subshells. It is <span class=
+        "emphasis"><i class="EMPHASIS">not</i></span> recommended
+        that a wholesale export of the shell variables be done, but
+        only selected ones.</p>
 
         <p>The paranoid and security minded reader will see some
         possible security problem with this script. The <tt class=
@@ -1171,8 +1190,8 @@
         originator of the print job request.</p>
 
         <p>For this reason <b class="APPLICATION">LPRng</b> takes
-        the rather brutal step of <i class=
-        "EMPHASIS">sanitizing</i> the control file. Only
+        the rather brutal step of <span class="emphasis"><i class=
+        "EMPHASIS">sanitizing</i></span> the control file. Only
         alphanumerics or a character in the list <tt class=
         "LITERAL">@/:()=,+-%_</tt> are used in the control file;
         all others replaced by the underscore (<tt class=
@@ -1239,11 +1258,11 @@
         "LITERAL">%options</tt> with the printcap entry options and
         the values from the control file. The <tt class=
         "FUNCTION">map</tt> function could be replaced by a <tt
-        class="FUNCTION">foreach</tt> loop, but this is Perl: <i
-        class="EMPHASIS">There is more than one way to do it</i>
-        and no tutorial would be complete without at least one mind
-        stretching example that has the reader reaching for the
-        reference manual.</p>
+        class="FUNCTION">foreach</tt> loop, but this is Perl: <span
+        class="emphasis"><i class="EMPHASIS">There is more than one
+        way to do it</i></span> and no tutorial would be complete
+        without at least one mind stretching example that has the
+        reader reaching for the reference manual.</p>
       </div>
 
       <div class="SECT2">
@@ -1354,14 +1373,15 @@
         <br>
 
         <p>Each data file for a print job has a name with the
-        format <tt class="LITERAL">df</tt><i class=
-        "EMPHASIS">X</i>nnn<tt class="FILENAME">h4.private</tt>.
-        The <tt class="LITERAL">df</tt> is used to indicate that
-        the file is a <i class="EMPHASIS">data file</i>, and the
-        remainder is a unique name for the file in the job. The <tt
-        class="LITERAL">X</tt> part of the name must be an upper or
-        lower case letter, setting a limit of 52 different files in
-        a single print job.</p>
+        format <tt class="LITERAL">df</tt><span class="emphasis"><i
+        class="EMPHASIS">X</i></span>nnn<tt class=
+        "FILENAME">h4.private</tt>. The <tt class="LITERAL">df</tt>
+        is used to indicate that the file is a <span class=
+        "emphasis"><i class="EMPHASIS">data file</i></span>, and
+        the remainder is a unique name for the file in the job. The
+        <tt class="LITERAL">X</tt> part of the name must be an
+        upper or lower case letter, setting a limit of 52 different
+        files in a single print job.</p>
 
         <p>The <tt class="FILENAME">fdfA105h4.private</tt> line in
         the control file specifies that we are to print the job
@@ -1370,8 +1390,9 @@
         assigned to the file and the name of the file. In the
         legacy BSD print spoolers, this format was used to select
         the print filter to be used. <b class=
-        "APPLICATION">LPRng</b> has expanded this by providing a <i
-        class="EMPHASIS">default</i> filter specification.</p>
+        "APPLICATION">LPRng</b> has expanded this by providing a
+        <span class="emphasis"><i class=
+        "EMPHASIS">default</i></span> filter specification.</p>
 
         <div class="TABLE">
           <a name="JOBFORMAT"></a>
@@ -1512,13 +1533,13 @@
         is no default, then the output is sent directly to the
         output device.</p>
 
-        <p>If the <tt class="LITERAL">:fx=</tt><i class=
-        "EMPHASIS">formats</i> is present in a printcap entry, it
-        specifies the formats that are allowed. For example, <tt
-        class="LITERAL">:fx=lfv</tt> would allow only formats <tt
-        class="LITERAL">l</tt>, <tt class="LITERAL">f</tt>, and <tt
-        class="LITERAL">v</tt> to be used on a particular spool
-        queue.</p>
+        <p>If the <tt class="LITERAL">:fx=</tt><span class=
+        "emphasis"><i class="EMPHASIS">formats</i></span> is
+        present in a printcap entry, it specifies the formats that
+        are allowed. For example, <tt class="LITERAL">:fx=lfv</tt>
+        would allow only formats <tt class="LITERAL">l</tt>, <tt
+        class="LITERAL">f</tt>, and <tt class="LITERAL">v</tt> to
+        be used on a particular spool queue.</p>
 
         <p>Some <tt class="LITERAL">Xf</tt> options have
         pre-assigned meanings and cannot be used for filter

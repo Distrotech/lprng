@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Interfacing to Non-LPRng Spoolers</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -62,8 +62,9 @@
       lines in the most commonly used order. In addition it will
       make the control and data files names extremely short and
       simple. This almost always solves compatibility problems when
-      sending jobs to older <i class="EMPHASIS">vintage</i> print
-      spoolers or UNIX systems.</p>
+      sending jobs to older <span class="emphasis"><i class=
+      "EMPHASIS">vintage</i></span> print spoolers or UNIX
+      systems.</p>
 
       <p>If this does not solve the problem, then you can specify
       the allowed control file lines and their order using the <tt
@@ -74,16 +75,18 @@
       <tt class="LITERAL">J</tt>, <tt class="LITERAL">P</tt>, <tt
       class="LITERAL">M</tt>, and <tt class="LITERAL">D</tt>, and
       this order in the control file. Note that this does not
-      provide <i class="EMPHASIS">missing</i> line values, it only
-      controls line values that are present in the control file.
-      You should also use the <tt class="LITERAL">:bk</tt> option
-      as well.</p>
+      provide <span class="emphasis"><i class=
+      "EMPHASIS">missing</i></span> line values, it only controls
+      line values that are present in the control file. You should
+      also use the <tt class="LITERAL">:bk</tt> option as well.</p>
 
-      <p>You might run into some <i class="EMPHASIS">really</i>
-      unusual implementations where the control file <tt class=
-      "LITERAL">N</tt> (file name) information must come <i class=
-      "EMPHASIS">after</i> the control file name. This is forced by
-      the <tt class="LITERAL">:nline_after_file</tt> option.</p>
+      <p>You might run into some <span class="emphasis"><i class=
+      "EMPHASIS">really</i></span> unusual implementations where
+      the control file <tt class="LITERAL">N</tt> (file name)
+      information must come <span class="emphasis"><i class=
+      "EMPHASIS">after</i></span> the control file name. This is
+      forced by the <tt class="LITERAL">:nline_after_file</tt>
+      option.</p>
 
       <p>If these horrible kludges do not solve your compatibility
       problems then we turn to the very large hammer and edit the

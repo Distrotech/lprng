@@ -1,3 +1,67 @@
+Version LPRng-3.8.12 - Sun May 5 14:42:43 PDT 2002
+
+
+Version LPRng-3.8.11 - Thu Apr  4 07:49:30 PST 2002
+
+  Subtle problem when a filter fails and produces zero
+  length file.  This is now treated as a JABORT level
+  error.  The problem is that RFC1179 treats a file
+  length as 0 as a 'read until end of file on socket'.
+  This means that folks who have filters that WILL produce
+  zero length files need to do something to produce at
+  least one byte of 'dummy' output.
+    (Brought to my attention by:
+      Sergij Kovalenko <s.kovalenko@drgueldener.de>)
+
+  Fixed up a portability issue for Solaris 2.6, in linksupport.c.
+  Need to do an unsigned long cast to do comparison of INADDR_NONE.
+  (Original patch from: Dr Andreas F Muller <afm@othello.ch>)
+
+  Added patches to support TCP wrappers.  Use:
+    configure --enable-tcpwrappers
+  (Patch by:  Tobias Burnus <burnus@net-b.de>)
+
+  Added a 'Linux Standards Base' (LSB) style startup script
+    for Linux systems.
+  (Provided by:  Tobias Burnus <burnus@net-b.de>)
+
+  Missing initialization for statb
+  (Patch by: Rob Joyce <robjoyce@EE.Princeton.EDU>)
+
+  Clobbering Logfile_LPD in common/lpd.c
+  (Patch by: Hugh McDonald <hugh@gw1.symac.dhs.org>)
+
+  Added a call to 'Remove_done_jobs()' in lpd_status.c;
+   then modified Remove_done_jobs to return indication that
+   a job was removed so that lpd_status.c would RESCAN
+   queue... Sigh... OK, but it now works 'right'.
+  (Stale jobs not getting removed noted by:
+    Richard Ems <r.ems.mtg@gmx.net>)
+
+  The problem of saturating a server when checking for work was
+   re-examined.  The new approach is:
+    a) if some work was done,  then check for success at
+        lpd_poll_time intervals.  If there remains work to
+        be done and there is no process actively doing the
+        work, mark the queue as needing service.
+    b) for the marked queues, start at most 'lpd_poll_servers_started'
+       queues at once,  and start these at intervales of
+       'lpd_poll_start_interval' seconds.
+   The effect of this will be to limit the number of processes
+     that LPD will start at a time.
+   (Pushed to look at the problem by: Johan Bengtsson <elijah@dd.chalmers.se>)
+
+  Found a very odd bug... the escape code for '\:' in printcap entries
+   appears to be broken.  The fix was to assume that the only places where
+   it would be used was in 'filter' or other options where the 'expand
+   escape sequences' code would be called and would take care of replacing
+   "\:" by a ":".
+.
+  The 'Printer_device()' routine, when opening a filter as an output
+  device, did not provide 'stdout' for the filter.  Some filters such
+  as pap from Appletalk seem to need this as they produce messages
+  on STDOUT (fd 2) as well as STDERR (fd 3).
+
 Version LPRng-3.8.10 - Sun Mar 31 11:31:19 PST 2002
 
  printcap.5 had :as and :ae examples reversed
@@ -13,6 +77,9 @@ Version LPRng-3.8.10 - Sun Mar 31 11:31:19 PST 2002
    - GCC flags -W -Wall -Werror -Wno-unused-parms
       - also fixed up &*)*(&)*(& unsigned and signed
         integer casts
+ Added patch to allow tcp wrappers to be used.  Configure updated
+   configure --enable-tcpwrappers     use tcp wrappers (-lwrap)
+   (Patch from: Tobias Burnus <burnus@net-b.de>)
 
  The authentication and connection information for permissions
   checking is now recorded so it can be used for permissions checking.

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Permissions and Authentication</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="PREVIOUS" title="ifhp Filter " href="ifhp.htm">
     <link rel="NEXT" title="Rule Matching Procedures" href=
@@ -17,8 +17,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -355,8 +355,9 @@
 
         <ul>
           <li>
-            <p><tt class="LITERAL">default_permission=</tt><i
-            class="EMPHASIS">Default Permission (accept)</i></p>
+            <p><tt class="LITERAL">default_permission=</tt><span
+            class="emphasis"><i class="EMPHASIS">Default Permission
+            (accept)</i></span></p>
           </li>
         </ul>
         <br>
@@ -392,10 +393,10 @@
           <li>
             <p>Each keyword has a value (or set of values) that are
             matched against a set of patterns. If the keyword does
-            not have a value (or the <i class="EMPHASIS">null</i>
-            value) then the match will fail. Initially, all the
-            keywords have a <tt class="LITERAL">null</tt>
-            value.</p>
+            not have a value (or the <span class="emphasis"><i
+            class="EMPHASIS">null</i></span> value) then the match
+            will fail. Initially, all the keywords have a <tt
+            class="LITERAL">null</tt> value.</p>
           </li>
 
           <li>
@@ -416,13 +417,14 @@
           <li>
             <p>The REMOTEHOST value is set to the result of doing a
             reverse DNS lookup on the REMOTEIP address. This value
-            is the list of names <i class="EMPHASIS">and</i> ip
-            addresses in standard IP notation (nnn.nnn.nnn.nnn)
-            that are returned by the lookup. If the DNS lookup
-            fails then the REMOTEHOST value is set to the REMOTEIP
-            value. For example, lookup of 10.0.0.2 would result in
-            the names <tt class="FILENAME">h2.private</tt> and <tt
-            class="FILENAME">patrick.private</tt>, and the only IP
+            is the list of names <span class="emphasis"><i class=
+            "EMPHASIS">and</i></span> ip addresses in standard IP
+            notation (nnn.nnn.nnn.nnn) that are returned by the
+            lookup. If the DNS lookup fails then the REMOTEHOST
+            value is set to the REMOTEIP value. For example, lookup
+            of 10.0.0.2 would result in the names <tt class=
+            "FILENAME">h2.private</tt> and <tt class=
+            "FILENAME">patrick.private</tt>, and the only IP
             address assigned to it was <tt class=
             "LITERAL">10.0.0.2</tt>. The REMOTEHOST value would
             then be the list <tt class=
@@ -552,8 +554,8 @@
         administrative action. To accommodate these printers, we
         must accept jobs for printing and then dispose of them.
         This is done by using the SERVICE=P (printing) checks.
-        These checks are performed <i class="EMPHASIS">after</i>
-        the job has been accepted.</p>
+        These checks are performed <span class="emphasis"><i class=
+        "EMPHASIS">after</i></span> the job has been accepted.</p>
 
         <ol type="1">
           <li>
@@ -586,10 +588,12 @@
 
         <p>While this model is very simple it can handle a wide
         range of situations. However, it is really based on the
-        simple <i class="EMPHASIS">trust</i> that users will not <i
-        class="EMPHASIS">impersonate</i> other users or hosts. If
-        this is not the case, then more elaborate procedures based
-        on encryption and authentication are called for.</p>
+        simple <span class="emphasis"><i class=
+        "EMPHASIS">trust</i></span> that users will not <span
+        class="emphasis"><i class="EMPHASIS">impersonate</i></span>
+        other users or hosts. If this is not the case, then more
+        elaborate procedures based on encryption and authentication
+        are called for.</p>
 
         <p>There is a problem with permissions checking for <b
         class="APPLICATION">lpq</b> (SERVICE=Q) requests. Since the
@@ -599,15 +603,15 @@
 
         <p>The <tt class="LITERAL">SERVICE=R</tt> and <tt class=
         "LITERAL">SERVICE=P</tt> facilities are provided to handle
-        problems with print spoolers that do not recognize a <i
-        class="EMPHASIS">lack of permission</i> error code, and
-        will indefinitely retry sending a job to the <b class=
-        "APPLICATION">lpd</b> server. If this is the case, then the
-        <tt class="LITERAL">SERVICE=R</tt> clause can be used to
-        accept jobs, and then the <tt class=
-        "LITERAL">SERVICE=P</tt> clause will cause the <b class=
-        "APPLICATION">lpd</b> server to remove of the job when it
-        is scheduled for printing.</p>
+        problems with print spoolers that do not recognize a <span
+        class="emphasis"><i class="EMPHASIS">lack of
+        permission</i></span> error code, and will indefinitely
+        retry sending a job to the <b class="APPLICATION">lpd</b>
+        server. If this is the case, then the <tt class=
+        "LITERAL">SERVICE=R</tt> clause can be used to accept jobs,
+        and then the <tt class="LITERAL">SERVICE=P</tt> clause will
+        cause the <b class="APPLICATION">lpd</b> server to remove
+        of the job when it is scheduled for printing.</p>
       </div>
     </div>
 

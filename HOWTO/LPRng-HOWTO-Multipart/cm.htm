@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Simple Server Printcap Example</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printcap Database " href=
     "printcapref.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,38 +46,38 @@
 
       <ul>
         <li>
-          <p><tt class="LITERAL">cm=</tt><i class=
-          "EMPHASIS">comment for status</i></p>
+          <p><tt class="LITERAL">cm=</tt><span class="emphasis"><i
+          class="EMPHASIS">comment for status</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">filter=</tt><i class=
-          "EMPHASIS">job filter</i></p>
+          <p><tt class="LITERAL">filter=</tt><span class=
+          "emphasis"><i class="EMPHASIS">job filter</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">lf=</tt><i class="EMPHASIS">log
-          file</i></p>
+          <p><tt class="LITERAL">lf=</tt><span class="emphasis"><i
+          class="EMPHASIS">log file</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">af=</tt><i class=
-          "EMPHASIS">accounting file</i></p>
+          <p><tt class="LITERAL">af=</tt><span class="emphasis"><i
+          class="EMPHASIS">accounting file</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">lp=</tt><i class="EMPHASIS">output
-          device</i></p>
+          <p><tt class="LITERAL">lp=</tt><span class="emphasis"><i
+          class="EMPHASIS">output device</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">mx=</tt><i class=
-          "EMPHASIS">maximum job size</i></p>
+          <p><tt class="LITERAL">mx=</tt><span class="emphasis"><i
+          class="EMPHASIS">maximum job size</i></span></p>
         </li>
 
         <li>
-          <p><tt class="LITERAL">sd=</tt><i class="EMPHASIS">spool
-          directory file</i></p>
+          <p><tt class="LITERAL">sd=</tt><span class="emphasis"><i
+          class="EMPHASIS">spool directory file</i></span></p>
         </li>
       </ul>
       <br>
@@ -138,14 +138,15 @@
           destination file, device or remote spool queue to which
           data is sent. In this example it is the device <tt class=
           "FILENAME">/dev/lp1</tt>. By default, IO devices are
-          opened for <i class="EMPHASIS">write-only</i>
-          operation.</p>
+          opened for <span class="emphasis"><i class=
+          "EMPHASIS">write-only</i></span> operation.</p>
         </li>
 
         <li>
           <p>The <tt class="LITERAL">:sd=/path</tt> specifies the
-          <i class="EMPHASIS">spool directory</i> where print job
-          files are stored until they are printed.</p>
+          <span class="emphasis"><i class="EMPHASIS">spool
+          directory</i></span> where print job files are stored
+          until they are printed.</p>
         </li>
 
         <li>
@@ -158,10 +159,11 @@
           directory. If these files don't exist, they will not be
           created, and no logging or accounting will be done. You
           will need to create them manually (e.g., by using <tt
-          class="LITERAL">touch</tt>) or by using the <i class=
-          "EMPHASIS"><a href="checkpc.htm">checkpc</a></i> program.
-          If you do not want a log or accounting file, then use <tt
-          class="LITERAL">:lf=</tt>, i.e. - no value.</p>
+          class="LITERAL">touch</tt>) or by using the <span class=
+          "emphasis"><i class="EMPHASIS"><a href=
+          "checkpc.htm">checkpc</a></i></span> program. If you do
+          not want a log or accounting file, then use <tt class=
+          "LITERAL">:lf=</tt>, i.e. - no value.</p>
         </li>
 
         <li>

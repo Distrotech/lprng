@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.27 2002/04/01 17:54:55 papowell Exp $";
+"$Id: printjob.c,v 1.30 2002/05/06 01:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -215,7 +215,7 @@ int Print_job( int output, int status_device, struct job *job,
 		datafile = (void *)job->datafiles.list[count];
 		if(DEBUGL4)Dump_line_list("Print_job - datafile", datafile );
 
-	Set_block_io( output );
+		Set_block_io( output );
 		transfername = Find_str_value(datafile,TRANSFERNAME,Value_sep);
 		openname = Find_str_value(datafile,OPENNAME,Value_sep);
 		format = Find_str_value(datafile,FORMAT,Value_sep);

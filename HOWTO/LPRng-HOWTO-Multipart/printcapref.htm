@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Printcap Database</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="PREVIOUS" title="Serial Printers " href=
     "secserial.htm">
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -156,25 +156,27 @@
 
         <ul>
           <li>
-            <p><tt class="LITERAL">client</tt> FLAG <i class=
-            "EMPHASIS">printcap entry valid only for client
-            programs</i></p>
+            <p><tt class="LITERAL">client</tt> FLAG <span class=
+            "emphasis"><i class="EMPHASIS">printcap entry valid
+            only for client programs</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">oh=</tt> <i class=
-            "EMPHASIS">hosts where printcap entry valid</i></p>
+            <p><tt class="LITERAL">oh=</tt><span class=
+            "emphasis"><i class="EMPHASIS">hosts where printcap
+            entry valid</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">server</tt> <i class=
-            "EMPHASIS">printcap entry valid only for lpd
-            server</i></p>
+            <p><tt class="LITERAL">server</tt><span class=
+            "emphasis"><i class="EMPHASIS">printcap entry valid
+            only for lpd server</i></span></p>
           </li>
 
           <li>
-            <p><tt class="LITERAL">tc</tt> <i class="EMPHASIS">add
-            named printcap entry contents</i></p>
+            <p><tt class="LITERAL">tc</tt><span class="emphasis"><i
+            class="EMPHASIS">add named printcap entry
+            contents</i></span></p>
           </li>
         </ul>
         <br>
@@ -184,8 +186,8 @@
         parts of the <b class="APPLICATION">LPRng</b> printcap
         database: combined client and server printcaps, host
         specific printcap entries, and the <tt class=
-        "LITERAL">tc</tt> <i class="EMPHASIS">include</i>
-        facility.</p>
+        "LITERAL">tc</tt> <span class="emphasis"><i class=
+        "EMPHASIS">include</i></span> facility.</p>
 
         <p>The following is a complete description of how a
         printcap file is processed:</p>
@@ -236,8 +238,9 @@
           </li>
 
           <li>
-            <p>The <tt class="LITERAL">oh</tt> (<i class=
-            "EMPHASIS">o</i>n this <i class="EMPHASIS">h</i>ost)
+            <p>The <tt class="LITERAL">oh</tt> (<span class=
+            "emphasis"><i class="EMPHASIS">o</i></span>n this <span
+            class="emphasis"><i class="EMPHASIS">h</i></span>ost)
             option specifies a list of IP addresses and mask pairs
             or glob strings which are used to determine if this
             printcap entry is valid for this host (see discussion
@@ -265,10 +268,11 @@
           </li>
 
           <li>
-            <p>Finally, each string printcap option with a <i
-            class="EMPHASIS">%X</i> value has <i class=
-            "EMPHASIS">%X</i> replaced by the following values.
-            Unspecified values will not be modified.</p>
+            <p>Finally, each string printcap option with a <span
+            class="emphasis"><i class="EMPHASIS">%X</i></span>
+            value has <span class="emphasis"><i class=
+            "EMPHASIS">%X</i></span> replaced by the following
+            values. Unspecified values will not be modified.</p>
 
             <div class="INFORMALTABLE">
               <a name="AEN5361"></a>
@@ -365,9 +369,9 @@
             <p>When parsing multiple printcap files, these are
             processed in order, and all of their printcap entries
             are combined according to the above procedures. The <tt
-            class="LITERAL">tc</tt> resolution and <i class=
-            "EMPHASIS">%X</i> expansion is done after all the files
-            have been processed.</p>
+            class="LITERAL">tc</tt> resolution and <span class=
+            "emphasis"><i class="EMPHASIS">%X</i></span> expansion
+            is done after all the files have been processed.</p>
           </li>
         </ol>
         <br>
@@ -458,9 +462,10 @@
 
         <p>If you have multiple printers of the same type whose
         configuration is almost identical, then you can define a
-        set of <i class="EMPHASIS">tc</i> only printcap entries
-        containing common information and use the <tt class=
-        "LITERAL">tc</tt> include facility.</p>
+        set of <span class="emphasis"><i class=
+        "EMPHASIS">tc</i></span> only printcap entries containing
+        common information and use the <tt class="LITERAL">tc</tt>
+        include facility.</p>
 
         <p>Printcap entry names may start with period (<tt class=
         "LITERAL">.</tt>), question mark (<tt class=

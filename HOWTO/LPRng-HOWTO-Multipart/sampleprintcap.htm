@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Sample Printcap Entry</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Print Spooling Tutorial " href=
     "tutorial.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,9 +46,10 @@
       Spooling Overview</a>, the information in the <tt class=
       "FILENAME">printcap</tt> database is used control printing
       operations. While there is no RFC specifying its format or
-      content, there is a strong <i class="EMPHASIS">de facto</i>
-      standard for its format. For a complete description of the
-      <tt class="FILENAME">printcap</tt> database see <a href=
+      content, there is a strong <span class="emphasis"><i class=
+      "EMPHASIS">de facto</i></span> standard for its format. For a
+      complete description of the <tt class=
+      "FILENAME">printcap</tt> database see <a href=
       "printcapref.htm">Printcap Database</a>. For a list of all of
       the <tt class="FILENAME">printcap</tt> and configuration
       options see <a href="optionindex.htm">Index To All The
@@ -73,18 +74,21 @@
       <br>
 
       <p>The <tt class="LITERAL">:lp=lp@h4.private</tt> printcap
-      entry tells the <i class="EMPHASIS">client</i> programs that
-      jobs for the <b class="APPLICATION">lp</b> printer or print
-      queue are sent to the <b class="APPLICATION">lp</b> print
-      queue queue on host <tt class="FILENAME">h4.private</tt>.
-      This can also be specified using the The <i class=
-      "EMPHASIS">legacy</i> BSD <tt class="LITERAL">:rp</tt> and
-      <tt class="LITERAL">:rm</tt>. The <tt class=
-      "LITERAL">:rp=</tt><i class="EMPHASIS">queue</i> option
-      specifies the <i class="EMPHASIS">print queue</i> <tt class=
-      "LITERAL">:rm=</tt><i class="EMPHASIS">host</i> option
-      specifies the host. When both <tt class="LITERAL">lp</tt> and
-      <tt class="LITERAL">:rp:rm</tt> are present the <tt class=
+      entry tells the <span class="emphasis"><i class=
+      "EMPHASIS">client</i></span> programs that jobs for the <b
+      class="APPLICATION">lp</b> printer or print queue are sent to
+      the <b class="APPLICATION">lp</b> print queue queue on host
+      <tt class="FILENAME">h4.private</tt>. This can also be
+      specified using the The <span class="emphasis"><i class=
+      "EMPHASIS">legacy</i></span> BSD <tt class="LITERAL">:rp</tt>
+      and <tt class="LITERAL">:rm</tt>. The <tt class=
+      "LITERAL">:rp=</tt><span class="emphasis"><i class=
+      "EMPHASIS">queue</i></span> option specifies the <span class=
+      "emphasis"><i class="EMPHASIS">print queue</i></span> <tt
+      class="LITERAL">:rm=</tt><span class="emphasis"><i class=
+      "EMPHASIS">host</i></span> option specifies the host. When
+      both <tt class="LITERAL">lp</tt> and <tt class=
+      "LITERAL">:rp:rm</tt> are present the <tt class=
       "LITERAL">:lp</tt> option has precedence.</p>
 
       <p>On the printserver the following is a sample printcap
@@ -103,12 +107,12 @@
       <br>
       <br>
 
-      <p>The <tt class="LITERAL">:sd=</tt><i class=
-      "EMPHASIS">directory</i> option (spool queue directory)
-      specifies the directory where print jobs will be placed. The
-      <tt class="LITERAL">%P</tt> will be replaced with the name of
-      the spool queue. The <tt class="LITERAL">:lp</tt> literal is
-      now the path to the output device the <b class=
+      <p>The <tt class="LITERAL">:sd=</tt><span class="emphasis"><i
+      class="EMPHASIS">directory</i></span> option (spool queue
+      directory) specifies the directory where print jobs will be
+      placed. The <tt class="LITERAL">%P</tt> will be replaced with
+      the name of the spool queue. The <tt class="LITERAL">:lp</tt>
+      literal is now the path to the output device the <b class=
       "APPLICATION">lpd</b> server will use to print the job. The
       <tt class="LITERAL">:filter</tt> literal specifies the filter
       program to use to process the job before sending to the

@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Parallel Port Printers</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printer Communication and Protocols "
     href="printercomm.htm">
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -46,19 +46,21 @@
       and connectors), the IO device and Operating System support,
       and finally the print spooler support for the device.</p>
 
-      <p>Originally most parallel port devices were strictly <i
-      class="EMPHASIS">write only</i> with a minimum amount of
-      error information - only hardware signals for <i class=
-      "EMPHASIS">online</i>, <i class="EMPHASIS">out of paper</i>
-      and <i class="EMPHASIS">fault</i> were present. Due to the
-      lack of any other way to interface devices to the Intel based
-      PC platform, desperate hardware designers in search of a
-      cheap (free?) way to interface their IO devices developed
-      ways to manipulate the signals and do <i class=
-      "EMPHASIS">bidirectional</i> communication. Needless to say,
-      no two companies developed the same methods, and no two
-      companies were compatible with any other companies
-      method.</p>
+      <p>Originally most parallel port devices were strictly <span
+      class="emphasis"><i class="EMPHASIS">write only</i></span>
+      with a minimum amount of error information - only hardware
+      signals for <span class="emphasis"><i class=
+      "EMPHASIS">online</i></span>, <span class="emphasis"><i
+      class="EMPHASIS">out of paper</i></span> and <span class=
+      "emphasis"><i class="EMPHASIS">fault</i></span> were present.
+      Due to the lack of any other way to interface devices to the
+      Intel based PC platform, desperate hardware designers in
+      search of a cheap (free?) way to interface their IO devices
+      developed ways to manipulate the signals and do <span class=
+      "emphasis"><i class="EMPHASIS">bidirectional</i></span>
+      communication. Needless to say, no two companies developed
+      the same methods, and no two companies were compatible with
+      any other companies method.</p>
 
       <p>In 1994, the IEEE 1284 standard was first developed,. The
       following information is courtesy of Warp Nine Engineering,
@@ -153,13 +155,14 @@
           that is, once a <tt class="FUNCTION">write()</tt> starts,
           then the process will block until the data is written
           out. If the <tt class="FUNCTION">write()</tt> call is
-          interrupted by a <i class="EMPHASIS">signal</i> and not
-          immediately restarted, then the status returned by the
-          <tt class="FUNCTION">write()</tt> may be an error
-          indication (<tt class="LITERAL">-1</tt>) or the numbers
-          of bytes that were actually written. If an error is
-          returned, then an unknown number were written and the
-          print job must be aborted.</p>
+          interrupted by a <span class="emphasis"><i class=
+          "EMPHASIS">signal</i></span> and not immediately
+          restarted, then the status returned by the <tt class=
+          "FUNCTION">write()</tt> may be an error indication (<tt
+          class="LITERAL">-1</tt>) or the numbers of bytes that
+          were actually written. If an error is returned, then an
+          unknown number were written and the print job must be
+          aborted.</p>
         </li>
 
         <li>
@@ -228,9 +231,10 @@
 
       <p>If your printer is connected to the device name you
       provided, then you should get a page of something out. If the
-      output suffers from the <i class="EMPHASIS">staircase</i>
-      effect, you will see the numbers marching across the page,
-      otherwise the numbers will all be in a single column.</p>
+      output suffers from the <span class="emphasis"><i class=
+      "EMPHASIS">staircase</i></span> effect, you will see the
+      numbers marching across the page, otherwise the numbers will
+      all be in a single column.</p>
     </div>
 
     <div class="NAVFOOTER">

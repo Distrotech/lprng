@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Security Concerns</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Installation" href="installation.htm">
     <link rel="PREVIOUS" title="SAMBA and LPRng" href="smb.htm">
@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -64,13 +64,15 @@
       can use the <tt class="FUNCTION">setuid()</tt> system call
       after binding to this port do drop ROOT capabilities.
       However, in order to fully compatible with RFC1179, <b class=
-      "APPLICATION">lpd</b> must originate connections from a <i
-      class="EMPHASIS">reserved</i> port in the range 721-731,
-      although in practice port 1-1023 seems to be acceptable.</p>
+      "APPLICATION">lpd</b> must originate connections from a <span
+      class="emphasis"><i class="EMPHASIS">reserved</i></span> port
+      in the range 721-731, although in practice port 1-1023 seems
+      to be acceptable.</p>
 
       <p>If inter-operability with non-<b class=
       "APPLICATION">LPRng</b> print spoolers is not desired, then
-      it is <i class="EMPHASIS">trivial</i> to configure <b class=
+      it is <span class="emphasis"><i class=
+      "EMPHASIS">trivial</i></span> to configure <b class=
       "APPLICATION">LPRng</b> to use a non-privileged port by using
       the <tt class="FILENAME">lpd.conf</tt> file. For example, in
       the <tt class="FILENAME">/etc/lpd.conf</tt> file, you only
@@ -90,14 +92,17 @@
       "APPLICATION">lpd</b> server binds and to which the clients
       will connect. <b class="APPLICATION">LPRng</b> applications
       will connect to port 2000 to transfer jobs and ask for
-      status. You can also use this facility to establish a <i
-      class="EMPHASIS">private</i> set of print spoolers which can
-      be used for testing See <a href="testing.htm">Testing and
-      Diagnostic Facilities</a> for more details.<br>
+      status. You can also use this facility to establish a <span
+      class="emphasis"><i class="EMPHASIS">private</i></span> set
+      of print spoolers which can be used for testing See <a href=
+      "testing.htm">Testing and Diagnostic Facilities</a> for more
+      details.<br>
       <br>
 
-      <p>Some <i class="EMPHASIS">legacy</i> print filters are not
-      <i class="EMPHASIS">meta-char-escape</i> proof. For example,
+      <p>Some <span class="emphasis"><i class=
+      "EMPHASIS">legacy</i></span> print filters are not <span
+      class="emphasis"><i class=
+      "EMPHASIS">meta-char-escape</i></span> proof. For example,
       suppose that a user decided to spool a job as follows:</p>
 
       <div class="INFORMALEXAMPLE">
@@ -126,10 +131,10 @@
       The observant reader will observe that the above line may
       have the most hideous consequences if it is processed by a
       shell. For this reason the <b class="APPLICATION">LPRng</b>
-      software takes extreme precautions and <i class=
-      "EMPHASIS">sanitizes</i> control file contents and file names
-      so that they do not contain any control or
-      metacharacters.<br>
+      software takes extreme precautions and <span class=
+      "emphasis"><i class="EMPHASIS">sanitizes</i></span> control
+      file contents and file names so that they do not contain any
+      control or metacharacters.<br>
       <br>
 
       <p>Finally, you can enable the use of a Unix socket for

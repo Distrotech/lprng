@@ -1,0 +1,51 @@
+***************
+*** 504,509 ****
+  			err = errno;
+  			DEBUG1("lpd: connection fd %d", newsock );
+  			if( newsock > 0 ){
+  				pid = Start_worker( "server", &args, newsock );
+  				if( pid < 0 ){
+  					LOGERR(LOG_INFO) _("lpd: fork() failed") );
+--- 508,527 ----
+  			err = errno;
+  			DEBUG1("lpd: connection fd %d", newsock );
+  			if( newsock > 0 ){
++ /*
++  * libwrap/tcp_wrappers:
++  * draht@suse.de, Mon Jan 28 2002
++  */
++ 
++ 			    struct request_info wrap_req;
++ 
++ 			    request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
++ 			    fromhost(&wrap_req);
++ 			    openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
++ 			    if (hosts_access(&wrap_req)) {
++ 				/* We accept. */
++ 				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
++ 
+  				pid = Start_worker( "server", &args, newsock );
+  				if( pid < 0 ){
+  					LOGERR(LOG_INFO) _("lpd: fork() failed") );
+***************
+*** 511,516 ****
+  				} else {
+  					DEBUG1( "lpd: listener pid %d running", pid );
+  				}
+  				close( newsock );
+  				Free_line_list(&args);
+  			} else {
+--- 529,541 ----
+  				} else {
+  					DEBUG1( "lpd: listener pid %d running", pid );
+  				}
++ 			    } else { /* we do not accept the connection: */
++ 				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
++ 			    }
++ /* 
++  * end libwrap
++  */
++ 
+  				close( newsock );
+  				Free_line_list(&args);
+  			} else {

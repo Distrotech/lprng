@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Socket API</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printer Communication and Protocols "
     href="printercomm.htm">
@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,9 +44,9 @@
 
       <p>The Socket API is a very flexible job transfer protocol.
       It is widely support by most Print Server manufacturers, with
-      the Hewlett Packard JetDirect setting the <i class=
-      "EMPHASIS">de facto</i> standard. The Socket API is extremely
-      simple.</p>
+      the Hewlett Packard JetDirect setting the <span class=
+      "emphasis"><i class="EMPHASIS">de facto</i></span> standard.
+      The Socket API is extremely simple.</p>
 
       <ol type="1">
         <li>
@@ -59,21 +59,23 @@
 
         <li>
           <p>When the network connection is established to a system
-          which has an <i class="EMPHASIS">internal printer</i> or
-          for which the Network Print Spooler is an integral part
-          of the system, the printer usually flushes all internal
-          buffers and readies itself to receive a new job. However,
-          when you are using an external Print Server box, you may
-          need to send specific initialization sequences to the
-          printer to ensure that it is reset correctly and is ready
-          to receive new jobs.</p>
+          which has an <span class="emphasis"><i class=
+          "EMPHASIS">internal printer</i></span> or for which the
+          Network Print Spooler is an integral part of the system,
+          the printer usually flushes all internal buffers and
+          readies itself to receive a new job. However, when you
+          are using an external Print Server box, you may need to
+          send specific initialization sequences to the printer to
+          ensure that it is reset correctly and is ready to receive
+          new jobs.</p>
         </li>
 
         <li>
           <p>When the connection is made, all bytes sent to the
           connection are either transferred to and external
-          interface to directly to a <i class="EMPHASIS">print
-          buffer</i> used by the printer's Print Engine.</p>
+          interface to directly to a <span class="emphasis"><i
+          class="EMPHASIS">print buffer</i></span> used by the
+          printer's Print Engine.</p>
         </li>
 
         <li>
@@ -92,13 +94,14 @@
         </li>
 
         <li>
-          <p>If the connection to the printer is <i class=
-          "EMPHASIS">half-closed</i>, that is, the <tt class=
-          "FUNCTION">shutdown()</tt> network system call is used to
-          indicate to the remote printer that no further data will
-          be sent, then the printer may immediately terminate the
-          network connection. This means that no further network or
-          status messages will be sent to the user.</p>
+          <p>If the connection to the printer is <span class=
+          "emphasis"><i class="EMPHASIS">half-closed</i></span>,
+          that is, the <tt class="FUNCTION">shutdown()</tt> network
+          system call is used to indicate to the remote printer
+          that no further data will be sent, then the printer may
+          immediately terminate the network connection. This means
+          that no further network or status messages will be sent
+          to the user.</p>
         </li>
 
         <li>

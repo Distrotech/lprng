@@ -376,7 +376,14 @@ lpd_bounce	A	bool	FALSE
 lpd_force_poll	A	bool	FALSE
 				Forces lpd to periodically poll lpd queues.
 lpd_poll_time	A	num	600
-				After this amount of idle time,  lpd will poll queues
+				Check queues for work at this interval; start queues
+				in groups of 'lpd_poll_servers_started' at intervals
+				of 'lpd_poll_start_interval' seconds
+lpd_poll_start_interval	A	num	10
+				Start 'lpd_poll_servers_started' queue servers at this
+				interval.
+lpd_poll_servers_started	A	num	10
+				Start 'lpd_poll_servers_started' queues at once
 lpd_port	D	str	printer
                 format is [ipaddr%]port.  If the ipaddr is present
                 then the lpd listening socket is bound to the specified

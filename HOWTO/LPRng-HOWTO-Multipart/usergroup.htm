@@ -4,7 +4,7 @@
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>Daemon User and Daemon Group</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Installation" href="installation.htm">
     <link rel="PREVIOUS" title=
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
-          (For LPRng-3.8.10)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 5 May 2002
+          (For LPRng-3.8.11)</th>
         </tr>
 
         <tr>
@@ -44,8 +44,8 @@
       <p>The <b class="APPLICATION">lpd</b> server is started at
       system initialization time and initially runs as ROOT
       (Effective <span class="ACRONYM">UID</span> 0). It performs
-      all file and other operations with <i class=
-      "EMPHASIS">non-privileged</i> user <tt class=
+      all file and other operations with <span class="emphasis"><i
+      class="EMPHASIS">non-privileged</i></span> user <tt class=
       "LITERAL">daemon</tt> Effective <span class=
       "ACRONYM">UID</span> and group <tt class=
       "LITERAL">daemon</tt> Effective GID, and does a <tt class=
@@ -61,8 +61,9 @@
       administration tools should be used to create them. The
       configuration <tt class="LITERAL">--with-userid=UID</tt> and
       <tt class="LITERAL">--with-groupid=GID</tt> can be used to
-      specify the user and group IDs. The user ID must <i class=
-      "EMPHASIS">not</i> have login capability.</p>
+      specify the user and group IDs. The user ID must <span class=
+      "emphasis"><i class="EMPHASIS">not</i></span> have login
+      capability.</p>
     </div>
 
     <div class="NAVFOOTER">
