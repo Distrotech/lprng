@@ -1,3 +1,7 @@
+Version LPRng-3.8.19 - Thu Dec 5 12:34:45 PST 2002
+  Check_for_missing_files was not writing control file.
+  (Spotted by Keith ("Wanna bet on that?") Rinaldo <rinaldok@egr.unlv.edu>
+
 Version LPRng-3.8.18 - Mon Dec 2 12:08:34 PST 2002
   Added the 'fifo' option  - this now makes LPRng handle
   one incoming job at a time in FIFO order.  If you send

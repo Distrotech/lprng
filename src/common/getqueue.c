@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
+"$Id: getqueue.c,v 1.42 2002/12/07 00:30:37 papowell Exp $";
 
 
 /***************************************************************************
@@ -2012,17 +2012,18 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	}
 	s = 0;
 
-	/* we really should not use 's', but it is embedded here... */
 	{
+		int s;
 		char *datalines;
-		char *s = Join_line_list(&controlfile,"\n");
-		DEBUG3( "Fix_control: control info '%s'", s );
+		char *temp = Join_line_list(&controlfile,"\n");
+		DEBUG3( "Fix_control: control info '%s'", temp );
 
 		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
 		DEBUG3( "Fix_control: data info '%s'", datalines );
-		s = safeextend2(s,datalines,__FILE__,__LINE__);
-		Set_str_value(&job->info,CF_OUT_IMAGE,s);
-		if( s ) free(s); s = 0;
+		temp = safeextend2(temp,datalines,__FILE__,__LINE__);
+		if( datalines ) free(datalines); datalines = 0;
+		Set_str_value(&job->info,CF_OUT_IMAGE,temp);
+		if( temp ) free(temp); temp = 0;
 	}
 	
 	if( filter ){
@@ -2075,7 +2076,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 int Create_control( struct job *job, char *error, int errlen,
 	char *xlate_format )
 {
-	char *s, *t, *file_hostname, *number, *priority, *openname;
+	char *fromhost, *file_hostname, *number, *priority, *openname;
 	int status = 0, fd, i;
 	struct stat statb;
 
@@ -2085,9 +2086,9 @@ int Create_control( struct job *job, char *error, int errlen,
 
 	Make_identifier( job );
 
-	if( !(s = Find_str_value(&job->info,FROMHOST,Value_sep)) || Is_clean_name(s) ){
+	if( !(fromhost = Find_str_value(&job->info,FROMHOST,Value_sep)) || Is_clean_name(fromhost) ){
 		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
-		s = Find_str_value(&job->info,FROMHOST,Value_sep);
+		fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
 	}
 	if( Force_IPADDR_hostname_DYN ){
 		char buffer[SMALLBUFFER];
@@ -2099,24 +2100,27 @@ int Create_control( struct job *job, char *error, int errlen,
 			buffer, sizeof(buffer) );
 		DEBUG1("Create_control: remotehost '%s'", const_s );
 		Set_str_value(&job->info,FROMHOST,const_s);
-		s = Find_str_value(&job->info,FROMHOST,Value_sep);
+		fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
 	}
-	if( Force_FQDN_hostname_DYN && !safestrchr(s,'.')
-		&& (t = safestrchr(FQDNRemote_FQDN,'.')) ){
-		s = safestrdup2(s, t, __FILE__,__LINE__ );
-		Set_str_value(&job->info,FROMHOST,s);
-		if( s ) free(s); s = 0;
-		s = Find_str_value(&job->info,FROMHOST,Value_sep);
+	{
+		char *s, *t;
+		if( Force_FQDN_hostname_DYN && !safestrchr(fromhost,'.')
+			&& (t = safestrchr(FQDNRemote_FQDN,'.')) ){
+			s = safestrdup2(fromhost, t, __FILE__,__LINE__ );
+			Set_str_value(&job->info,FROMHOST,s);
+			if( s ) free(s); s = 0;
+			fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
+		}
 	}
 
 
 	if( !Find_str_value(&job->info,DATE,Value_sep) ){
-		s = Time_str(0,0);
+		char *s = Time_str(0,0);
 		Set_str_value(&job->info,DATE,s);
 	}
 	if( (Use_queuename_DYN || Force_queuename_DYN)
 		&& !Find_str_value(&job->info,QUEUENAME,Value_sep) ){
-		s = Force_queuename_DYN;
+		char *s = Force_queuename_DYN;
 		if( s == 0 ) s = Queue_name_DYN;
 		if( s == 0 ) s = Printer_DYN;
 		Set_str_value(&job->info,QUEUENAME,s);
@@ -2143,7 +2147,7 @@ int Create_control( struct job *job, char *error, int errlen,
 	if( ISNULL(file_hostname) ) file_hostname = FQDNHost_FQDN;
 
 	if( isdigit(cval(file_hostname)) ){
-		s = safestrdup2("ADDR",file_hostname,__FILE__,__LINE__);
+		char * s = safestrdup2("ADDR",file_hostname,__FILE__,__LINE__);
 		Set_str_value(&job->info,FILE_HOSTNAME,s);
 		if( s ) free(s); s = 0;
 	} else {
@@ -2155,46 +2159,50 @@ int Create_control( struct job *job, char *error, int errlen,
 	Fix_Z_opts( job );
 	/* fix control file name */
 
-	s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
-	Set_str_value(&job->info,TRANSFERNAME,s);
-	if(s) free(s); s = 0;
+	{
+		char *s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
+		Set_str_value(&job->info,TRANSFERNAME,s);
+		if(s) free(s); s = 0;
+	}
 
 	{
 		/* now we generate the control file image by getting the info
 		 * from the hold file
 		 */
-		char *s = 0, *datalines;
+		char *cf, *datalines;
+		cf = datalines = 0;
 		for( i = 0; i < job->info.count; ++i ){
 			char *t = job->info.list[i];
 			int c;
 			if( t && (c = t[0]) && isupper(c) && c != 'N' && c != 'U' 
 				&& t[1] == '=' ){
 				t[1] = 0;
-				s = safeextend4(s,t,t+2,"\n",__FILE__,__LINE__);
+				cf = safeextend4(cf,t,t+2,"\n",__FILE__,__LINE__);
 				t[1] = '=';
 			}
 		}
 
-		DEBUG4("Create_control: first part '%s'", s );
+		DEBUG4("Create_control: first part '%s'", cf );
 		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
 		DEBUG4("Create_control: data info '%s'", datalines );
-		s = safeextend2(s,datalines,__FILE__,__LINE__);
-		DEBUG4("Create_control: joined '%s'", s );
+		cf = safeextend2(cf,datalines,__FILE__,__LINE__);
+		DEBUG4("Create_control: joined '%s'", cf );
+		if( datalines ) free(datalines); datalines = 0;
+
+		openname = Find_str_value(&job->info,OPENNAME,Value_sep); 
+		if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep); 
+		DEBUG4("Create_control: writing to '%s'", openname );
+		if( (fd = Checkwrite(openname,&statb,0,1,0)) < 0
+			|| ftruncate(fd,0) || Write_fd_str(fd,cf) < 0 ){
+			SNPRINTF(error,errlen)"Write_control: cannot write '%s' - '%s'",
+				openname, Errormsg(errno) );
+			status = 1;
+		}
+		Max_open(fd);
+		if( fd > 0 ) close(fd); fd = -1;
+		if( cf ) free(cf); cf = 0;
 	}
 
-	openname = Find_str_value(&job->info,OPENNAME,Value_sep); 
-	if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep); 
-	DEBUG4("Create_control: writing to '%s'", openname );
-	if( (fd = Checkwrite(openname,&statb,0,1,0)) < 0
-		|| ftruncate(fd,0) || Write_fd_str(fd,s) < 0 ){
-		SNPRINTF(error,errlen)"Write_control: cannot write '%s' - '%s'",
-			openname, Errormsg(errno) );
-		status = 1;
-	}
-	Max_open(fd);
-	if( fd > 0 ) close(fd); fd = -1;
-
-	if( s ) free(s); s = 0;
 
 	return( status );
 }

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
+"$Id: vars.c,v 1.42 2002/12/07 00:30:39 papowell Exp $";
 
 
 /* force local definitions */
@@ -460,8 +460,8 @@ struct keywords Pc_var_list[] = {
 { "send_data_first", 0, FLAG_K, &Send_data_first_DYN,0,0,0},
    /* failure action for server to take after send_try attempts failed */
 { "send_failure_action", 0, STRING_K, &Send_failure_action_DYN,0,0,"=remove"},
-   /* timeout for read/write lpr IO operatons */
-{ "send_job_rw_timeout", 0, INTEGER_K, &Send_job_rw_timeout_DYN,0,0,"=6000"},
+   /* timeout for read/write lpr IO operatons (10 min default) */
+{ "send_job_rw_timeout", 0, INTEGER_K, &Send_job_rw_timeout_DYN,0,0,"=600"},
    /* timeout for read/write status or control operatons */
 { "send_query_rw_timeout", 0, INTEGER_K, &Send_query_rw_timeout_DYN,0,0,"=30"},
    /* numbers of times for server to try sending job - 0 is infinite */
