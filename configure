@@ -1168,7 +1168,7 @@ PATH_SEPARATOR="$ac_path_separator"
 rm -f conftest.sh
 
 PACKAGE=LPRng
-VERSION=3.8.7
+VERSION=3.8.8
 
 ac_aux_dir=
 for ac_dir in . $srcdir/.; do

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.8.7
+.ds VE LPRng-3.8.8
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -93,6 +93,13 @@ and possibly tabs or spaces (whitespace) as well.
 Keyword names can use either underscores (_) or hyphens (-)
 in their names,
 but the underscore is preferred.
+.TP
+\fBinclude\fR pathname [pathname*] (no default)
+This can be used to include files into
+the \fBlpd.conf\fR file.
+The include file parameter a whitespace separated 
+list of files; the files must have absolute pathnames and must
+be readable.
 .TP
 \fBae\fR (default: "jobend $H $n $P $k $b $t")
 This specifies either a script or a filter to be invoked

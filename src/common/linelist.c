@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.11 2002/02/23 03:45:17 papowell Exp $";
+"$Id: linelist.c,v 1.12 2002/02/25 17:43:12 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -1383,14 +1383,15 @@ void Find_default_tags( struct line_list *dest,
 
 /*
  * Read_file_list( struct line_list *model, char *str
- *	char *sep, int sort, char *keysep, int uniq, int trim, int marker )
+ *	char *sep, int sort, char *keysep, int uniq, int trim, int marker,
+ *  int doinclude, int nocomment, int depth, int maxdepth )
  *  read the model information from these files
  *  if marker != then add a NULL line after each file
  */
 
 void Read_file_list( int required, struct line_list *model, char *str,
 	const char *linesep, int sort, const char *keysep, int uniq, int trim,
-	int marker, int doinclude, int nocomment )
+	int marker, int doinclude, int nocomment, int depth, int maxdepth )
 {
 	struct line_list l;
 	int i, start, end, c=0, n, found;
@@ -1398,14 +1399,22 @@ void Read_file_list( int required, struct line_list *model, char *str,
 	struct stat statb;
 
 	Init_line_list(&l);
-	DEBUG3("Read_file_list: '%s', doinclude %d", str, doinclude );
+	DEBUG3("Read_file_list: '%s', doinclude %d, depth %d, maxdepth %d",
+		str, doinclude, depth, maxdepth );
+	if( depth > maxdepth ){
+		Errorcode = JABORT;
+		LOGERR_DIE(LOG_ERR)
+			"Read_file_list: recursion depth %d exceeds maxdepth %d for file '%s'",
+			depth, maxdepth, str );
+	}
 	Split( &l, str, File_sep, 0, 0, 0, 1, 0 ,0);
 	start = model->count;
 	for( i = 0; i < l.count; ++i ){
 		if( stat( l.list[i], &statb ) == -1 ){
-			if( required ){
+			if( required || depth ){
+				Errorcode = JABORT;
 				LOGERR_DIE(LOG_ERR)
-					"Read_file_list: cannot stat required file '%s'",
+					"Read_file_list: cannot stat required or included file '%s'",
 					l.list[i] );
 			}
 			continue;
@@ -1427,7 +1436,7 @@ void Read_file_list( int required, struct line_list *model, char *str,
 				if( found ){
 					DEBUG4("Read_file_list: include '%s'", t+1 );
 					Read_file_list( 1, model, t+1, linesep, sort, keysep, uniq, trim,
-						marker, doinclude, nocomment );
+						marker, doinclude, nocomment, depth+1, maxdepth );
 					/* at this point the include lines are at
 					 *  end to model->count-1
 					 * we need to move the lines from start to end-1
@@ -1461,6 +1470,7 @@ void Read_file_list( int required, struct line_list *model, char *str,
 			}
 		}
 		if( marker ){
+			/* put null at end of list */
 			Check_max( model, 1 );
 			model->list[model->count++] = 0;
 		}
@@ -2147,12 +2157,16 @@ char *Find_default_var_value( void *v )
 void Get_config( int required, char *path )
 {
 	DEBUG1("Get_config: required '%d', '%s'", required, path );
-   /* void Read_file_list( int required, struct line_list *model, char *str,
-	* const char *linesep, int sort, const char *keysep, int uniq, int trim,
-	* int marker, int doinclude, int nocomment )
-	*/
-	Read_file_list( required, &Config_line_list, path,
-		Line_ends, 1, Value_sep, 1, ':', 0, 0, 1 ); 
+	/* void Read_file_list( int required, struct line_list *model, char *str,
+	 *  const char *linesep, int sort, const char *keysep, int uniq, int trim,
+	 *  int marker, int doinclude, int nocomment, int depth, int maxdepth )
+	 */
+	Read_file_list( /*required*/required,
+		/*model*/ &Config_line_list,/*str*/ path,
+		/*linesep*/Line_ends, /*sort*/1, /*keysep*/Value_sep,/*uniq*/1,
+		/*trim*/':',/*marker*/0,/*doinclude*/0,/*nocomment*/1,
+		/*depth*/0,/*maxdepth*/4 ); 
+
 	Set_var_list( Pc_var_list, &Config_line_list);
 	Get_local_host();
 	Expand_vars();
@@ -2270,7 +2284,14 @@ void Getprintcap_pathlist( int required,
 			break;
 		case '/':
 			DEBUG2("Getprintcap_pathlist: file '%s'", path );
-			Read_file_list(required,raw,path,Line_ends,0,0,0,1,0,1,1);
+			/*
+			void Read_file_list( int required, struct line_list *model, char *str,
+				const char *linesep, int sort, const char *keysep, int uniq, int trim,
+				int marker, int doinclude, int nocomment, int depth, int maxdepth )
+			*/
+			Read_file_list(/*required*/required,/*model*/raw,/*str*/path,
+				/*linesep*/Line_ends,/*sort*/0,/*keysep*/0,/*uniq*/0,/*trim*/1,
+				/*marker*/0,/*doinclude*/1,/*nocomment*/1,/*depth*/0,/*maxdepth*/4);
 			break;
 		default:
 			FATAL(LOG_ERR)

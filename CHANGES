@@ -1,3 +1,9 @@
+Version LPRng-3.8.8 - Sat Feb 23 07:35:45 PST 2002
+
+  Restored include file functions to lpd.conf.  Also put in recursion
+  depth checks so that it will stop if you have a loop.
+
+
 Version LPRng-3.8.7 - Fri Feb 22 12:24:38 PST 2002
 
   Modified the wildcard lookup so that it returns some sane

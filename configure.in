@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.7
+VERSION=3.8.8
 
 
 AC_CONFIG_AUX_DIR(.)

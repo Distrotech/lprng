@@ -4,33 +4,11 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: errormsg.h,v 1.11 2002/02/23 03:45:24 papowell Exp $
+ * $Id: errormsg.h,v 1.12 2002/02/25 17:43:18 papowell Exp $
  ***************************************************************************/
-
-
 
 #ifndef _ERRORMSG_H_
 #define _ERRORMSG_H_ 1
-
-#if defined(HAVE_STDARGS)
-void logmsg(int kind, char *msg,...);
-void fatal(int kind, char *msg,...);
-void logerr(int kind, char *msg,...);
-void logerr_die(int kind, char *msg,...);
-void Diemsg(char *msg,...);
-void Warnmsg(char *msg,...);
-void logDebug(char *msg,...);
-void Message(char *msg,...);
-#else
-void logmsg();
-void fatal();
-void logerr();
-void logerr_die();
-void Diemsg();
-void Warnmsg();
-void logDebug();
-void Message();
-#endif
 
 #if defined(FORMAT_TEST)
 #define LOGMSG(X) printf(
@@ -54,8 +32,78 @@ void Message();
 
 /* PROTOTYPES */
 const char * Errormsg ( int err );
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void logmsg(int kind, char *msg,...)
+#else
+ void logmsg(va_alist) va_dcl
+#endif
+;
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void fatal (int kind, char *msg,...)
+#else
+ void fatal (va_alist) va_dcl
+#endif
+;
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void logerr (int kind, char *msg,...)
+#else
+ void logerr (va_alist) va_dcl
+#endif
+;
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void logerr_die (int kind, char *msg,...)
+#else
+ void logerr_die (va_alist) va_dcl
+#endif
+;
+/* VARARGS1 */
+#ifdef HAVE_STDARGS
+ void Diemsg (char *msg,...)
+#else
+ void Diemsg (va_alist) va_dcl
+#endif
+;
+/* VARARGS1 */
+#ifdef HAVE_STDARGS
+ void Warnmsg (char *msg,...)
+#else
+ void Warnmsg (va_alist) va_dcl
+#endif
+;
+/* VARARGS1 */
+#ifdef HAVE_STDARGS
+ void Message (char *msg,...)
+#else
+ void Message (va_alist) va_dcl
+#endif
+;
+/* VARARGS1 */
+#ifdef HAVE_STDARGS
+ void logDebug (char *msg,...)
+#else
+ void logDebug (va_alist) va_dcl
+#endif
+;
 const char *Sigstr (int n);
 const char *Decode_status (plp_status_t *status);
 char *Server_status( int d );
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void setstatus (struct job *job,char *fmt,...)
+#else
+ void setstatus (va_alist) va_dcl
+#endif
+;
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void setmessage (struct job *job,const char *header, char *fmt,...)
+#else
+ void setmessage (va_alist) va_dcl
+#endif
+;
 
 #endif

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.11 2002/02/23 03:45:25 papowell Exp $
+ * $Id: linelist.h,v 1.12 2002/02/25 17:43:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -209,7 +209,7 @@ void Find_default_tags( struct line_list *dest,
 	struct keywords *var_list, char *tag );
 void Read_file_list( int required, struct line_list *model, char *str,
 	const char *linesep, int sort, const char *keysep, int uniq, int trim,
-	int marker, int doinclude, int nocomment );
+	int marker, int doinclude, int nocomment, int depth, int maxdepth );
 void Read_fd_and_split( struct line_list *list, int fd,
 	const char *linesep, int sort, const char *keysep, int uniq,
 	int trim, int nocomment );
