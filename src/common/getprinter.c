@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 5.24 2000/12/25 01:51:06 papowell Exp papowell $";
+"$Id: getprinter.c,v 5.25 2000/12/28 01:32:55 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -294,10 +294,16 @@ void Get_all_printcap_entries(void)
 				&PC_names_line_list, &PC_order_line_list,
 				&PC_info_line_list, 0,
 				&User_PC_names_line_list, &User_PC_info_line_list )) ){
-			if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
-				t = "all";
+			if( safestrcmp( s, "*" ) ){
+				/* no, we use the entries in the list */
+				s = 0;
+			} else if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
+				/* we do have the main wildcard, but it does not have an all entry
+				 * so we use 'all'
+				 */
+				s = 0;
 			}
-			DEBUG1("Get_all_printcap_entries: User '%s' has '%s'",s,t);
+			DEBUG1("Get_all_printcap_entries: looking for 'all' User printcap '%s' has '%s'",s,t);
 		} else if( (s = Select_pc_info("*",
 				&PC_entry_line_list,
 				&PC_alias_line_list,
@@ -314,13 +320,13 @@ void Get_all_printcap_entries(void)
 				 */
 				s = 0;
 			}
-			DEBUG1("Get_all_printcap_entries: User '%s' has '%s'",s,t);
+			DEBUG1("Get_all_printcap_entries: looking for wildcard, User printcap '%s' has '%s'",s,t);
 		}
 		if( t && *t ){
 			Free_line_list( &All_line_list );
 			Split(&All_line_list,t,File_sep,0,0,0,1,0);
 		}
-		if(DEBUGL1)Dump_line_list("Get_all_printcap_entries- User", &User_PC_order_line_list );
+		if(DEBUGL1)Dump_line_list("Get_all_printcap_entries- after User", &User_PC_order_line_list );
 		if( s == 0 ){
 			struct line_list l;
 			Init_line_list(&l);
@@ -331,6 +337,7 @@ void Get_all_printcap_entries(void)
 			for( i = 0; i < l.count; ++i ){
 				s = l.list[i];
 				if( !safestrcmp( ALL, s ) ) continue;
+				if( !safestrcmp( "*", s ) ) continue;
 				Add_line_list(&All_line_list,s, 0, 0, 0);
 			}
 			Remove_duplicates_line_list(&All_line_list);

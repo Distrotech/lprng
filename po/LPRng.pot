@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-12-26 18:41-0800\n"
+"POT-Creation-Date: 2000-12-28 05:05-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -550,136 +550,136 @@ msgstr ""
 msgid "not implemented yet"
 msgstr ""
 
-#: src/common/lpd_control.c:450
+#: src/common/lpd_control.c:460
 #, c-format
 msgid "kill server PID %d with %s\n"
 msgstr ""
 
 #. no message
-#: src/common/lpd_control.c:458
+#: src/common/lpd_control.c:468
 msgid "enabled and started"
 msgstr ""
 
-#: src/common/lpd_control.c:459
+#: src/common/lpd_control.c:469
 msgid "disabled and stopped"
 msgstr ""
 
-#: src/common/lpd_control.c:460
+#: src/common/lpd_control.c:470
 msgid "stopped"
 msgstr ""
 
-#: src/common/lpd_control.c:462
+#: src/common/lpd_control.c:472
 msgid "started"
 msgstr ""
 
-#: src/common/lpd_control.c:463
+#: src/common/lpd_control.c:473
 msgid "disabled"
 msgstr ""
 
-#: src/common/lpd_control.c:464
+#: src/common/lpd_control.c:474
 msgid "enabled"
 msgstr ""
 
-#: src/common/lpd_control.c:465
+#: src/common/lpd_control.c:475
 msgid "redirected"
 msgstr ""
 
-#: src/common/lpd_control.c:466
+#: src/common/lpd_control.c:476
 msgid "holdall on"
 msgstr ""
 
-#: src/common/lpd_control.c:467
+#: src/common/lpd_control.c:477
 msgid "holdall off"
 msgstr ""
 
-#: src/common/lpd_control.c:468
+#: src/common/lpd_control.c:478
 msgid "move done"
 msgstr ""
 
-#: src/common/lpd_control.c:469
+#: src/common/lpd_control.c:479
 msgid "class updated"
 msgstr ""
 
-#: src/common/lpd_control.c:470
+#: src/common/lpd_control.c:480
 msgid "killed job"
 msgstr ""
 
-#: src/common/lpd_control.c:471
+#: src/common/lpd_control.c:481
 msgid "aborted job"
 msgstr ""
 
-#: src/common/lpd_control.c:472
+#: src/common/lpd_control.c:482
 msgid "flushed status"
 msgstr ""
 
-#: src/common/lpd_control.c:492
+#: src/common/lpd_control.c:502
 #, c-format
 msgid "kill load balance server PID %d with %s\n"
 msgstr ""
 
-#: src/common/lpd_control.c:524
+#: src/common/lpd_control.c:534
 #, c-format
 msgid "Do_queue_control: write to fd '%d' failed"
 msgstr ""
 
-#: src/common/lpd_control.c:608
+#: src/common/lpd_control.c:618
 #, c-format
 msgid "%s: no permission '%s'\n"
 msgstr ""
 
-#: src/common/lpd_control.c:690
+#: src/common/lpd_control.c:700
 #, c-format
 msgid "%s: selected '%s'\n"
 msgstr ""
 
-#: src/common/lpd_control.c:699
+#: src/common/lpd_control.c:709
 #, c-format
 msgid "%s: cannot set hold file '%s'\n"
 msgstr ""
 
-#: src/common/lpd_control.c:806
+#: src/common/lpd_control.c:816
 msgid " holdall"
 msgstr ""
 
-#: src/common/lpd_control.c:810
+#: src/common/lpd_control.c:820
 #, c-format
 msgid " class=%s"
 msgstr ""
 
-#: src/common/lpd_control.c:814
+#: src/common/lpd_control.c:824
 msgid " autohold"
 msgstr ""
 
-#: src/common/lpd_control.c:886 src/common/lpd_control.c:941
-#: src/common/lpd_control.c:996
+#: src/common/lpd_control.c:896 src/common/lpd_control.c:951
+#: src/common/lpd_control.c:1006
 #, c-format
 msgid "wrong number arguments, %d"
 msgstr ""
 
-#: src/common/lpd_control.c:892
+#: src/common/lpd_control.c:902
 #, c-format
 msgid "forwarding to '%s'\n"
 msgstr ""
 
-#: src/common/lpd_control.c:894
+#: src/common/lpd_control.c:904
 msgid "forwarding off\n"
 msgstr ""
 
-#: src/common/lpd_control.c:948
+#: src/common/lpd_control.c:958
 #, c-format
 msgid "classes printed '%s'\n"
 msgstr ""
 
-#: src/common/lpd_control.c:951
+#: src/common/lpd_control.c:961
 msgid "all classes printed\n"
 msgstr ""
 
-#: src/common/lpd_control.c:1002
+#: src/common/lpd_control.c:1012
 #, c-format
 msgid "debugging override set to '%s'"
 msgstr ""
 
-#: src/common/lpd_control.c:1004
+#: src/common/lpd_control.c:1014
 msgid "debugging override off"
 msgstr ""
 
@@ -1045,7 +1045,7 @@ msgstr ""
 msgid "error: could not remove '%s'"
 msgstr ""
 
-#: src/common/lpd_remove.c:370
+#: src/common/lpd_remove.c:374
 msgid " ERROR: "
 msgstr ""
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: child.c,v 5.16 2000/12/25 01:51:04 papowell Exp papowell $";
+"$Id: child.c,v 5.17 2000/12/28 01:32:54 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -320,6 +320,9 @@ plp_signal_t cleanup (int passed_signal)
 
 	/* kill children of this process */
 	Killchildren( signalv );
+	Killchildren( SIGINT );
+	Killchildren( SIGHUP );
+	Killchildren( SIGQUIT );
 	Process_list.count = 0;
 	DEBUG1("cleanup: done, exit(%d)", Errorcode);
 

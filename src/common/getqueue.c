@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 5.35 2000/12/27 02:41:51 papowell Exp papowell $";
+"$Id: getqueue.c,v 5.36 2000/12/28 01:32:56 papowell Exp papowell $";
 
 
 /***************************************************************************
@@ -2460,6 +2460,8 @@ int Open_gdbm( int db_create )
 					LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot lock '%s'",
 						Queue_db_file_DYN );
 				}
+			} else {
+				break;
 			}
 		}
 		if( fstat( gdbm_lock, &statb ) ){

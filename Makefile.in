@@ -16,7 +16,7 @@
 #***************************************
 
 PACKAGE=@PACKAGE@
-VERSION=3.7.3
+VERSION=3.7.4
 SRC=@srcdir@
 @SET_MAKE@
 INSTALL=@INSTALL@

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 5.24 2000/12/25 01:51:10 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 5.25 2000/12/28 01:33:01 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -281,9 +281,13 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		for( i = 0; i < active_pid.count; ++i ){
 			pid = Cast_ptr_to_int(active_pid.list[i]);
 			active_pid.list[i] = 0;
-			DEBUGF(DLPRM2)("Get_queue_remove: killing pid '%d' SIGINT", pid );
+			DEBUGF(DLPRM2)("Get_queue_remove: killing pid '%d' SIGHUP/SIGINT/SIGQUIT/SIGCONT", pid );
+			killpg( pid, SIGHUP );
+			kill( pid, SIGHUP );
 			killpg( pid, SIGINT );
 			kill( pid, SIGINT );
+			killpg( pid, SIGQUIT );
+			kill( pid, SIGQUIT );
 			killpg( pid, SIGCONT );
 			kill( pid, SIGCONT );
 		}

@@ -1,13 +1,13 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 5.80 2000/12/27 02:41:33 papowell Exp papowell $
+dnl $Id: configure.in,v 5.82 2000/12/28 12:52:02 papowell Exp papowell $
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
 AC_INIT(Makefile.in)
 
 PACKAGE=LPRng
-VERSION=3.7.3
+VERSION=3.7.4
 
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
@@ -591,7 +591,7 @@ if test -z "$checklibs"; then
 	fi
 fi
 
-echo USE_GDBM $USE_GDBM
+AC_MSG_RESULT(USE_GDBM $USE_GDBM)
 if test "$USE_GDBM" = 1 ; then
 	AC_CHECK_HEADERS(gdbm.h,,[
 		echo "
@@ -616,6 +616,21 @@ You may need to add -I /usr/local/include to the compilation options:
 "
 	exit 1
 	]
+	
+	AC_TRY_LINK([
+#include "gdbm.h"
+],[
+int i = GDBM_SYNC | GDBM_NOLOCK;
+GDBM_FILE dbf;
+gdbm_fdesc(dbf);
+],version=yes,version=no)
+	if test "$version" != "yes" ; then
+		echo "
+WARNING: you do not have GDBM version 1.8.0 or later installed.
+Please install this or use --disable-gdbm to disable gdbm use.
+"
+	exit 1
+	fi
 fi
 )
 

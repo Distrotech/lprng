@@ -1,1 +1,1 @@
-#define PATCHLEVEL "LPRng-3.7.3"
+#define PATCHLEVEL "LPRng-3.7.4"

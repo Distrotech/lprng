@@ -7,7 +7,7 @@
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.in,v 1.39 2000/12/25 01:51:03 papowell Exp papowell $
+# $Id: Makefile.in,v 1.40 2000/12/28 01:32:52 papowell Exp papowell $
 ###########################################################################
 #
 
@@ -23,7 +23,7 @@
 
 
 PACKAGE=@PACKAGE@
-VERSION=3.7.3
+VERSION=3.7.4
 
 # where the source directory is
 SRC=@srcdir@

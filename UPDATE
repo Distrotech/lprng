@@ -1,20 +1,9 @@
-#!/usr/local/bin/perl
-use Getopt::Std;
-$| = 1;
-($dir) = `pwd`;
-chomp $dir;
-print "dir $dir\n";
-($path, $prog) = ($dir =~ m,(.*)/(.*),);
-($name, $ver) = ($prog =~ m,(.*)-(.*),);
-print "prog $prog, name $name, ver $ver\n";
-($newprog = $prog) =~ s/(\d+)$/$1+1/e;
-($newdir = $dir) =~ s/(\d+)$/$1+1/e;
-print "prog $prog, name $name, ver $ver, newprog $newprog, newdir $newdir\n";
-print "\nupdating directory name and links\n";
-if( -l "$path/$name" ){
- 	print "removing link $path/$name\n";
- 	@err = `rm $path/$name`;
-	if( $? ){ die "rm link $prog failed - @err $!\n"; }
-}
-@err = `chdir ..; mv $prog $newprog; ln -s $newprog $name`;
-print @err . "\n";
+#!/bin/sh
+DIR=`pwd | sed -e 's,.*/,,'`
+PREFIX=`echo $DIR | sed -e 's,-.*,,'`
+TAIL=`echo $DIR | sed -e 's,^[^-]*-,,'`
+LAST=`echo $TAIL | sed -e 's,^.*\.,,'`
+BEFORE=`echo $TAIL | sed -e 's,\(^.*\.\).*$,\1,'`
+INCR=`expr $LAST "+" 1`
+NEW=$PREFIX-$BEFORE$INCR
+cd ..; mv $DIR $NEW; rm $PREFIX;

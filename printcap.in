@@ -1,7 +1,7 @@
 ## The Super Quick Guide to LPRng Printcaps
 ##  Patrick Powell <papowell@lprng.com>
 ##          23 Dec 2000
-# VERSION=3.7.3
+# VERSION=3.7.4
 #
 # This printcap provides a very simple way to configure your UNIX
 # or Linux or MS or Apple LPRng printcap.  There are several choices
@@ -14,7 +14,8 @@
 #   uncomment the following line.  This is the normal case for most
 #   single user systems with attached printers or simple network printers.
 #
-#lp|*:force_localhost:client
+#lp:force_localhost:client
+#*:force_localhost:client
 #    [Translation:
 #    lp - default print queue .  If you do not want 'lp' to be the
 #      to be the default print queue, set it to the appropriate value
@@ -30,7 +31,8 @@
 #   using this entry then your printcap configuration is complete
 #   and you can skip the other steps.
 #
-#lp|*:force_localhost@:client:rm=REMOTEHOST
+#lp:force_localhost@:client:rm=REMOTEHOST
+#*:force_localhost@:client:rm=REMOTEHOST
 #    [Translation:
 #    lp - default print queue .  If you do not want 'lp' to be the
 #      to be the default print queue, set it to the appropriate value

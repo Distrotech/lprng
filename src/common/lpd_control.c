@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 5.17 2000/12/25 01:51:09 papowell Exp papowell $";
+"$Id: lpd_control.c,v 5.18 2000/12/28 01:32:59 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -444,8 +444,18 @@ void Do_queue_control( char *user, int action, int *sock,
 	if( signal_server && (fd = Checkread( Queue_lock_file_DYN, &statb ) ) >= 0 ){
 		serverpid = Read_pid( fd, (char *)0, 0 );
 		close( fd );
-		if( serverpid == 0 || kill( serverpid, signal_server ) ){
-			serverpid = 0;
+		if( serverpid ){
+			if( signal_server != SIGUSR1 ){
+				killpg( serverpid, signal_server );
+				killpg( serverpid, SIGHUP );
+				killpg( serverpid, SIGQUIT );
+				kill( serverpid, signal_server );
+				kill( serverpid, SIGHUP );
+				kill( serverpid, SIGQUIT );
+			}
+			if( kill( serverpid, signal_server ) ){
+				serverpid = 0;
+			}
 		} else {
 			SNPRINTF(msg,sizeof(msg))_("kill server PID %d with %s\n"),
 				serverpid, Sigstr(signal_server) );

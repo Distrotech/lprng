@@ -1,16 +1,6 @@
-#!/usr/local/bin/perl
-use Getopt::Std;
-$| = 1;
-($dir) = `pwd`;
-chomp $dir;
-print "dir $dir\n";
-($path, $prog) = ($dir =~ m,(.*)/(.*),);
-($name, $ver) = ($prog =~ m,(.*)-(.*),);
-print "prog $prog, name $name, ver $ver\n";
-print "updating directory name and links\n";
-if( -l "$path/$name" ){
- 	print "removing link $path/$name\n";
- 	@err = `rm $path/$name`;
-	if( $? ){ die "rm link $prog failed - @err $!\n"; }
-}
-@err = `chdir ..; ln -s $dir $name`;
+#!/bin/sh
+DIR=`pwd | sed -e 's,.*/,,'`
+PREFIX=`echo $DIR | sed -e 's,-.*,,'`
+cd ..;
+rm $PREFIX
+ln -s $DIR $PREFIX

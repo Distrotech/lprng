@@ -11,6 +11,28 @@
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
 
+Release LPRng 3.7.4 Wed Dec 27 07:10:27 PST 2000
+  ARGH ARGH!  Distributed the test version and not the release
+  version for 3.7.3 - this has not been a good week.
+
+  The printcap entry '*:client:rm=IPADDR:force_localhost' now works correctly
+  with lpq -a.  Side effect: you do not get status if you do not have a
+  default printer.  i.e. - 'lp|*:client:rm=IPADDR' is better.
+
+  I now kill off process by using SIGHUP, SIGINT, SIGQUIT and SIGCONT.
+    Even Guido thinks this is overkill but expects that there will be
+    some system where even this does not work.
+
+  Added a check for the VERSION of gdbm as well.
+
+  ARGH ARGH ARGH... I fixed a problem with signals (SIGINT) killing off
+   the process waiting for a lock on a file descriptor,  but I did
+   it wrong.
+   (Pointed out most gleefully,  complete with TRUSS output by:
+     Doug Morris <doug@daynetwork.com>
+       AND
+     John Perkins <john@cs.wisc.edu>)
+
 Release LPRng 3.7.3 Sun Dec 24 17:47:52 PST 2000
   Updated the default printcap file with a simplified set
    of instructions.
@@ -1270,7 +1292,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
      # FreeBSD Convenience Script for Source Install
      # -- START --
-     # $Id: CHANGES,v 5.86 2000/12/25 01:50:42 papowell Exp papowell $
+     # $Id: CHANGES,v 5.87 2000/12/28 01:32:37 papowell Exp papowell $
      #
      #  If you are building a PORT, see the
      #  DISTRIBUTIONS/Freebsd directory for a complete port
@@ -1424,7 +1446,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
     
 	# LINUX/RedHat Source Installation Convenience Script
 	# -- START --
-	# $Id: CHANGES,v 5.86 2000/12/25 01:50:42 papowell Exp papowell $
+	# $Id: CHANGES,v 5.87 2000/12/28 01:32:37 papowell Exp papowell $
       *** same as above
 	fix () {
       *** same as above
