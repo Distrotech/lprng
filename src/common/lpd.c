@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
+"$Id: lpd.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
 
 
 #include "lp.h"
@@ -218,7 +218,6 @@ int main(int argc, char *argv[], char *envp[])
 
 		s = Ipp_listen_port_arg;
 		if( ISNULL(s) ) s = Ipp_listen_port_DYN;
-		if( ISNULL(s) ) s = Ipp_port_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
 			ipp_sock = Link_listen(s);
 			DEBUG1("lpd: listening socket fd %d",ipp_sock);

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-02-01 17:00-0800\n"
+"POT-Creation-Date: 2004-02-19 09:51-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -432,101 +432,101 @@ msgstr ""
 msgid "cannot open or lock lockfile - %s"
 msgstr ""
 
-#: src/common/lpd.c:262
+#: src/common/lpd.c:261
 msgid "lpd: main() dofork failed"
 msgstr ""
 
-#: src/common/lpd.c:307 src/common/lpd.c:318
+#: src/common/lpd.c:306 src/common/lpd.c:317
 msgid "lpd: pipe call failed"
 msgstr ""
 
-#: src/common/lpd.c:325
+#: src/common/lpd.c:324
 msgid "lpd: cannot start initial logger process"
 msgstr ""
 
-#: src/common/lpd.c:607
+#: src/common/lpd.c:606
 msgid "lpd: select error!"
 msgstr ""
 
-#: src/common/lpd.c:632
+#: src/common/lpd.c:631
 msgid "lpd: Lpd_request pipe EOF! cannot happen"
 msgstr ""
 
-#: src/common/lpd.c:658 src/common/lpd.c:661
+#: src/common/lpd.c:657 src/common/lpd.c:660
 msgid "Setup_log: open /dev/null failed"
 msgstr ""
 
-#: src/common/lpd.c:668 src/common/lpd.c:672
+#: src/common/lpd.c:667 src/common/lpd.c:671
 #, c-format
 msgid "Setup_log: dup2(%d,%d) failed"
 msgstr ""
 
-#: src/common/lpd.c:677
+#: src/common/lpd.c:676
 #, c-format
 msgid "Setup_log: open %s failed"
 msgstr ""
 
-#: src/common/lpd.c:721
+#: src/common/lpd.c:720
 msgid "lpd: Cannot truncate lock file"
 msgstr ""
 
-#: src/common/lpd.c:739
+#: src/common/lpd.c:738
 #, c-format
 msgid "lpd: Cannot open lock file '%s'"
 msgstr ""
 
-#: src/common/lpd.c:819
+#: src/common/lpd.c:818
 #, c-format
 msgid ""
 "usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP "
 "destination port]\n"
 msgstr ""
 
-#: src/common/lpd.c:820
+#: src/common/lpd.c:819
 msgid " Options\n"
 msgstr ""
 
-#: src/common/lpd.c:821
+#: src/common/lpd.c:820
 msgid " -D dbg      - set debug level and flags\n"
 msgstr ""
 
-#: src/common/lpd.c:822
+#: src/common/lpd.c:821
 msgid " -F          - run in foreground, log to STDERR\n"
 msgstr ""
 
-#: src/common/lpd.c:823
+#: src/common/lpd.c:822
 msgid " -L logfile  - append log information to logfile\n"
 msgstr ""
 
-#: src/common/lpd.c:824
+#: src/common/lpd.c:823
 msgid " -V          - show version info\n"
 msgstr ""
 
-#: src/common/lpd.c:825
+#: src/common/lpd.c:824
 msgid ""
 " -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port "
 "(lpd_listen_port)\n"
 msgstr ""
 
-#: src/common/lpd.c:826
+#: src/common/lpd.c:825
 msgid ""
 " -P path     - UNIX socket path, 'off' disables UNIX listening socket "
 "(unix_socket_path)\n"
 msgstr ""
 
-#: src/common/lpd.c:827
+#: src/common/lpd.c:826
 msgid " -R port     - remote LPD server port (lpd_port)\n"
 msgstr ""
 
-#: src/common/lpd.c:921
+#: src/common/lpd.c:920
 msgid "lpd: fork() failed"
 msgstr ""
 
-#: src/common/lpd.c:932
+#: src/common/lpd.c:931
 msgid "lpd: accept on listening socket failed"
 msgstr ""
 
-#: src/common/lpd.c:951
+#: src/common/lpd.c:950
 msgid "Start_all: pipe failed!"
 msgstr ""
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
+"$Id: getqueue.c,v 1.68 2004/02/24 19:37:32 papowell Exp $";
 
 
 /***************************************************************************
@@ -723,9 +723,10 @@ void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  )
 		&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
 	if( &job->info.count ) {
 		struct line_list cf_line_list, *datafile;
-		Init_line_list(&cf_line_list);
 		int i;
 		char *s;
+
+		Init_line_list(&cf_line_list);
 
 		if( (s = Find_str_value(&job->info,HFDATAFILES)) ){
 			Split(&cf_line_list,s,"\001",0,0,0,0,0,0);

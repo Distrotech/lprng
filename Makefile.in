@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 1.65 2004/02/04 00:54:04 papowell Exp $
+# $Id: Makefile.in,v 1.68 2004/02/24 19:37:17 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -257,6 +257,7 @@ update:
 ###############################################################################
 
 tar: distclean
+	chmod a+x STANDARD_configuration configure
 	rm -f */Makefile Makefile
 	chmod 755 `find . -name install-sh -print`
 	chmod 755 `find . -name mkinstalldirs -print`
@@ -273,6 +274,7 @@ tar: distclean
 configure: configure.in
 	autoconf
 	autoheader
+	chmod a+x STANDARD_configuration configure
 
 dist: update ci distclean tar send
 redist: ci distclean tar send

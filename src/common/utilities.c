@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.65 2004/02/04 00:54:13 papowell Exp $";
+"$Id: utilities.c,v 1.68 2004/02/24 19:37:36 papowell Exp $";
 
 #include "lp.h"
 
@@ -85,7 +85,7 @@ char *Pretty_time( time_t t )
 		t = tv.tv_sec;
 	}
 	tmptr = localtime( &t );
-	strftime( buffer, sizeof(buffer), "%b %d %R %Y", tmptr );
+	strftime( buffer, sizeof(buffer), "%b %d %H:%M:%S %Y", tmptr );
 
 	return( buffer );
 }

@@ -1,3 +1,16 @@
+Version LPRng-3.8.26 - Tue Feb 3 16:58:00 PST 2004
+  ADDITION to UTILS:
+    VeryFlexibleChooser.pl script uses SNMP to get printer
+    status and selects printer.
+  (Contributed by: Henrik Edlund <henrik@edlund.org>)
+
+  Fixed:
+   --disable-werror configuration option not set correctly.
+  (Noticed and patched by:  Gabriele Balducci <balducci@univ.trieste.it>)
+
+   IPP listening enabled by default.  Should not be enabled by default.
+   (ipp_listen_port=0)
+
 Version LPRng-3.8.25 - Wed Jan 7 04:46:12 PST 2004
 
   MAJOR CHANGE in internals:

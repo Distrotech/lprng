@@ -1410,7 +1410,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=LPRng
-VERSION=3.8.25
+VERSION=3.8.26
 
 
 ac_aux_dir=
@@ -2467,7 +2467,7 @@ if test "${enable_werror+set}" = set; then
 if test "$enableval" = "yes" ; then
 	v=yes;  werror=" -Werror ";
 else
-	v=no; werror ="";
+	v=no; werror="";
 fi
 
 else

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.68 2004/02/24 19:37:33 papowell Exp $";
 
 
 #include "lp.h"
@@ -1662,15 +1662,19 @@ void Generate_control_file( struct job *job )
 	struct stat statb;
 	int i, fd = -1;
 	char *cf = 0;
+	char *datalines, *openname, *transfername;
+
 	char *priority = Find_str_value(&job->info,PRIORITY);
 	char *number = Find_str_value( &job->info,NUMBER);
 	char *file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 	char *s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
+
 	Set_str_value(&job->info,CFTRANSFERNAME,s);
 	if(s) free(s); s = 0;
-	char *datalines = Find_str_value(&job->info,DATAFILES);
-	char *openname = Find_str_value(&job->info,OPENNAME); 
-	char *transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	datalines = Find_str_value(&job->info,DATAFILES);
+	openname = Find_str_value(&job->info,OPENNAME); 
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+
 	for( i = 0; i < job->info.count; ++i ){
 		char *t = job->info.list[i];
 		int c;

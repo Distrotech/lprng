@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: ssl_auth.h,v 1.34 2004/02/04 00:54:15 papowell Exp $
+ * $Id: ssl_auth.h,v 1.37 2004/02/24 19:37:39 papowell Exp $
  ***************************************************************************/
 
 

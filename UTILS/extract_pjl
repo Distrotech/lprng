@@ -91,10 +91,11 @@ if( $host ){
 	or die "could not connect to $host, port $port";
 	print $socket
 	"\033%-12345X" .
-	"\@PJL\r\n" .
-	"\@PJL INFO VARIABLES\r\n" .
-	"\@PJL INFO ID\r\n" .
-	"\@PJL INFO CONFIG\r\n" .
+	"\@PJL\n" .
+	"\@PJL INFO VARIABLES\n" .
+	"\@PJL INFO ID\n" .
+	"\@PJL INFO CONFIG\n" .
+	"\@PJL ENTER LANGUAGE = PCL\n" .
 	"\033%-12345X"
 		or die "write to socket failed";
 	my $s = IO::Select->new();

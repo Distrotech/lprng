@@ -1,0 +1,5 @@
+#!/bin/sh
+for i in lp lpc lpq lpr lprm lpd lpstat ; do
+v=` which $i `
+echo $v; rm -f $v
+done
