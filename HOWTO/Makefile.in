@@ -78,6 +78,7 @@ update:
 	./updatesgmlmirrors ../MIRRORS *.sgml
 	./updateversion *.sgml
 	cp ../CHANGES .
+	rm -f genindex.sgml
 	perl collateindex.pl -t "Index" -N -o genindex.sgml
 	jade -V html-index -V nochunks -t sgml \
 		$(CATALOGS) -d \

@@ -47,7 +47,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)"
 ac_help="$ac_help
-  --with-lpd_printcap_path=PATH     path of lpd_printcap (NONE)"
+  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd_printcap)"
 ac_help="$ac_help
   --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
                                        use 'no' to disable installation and lpd startup"
@@ -602,7 +602,7 @@ fi
 
 
 PACKAGE=LPRng
-VERSION=3.7.9
+VERSION=3.8.1
 
 
 ac_aux_dir=
@@ -1586,7 +1586,7 @@ if test "${with_lpd_printcap_path+set}" = set; then
   withval="$with_lpd_printcap_path"
   LPD_PRINTCAP_PATH=$withval
 else
-  LPD_PRINTCAP_PATH=
+  LPD_PRINTCAP_PATH=\${sysconfdir}/lpd_printcap
 fi
 
 echo "$ac_t""$LPD_PRINTCAP_PATH" 1>&6

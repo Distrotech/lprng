@@ -2,16 +2,17 @@
 <html>
   <head>
     <meta name="generator" content="HTML Tidy, see www.w3.org">
-    <title>Duplex Printing</title>
+    <title>Lexmark Printers</title>
     <meta name="GENERATOR" content=
     "Modular DocBook HTML Stylesheet Version 1.71 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printcap Database " href=
     "printcapref.htm">
-    <link rel="PREVIOUS" title="Tektronix Phaser Printers " href=
+    <link rel="PREVIOUS" title=
+    "Using Programs To Get Printcap Information " href=
+    "secnis.htm">
+    <link rel="NEXT" title="Tektronix Phaser Printers " href=
     "p450.htm">
-    <link rel="NEXT" title="Solaris, Newsprint and FrameMaker"
-    href="x6173.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -20,84 +21,74 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 15 Oct 2001
-          (For LPRng-3.7.9)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 16 Nov 2001
+          (For LPRng-3.8.1)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "p450.htm" accesskey="P">Prev</a></td>
+          "secnis.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           12. Printcap Database</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x6173.htm" accesskey="N">Next</a></td>
+          "p450.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
     </div>
 
     <div class="SECT1">
-      <h1 class="SECT1"><a name="AEN6152">12.21. Duplex
-      Printing</a></h1>
+      <h1 class="SECT1"><a name="AEN6152">12.19. Lexmark
+      Printers</a></h1>
 
-      <p>Duplex printing is when you print on both sides of a page.
-      Some printers which do duplex printing require that you send
-      them special commands to force this mode. This is usually
-      done by the FILTERS. The <b class="APPLICATION">ifhp</b>
-      filter makes a stab at sending the PJL or PostScript commands
-      to the printer. Many people have reported problems doing
-      duplex printing, so here is a check list.</p>
+      <p>Some Lexmark printers do not send <i class="EMPHASIS">end
+      of job</i> status back unless configured to do so. Here is
+      what is needed to force this. (This capability has been
+      incorporated into the <b class="APPLICATION">ifhp</b>
+      filter.)</p>
 
-      <ol type="1">
-        <li>
-          <p>Make sure you have enough memory for the worst case
-          print job. Usually the printer has to rasterize both
-          pages before it can produce an impression. It may require
-          much more memory than you expect.</p>
-        </li>
-
-        <li>
-          <p>Check your printer manual to discover the EXACT form
-          of the <tt class="LITERAL">enter duplex mode</tt> command
-          and make sure that either the command is part of the job
-          (PJL language at the start of the job, postscript header,
-          etc), or that the filter generates the correct form.</p>
-
-          <p>Note there is a PostScript Printer Description file
-          (PPD) for most printers that support PostScript, and they
-          even have the PJL and PostScript code for this in the PPD
-          file.</p>
-        </li>
-
-        <li>
-          <p>It has been observed that even with what would
-          apparently be sufficient memory, that many duplex jobs
-          print 'oddly', that they are not aligned on the same side
-          in the same way, etc etc. This may not be the fault of
-          the software, but of the support for duplex
-          operation.</p>
-        </li>
-
-        <li>
-          <p>Read the <b class="APPLICATION">ifhp</b>
-          documentation, and create a configuration section in the
-          <tt class="FILENAME">ifhp.conf</tt> file for your
-          printer.</p>
-        </li>
-      </ol>
-      <br>
-      <br>
-
-      <p>I know this is painful, but until there is a uniform way
-      to get the correct commands extracted from either PPD or some
-      other database then this appears to be the only way to do it.
-      <a name="AEN6170"></a></p>
-
-      <blockquote class="BLOCKQUOTE">
-        <p><i class="EMPHASIS">Patrick Powell</i></p>
-      </blockquote>
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN6157"></a>
+<pre class="SCREEN">
+    From: Matt White &lt;whitem@bofh.usask.ca&gt;
+    To: lprng@lprng.com
+    Date: Wed, 21 Jan 1998 18:25:50 -0600 (CST)
+    Subject: Re: [LPRng] ifhp with Lexmark Optra N printer
+    
+    On Wed, 21 Jan 1998, Simon Greaves wrote:
+    
+    &gt; Apologies in advance if this is way off mark, but we've been evaluating a
+    &gt; commercial print charging package (Geomica) which works by talking to the
+    &gt; printer in what I think is a similar way to the ifhp filters. Lexmarks are
+    &gt; currently a big headache because they seem to fail to return the message
+    &gt; that they have finished printing which screws things up somewhat. In our
+    &gt; case, it is believed to be a problem with the Lexmark firmware which they
+    &gt; are looking into.
+    
+    There is a fix for that...it is originally from the Lexmark 4039 series,
+    but it still works on the Optra S 1650 machines that we have (and should
+    work on the rest of the optra line).  Just send this little chunk of
+    postscript to the printer once:
+    
+    -----------snip----------
+    %! Postscript utility file to set the 4039 printer into synchronous mode
+    serverdict begin 0 exitserver
+    statusdict begin true setenginesync end
+    -----------snip----------
+    
+    Basically, it causes the printer to wait until it is finished printing
+    before actually reporting that it is done.  I've got 3 Optra S printers
+    running with ifhp right now with no extra options (just defaults).
+    
+    ---------------------------------------------------------------------
+    - Matt White                         whitem@arts.usask.ca           -
+    - Network Technical Support          http://arts.usask.ca/~whitem   -
+    - College of Arts &amp; Science          University of Saskatchewan     -
+    ---------------------------------------------------------------------
+</pre>
+      </div>
       <br>
       <br>
     </div>
@@ -109,24 +100,24 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "p450.htm" accesskey="P">Prev</a></td>
+          "secnis.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x6173.htm" accesskey="N">Next</a></td>
+          "p450.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>
-          <td width="33%" align="left" valign="top">Tektronix
-          Phaser Printers</td>
+          <td width="33%" align="left" valign="top">Using Programs
+          To Get Printcap Information</td>
 
           <td width="34%" align="center" valign="top"><a href=
           "printcapref.htm" accesskey="U">Up</a></td>
 
-          <td width="33%" align="right" valign="top">Solaris,
-          Newsprint and FrameMaker</td>
+          <td width="33%" align="right" valign="top">Tektronix
+          Phaser Printers</td>
         </tr>
       </table>
     </div>

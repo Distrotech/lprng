@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.25 2001/10/15 13:25:35 papowell Exp $";
+"$Id: utilities.c,v 1.28 2001/11/16 16:06:46 papowell Exp $";
 
 #include "lp.h"
 
@@ -690,7 +690,7 @@ int Set_block_io( int fd )
  *     write data from to this fd from this buffer before this timeout
  *  int timeout
  *       > 0  - wait total of this long
- *       0    - wait indefinately
+ *       0    - wait indefinitely
  *      -1    - do not wait
  *  Returns:
  *   **outbuffer, *outlen updated
@@ -1024,10 +1024,10 @@ void Clear_timeout( void )
 
 /***************************************************************************
  * Setup_uid()
- * 1. checks for the correct daemon uid
- * 2. checks to see if called (only needs to do this once)
- * 3. if UID 0 or EUID 0 forces both UID and EUID to 0 (test)
- * 4. Sets UID_root flag to indicate that we can change
+ * 1. gets the original EUID, RUID, EGID, RGID
+ * 2. if UID 0 or EUID 0 forces both UID and EUID to 0 (test)
+ * 3. Sets the EUID to the original RUID
+ *    This leaves the UID (EUID) 
  ***************************************************************************/
 
 void Setup_uid(void)
@@ -1050,16 +1050,16 @@ void Setup_uid(void)
 			/* set RUID/EUID to ROOT - possible if EUID or UID is 0 */
 			if(
 #				ifdef HAVE_SETEUID
-					setuid( (uid_t)0 ) || seteuid( (uid_t)0 )
+					setuid( (uid_t)0 ) || seteuid( OriginalRUID )
 #				else
-					setuid( (uid_t)0 ) || setreuid( 0, 0 )
+					setuid( (uid_t)0 ) || setreuid( 0, OriginalRUID )
 #				endif
 				){
 				FATAL(LOG_ERR)
 					"Setup_uid: RUID/EUID Start %d/%d seteuid failed",
 					OriginalRUID, OriginalEUID);
 			}
-			if( getuid() || geteuid() ){
+			if( getuid() ){
 				FATAL(LOG_ERR)
 				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
 					OriginalRUID, OriginalEUID, 
@@ -1067,6 +1067,9 @@ void Setup_uid(void)
 			}
 			UID_root = 1;
 		}
+		DEBUG1( "Setup_uid: Original RUID/EUID %d/%d, RUID/EUID %d/%d",
+					OriginalRUID, OriginalEUID, 
+					getuid(), geteuid() );
 		SetRootUID = 1;
 	}
 	errno = err;
@@ -1164,7 +1167,6 @@ void Setup_uid(void)
  */
 int To_euid_root(void)
 {
-	Setup_uid();
 	return( seteuid_wrapper( 0 )	);
 }
 
@@ -1172,7 +1174,6 @@ int To_euid_root(void)
 
 int To_daemon(void)
 {
-	Setup_uid();
 	Set_full_group( DaemonUID, DaemonGID );
 	To_daemon_called = 1;
 	return( seteuid_wrapper( DaemonUID )	);
@@ -1185,17 +1186,16 @@ int To_user(void)
 		LOGMSG(LOG_ERR) "To_user: LOGIC ERROR! To_daemon has been called");
 		abort();
 	}
-	Setup_uid();
 	/* Set_full_group( OriginalRUID, OriginalRGID ); */
 	return( seteuid_wrapper( OriginalRUID )	);
 }
 int To_ruid(int ruid)
 {
-	Setup_uid(); return( setruid_wrapper( ruid )	);
+	return( setruid_wrapper( ruid )	);
 }
 int To_euid( int euid )
 {
-	Setup_uid(); return( seteuid_wrapper( euid ) );
+	return( seteuid_wrapper( euid ) );
 }
 
 /*

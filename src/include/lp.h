@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.25 2001/10/15 13:25:39 papowell Exp $
+ * $Id: lp.h,v 1.28 2001/11/16 16:06:49 papowell Exp $
  ***************************************************************************/
 
 
@@ -322,6 +322,7 @@ EXTERN char* Filter_path_DYN;
 EXTERN int Fake_large_file_DYN; 	/* fake large file size if you cannot use 0 */
 EXTERN int Filter_poll_interval_DYN; /* intervals at which to check filter */
 EXTERN int Force_FQDN_hostname_DYN; /* force FQDN Host name in control file */
+EXTERN int Force_IPADDR_hostname_DYN; /* force IPADDR for Host name in control file */
 EXTERN int Force_localhost_DYN;	/* force localhost for client job transfer */
 EXTERN char* Force_lpq_status_DYN;	/* force lpq status format */
 EXTERN int Force_poll_DYN; /* force polling job queues */
@@ -372,10 +373,12 @@ EXTERN char* Mail_operator_on_error_DYN;
 EXTERN int Max_connect_interval_DYN;	/* maximum connect interval */
 EXTERN int Max_copies_DYN; /* maximum copies allowed */
 EXTERN int Max_job_size_DYN; /* maximum job size (1Kb blocks, 0 = unlimited) */
+EXTERN int Max_accounting_file_size_DYN;	/* maximum accounting file size */
 EXTERN int Max_log_file_size_DYN;	/* maximum log file size */
 EXTERN int Max_servers_active_DYN;	/* maximum number of servers active */
 EXTERN int Max_status_line_DYN; /* maximum status line size */
 EXTERN int Max_status_size_DYN;
+EXTERN int Min_accounting_file_size_DYN;	/* minimum accounting file size */
 EXTERN int Min_log_file_size_DYN;	/* minimum log file size */
 EXTERN int Min_printable_count_DYN; /* minimum printable characters for printable check */
 EXTERN int Min_status_size_DYN;
@@ -417,6 +420,7 @@ EXTERN char* Remote_support_DYN; /* Operations allowed to remote system */
 EXTERN char* Remove_Z_DYN; /* remove -Z options on outgoing or filter*/
 EXTERN char* Report_server_as_DYN; /* report server name as this value */
 EXTERN int Require_configfiles_DYN; /* require lpd.conf, printcap, lpd.perms files */
+EXTERN int Require_explicit_Q_DYN; /* require default queue to be explicitly defined */
 EXTERN int Retry_ECONNREFUSED_DYN; /* retry on ECONNREFUSED  */
 EXTERN int Retry_NOLINK_DYN; /* retry on link connection failure */
 EXTERN char* Return_short_status_DYN;	/* return short status */

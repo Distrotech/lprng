@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.25 2001/10/15 13:25:26 papowell Exp $";
+"$Id: accounting.c,v 1.28 2001/11/16 16:06:37 papowell Exp $";
 
 
 #include "lp.h"
@@ -73,6 +73,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 	struct line_list args;
 	struct stat statb;
 
+
 	Init_line_list(&args);
 	msg[0] = 0;
 	err = JSUCC;
@@ -129,7 +130,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			port = safestrchr( host, '%' );
 			*port++ = 0;
 			
-			DEBUG2("Setup_accounting: connecting to '%s'%%'%s'",host,port);
+			DEBUG2("Do_accounting: connecting to '%s'%%'%s'",host,port);
 			if( (tempfd = Link_open(host,port,Connect_timeout_DYN,0 )) < 0 ){
 				err = errno;
 				Errorcode= JFAIL;
@@ -146,7 +147,11 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			shutdown(tempfd,1);
 		} else {
 			tempfd = Checkwrite( Accounting_file_DYN, &statb, 0, Create_files_DYN, 0 );
-			DEBUG2("Setup_accounting: fd %d", tempfd );
+			if( !end ){
+				tempfd = Trim_status_file( tempfd, Accounting_file_DYN, Max_accounting_file_size_DYN,
+					Min_accounting_file_size_DYN );
+			}
+			DEBUG2("Do_accounting: fd %d", tempfd );
 			if( tempfd > 0 ){
 				if( Write_fd_str( tempfd, args.list[0] ) < 0 ){
 					err = errno;
@@ -157,6 +162,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			}
 		}
 	}
+
 	if( tempfd > 0 && err == 0 && end == 0 && Accounting_check_DYN ){
 		msg[0] = 0;
 		len = 0;
@@ -171,7 +177,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			if( (t = strchr(s,'\n')) ) *t = 0;
 			if( *s == 0 || !safestrncasecmp( s, "accept", 6 ) ){
 				err = JSUCC;
-			} else if( safestrncasecmp( s, "hold", 4 ) ){
+			} else if( !safestrncasecmp( s, "hold", 4 ) ){
 				err = JHOLD;
 			} else if( !safestrncasecmp( s, "remove", 6 ) ){
 				err = JREMOVE;

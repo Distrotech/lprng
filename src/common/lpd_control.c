@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.25 2001/10/15 13:25:30 papowell Exp $";
+"$Id: lpd_control.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
 
 
 #include "lp.h"
@@ -705,7 +705,7 @@ int Do_control_file( char *user, int action, int *sock,
 		Set_str_value(&job.info,ERROR,0 );
 		/* record the last update person */
 		Perm_check_to_list(&l, &Perm_check );
-		if( Set_hold_file(&job,&l) ){
+		if( Set_hold_file(&job,&l,0) ){
 			setmessage( &job, TRACE, "LPC failed" );
 			SNPRINTF( msg, sizeof(msg))
 				_("%s: cannot set hold file '%s'\n"),

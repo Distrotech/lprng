@@ -56,7 +56,7 @@
 #
 #Step 2: (For the VERY paranoid)
 #   read the rest of this Makefile!
-#	${MAKE} checkit
+#	${MAKE} -f Makefile.build checkit
 #     this does all sorts of tests, etc.
 #   The final result is LPRng installed and a port made in this
 #   directory.
@@ -73,51 +73,21 @@
 # Notes and warnings:
 # 
 
-PORTNAME=LPRng
-PORTVERSION=3.7.9
-CATEGORIES=	    sysutils print
-MASTER_SITES=	ftp://ftp.lprng.com/pub/LPRng/LPRng/
-EXTRACT_SUFX=	.tgz
-
-MAINTAINER=	papowell@astart.com
-
-#RUN_DEPENDS=	ifhp:${PORTSDIR}/print/ifhp
-
-PREFIX?=/usr
-
-HAS_CONFIGURE=	yes
-GNU_CONFIGURE=	yes
-INSTALLS_SHLIB=	yes
-
-CONFIGURE_ARGS= \
-	--prefix=${PREFIX} \
-	--sysconfdir=/etc \
-	--with-ldopts="-L/usr/local/lib" \
-	--with-ccopts="-I/usr/local/include" \
-	--with-filterdir=${PREFIX}/libexec/filters \
-	--with-ld_library_path="${PREFIX}/lib:/lib:/usr/lib:/usr/local/lib" \
-	--with-filter_path="${PREFIX}/bin:/bin:/usr/bin:${PREFIX}/sbin:/sbin:/usr/sbin"
-	
-
-MAN1=cancel.1 lp.1 lpbanner.1 lpf.1 lpq.1 lpr.1 lprm.1 lpstat.1 monitor.1 pclbanner.1 psbanner.1
-MAN5=lpd.conf.5 lpd.perms.5 printcap.5
-MAN8=checkpc.8 lpc.8 lpd.8
-
-post-install:
-.if !defined(NOPORTSDOCS)
-	${MKDIR} ${DESTDIR}${PREFIX}/share/doc/${DISTNAME}
-	${CP} ` ls \
-	    ${WRKSRC}/HOWTO/*.txt \
-	    ${WRKSRC}/HOWTO/*.ps \
-	    ${WRKSRC}/HOWTO/*.pdf \
-	    ${WRKSRC}/HOWTO/*.html \
-	    ${WRKSRC}/HOWTO/*.gif \
-	    ${WRKSRC}/HOWTO/*.png \
-	    ${WRKSRC}/HOWTO/*.jpg \
-	    ${WRKSRC}/HOWTO/*.ppt 2>/dev/null `\
-		${DESTDIR}${PREFIX}/share/doc/${DISTNAME};
-.endif
-	@${CAT} pkg-message
+checkit:
+	${MAKE} -f Makefile.build cleanit
+	${MAKE} makesum
+	${MAKE} clean all
+	${MAKE} -f Makefile.build plist
+	-${MAKE} deinstall
+	${MAKE} install deinstall
+	${MAKE} reinstall
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.tgz
+	${MAKE} deinstall
+	pkg_add *.tgz
+	pkg_delete ${DISTNAME}
+	${MAKE} -f Makefile.build port
 
 # Automated PLIST and INSTALL generation
 #   - I wonder why more scripts don't have this, it would make life easier
@@ -170,10 +140,10 @@ plist:
 	$(PERL) -spi.bak -e \
 	"s/^MAN1=.*/MAN1=$${MAN1}/; s/^MAN5=.*/MAN5=$${MAN5}/; s/^MAN8=.*/MAN8=$${MAN8}/;" \
 		Makefile
-# get directories
+# get directories and put in reverse order so that deeper are removed first
 	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type d) \
 	 | comm -13 /tmp/OLD-DIRS - \
-	 | ${SED} -e /filters/d -e s#^..## -e 's#^#@dirrm  #' >> /tmp/PLIST
+	 | ${SED} -e /filters/d -e s#^..## -e 's#^#@dirrm  #' | sort -r >> /tmp/PLIST
 # now update the PLIST
 	${CP} /tmp/PLIST pkg-plist
 
@@ -208,10 +178,6 @@ packageit:
 	${MAKE} deinstall
 	pkg_add *.tgz
 	pkg_delete ${DISTNAME}
-	${MAKE} reinstall
-	${MAKE} package
-	-${MAKE} removeit
-	${MAKE} addit
 
 addit:
 	pkg_add ${DISTNAME}.tgz
@@ -226,17 +192,8 @@ port: clean
 	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}
 	cd /tmp; sh ${PORTNAME}.port; cd ${PORTNAME}; ${MAKE}
 
-checkit:
-	${MAKE} cleanit
-	${MAKE} makesum
-	${MAKE} clean all
-	${MAKE} plist
-	-${MAKE} deinstall
-	${MAKE} install deinstall
-	${MAKE} packageit
-
 cleanit:
-	-${RM} -rf pkg-plist distinfo *.tgz work LPRng.diffs LPRng
-	-${CP} /dev/null pkg-plist
+	rm -rf pkg-plist distinfo *.tgz work LPRng.diffs LPRng
+	cp /dev/null pkg-plist
 
-.include <bsd.port.mk>
+.include "Makefile"

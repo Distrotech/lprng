@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.25 2001/10/15 13:25:35 papowell Exp $";
+"$Id: vars.c,v 1.28 2001/11/16 16:06:46 papowell Exp $";
 
 
 /* force local definitions */
@@ -211,6 +211,8 @@ struct keywords Pc_var_list[] = {
 { "fo", 0,  FLAG_K,  &FF_on_open_DYN,0,0},
    /* force FQDN HOST value in control file */
 { "force_fqdn_hostname", 0,  FLAG_K,  &Force_FQDN_hostname_DYN,0,0},
+   /* force IPADDR of Originating host for host value in control file */
+{ "force_ipaddr_hostname", 0,  FLAG_K,  &Force_IPADDR_hostname_DYN,0,0},
    /* force clients to send all requests to localhost */
 { "force_localhost", 0,  FLAG_K,  &Force_localhost_DYN,0,0,FORCE_LOCALHOST},
    /*  force lpq status format for specified hostnames */
@@ -271,7 +273,7 @@ struct keywords Pc_var_list[] = {
 { "logger_path", 0,  STRING_K,  &Logger_path_DYN,0,0},
    /* timeout between connection attempts to remote logger */
 { "logger_timeout", 0,  INTEGER_K,  &Logger_timeout_DYN,0,0},
-   /*  use long job number when a job is submitted */
+   /*  use long job number (0 - 999999) when a job is submitted */
 { "longnumber", 0,  FLAG_K,  &Long_number_DYN,0,0},
    /*  device name or lp-pipe command to send output to */
 { "lp", 0,  STRING_K,  &Lp_device_DYN,0,0},
@@ -305,6 +307,8 @@ struct keywords Pc_var_list[] = {
 { "mail_from", 0, STRING_K, &Mail_from_DYN,0,0},
    /* mail to this operator on error */
 { "mail_operator_on_error", 0, STRING_K, &Mail_operator_on_error_DYN,0,0},
+   /* maximum accounting file size in Kbytes */
+{ "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=1000"},
    /* maximum interval between connection attempts */
 { "max_connect_interval", 0, INTEGER_K, &Max_connect_interval_DYN,0,0,"=60"},
    /* maximum number of datafiles */
@@ -319,6 +323,8 @@ struct keywords Pc_var_list[] = {
 { "max_status_size", 0, INTEGER_K, &Max_status_size_DYN,0,0,"=10"},
    /*  maximum copies allowed */
 { "mc", 0,  INTEGER_K,  &Max_copies_DYN,0,0,"=1"},
+   /* minimum accounting file size in Kbytes */
+{ "min_accounting_file_size", 0, INTEGER_K, &Min_accounting_file_size_DYN,0,0},
    /* minimum log file size in Kbytes */
 { "min_log_file_size", 0, INTEGER_K, &Min_log_file_size_DYN,0,0},
    /* minimum status file size in Kbytes */
@@ -385,6 +391,8 @@ struct keywords Pc_var_list[] = {
 { "remove_z", 0, STRING_K, &Remove_Z_DYN,0,0},
    /*  report server as this value for LPQ status */
 { "report_server_as", 0,  STRING_K,  &Report_server_as_DYN,0,0},
+   /* require default queue to be explicitly set */
+{ "require_explicit_q", 0, FLAG_K, &Require_explicit_Q_DYN,0,0,"0"},
    /*  client requires lpd.conf, printcap */
 { "require_configfiles", 0,  FLAG_K,  &Require_configfiles_DYN,0,0,"=" REQUIRE_CONFIGFILES},
    /*  retry on ECONNREFUSED error */

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.25 2001/10/15 13:25:38 papowell Exp $
+ * $Id: getqueue.h,v 1.28 2001/11/16 16:06:48 papowell Exp $
  ***************************************************************************/
 
 
@@ -162,7 +162,7 @@ int Get_hold_class( struct line_list *info, struct line_list *sq );
 void Append_Z_value( struct job *job, char *s );
 int Setup_cf_info( struct job *job, int check_for_existence );
 char *Make_hf_image( struct job *job );
-int Set_hold_file( struct job *job, struct line_list *perm_check );
+int Set_hold_file( struct job *job, struct line_list *perm_check, int fd );
 void Get_hold_file( struct job *job, char *hf_name );
 void Get_spool_control( const char *file, struct line_list *info );
 void Set_spool_control( struct line_list *perm_check, const char *file,

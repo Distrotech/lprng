@@ -10,7 +10,7 @@ SBINDIR=/usr/sbin
 FILTER_DIR=/usr/libexec/filters
 LOCKFILE="/var/run/lpd"
 PSHOWALL="-ax"
-VERSION=3.7.8
+VERSION=3.7.9
 INIT=
 #
 # -- START --

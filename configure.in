@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.7.9
+VERSION=3.8.1
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -172,9 +172,9 @@ dnl  lpd_printcap location
 dnl
 AC_MSG_CHECKING(lpd_printcap location)
 AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (NONE)],
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd_printcap)],
 LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=,
+LPD_PRINTCAP_PATH=\${sysconfdir}/lpd_printcap,
 )
 AC_MSG_RESULT($LPD_PRINTCAP_PATH)
 AC_SUBST(LPD_PRINTCAP_PATH)

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.9
+.ds VE LPRng-3.8.1
 .TH LPRM 1 \*(VE "LPRng"
 .ig
 lprm.1,v 3.39 1998/03/29 18:37:49 papowell Exp
@@ -96,19 +96,19 @@ lprm
 .TP
 Remove job 25 in spool queue p1:
 .sp
-lprm -Pt1 25
+lprm -Pp1 25
 .TP
 Remove job 25 and 30 in spool queue p1:
 .sp
-lprm -Pt1 25 30
+lprm -Pp1 25 30
 .TP
 Remove all of user john's jobs in spool queue p1:
 .sp
-lprm -Pt1 john
+lprm -Pp1 john
 .TP
 Remove all jobs in spool queue p1:
 .sp
-lprm -Pt1 all
+lprm -Pp1 all
 .TP
 Remove all jobs in all spool queues:
 .sp
@@ -118,7 +118,7 @@ Remove the jobs with identifier nobody@system in spool queue p1.
 Note that the quotes around the pattern are needed to suppress
 shell glob expansion.
 .sp
-lprm -Pt1 'nobody@system*'
+lprm -Pp1 'nobody@system*'
 .SH OPTIONS
 .IP "\fB\-A\fR" 5
 Use authentication specified by the value of the AUTH environment variable.

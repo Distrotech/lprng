@@ -15,6 +15,6 @@ To activate the new printing system do the following:
 LPRng uses /etc/printcap, /etc/lpd.conf, and /etc/lpd.perms
 
 For further information, have a look at:
-  /usr/share/doc/LPRng-3.7.8
+  /usr/share/doc/LPRng-3.7.9
 also:
   WWW: http://www.astart.com/lprng.html

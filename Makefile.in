@@ -122,7 +122,7 @@ TAGS clean::
 
 clean::
 	-rm -f header lpd.conf $(FILES) $(SCRIPTS) postinstall preremove postremove a.out
-	-rm -f *.bak ? ?.* core printcap *.old
+	-rm -f *.bak ? ?.* core *.old
 
 install: all
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(INSTALLDIRS)
@@ -220,7 +220,7 @@ update:
 		s,^SCRIPTS=.*,SCRIPTS=$$S,;" \
 		configure.in lpd.perms.in \
 		DISTRIBUTIONS/*/Makefile DISTRIBUTIONS/Free*/README.html \
-		po/Makefile.in.in
+		po/Makefile.in.in printcap
 	perl -spi -e 's,.*,"Project-Id-Version: $(PACKAGE) $(VERSION)\\n", if(/^"Project-Id/);' \
 		po/*.po
 	sh CREATE_CONFIGURE
@@ -260,3 +260,4 @@ configure: configure.in
 	autoheader
 
 dist: update ci distclean tar
+	if [ -f ../SEND* ] ; then (cd ..; sh SEND*) ; fi

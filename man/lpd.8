@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.9
+.ds VE LPRng-3.8.1
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -350,11 +350,10 @@ given by the
 and
 .I lpd_printcap_path
 configuration information.
-The a common printcap configuration is to have a main (shared) printcap database
+The usual printcap configuration is to have a main (shared) printcap database
 which is used by all hosts.
 The printcap information is usually extremely simple,
-consisting only of the printer name and host (i.e. - fullpage
-printer entry).
+consisting only of the printer name and host (i.e. - fullpage printer entry).
 .PP
 On hosts which have printers attached or which are to provide spooling queue
 directories,
@@ -390,13 +389,12 @@ flag indicates that this entry is for a the LPD server only.
 This can be used to simplify the management of client and server entries.
 .PP
 The printcap information is obtained in the following order.
-All programs use the contents of the configuration
+If the lpd_printcap_path configuration value is nonblank
+then the lpd server will proccess only this information
+otherwise it uses the printcap_path information.
+All client programs use the contents of the configuration
 printcap_path variable to get a list of locations of printcap files.
-In addition,
-the lpd program appends the contents of the
-lpd_printcap_path configuration information.
-Next,
-each of these entries is processed,
+Each of these entries in the path lists are processed,
 and the printcap information is extracted.
 Entries which have
 .I oh

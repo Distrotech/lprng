@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.25 2001/10/15 13:25:29 papowell Exp $";
+"$Id: linksupport.c,v 1.28 2001/11/16 16:06:40 papowell Exp $";
 
 
 /***************************************************************************
@@ -21,7 +21,7 @@
  *
  * int Link_open(char *host, int port, int int timeout )
  *    opens a link to the remote host
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    returns socket fd (>= 0); LINK errorcode (negative) if error
  *
  * int Link_listen()
@@ -37,7 +37,7 @@
  *    sends 'ch'line'lf' to the remote host
  *    if write/read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    if timeout > 0, i.e.- local, set signal handler
  *    if ch != 0, send ch at start of line
  *    if lf != 0, send LF at end of line
@@ -48,7 +48,7 @@
  *	char *src, int fd, double count)
  *    copies count bytes from fd to the socket
  *    do a timeout on both reading from fd and writing to socket;
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *      returns 0 if successful, LINK errorcode if failure
  *
  * int Link_line_read(char *host, int *socket, int timeout,
@@ -59,7 +59,7 @@
  *      updated with actual value read (less 1 for '\n' )
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    if *count read and not '\n',  then error set; last character
  *       will be discarded.
  *    returns 0 if '\n' read and read <= *count characters
@@ -74,7 +74,7 @@
  *      updated with actual value read
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    returns 0 *count not read
  *            LINK errorcode otherwise
  *
@@ -87,7 +87,7 @@
  *       returns value in *ack
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    returns 0 *count not read
  *
  ***************************************************************************/
@@ -375,7 +375,7 @@ int getconnection ( char *hostname, char *dest_port,
 		errno = err;
 		LOGERR_DIE(LOG_DEBUG) "getconnection: socket call failed");
 	}
-	DEBUGF(DNW4) ("getconnection: socket %d", sock);
+	DEBUGF(DNW2) ("getconnection: socket %d", sock);
 
 	/* bind to an outgoing port if you need to */
 	if( minportno || bindto ){
@@ -716,7 +716,7 @@ void Link_close( int *sock )
  *    sends 'ch'str to the remote host
  *    if write/read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    if ch != 0, send ch at start of line
  *    if lf != 0, send LF at end of line
  *    if ack != 0, wait for ack, and report it
@@ -835,7 +835,7 @@ int Link_send( char *host, int *sock, int timeout,
  *    copies count bytes from fd to the socket
  *    if write does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    if count < 0, will read until end of file
  *      returns 0 if successful, LINK errorcode if failure
  ***************************************************************************/
@@ -968,7 +968,7 @@ int Link_dest_port_num( char *port )
  *      updated with actual value read (less 1 for '\n' )
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    if *count read and not '\n',  then error set; last character
  *       will be discarded.
  *    returns 0 if '\n' read at or before *count characters
@@ -1044,7 +1044,7 @@ int Link_line_read(char *host, int *sock, int timeout,
  *      updated with actual value read
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    returns 0 *count not read
  *        LINK errorcode otherwise
  ***************************************************************************/
@@ -1110,7 +1110,7 @@ int Link_read(char *host, int *sock, int timeout,
  *       returns value in *ack
  *    if read does not complete within timeout seconds,
  *      terminate action with error.
- *    if timeout == 0, wait indefinately
+ *    if timeout == 0, wait indefinitely
  *    returns 0 *count not read
  *
  ***************************************************************************/

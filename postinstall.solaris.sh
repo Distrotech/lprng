@@ -51,7 +51,7 @@ if [ "$INIT" != no ] ; then
 		cp init.solaris $init
 		chmod 755 $init
 	fi
-	for i in rc2.d/S60lprng rc2.d/S80lprng rc1.d/K39lprng \
+	for i in rc2.d/S80lprng rc1.d/K39lprng \
 		rc0.d/K39lprng rcS.d/K39lprng ; do
 		s=${DESTDIR}/etc/$i;
 		if [ ! -d `dirname $s` ] ; then mkdir -p `dirname $s` ; fi;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.25 2001/10/15 13:25:26 papowell Exp $";
+"$Id: checkpc.c,v 1.28 2001/11/16 16:06:37 papowell Exp $";
 
 
 
@@ -148,10 +148,11 @@ int main( int argc, char *argv[], char *envp[] )
 	}
 
 	if(Verbose)MESSAGE("Checking for printcap files '%s'", Printcap_path_DYN);
-	found_pc = Check_path_list( Printcap_path_DYN, 0 );
-	if( Lpd_printcap_path_DYN ){
+	if( Is_server && Lpd_printcap_path_DYN ){
 		if(Verbose)MESSAGE("Checking for lpd only printcap files '%s'", Lpd_printcap_path_DYN);
 		found_pc += Check_path_list( Lpd_printcap_path_DYN, 1 );
+	} else {
+		found_pc += Check_path_list( Printcap_path_DYN, 0 );
 	}
 	if( found_pc == 0 ){
 		WARNMSG("No printcap files!!!" );
@@ -511,24 +512,26 @@ void Scan_printer(void)
 	for( i = 'a'; i <= 'z'; ++i ){
 		if( safestrchr("afls",i) ) continue;
 		error[0] = i;
-		Check_executable_filter( error );
+		Check_executable_filter( error, 0 );
 	}
 
 	for( names = filter_names; (s = *names); ++names ){
-		Check_executable_filter( s );
+		Check_executable_filter( s, 0 );
 	}
 }
 
-void Check_executable_filter( char *id )
+void Check_executable_filter( char *id, char *filter_str )
 {
 	struct line_list files;
-	char *s, *t, *filter_str;
+	char *s, *t;
 	struct stat statb;
 	int c, j, n;
 	
 	Init_line_list(&files);
-	filter_str = Find_str_value(&PC_entry_line_list,id,Value_sep);
-	if(!filter_str) filter_str = Find_str_value(&Config_line_list,id,Value_sep);
+	if( !filter_str ){
+		filter_str = Find_str_value(&PC_entry_line_list,id,Value_sep);
+		if(!filter_str) filter_str = Find_str_value(&Config_line_list,id,Value_sep);
+	}
 	Split(&files,filter_str,Whitespace,0,0,0,0,0,0);
 	if( files.count ){
 		if(Verbose)MESSAGE("  '%s' filter '%s'", id, filter_str );
@@ -713,6 +716,7 @@ int Check_file( char  *path, int fix, int age, int rmflag )
 		WARNMSG( "'%s' not a regular file - unusual", path );
 		return(2) ;
 	}
+
 	if( statb.st_uid != DaemonUID || statb.st_gid != DaemonGID ){
 		WARNMSG( "owner/group of '%s' are %d/%d, not %d/%d", path,
 			(int)(statb.st_uid), (int)(statb.st_gid), DaemonUID, DaemonGID );
@@ -1425,7 +1429,7 @@ void Fix_clean( char *s, int no )
 int Check_path_list( char *plist, int allow_missing )
 {
 	struct line_list values;
-	char *path, *s;
+	char *path;
 	int found_pc = 0, i, fd;
 	struct stat statb;
 
@@ -1435,10 +1439,8 @@ int Check_path_list( char *plist, int allow_missing )
 		path = values.list[i];
 		if( path[0] == '|' ){
 			++path;
-			while( isspace(cval(path)) ) ++path;
-			if( (s = strpbrk(path,Whitespace)) ) *s = 0;
-		}
-		if( path[0] == '/' ){
+			Check_executable_filter( path, 0 );
+		} else if( path[0] == '/' ){
 			if( (fd = Checkread( path,&statb ) ) < 0 ){
 				if( stat( path, &statb ) ){
 					if( ! allow_missing ) WARNMSG(" '%s' not present", path );

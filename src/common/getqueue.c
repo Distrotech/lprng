@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.25 2001/10/15 13:25:28 papowell Exp $";
+"$Id: getqueue.c,v 1.28 2001/11/16 16:06:39 papowell Exp $";
 
 
 /***************************************************************************
@@ -32,6 +32,7 @@
 #include "fileopen.h"
 #include "linelist.h"
 #include "getprinter.h"
+#include "gethostinfo.h"
 #include "getqueue.h"
 #include "globmatch.h"
 #include "permission.h"
@@ -663,10 +664,10 @@ char *Make_hf_image( struct job *job )
  * Write a hold file
  */
 
-int Set_hold_file( struct job *job, struct line_list *perm_check )
+int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 {
 	char *hf_name, *tempfile, *outstr;
-	int fd, status;
+	int status;
 
 	status = 0;
 	outstr = 0;
@@ -680,18 +681,31 @@ int Set_hold_file( struct job *job, struct line_list *perm_check )
 	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
 	outstr = Make_hf_image( job );
 
-	fd = Make_temp_fd( &tempfile );
-	if( Write_fd_str(fd, outstr) < 0 ){
-		LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", tempfile );
-		status = 1;
+	if( !fd ){
+		fd = Make_temp_fd( &tempfile );
+		if( Write_fd_str(fd, outstr) < 0 ){
+			LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", tempfile );
+			status = 1;
+		}
+		close(fd);
+		if( status == 0 && rename( tempfile, hf_name ) == -1 ){
+			LOGERR(LOG_INFO)"Set_hold_file: rename '%s' to '%s' failed",
+				tempfile, hf_name );
+			status = 1;
+		}
+	} else {
+		if( lseek( fd, 0, SEEK_SET ) == -1 ){
+			LOGERR_DIE(LOG_ERR) "Write_pid: lseek failed" );
+		}
+		if( ftruncate( fd, 0 ) ){
+			LOGERR_DIE(LOG_ERR) "Write_pid: ftruncate failed" );
+		}
+		if( Write_fd_str(fd, outstr) < 0 ){
+			LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", hf_name );
+			status = 1;
+		}
+		close(fd);
 	}
-	close(fd);
-	if( status == 0 && rename( tempfile, hf_name ) == -1 ){
-		LOGERR(LOG_INFO)"Set_hold_file: rename '%s' to '%s' failed",
-			tempfile, hf_name );
-		status = 1;
-	}
-
 
 	if( Lpq_status_file_DYN ){
 		unlink(Lpq_status_file_DYN );
@@ -1023,11 +1037,11 @@ void Write_pid( int fd, int pid, char *str )
 {
 	char line[LINEBUFFER];
 
-	if( ftruncate( fd, 0 ) ){
-		LOGERR_DIE(LOG_ERR) "Write_pid: ftruncate failed" );
-	}
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
 		LOGERR_DIE(LOG_ERR) "Write_pid: lseek failed" );
+	}
+	if( ftruncate( fd, 0 ) ){
+		LOGERR_DIE(LOG_ERR) "Write_pid: ftruncate failed" );
 	}
 
 	if( str == 0 ){
@@ -1601,19 +1615,19 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 	char *tempfile, *s;
 	int count;
 
-	status_fd = tempfd = status = -1;
+	tempfd = status = -1;
 
 	DEBUG1("Trim_status_file: file '%s' max %d, min %d", file, max, min);
 
 	/* if the file does not exist, do not create it */
-	if( file == 0 ) return( status_fd );
+	if( ISNULL(file) ) return( status_fd );
 	if( stat( file, &statb ) == 0 ){
 		DEBUG1("Trim_status_file: '%s' max %d, min %d, size %ld", file, max, min, 
 			(long)(statb.st_size) );
 		if( max > 0 && statb.st_size/1024 > max ){
 			status = Checkwrite( file, &statb,O_RDWR,0,0);
 			tempfd = Make_temp_fd(&tempfile);
-			if( min > max ){
+			if( min > max || min == 0 ){
 				min = max/4;
 			}
 			if( min == 0 ) min = 1;
@@ -1647,7 +1661,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 			close(status);
 		}
 		close( tempfd );
-		close( status_fd );
+		if( status_fd > 0 ) close( status_fd );
 		status_fd = Checkwrite( file, &statb,0,0,0);
 	}
 	return( status_fd );
@@ -2087,6 +2101,18 @@ int Create_control( struct job *job, char *error, int errlen, char *auth_id,
 	}
 	if( !(s = Find_str_value(&job->info,FROMHOST,Value_sep)) || Is_clean_name(s) ){
 		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
+		s = Find_str_value(&job->info,FROMHOST,Value_sep);
+	}
+	if( Force_IPADDR_hostname_DYN ){
+		char buffer[SMALLBUFFER];
+		const char *const_s;
+		int family;
+		/* We will need to create a dummy record. - no host */
+		family = RemoteHost_IP.h_addrtype;
+		const_s = (char *)inet_ntop( family, RemoteHost_IP.h_addr_list.list[0],
+			buffer, sizeof(buffer) );
+		DEBUG1("Create_control: remotehost '%s'", const_s );
+		Set_str_value(&job->info,FROMHOST,const_s);
 		s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	}
 	if( Force_FQDN_hostname_DYN && !safestrchr(s,'.')

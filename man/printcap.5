@@ -1,11 +1,11 @@
-.ds VE LPRng-3.7.9
+.ds VE LPRng-3.8.1
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
 .SH SYNOPSIS
 /etc/printcap database
 .SH DESCRIPTION
-The format of the LPNng
+The format of the LPRng
 .I printcap
 database was based on the
 .IR termcap (5)
@@ -292,6 +292,9 @@ filter_stderr_to_status_file	D	bool	false
 fo	D	bool	false	print a form feed when device is opened
 force_fqdn_hostname	A	bool	FALSE
 				Force a fully qualified host name in control file
+force_ipadddr_hostname	A	bool	FALSE
+				Force the IP address of the host to be used for the
+				hostname in control file
 force_localhost	A	bool	TRUE
 				Forces the clients programs (lpr, lpc, etc.)
 				to send all print jobs and requests to the server running
@@ -371,9 +374,10 @@ lpd_port	D	str	printer
                 then the lpd listening socket is bound to the specified
                 ip address and port only, otherwise it is bound to all
                 interfaces. If the port value is not a number then the
-
+				then the getservbyname() system call is used to get the
+				port number.
 lpd_printcap_path	D	str	(see source)
-				printcap path for lpd, in addition to normal one
+				printcap path for lpd, used instead of printcap path
 				(configuration value only)
 lpr_bounce	R	bool	true
 				Forces lpr to filter jobs and then send them.
@@ -474,6 +478,8 @@ remove_z	D	str	null
 report_server_as	A	str	NULL
 				use the str value as the name of the server when reporting
 				LPQ or LPC status.
+require_explicit_q	Require a queue to be specified, do not use default
+				queue from printcap.
 retry_econnrefused	A	bool	true
 				if set, retry a connection to a remote system when an
 				ECONNREFUSED error is returned.
@@ -755,7 +761,7 @@ tr	D	str	NULL	trailer string to print when queue empties
 
 .B "Serial Line Setup"
 br	D	num	none	if lp is a tty, set the baud rate (see ty)
-sttyy	D	str	NULL	stty commands to set output line characteristics
+stty	D	str	NULL	stty commands to set output line characteristics
 				alias is sy, ms
 xs	D	num	0	like `xc' but set bits (see STTY)
 
@@ -1016,8 +1022,6 @@ For example:
 .nf
 #all printers
 all:all=lp1,lp2,lp3,lp4
-.sp
-.R
 .fi
 .SH ACCOUNTING
 .PP

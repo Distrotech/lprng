@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.25 2001/10/15 13:25:33 papowell Exp $";
+"$Id: printjob.c,v 1.28 2001/11/16 16:06:44 papowell Exp $";
 
 
 #include "lp.h"
@@ -768,7 +768,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
  * char *msg, int msgmax - status storage area
  * int timeout   - timeout
  *                 nnn - wait this long
- *                 0   - wait indefinately
+ *                 0   - wait indefinitely
  *                 -1  - do not wait
  * poll for status
  * )

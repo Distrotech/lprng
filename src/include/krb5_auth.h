@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: krb5_auth.h,v 1.25 2001/10/15 13:25:38 papowell Exp $
+ * $Id: krb5_auth.h,v 1.28 2001/11/16 16:06:48 papowell Exp $
  ***************************************************************************/
 
 

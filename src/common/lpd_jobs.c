@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.25 2001/10/15 13:25:30 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -503,7 +503,7 @@ int Do_queue_jobs( char *name, int subserver )
 	}
 
 	master = 0;
-	if( Server_names_DYN ){
+	if( !ISNULL(Server_names_DYN) ){
 		DEBUG1( "Do_queue_jobs: Server_names_DYN '%s', Server_order '%s'",
 			Server_names_DYN, Srver_order(&Spool_control) );
 		if( Server_queue_name_DYN ){
@@ -595,7 +595,7 @@ int Do_queue_jobs( char *name, int subserver )
 				}
 			}
 		}
-		if( mod ) Set_hold_file(&job, 0 );
+		if( mod ) Set_hold_file(&job, 0, 0 );
 	}
 
 
@@ -658,13 +658,25 @@ int Do_queue_jobs( char *name, int subserver )
 		destination = use_subserver = job_to_do = -1;
 		working =  destinations = chooser_did_not_find_server = 0;
 
+		if(DEBUGL2) Dump_subserver_info("Do_queue_jobs- checking for server",
+			&servers );
+		for( j = 0; j < servers.count; ++j ){
+			sp = (void *)servers.list[j];
+			pid = Find_flag_value(sp,SERVER,Value_sep);
+			pr = Find_str_value(sp,PRINTER,Value_sep);
+			DEBUG2("Do_queue_jobs: printer '%s', server %d", pr, pid );
+			if( pid ){
+				++working;
+			}
+		}
+
 		for( job_index = 0; job_to_do < 0 && job_index < Sort_order.count;
 			++job_index ){
 
 			Free_job(&job);
 			id = move_dest = new_dest = 0;
 			destination = use_subserver = job_to_do = -1;
-			working = destinations = 0;
+			destinations = 0;
 
 			if( !Sort_order.list[job_index] ) continue;
 			DEBUG3("Do_queue_jobs: job_index [%d] '%s'", job_index,
@@ -690,7 +702,7 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 			if( Check_print_perms(&job) == P_REJECT ){
 				Set_str_value(&job.info,ERROR,"no permission to print");
-				if( Set_hold_file( &job, 0 ) ){
+				if( Set_hold_file( &job, 0, 0 ) ){
 					/* you cannot update hold file!! */
 					setstatus( &job, _("cannot update hold file for '%s'"),
 						id);
@@ -766,12 +778,6 @@ int Do_queue_jobs( char *name, int subserver )
 				 */
 				Free_line_list( &chooser_list );
 				Free_line_list( &chooser_env );
-				if( !Chooser_routine_DYN && Chooser_DYN ){
-					if( in_tempfd > 0 ) close( in_tempfd ); in_tempfd = -1;
-					if( out_tempfd > 0 ) close( out_tempfd ); out_tempfd = -1;
-					in_tempfd = Make_temp_fd(0);
-					out_tempfd = Make_temp_fd(0);
-				}
 				DEBUG1("Do_queue_jobs: chooser '%s', chooser_routine %lx",
 					Chooser_DYN, Cast_ptr_to_long(Chooser_routine_DYN) );
 				for( j = master; use_subserver < 0 && j < servers.count; ++j ){
@@ -789,7 +795,7 @@ int Do_queue_jobs( char *name, int subserver )
 					if( Get_hold_class(&job.info,sp) ){
 						DEBUG1("Do_queue_jobs: cannot use [%d] '%s' class conflict",
 							j, s );
-						/* we found a server that was available */
+						/* we found a server that was not available */
 						continue;
 					}
 					if( Chooser_DYN == 0 && Chooser_routine_DYN == 0 ){
@@ -804,15 +810,25 @@ int Do_queue_jobs( char *name, int subserver )
 							t = Join_line_list_with_sep(sp,"\n");
 							Set_str_value(&chooser_env,s,t);
 							if( t ) free(t); t = 0;
-							if( Write_fd_str( in_tempfd, s ) < 0 
-								|| Write_fd_str( in_tempfd, "\n" ) < 0 ){
-								Errorcode = JABORT;
-								LOGERR_DIE(LOG_ERR) "Do_queue_jobs: write(%d) failed", in_tempfd);
+							t = Find_str_value( &chooser_env,"PRINTERS",Value_sep );
+							if( t ){
+								t = safestrdup3(t,",",s,__FILE__,__LINE__);
+								Set_str_value( &chooser_env,"PRINTERS",t );
+								if( t ) free(t); t = 0;
+							} else {
+								Set_str_value( &chooser_env,"PRINTERS",s );
 							}
 						}
 					}
 				}
-				if( Chooser_routine_DYN ){
+				/* we now have to find out if we really need to call the chooser
+				 * if we are working and a single queue, then we do not
+				 *   :sv == ""   - then we do
+				 */
+				DEBUG1("Do_queue_jobs: Chooser %s, working %d, master %d", Chooser_DYN, working, master);
+				if( (Chooser_routine_DYN || Chooser_DYN) && working && master == 0 ){
+					chooser_did_not_find_server = 1;
+				} else if( Chooser_routine_DYN ){
 #if defined(CHOOSER_ROUTINE)
 					extern int CHOOSER_ROUTINE( struct line_list *servers,
 						struct line_list *available, int *use_subserver );
@@ -821,7 +837,14 @@ int Do_queue_jobs( char *name, int subserver )
 					j =  CHOOSER_ROUTINE( &servers, &chooser_list, &use_subserver );
 					if( j ){
 						SETSTATUS(&job)"CHOOSER_ROUTINE exit status %s", Server_status(j));
-						Update_status( &job, j );
+						chooser_did_not_find_server = 1;
+						if( j != JFAIL && j != JABORT ){
+							Update_status( &job, j );
+						}
+						if( j == JABORT ){
+							Errorcode = JABORT;
+							FATAL(LOG_ERR) "Do_queue_jobs: Chooser_routine aborted" );
+						}
 					} else if( use_subserver >= 0 ){
 						/* we use this subserver */
 						job_to_do = job_index;
@@ -834,6 +857,16 @@ int Do_queue_jobs( char *name, int subserver )
 					fatal(LOG_ERR,"Do_queue_jobs: 'chooser_routine' select and no routine defined");
 #endif
 				} else if( Chooser_DYN ){
+					if( in_tempfd > 0 ) close( in_tempfd ); in_tempfd = -1;
+					if( out_tempfd > 0 ) close( out_tempfd ); out_tempfd = -1;
+					in_tempfd = Make_temp_fd(0);
+					out_tempfd = Make_temp_fd(0);
+					s = Find_str_value( &chooser_env,"PRINTERS",Value_sep );
+					if( s && (Write_fd_str( in_tempfd, s ) < 0 
+						|| Write_fd_str( in_tempfd, "\n" ) < 0) ){
+						Errorcode = JABORT;
+						LOGERR_DIE(LOG_ERR) "Do_queue_jobs: write(%d) failed", in_tempfd);
+					}
 					/* we invoke the chooser with the list
 					 * of printers we have found in the order
 					 */
@@ -846,7 +879,14 @@ int Do_queue_jobs( char *name, int subserver )
 						Chooser_DYN, Filter_options_DYN, &job, &chooser_env, 1 );
 					if( j ){
 						SETSTATUS(&job)"CHOOSER exit status %s", Server_status(j));
-						Update_status( &job, j );
+						chooser_did_not_find_server = 1;
+						if( j != JFAIL && j != JABORT ){
+							Update_status( &job, j );
+						}
+						if( j == JABORT ){
+							Errorcode = JABORT;
+							FATAL(LOG_ERR) "Do_queue_jobs: Chooser aborted" );
+						}
 					} else {
 						if( lseek(out_tempfd,0,SEEK_SET) == -1 ){
 							Errorcode = JFAIL;
@@ -893,18 +933,6 @@ int Do_queue_jobs( char *name, int subserver )
 				if( out_tempfd >= 0 ) close( out_tempfd ); out_tempfd = -1;
 				Free_line_list( &chooser_env );
 				Free_line_list( &chooser_list );
-			}
-		}
-
-		if(DEBUGL2) Dump_subserver_info("Do_queue_jobs- checking for server",
-			&servers );
-		for( j = 0; j < servers.count; ++j ){
-			sp = (void *)servers.list[j];
-			pid = Find_flag_value(sp,SERVER,Value_sep);
-			pr = Find_str_value(sp,PRINTER,Value_sep);
-			DEBUG2("Do_queue_jobs: printer '%s', server %d", pr, pid );
-			if( pid ){
-				++working;
 			}
 		}
 
@@ -960,7 +988,7 @@ int Do_queue_jobs( char *name, int subserver )
 		pr = Find_str_value(sp,PRINTER,Value_sep);
 		DEBUG1("Do_queue_jobs: starting job '%s' on '%s'", id, pr );
 
-		if( Set_hold_file( &job, 0 ) ){
+		if( Set_hold_file( &job, 0, 0 ) ){
 			/* you cannot update hold file!! */
 			setstatus( &job, _("cannot update hold file '%s'"), hf_name);
 			FATAL(LOG_ERR)
@@ -1076,7 +1104,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 			/* now we deal with the job in the original queue */
 			Set_flag_value(&job.info,DONE_TIME,time((void *)0));
-			Set_hold_file(&job, 0);
+			Set_hold_file(&job, 0, 0);
 
 			Set_str_value(sp,IDENTIFIER,id);
 			setstatus(&job, "transfer '%s' to subserver '%s' finished", id, pr );
@@ -1099,7 +1127,7 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(&tinfo,MOVE_DEST,move_dest);
 			if( (pid = Fork_subserver( &servers, 0, &tinfo )) < 0 ){
 				Set_decimal_value(&job.info,SERVER,0);
-				if( Set_hold_file( &job, 0 ) ){
+				if( Set_hold_file( &job, 0, 0 ) ){
 					/* you cannot update hold file!! */
 					setstatus( &job, _("cannot update hold file '%s'"),
 						hf_name );
@@ -1198,7 +1226,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
 	default: Set_str_value(&job->info,ERROR,buffer); break;
 			}
-			Set_hold_file(job, 0 );
+			Set_hold_file(job, 0, 0 );
 			goto exit;
 		}
 	}
@@ -1322,7 +1350,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 
 	Set_str_value(&job->info,PRSTATUS,Server_status(status));
 
-	Set_hold_file(job, 0 );
+	Set_hold_file(job, 0, 0 );
 
 	if( Accounting_remote_DYN && Accounting_file_DYN  ){
 		if( Accounting_end_DYN ){
@@ -1356,12 +1384,14 @@ int Local_job( struct job *job, char *id )
 	Setup_user_reporting(job);
 
 	SETSTATUS(job)"subserver pid %d starting", getpid());
+
 	if( Accounting_file_DYN && Local_accounting_DYN ){
 		SETSTATUS(job)"accounting at start");
 		if( Accounting_start_DYN ){
 			status = Do_accounting( 0,
 				Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
 		}
+
 		DEBUG1("Local_job: accounting status %s", Server_status(status) );
 		if( status ){
 			SNPRINTF(buffer,sizeof(buffer))
@@ -1373,7 +1403,7 @@ int Local_job( struct job *job, char *id )
 	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
 	default: Set_str_value(&job->info,ERROR,buffer); break;
 			}
-			Set_hold_file(job, 0 );
+			Set_hold_file(job, 0, 0 );
 			goto exit;
 		}
 	}
@@ -1745,7 +1775,7 @@ void Update_status( struct job *job, int status )
 			Set_flag_value(&job->info,HOLD_TIME, time((void *)0) );
 			Set_flag_value(&job->info,PRIORITY_TIME, 0 );
 		}
-		Set_hold_file( job, 0 );
+		Set_hold_file( job, 0, 0 );
 		break;
 
 	case JSUCC:	/* successful, remove job */
@@ -1785,7 +1815,7 @@ void Update_status( struct job *job, int status )
 					Printer_DYN, FQDNHost_FQDN, id );
 				goto done_job;
 			}
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 			break;
 		} else {
 			copies = Find_flag_value(&job->info,COPIES,Value_sep);
@@ -1810,7 +1840,7 @@ void Update_status( struct job *job, int status )
 					setstatus( job, "%s@%s: job '%s' printed",
 						Printer_DYN, FQDNHost_FQDN, id );
 				} else {
-					Set_hold_file( job, 0 );
+					Set_hold_file( job, 0, 0 );
 					break;
 				}
 			}
@@ -1818,7 +1848,7 @@ void Update_status( struct job *job, int status )
 			hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
 			DEBUG3("Update_status: done_job, id '%s', hf '%s'", id, hf_name );
 			if( hf_name ){
-				Set_hold_file( job, 0 );
+				Set_hold_file( job, 0, 0 );
 				if(DEBUGL3)Dump_job("Update_status - done_job", job );
 				if( !Save_when_done_DYN ){
 					if( Remove_job( job ) ){
@@ -1846,7 +1876,7 @@ void Update_status( struct job *job, int status )
 		}
 		DEBUG1( "Update_status: JFAIL - attempt %d, max %d",
 			attempt, Send_try_DYN );
-		Set_hold_file( job, 0 );
+		Set_hold_file( job, 0, 0 );
 
 		if( Send_try_DYN > 0 && attempt >= Send_try_DYN ){
 			char buf[60];
@@ -1878,7 +1908,7 @@ void Update_status( struct job *job, int status )
 				setstatus( job, _("job '%s' attempt %d, trying %d times"),
 					id, attempt, Send_try_DYN );
 			} else {
-				setstatus( job, _("job '%s' attempt %d, trying indefinately"),
+				setstatus( job, _("job '%s' attempt %d, trying indefinitely"),
 					id, attempt);
 			}
 			if( destination ){
@@ -1888,7 +1918,7 @@ void Update_status( struct job *job, int status )
 				Set_str_value(&job->info,ERROR,0);
 				Set_str_value(&job->info,PRSTATUS,0);
 			}
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 		} else {
 			goto again;
 		}
@@ -1904,7 +1934,7 @@ void Update_status( struct job *job, int status )
 			}
 			Set_flag_value(destination,ATTEMPT,attempt);
 			Update_destination(job);
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 		} else {
 			attempt = Find_flag_value(&job->info,ATTEMPT,Value_sep);
 			++attempt;
@@ -1912,7 +1942,7 @@ void Update_status( struct job *job, int status )
 			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
 				Set_str_value(&job->info,ERROR,buffer);
 			}
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 			Sendmail_to_user( status, job );
 		}
 		if( destination == 0 && !Save_on_error_DYN ){
@@ -1941,7 +1971,7 @@ void Update_status( struct job *job, int status )
 			setstatus( job, "job '%s' error '%s'",id, strv);
 			Sendmail_to_user( status, job );
 		}
-		Set_hold_file( job, 0 );
+		Set_hold_file( job, 0, 0 );
 		if( destination == 0 && !Save_on_error_DYN ){
 			setstatus( job, _("removing job '%s' - ABORT"), id);
 			Remove_job( job );
@@ -1963,7 +1993,7 @@ void Update_status( struct job *job, int status )
 			Set_flag_value(destination,DONE_TIME, time( (void *)0) );
 			Set_flag_value(destination,REMOVE_TIME, time( (void *)0) );
 			Update_destination(job);
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 		} else {
 			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
 				SNPRINTF( buffer, sizeof(buffer))
@@ -1972,7 +2002,7 @@ void Update_status( struct job *job, int status )
 			}
 			Set_flag_value(&job->info,DONE_TIME, time( (void *)0) );
 			Set_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
-			Set_hold_file( job, 0 );
+			Set_hold_file( job, 0, 0 );
 			Sendmail_to_user( status, job );
 			if( !Save_on_error_DYN ){
 				setstatus( job, _("removing job '%s' - JREMOVE"), id );
@@ -2112,7 +2142,7 @@ void Service_worker( struct line_list *args )
 
 	Free_line_list(args);
 
-	n = Set_hold_file( &job, 0 );
+	n = Set_hold_file( &job, 0, 0 );
 	if( n ){
 		/* you cannot update hold file!! */
 		setstatus( &job, _("cannot update hold file for '%s'"),
@@ -2371,7 +2401,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			}
 		}
 	}
-	if( device_fd > 0 ){
+	if( device_fd >= 0 ){
 		/* we can only read status from a device, fifo, or socket */
 		if( (mask = fcntl( device_fd, F_GETFL, 0 )) == -1 ){
 			Errorcode = JABORT;

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: checkpc.h,v 1.25 2001/10/15 13:25:35 papowell Exp $
+ * $Id: checkpc.h,v 1.28 2001/11/16 16:06:46 papowell Exp $
  ***************************************************************************/
 
 
@@ -16,7 +16,7 @@
 int main( int argc, char *argv[], char *envp[] );
 void mkdir_path( char *path );
 void Scan_printer(void);
-void Check_executable_filter( char *id );
+void Check_executable_filter( char *id, char *filter_str );
 void Make_write_file( char *file, char *printer );
 void usage(void);
 int getage( char *age );

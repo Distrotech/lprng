@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.9
+.ds VE LPRng-3.8.1
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -391,13 +391,13 @@ a different port from the default will not
 interfere with a previous installation of
 LPD or LPRng.
 .TP
-\fBlpd_printcap_path\fR (default: "/etc/lpd_printcap:/usr/etc/lpd_printcap")
-The location of additional 
+\fBlpd_printcap_path\fR (default: "")
+The location of
 .B lpd
-server printcap database information.
-This list is searched after the
-printcap_path list is searched.
-See PRINTCAP LOOKUP for details.
+server only printcap database information.
+If this is nonblank the \fBprintcap_path\P will not be used by the
+.B lpd
+server.
 .TP
 \fBmail_operator_on_error\fR (default: "")
 Put this person on the CC-list of the mail, if it is not
@@ -640,11 +640,16 @@ To find the printcap information,
 client programs will first search the database files specified in the
 .I printcap_path
 entry.
-The
-.I lpd
-server will also search the
+If the
 .I lpd_printcap_path
-entries as well.
+entry is nonblank the
+.I lpd
+will use the
+.I lpd_printcap_path
+entries,
+otherwise it will use the
+.I printcap_path
+entries.
 After having searched the various files,
 if a filter has been specified the filter will be started and
 the required printer name will be sent to the filter.

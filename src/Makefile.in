@@ -333,7 +333,7 @@ uninstall:
 
 clean::
 	-rm -rf *.o *.tmp *core *.a ? ?.bak ?.orig $(TARGET) $(NONTARGET) st[0-9]* \
-	tags ./lpd.conf */*.old */*.bak */*.orig .libs *.lo *.la
+	tags ./lpd.conf */*.old */*.bak */*.orig .libs *.lo *.la log
 
 realclean mostlyclean distclean:: clean
 	-rm -f Makefile Makefile.bsd pclbanner psbanner

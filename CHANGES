@@ -1,17 +1,55 @@
-###########################################################################
-# LPRng - An Extended Print Spooler System
-#
-# Copyright 1988-2001 Patrick Powell, San Diego, CA
-#     papowell@lprng.com
-# See LICENSE for conditions of use.
-#
-###########################################################################
-# MODULE: Changes
-# PURPOSE: Record Changes
-# CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
-###########################################################################
+Version LPRng-3.8.1 - Thu Nov 15 16:08:41 PST 2001
+
+  The original default actions and values for the LPD_PRINTCAP_PATH
+  have been restored, as it broke too many other things.  A work around
+  for the problems with using LPD and database based configuration
+  has been found... ugly, but it works.
+
+  Chooser also now will wait when it cannot find a queue instead of
+  just exiting.  This solves the problem of 'hung' load balance print
+  queues using 'chooser' support.
+
+  Trim the accounting file information.  This now solves the 'mysterious
+  full spool partition' error messages.
+
+  'indefinately' is really 'indefinitely' ... so says 'ispell'
+
+  The 'remove_z' now really removes 'Z' options.
+   (Found by: Ryan Lovett <ryan@stat.Berkeley.EDU>)
+
+  The 'require_explicit_q' added for those folks who absolutely require
+  that a queue be specified and do not want them to use a default queue.
+   (Patch to code supplied by: James Thomas Klaas <jklaas@engin.umich.edu>
+     with a little help from Dan Escapa)
+
+  Grrr... left in a line of code when I was doing some testing of the
+  setuid functions ih Win32 and screwed up the setuid stuff.
+
+  Fixed up a silly problem with file descriptor 0 not bound to
+  /dev/null in lpd subprocesses.
+
+  Fixed the 'Trim_status_file' routine so that it now treats file
+  descriptor 0 and -1 as 'closed' files.  This prevents some silly
+  problems with initialization.
+
+Release LPRng 3.8.0 Mon Oct 15 12:09:13 PDT 2001
+
+   At line 174 in accounting.c:
+     } else if( safestrncasecmp( s, "hold", 4 ) ){
+   This should be 
+     } else if( !safestrncasecmp( s, "hold", 4 ) ){
+   otherwise anything send back to lpd from the accounting filter
+   other than accept will result in a JHOLD!
+    (Spotted by: "C. L. McAvaney" <chrismc@deakin.edu.au>)
+
+   Added :force_ipaddr_hostname option.  This causes the IP address of the
+   remote host to be used for the hostname, overriding the information 
+   in the control file.  This can be used when you really need the
+   IP address rather than the hostname in the control file.
+     (Needed by: Rick Cochran <rcc2@cornell.edu>)
 
 Release LPRng 3.7.9 Mon Oct 15 06:18:43 PDT 2001
+
   Version control strikes again.  Sigh...
   Now all the files are carefully put into place
    (Fumble fingers by:  Patrick Powell <papowell@astart.com>)

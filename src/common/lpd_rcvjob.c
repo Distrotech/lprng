@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.25 2001/10/15 13:25:31 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.28 2001/11/16 16:06:42 papowell Exp $";
 
 
 #include "lp.h"
@@ -964,7 +964,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		if( transfername ) free( transfername ); transfername = 0;
 		goto error;
 	}
-	if( (status = Set_hold_file( job, 0 )) ){
+	if( (status = Set_hold_file( job, 0, fd )) ){
 		SNPRINTF( error,errlen)
 			"error setting up hold file - %s",
 			Errormsg( errno ) );

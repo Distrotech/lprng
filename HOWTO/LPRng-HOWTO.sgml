@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 15 Oct 2001 (For LPRng-3.7.9)</subtitle>
+<subtitle> 16 Nov 2001 (For LPRng-3.8.1)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -24,7 +24,7 @@
 <affiliation>
 <address>
 <email>papowell@lprng.com</email>
-AStArt Technologies addr
+AStArt Technologies
 9475 Chesapeake Dr, Suite D,
 San Diego, CA 92123
 Phone <phone>858-874-6543</phone>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.24 2001/10/15 13:25:46 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.27 2001/11/16 16:06:55 papowell Exp $</releaseinfo>
 
 	<legalnotice>
 	 <important>
@@ -5281,7 +5281,7 @@ Since this is a tutorial,
 we will demonstrate a simple way to make your own
 <emphasis>multi-format</emphasis>
 print filter,
-and provide insite into how more complex filters work.</para>
+and provide insight into how more complex filters work.</para>
 
 <para>The
 <link linkend="fileprog">file</link> utility  developed
@@ -8632,7 +8632,12 @@ and the clients will simply talk to the
 <para> <literal>force_localhost</literal> FLAG <emphasis>force clients to send requests to localhost </emphasis></para>
 </listitem>
 
+<listitem>
+<para> <literal>require_explicit_q</literal> FLAG <emphasis>require queue to be specified</emphasis></para>
+</listitem>
+
 </itemizedlist>
+
 </para>
 
 <para>When an &LPRng; client such as
@@ -8764,6 +8769,8 @@ For example:
 
 <para>If you do not specify a printer on the command line or in the
 environment variables,
+and the 
+<literal/require_explicit_q/ value is not set
 then &LPRng; will search the printcap and use the first valid printcap entry
 as the printer.
 It will use the first one found as the default.</para>
@@ -8786,7 +8793,10 @@ It will use the first one found as the default.</para>
 </itemizedlist>
 </para>
 
-<para>If the preceding steps do not yeild a printer, then the
+<para>
+If the preceding steps do not yield a printer name and the
+<literal/require_explicit_q/ flag is not set
+then the
 <literal>default_printer</literal>
 and
 <literal>default_remote_host</literal>
@@ -9574,6 +9584,10 @@ is rejected.</para>
 </listitem>
 
 <listitem>
+<para><literal>force_ipaddr_hostname</literal> FLAG <emphasis>Update control file with IP address of remote host</emphasis></para>
+</listitem>
+
+<listitem>
 <para><literal>use_shorthost</literal> FLAG <emphasis>short control and data file names</emphasis></para>
 </listitem>
 
@@ -9584,6 +9598,10 @@ is rejected.</para>
 The <literal>force_fqdn_hostname</literal> flag will cause <application>lpd</application> to put a FQDN
 host name in the control file.
 This option will assume that the domain is where the connection originated from.</para>
+
+<para>Similarly, the <literal>force_ipaddr_hostname</literal>
+flag will cause <application>lpd</application> to put a FQDN
+host name in the control file.</para>
 
 <para>Some systems cannot handle FQDN hostnames in control and data file formats.
 The <literal>use_shorthost</literal> option will send control and data files with
@@ -13167,7 +13185,7 @@ then you would simply remove the non-server entries from the printcap.</para>
 </listitem>
 
 <listitem>
-<para> <literal>lpd_printcap_path=</literal><emphasis>additional server printcap file locations</emphasis></para>
+<para> <literal>lpd_printcap_path=</literal><emphasis>lpd server printcap information</emphasis></para>
 </listitem>
 
 </itemizedlist>
@@ -13178,19 +13196,23 @@ then you would simply remove the non-server entries from the printcap.</para>
 and
 <literal> lpd_printcap_path </literal>
 configuration options (see
-
 <link linkend="configfile">lpd.conf(5)</link>
 ) specify a set of paths for the
 printcap information.
-Client programs use only <literal>printcap_path</literal> and the <application>lpd</application>
-server uses both
-<literal>printcap_path</literal> and <literal>lpd_printcap_path</literal>.
+If the
+<literal>lpd_printcap_path</literal> is nonblank then
+the 
+<application>lpd</application>
+server uses it,
+otherwise it uses the
+<literal>printcap_path</literal> information.
+Client programs use only <literal>printcap_path</literal>.
 The path names can be separated with whitespace,
 commas, semicolons, or colons.
 The default values are:
 <informalexample>
 <screen>printcap_path      ${sysconfdir}/printcap
-lpd_printcap_path  ${sysconfdir}/lpd_printcap </screen>
+lpd_printcap_path  (blank or empty)</screen>
 </informalexample>
 </para>
 
@@ -13201,8 +13223,8 @@ lpd_printcap_path  ${sysconfdir}/lpd_printcap </screen>
 printcap file specified by the
 <literal>lpd_printcap_path</literal>,
 you can place server specific information there.
-This allows you to have a common printcap file for clients and an
-additional one for the lpd servers.</para>
+If this file is used it must also contain any required information
+in the <literal/printcap_path/ file.</para>
 
 </sect2>
 

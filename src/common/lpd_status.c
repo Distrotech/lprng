@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.25 2001/10/15 13:25:31 papowell Exp $";
+"$Id: lpd_status.c,v 1.28 2001/11/16 16:06:42 papowell Exp $";
 
 
 #include "lp.h"
@@ -23,6 +23,7 @@
 #include "globmatch.h"
 #include "permission.h"
 #include "lockfile.h"
+#include "errorcodes.h"
 
 #include "lpd_status.h"
 
@@ -1127,6 +1128,23 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 				tempfile, buffer );
 		}
 		s = Join_line_list( &cache,"\n" );
+		if( lseek( lockfd, 0, SEEK_SET) == -1 ){
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_INFO) "Get_queue_status: lseek failed write file '%s'", Lpq_status_file_DYN);
+		}
+		if( ftruncate( lockfd, 0 ) ){
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_INFO) "Get_queue_status: ftruncate failed file '%s'", Lpq_status_file_DYN);
+		}
+		if( Write_fd_str( lockfd, s ) < 0 ){
+			unlink( Lpq_status_file_DYN );
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_INFO) "Get_queue_status: write failed file '%s'", Lpq_status_file_DYN);
+		}
+		if(s) free(s); s = 0;
+		close(lockfd);
+		
+#if 0
 		tempfd = Make_temp_fd( &tempfile );
 		if( Write_fd_str( tempfd, s ) < 0 ){
 			err = errno;
@@ -1145,6 +1163,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			LOGERR_DIE(LOG_INFO)"Get_queue_status: rename of '%s' to '%s' failed",
 				tempfile, Lpq_status_file_DYN );
 		}
+#endif
 		Free_line_list(&cache_info);
 		Free_line_list(&cache);
 		close( lockfd ); lockfd = -1;

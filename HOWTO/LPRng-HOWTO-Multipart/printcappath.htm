@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 15 Oct 2001
-          (For LPRng-3.7.9)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 16 Nov 2001
+          (For LPRng-3.8.1)</th>
         </tr>
 
         <tr>
@@ -53,8 +53,7 @@
 
         <li>
           <p><tt class="LITERAL">lpd_printcap_path=</tt><i class=
-          "EMPHASIS">additional server printcap file
-          locations</i></p>
+          "EMPHASIS">lpd server printcap information</i></p>
         </li>
       </ul>
       <br>
@@ -63,34 +62,35 @@
       <p>The <tt class="LITERAL">printcap_path</tt> and <tt class=
       "LITERAL">lpd_printcap_path</tt> configuration options (see
       <a href="configfile.htm">lpd.conf(5)</a> ) specify a set of
-      paths for the printcap information. Client programs use only
-      <tt class="LITERAL">printcap_path</tt> and the <b class=
-      "APPLICATION">lpd</b> server uses both <tt class=
-      "LITERAL">printcap_path</tt> and <tt class=
-      "LITERAL">lpd_printcap_path</tt>. The path names can be
-      separated with whitespace, commas, semicolons, or colons. The
-      default values are:</p>
+      paths for the printcap information. If the <tt class=
+      "LITERAL">lpd_printcap_path</tt> is nonblank then the <b
+      class="APPLICATION">lpd</b> server uses it, otherwise it uses
+      the <tt class="LITERAL">printcap_path</tt> information.
+      Client programs use only <tt class=
+      "LITERAL">printcap_path</tt>. The path names can be separated
+      with whitespace, commas, semicolons, or colons. The default
+      values are:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN5985"></a>
+        <a name="AEN5998"></a>
 <pre class="SCREEN">
     printcap_path      ${sysconfdir}/printcap
-    lpd_printcap_path  ${sysconfdir}/lpd_printcap
+    lpd_printcap_path  (blank or empty)
 </pre>
       </div>
       <br>
       <br>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN5987">12.15.1. Separate
+        <h2 class="SECT2"><a name="AEN6000">12.15.1. Separate
         Server and Client Printcap Files</a></h2>
 
         <p>Since only the <b class="APPLICATION">lpd</b> server
         uses the printcap file specified by the <tt class=
         "LITERAL">lpd_printcap_path</tt>, you can place server
-        specific information there. This allows you to have a
-        common printcap file for clients and an additional one for
-        the lpd servers.</p>
+        specific information there. If this file is used it must
+        also contain any required information in the <tt class=
+        "LITERAL">printcap_path</tt> file.</p>
       </div>
 
       <div class="SECT2">
@@ -106,7 +106,7 @@
         printcap entry has the form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN5998"></a>
+          <a name="AEN6012"></a>
 <pre class="SCREEN">
     all:all=pr1,pr2,...
 </pre>

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.25 2001/10/15 13:25:29 papowell Exp $";
+"$Id: linelist.c,v 1.28 2001/11/16 16:06:40 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -3059,7 +3059,7 @@ void Fix_Z_opts( struct job *job )
 		for( i = 0; i < n-1; ++i ){
 			buffer[0] = s[i];
 			if( (start = Find_str_value(&job->info,buffer,Value_sep)) ){
-				str= safeextend3(str,",",start, __FILE__,__LINE__);
+				str= safeextend2(str,start, __FILE__,__LINE__);
 				Set_str_value(&job->info,buffer,0);
 			}
 		}
@@ -3068,7 +3068,7 @@ void Fix_Z_opts( struct job *job )
 			buffer[0] = s[i];
 			start = Find_str_value(&job->info,buffer,Value_sep);
 				/* put at start */
-			start= safestrdup3(str,",",Find_str_value(&job->info,buffer,Value_sep),
+			start= safestrdup3(str,(start?",":""),start,
 				__FILE__,__LINE__);
 			Set_str_value(&job->info, buffer, start );
 			if( start ) free(start); start = 0;
@@ -3082,13 +3082,14 @@ void Fix_Z_opts( struct job *job )
 		Split(&l, Remove_Z_DYN, ",", 0, 0, 0, 0, 0,0);
 		for( i = 0; i < l.count; ++i ){
 			pattern = l.list[i];
-			DEBUG4("Fix_Z_opts: pattern '%s'", pattern );
+			DEBUG4("Fix_Z_opts: REMOVE pattern '%s'", pattern );
 			for( start = str; start && *start; start = end ){
 				c = 0;
 				if( !(end = strpbrk(start,",")) ){
 					end = start+strlen(start);
 				}
 				c = *end;
+				*end = 0;
 				/* now we have the option */
 				DEBUG4("Fix_Z_opts: str '%s'", start );
 				if( !Globmatch( pattern, start) ){
