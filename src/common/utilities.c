@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.19 2001/09/18 01:43:41 papowell Exp $";
+"$Id: utilities.c,v 1.23 2001/09/29 22:28:54 papowell Exp $";
 
 #include "lp.h"
 
@@ -934,7 +934,7 @@ void Clear_timeout( void )
  * 
  * To_ruid( user );	-- set ruid to user, euid to root
  * To_euid( user );	-- set euid to user, ruid to root
- * To_root();	-- set euid to root, ruid to root
+ * To_euid_root();	-- set euid to root, ruid to root
  * To_daemon();	-- set euid to daemon, ruid to root
  * To_user();	-- set euid to user, ruid to root
  * Full_daemon_perms() -- set both UID and EUID, one way, no return
@@ -1162,31 +1162,39 @@ void Clear_timeout( void )
  *  To_ruid and To_uid,  which only does the RUID and EUID
  *    Sigh...  To every rule there is an exception.
  */
-int To_root(void)
+int To_euid_root(void)
 {
 	setup_info();
-	Set_full_group( 0, 0 );
 	return( seteuid_wrapper( 0 )	);
 }
+
+static int To_daemon_called;
+
 int To_daemon(void)
 {
 	setup_info();
 	Set_full_group( DaemonUID, DaemonGID );
+	To_daemon_called = 1;
 	return( seteuid_wrapper( DaemonUID )	);
 }
+
 int To_user(void)
 {
+	if( To_daemon_called ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "To_user: LOGIC ERROR! To_daemon has been called");
+	}
 	setup_info();
-	Set_full_group( OriginalRUID, OriginalRGID );
+	/* Set_full_group( OriginalRUID, OriginalRGID ); */
 	return( seteuid_wrapper( OriginalRUID )	);
 }
-int To_ruid(int uid)
+int To_ruid(int ruid)
 {
-	setup_info(); return( setruid_wrapper( uid )	);
+	setup_info(); return( setruid_wrapper( ruid )	);
 }
-int To_uid( int uid )
+int To_euid( int euid )
 {
-	setup_info(); return( seteuid_wrapper( uid ) );
+	setup_info(); return( seteuid_wrapper( euid ) );
 }
 
 /*

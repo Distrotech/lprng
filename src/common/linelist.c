@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.19 2001/09/18 01:43:35 papowell Exp $";
+"$Id: linelist.c,v 1.23 2001/09/29 22:28:47 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -2695,7 +2695,7 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 		/* set up full perms for filter */ 
 		if( Is_server ){
 			if( root ){
-				To_root();
+				To_euid_root();
 			} else {
 				Full_daemon_perms();
 			}
@@ -4045,10 +4045,10 @@ void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
 	Set_flag_value(args,DEBUGFV,DbgFlag);
 #ifdef DMALLOC
 	{
-		extern int _dmalloc_outfile;
-		if( _dmalloc_outfile > 0 ){
+		extern int _dmalloc_outfile_fd;
+		if( _dmalloc_outfile_fd > 0 ){
 			Set_decimal_value(args,DMALLOC_OUTFILE,passfd->count);
-			passfd->list[passfd->count++] = Cast_int_to_voidstar(_dmalloc_outfile);
+			passfd->list[passfd->count++] = Cast_int_to_voidstar(_dmalloc_outfile_fd);
 		}
 	}
 #endif
@@ -4167,8 +4167,8 @@ void Do_work( struct line_list *args )
 	DbgFlag= Find_flag_value( args, DEBUGFV, Value_sep);
 #ifdef DMALLOC
 	{
-		extern int _dmalloc_outfile;
-		_dmalloc_outfile = Find_flag_value(args, DMALLOC_OUTFILE,Value_sep);
+		extern int _dmalloc_outfile_fd;
+		_dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE,Value_sep);
 	}
 #endif
 	name = Find_str_value(args,CALL,Value_sep);

@@ -9,9 +9,9 @@
     <link rel="UP" title="Permissions and Authentication " href=
     "permsref.htm">
     <link rel="PREVIOUS" title="PGP Authentication Support" href=
-    "x8931.htm">
+    "x8932.htm">
     <link rel="NEXT" title="Using Kerberos 4 for Authentication"
-    href="x9202.htm">
+    href="x9203.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -20,19 +20,19 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 17 Sep 2001
-          (For LPRng-3.7.7)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 29 Sep 2001
+          (For LPRng-3.7.8)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x8931.htm" accesskey="P">Prev</a></td>
+          "x8932.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           17. Permissions and Authentication</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x9202.htm" accesskey="N">Next</a></td>
+          "x9203.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -53,14 +53,14 @@
       class="APPLICATION">LPRng</b> to use Kerberos.</p>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN9062">17.14.1. <b class=
+        <h2 class="SECT2"><a name="AEN9063">17.14.1. <b class=
         "APPLICATION">LPRng</b> Configuration</a></h2>
 
         <p>The following <tt class="LITERAL">configure</tt> options
         are used to enable Kerberos support:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN9067"></a>
+          <a name="AEN9068"></a>
 <pre class="SCREEN">
      --enable-kerberos                 enable kerberos support
     --enable-mit_kerberos4            enable MIT Kerberos 4 support
@@ -86,7 +86,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN9076">17.14.2. Kerberos
+        <h2 class="SECT2"><a name="AEN9077">17.14.2. Kerberos
         Installation Procedure</a></h2>
 
         <ol type="1">
@@ -116,7 +116,7 @@
             files:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN9092"></a>
+              <a name="AEN9093"></a>
 <pre class="SCREEN">
     if [ -f /etc/krb5.conf -a -f /usr/local/var/krb5kdc/kdc.conf  ]; then
         echo -n ' krb5kdc ';    /usr/local/sbin/krb5kdc;
@@ -145,7 +145,7 @@
             password.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN9101"></a>
+              <a name="AEN9102"></a>
 <pre class="SCREEN">
     Example:
     
@@ -162,7 +162,7 @@
             <p>Extract the keytab for each server:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN9105"></a>
+              <a name="AEN9106"></a>
 <pre class="SCREEN">
     Example:
     #&gt; kadmin   OR #&gt; kadmin.local 
@@ -189,7 +189,7 @@
             "APPLICATION">lpd</b> will run as.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN9115"></a>
+              <a name="AEN9116"></a>
 <pre class="SCREEN">
     #&gt; chmod 400 lpr.wayoff.com
     #&gt; scp lpr.wayoff.com root@wayoff.com:/etc/lpd.keytab
@@ -217,7 +217,7 @@
             compatible with the Kerberos 4 support.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN9122"></a>
+              <a name="AEN9123"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {321} #</tt> <tt class=
 "USERINPUT"><b>ktuil</b></tt>
@@ -234,7 +234,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN9128">17.14.3. <b class=
+        <h2 class="SECT2"><a name="AEN9129">17.14.3. <b class=
         "APPLICATION">LPRng</b> Configuration</a></h2>
 
         <p>The <b class="APPLICATION">LPRng</b> software needs to
@@ -248,7 +248,7 @@
         installation:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN9136"></a>
+          <a name="AEN9137"></a>
 <pre class="SCREEN">
     cd .../LPRng
     rm -f config.cache
@@ -265,7 +265,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN9138">17.14.4. Printcap
+        <h2 class="SECT2"><a name="AEN9139">17.14.4. Printcap
         Entries</a></h2>
 
         <p>Options used:</p>
@@ -327,7 +327,7 @@
         <p>Example printcap entry:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN9179"></a>
+          <a name="AEN9180"></a>
 <pre class="SCREEN">
     pr:client
         :lp=pr@wayoff
@@ -394,7 +394,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN9197">17.14.5. User
+        <h2 class="SECT2"><a name="AEN9198">17.14.5. User
         Environment Variables and Files</a></h2>
 
         <p>In order to use kerberos authentication, the user will
@@ -412,13 +412,13 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x8931.htm" accesskey="P">Prev</a></td>
+          "x8932.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x9202.htm" accesskey="N">Next</a></td>
+          "x9203.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

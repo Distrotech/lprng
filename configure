@@ -602,7 +602,7 @@ fi
 
 
 PACKAGE=LPRng
-VERSION=3.7.7
+VERSION=3.7.8
 
 
 ac_aux_dir=

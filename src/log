@@ -1,0 +1,25 @@
+*** Setup_configuration: pid 39114
+*** Dump_unfreed_mem: **** cleanup, pid 39114
+1000835005: 1100: dumping the unfreed pointers
+1000835005: 1100: dumping not-freed pointers changed since 0:
+1000835005: 1100:  not freed: '0x80ef020|s1' (8 bytes) from './common/initialize.c:170'
+1000835005: 1100:  not freed: '0x80f1000|s1' (1087 bytes) from 'ra=0x28140d5c'
+1000835005: 1100:  not freed: '0x80fa600|s1' (408 bytes) from './common/linelist.c:348'
+1000835005: 1100:  not freed: '0x80f4180|s3' (11 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f41e0|s1' (4 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f4200|s1' (15 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f4220|s1' (10 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f4240|s1' (11 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f42e0|s1' (20 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f4320|s1' (26 bytes) from './common/linelist.c:381'
+1000835005: 1100:  not freed: '0x80f4360|s1' (5 bytes) from './common/linelist.c:381'
+1000835005: 1100:  total-size  count  source
+1000835005: 1100:        1087      1  ra=0x28140d5c
+1000835005: 1100:         408      1  ./common/linelist.c:348
+1000835005: 1100:         102      8  ./common/linelist.c:381
+1000835005: 1100:           8      1  ./common/initialize.c:170
+1000835005: 1100:        1605     11  Total of 4
+1000835005: 1100:  known memory: 10 pointers, 518 bytes
+1000835005: 1100:  unknown memory: 1 pointer, 1087 bytes
+***
+1000835005: 1100: ending time = 1000835005, elapsed since start = 0:00:00

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: child.c,v 1.19 2001/09/18 01:43:33 papowell Exp $";
+"$Id: child.c,v 1.23 2001/09/29 22:28:45 papowell Exp $";
 
 
 #include "lp.h"
@@ -191,7 +191,6 @@ pid_t dofork( int new_process_group )
 		Process_list.count = 0;
 		Free_line_list( &Process_list );
 		Clear_tempfile_list();
-		Clear_exit();
 
 		/*
 		 * We need to make sure that LPD forked processes do not have blocked
@@ -211,35 +210,6 @@ pid_t dofork( int new_process_group )
 /*
  * routines to call on exit
  */
-
-
-/***************************************************************************
- * User level implementation of on_exit() function
- *  register_exit( routine, parm )
- *    -registers a call to  routine(parm)
- *    - returns back entry in list
- *  void remove_exit( int i )
- *    - removes entry i from exit list
- *  void cleanup( int signal )
- *    - calls routines and does cleanup
- ***************************************************************************/
-
-void Register_exit( char *name, exit_ret exit_proc, void *p )
-{
-	struct exit_info *e;
-
-	e = malloc_or_die( sizeof(e[0]), __FILE__,__LINE__ );
-	e->exit = exit_proc;
-	e->parm = p;
-	safestrncpy(e->name, name);
-	Check_max(&Exit_list,1);
-	Exit_list.list[Exit_list.count++] = (char *)e;
-}
-
-void Clear_exit( void )
-{
-	Free_line_list(&Exit_list);
-}
 
 plp_signal_t cleanup_USR1 (int passed_signal)
 {
@@ -284,31 +254,25 @@ plp_signal_t cleanup (int passed_signal)
 	plp_block_mask oblock;
 	int i;
 	int signalv = passed_signal;
-	struct exit_info *e;
 
 	plp_block_all_signals( &oblock ); /**/
 
-	DEBUG2("cleanup: signal %s, Errorcode %d, exits %d",
-		Sigstr(passed_signal), Errorcode, Exit_list.count);
+	DEBUG2("cleanup: signal %s, Errorcode %d",
+		Sigstr(passed_signal), Errorcode );
 
 	/* shut down all logging stuff */
 	Doing_cleanup = 1;
 	/* first we try to close all the output ports */
 	for( i = 3; i < Max_fd; ++i ){
 #ifdef DMALLOC
-		extern int _dmalloc_outfile;
-		if( i == _dmalloc_outfile ) continue;
+		extern int _dmalloc_outfile_fd;
+		if( i == _dmalloc_outfile_fd ) continue;
 #endif
 		close(i);
 	}
 
 	Remove_tempfiles();
 	/* then we do exit cleanup */
-	for( i = Exit_list.count-1; i >= 0;  --i ){
-		e = (void *)(Exit_list.list[i]);
-		e->exit( e->parm );
-	}
-	Free_line_list(&Exit_list);
 
 	if( passed_signal == 0 ){
 		signalv = SIGINT;
@@ -338,17 +302,17 @@ plp_signal_t cleanup (int passed_signal)
 void Dump_unfreed_mem(char *title)
 {
 #if defined(DMALLOC)
-	extern int _dmalloc_outfile;
+	extern int _dmalloc_outfile_fd;
 	extern char *_dmalloc_logpath;
 	char buffer[SMALLBUFFER];
 
-	if( _dmalloc_logpath && _dmalloc_outfile < 0 ){
-		_dmalloc_outfile = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		Max_open( _dmalloc_outfile );
+	if( _dmalloc_logpath && _dmalloc_outfile_fd < 0 ){
+		_dmalloc_outfile_fd = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		Max_open( _dmalloc_outfile_fd );
 	}
 	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %d\n",
 		title, getpid() );
-	Write_fd_str(_dmalloc_outfile, buffer );
+	Write_fd_str(_dmalloc_outfile_fd, buffer );
 	if(Outbuf) free(Outbuf); Outbuf = 0;
 	if(Inbuf) free(Inbuf); Inbuf = 0;
 	Clear_tempfile_list();
@@ -358,12 +322,11 @@ void Dump_unfreed_mem(char *title)
 	}
 	Process_list.count = 0;
 	Free_line_list(&Process_list);
-	Free_line_list(&Exit_list);
 	Clear_all_host_information();
     Clear_var_list( Pc_var_list, 0 );
     Clear_var_list( DYN_var_list, 0 );
 	dmalloc_log_unfreed();
-	Write_fd_str(_dmalloc_outfile, "***\n" );
+	Write_fd_str(_dmalloc_outfile_fd, "***\n" );
 	exit(Errorcode);
 #endif
 }

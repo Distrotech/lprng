@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 17 Sep 2001 (For LPRng-3.7.7)</subtitle>
+<subtitle> 29 Sep 2001 (For LPRng-3.7.8)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.18 2001/09/18 01:43:52 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.22 2001/09/29 22:29:06 papowell Exp $</releaseinfo>
 
 	<legalnotice>
 	 <important>
@@ -784,7 +784,13 @@ they are used by the <application>ifhp</application> filter.
 <anchor id=fileprog>
 <para>The Open Source <application/file/ utility by Ian F. Darwin
 can be obtained from
-<ulink URL="ftp://ftp.astron.com/pub/file/">ftp://ftp.astron.com/pub/file/</ulink>.
+<ulink URL="ftp://ftp.astron.com/pub/file/">
+ftp://ftp.astron.com/pub/file/
+</ulink>.
+or
+<ulink URL="ftp://ftp.lprng.com/pub/LPRng/UNIXTOOLS/file/">
+ftp://ftp.lprng.com/pub/LPRng/UNIXTOOLS/file/
+</ulink>.
 This is a greatly improved version of the original UNIX file utility and
 may be used by the <application>ifhp</application> filter to do file recognition.</para>
 

@@ -11,6 +11,31 @@
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
 
+Release LPRng 3.7.8 Tue Sep 25 12:35:46 PDT 2001
+
+  Can't spell... fixed typos in man pages.
+  (Corrections from: Karsten Weiss <knweiss@gmx.de>)
+
+  lpd_logger.c - free(sp); s=0 ... this sure does make
+   free() and malloc() unhappy...
+   (Found totally by accident: Patrick Powell <papowell@astart.com>)
+
+  lpr '-Y' (enable lpr_filter) processing fixed up a bit.  Now has better
+   diagnostics and information. 
+
+  An extremely rare but annoying network condition causes LPQ print
+  status to fail.  When running as root (setuid root),  and doing an LPQ
+  operation,  the lpq process will try to bind to a port in the low
+  port range (512 - 1023).  This will sometimes fail with a timeout
+  if the port has been recently used and bound to.  I have put a bit
+  more 'randomization' into the selection of the port,  but there is really
+  nothing that can be done,  as the TCP/IP error status does not distinguish
+  between 'connection refused because you just connected from this port'
+  and the remote printer being off line.  Sigh...  The obvious answer
+  to this is to bind to the low ports only when needed, but this requires
+  users to know when to set the option.  I give up.
+
+
 Release LPRng 3.7.7 Fri Sep 14 15:54:48 PDT 2001
 
   checkpc whooped its cookies when running checkpc -f and

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.19 2001/09/18 01:43:36 papowell Exp $";
+"$Id: lpd.c,v 1.23 2001/09/29 22:28:49 papowell Exp $";
 
 
 #include "lp.h"
@@ -78,7 +78,7 @@ int main(int argc, char *argv[], char *envp[])
 	int start_fd = 0;
 	int status_pid = 0;
 	int request_pipe[2], status_pipe[2];
-	int fork_failed;
+	int last_fork_pid_value;
 	struct line_list args;
 	char *s;
 	int first_scan = 1;
@@ -276,6 +276,10 @@ int main(int argc, char *argv[], char *envp[])
 		Max_open(status_pipe[0]); Max_open(status_pipe[1]);
 		Logger_fd = status_pipe[1];
 		DEBUG2( "lpd: fd status_pipe(%d,%d)",status_pipe[0],status_pipe[1]);
+		status_pid = Start_logger( status_pipe[0] );
+		if( status_pid < 0 ){
+			LOGERR_DIE(LOG_ERR) _("lpd: cannot start initial logger process") );
+		}
 	}
 
 	/* open a connection to logger */
@@ -301,8 +305,8 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	last_time = time( (void *)0 );
-	fork_failed = start_fd = Start_all(first_scan);
-	Fork_error( fork_failed );
+	last_fork_pid_value = start_fd = Start_all(first_scan);
+	Fork_error( last_fork_pid_value );
 	if( start_fd > 0 ){
 		first_scan = 0;
 	}
@@ -326,15 +330,15 @@ int main(int argc, char *argv[], char *envp[])
 			if( pid == status_pid ){
 				status_pid = -1;
 			}
-			fork_failed = 1;
+			last_fork_pid_value = 1;
 		}
-		if( fork_failed > 0 && Logger_fd > 0 && status_pid < 0 ){
+		if( last_fork_pid_value > 0 && Logger_fd > 0 && status_pid < 0 ){
 			DEBUG1( "lpd: restarting logger process");
-			fork_failed = status_pid = Start_logger( status_pipe[0] );
-			Fork_error( fork_failed );
+			last_fork_pid_value = status_pid = Start_logger( status_pipe[0] );
+			Fork_error( last_fork_pid_value );
 			DEBUG1("lpd: status_pid %d", status_pid );
 		}
-		if( fork_failed < 0 ){
+		if( last_fork_pid_value < 0 ){
 			/* wait for 10 seconds then go in a loop */
 			memset(&timeval, 0, sizeof(timeval));
 			timeval.tv_sec = 10;
@@ -350,8 +354,8 @@ int main(int argc, char *argv[], char *envp[])
 				m, (int)timeval.tv_sec );
 			if( m >= Poll_time_DYN ){
 				if( Started_server || Force_poll_DYN ){
-					fork_failed = start_fd = Start_all(first_scan);
-					Fork_error( fork_failed );
+					last_fork_pid_value = start_fd = Start_all(first_scan);
+					Fork_error( last_fork_pid_value );
 					DEBUG1( "lpd: restarting poll, start_fd %d", start_fd);
 					if( start_fd > 0 ){
 						if( first_scan ) first_scan = 0;
@@ -370,13 +374,13 @@ int main(int argc, char *argv[], char *envp[])
 		DEBUG1("lpd: max_servers %d, active %d", max_servers, n );
 
 		/* allow a little space for people to send commands */
-		while( fork_failed > 0 && Servers_line_list.count > 0 && n < max_servers-4 ){ 
+		while( last_fork_pid_value > 0 && Servers_line_list.count > 0 && n < max_servers-4 ){ 
 			s = Servers_line_list.list[0];
 			DEBUG1("lpd: starting server '%s'", s );
 			Set_str_value(&args,PRINTER,s);
 			Set_str_value(&args,CALL,QUEUE);
-			fork_failed = pid = Start_worker( &args, 0 );
-			Fork_error( fork_failed );
+			last_fork_pid_value = pid = Start_worker( &args, 0 );
+			Fork_error( last_fork_pid_value );
 			Free_line_list(&args);
 			if( pid > 0 ){
 				Remove_line_list( &Servers_line_list, 0 );
@@ -385,11 +389,11 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		}
 
-		DEBUG1("lpd: fork_failed %d, processes %d active, max %d",
-			fork_failed, n, max_servers );
+		DEBUG1("lpd: last_fork_pid_value %d, processes %d active, max %d",
+			last_fork_pid_value, n, max_servers );
 		/* do not accept incoming call if no worker available */
 		readfds = defreadfds;
-		if( n >= max_servers || fork_failed < 0 ){
+		if( n >= max_servers || last_fork_pid_value < 0 ){
 			DEBUG1( "lpd: not accepting requests" );
 			FD_CLR( sock, &readfds );
 		}
@@ -453,9 +457,9 @@ int main(int argc, char *argv[], char *envp[])
 			}
 			continue;
 		} else if( m == 0 ){
-			DEBUG1( "lpd: signal or time out, fork_failed %d", fork_failed );
+			DEBUG1( "lpd: signal or time out, last_fork_pid_value %d", last_fork_pid_value );
 			/* we try to fork now */
-			if( fork_failed < 0 ) fork_failed = 1;
+			if( last_fork_pid_value < 0 ) last_fork_pid_value = 1;
 			continue;
 		}
 		if( FD_ISSET( sock, &readfds ) ){
@@ -720,13 +724,14 @@ void Set_lpd_pid(void)
 	lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 	fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
 	if( lockfd < 0 ){
-		To_root();
+		int euid = geteuid();
+		To_euid_root();
 		lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 		if( lockfd > 0 ){
 			fchown( lockfd, DaemonUID, DaemonGID );
 			fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
 		}
-		To_daemon();
+		To_euid(euid);
 	}
 	if( lockfd < 0 ){
 		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open '%s'"), path );
@@ -999,10 +1004,10 @@ void Setup_waitpid_break (void)
 	(void) plp_signal_break(SIGCHLD, sigchld_handler);
 }
 
-void Fork_error( int fork_failed )
+void Fork_error( int last_fork_pid_value )
 {
-	DEBUG1("Fork_error: %d", fork_failed );
-	if( fork_failed < 0 ){
+	DEBUG1("Fork_error: %d", last_fork_pid_value );
+	if( last_fork_pid_value < 0 ){
 		LOGMSG(LOG_CRIT)"LPD: fork failed! LPD not accepting any requests");
 	}
 }

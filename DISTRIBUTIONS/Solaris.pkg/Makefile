@@ -19,7 +19,7 @@ FILTERDIR=/usr/libexec/filters
 SYSCONFDIR=/etc
 SBINDIR=${PREFIX}/sbin
 MANDIR=/usr/share/man
-VERSION=3.7.7
+VERSION=3.7.8
 
 CONFIGURE_ARGS=--prefix=${PREFIX} --sysconfdir=${SYSCONFDIR} --with-filterdir=${FILTERDIR} --mandir=${MANDIR}
 

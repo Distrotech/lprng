@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: accounting.h,v 1.19 2001/09/18 01:43:42 papowell Exp $
+ * $Id: accounting.h,v 1.23 2001/09/29 22:28:54 papowell Exp $
  ***************************************************************************/
 
 

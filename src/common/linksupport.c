@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.19 2001/09/18 01:43:35 papowell Exp $";
+"$Id: linksupport.c,v 1.23 2001/09/29 22:28:48 papowell Exp $";
 
 
 /***************************************************************************
@@ -224,7 +224,6 @@ int getconnection ( char *hostname, char *dest_port,
 	struct sockaddr_in dest_sin;     /* inet socket address */
 	struct sockaddr_in src_sin;     /* inet socket address */
 	int maxportno, minportno;
-	int port = 0;			/* max and minimum port numbers */
 	int euid;
 	int status = -1;			/* status of operation */
 	plp_block_mask oblock;
@@ -235,6 +234,7 @@ int getconnection ( char *hostname, char *dest_port,
 	char *use_host;
 	int address_count = 0;
 	int incoming_port;
+	static int last_port_used;
 
 	/*
 	 * find the address
@@ -317,13 +317,25 @@ int getconnection ( char *hostname, char *dest_port,
 		}
 	}
 	range = maxportno - minportno;
-	if( minportno && range ){
-		/* ugly way to get a not so random number */ 
-		port = getpid()^time((void *)0);
-		if(port<0) port = -port;
-		port = port % range;
-	} else {
-		port = 0;
+
+	port_count = 0;			/* numbers of ports tried */
+	port_number = 0;
+	connect_count = 0;		/* number of connections tried */
+	port_number = 0;
+
+	if( minportno ){
+		port_number = minportno;
+		if( range ){
+			if( last_port_used && last_port_used >= minportno ){
+				port_number = ++last_port_used;
+			} else {
+				srand(getpid()); 
+				port_number = minportno + (abs(rand()>>8) % range);
+			}
+		}
+		if( port_number > maxportno){
+			port_number = minportno;
+		}
 	}
 
 	/* we now have a range of ports and a starting position
@@ -344,27 +356,20 @@ int getconnection ( char *hostname, char *dest_port,
 	 * very odd system implementations.  Note that you can
 	 * read and write to the socket as a user.
 	 */
-	DEBUGF(DNW2)("getconnection: RESTART ");
-	port_count = 0;			/* numbers of ports tried */
-	port_number = 0;
-	connect_count = 0;		/* number of connections tried */
-	if( minportno ){
-		port_number = minportno + port;
-	}
 	DEBUGF(DNW2)("getconnection: minportno %d, maxportno %d, range %d, port_number %d",
 		minportno, maxportno, range, port_number );
 
  again:
-	DEBUGF(DNW2)("getconnection: AGAIN port %d, count %d, connects %d",
-		port_number, port_count, connect_count );
+	DEBUGF(DNW1)("getconnection: AGAIN port %d, min %d, max %d, count %d, connects %d",
+		port_number, minportno, maxportno, port_count, connect_count );
 	DEBUGF(DNW2)("getconnection: protocol %d, connection_type %d",
 		AF_Protocol(), connection_type );
 	plp_block_all_signals( &oblock );
-	if( UID_root ) (void)To_root();
+	if( UID_root ) (void)To_euid_root();
 	sock = socket(AF_Protocol(), connection_type, 0);
 	Max_open(sock);
 	err = errno;
-	if( UID_root ) (void)To_uid( euid );
+	if( UID_root ) (void)To_euid( euid );
 	plp_set_signal_mask( &oblock, 0 );
 	if( sock < 0 ){
 		errno = err;
@@ -376,6 +381,7 @@ int getconnection ( char *hostname, char *dest_port,
 	if( minportno || bindto ){
 		incoming_port = ntohs(Link_dest_port_num(0));
 		do{
+			last_port_used = port_number;
 			status = -1;
 			if( bindto == 0 ){
 				src_sin.sin_family = AF_Protocol();
@@ -400,10 +406,10 @@ int getconnection ( char *hostname, char *dest_port,
 					able to reuse a port for up to 10 minutes */
 				/* we do the next without interrupts and as root */
 				plp_block_all_signals( &oblock );
-				if( UID_root ) (void)To_root();
+				if( UID_root ) (void)To_euid_root();
 				status = Link_setreuse( sock );
 				err = errno;
-				if( UID_root ) (void)To_uid( euid );
+				if( UID_root ) (void)To_euid( euid );
 				plp_set_signal_mask( &oblock, 0 );
 				DEBUGF(DNW2) ("getconnection: sock %d, reuse status %d",
 					sock, status );
@@ -414,10 +420,10 @@ int getconnection ( char *hostname, char *dest_port,
 			if( status >= 0 ){
 				/* we do the next without interrupts */
 				plp_block_all_signals( &oblock );
-				if( UID_root ) (void)To_root();
+				if( UID_root ) (void)To_euid_root();
 				status = bind(sock, (struct sockaddr *)&src_sin, sizeof(src_sin));
 				err = errno;
-				if( UID_root ) (void)To_uid( euid );
+				if( UID_root ) (void)To_euid( euid );
 				plp_set_signal_mask( &oblock, 0 );
 				DEBUGF(DNW2) ("getconnection: bind returns %d, sock %d, port %d, src '%s'",
 					status, sock, ntohs(src_sin.sin_port), inet_ntoa(src_sin.sin_addr) );
@@ -425,10 +431,10 @@ int getconnection ( char *hostname, char *dest_port,
 			if( status >= 0 && Keepalive_DYN ){
 				/* we do the next without interrupts */
 				plp_block_all_signals( &oblock );
-				if( UID_root ) (void)To_root();
+				if( UID_root ) (void)To_euid_root();
 				status = Link_setkeepalive( sock );
 				err = errno;
-				if( UID_root ) (void)To_uid( euid );
+				if( UID_root ) (void)To_euid( euid );
 				plp_set_signal_mask( &oblock, 0 );
 				if( status < 0 ){
 					LOGERR(LOG_ERR) "getconnection: set SO_KEEPALIVE failed" );
@@ -600,14 +606,14 @@ int Link_listen( void )
 		inet_ntoa( sinaddr.sin_addr ), ntohs( sinaddr.sin_port ) );
 
 	euid = geteuid();
-	if( UID_root ) (void)To_root();
+	if( UID_root ) (void)To_euid_root();
 	errno = 0;
 	status = (sock = socket (AF_Protocol(), SOCK_STREAM, 0)) < 0
 		|| Link_setreuse( sock ) < 0
 		|| (Keepalive_DYN && Link_setkeepalive( sock ) < 0)
 		|| bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) < 0;
 	err = errno;
-	if( UID_root ) (void)To_uid( euid );
+	if( UID_root ) (void)To_euid( euid );
 	if( status ){
 		DEBUGF(DNW4)("Link_listen: bind to lpd port %d failed '%s'",
 			port, Errormsg(err));

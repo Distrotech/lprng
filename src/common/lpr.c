@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.19 2001/09/18 01:43:38 papowell Exp $";
+"$Id: lpr.c,v 1.23 2001/09/29 22:28:51 papowell Exp $";
 
 
 #include "lp.h"
@@ -57,7 +57,7 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	off_t job_size;
-	char *s, *t, buffer[SMALLBUFFER];
+	char *s, *t, buffer[SMALLBUFFER], *send_to_pr = 0;
 	struct job prjob;
 	struct line_list opts, newargs;
 	int n;
@@ -149,6 +149,7 @@ int main(int argc, char *argv[], char *envp[])
             }
         }
     }
+
 	/*
 	 * Fix the rest of the control file
 	 */
@@ -173,7 +174,6 @@ int main(int argc, char *argv[], char *envp[])
 	/* we check to see if we need to do control file filtering */
 	/* we do not do any translation of formats */
 	s = 0;
-	Fix_control( &prjob, Control_filter_DYN, 0 );
 
 	n = Find_flag_value( &prjob.info,DATAFILE_COUNT,Value_sep);
 	if( Max_datafiles_DYN > 0 && n > Max_datafiles_DYN ){
@@ -182,19 +182,62 @@ int main(int argc, char *argv[], char *envp[])
 					n, Max_datafiles_DYN );
 	}
 
-	s = 0;
+	send_to_pr = 0;
 	if( (Direct_JOB || Direct_DYN) ){
 		Force_localhost_DYN = 0;
 		Lpr_bounce_DYN = Lpr_bounce_JOB = 0;
 		/* check to see if we have a socket connection specified */
-		s = Printer_JOB;
-		if( !s ){ s = Find_str_value(&PC_entry_line_list,LP,Value_sep ); }
-		if( s ){
-			s = safestrdup(s,__FILE__,__LINE__);
-			Expand_percent(&s);
+		send_to_pr = Printer_JOB;
+		if( !send_to_pr ){ send_to_pr = Find_str_value(&PC_entry_line_list,LP,Value_sep ); }
+		if( send_to_pr ){
+			send_to_pr = safestrdup(send_to_pr,__FILE__,__LINE__);
+			Expand_percent(&send_to_pr);
 		}
 	}
-	if( s && (strchr(s,'%') || (s[0] == '/') || strchr(s,'|')) ){
+	if( Lpr_bounce_DYN || Lpr_bounce_JOB ){
+		int tempfd;
+		struct stat statb;
+		char *tempfile, *old_lp_value;
+		struct line_list *lp;
+
+		if(DEBUGL2) Dump_job( "lpr - before filtering", &prjob );
+		tempfd = Make_temp_fd(&tempfile);
+
+		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep ),
+			__FILE__,__LINE__);
+		Set_str_value( &PC_entry_line_list, LP, tempfile );
+		/* Print_job( output_device, status_device, job, timeout, poll_for_status ) */
+		Print_job( tempfd, -1, &prjob, 0, 0, User_filter_JOB );
+		Set_str_value( &PC_entry_line_list, LP, old_lp_value );
+		if( old_lp_value ) free( old_lp_value ); old_lp_value = 0;
+
+		close(tempfd);
+		tempfd = Checkread( tempfile, &statb );
+		if( tempfd < 0 ){
+			Errorcode = JABORT;
+			FATAL(LOG_INFO) _("Cannot open file '%s', %s"), tempfile, Errormsg( errno ) );
+		}
+		close(tempfd);
+		DEBUG2("lpr: jobs size now %0.0f", (double)(statb.st_size));
+		job_size = statb.st_size;
+		Free_listof_line_list(&prjob.datafiles);
+		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
+		memset(lp,0,sizeof(lp[0]));
+		Check_max(&prjob.datafiles,1);
+		prjob.datafiles.list[prjob.datafiles.count++] = (void *)lp;
+		Set_str_value(lp,OPENNAME,tempfile);
+		Set_str_value(lp,"N",_("(lpr_filter)"));
+		Set_flag_value(lp,COPIES,1);
+		Set_double_value(lp,SIZE,job_size);
+		Fix_bq_format( 'f', lp );
+		User_filter_JOB = 0;
+	}
+
+	if(DEBUGL1)Dump_job("lpr - before Fix_control",&prjob);
+	Fix_control( &prjob, Control_filter_DYN, 0 );
+	if(DEBUGL1)Dump_job("lpr - after Fix_control",&prjob);
+
+	if( (s = send_to_pr) && (strchr(s,'%') || (s[0] == '/') || strchr(s,'|')) ){
 		int fd, pid, status_fd, poll_for_status;
 		char *id;
 
@@ -218,7 +261,6 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = Print_job( fd, status_fd, &prjob, Send_job_rw_timeout_DYN, poll_for_status, User_filter_JOB );
 		/* we close close device */
 		DEBUG1("lpr: shutting down fd %d", fd );
-		if(s) free(s); s = 0;
 
 		fd = Shutdown_or_close( fd );
 		DEBUG1("lpr: after shutdown fd %d, status_fd %d", fd, status_fd );
@@ -238,53 +280,6 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		DEBUG1("lpr: status %s", Server_status(Errorcode) );
 	} else {
-		/* do we flatten job ? */
-		if(s) free(s); s = 0;
-		if( Lpr_bounce_DYN || Lpr_bounce_JOB ){
-			int tempfd;
-			struct stat statb;
-			char *tempfile, *old_lp_value;
-			struct line_list *lp;
-
-			if(DEBUGL2) Dump_job( "lpr - before filtering", &prjob );
-			tempfd = Make_temp_fd(&tempfile);
-
-			old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep ),
-				__FILE__,__LINE__);
-			Set_str_value( &PC_entry_line_list, LP, tempfile );
-			/* Print_job( output_device, status_device, job, timeout, poll_for_status ) */
-			Print_job( tempfd, -1, &prjob, 0, 0, User_filter_JOB );
-			Set_str_value( &PC_entry_line_list, LP, old_lp_value );
-			if( old_lp_value ) free( old_lp_value ); old_lp_value = 0;
-
-			close(tempfd);
-			tempfd = Checkread( tempfile, &statb );
-			if( tempfd < 0 ){
-				Errorcode = JABORT;
-				FATAL(LOG_INFO) _("Cannot open file '%s', %s"), tempfile, Errormsg( errno ) );
-			}
-			close(tempfd);
-			DEBUG2("lpr: jobs size now %0.0f", (double)(statb.st_size));
-			job_size = statb.st_size;
-			Free_listof_line_list(&prjob.datafiles);
-			lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
-			memset(lp,0,sizeof(lp[0]));
-			Check_max(&prjob.datafiles,1);
-			prjob.datafiles.list[prjob.datafiles.count++] = (void *)lp;
-			Set_str_value(lp,OPENNAME,tempfile);
-			if( Bounce_queue_format_DYN ){
-				Set_str_value(lp,FORMAT,Bounce_queue_format_DYN);
-			}
-			Set_str_value(lp,"N",_("(lpr_filter)"));
-			Set_flag_value(lp,COPIES,1);
-			Set_double_value(lp,SIZE,job_size);
-			User_filter_JOB = 0;
-		} else if( Direct_JOB || Direct_DYN
-			|| (User_filter_JOB && prjob.datafiles.count > 1) ){
-			Filter_files_in_job( &prjob, -1, User_filter_JOB );
-			User_filter_JOB = 0;
-		}
-		/* Send job to the LPD server for the printer */
 		Errorcode = Send_job( &prjob, &prjob, Connect_timeout_DYN,
 			Connect_interval_DYN,
 			Max_connect_interval_DYN,
@@ -292,6 +287,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
   exit:
+	if( send_to_pr ) free(send_to_pr); send_to_pr = 0;
 	if( Errorcode ){
 		Errorcode = 1;
 		if(DEBUGL1)Dump_job("lpr - after error",&prjob);

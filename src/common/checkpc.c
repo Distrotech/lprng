@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.19 2001/09/18 01:43:33 papowell Exp $";
+"$Id: checkpc.c,v 1.23 2001/09/29 22:28:44 papowell Exp $";
 
 
 
@@ -60,7 +60,7 @@ int main( int argc, char *argv[], char *envp[] )
 	s = t = printcap = 0;
 	Init_line_list(&raw);
 	/* set up the uid state */
-	To_root();
+	To_euid_root();
 	time(&Current_time);
 
 	Verbose = 0;
@@ -136,7 +136,7 @@ int main( int argc, char *argv[], char *envp[] )
 		&PC_info_line_list, &raw, &Host_IP );
 	Free_line_list( &raw );
 
-	To_root();
+	To_euid_root();
 	if( Fix && geteuid() ){
 		WARNMSG("Fix option (-f) requires root permissions\n" );
 	}
@@ -198,7 +198,7 @@ int main( int argc, char *argv[], char *envp[] )
 			if( stat( path, &statb ) ){
 				WARNMSG( "  LPD Lockfile '%s' does not exist!", path);
 				if( Fix ){
-					To_root();
+					To_euid_root();
 					Make_write_file( path, 0 );
 				}
 			}
@@ -766,7 +766,7 @@ int Fix_create_dir( char  *path, struct stat *statb )
 	}
 	/* we don't have a directory */
 	if( stat( path, statb ) ){
-		To_root();
+		To_euid_root();
 		if( mkdir( path, Spool_dir_perms_DYN ) ){
 			WARNMSG( "mkdir '%s' failed, %s", path, Errormsg(errno) );
 			err = 1;
@@ -783,7 +783,7 @@ int Fix_owner( char *path )
 	int status = 0;
 	int err;
 
-	To_root();
+	To_euid_root();
 	WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
 	chown( path, DaemonUID, DaemonGID );
 	if( geteuid() == 0 ){
@@ -804,7 +804,7 @@ int Fix_perms( char *path, int perms )
 	int status;
 	int err;
 
-	To_root();
+	To_euid_root();
 	status = chmod( path, perms );
 	To_daemon();
 	err = errno;
@@ -969,9 +969,9 @@ void Test_port(int ruid, int euid, char *serial_line )
 			"checkpc: setuid code failed!! Portability problems\n" );
 			exit(1);
 		}
-		if( To_uid(1) ){
+		if( To_euid(1) ){
 			FPRINTF( STDERR,
-			"checkpc: To_uid() seteuid code failed!! Portability problems\n" );
+			"checkpc: To_euid() seteuid code failed!! Portability problems\n" );
 			exit(1);
 		}
 		if( To_user() ){

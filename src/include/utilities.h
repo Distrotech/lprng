@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 1.19 2001/09/18 01:43:48 papowell Exp $
+ * $Id: utilities.h,v 1.23 2001/09/29 22:29:01 papowell Exp $
  ***************************************************************************/
 
 
@@ -75,11 +75,11 @@ void Set_timeout_signal_handler( int timeout, plp_sigfunc_t handler );
 void Set_timeout_alarm( int timeout );
 void Set_timeout_break( int timeout );
 void Clear_timeout( void );
-int To_root(void);
+int To_euid_root(void);
 int To_daemon(void);
 int To_user(void);
-int To_ruid(int uid);
-int To_uid( int uid );
+int To_ruid(int ruid);
+int To_euid( int euid );
 int setuid_wrapper(int to);
 int Full_daemon_perms(void);
 int Full_root_perms(void);

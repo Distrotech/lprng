@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.19 2001/09/18 01:43:35 papowell Exp $";
+"$Id: initialize.c,v 1.23 2001/09/29 22:28:47 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -163,18 +163,18 @@ void Setup_configuration()
 
 	/* Get default configuration file information */
 #ifdef DMALLOC
-	extern int _dmalloc_outfile;
+	extern int _dmalloc_outfile_fd;
 	extern char *_dmalloc_logpath;
 	char buffer[SMALLBUFFER];
 
 	safestrdup("DMALLOC",__FILE__,__LINE__);
-	if( _dmalloc_logpath && _dmalloc_outfile < 0 ){
-		_dmalloc_outfile = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-		Max_open(_dmalloc_outfile);
+	if( _dmalloc_logpath && _dmalloc_outfile_fd < 0 ){
+		_dmalloc_outfile_fd = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+		Max_open(_dmalloc_outfile_fd);
 	}
 	SNPRINTF(buffer,sizeof(buffer))"*** Setup_configuration: pid %d\n", getpid() );
-	Write_fd_str(_dmalloc_outfile,buffer);
-	DEBUG1("Setup_configuration: _dmalloc_outfile fd %d", _dmalloc_outfile);
+	Write_fd_str(_dmalloc_outfile_fd,buffer);
+	DEBUG1("Setup_configuration: _dmalloc_outfile fd %d", _dmalloc_outfile_fd);
 #endif
 
 	Init_line_list(&raw);
@@ -214,9 +214,9 @@ void Setup_configuration()
 		Set_DYN( &Logname_DYN, s );
 		if(s) free(s); s = 0;
 	}
-	DEBUG4( "Is_server %d, DaemonUID %d, UID %d, EUID %d, GID %d, EGID %d",
-		Is_server,
-		DaemonUID, getuid(), geteuid(), getgid(), getegid() );
+	DEBUG1( "Is_server %d, DaemonUID %d, DaemonGID %d, UID %d, EUID %d, GID %d, EGID %d",
+		Is_server, DaemonUID, DaemonGID,
+		getuid(), geteuid(), getgid(), getegid() );
 
 	DEBUG1("Setup_configuration: Host '%s', ShortHost '%s', user '%s'",
 		FQDNHost_FQDN, ShortHost_FQDN, Logname_DYN );

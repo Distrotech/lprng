@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.19 2001/09/18 01:43:36 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.23 2001/09/29 22:28:49 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -2299,6 +2299,9 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			break;
 
 		case '/':
+			DEBUG3( "Printer_open: Is_server %d, DaemonUID %d, DaemonGID %d, UID %d, EUID %d, GID %d, EGID %d",
+			Is_server, DaemonUID, DaemonGID,
+			getuid(), geteuid(), getgid(), getegid() );
 			device_fd = Checkwrite_timeout( connect_tmout, lp_device, &statb, 
 				(Read_write_DYN || Lock_it_DYN) ?(O_RDWR):(O_APPEND|O_WRONLY),
 				0, Nonblocking_open_DYN );

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.19 2001/09/18 01:43:44 papowell Exp $
+ * $Id: linelist.h,v 1.23 2001/09/29 22:28:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -92,7 +92,7 @@ EXTERN struct line_list
 	User_PC_info_line_list, User_PC_alias_line_list,
 	All_line_list, Spool_control, Sort_order,
 	RawPerm_line_list, Perm_line_list, Perm_filters_line_list,
-	Process_list, Exit_list, Tempfiles, Servers_line_list, Printer_list,
+	Process_list, Tempfiles, Servers_line_list, Printer_list,
 	Files, Status_lines, Logger_line_list, RemoteHost_line_list;
 EXTERN struct line_list *Allocs[]
 #ifdef DEFS
@@ -104,7 +104,7 @@ EXTERN struct line_list *Allocs[]
 	 &User_PC_info_line_list, &User_PC_alias_line_list,
 	 &All_line_list, &Spool_control, &Sort_order,
 	 &RawPerm_line_list, &Perm_line_list, &Perm_filters_line_list,
-	 &Exit_list, &Tempfiles, &Servers_line_list,
+	 &Tempfiles, &Servers_line_list,
 	 &Printer_list, &Files, &Status_lines, &Logger_line_list, &RemoteHost_line_list,
 	0 }
 #endif
