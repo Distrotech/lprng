@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.18 2001/09/07 20:12:58 papowell Exp $";
+"$Id: getqueue.c,v 1.19 2001/09/18 01:43:34 papowell Exp $";
 
 
 /***************************************************************************
@@ -30,6 +30,7 @@
 #include "child.h"
 #include "errorcodes.h"
 #include "fileopen.h"
+#include "linelist.h"
 #include "getprinter.h"
 #include "getqueue.h"
 #include "globmatch.h"
@@ -513,6 +514,8 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 		}
 	}
 
+	Free_listof_line_list( &job->datafiles );
+
 	file_found = 0;
 	datafile = malloc_or_die(sizeof(datafile[0]),__FILE__,__LINE__);
 	memset(datafile,0,sizeof(datafile[0]));
@@ -581,6 +584,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 				}
 				continue;
 			}
+			/* if we have a file name AND an 'N' for it, then set up a new file */
 			if( file_found && (t = Find_str_value(datafile,"N",Value_sep))
 				/* && safestrcmp(t,s+1) */ ){
 				Check_max(&job->datafiles,1);
@@ -620,14 +624,18 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 			}
 		}
 	}
-	if( Find_str_value(datafile,TRANSFERNAME,Value_sep) ){
+	if( file_found ){
 		Check_max(&job->datafiles,1);
 		job->datafiles.list[job->datafiles.count++] = (void *)datafile;
 	} else {
-		free(datafile); datafile = 0;
+		free(datafile);
 	}
+	datafile = 0;
 	Set_str_value(&job->info,FILENAMES,names);
+
  done:
+
+	if( datafile )	free(datafile); datafile=0;
 	if( names )	free(names); names=0;
 	Free_line_list( &cf_line_list );
 	if(DEBUGL4)Dump_job("Setup_cf_info - final",job);

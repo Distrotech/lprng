@@ -141,7 +141,9 @@ src/lpd.conf:
 	cd src; $(MAKE) MAKETARGET=lpd.conf
 
 realclean mostlyclean distclean: clean
-	cd DISTRIBUTIONS/FreeBSD*; make clean
+	if test -d DISTRIBUTIONS/FreeBSD*/work ; then \
+		cd DISTRIBUTIONS/FreeBSD*; ${MAKE} clean ; \
+	fi;
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(ALLDIRS)
 	rm -f `find . -type f -name '*.old' -print` \
 	 `find . -type f -name '*.bak' -print` \

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.18 2001/09/07 20:13:11 papowell Exp $
+ * $Id: portable.h,v 1.19 2001/09/18 01:43:47 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -96,6 +96,23 @@ LPRng requires ANSI Standard C compiler
 #if defined(sun)
 #endif
 
+/*************************************************************************
+ * SCO OpenServer 5.0.5
+ *************************************************************************/
+/* normal include files do not define MAXPATHLEN - rather PATHSIZE in 
+   sys/param.h */
+#ifdef sco
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	PATHSIZE
+#endif
+/* SCO doesn't define the S_ISSOCK POSIX macro to use in testing the 
+   stat.st_mode structure member  - it appears as though a socket has
+   st_mode = 0020000 (same as character special) */
+#ifndef S_ISSOCK
+#define S_IFSOCK	0020000
+#define S_ISSOCK(m)	(((m) & S_IFMT) == S_IFSOCK)
+#endif
+#endif
 
 /*************************************************************************
  * Cray

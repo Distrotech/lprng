@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.18 2001/09/07 20:13:02 papowell Exp $";
+"$Id: lpq.c,v 1.19 2001/09/18 01:43:38 papowell Exp $";
 
 
 /***************************************************************************
@@ -239,7 +239,7 @@ void Show_status(char **argv)
 		&argv[Optind], Connect_timeout_DYN,
 		Send_query_rw_timeout_DYN, 1 );
 	if( fd >= 0 ){
-		shutdown( fd, 1 );
+		/* shutdown( fd, 1 ); */
 		if( Read_status_info( RemoteHost_DYN, fd,
 			1, Send_query_rw_timeout_DYN, Displayformat,
 			Status_line_count ) ){

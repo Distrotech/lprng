@@ -602,7 +602,7 @@ fi
 
 
 PACKAGE=LPRng
-VERSION=3.7.6
+VERSION=3.7.7
 
 
 ac_aux_dir=
@@ -1681,7 +1681,7 @@ if test "${with_chooser_routine+set}" = set; then
   
 CHOOSER_ROUTINE="$withval"
 cat >> confdefs.h <<EOF
-#define CHOOSER_ROUTINE "$CHOOSER_ROUTINE"
+#define CHOOSER_ROUTINE $CHOOSER_ROUTINE
 EOF
 
 
@@ -2008,10 +2008,10 @@ rm -f conftest*
 
 release=`uname -r 2>/dev/null; exit 0`;
 version=`echo $target_os | sed -e 's/[^0-9][^0-9]*//' -e 's/\./X/' -e 's/\.//g' -e 's/X/./' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 ){v = v * 10;}}; print v; }' `;
+	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
 if test "$version" -eq 0 ; then
 	version=`echo $release | sed -e 's/-.*//' -e 's/\.//g' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 ){v = v * 10;}}; print v; }' `;
+	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
 fi
 osword=`echo $target_os | sed -e 's/[0-9].*//'`; export osword
 echo "$ac_t""Target is $target, arch $target_cpu, os $target_os, release $release, version $version" 1>&6

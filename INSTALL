@@ -21,7 +21,7 @@ The "STANDARD configuration" is the most common configuration for UNIX/LINUX
 CAVEATS and WARNINGS:
 
     The LPRng software requires an ANSI C compiler and a make utility that is
-    compatible with Gnu Make (verson 3.73) or BSD 4.3/4.4.  By default,
+    compatible with Gnu Make (verson 3.73 or later) or FreeBSD 4.2 or later.
     LPRng is compiled and tested using GCC and Gnu Make.  It uses libtool
     to create a shared library on systems where this is supported.
 

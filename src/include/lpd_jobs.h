@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_jobs.h,v 1.18 2001/09/07 20:13:09 papowell Exp $
+ * $Id: lpd_jobs.h,v 1.19 2001/09/18 01:43:45 papowell Exp $
  ***************************************************************************/
 
 
@@ -36,6 +36,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	int max_attempts, int interval, int max_interval, int grace,
 	int connect_tmout, int *filterpid, int *poll_for_status );
 void Add_banner_to_job( struct job *job );
+void Fix_bq_format( int format, struct line_list *datafile );
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
 
 #endif

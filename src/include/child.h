@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: child.h,v 1.18 2001/09/07 20:13:06 papowell Exp $
+ * $Id: child.h,v 1.19 2001/09/18 01:43:42 papowell Exp $
  ***************************************************************************/
 
 

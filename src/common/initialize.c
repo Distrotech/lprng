@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.18 2001/09/07 20:12:59 papowell Exp $";
+"$Id: initialize.c,v 1.19 2001/09/18 01:43:35 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -125,51 +125,6 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
 
 	/* set suid information */
 	To_user();
-#if defined(SETUID_CHECK)
-	DEBUG1("Initialize: setuid check enabled");
-	if( UID_root && !Is_server ){
-		int pid, n;
-		plp_status_t procstatus;
-
-		memset(&procstatus,0,sizeof(procstatus));
-		if( (pid = fork()) < 0 ){
-			LOGERR_DIE(LOG_CRIT) "Initialize: fork() failed" );
-		} else if( pid == 0 ){
-			/* child does the rest */
-			DEBUG1("Initialize: before setuid(0) child uid %d, euid %d",
-				(int)getuid(), (int)geteuid() );
-			Errorcode = JABORT;
-			if( setuid(0) == -1 ){
-				LOGERR_DIE(LOG_CRIT) "Initialize: setuid(0) failed" );
-			}
-			if( setuid(1) == -1 ){
-				LOGERR_DIE(LOG_CRIT) "Initialize: setuid(1) failed" );
-			}
-			DEBUG1("Initialize: after setuid(1) child uid %d, euid %d",
-				(int)getuid(), (int)geteuid() );
-			setuid(0);
-			DEBUG1("Initialize: after setuid(0) child uid %d, euid %d",
-				(int)getuid(), (int)geteuid() );
-			exit( getuid() == 0 );
-		}
-        while( (n = plp_waitpid( pid, &procstatus, 0)) < 0 ){
-            DEBUG1( "Init: process %d, status '%s'",
-                n, Decode_status(&procstatus));
-        }
-		DEBUG1( "Initialize: LINUX SETUID BUG TESTING process %d, status '%s'",
-			n, Decode_status(&procstatus));
-		if( WIFEXITED(procstatus) ){
-			n = WEXITSTATUS(procstatus);
-		} else if( WIFSIGNALED(procstatus) ){
-			n = JSIGNAL;
-		}
-		if( n ){
-			Errorcode = JABORT;
-			if(Is_server) FATAL(LOG_CRIT)"Initialize: LINUX SETUID BUG! UPDATE KERNEL");
-			FATAL(LOG_INFO)"Initialize: LINUX SETUID BUG! UPDATE KERNEL");
-		}
-	}
-#endif
 
     if(DEBUGL3){
 		struct stat statb;
@@ -254,12 +209,14 @@ void Setup_configuration()
 	if( Is_server ){
 		Setdaemon_group();
 		To_daemon();
-		DEBUG1( "DaemonUID %d", DaemonUID );
 	} else {
 		s = Get_user_information();
 		Set_DYN( &Logname_DYN, s );
 		if(s) free(s); s = 0;
 	}
+	DEBUG4( "Is_server %d, DaemonUID %d, UID %d, EUID %d, GID %d, EGID %d",
+		Is_server,
+		DaemonUID, getuid(), geteuid(), getgid(), getegid() );
 
 	DEBUG1("Setup_configuration: Host '%s', ShortHost '%s', user '%s'",
 		FQDNHost_FQDN, ShortHost_FQDN, Logname_DYN );

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.18 2001/09/07 20:13:05 papowell Exp $";
+"$Id: utilities.c,v 1.19 2001/09/18 01:43:41 papowell Exp $";
 
 #include "lp.h"
 
@@ -1040,8 +1040,10 @@ void Clear_timeout( void )
 		OriginalRUID = getuid();	
 		OriginalEGID = getegid();	
 		OriginalRGID = getgid();	
-		DEBUG1("setup_info: OriginalEUD %d, OriginalRUID %d",
+		DEBUG1("setup_info: OriginalEUID %d, OriginalRUID %d",
 			OriginalEUID, OriginalRUID );
+		DEBUG1("setup_info: OriginalEGID %d, OriginalRGID %d",
+			OriginalEGID, OriginalRGID );
 		/* we now make sure that we are able to use setuid() */
 		/* notice that setuid() will work if EUID or RUID is 0 */
 		if( OriginalEUID == 0 || OriginalRUID == 0 ){
@@ -1380,7 +1382,6 @@ void Reset_daemonuid(void)
             DaemonUID = uid;
         }
     }
-	To_daemon();        /* now we are running with desired UID */
     DEBUG4( "DaemonUID %d", DaemonUID );
 }
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.18 2001/09/07 20:13:01 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.19 2001/09/18 01:43:37 papowell Exp $";
 
 
 #include "lp.h"
@@ -1049,11 +1049,11 @@ int Find_non_colliding_job_number( struct job *job )
 
 int Get_route( struct job *job, char *error, int errlen )
 {
-	int i, fd, tempfd, count;
+	int i, fd, tempfd, count, c;
 	char *tempfile, *openname, *s, *t, *id;
 	char buffer[SMALLBUFFER];
 	int errorcode = 0;
-	struct line_list info, dest, env, *lp;
+	struct line_list info, dest, env, *lp, cf_line_list;
 
 	DEBUG1("Get_route: routing filter '%s', control filter '%s'",
 		Routing_filter_DYN, Incoming_control_filter_DYN );
@@ -1064,6 +1064,7 @@ int Get_route( struct job *job, char *error, int errlen )
 	Init_line_list(&info);
 	Init_line_list(&dest);
 	Init_line_list(&env);
+	Init_line_list(&cf_line_list);
 
 	/* build up the list of files and initialize the DATAFILES
 	 * environment variable
@@ -1122,6 +1123,27 @@ int Get_route( struct job *job, char *error, int errlen )
 			goto error;
 		}
 		Max_open(fd);
+		if( Get_file_image_and_split(openname,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
+            SNPRINTF(error,errlen)
+                "Get_route: open failed - modified control file  %s - %s", openname, Errormsg(errno) );
+			goto error;
+		}
+		for( i = 'A'; i <= 'Z'; ++i ){
+			buffer[1] = 0;
+			buffer[0] = i;
+			Set_str_value(&job->info,buffer,0);
+		}
+		for( i = 0; i < cf_line_list.count; ++i ){
+			s = cf_line_list.list[i];
+			Clean_meta(s);
+			c = cval(s);
+			DEBUG3("Get_route: doing line '%s'", s );
+			if( isupper(c) && c != 'U' && c != 'N' ){
+				buffer[0] = c; buffer[1] = 0;
+				DEBUG3("Get_route: control '%s'='%s'", buffer, s+1 );
+				Set_str_value(&job->info,buffer,s+1);
+			}
+		}
 		tempfd = Make_temp_fd(&tempfile);
 	}
 
@@ -1200,5 +1222,6 @@ int Get_route( struct job *job, char *error, int errlen )
 	Free_line_list(&info);
 	Free_line_list(&dest);
 	Free_line_list(&env);
+	Free_line_list(&cf_line_list);
 	return( errorcode );
 }

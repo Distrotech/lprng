@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.18 2001/09/07 20:12:59 papowell Exp $";
+"$Id: linelist.c,v 1.19 2001/09/18 01:43:35 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"

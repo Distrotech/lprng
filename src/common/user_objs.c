@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: user_objs.c,v 1.18 2001/09/07 20:13:05 papowell Exp $";
+"$Id: user_objs.c,v 1.19 2001/09/18 01:43:41 papowell Exp $";
 
 #include "lp.h"
 #include "getqueue.h"
@@ -116,44 +116,32 @@ int test_chooser( struct line_list *servers,
 
 char *test_sort_key( struct job *job )
 {
-	char *cmpstr = 0, *s, *t;
-	struct line_list fields;
-
-	Init_line_list(&fields);
-
+	char *cmpstr = 0;
 	/* first key is DONE_TIME - done jobs come last */
-	intval(DONE_TIME,&job->info,&fields);
+	cmpstr = intval(DONE_TIME,&job->info,cmpstr);
 	/* next key is REMOVE_TIME - removed jobs come before last */
-	intval(REMOVE_TIME,&job->info,&fields);
+	cmpstr = intval(REMOVE_TIME,&job->info,cmpstr);
 	/* next key is ERROR - error jobs jobs come before removed */
-	strzval(ERROR,&job->info,&fields);
+	cmpstr = strzval(ERROR,&job->info,cmpstr);
 	/* next key is HOLD - before the error jobs  */
-	intval(HOLD_CLASS,&job->info,&fields);
-	intval(HOLD_TIME,&job->info,&fields);
+	cmpstr = intval(HOLD_CLASS,&job->info,cmpstr);
+	cmpstr = intval(HOLD_TIME,&job->info,cmpstr);
 	/* next key is MOVE - before the held jobs  */
-	strnzval(MOVE,&job->info,&fields);
+	cmpstr = strnzval(MOVE,&job->info,cmpstr);
 	/* now by priority */
 	if( Ignore_requested_user_priority_DYN == 0 ){
-		strval(PRIORITY,&job->info,&fields,Reverse_priority_order_DYN);
+		cmpstr = strval(PRIORITY,&job->info,cmpstr,Reverse_priority_order_DYN);
 	}
 	/* now we do TOPQ */
-	revintval(PRIORITY_TIME,&job->info,&fields);
+	cmpstr = revintval(PRIORITY_TIME,&job->info,cmpstr);
 	/* now we do FirstIn, FirstOut */
-	intval(JOB_TIME,&job->info,&fields);
-	intval(JOB_TIME_USEC,&job->info,&fields);
+	cmpstr = intval(JOB_TIME,&job->info,cmpstr);
+	cmpstr = intval(JOB_TIME_USEC,&job->info,cmpstr);
 	/* now we do by job number if two at same time (very unlikely) */
-	intval(NUMBER,&job->info,&fields);
-	cmpstr = Join_line_list(&fields,"|");
+	cmpstr = intval(NUMBER,&job->info,cmpstr);
 
 	DEBUG4("test_sort_key: cmpstr '%s'", cmpstr );
 
-	s = Join_line_list(&job->info,";");
-	t = safestrdup3(cmpstr,";",s,__FILE__,__LINE__);
-
-	DEBUG4("test_sort_key: '%s'",t);
-
-	Free_line_list(&fields);
-	if(s) free(s); s = 0;
-	if(cmpstr) free(cmpstr); cmpstr = 0;
-	return(t);
+	return(cmpstr);
 }
+

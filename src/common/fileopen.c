@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: fileopen.c,v 1.18 2001/09/07 20:12:58 papowell Exp $";
+"$Id: fileopen.c,v 1.19 2001/09/18 01:43:34 papowell Exp $";
 
 
 #include "lp.h"
@@ -126,18 +126,20 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 		if( mask == -1 ){
 			LOGERR(LOG_ERR) "Checkwrite: fcntl F_GETFL of '%s' failed", file);
 			status = -1;
-		} else {
+		} else if( mask & NONBLOCK ){
 			DEBUG3( "Checkwrite: F_GETFL value '0x%x', BLOCK 0x%x",
 				mask, NONBLOCK );
 			mask &= ~NONBLOCK;
 			mask = fcntl( fd, F_SETFL, mask );
-			if( mask == -1 ){
+			err = errno;
+			DEBUG3( "Checkwrite: after F_SETFL value now '0x%x'",
+				fcntl( fd, F_GETFL, 0 ) );
+			if( mask == -1 && err != ENODEV ){
+				errno = err;
 				LOGERR(LOG_ERR) "Checkwrite: fcntl F_SETFL of '%s' failed",
 					file );
 				status = -1;
 			}
-			DEBUG3( "Checkwrite: after F_SETFL value now '0x%x'",
-				fcntl( fd, F_GETFL, 0 ) );
 		}
 	}
 

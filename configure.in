@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.7.6
+VERSION=3.7.7
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -251,7 +251,7 @@ AC_ARG_WITH(chooser_routine,
 [  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file ],
 [
 CHOOSER_ROUTINE="$withval"
-AC_DEFINE_UNQUOTED(CHOOSER_ROUTINE,"$CHOOSER_ROUTINE")
+AC_DEFINE_UNQUOTED(CHOOSER_ROUTINE,$CHOOSER_ROUTINE)
 ]
 )
 AC_MSG_RESULT("$CHOOSER_ROUTINE")
@@ -354,10 +354,10 @@ AC_AIX
 changequote(, )dnl
 release=`uname -r 2>/dev/null; exit 0`;
 version=`echo $target_os | sed -e 's/[^0-9][^0-9]*//' -e 's/\./X/' -e 's/\.//g' -e 's/X/./' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 ){v = v * 10;}}; print v; }' `;
+	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
 if test "$version" -eq 0 ; then
 	version=`echo $release | sed -e 's/-.*//' -e 's/\.//g' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 ){v = v * 10;}}; print v; }' `;
+	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
 fi
 osword=`echo $target_os | sed -e 's/[0-9].*//'`; export osword
 changequote([, ])dnl

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lprm.h,v 1.18 2001/09/07 20:13:10 papowell Exp $
+ * $Id: lprm.h,v 1.19 2001/09/18 01:43:46 papowell Exp $
  ***************************************************************************/
 
 

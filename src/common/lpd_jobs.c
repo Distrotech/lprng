@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.18 2001/09/07 20:13:01 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.19 2001/09/18 01:43:36 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -1208,21 +1208,12 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	Copy_job(&jcopy,job);
 	if(DEBUGL2)Dump_job("Remote_job - jcopy", &jcopy );
 	if( lpd_bounce ){
-		if( !Bounce_queue_format_DYN ){
-			Errorcode = JABORT;
-			FATAL(LOG_INFO)"Remote_job: no bq_format value");
-		}
-		if( !islower(cval(Bounce_queue_format_DYN)) ){
-			Errorcode = JABORT;
-			FATAL(LOG_INFO)"Remote_job: bq_format must be single lower case letter");
-		}
 		if(DEBUGL2) Dump_job( "Remote_job - before filtering", &jcopy );
 		tempfd = Make_temp_fd(&tempfile);
 
 		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep),
 			__FILE__,__LINE__ );
 		Set_str_value( &PC_entry_line_list, LP, tempfile );
-		/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
 		Print_job( tempfd, -1, &jcopy, 0, 0, 0 );
 		Set_str_value( &PC_entry_line_list, LP, old_lp_value );
 		if( old_lp_value ) free(old_lp_value); old_lp_value = 0;
@@ -1252,12 +1243,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		Set_str_value(lp,"N",s?s:"(lpd_filter)");
 		Set_flag_value(lp,COPIES,1);
 		Set_double_value(lp,SIZE,job_size);
-		{
-			char fmt[2];
-			fmt[0] = cval(Bounce_queue_format_DYN);
-			fmt[1] = 0;
-			Set_str_value(lp,FORMAT,fmt);
-		}
+		Fix_bq_format( 'f', lp );
 	} else if( !move_dest ) {
 		int err = Errorcode;
 		Errorcode = 0;
@@ -2481,6 +2467,41 @@ void Add_banner_to_job( struct job *job )
 	if(DEBUGL3)Dump_job("Add_banner_to_job", job);
 }
 
+/* change the format of the output of a filter
+ * bq_format=IoIo...D
+ *   I is input type or '*' for all types
+ *   o is output type
+ *   D is default
+ *     If no default, preserve the original type
+ */
+
+void Fix_bq_format( int format, struct line_list *datafile )
+{
+	char fmt[2], *s;
+	fmt[0] = format; fmt[1] = 0;
+	if( (s = Bounce_queue_format_DYN) ){
+		lowercase( s );
+		while( s[0] ){
+			if( s[1] ){
+				if( format == cval(s) || cval(s) == '*' ){
+					fmt[0] = s[1];
+					break;
+				}
+			} else {
+				if( cval(s) != '*' ){
+					fmt[0] = s[0];
+				}
+				break;
+			}
+			s += 2;
+		}
+	}
+	Set_str_value(datafile,FORMAT,fmt);
+}
+
+/*
+ * Filter all the files in the print job
+ */
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 {
 	struct line_list *datafile;
@@ -2684,37 +2705,7 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 				goto end_of_job;
 			}
 			SETSTATUS(job) "%s filter finished", filter_title );
-			if( (s = Bounce_queue_format_DYN) ){
-				char fmt[2];
-				fmt[0] = s[0];
-				fmt[1] = 0;
-				if( !s[0] ){
-					Errorcode = JABORT;
-					FATAL(LOG_INFO)"Remote_job: bq_format must be single lower case letters");
-				}
-				/* bounce queue format is OnOnD... where O is old
-				 * default is D or original if not present
-				 */
-				if( s[1] ){
-					while( s[0] ){
-						char fmt[2];
-						fmt[0] = s[0];
-						if( !s[1] ) break; 
-						if( cval(format) == cval(s) || cval(s) == '*' ){
-							fmt[0] = s[1];
-							break;
-						}
-						fmt[0] = 0;
-						s += 2;
-					}
-				}
-				if( !islower(cval(fmt)) ){
-					Errorcode = JABORT;
-					FATAL(LOG_INFO) "Remote_job: bounce_queue_format '%s' does not match format '%s'",
-						Bounce_queue_format_DYN, format);
-				}
-				Set_str_value(datafile,FORMAT,fmt);
-			}
+			Fix_bq_format( cval(format), datafile );
 		}
 		DEBUG3("Filter_files_in_job: finished file");
 	}
