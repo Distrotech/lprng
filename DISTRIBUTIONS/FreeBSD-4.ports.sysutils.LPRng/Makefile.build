@@ -78,9 +78,9 @@ checkit:
 	${MAKE} reinstall
 	${MAKE} package
 	${MAKE} deinstall
-	pkg_add *.tgz
+	for i in `ls` ; do case $$i in *.tgz | *.tbz2 ) pkg_add $$i; esac;  done
 	${MAKE} deinstall
-	pkg_add *.tgz
+	for i in `ls` ; do case $$i in *.tgz | *.tbz2 ) pkg_add $$i; esac;  done
 	pkg_delete ${DISTNAME}
 	${MAKE} -f Makefile.build port
 
@@ -186,7 +186,7 @@ removeit:
 	pkg_delete ${DISTNAME}
 
 port:
-	rm -rf *.tgz *.bak /tmp/${PORTNAME}
+	rm -rf *.tgz *.bak *.tbz2 /tmp/${PORTNAME}
 	mkdir /tmp/${PORTNAME}
 	-cp Makefile distinfo files-* pkg-* /tmp/${PORTNAME}
 	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}

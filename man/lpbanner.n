@@ -4,11 +4,7 @@
 lpbanner.1,v 3.33 1998/03/29 18:37:49 papowell Exp
 ..
 .SH NAME
-lpbanner \- text banner
-.br
-pclbanner \- pcl format banner
-.br
-psbanner \- PostScript format banner
+lpbanner, pclbanner, psbanner \- printer banners in text, PCL and PostScript
 .SH SYNOPSIS
 .B lpbanner
 [

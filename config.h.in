@@ -22,9 +22,6 @@
 #undef _ALL_SOURCE
 #endif
 
-/* Define if using ARCHITECTURE  */
-#undef ARCHITECTURE
-
 /* Define if using alloca.c.  */
 #undef C_ALLOCA
 
@@ -406,6 +403,9 @@
 /* Define if you don't have <dirent.h>, but have <sys/ndir.h>.  */
 #undef SYSNDIR
 
+/* Define if using TARGETARCHITECTURE  */
+#undef TARGETARCHITECTURE
+
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #undef TIME_WITH_SYS_TIME
 
@@ -568,6 +568,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define to 1 if the system has the type `fd_set'. */
+#undef HAVE_FD_SET
 
 /* Define to 1 if you have the `feof_unlocked' function. */
 #undef HAVE_FEOF_UNLOCKED

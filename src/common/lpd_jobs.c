@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -2107,6 +2107,7 @@ int Check_print_perms( struct job *job )
 	Perm_check.authuser = Find_str_value(&job->info,AUTHUSER,Value_sep);
 	Perm_check.authfrom = Find_str_value(&job->info,AUTHFROM,Value_sep);
 	Perm_check.authtype = Find_str_value(&job->info,AUTHTYPE,Value_sep);
+	Perm_check.authca = Find_str_value(&job->info,AUTHCA,Value_sep);
 	s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
 		Perm_check.host = &PermHost_IP;

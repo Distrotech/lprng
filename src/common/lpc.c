@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
+"$Id: lpc.c,v 1.36 2002/08/06 19:14:14 papowell Exp $";
 
 
 /***************************************************************************
@@ -428,7 +428,24 @@ void Get_parms(int argc, char *argv[] )
 			usage();
 		}
 	}
-	if( Verbose ) FPRINTF( STDERR, "%s\n", Version );
+	if( Verbose ) {
+		FPRINTF( STDOUT, "%s\n", Version );
+		if( Verbose > 1 ){
+			char *s, *t;
+			if( (s = getenv("LANG")) ){
+				FPRINTF( STDOUT, _("LANG environment variable '%s'\n"), s );
+				t = _("");
+				if( t && *t ){
+					FPRINTF( STDOUT, _("gettext translation information '%s'\n"), t );
+				} else {
+					FPRINTF( STDOUT, "%s", _("No translation available\n"));
+				}
+			} else {
+				FPRINTF( STDOUT, "LANG environment variable not set\n" );
+			}
+			Printlist( Copyright, 2 );
+		}
+	}
 }
 
  char *msg[] ={

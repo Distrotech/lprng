@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 22 Jul 2002 (For LPRng-3.8.13)</subtitle>
+<subtitle> 6 Aug 2002 (For LPRng-3.8.14)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -25,10 +25,10 @@
 <address>
 <email>papowell@lprng.com</email>
 AStArt Technologies
-9475 Chesapeake Dr, Suite D,
-San Diego, CA 92123
+6741 Convoy Court,
+San Diego, CA 92111
 Phone <phone>858-874-6543</phone>
-Fax <fax>858-279-8424</fax>
+Fax <fax>858-751-2435</fax>
 </address>
 </affiliation>
 </author>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.32 2002/07/22 16:11:30 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.35 2002/08/06 19:14:17 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -2408,8 +2408,8 @@ authenticated users.
     lprm command  =      /usr/bin/lprm -P%p %j
     lppause command =    /usr/sbin/lpc hold %p %j
     lpresume command =   /usr/sbin/lpc release %p %j
-    queuepause command = /usr/sbin/lpc  -P%p stop
-    queueresume command = /usr/sbin/lpc -P%p start
+    queuepause command = /usr/sbin/lpc  stop %p
+    queueresume command = /usr/sbin/lpc start %p
 </screen>
 </informalexample>
 </para>
@@ -2514,8 +2514,8 @@ For example:
     lprm command  =       /usr/bin/lprm -U%U@%M -P%p %j
     lppause command =     /usr/sbin/lpc -U%U@%M hold %p %j
     lpresume command =    /usr/sbin/lpc -U%U@%M release %p %j
-    queuepause command =  /usr/sbin/lpc -U%U@%M -P%p stop
-    queueresume command = /usr/sbin/lpc -U%U@%M -P%p start
+    queuepause command =  /usr/sbin/lpc -U%U@%M stop %p
+    queueresume command = /usr/sbin/lpc -U%U@%M start %p
 </screen>
 </informalexample>
 </para>

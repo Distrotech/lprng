@@ -1,3 +1,27 @@
+Version LPRng-3.8.14 - Tue Aug  6 09:14:06 PDT 2002
+
+  man page fixes.
+	(Spotted by the eagle eyes of: Eric S. Raymond <esr@golux.thyrsus.com>)
+
+  Based on third hand reports, some installations of GNU compilers
+  on HPUX and other systems now have 'fd_set' data types.
+  I have modified configure so that it checks for 'fd_set' being
+  present.  I wish there was a way to read the man pages and
+  find out if this was the real case.
+
+  The configure 'enable-ssl/disable-ssl/' option was not working.
+  Once again beating on autoconf 1.53 ...  It now understands
+  'enable-OPTION' and 'disable-OPTION'.
+  
+  The Samba examples in the LPRNG-Howto were not consistent.
+   changed 
+        queuepause command = /usr/sbin/lpc -P%p stop
+        queueresume command = /usr/sbin/lpc -P%p start
+   to
+         queuepause command = /usr/local/sbin/lpc stop %p
+         queueresume command = /usr/local/sbin/lpc start %p
+   (Suggested by: Jim Van Sickler <vansickj-eodc@Kaman.com>)
+
 Version LPRng-3.8.13 - Mon Jul 22 09:07:57 PDT 2002
 
   Major Enhancement In Printcap and Configuration Functionality

@@ -37,7 +37,7 @@ for (@ARGV){
 				$s = $_;
 			}
 		}
-		if (/VARARGS/ .. /^{/) {
+		if (/VARARGS[0-9]/ .. /^{/) {
 			chomp;
 			if( /{/ ){
 				$s .= "\n;\n";

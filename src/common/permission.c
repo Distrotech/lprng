@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
+"$Id: permission.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -717,4 +717,5 @@ void Perm_check_to_list( struct line_list *list, struct perm_check *check )
 	Set_str_value( list, AUTHTYPE, check->authtype );
 	Set_str_value( list, AUTHFROM, check->authfrom );
 	Set_str_value( list, AUTHUSER, check->authuser );
+	Set_str_value( list, AUTHCA, check->authca );
 }

@@ -240,7 +240,7 @@ defs.h: Makefile
 	echo "#define " SSL_CRL_FILE \"@SSL_CRL_FILE@\" >>$@
 	echo "#define " SSL_CERTS_DIR \"@SSL_CERTS_DIR@\" >>$@
 	echo "#define " SSL_SERVER_CERT \"@SSL_SERVER_CERT@\" >>$@
-	echo "#define " SSL_SERVER_PASSWORD \"@SSL_SERVER_PASSWORD@\" >>$@
+	echo "#define " SSL_SERVER_PASSWORD_FILE \"@SSL_SERVER_PASSWORD_FILE@\" >>$@
 
 .PHONY: all ci clean \
 	uninstall realclean mostlyclean distclean \
@@ -469,13 +469,13 @@ depend: /tmp/dep /tmp/order
 
 ########### LIBRARY ORDER #########
 LIBLPR_ORDER = \
-	 initialize.o getopt.o copyright.o proctitle.o\
-	 utilities.o user_auth.o md5.o ssl_auth.o\
-	 stty.o sendreq.o sendmail.o sendjob.o\
-	 sendauth.o printjob.o permission.o merge.o\
-	 lpd_status.o lpd_secure.o lpd_remove.o lpd_rcvjob.o\
-	 lpd_logger.o lpd_jobs.o lockfile.o accounting.o\
-	 lpd_dispatch.o lpd_control.o krb5_auth.o debug.o\
+	 krb5_auth.o initialize.o getopt.o copyright.o\
+	 proctitle.o utilities.o user_auth.o md5.o\
+	 ssl_auth.o stty.o sendreq.o sendmail.o\
+	 sendjob.o sendauth.o printjob.o permission.o\
+	 merge.o lpd_status.o lpd_secure.o lpd_remove.o\
+	 lpd_rcvjob.o lpd_logger.o lpd_jobs.o lockfile.o\
+	 accounting.o lpd_dispatch.o lpd_control.o debug.o\
 	 controlword.o linksupport.o linelist.o gethostinfo.o\
 	 globmatch.o getqueue.o getprinter.o fileopen.o\
 	 errormsg.o child.o vars.o plp_snprintf.o\

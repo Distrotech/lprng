@@ -27,7 +27,7 @@ It prints this information on it standard output.
 wait for connections on the UDP port.
 .IP "\fB\-t\fR" 5
 wait for connections on the TCP port.
-.IP "\fB\port\fR" 5
+.IP "\fBport\fR" 5
 Use the specified port number.
 .SH "EXIT STATUS"
 .PP

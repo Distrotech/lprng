@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.13
+VERSION=3.8.14
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -77,8 +77,16 @@ dnl check to see if setuid is suppressed
 AC_MSG_CHECKING(if installing clients setuid)
 AC_ARG_ENABLE( setuid,
 [  --disable-setuid                  do not install client executables setuid root],
-PERMS=NORM_PERMS,
-PERMS=SUID_ROOT_PERMS
+[
+if test "$enableval" = "yes" ; then
+	PERMS=SUID_ROOT_PERMS
+else
+	PERMS=NORM_PERMS
+fi
+],
+[
+	PERMS=SUID_ROOT_PERMS
+],
 )
 AC_MSG_RESULT($PERMS)
 AC_SUBST(PERMS)
@@ -87,8 +95,16 @@ dnl check to see if priv ports required
 AC_MSG_CHECKING(require connections from priviledged ports)
 AC_ARG_ENABLE( priv_ports,
 [  --enable-priv_ports               require connections from privileged ports],
-[v=yes;  PRIV_PORTS="";],
-[v=no; PRIV_PORTS="#";]
+[
+if test "$enableval" = "yes" ; then
+	v=yes;  PRIV_PORTS="";
+else
+	v=no; PRIV_PORTS="#";
+fi
+],
+[
+	v=no; PRIV_PORTS="#";
+]
 )
 AC_MSG_RESULT($v);dnl
 AC_SUBST(PRIV_PORTS)
@@ -97,8 +113,16 @@ dnl check to see if force_localhost is suppressed
 AC_MSG_CHECKING(disable force_localhost default)
 AC_ARG_ENABLE( force_localhost,
 [  --disable-force_localhost         disable force_localhost default],
-[v=disabled; FORCE_LOCALHOST=0; ],
-[v=enabled;  FORCE_LOCALHOST=1; ]
+[
+if test "$enableval" = "yes" ; then
+	v=enabled;  FORCE_LOCALHOST=1;
+else
+	v=disabled; FORCE_LOCALHOST=0;
+fi
+],
+[
+	v=enabled;  FORCE_LOCALHOST=1;
+]
 )
 AC_MSG_RESULT($v)
 AC_DEFINE_UNQUOTED(FORCE_LOCALHOST,"$FORCE_LOCALHOST")
@@ -107,8 +131,16 @@ dnl check to see if clients require lpd.conf and printcap
 AC_MSG_CHECKING(require_configfiles default)
 AC_ARG_ENABLE( require_configfiles,
 [  --disable-require_configfiles     client programs require lpd.conf, printcap],
-[v=no; REQUIRE_CONFIGFILES=0; ],
-[v=yes;  REQUIRE_CONFIGFILES=1; ]
+[
+if test "$enableval" = "yes" ; then
+	v=yes;  REQUIRE_CONFIGFILES=1;
+else
+	v=no; REQUIRE_CONFIGFILES=0;
+fi
+],
+[
+	v=yes;  REQUIRE_CONFIGFILES=1;
+]
 )
 AC_MSG_RESULT($v)
 AC_SUBST(REQUIRE_CONFIGFILES)
@@ -117,8 +149,16 @@ dnl check to see if kerberos is disabled
 AC_MSG_CHECKING(if Kerberos authentication is enabled)
 AC_ARG_ENABLE( kerberos,
 [  --enable-kerberos                 enable kerberos support],
-[v=enabled;  KERBEROS=1;AC_DEFINE_UNQUOTED(KERBEROS,"$KERBEROS")],
-[v=disabled; KERBEROS=;]
+[
+if test "$enableval" = "yes" ; then
+	v=enabled;  KERBEROS=1;AC_DEFINE_UNQUOTED(KERBEROS,"$KERBEROS")
+else
+	v=disabled; KERBEROS=;
+fi
+],
+[
+	v=disabled; KERBEROS=;
+]
 )
 AC_MSG_RESULT($v (KERBEROS $KERBEROS));dnl
 AC_SUBST(KERBEROS)
@@ -127,8 +167,16 @@ dnl check to see if MIT Kerberos 4 support is enabled
 AC_MSG_CHECKING(if MIT Kerberos4 is enabled)
 AC_ARG_ENABLE( mit_kerberos4,
 [  --enable-mit_kerberos4            enable MIT Kerberos 4 support],
-[v=enabled; MIT_KERBEROS4=1;AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4")],
-[v=disabled; MIT_KERBEROS4=;]
+[
+if test "$enableval" = "yes" ; then
+	v=enabled; MIT_KERBEROS4=1;AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4")
+else
+	v=disabled; MIT_KERBEROS4=;
+fi
+],
+[
+	v=disabled; MIT_KERBEROS4=;
+]
 )
 AC_MSG_RESULT($v (MIT_KERBEROS4 $MIT_KERBEROS4));dnl
 AC_SUBST(MIT_KERBEROS4)
@@ -137,8 +185,16 @@ dnl find kerberos libraries
 AC_MSG_CHECKING(if Kerberos libraries are to located and other checks)
 AC_ARG_ENABLE( --disable-kerberos_checks,
 [  --disable-kerberos_checks         disable kerberos library location and checking for support],
-[v=disabled; KERBEROS_CHECKS=;],
-[v=enabled; KERBEROS_CHECKS=1;]
+[
+if test "$enableval" = "yes" ; then
+	v=enabled; KERBEROS_CHECKS=1;
+else
+	v=disabled; KERBEROS_CHECKS=;
+fi
+],
+[
+	v=enabled; KERBEROS_CHECKS=1;
+]
 )
 AC_MSG_RESULT($v (KERBEROS_CHECKS $KERBEROS_CHECKS));dnl
 
@@ -374,8 +430,16 @@ dnl default strip binaries
 AC_MSG_CHECKING(disable stripped binaries)
 AC_ARG_ENABLE( strip,
 [  --disable-strip                   disable stripping binaries by default],
-[v=no; STRIP_OPTION=""; ],
-[v=yes;  STRIP_OPTION=" -s "; ]
+[
+if test "$enableval" = "yes" ; then
+	v=yes;  STRIP_OPTION=" -s ";
+else
+	v=no; STRIP_OPTION="";
+fi
+],
+[
+	v=yes;  STRIP_OPTION=" -s ";
+]
 )
 AC_MSG_RESULT($v)
 AC_SUBST(STRIP_OPTION)
@@ -394,7 +458,7 @@ osword=`echo $target_os | sed -e 's/[0-9].*//'`; export osword
 changequote([, ])dnl
 AC_MSG_RESULT([Target is $target, arch $target_cpu, os $target_os, release $release, version $version])
 
-AC_DEFINE_UNQUOTED(ARCHITECTURE,"$target_cpu")
+AC_DEFINE_UNQUOTED(TARGETARCHITECTURE,"$target_cpu")
 AC_DEFINE_UNQUOTED(OSNAME,"$osword")
 AC_DEFINE_UNQUOTED(OSVERSION,$version)
 OSNAME=$osword
@@ -448,6 +512,13 @@ AC_TYPE_SIZE_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
+
+
+AC_CHECK_TYPES( fd_set,,,[
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/unistd.h>
+] )
 
 AC_CHECK_TYPES( socklen_t,,,[
 #include <sys/types.h>
@@ -1392,54 +1463,78 @@ AC_MSG_CHECKING(use tcp wrappers)
 AC_ARG_ENABLE( tcpwrappers,
 [  --enable-tcpwrappers             use tcp wrappers (-lwrap)],
 [
+if test "$enableval" = "yes" ; then
+ v=yes
  AC_CHECK_HEADERS(tcpd.h,
   [AC_DEFINE(HAVE_TCPD_H)],
-  [AC_MSG_ERROR(tcpd.h not found)]
+  [AC_MSG_ERROR(tcpd.h not found);
+   v=no;
+  ]
  )
  AC_CHECK_LIB(wrap, request_init,
   [LIBS="-lwrap $LIBS"],
-  AC_MSG_ERROR(request_init not found in -wrap library)
+  [AC_MSG_ERROR(request_init not found in -wrap library);
+   v=no;
+  ]
  )
- AC_DEFINE(TCPWRAPPERS)
+else
+ v=no;
+fi
 ],
 [
- AC_MSG_RESULT(no);dnl
+ v=no;
 ]
 )
+
+if test "$v" = "yes" ; then
+	 AC_DEFINE(TCPWRAPPERS)
+fi
+AC_MSG_RESULT($v);dnl
 
 dnl check to see if ssl is disabled
 AC_MSG_CHECKING(if ssl authentication is disabled)
-AC_ARG_ENABLE( use_openssl,
+AC_ARG_ENABLE( ssl,
 [  --disable-ssl                 disable ssl support],
-[v=disabled; SSL_ENABLE=;],
-[v=enabled;  SSL_ENABLE=1;]
+[
+if test "$enableval" = "yes" ; then
+	v=enabled;  SSL_ENABLE=1;
+else
+	v=disabled; SSL_ENABLE=;
+fi
+],
+[
+	v=enabled;  SSL_ENABLE=1;
+],
 )
 AC_MSG_RESULT($v);dnl
 
-dnl See if we can find OpenSSL
-dnl We can compile without OpenSSL if we have to
-ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
-ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
-
-AC_ARG_WITH(openssl,
-[  --with-openssl=DIR          root location for OpenSSL],
-[
-	ac_openssl_lib_dir="$withval/lib $withval"
-	ac_openssl_inc_dir="$withval/include $withval"
-]
-)
-
-AC_ARG_WITH(openssl-inc,
-[  --with-openssl-inc        OpenSSL include files],
-	ac_openssl_inc_dir=$withval
-)
-AC_ARG_WITH(openssl-lib,
-[  --with-openssl-lib        OpenSSL library files],
-	ac_openssl_lib_dir=$withval
-)
-
 dnl Now look for OpenSSL
+ac_openssl_lib_dir=
+ac_openssl_inc_dir=
 if test "$SSL_ENABLE" != ""; then
+
+	dnl See if we can find OpenSSL
+	dnl We can compile without OpenSSL if we have to
+	ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
+	ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
+
+	AC_ARG_WITH(openssl,
+	[  --with-openssl=DIR          root location for OpenSSL],
+	[
+		ac_openssl_lib_dir="$withval/lib $withval"
+		ac_openssl_inc_dir="$withval/include $withval"
+	]
+	)
+
+	AC_ARG_WITH(openssl-inc,
+	[  --with-openssl-inc        OpenSSL include files],
+		ac_openssl_inc_dir=$withval
+	)
+	AC_ARG_WITH(openssl-lib,
+	[  --with-openssl-lib        OpenSSL library files],
+		ac_openssl_lib_dir=$withval
+	)
+
 	ac_found_openssl_inc_dir="no"
 	AC_MSG_CHECKING(for OpenSSL include files)
 	for dir in $ac_openssl_inc_dir; do
@@ -1559,11 +1654,11 @@ dnl
 AC_MSG_CHECKING(ssl server password file for private key file)
 AC_ARG_WITH(ssl_server_password_file,
 [  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/lpd/ssl.server/server.pwd)],
-SSL_SERVER_PASSWORD=$withval,
-SSL_SERVER_PASSWORD=\${sysconfdir}/lpd/ssl.server/server.pwd,
+SSL_SERVER_PASSWORD_FILE=$withval,
+SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/lpd/ssl.server/server.pwd,
 )
-AC_MSG_RESULT($SSL_SERVER_PASSWORD)
-AC_SUBST(SSL_SERVER_PASSWORD)
+AC_MSG_RESULT($SSL_SERVER_PASSWORD_FILE)
+AC_SUBST(SSL_SERVER_PASSWORD_FILE)
 
 dnl ----------------------------------------------------------------------------
 dnl ---------------- START OF KERBEROS -----------------------------------------

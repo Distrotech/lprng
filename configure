@@ -1407,7 +1407,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=LPRng
-VERSION=3.8.13
+VERSION=3.8.14
 
 
 ac_aux_dir=
@@ -1895,9 +1895,16 @@ echo $ECHO_N "checking if installing clients setuid... $ECHO_C" >&6
 # Check whether --enable-setuid or --disable-setuid was given.
 if test "${enable_setuid+set}" = set; then
   enableval="$enable_setuid"
-  PERMS=NORM_PERMS
+
+if test "$enableval" = "yes" ; then
+	PERMS=SUID_ROOT_PERMS
 else
-  PERMS=SUID_ROOT_PERMS
+	PERMS=NORM_PERMS
+fi
+
+else
+
+	PERMS=SUID_ROOT_PERMS
 
 fi;
 echo "$as_me:$LINENO: result: $PERMS" >&5
@@ -1909,9 +1916,17 @@ echo $ECHO_N "checking require connections from priviledged ports... $ECHO_C" >&
 # Check whether --enable-priv_ports or --disable-priv_ports was given.
 if test "${enable_priv_ports+set}" = set; then
   enableval="$enable_priv_ports"
-  v=yes;  PRIV_PORTS="";
+
+if test "$enableval" = "yes" ; then
+	v=yes;  PRIV_PORTS="";
 else
-  v=no; PRIV_PORTS="#";
+	v=no; PRIV_PORTS="#";
+fi
+
+else
+
+	v=no; PRIV_PORTS="#";
+
 
 fi;
 echo "$as_me:$LINENO: result: $v" >&5
@@ -1922,9 +1937,17 @@ echo $ECHO_N "checking disable force_localhost default... $ECHO_C" >&6
 # Check whether --enable-force_localhost or --disable-force_localhost was given.
 if test "${enable_force_localhost+set}" = set; then
   enableval="$enable_force_localhost"
-  v=disabled; FORCE_LOCALHOST=0;
+
+if test "$enableval" = "yes" ; then
+	v=enabled;  FORCE_LOCALHOST=1;
 else
-  v=enabled;  FORCE_LOCALHOST=1;
+	v=disabled; FORCE_LOCALHOST=0;
+fi
+
+else
+
+	v=enabled;  FORCE_LOCALHOST=1;
+
 
 fi;
 echo "$as_me:$LINENO: result: $v" >&5
@@ -1939,9 +1962,17 @@ echo $ECHO_N "checking require_configfiles default... $ECHO_C" >&6
 # Check whether --enable-require_configfiles or --disable-require_configfiles was given.
 if test "${enable_require_configfiles+set}" = set; then
   enableval="$enable_require_configfiles"
-  v=no; REQUIRE_CONFIGFILES=0;
+
+if test "$enableval" = "yes" ; then
+	v=yes;  REQUIRE_CONFIGFILES=1;
 else
-  v=yes;  REQUIRE_CONFIGFILES=1;
+	v=no; REQUIRE_CONFIGFILES=0;
+fi
+
+else
+
+	v=yes;  REQUIRE_CONFIGFILES=1;
+
 
 fi;
 echo "$as_me:$LINENO: result: $v" >&5
@@ -1953,12 +1984,20 @@ echo $ECHO_N "checking if Kerberos authentication is enabled... $ECHO_C" >&6
 # Check whether --enable-kerberos or --disable-kerberos was given.
 if test "${enable_kerberos+set}" = set; then
   enableval="$enable_kerberos"
-  v=enabled;  KERBEROS=1;cat >>confdefs.h <<_ACEOF
+
+if test "$enableval" = "yes" ; then
+	v=enabled;  KERBEROS=1;cat >>confdefs.h <<_ACEOF
 #define KERBEROS "$KERBEROS"
 _ACEOF
 
 else
-  v=disabled; KERBEROS=;
+	v=disabled; KERBEROS=;
+fi
+
+else
+
+	v=disabled; KERBEROS=;
+
 
 fi;
 echo "$as_me:$LINENO: result: $v (KERBEROS $KERBEROS)" >&5
@@ -1969,12 +2008,20 @@ echo $ECHO_N "checking if MIT Kerberos4 is enabled... $ECHO_C" >&6
 # Check whether --enable-mit_kerberos4 or --disable-mit_kerberos4 was given.
 if test "${enable_mit_kerberos4+set}" = set; then
   enableval="$enable_mit_kerberos4"
-  v=enabled; MIT_KERBEROS4=1;cat >>confdefs.h <<_ACEOF
+
+if test "$enableval" = "yes" ; then
+	v=enabled; MIT_KERBEROS4=1;cat >>confdefs.h <<_ACEOF
 #define MIT_KERBEROS4 "$MIT_KERBEROS4"
 _ACEOF
 
 else
-  v=disabled; MIT_KERBEROS4=;
+	v=disabled; MIT_KERBEROS4=;
+fi
+
+else
+
+	v=disabled; MIT_KERBEROS4=;
+
 
 fi;
 echo "$as_me:$LINENO: result: $v (MIT_KERBEROS4 $MIT_KERBEROS4)" >&5
@@ -1985,9 +2032,17 @@ echo $ECHO_N "checking if Kerberos libraries are to located and other checks... 
 # Check whether --enable---disable-kerberos_checks or --disable---disable-kerberos_checks was given.
 if test "${enable___disable_kerberos_checks+set}" = set; then
   enableval="$enable___disable_kerberos_checks"
-  v=disabled; KERBEROS_CHECKS=;
+
+if test "$enableval" = "yes" ; then
+	v=enabled; KERBEROS_CHECKS=1;
 else
-  v=enabled; KERBEROS_CHECKS=1;
+	v=disabled; KERBEROS_CHECKS=;
+fi
+
+else
+
+	v=enabled; KERBEROS_CHECKS=1;
+
 
 fi;
 echo "$as_me:$LINENO: result: $v (KERBEROS_CHECKS $KERBEROS_CHECKS)" >&5
@@ -2339,9 +2394,17 @@ echo $ECHO_N "checking disable stripped binaries... $ECHO_C" >&6
 # Check whether --enable-strip or --disable-strip was given.
 if test "${enable_strip+set}" = set; then
   enableval="$enable_strip"
-  v=no; STRIP_OPTION="";
+
+if test "$enableval" = "yes" ; then
+	v=yes;  STRIP_OPTION=" -s ";
 else
-  v=yes;  STRIP_OPTION=" -s ";
+	v=no; STRIP_OPTION="";
+fi
+
+else
+
+	v=yes;  STRIP_OPTION=" -s ";
+
 
 fi;
 echo "$as_me:$LINENO: result: $v" >&5
@@ -2360,7 +2423,7 @@ echo "$as_me:$LINENO: result: Target is $target, arch $target_cpu, os $target_os
 echo "${ECHO_T}Target is $target, arch $target_cpu, os $target_os, release $release, version $version" >&6
 
 cat >>confdefs.h <<_ACEOF
-#define ARCHITECTURE "$target_cpu"
+#define TARGETARCHITECTURE "$target_cpu"
 _ACEOF
 
 cat >>confdefs.h <<_ACEOF
@@ -5394,7 +5457,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5397 "configure"' > conftest.$ac_ext
+  echo '#line 5460 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5930,7 +5993,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:5933: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:5996: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -7723,7 +7786,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7726 "configure"
+#line 7789 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -7821,7 +7884,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7824 "configure"
+#line 7887 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9721,6 +9784,70 @@ else
 cat >>confdefs.h <<_ACEOF
 #define pid_t int
 _ACEOF
+
+fi
+
+
+
+echo "$as_me:$LINENO: checking for fd_set" >&5
+echo $ECHO_N "checking for fd_set... $ECHO_C" >&6
+if test "${ac_cv_type_fd_set+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/unistd.h>
+
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+if ((fd_set *) 0)
+  return 0;
+if (sizeof (fd_set))
+  return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_type_fd_set=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_type_fd_set=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_type_fd_set" >&5
+echo "${ECHO_T}$ac_cv_type_fd_set" >&6
+if test $ac_cv_type_fd_set = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FD_SET 1
+_ACEOF
+
 
 fi
 
@@ -18600,6 +18727,8 @@ echo $ECHO_N "checking use tcp wrappers... $ECHO_C" >&6
 if test "${enable_tcpwrappers+set}" = set; then
   enableval="$enable_tcpwrappers"
 
+if test "$enableval" = "yes" ; then
+ v=yes
 
 for ac_header in tcpd.h
 do
@@ -18716,7 +18845,9 @@ _ACEOF
 else
   { { echo "$as_me:$LINENO: error: tcpd.h not found" >&5
 echo "$as_me: error: tcpd.h not found" >&2;}
-   { (exit 1); exit 1; }; }
+   { (exit 1); exit 1; }; };
+   v=no;
+
 
 fi
 
@@ -18782,44 +18913,64 @@ if test $ac_cv_lib_wrap_request_init = yes; then
 else
   { { echo "$as_me:$LINENO: error: request_init not found in -wrap library" >&5
 echo "$as_me: error: request_init not found in -wrap library" >&2;}
-   { (exit 1); exit 1; }; }
+   { (exit 1); exit 1; }; };
+   v=no;
+
 
 fi
 
- cat >>confdefs.h <<\_ACEOF
-#define TCPWRAPPERS 1
-_ACEOF
-
+else
+ v=no;
+fi
 
 else
 
- echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6;
+ v=no;
+
 
 fi;
 
+if test "$v" = "yes" ; then
+	 cat >>confdefs.h <<\_ACEOF
+#define TCPWRAPPERS 1
+_ACEOF
+
+fi
+echo "$as_me:$LINENO: result: $v" >&5
+echo "${ECHO_T}$v" >&6;
 echo "$as_me:$LINENO: checking if ssl authentication is disabled" >&5
 echo $ECHO_N "checking if ssl authentication is disabled... $ECHO_C" >&6
-# Check whether --enable-use_openssl or --disable-use_openssl was given.
-if test "${enable_use_openssl+set}" = set; then
-  enableval="$enable_use_openssl"
-  v=disabled; SSL_ENABLE=;
+# Check whether --enable-ssl or --disable-ssl was given.
+if test "${enable_ssl+set}" = set; then
+  enableval="$enable_ssl"
+
+if test "$enableval" = "yes" ; then
+	v=enabled;  SSL_ENABLE=1;
 else
-  v=enabled;  SSL_ENABLE=1;
+	v=disabled; SSL_ENABLE=;
+fi
+
+else
+
+	v=enabled;  SSL_ENABLE=1;
 
 fi;
 echo "$as_me:$LINENO: result: $v" >&5
 echo "${ECHO_T}$v" >&6;
-ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
-ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
+ac_openssl_lib_dir=
+ac_openssl_inc_dir=
+if test "$SSL_ENABLE" != ""; then
+
+			ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
+	ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
 
 
 # Check whether --with-openssl or --without-openssl was given.
 if test "${with_openssl+set}" = set; then
   withval="$with_openssl"
 
-	ac_openssl_lib_dir="$withval/lib $withval"
-	ac_openssl_inc_dir="$withval/include $withval"
+		ac_openssl_lib_dir="$withval/lib $withval"
+		ac_openssl_inc_dir="$withval/include $withval"
 
 
 fi;
@@ -18839,7 +18990,6 @@ if test "${with_openssl_lib+set}" = set; then
 
 fi;
 
-if test "$SSL_ENABLE" != ""; then
 	ac_found_openssl_inc_dir="no"
 	echo "$as_me:$LINENO: checking for OpenSSL include files" >&5
 echo $ECHO_N "checking for OpenSSL include files... $ECHO_C" >&6
@@ -19062,12 +19212,12 @@ echo $ECHO_N "checking ssl server password file for private key file... $ECHO_C"
 # Check whether --with-ssl_server_password_file or --without-ssl_server_password_file was given.
 if test "${with_ssl_server_password_file+set}" = set; then
   withval="$with_ssl_server_password_file"
-  SSL_SERVER_PASSWORD=$withval
+  SSL_SERVER_PASSWORD_FILE=$withval
 else
-  SSL_SERVER_PASSWORD=\${sysconfdir}/lpd/ssl.server/server.pwd
+  SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/lpd/ssl.server/server.pwd
 fi;
-echo "$as_me:$LINENO: result: $SSL_SERVER_PASSWORD" >&5
-echo "${ECHO_T}$SSL_SERVER_PASSWORD" >&6
+echo "$as_me:$LINENO: result: $SSL_SERVER_PASSWORD_FILE" >&5
+echo "${ECHO_T}$SSL_SERVER_PASSWORD_FILE" >&6
 
 
 
@@ -20771,7 +20921,7 @@ s,@SSL_CA_KEY@,$SSL_CA_KEY,;t t
 s,@SSL_CERTS_DIR@,$SSL_CERTS_DIR,;t t
 s,@SSL_CRL_FILE@,$SSL_CRL_FILE,;t t
 s,@SSL_SERVER_CERT@,$SSL_SERVER_CERT,;t t
-s,@SSL_SERVER_PASSWORD@,$SSL_SERVER_PASSWORD,;t t
+s,@SSL_SERVER_PASSWORD_FILE@,$SSL_SERVER_PASSWORD_FILE,;t t
 CEOF
 
 _ACEOF

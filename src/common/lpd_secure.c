@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
+"$Id: lpd_secure.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -429,10 +429,8 @@ int Check_secure_perms( struct line_list *options, int from_server,
 	Set_str_value(options, AUTHTYPE, Perm_check.authtype );
 	Set_str_value(options, AUTHFROM, authfrom );
 	Set_str_value(options, AUTHUSER, authuser );
-	authfrom = Find_str_value(options,AUTHFROM,Value_sep);
-	Perm_check.authfrom = authfrom;
-	authuser = Find_str_value(options,AUTHUSER,Value_sep);
-	Perm_check.authuser = authuser;
+	Perm_check.authfrom = Find_str_value(options,AUTHFROM,Value_sep);
+	Perm_check.authuser = authuser = Find_str_value(options,AUTHUSER,Value_sep);
 	if( !authuser ){
 		SNPRINTF( error, errlen) "Printer %s@%s: missing authentication client id",
 			Printer_DYN,Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );

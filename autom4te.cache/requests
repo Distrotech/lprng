@@ -15,8 +15,8 @@
                         'configure.in'
                       ],
                       {
-                        'AC_PROG_GCC_TRADITIONAL' => 1,
                         'AM_CONDITIONAL' => 1,
+                        'AC_PROG_GCC_TRADITIONAL' => 1,
                         'AC_FUNC_STRERROR_R' => 1,
                         'AC_PROG_LN_S' => 1,
                         'AC_PATH_X' => 1,
@@ -80,10 +80,10 @@
                         'AC_FUNC_FNMATCH' => 1,
                         'AC_PROG_LIBTOOL' => 1,
                         'AC_PROG_INSTALL' => 1,
-                        'AC_FUNC_ERROR_AT_LINE' => 1,
                         'AC_FUNC_SETPGRP' => 1,
-                        'AC_CHECK_TYPES' => 1,
+                        'AC_FUNC_ERROR_AT_LINE' => 1,
                         'AC_FUNC_MKTIME' => 1,
+                        'AC_CHECK_TYPES' => 1,
                         'AC_FUNC_WAIT3' => 1,
                         'AC_FUNC_VPRINTF' => 1,
                         'AC_PROG_YACC' => 1,

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
+"$Id: lpr.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -1314,31 +1314,31 @@ int is_exec( char *buf, int n)
 
 #ifdef N_BADMAG		/* BSD, non-mips Ultrix */
 #  ifdef HAVE_STRUCT_EXEC
-    if (n >= sizeof (struct exec)){
+    if (n >= (int)sizeof (struct exec)){
 		i |= !(N_BADMAG ((*(struct exec *) buf)));
 	}
 #  else
-    if (n >= sizeof (struct aouthdr)){
+    if (n >= (int)sizeof (struct aouthdr)){
 		i |= !(N_BADMAG ((*(struct aouthdr *) buf)));
 	}
 #  endif
 #endif
 
 #ifdef ISCOFF		/* SVR4, mips Ultrix */
-    if (n >= sizeof (struct filehdr)){
+    if (n >= (int)sizeof (struct filehdr)){
 		i |= (ISCOFF (((struct filehdr *) buf)->f_magic));
 	}
 #endif
 
 #ifdef MH_MAGIC		/* NeXT */
-    if (n >= sizeof (struct mach_header)){
+    if (n >= (int)sizeof (struct mach_header)){
 		i |= (((struct mach_header *) buf)->magic == MH_MAGIC);
 	}
 #endif
 
 #ifdef IS_DATAGEN	/* Data General (forget it! ;) */
     {
-		if( n > sizeof (struct header)){
+		if( n > (int)sizeof (struct header)){
 			i |= ISMAGIC (((struct header *)buff->magic_number));
 		}
     }

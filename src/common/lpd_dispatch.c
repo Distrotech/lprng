@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -60,7 +60,7 @@ void Dispatch_input(int *talk, char *input )
 		case REQ_SECURE:
 			Receive_secure( talk, input );
 			break;
-#if defined(MIT_KERBEROS4)
+#if defined(KERBEROS) && defined(MIT_KERBEROS4)
 		case REQ_K4AUTH:
 			Receive_k4auth( talk, input );
 			break;

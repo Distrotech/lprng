@@ -68,7 +68,7 @@ lp \- send requests to an LPRng print service
 .if n .ti +5n
 [
 .BI \-S " print-wheel"
-[
+] [
 .BI \-t " title"
 ]
 .if t .ti +5n

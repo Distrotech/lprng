@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: copyright.c,v 1.33 2002/07/22 16:11:25 papowell Exp $";
+"$Id: copyright.c,v 1.36 2002/08/06 19:14:13 papowell Exp $";
 
 
 #include "lp.h"
@@ -48,10 +48,10 @@ char *Copyright[] = {
             "termios"
 #endif
 ,
-#ifdef USE_GDBM
-"with GDBM"
+#ifdef SSL_ENABLE
+"with SSL"
 #else
-"without GDBM"
+"without SSL"
 #endif
 ,
 "",

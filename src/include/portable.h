@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.33 2002/07/22 16:11:29 papowell Exp $
+ * $Id: portable.h,v 1.36 2002/08/06 19:14:16 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -640,10 +640,13 @@ XX ** NO VARARGS ** XX
 #if defined(HPUX) && HPUX<110
 #  undef NONBLOCK
 #  define NONBLOCK (O_NONBLOCK)
-#  undef FD_SET_FIX
-#  define FD_SET_FIX(X) (int *)
 #endif
 
+/* fix for HPUX systems with no fd_set values */
+#undef FD_SET_FIX
+#if !defined(HAVE_FD_SET) && defined(HPUX)
+#  define FD_SET_FIX(X) (int *)
+#endif
 
 
 /*********************************************************************

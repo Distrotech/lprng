@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.33 2002/07/22 16:11:28 papowell Exp $";
+"$Id: vars.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
 
 
 /* force local definitions */
@@ -41,8 +41,8 @@ Put all of the variables in a separate file.
 #if !defined(GETENV)
 #define GETENV "0"
 #endif
-#if !defined(ARCHITECTURE)
-#define ARCHITECTURE "unknown"
+#if !defined(TARGETARCHITECTURE)
+#define TARGETARCHITECTURE "unknown"
 #endif
 #if !defined(LPD_CONF_PATH)
 #error Missing LPD_CONF_PATH definition
@@ -123,7 +123,7 @@ struct keywords Pc_var_list[] = {
    /*  write remote transfer accounting (if af is set) */
 { "ar", 0,  FLAG_K,  &Accounting_remote_DYN,0,0,"1"},
    /* host architecture */
-{ "architecture", 0, STRING_K, &Architecture_DYN,1,0,ARCHITECTURE},
+{ "architecture", 0, STRING_K, &Architecture_DYN,1,0,TARGETARCHITECTURE},
    /*  accounting at start (see also af, la, ar) */
 { "as", 0,  STRING_K,  &Accounting_start_DYN,0,0,"=jobstart $H $n $P $k $b $t $'C $'J $'M"},
 	/* authentication type for client to server */
@@ -493,7 +493,7 @@ struct keywords Pc_var_list[] = {
    /*  ssl server certificate */
 { "ssl_server_cert", 0,  STRING_K,  &Ssl_server_cert_DYN,0,0,"=" SSL_SERVER_CERT },
    /*  ssl server cert password is in this file */
-{ "ssl_server_password_file", 0,  STRING_K,  &Ssl_server_password_file_DYN,0,0,"=" SSL_SERVER_PASSWORD },
+{ "ssl_server_password_file", 0,  STRING_K,  &Ssl_server_password_file_DYN,0,0,"=" SSL_SERVER_PASSWORD_FILE },
    /*  stalled job timeout */
 { "stalled_time", 0, INTEGER_K, &Stalled_time_DYN,0,0,"=120"},
    /*  stop processing queue on filter abort */

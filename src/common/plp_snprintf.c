@@ -205,10 +205,10 @@
 
 
 
-NAME
+ NAME
      plp_snprintf, plp_vsnprintf - formatted output conversion
 
-SYNOPSIS
+ SYNOPSIS
      #include <stdio.h>
      #include <stdarg.h>
 
@@ -228,7 +228,7 @@ SYNOPSIS
 
      (Multithreaded Safe)
 
-DESCRIPTION
+ DESCRIPTION
      The printf() family of functions produces output according to
      a format as described below.  Snprintf(), and vsnprintf()
      write to the character string str. These functions write the
@@ -401,7 +401,7 @@ DESCRIPTION
      field; if the result of a conversion is wider than the field width, the
      field is expanded to contain the conversion result.
 
-EXAMPLES
+ EXAMPLES
      To print a date and time in the form `Sunday, July 3, 10:02', where
      weekday and month are pointers to strings:
 
@@ -432,14 +432,14 @@ EXAMPLES
                return (p);
            }
 
-SEE ALSO
+ SEE ALSO
      printf(1),  scanf(3)
 
-STANDARDS
+ STANDARDS
      Turkey C Standardization and wimpy POSIX folks did not define
      snprintf or vsnprintf().
 
-BUGS
+ BUGS
      The conversion formats %D, %O, and %U are not standard and are provided
      only for backward compatibility.  The effect of padding the %p format
      with zeros (either by the `0' flag or by specifying a precision), and the
@@ -485,7 +485,7 @@ BUGS
  
  
  static char *const _id = "plp_snprintf V2000.08.18 Copyright Patrick Powell 1988-2000 "
- "$Id: plp_snprintf.c,v 1.33 2002/07/22 16:11:27 papowell Exp $"
+ "$Id: plp_snprintf.c,v 1.36 2002/08/06 19:14:15 papowell Exp $"
  " LOCAL REVISIONS: <NONE>";
 
 /* varargs declarations: */
@@ -512,11 +512,11 @@ BUGS
 #  define VA_SHIFT(v,t)	v = va_arg(ap,t)
 #  define VA_END		va_end(ap)
 # else
-XX ** NO VARARGS ** XX
+ XX ** NO VARARGS ** XX
 # endif
 #endif
 
-union value {
+ union value {
 #if defined(HAVE_QUAD_T)
 	quad_t qvalue;
 #endif
@@ -551,8 +551,13 @@ union value {
 	int ljust, int len, int zpad, int precision );
  static void dostr(  char **buffer, int *left, char *str );
  static void dopr_outch(  char **buffer, int *left, int c );
+/* VARARGS3 */
+#ifdef HAVE_STDARGS
+ int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+#else
+ int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+#endif
 
-int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	int left;
 	char *buffer;
@@ -573,7 +578,12 @@ int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 	return(count - left);
 }
 
-int plp_unsafe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+/* VARARGS3 */
+#ifdef HAVE_STDARGS
+ int plp_unsafe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+#else
+ int plp_unsafe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
+#endif
 {
 	int left;
 	char *buffer;
@@ -596,9 +606,9 @@ int plp_unsafe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 
 /* VARARGS3 */
 #ifdef HAVE_STDARGS
-int plp_snprintf (char *str,size_t count,const char *fmt,...)
+ int plp_snprintf (char *str,size_t count,const char *fmt,...)
 #else
-int plp_snprintf (va_alist) va_dcl
+ int plp_snprintf (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -621,9 +631,9 @@ int plp_snprintf (va_alist) va_dcl
 
 /* VARARGS3 */
 #ifdef HAVE_STDARGS
-int plp_unsafe_snprintf (char *str,size_t count,const char *fmt,...)
+ int plp_unsafe_snprintf (char *str,size_t count,const char *fmt,...)
 #else
-int plp_unsafe_snprintf (va_alist) va_dcl
+ int plp_unsafe_snprintf (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -779,7 +789,7 @@ int plp_unsafe_snprintf (va_alist) va_dcl
  * precision = numbers of chars in string to use
  */
  static void
-fmtstr( int visible_control, char **buffer, int *left,
+ fmtstr( int visible_control, char **buffer, int *left,
 	 char *value, int ljust, int len, int zpad, int precision )
 {
 	int padlen, strlenv, i, c;	/* amount to pad */
@@ -819,7 +829,7 @@ fmtstr( int visible_control, char **buffer, int *left,
 }
 
  static void
-fmtnum( char **buffer, int *left,
+ fmtnum( char **buffer, int *left,
 	union value *value, int base, int dosign, int ljust,
 	int len, int zpad, int precision )
 {
@@ -885,7 +895,7 @@ fmtnum( char **buffer, int *left,
 #if defined(HAVE_QUAD_T)
 
  static void
-fmtquad( char **buffer, int *left,
+ fmtquad( char **buffer, int *left,
 	union value *value, int base, int dosign, int ljust,
 	int len, int zpad, int precision )
 {
@@ -957,7 +967,7 @@ fmtquad( char **buffer, int *left,
 }
 
  static void
-fmtdouble( char **buffer, int *left,
+ fmtdouble( char **buffer, int *left,
 	int fmt, double value, int ljust, int len, int zpad, int precision )
 {
 	char convert[sizeof( union value) * 8 + 512];
@@ -1051,7 +1061,7 @@ fmtdouble( char **buffer, int *left,
 
 #if defined(TEST)
 #include <stdio.h>
-int main( void )
+ int main( void )
 {
 	char buffer[128];
 	char *t;

@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
-          (For LPRng-3.8.13)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 6 Aug 2002
+          (For LPRng-3.8.14)</th>
         </tr>
 
         <tr>
@@ -82,8 +82,8 @@
         lprm command  =      /usr/bin/lprm -P%p %j
         lppause command =    /usr/sbin/lpc hold %p %j
         lpresume command =   /usr/sbin/lpc release %p %j
-        queuepause command = /usr/sbin/lpc  -P%p stop
-        queueresume command = /usr/sbin/lpc -P%p start
+        queuepause command = /usr/sbin/lpc  stop %p
+        queueresume command = /usr/sbin/lpc start %p
 </pre>
       </div>
       <br>
@@ -202,8 +202,8 @@
         lprm command  =       /usr/bin/lprm -U%U@%M -P%p %j
         lppause command =     /usr/sbin/lpc -U%U@%M hold %p %j
         lpresume command =    /usr/sbin/lpc -U%U@%M release %p %j
-        queuepause command =  /usr/sbin/lpc -U%U@%M -P%p stop
-        queueresume command = /usr/sbin/lpc -U%U@%M -P%p start
+        queuepause command =  /usr/sbin/lpc -U%U@%M stop %p
+        queueresume command = /usr/sbin/lpc -U%U@%M start %p
 </pre>
           </div>
           <br>

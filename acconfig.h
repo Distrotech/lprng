@@ -21,9 +21,6 @@
 #undef _ALL_SOURCE
 #endif
 
-/* Define if using ARCHITECTURE  */
-#undef ARCHITECTURE
-
 /* Define if using alloca.c.  */
 #undef C_ALLOCA
 
@@ -404,6 +401,9 @@
 
 /* Define if you don't have <dirent.h>, but have <sys/ndir.h>.  */
 #undef SYSNDIR
+
+/* Define if using TARGETARCHITECTURE  */
+#undef TARGETARCHITECTURE
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #undef TIME_WITH_SYS_TIME
