@@ -1,0 +1,11 @@
+Directories:
+Intro   - Introduction
+Install - Installation and test documentation
+Tutorial- Tutorial
+Macros  - macros
+
+Files:
+Makefile - makes all the documentation
+README   - this file
+Using_stty  - short note on use the printcap stty 'sy' field
+LPRng-LISA95.ps - LISA-95 Proceedings paper

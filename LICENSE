@@ -1,0 +1,24 @@
+ ***************************************************************************
+ * LPRng - An Extended Print Spooler System
+ *
+ * Copyright 1988-1995 Patrick Powell, San Diego State University
+ *     papowell@sdsu.edu
+ * See LICENSE for conditions of use.
+ *
+ ***************************************************************************
+ * MODULE: LICENSE
+ * PURPOSE: terms and conditions
+ * $Id: LICENSE,v 3.0 1996/05/19 04:05:23 papowell Exp $
+ **************************************************************************
+
+
+Use and distribution of this software is covered by the GNU COPYING
+license.  Please refer to this for terms and conditions.
+
+This software incorporates code from other sources;  see the file
+copyright.c in this distribution for general copyright information.
+Individual source files have their copyrights as well, where
+applicable.
+
+Patrick Powell
+Mon Jul 10 07:01:54 PDT 1995

@@ -1,0 +1,68 @@
+         Bounce Queues
+     LPRng-2.2.5 and Later
+Mon Apr 22 09:05:58 PDT 1996
+Updated Tue Jun  4 14:21:11 PDT 1996
+Updated Sun Sep  8 08:34:32 PDT 1996
+       Patrick Powell
+
+A bounce queue is a special spool queue that will pass
+all submitted jobs through a filter before sending the
+job to the final destination.  This activity is controlled
+by the :bq=destination: printcap flag.  In order to
+have this work successfully,  the following guidelines
+should be followed.
+
+1. printcap lp or rm/rp should specify the actual bounce
+   queue on the host where processing is done.
+2. the :bq=destination: entry should specify where the
+   filtered job is sent after filtering.
+
+Examples:
+
+bqprinter:
+    :lp=bqprinter@host
+    :bq=finalprinter@host
+    :sd=/usr/spool/bqprinter
+    :if=/usr/filter_for_f_format
+
+multifmt|1up|2up|landscape|normal
+    :qq
+    :lp=multifmt@host
+    :bq=finalprinter@host
+    :sd=/usr/spool/multifmt
+    :if=/usr/filter_for_f_format
+    :translate_format=mfpf
+    :pf=/usr/filter_for_pr
+    :mf=/usr/filter_for_m_format
+
+Note: only formats for which you have a filter will
+be filtered - there is no default filter.
+
+Multiple Formats
+
+The :qq: (use queuename) printcap flag or use_queuename configuration variable
+can be used to provide the original name of the queue to filters.
+For example,  suppose that you wanted to format output
+in several different ways - 1up, 2up, landscape, normal.  The above
+printcap entry will cause LPR to put the original queue name into the
+job file.  The bounce queue filter can then use the name to reformat the
+job file appropriately.
+
+Changing Formats
+
+Once a job has been processed,  the actual format of the data files may
+be changed.  The 'translate_format' option can be used to specify a new
+format before sending the job to the destination.  The option has the form
+SdSd... where S is the original format and d is the new format.  The
+value mfpf will rename formats m and p as format f.
+
+Bounce Queues and the lpr -p option
+
+The lpr -p option specifies that the print job will be passed
+to /bin/pr (actually, a program specified by the :pr: printcap entry)
+and then filtered by the :if: filter.  When using bounce queues,
+this is not done.  If you want to have print jobs filtered,  then
+you can use a :pf: specification for a print filter. If you use this,
+then you should also use the 'translate_format' option to rename the
+format of the file as well.  Note that the pf filter will need to
+do both /bin/pr formatting as well as the f format filtering.

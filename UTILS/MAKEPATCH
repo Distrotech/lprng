@@ -1,0 +1,33 @@
+#!/bin/sh -x
+NEW=$1
+PREFIX=`echo "$1" | sed -e 's/-.*//'`
+NEW=`echo "$1" | sed -e 's/.*-//'`
+OLD=`echo "$2" | sed -e 's/.*-//'`
+if [ -z "$OLD" ]; then
+	OLD=`echo $NEW | awk '-F.' '{
+		$NF = $NF - 1;
+		s = $1;
+		for( i = 2; i <= NF; ++i ){
+			s = s "." $i;
+		}
+		print s;
+	}' `
+fi;
+echo PREFIX $PREFIX NEW $NEW OLD $OLD
+PATCH=${PREFIX}-${OLD}-${NEW}.patch;
+rm -f ${PATCH} ${PATCH}.gz
+cat >${PATCH} <<EOF
+# ${PREFIX} Patch - version ${PREFIX}-${OLD} to ${PREFIX}-${NEW}
+# 
+# If ${PREFIX} software distribution files home directory is
+# ${PREFIX}-${OLD}, and this patch file is ${PATCH}.gz,
+# do the following.  NOTE - the -p flag to patch is CRITICAL,
+# otherwise the wrong files will get patched.
+# 
+# gunzip -c ${PATCH}.gz | (cd ${PREFIX}-${OLD}; patch -p )
+# mv ${PREFIX}-${OLD} ${PREFIX}-${NEW}
+# 
+# ------ Patch starts here ----
+EOF
+(cd ${PREFIX}-${NEW}; diff -c3 -i -r -P ../${PREFIX}-${OLD} . ) >>${PATCH} 
+gzip ${PATCH}

@@ -1,0 +1,1521 @@
+.\" ***************************************************************************
+.\" * LPRng - An Extended Print Spooler System
+.\" *
+.\" * Copyright 1988-1995 Patrick Powell, San Diego State University
+.\" *     papowell@sdsu.edu
+.\" * See LICENSE for conditions of use.
+.\" *
+.\" ***************************************************************************
+.\" * MODULE: README
+.\" * PURPOSE: Overview of Software
+.\" * $Id: Install.nroff,v 3.0 1996/05/19 04:06:54 papowell Exp $
+.\" **************************************************************************/
+.\"
+.\"Uses the NROFF -me macros, supplemented by the following:
+.\"tbl | troff | dvi2dumb
+.\".fo 'README'%'Alpha Release'
+.\"
+.\" number of columns
+.ds CC ""
+.nr PS 10
+.nr FU 0.22i	\" printer prints this much too low
+.nr VS 11
+.ds Q ``
+.ds U ''
+.\" footnote stuff
+.nr * 0 1
+.ds [. \|[
+.ds .] ]
+.ds [, \s-2\v'-.4m'\f2
+.ds ,] \v'.4m'\s+2\fP
+.ds * \*([,\\n+*\*(,]
+.ds [o ``
+.ds [c ''
+.ev 1
+.ps \n(PS
+.vs \n(VS
+.ev
+.de PP
+.LP
+.ti 3n
+..
+.de LP
+.sp 0.3
+.ne 1
+.in 0
+.nr Ia 0
+.nr Ic 0
+.fi
+..
+.de IP
+.sp 0.3
+.\" Ia = total indent for this guy
+.\" Ib = .ti value for this guy
+.\" Ic = auxiliary indent
+.nr Ib 0.0i
+.if \\n(Ia=0 .nr Ia 0.2i
+.if !\\$1 \{\
+.   nr Ia \w\\$1\ \ u
+.   nr Ib \\n(Ia
+.\}
+.if !\\$2 .nr Ia \\$2n
+.in \\n(Iau
+.in +\\n(Icu
+.ti -\\n(Ibu
+.if !\\$1 \{\
+\&\\$1\ \ \c
+.\}
+..
+.de QP
+.IP
+..
+.de RS
+.nr Ic +0.2i
+..
+.de RE
+.nr Ic -0.2i
+..
+.de PN
+.rs
+'sp |10.4i-\\n(FUu
+.rs
+'sp |10.4i-\\n(FUu	 \" how many traps could there be?
+.rs
+'sp |10.4i-\\n(FUu
+.PO
+'ie e \{\
+.ev 2
+'tl \s10\f3%\\*(CC\fP\s0
+.ev
+'\}
+'el \{\
+.ev 2
+'tl \s10\f3\\*(CC%\fP\s0
+.ev
+'\}
+.po
+.wh 0 hh
+'bp
+..
+.de ff
+.nr dn 0
+.if \\nx \{\
+. ev 1
+. vs \\n(VVu
+. mk QR
+' nr QS 11i+0.5v-1u+\\nyu
+' if \\n(QS>\\n(QR 'sp |\\n(QSu
+. nf
+. FN	\" print the footnotes
+. vs
+. rm FN
+. if \\n(.zfy .br\" end overflow diversion
+. if \\n(.zfy .di\" end overflow diversion
+. nr x 0 1
+. ev
+.\}
+.nr N +1
+.if \n(dn .fz	\" leftover footnote
+.ie \\nN<\\nC \{\
+'  sp |\\nTu
+'  ns
+'  po +\\n(LLu+0.40i
+.\}
+.el \{\
+.  rF
+.  PN
+.  PO
+.  nr N 0
+.\}
+.nr y 0-\\nb
+.nr QQ 11i-\\nb
+.ch fx
+.ch ff
+.wh \\n(QQu ff
+.wh 12i fx
+.ch fx \\n(QQu
+.if \\n(dn .fz
+..
+.de fz   \" get leftover footnote
+.FS \&
+.nf
+.fy
+.FE
+..
+.de fx	 \" footnote overflow processing
+.if \\nx .di fy
+..
+.de FS	\" start a footnote
+.if \\n(.t<=1.7v .ne 2
+.da FN
+.nr YY \\n(.lu
+.ev 1
+.ll \\n(YYu
+.if \\n+x=1 .fs
+.fi
+.ie \\$1 \ \ \*([,\\n*\*(,]\c
+.el \ \ \*([,\\$1\*(,]\c
+.ps -1
+.vs -1
+.nr VV \\n(.v
+..
+.de FE
+.br
+.ps +1
+.vs +1
+.ev
+.da
+.nr y -\\n(dn
+.nr QR 11i-1v-1u+\\nyu   \" y is negative
+.ie \\n(nlu+1v<\\n(QRu .ch ff \\n(QRu
+.el .ch ff \\n(nlu+1v
+..
+.de fs
+.br
+.vs \\n(VS
+\v'-0.4v'\s16\D'l 1.5i 0'\s0
+.sp -0.4v
+.vs
+..
+.de PO
+.ie e .po 0.5i
+.el   .po 0.5i
+..
+.de NC
+'PO
+'ll \\n(LLu
+'nr N 0
+..
+.de 2C
+.br
+.nr LL 3.5i
+'NC
+'nr C 2
+'mk T
+'ns
+..
+.de 1C
+.br
+.nr LL 7.5i
+.NC
+'nr C 1
+'mk T
+'ns
+..
+.de rF	\" reset footer to nominal
+.nr b 1.0i+\\n(FUu	\" nominal footer place
+..
+.rF
+'nr x 0 1	\" init:
+.nr y 0-\nb
+.pl 11i
+.nr QQ 11i+\ny
+.wh \n(QQu ff
+.wh 12i fx
+.ch fx \n(QQu
+.de hh
+'rs
+'sp |0.5i-\\n(FUu
+.PO
+'ie e \{\
+.ev 2
+'tl \s10\f3\\*(T2\\*(A2\fP\s0
+.ev
+'\}
+'el \{\
+.ev 2
+'tl \s10\f3\\*(A2\\*(T2\fP\s0
+.ev
+'\}
+'sp |1i-\\n(FUu
+'mk T
+'ns
+'nr x 0 1	\" number of footnotes
+.nr y 0-\\nb
+.nr QQ 11i+\\ny
+.ch ff
+.wh \\n(QQu ff
+.ch fx
+.wh 12i fx
+.ch fx \\n(QQu
+..
+.\"-------------------
+.de TI
+.nh
+.rs
+.in 0i
+.nr % \\$1
+.fi
+.nr QS \\n(.lu
+.ll 100i
+.ps 22
+.vs 22
+.ft 3
+.ds TT \\
+..
+.de AA
+.nr DL \w\\*(TT
+.nr NN 1
+.nr NL \\n(QSu-1i	\" a nice line length for title
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.nr QR (\\n(DLu/\\n(NNu)+0.75i	\" +.75 cuz words don't always balance
+.ll \\n(QRu
+.di TU
+.ad l
+\\*(TT
+.br
+.di
+.sp |1.0i-\\n(FUu
+.nr NP 0
+.if \\n(QSu>\\n(QRu .nr NP (\\n(QSu-\\n(QRu)/2u
+.po +\\n(NPu
+.ce 999
+.TU
+.ce 0
+.po
+.ll \\n(QSu
+.sp 0.1i
+.ft 1
+.ps 12
+.vs 12
+.sp 0.5
+..
+.de A		\" .A "Brian Author" "Affiliation"
+.in 0
+.ie !\\$2 \{\
+.ce
+\f2\\$1\f1 \- \\$2
+.\}
+.el \{\
+.ce
+\f2\\$1\f1
+.\}
+..
+.de AB
+.sp 0.20i
+.po +0.5i
+.ll -1.125i
+.ce
+\f3\s12ABSTRACT\s0\f1
+.sp 0.5
+.ps \\n(PS
+.vs \\n(VS
+.ad b
+.fi
+..
+.de EA
+.sp
+.if \\nt .2C
+.hy 14
+..
+.de AE
+.EA
+..
+.de SH
+.br
+.in 0
+.di St
+.ft 3
+.it 1 S2
+..
+.de SH
+.NH "\\$1" "\\$2" "\\$3"
+..
+.de S2
+.br
+.di
+.sp 0.75
+.ne 3
+.ce
+.St
+.br
+.ft 1
+.sp 0.5
+.ns
+..
+.de NH
+.br
+.ne 2
+.in 0
+.nr Ia 0
+.nr Ic 0
+.fi
+.nr L 1
+.if !\\$1 .nr L \\$1\" level
+.if \\nL1 .ft 3
+.if \\nL2 .ft 3
+.if \\nL3 .ft 2
+.di Nt
+.in 0.3i
+.ti 0
+.it 1 N2
+..
+.de N2
+.br
+.in 0
+.di
+.if \\nL1 .sp 0.75
+.if \\nL2 .sp 0.25
+.if \\nL3 .sp 0.25
+.if \\nL4 .sp 0.25
+.ne 3
+.if \\nL1 .ce
+.Nt
+.br
+.ft 1
+.if \\nL1 .sp 0.50
+.if \\nL2 .sp 0.25
+.if \\nL3 .sp 0.25
+.if \\nL4 .sp 0.25
+.ns
+..
+.de XP
+.sp 0.5
+.ne 2
+.in \w[3]\ \ u
+.ti 0
+.ns
+..
+.de I
+.nr PQ \\n(.f
+.ft 2
+.if !"\\$1"" \&\\$1\\f\\n(PQ\\$2
+..
+.de R
+.ft 1
+..
+.de B
+.nr PQ \\n(.f
+.ft 3
+.if !\\$1 \&\\$1\\f\\n(PQ\\$2
+..
+.de T
+.nr PQ \\n(.f
+.if !\\$1 \&\\$3\f(CW\\$1\\f\\n(PQ\\$2
+..
+.de Ds
+'sp 0.4
+'nr DY \\n(.i
+'in 0.1i
+.if !\\$1 .in \\$1
+.ft CW
+.nf
+..
+.de DS
+.br
+.Ds \\$1
+..
+.de DE
+.br
+.De
+..
+.de De
+'sp 0.4
+.in \\n(DYu
+.ft 1
+.fi
+..
+.de np
+.br
+.in \w\(bu\ \ u
+.ti -\w\(bu\ \ u
+\(bu\ \ \c
+..
+.de lp
+.br
+.in 0
+..
+.de TS
+.br
+.ul 0
+.sp 0.5
+..
+.de TE
+.sp 0.5
+..
+.de RT
+.ft 1
+.ce 0
+.ul 0
+'ll \\n(LLu
+.ps \\n(PS
+.vs \\n(VS
+.in 0
+.\"bd 1
+.ta 5n 10n 15n 20n 25n 30n 35n 40n 45n 50n 55n 60n 65n 70n 75n 80n
+.fi
+..
+.de KF
+'sp 0.4
+.ev 2
+.nr Zs \\n(.s
+.nr Zv \\n(.v
+.ll \\n(LLu
+.in 0
+..
+.de KE
+.br
+.ps \\n(Zs
+.vs \\n(Zvu
+.ev
+'sp 0.4
+..
+.de UX
+\\$3\s-2UNIX\s0\\$1\\$2
+..
+.de SM
+.ps -2
+..
+.	\" LG - larger
+.de LG
+.ps +2
+..
+.de EB
+.nr QQ 11i-\\nb-\\$1
+.nr b +\\n(QQu
+.nr y 0+\\nyu-\\n(QQu
+.nr QQ 11i+\\ny
+.ch ff
+.wh \\n(QQu ff
+.ch fx
+.wh 12i fx
+.ch fx \\n(QQu
+..
+.\"==============================================
+.de Zz
+.if \\nN=1 'ch Zz
+'sp 11i
+..
+.de Z
+.nr N_ \\n(N_+1
+.br
+.mk Qz
+.ev 2
+.nr Qy \\n(.l
+.ll 6.5i
+.di J
+.in 0
+.ft 1
+..
+.de ZZ
+.br
+.if !\\$1 \{\
+.  if !\\$2 .ll \\$2
+.sp 0.4
+.ce
+.ft 1
+\\$1
+.ft
+.if !\\$2 .ll
+.\}
+.di
+.ev
+.nr QQ \\n(.t-\\n(dn-10
+.if \\n(QQ<0 .tm oops -- \\n(N_ called Z too late on page \\n%!
+.if \\n(QQ<0 .ex
+.mk Qj
+.sp \\n(QQu
+.mk Q2
+.ev 2
+.in 0
+.nf
+.J
+.fi
+.rm J
+.ll \\n(.lu
+.ev
+.sp |\\n(Qzu
+.nr QQ \\n(Q2-0.8v
+.EB \\n(QQu
+..
+.\"======================================================
+.de KS
+.\".tm KS:  Not implemented yet
+..
+.de KE
+.\".tm KE:  Not implemented yet
+..
+.de KF
+.\".tm KF:  Not implemented yet
+..
+.ds ' \h'\w'e'u*4/10'\z\(aa\h'-\w'e'u*4/10'
+.de BE
+.br
+..
+.lt 6.5i
+.de T1
+.ds T2 \\$1
+..
+.de A1
+.ds A2 \\$1
+..
+.nr P1 1.1i		\" picture width
+.nr P2 14u*\n(P1u/10u	\" picture depth 
+.de BB
+.in 0
+.\".nr QQ \\n(P2+0.1i
+.\".ne \\n(QQu
+.\".rs
+.\".ll -\\n(P1u
+.\".ll -0.1i
+.\".po +\\n(.lu+0.1i
+.\".sp 0.3
+.\"
+.\".sp -0.8
+.\"\!H\\n(.o
+.\".mk QQ
+.\"\!V\\n(QQ
+.\"\!DZ \\n(P1 \\n(P2
+.\".ie \\$1 .tm Picture not yet inserted for .BB
+.\".el \!P \\$1
+.\".sp -0.3
+.\".po
+.\".sp -1
+.\".if \\$1 \{\
+.\"\h'0.1i'\h'\\n(.lu'\D'l \\n(P1u 0'\D'l 0 \\n(P2u'\D'l -\\n(P1u 0'\D'l 0 -\\n(P2u'
+.\".sp -1
+.\".\}
+.\".sp 0.8
+.\".mk QQ
+.\".nr QQ +\\n(P2u
+.\".wh \\n(QQu Bb
+.\"=====
+.\" ::: .sp 1
+.\" ::: .ne 2
+.if \\n(SB=0 \{\
+.NH 1
+Author Information
+.\}
+.nr SB 1
+.PP
+..
+.de Bb
+'ch Bb
+'ll +\\n(P1u
+'ll +0.1i
+..
+.de GS
+.br
+..
+.de GE
+..
+.nr SL 0.3v
+.nr LI 0.28i
+.de BL         \" begin list
+.br
+.sp \\n(SL
+.in +\\n(LIu
+.ll -0.1i
+.if \\n(Ld \{\
+.ds Z\\n(Ld \\*(LT
+.af LN 1
+.nr N\\n(Ld \\n(LN
+.ds C\\n(Ld \\*(LC
+. \}
+.nr Ld +1
+.ds LT \\$1\" LT is the List Type: 1, a, or a bulletchar
+.if \\$1 .ds LT \(bu
+.af LN \\$1	\" number register type if it exists...
+.nr LN 0	\" LN is the list element number
+.ds LC\\$2
+.\" LC is the optional bullet trailer...
+..
+.de LE            \" list element
+.br
+.ie '\\$1'' .nr LN +1
+.el \{\
+.   nr LN 0
+.   nr LN \\$1
+.\}
+.ds LX \\*(LT\\*(LC
+.if \\*(LT1 .ds LX \\n(LN\\*(LC
+.if \\*(LTa .ds LX \\n(LN\\*(LC
+.if \\*(LTA .ds LX \\n(LN\\*(LC
+.if \\*(LTi .ds LX \\n(LN\\*(LC
+.if \\*(LTI .ds LX \\n(LN\\*(LC
+.if \\n(LN=0 \{\
+.    if !'\\$1'' .ds LX \\$1\\*(LC
+.\}
+.nr QQ 3u*\w' 'u/2u
+.ti -\\w'\\*(LX\h'\\n(QQu''u
+\\*(LX\h'\\n(QQu'\c
+..
+.de EL             \" end list
+.br
+.nr Ld -1
+.if \\n(Ld \{\
+.  ds LT \\*(Z\\n(Ld
+.  af LN \\*(LT
+.  nr LN \\n(N\\n(Ld
+.  ds LC \\*(C\\n(Ld
+. \}
+.in -\\n(LIu
+.ll +0.1i
+..
+.de F1
+.in 0
+\v'-0.4'\D'l \\n(.lu 0'
+.sp -0.7
+.in
+..
+.de F2
+.mk QQ
+.if !'\\nT'\\n(QQ' \{\
+.in 0
+\v'-0.4'\D'l \\n(.lu 0'
+.sp -0.4
+.in
+.\}
+..
+.de EM
+.br
+.if o \{\
+.ds A2 
+.ds T2 
+.rs
+.bp
+.ch ff
+.ch fx
+.PO
+.rs
+.sp |10.4i-\\n(FUu
+.mk QQ
+'ie e \{\
+. ev 2
+' tl \s10\f3%\\*(CC\fP\s0
+. ev
+'  \}
+'el \{\
+. ev 2
+' tl \s10\f3\\*(CC%\fP\s0
+. ev
+'  \}
+.\}
+..
+.de RF
+.sp 0.1
+.in 0.3i
+.ie !\\$1 \{\
+.nr QQ \w'\\$1\ '
+.ti -\\n(QQu
+\\$1\ \c
+.\}
+.el .ti 0
+..
+.de RZ
+.sp 0.1
+.in 0.3i
+.nr QQ \w'\\$1\ '
+.ti -\\n(QQu
+\\$1\ \c
+..
+.de z3
+.nr QQ \\$4
+\\!H\\n(QQ
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\$1 \\$2
+\\!P \\$3
+..
+.de zz
+.nr Z1 \\$1
+.nr Z2 \\$2
+.if \\n(.t<\\n(Z2 .tm note that figure ``\\$3'' does not fit at column bottom ------------------------
+.ie '\\n(.z'' \{\
+.sp 0.2
+.ne \\n(Z2u
+\\!H\\n(.o
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\n(Z1 \\n(Z2
+\\!P \\$3
+.rs
+.sp \\n(Z2u
+.sp 0.2
+.\}
+.el \{\
+.sp 0.2
+\\!.z3 \\n(Z1 \\n(Z2 "\\$3" \\n(.o
+.sp \\n(Z2u
+.sp 0.2
+.\}
+..
+.de z2
+.nr Z1 \\$1
+.nr Z2 \\$2
+.ie '\\n(.z'' \{\
+.sp 0.2
+.ne \\n(Z2u
+.nr QQ (\\n(.lu-\\$1)/2u
+.po +\\n(QQu
+\\!H\\n(.o
+.br
+.po -\\n(QQu
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\n(Z1 \\n(Z2
+\\!P \\$3
+.rs
+.sp \\n(Z2u
+.sp 0.2
+.\}
+.el \{\
+.sp 0.2
+.nr QQ (\\n(.lu-\\$1)/2u+\\n(.ou
+\\!.z3 \\n(Z1 \\n(Z2 "\\$3" \\n(QQu
+.sp \\n(Z2u
+.sp 0.2
+.\}
+..
+.de sz
+.vs \\$1
+.ps \\$1
+..
+.de M
+\f2\\$1\f1\|(\\$2)\\$3
+..
+.de B1
+.br
+.mk Bz
+..
+.de B2
+.br
+.mk By
+.nr D \\n(Byu-\\n(Bzu
+.nr L \\n(.lu+0.2i-\\n(.iu
+\h'-0.1i'\v'-0.7v'\D'l \\nLu 0'\D'l 0 -\\nDu'\D'l -\\nLu 0'\D'l 0 \\nDu'
+.sp -1
+..
+.de []
+.][ \\$1
+..
+.de ][
+.if \\$1>5 .tm Bad arg to []
+.[\\$1
+..
+.de [5 \" tm style
+.FS
+\\*([A, \\f2\\*([T\\f1,
+.ie \\n(TN \\*([M.
+.el Bell Laboratories internal memorandum (\\*([D).
+.RT
+.FE
+..
+.de [0 \" other
+.FS
+.nr [: 0
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \{\
+.nr [: 1
+\\*([Q\c
+.\}
+.if !\\*([A \{\
+.nr [: 1
+\\*([A\c
+.\}
+.if !\\*([T \{\
+.if \\n([:>0 ,
+.nr [: 1
+\f2\\*([T\f1\c
+.\}
+.if !\\*([S , \\*([S\c
+.if !\\*([V , \\*([V\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+.if \\n([:>0 \&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [1
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+\f2\\*([J\f1\c
+.if !\\*([V , vol. \\*([V\c
+.if !\\*([N , no. \\*([N\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [2 \" book
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \f2\\*([T,\f1
+.if !\\*([S \\*([S,
+.if !\\*([V \\*([V,
+.if !\\*([P \{\
+.ie \\n([P>0 pp. \\*([P,
+.el p. \\*([P,
+.\}
+\\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [4 \" report
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+.if !\\*([R \\*([R\c
+.if !\\*([G \& (\\*([G)\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [3 \" article in book
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+in \f2\\*([B\f1\c
+.if !\\*([E , ed. \\*([E\c
+.if !\\*([S , \\*([S\c
+.if !\\*([V , vol. \\*([V\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [<
+.]>
+..
+.de ]<
+.SH
+References
+.LP
+.de FP
+.\".IP \\\\$1.
+.RZ \\\\$1.
+\\..
+.rm FS FE
+..
+.de [>
+.]>
+..
+.de ]>
+.sp
+..
+.de [-
+.]-
+..
+.de ]-
+.rm [Q [A [T [J [B [E [S [V
+.rm [N [P [I [C [D [O [R [G
+..
+.de FG
+.ds QQ \fB\\$1\\fP:  \\$2
+.ie \w\\*(QQ>\\n(.l \{\
+.in +0.25i
+.ti 0
+\\*(QQ
+.in 0
+.\}
+.el \{\
+.ce
+\\*(QQ
+.\}
+..
+.1C
+.ds CC LPRng - Portability Testing and Installation
+.ll \n(LLu
+.po .5i
+.de sz
+.ps \\$1
+.vs \\n(.su*\\n($ru
+.\".bd S B \\n(.su/3u
+..
+.nr $r \n(.v/\n(.s
+.de L
+.if \\n(.$>2 \&\\$3\c
+.ds p# "
+.nr PQ \\n(.f
+.if \\n(PQ>9 .ds p# (
+.ft CW
+.if \\n(.$>0 \\s-\\n(Ls\&\\$1\\f\\*(p#\\n(PQ\\s+\\n(Ls\\$2
+..
+.de NP
+.IP \\n(nP.
+.nr nP \\n(nP+1
+..
+.nf
+.ce 100
+.sz 20
+.B
+LPRng Portability Testing and Installation
+.sz 14
+.sp .5v
+.sz 12
+Patrick Powell <papowell@sdsu.edu>
+Dept. Electrical and Computer Engineering
+San Diego State University, San Diego, CA 92182
+.AB
+This is a detailed set of procedures for installing the
+LPRng software and testing it for portability.
+The
+.I "Introduciton"
+document provides a detailed description of the LPRng software and the
+.I "Tutorial"
+document provides details on the management procedures.
+The various
+.I man
+pages provide details on each of the LPRng components. 
+.T1 "LPRng Portability"
+.sp .25i
+.tm FLAG \nt
+.if \nt>0 .2C
+.NH 1
+Introduction
+.PP
+The LPRng software is a descendent of the Berkeley LPR software,
+with the same general functionality.
+The source distribution has the structure shown in Table 1.
+.NH 1
+Order of Activities
+.PP
+I recommend the following steps, each of which is detailed below.
+.nr nP 1
+.NP
+Generate the test version of the LPRng software.
+.NP
+Check the various portability issues.
+.NP
+Check the printcap and filters for existing devices.
+.Z
+.F1
+\!.po +1i
+.sp
+.nf
+.ta 16n +4n +4n +4n +4n +4n
+configure	configuration script
+CHANGES	change log (major changes only)
+DOC/*	docmentation
+INFORMATION	a short overview of LPRng
+INSTALL	Gnu Autoconf installation information
+TESTSUPPORT	Test LPR system
+README	This document
+man/*	man pages for the major components.
+src/*	source code
+src/Makefile	Makefile for executables
+src/lpd	LPRng server
+src/lpr,lpr,lprm,lpc	LPRng clients
+src/checkpc	LPRng checkout and test
+.sp .5v
+.R
+.FG "Table 1" "Distribution"
+\!.po -1i
+.ZZ
+.PP
+By convention,
+in the following discussion files are referenced
+with respect to the root of the LPRng distribution.
+.NH 1
+COMPILATION
+.PP
+LPRng is written in ANSI C and uses the GNU Make program.
+If you do not have an ANSI C compiler
+you can try using the
+.L unproto5.shar.gz
+software in the UTIL directory.
+This software valiantly tries to convert ANSI C to K&R C;
+most of the code will translate directly but the
+.L VARARGS
+routines will require special consideration.
+The
+GNU Make program can be obtained by FTP from
+.L ftp://prep.ai.mit.edu/pub/gnu ,
+or from many other mirror sites.
+.PP
+The LPRng executables are
+the
+.L lpd 
+server program,
+.L lpr
+for job submission,
+.L lpq
+for displaying status,
+.L lprm
+for removing jobs,
+and
+.L checkpc
+which performs test and checkout functions.
+.PP
+First,
+run the
+.L configure
+script in the distribution root directory;
+the
+.L INSTALL
+file contains a description of configure's options.
+The configure script will check for
+various system configuration options,
+and generate the various Makefiles and a
+.L config.h
+file.
+By default,
+the executables will be generated in the
+.L src
+subdirectory.
+.PP
+To generate executables in the
+.L $MYBIN
+directory,
+starting in the distribution root
+do the following commands:
+.DS
+.nf
+.L
+SRC=`pwd`
+cd $MYBIN
+$SRC/configure --srcdir=$SRC
+make
+.DE
+.PP
+The configure script is produced by the GNU
+.L autoconf
+and
+.L autoheader
+program,
+using the
+.L configure.in
+and
+.L acconfig.h
+files.
+If you regenerate the configure script,
+use the 2.1 or later version of autoconf,
+and run the
+autoheader
+program as well.
+See the autoconf documentation for details
+on these programs.
+.PP
+Once configure finishes,
+you can then do
+.L "make TESTVERSION=YES all"
+or
+.L "cd src; make TESTVERSION=YES all"
+to generate the executables.
+.PP
+The
+.L TESTVERSION
+flag causes a test and debugging version of the
+software to be generated.
+This version will read the
+.L LPD_CONF
+environment variable for the name of a configuration file,
+whose contents can override the compile time defaults.
+This is a blatant security loophole
+especially running SUID root;
+see Security Considerations later in the document.
+Only the
+.L defaults.o
+file uses this flag for compilation.
+After testing the installation
+you can delete 
+.L defaults.o
+and remake the distribtion.
+.PP
+Some systems such as SUNOS 4.1.1 do not have function prototypes
+for all the system functions;
+you will get a large number of spurious warning messages.
+The following is a sed script which can
+strip out various warnings.
+.DS
+.nf
+.L
+.sz 9
+#!/bin/sh
+# stripjunk - strip out meaningless errors
+# example: make 2>errs ; stripjunk errs
+sed \e
+-e '/^gcc/d' \e
+-e '/implicit dec.* `fprintf\'/d' \e
+-e '/implicit dec.* `bzero/d\'' \e
+-e '/implicit dec.* `getpeername/d\'' \e
+-e '/At top level:/d' \e
+ "$@"
+.DE
+.NH 1
+PORTABILITY AND TESTING VERSION
+.PP
+Once you have generated the test version using
+.L "make TESTVERSION=YES" ,
+you should set up a user version of the LPRng software by
+using the files in the 
+.L TESTSUPPORT
+directory.
+This requires the following steps.
+.DS
+.nf
+.L
+.sz 9
+cd TESTSUPPORT
+
+setenv USER `whoami`
+setenv HOST \fIfully qualified domain name\fP
+setenv LPD_CONF /tmp/LPD/lpd.conf
+set path=( /tmp/LPD $path ) 
+.B OR
+USER=`whoami`; export USER
+HOST= \fIfully qualified domain name\fP; export HOST
+PATH=/tmp/LPD $path:$PATH
+LPD_CONF=/tmp/LPD/lpd.conf; export LPD_CONF
+
+make
+.PP
+The test files and executables will be installed in the
+.L /tmp/LPD
+directory.
+This target directory can be changed by modifying the
+.L TESTSUPPORT/Makefile.
+.PP
+During testing,
+the environment variables should be set in the
+.L .cshrc
+or
+.L .profile
+initialization files.
+.NH 1
+PORTABILTY TESTING
+.PP
+If your system is not listed in the
+.L README.ports
+file,
+it is strongly recommended that you check the installation for portability.
+These tests use the
+.L TESTSUPPORT
+version,
+installed as detailed in the previous section.
+The executables are placed in
+.L /tmp/LPD .
+.PP
+The
+.L checkpc
+program has several portablility tests that are run by using the
+.L "checkpc -T"
+flag.
+You will need to be superuser for some of these tests;
+this is only for testing that the SUID functionality is working.
+In the directory where you generated the
+.L checkpc
+executable,
+execute the following command,
+where
+.I serial
+is the pathname of a serial port.
+.DS
+.L
+.nf
+checkpc -T \fIserial\fP
+.DE
+.NH 2
+SUID Test
+.PP
+The first test involves SUID checking.
+This test can be delayed until installation time,
+but must be done before installing a production version.
+If 
+.L checkpc
+is not run as ROOT or as a SETUID ROOT program,
+this test is skipped.
+.PP
+To create a SETUID ROOT checkpc program and run the tests,
+carry out the following steps.
+Delete the SETUID after finishing the tests!
+.DS
+.L
+.nf
+.ta 4n +4n +4n +4n +4n +4n +4n +4n +4n +4n
+cd /tmp/LPD
+su				\fRbecome root\fP
+chown root checkpc	\fRchange ownership\fP
+chmod 4111 checkpc	\fRmake SETUID ROOT\fP
+exit			\fR(become regular user)\fP
+.L
+checkpc -T \fIserial\fP	\fRrun tests\fP
+    \fR(check test results)\fP
+.L
+su				\fRbecome root\fP
+chmod 755 checkpc
+chown `whoami` checkpc
+exit			 \fR(become regular user)\fP
+.DE
+.PP
+If the setuid test succeeds,
+then a success message will be printed out.
+If it fails,
+then rerun the test with diagnostics enabled as shown below
+and save the output to a file.
+A study of the
+output should provide detailed information as to the cause of failure.
+.DS
+.L
+.nf
+.ta 4n +4n +4n +4n +4n +4n +4n +4n +4n +4n
+checkpc -D9 -T \fIserial
+.R
+.DE
+.NH 2
+BIDIRECTIONAL PIPES
+.PP
+A bidirectional pipe is used for inter-filter
+communication.
+If this test fails,
+then you should enable
+.L RWSOCKETS_CFLAGS
+option in the
+.L src/Makefile
+and regenerate
+.L rw_pipe.o .
+This option implements bidirectional pipes by using a socket based
+mechanism.
+.NH 2
+SERIAL DEVICE OPEN AND LOCK
+.PP
+The next test checks to see if the
+.L Checkwrite()
+and
+.L Lock_device()
+routines open and lock a serial device.
+Device locking is done by using the
+.L TIOCEXCL
+.L ioctl()
+call.
+If locking fails, set
+.L -D4
+and determine which lock method
+is being used.
+.PP
+See the
+.L LOCK_DEVS_CFLAGS
+variable description
+in
+.L src/Makefile
+and comments in
+.L src/common/lockfile.c
+on how to select the fallback locking method.
+Once selected,
+You will need to regenerate
+.L lockfile.o
+and the executables and reinstall them in the
+test location.
+.NH 2
+FILE OPEN AND LOCK
+.PP
+The next set of tests check that file locking works.
+If they fail,
+then try using an alternative locking method with the
+.L STATFS_CFLAGS
+variable in the
+.L src/Makefile .
+See the comments in
+.L src/common/lockfile.c
+as well.
+You will need to regenerate
+.L lockfile.o
+and the executables.
+.NH 2
+STTY FUNCTIONS
+.PP
+The next test checks the
+.L stty
+(set serial line characteristics) capabilities.
+In order to do as system independent operations as possible,
+line status is displayed using the
+.L stty
+command.
+You should check the output of this command to make sure that the
+requested STTY operations did take place.
+.PP
+If a stty operation failes,
+using the
+.L checkpc
+.L -D9
+flag and examine the diagnostic output for the cause of failure.
+See the
+.L STTY_CFLAGS
+section of
+.L src/Makefile
+on how to select an alternatve STTY interface function if the
+one selected by
+.L configure
+is not suitable.
+You will need to regenerate
+.L stty.o
+and the executables.
+.NH 2
+PROCTITLE
+.PP
+The
+.L setproctitle()
+function modifies the process status so that the
+.L ps(1)
+command will display the process activity.
+If this test fails,
+then you might want to see if you can modify
+the
+.L src/proctitle.c
+code so that it works.
+Otherwise,
+just modify the
+.L SETPROCTITLE_CFLAGS
+variable in
+.L src/Makefile 
+and recompile.
+.NH 1
+Filter Testing
+.PP
+You should test the filters for your existing printers by
+first using the test version.
+You can simply copy the existing printcap entry to the
+test printcap file,
+and modify the entry so that it uses the test setup directories.
+.PP
+Next,
+try running a job through the filters,
+and see if it works correctly.
+Some filters
+.B require
+root permissions as they perform operations such as opening sockets
+in the privileged port range.
+If this is the case, 
+you will need to set the filters executables
+.L "SUID ROOT"
+and executable only by group daemon.
+.DS
+chown root $filter
+chgrp daemon $filter
+chmod 4010 $filter
+.DE
+.NH 1
+Installation
+.PP
+Once you have finished testing,
+you can perform a final installation.
+The following steps should be followed.
+.nr nP 1
+.NP
+First,
+compile the non-test version and install it in the
+default locations.
+.DS
+rm src/default.o
+su   \fImay need root perms to install\fP
+make install
+.DE
+.NP
+Next,
+if you are performing an initial installation,
+a simple set of
+.L lpd.conf
+and
+.L lpd.perms
+files are available.
+.DS
+make default
+.DE
+.NP
+Next,
+you should stop the current lpd daemon and save the
+existing printcap file.
+.DS
+ps -axu | grep lpd
+kill \fIlpd pid\fP
+.DE
+.NP
+If you need to,
+copy the new printcap file to
+.L /etc/printcap .
+Use
+.L checkpc
+to ensure that the current printcap file is correct.
+.DS
+cp /etc/printcap /etc/printcap.old
+checkpc
+checkpc -f  \fIif necessary\fP
+.DE
+.NP
+Start the lpd daemon and check its operation.
+.DS
+lpd
+exit  \fIreturn to user\fP
+lpq
+.DE
+.NP
+Edit the print spooler startup commands in
+the appropriate
+.L rc.local
+or other startup file to use
+.L /usr/local/bin/lpd .
+.NP
+Reboot system to ensure that server is started correctly.
+.NH 1
+Periodic Maintenance
+.PP
+It is recommended that the
+.L checkpc
+program be run periodically to remove aborted jobs and
+to truncate various log files. 
+This can be done by putting the following entry in the
+.I crontab
+for root.
+.DS
+15 5 * * * /usr/local/lib/cleanlog
+.DE
+.PP
+The
+.L cleanlog
+script can be used to clean and/or truncate various files.
+The following is a typical script.
+.DS
+#!/bin/sh
+trunc () {
+	tail $1 >/tmp/$$
+	cat /tmp/$$ >$1
+	rm /tmp/$$
+}
+
+FILES="/usr/spool/lpd/log* /usr/spool/lpd/accnt"
+for i in $FILES do
+	echo $i
+done
+.DE

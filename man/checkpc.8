@@ -1,0 +1,137 @@
+.ds VE LPRng-2.3.12
+.TH CHECKPC 8 \*(VE "LPRng"
+.ig
+$Id: checkpc.8,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+LPRng
+Mon Jul 17 20:13:09 PDT 1995 Patrick Powell
+..
+.SH NAME
+checkpc \- check out the /etc/printcap database
+.SH SYNOPSIS
+.B checkpc
+[
+.B \-aflrCPV
+] [
+.B \-c configfile
+] [
+.B \-A age[DHMS]
+] [
+.B \-D debug
+] [
+.B \-p printcap
+] [
+.B \-c config
+] [
+printcap
+]
+.SH DESCRIPTION
+.B Checkpc
+is used to check for the existence and correct permissions of entries
+in the
+.I printcap
+database.
+It is useful when installing a new printcap database and cleaning up
+existing printer spoolers.
+.IP "\fB\-a\fI" 5
+Do not create accounting files if the fix option has been specified.
+.IP "\fB\-c\fI configfile" 5
+Read the configuration from configfile.
+.IP "\fB\-f\fI" 5
+The fix flag will cause the checkpc program to try and fix
+various files and permissions.
+It does this in a simple minded manner,
+and the program may have to be run several times until all permissions
+are correct.
+It also reports its actions.
+.IP "\fB\-l\fI" 5
+Do not create log files if the fix option has been specified.
+.IP "\fB\-p\fI printcapfile" 5
+Read the printcap information from printcapfile.
+.IP "\fB\-r\fI" 5
+remove junk files older than the age set by -A.
+You must set the age to a non-zero value otherwise no files are removed.
+.IP "\fB\-s\fI" 5
+Do not create printer status files if the fix option has been specified.
+.IP "\fB\-A\fI Age[DHMS]" 5
+Report junk files older than age.
+The age time can have a suffix
+days (D)
+hours (H),
+minutes (M),
+or
+seconds (S);
+default is days.
+.IP "\fB\-C\fI" 5
+Print verbose configuration information.
+Useful if interested in the configuration or defaults.
+.IP "\fB\-P\fI" 5
+Print verbose printcap information.
+Useful if interested in the printcap values.
+.IP "\fB\-V\fI" 5
+Toggle verbose mode.
+.SH "ANNOYING FEATURES"
+If the
+.B \-f
+(fix)
+option is specified and you do not run this as root,
+it will complain,
+but attempt to carry out the operations.
+Usually the 
+.IR chown (5)
+will fail,
+but this is not serious.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+/etc/printcap		printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

@@ -1,0 +1,2352 @@
+%!PS-Adobe-1.0
+%%Creator: devps (Pipeline Associates, Inc.) Prepared for LaserWriter plus
+%%CreationDate: Tue Jul  2 18:59:16 1996
+%%Pages: (atend)
+%%DocumentFonts: (atend)
+
+/X{exch}def
+/r{rmoveto}def
+/m{moveto}def
+/l{lineto}def
+/rl{rlineto}def
+/lc{yc X xc X l st}def
+/mc{yc X xc X m}def
+/el{gs /a X def a div 1 X scale cp np a xc 2 div 0 360 arc st gr}def
+/ar{cp 7 2 roll np xc 5 1 roll atan 3 1 roll atan X arc st}def
+/sp{yc X xc X 6 2 roll yc X xc X 6 2 roll yc X xc X 6 2 roll ct}def
+/st{stroke}def
+/gs{gsave}def
+/gr{grestore}def
+/cp{currentpoint}def
+/np{newpath}def
+/ct{curveto}def
+/m0{0 0 moveto}def
+/BP{/devps-save save def m0}def
+/EP{
+clear devps-save restore
+showpage}def
+/V{res neg div 792 add
+currentpoint pop X
+m}def
+/H{res div
+currentpoint X pop
+moveto}def
+/h{res div 0 r}def
+/v{res neg div 0 X r}def
+/xc{res div}def
+/yc{res neg div 792 add}def
+/S{X H show}def
+/psize 10 def
+/height 1 def
+/slant 0 def
+/FF{findfont X dup 12 div setlinewidth /psize X def
+    [psize 0 psize height mul slant sin slant cos div mul psize height mul 0 0]
+    makefont setfont}def
+/shade{gs
+ /dy X def
+ /dx X def
+ np m
+ setgray
+ 0 dy rl
+ dx 0 rl
+ 0 dy neg rl
+ dx neg 0 rl
+ closepath
+ fill
+gr}def
+1 setlinecap
+/DocumentInitState [ matrix currentmatrix currentlinewidth currentlinecap
+currentlinejoin currentdash currentgray currentmiterlimit ] cvx def
+
+/startFig {
+	/SavedState save def
+	userdict maxlength dict begin
+	currentpoint transform
+
+	DocumentInitState setmiterlimit setgray setdash setlinejoin setlinecap
+		setlinewidth setmatrix
+
+	itransform moveto
+
+	/ury exch def
+	/urx exch def
+	/lly exch def
+	/llx exch def
+	/y exch 72 mul resolution div def
+	/x exch 72 mul resolution div def
+	
+	currentpoint /cy exch def /cx exch def
+
+	/sx x urx llx sub div def 	% scaling for x
+	/sy y ury lly sub div def	% scaling for y
+
+	sx sy scale			% scale by (sx,sy)
+
+	cx sx div llx sub
+	cy sy div ury sub translate
+	
+	/DefFigCTM matrix currentmatrix def
+
+	/initmatrix {
+		DefFigCTM setmatrix
+	} def
+	/defaultmatrix {
+		DefFigCTM exch copy
+	} def
+
+	/initgraphics {
+		DocumentInitState setmiterlimit setgray setdash 
+			setlinejoin setlinecap setlinewidth setmatrix
+		DefFigCTM setmatrix
+	} def
+
+	/showpage {
+		initgraphics
+	} def
+
+} def
+/clipFig {
+	currentpoint 6 2 roll
+	newpath 4 copy
+	4 2 roll moveto
+	6 -1 roll exch lineto
+	exch lineto
+	exch lineto
+	closepath clip
+	newpath
+	moveto
+} def
+/doclip { llx lly urx ury clipFig } def
+/endFig {
+	end SavedState restore
+} def
+/globalstart {
+	% Push details about the enviornment on the stack.
+	psize slant height
+	resolution currentpoint 
+	gsave 
+} def
+/globalend {
+	grestore moveto
+	setres
+	/height exch def
+	/slant exch def /psize exch def
+} def
+
+/setres {/resolution exch def
+	/res resolution 72.0 div def} def
+720 setres
+/R{/Times-Roman FF}def
+/B{/Times-Bold FF}def
+/I{/Times-Italic FF}def
+/C{/Courier FF}def
+%%EndProlog
+10 R
+%%Page: 1 1
+BP
+/slant 0 def
+/height 1.000000 def
+10 R
+10 B
+240 V
+20 B
+1224(LPRng)S
+1886(Portability)S
+2858(Testing)S
+3542(and)S
+3916(Installation)S
+468 V
+12 B
+2093(Patrick)S
+2503(Powell)S
+2873(<papowell@sdsu.edu>)S
+612 V
+1941(Dept.)S
+2247(Electrical)S
+2771(and)S
+2995(Computer)S
+3551(Engineering)S
+756 V
+1805(San)S
+2029(Diego)S
+2352(State)S
+2642(University,)S
+3236(San)S
+3460(Diego,)S
+3813(CA)S
+4015(92182)S
+1044 V
+2689(ABSTRACT)S
+12 R
+1226 V
+10 R
+720(This)S
+927(is)S
+1023(a)S
+1095(detailed)S
+1439(set)S
+1578(of)S
+1689(procedures)S
+2154(for)S
+2298(installing)S
+2699(the)S
+2849(LPRng)S
+3161(software)S
+3532(and)S
+3704(testing)S
+3999(it)S
+4083(for)S
+4227(portability.)S
+4722(The)S
+10 I
+4905(Introduci-)S
+1336 V
+720(ton)S
+10 R
+881(document)S
+1308(provides)S
+1685(a)S
+1762(detailed)S
+2111(description)S
+2588(of)S
+2704(the)S
+2859(LPRng)S
+3176(software)S
+3552(and)S
+3729(the)S
+10 I
+3884(Tutorial)S
+10 R
+4246(document)S
+4673(provides)S
+5049(details)S
+1446 V
+720(on)S
+845(the)S
+992(management)S
+1527(procedures.)S
+2039(The)S
+2219(various)S
+10 I
+2538(man)S
+10 R
+2735(pages)S
+2987(provide)S
+3317(details)S
+3603(on)S
+3728(each)S
+3935(of)S
+4043(the)S
+4190(LPRng)S
+4499(components.)S
+10 B
+1736 V
+1347(Introduction)S
+10 R
+1901 V
+510(The)S
+697(LPRng)S
+1013(software)S
+1388(is)S
+1487(a)S
+1563(descendent)S
+2038(of)S
+2152(the)S
+2305(Berkeley)S
+2696(LPR)S
+2011 V
+360(software,)S
+757(with)S
+964(the)S
+1115(same)S
+1349(general)S
+1670(functionality.)S
+2259(The)S
+2442(source)S
+2730(dis-)S
+2121 V
+360(tribution)S
+730(has)S
+888(the)S
+1035(structure)S
+1409(shown)S
+1695(in)S
+1798(Table)S
+2050(1.)S
+10 B
+2313 V
+1221(Order)S
+1512(of)S
+1620(Activities)S
+10 R
+2478 V
+510(I)S
+570(recommend)S
+1068(the)S
+1217(following)S
+1633(steps,)S
+1884(each)S
+2092(of)S
+2201(which)S
+2471(is)S
+2564(detailed)S
+2588 V
+360(below.)S
+2731 V
+360(1.  Generate)S
+869(the)S
+1016(test)S
+1180(version)S
+1499(of)S
+1607(the)S
+1754(LPRng)S
+2063(software.)S
+2874 V
+360(2.  Check)S
+765(the)S
+912(various)S
+1231(portability)S
+1673(issues.)S
+3017 V
+360(3.  Check)S
+765(the)S
+912(printcap)S
+1264(and)S
+1433(filters)S
+1691(for)S
+1832(existing)S
+2174(devices.)S
+5208 V
+360 H
+5040 5208 lc
+5040 5208 mc
+5412 V
+1080(configure)S
+1880(configuration)S
+2443(script)S
+5532 V
+1080(CHANGES)S
+1880(change)S
+2187(log)S
+2340(\(major)S
+2631(changes)S
+2977(only\))S
+5652 V
+1080(DOC/*)S
+1880(docmentation)S
+5772 V
+1080(INFORMATION)S
+1880(a)S
+1949(short)S
+2174(overview)S
+2570(of)S
+2678(LPRng)S
+5892 V
+1080(INSTALL)S
+1880(Gnu)S
+2077(Autoconf)S
+2479(installation)S
+2949(information)S
+6012 V
+1080(TESTSUPPORT)S
+1880(Test)S
+2077(LPR)S
+2286(system)S
+6132 V
+1080(README)S
+1880(This)S
+2083(document)S
+6252 V
+1080(man/*)S
+1880(man)S
+2077(pages)S
+2329(for)S
+2470(the)S
+2617(major)S
+2875(components.)S
+6372 V
+1080(src/*)S
+1880(source)S
+2165(code)S
+6492 V
+1080(src/Makefile)S
+1880(Makefile)S
+2265(for)S
+2406(executables)S
+6612 V
+1080(src/lpd)S
+1880(LPRng)S
+2189(server)S
+6732 V
+1080(src/lpr,lpr,lprm,lpc)S
+1880(LPRng)S
+2189(clients)S
+6852 V
+1080(src/checkpc)S
+1880(LPRng)S
+2189(checkout)S
+2574(and)S
+2743(test)S
+10 B
+7032 V
+2979(Table)S
+3249(1)S
+10 R
+3299(:)S
+3377(Distribution)S
+3160 V
+510(By)S
+661(convention,)S
+1163(in)S
+1274(the)S
+1429(following)S
+1851(discussion)S
+2301(files)S
+2506(are)S
+2660(refer-)S
+3270 V
+360(enced)S
+617(with)S
+820(respect)S
+1127(to)S
+1230(the)S
+1377(root)S
+1563(of)S
+1671(the)S
+1818(LPRng)S
+2127(distribution.)S
+10 B
+3462 V
+1250(COMPILATION)S
+10 R
+3627 V
+510(LPRng)S
+823(is)S
+919(written)S
+1231(in)S
+1337(ANSI)S
+1598(C)S
+1693(and)S
+1865(uses)S
+2065(the)S
+2215(GNU)S
+2459(Make)S
+2714(pro-)S
+3737 V
+360(gram.)S
+643(If)S
+737(you)S
+915(do)S
+1043(not)S
+1199(have)S
+1415(an)S
+1537(ANSI)S
+1798(C)S
+1893(compiler)S
+2276(you)S
+2454(can)S
+2620(try)S
+2758(us-)S
+3847 V
+360(ing)S
+516(the)S
+10 C
+701(unproto5.shar.gz)S
+10 R
+1689(software)S
+2060(in)S
+2166(the)S
+2316(UTIL)S
+2570(directo-)S
+3957 V
+360(ry.)S
+519(This)S
+723(software)S
+1091(valiantly)S
+1466(tries)S
+1663(to)S
+1766(convert)S
+2090(ANSI)S
+2348(C)S
+2440(to)S
+2543(K&R)S
+2785(C;)S
+4067 V
+360(most)S
+582(of)S
+692(the)S
+840(code)S
+1054(will)S
+1236(translate)S
+1600(directly)S
+1931(but)S
+2085(the)S
+10 C
+2268(VARARGS)S
+10 R
+2714(rou-)S
+4177 V
+360(tines)S
+582(will)S
+771(require)S
+1086(special)S
+1396(consideration.)S
+2017(The)S
+2205(GNU)S
+2454(Make)S
+2714(pro-)S
+4287 V
+360(gram)S
+777(can)S
+1127(be)S
+1433(obtained)S
+1989(by)S
+2301(FTP)S
+2686(from)S
+10 C
+4397 V
+360(ftp://prep.ai.mit.edu/pub/gnu)S
+10 R
+2100(,)S
+2211(or)S
+2379(from)S
+2658(many)S
+4507 V
+360(other)S
+590(mirror)S
+870(sites.)S
+4650 V
+510(The)S
+723(LPRng)S
+1065(executables)S
+1588(are)S
+1766(the)S
+10 C
+1980(lpd)S
+10 R
+2217(server)S
+2517(program,)S
+10 C
+4760 V
+360(lpr)S
+10 R
+566(for)S
+708(job)S
+862(submission,)S
+10 C
+1398(lpq)S
+10 R
+1603(for)S
+1744(displaying)S
+2186(status,)S
+10 C
+2499(lprm)S
+10 R
+2764(for)S
+4870 V
+360(removing)S
+809(jobs,)S
+1067(and)S
+10 C
+1312(checkpc)S
+10 R
+1798(which)S
+2107(performs)S
+2532(test)S
+2736(and)S
+4980 V
+360(checkout)S
+745(functions.)S
+1736 V
+3318(First,)S
+3563(run)S
+3732(the)S
+10 C
+3925(configure)S
+10 R
+4501(script)S
+4759(in)S
+4873(the)S
+5030(distribution)S
+5527(root)S
+1846 V
+3168(directory;)S
+3630(the)S
+10 C
+3861(INSTALL)S
+10 R
+4355(file)S
+4562(contains)S
+4969(a)S
+5087(description)S
+5605(of)S
+1956 V
+3168(configure's)S
+3656(options.)S
+4035(The)S
+4224(configure)S
+4640(script)S
+4896(will)S
+5086(check)S
+5351(for)S
+5500(vari-)S
+2066 V
+3168(ous)S
+3357(system)S
+3685(configuration)S
+4273(options,)S
+4643(and)S
+4837(generate)S
+5223(the)S
+5394(various)S
+2176 V
+3168(Makefiles)S
+3596(and)S
+3769(a)S
+10 C
+3877(config.h)S
+10 R
+4386(file.)S
+4598(By)S
+4743(default,)S
+5073(the)S
+5223(executables)S
+2286 V
+3168(will)S
+3349(be)S
+3468(generated)S
+3880(in)S
+3983(the)S
+10 C
+4165(src)S
+10 R
+4370(subdirectory.)S
+2429 V
+3318(To)S
+3455(generate)S
+3818(executables)S
+4308(in)S
+4411(the)S
+10 C
+4593($MYBIN)S
+10 R
+4978(directory,)S
+5388(starting)S
+2539 V
+3168(in)S
+3271(the)S
+3418(distribution)S
+3905(root)S
+4091(do)S
+4216(the)S
+4363(following)S
+4777(commands:)S
+10 C
+2693 V
+3240(SRC=`pwd`)S
+2803 V
+3240(cd)S
+3420($MYBIN)S
+2913 V
+3240($SRC/configure)S
+4140(--srcdir=$SRC)S
+3023 V
+3240(make)S
+10 R
+3210 V
+3318(The)S
+3501(configure)S
+3911(script)S
+4161(is)S
+4256(produced)S
+4654(by)S
+4781(the)S
+4930(GNU)S
+10 C
+5208(autoconf)S
+10 R
+3320 V
+3168(and)S
+10 C
+3404(autoheader)S
+10 R
+4061(program,)S
+4481(using)S
+4755(the)S
+10 C
+4968(configure.in)S
+10 R
+3430 V
+3168(and)S
+10 C
+3402(acconfig.h)S
+10 R
+4057(files.)S
+4334(If)S
+4455(you)S
+4660(regenerate)S
+5129(the)S
+5306(configure)S
+3540 V
+3168(script,)S
+3445(use)S
+3608(the)S
+3760(2.1)S
+3915(or)S
+4028(later)S
+4235(version)S
+4559(of)S
+4672(autoconf,)S
+5075(and)S
+5248(run)S
+5410(the)S
+5561(au-)S
+3650 V
+3168(toheader)S
+3538(program)S
+3902(as)S
+4011(well.)S
+4259(See)S
+4429(the)S
+4577(autoconf)S
+4952(documentation)S
+5572(for)S
+3760 V
+3168(details)S
+3454(on)S
+3579(these)S
+3809(programs.)S
+3903 V
+3318(Once)S
+3615(configure)S
+4084(finishes,)S
+4507(you)S
+4744(can)S
+4969(then)S
+5227(do)S
+10 C
+5448(make)S
+4013 V
+3168(TESTVERSION=YES)S
+4227(all)S
+10 R
+4531(or)S
+10 C
+4772(cd)S
+5050(src;)S
+5448(make)S
+4123 V
+3168(TESTVERSION=YES)S
+4128(all)S
+10 R
+4333(to)S
+4436(generate)S
+4798(the)S
+4945(executables.)S
+4266 V
+3318(The)S
+10 C
+3559(TESTVERSION)S
+10 R
+4270(flag)S
+4476(causes)S
+4787(a)S
+4882(test)S
+5072(and)S
+5266(debugging)S
+4376 V
+3168(version)S
+3489(of)S
+3599(the)S
+3748(software)S
+4118(to)S
+4223(be)S
+4344(generated.)S
+4808(This)S
+5013(version)S
+5334(will)S
+5517(read)S
+4486 V
+3168(the)S
+10 C
+3352(LPD_CONF)S
+10 R
+3859(environment)S
+4391(variable)S
+4739(for)S
+4881(the)S
+5029(name)S
+5271(of)S
+5380(a)S
+5450(confi-)S
+4596 V
+3168(guration)S
+3545(file,)S
+3747(whose)S
+4046(contents)S
+4423(can)S
+4605(override)S
+4980(the)S
+5145(compile)S
+5510(time)S
+4706 V
+3168(defaults.)S
+3562(This)S
+3767(is)S
+3861(a)S
+3932(blatant)S
+4231(security)S
+4574(loophole)S
+4951(especially)S
+5377(running)S
+4816 V
+3168(SUID)S
+3432(root;)S
+3652(see)S
+3809(Security)S
+4172(Considerations)S
+4802(later)S
+5009(in)S
+5117(the)S
+5269(document.)S
+4926 V
+3168(Only)S
+3411(the)S
+10 C
+3611(defaults.o)S
+10 R
+4254(file)S
+4429(uses)S
+4643(this)S
+4830(flag)S
+5027(for)S
+5185(compilation.)S
+5036 V
+3168(After)S
+3423(testing)S
+3735(the)S
+3902(installation)S
+4392(you)S
+4587(can)S
+4770(delete)S
+10 C
+5088(defaults.o)S
+10 R
+5146 V
+3168(and)S
+3337(remake)S
+3655(the)S
+3802(distribtion.)S
+10 B
+7450 V
+360(LPRng - Portability Testing and Installation)S
+4990(1)S
+7920 V
+EP
+%%Page: 2 2
+BP
+/slant 0 def
+/height 1.000000 def
+10 B
+322 V
+360(LPRng Portability)S
+10 R
+672 V
+510(Some)S
+770(systems)S
+1119(such)S
+1334(as)S
+1448(SUNOS)S
+1807(4.1.1)S
+2038(do)S
+2169(not)S
+2328(have)S
+2547(function)S
+782 V
+360(prototypes)S
+824(for)S
+981(all)S
+1122(the)S
+1285(system)S
+1604(functions;)S
+2045(you)S
+2236(will)S
+2433(get)S
+2596(a)S
+2681(large)S
+892 V
+360(number)S
+693(of)S
+804(spurious)S
+1171(warning)S
+1526(messages.)S
+1981(The)S
+2164(following)S
+2581(is)S
+2676(a)S
+2747(sed)S
+1002 V
+360(script)S
+607(which)S
+876(can)S
+1039(strip)S
+1242(out)S
+1395(various)S
+1714(warnings.)S
+10 C
+1154 V
+9 C
+432(#!/bin/sh)S
+1262 V
+432(#)S
+540(stripjunk)S
+1080(-)S
+1188(strip)S
+1512(out)S
+1728(meaningless)S
+2376(errors)S
+1370 V
+432(#)S
+540(example:)S
+1026(make)S
+1296(2>errs)S
+1674(;)S
+1782(stripjunk)S
+2322(errs)S
+1478 V
+432(sed)S
+648(\\)S
+1586 V
+432(-e)S
+594('/^gcc/d')S
+1134(\\)S
+1694 V
+432(-e)S
+594('/implicit)S
+1188(dec.*)S
+1512(`fprintf\302/d')S
+2214(\\)S
+1802 V
+432(-e)S
+594('/implicit)S
+1188(dec.*)S
+1512(`bzero/d\302')S
+2106(\\)S
+1910 V
+432(-e)S
+594('/implicit)S
+1188(dec.*)S
+1512(`getpeername/d\302')S
+2430(\\)S
+2018 V
+432(-e)S
+594('/At)S
+864(top)S
+1080(level:/d')S
+1620(\\)S
+2126 V
+486("$@")S
+9 B
+2358 V
+768(PORTABILITY)S
+1421(AND)S
+1639(TESTING)S
+2062(VERSION)S
+9 R
+2520 V
+495(Once)S
+760(you)S
+970(have)S
+1215(generated)S
+1640(the)S
+1825(test)S
+2025(version)S
+2364(using)S
+9 C
+2664(make)S
+2628 V
+360(TESTVERSION=YES)S
+9 R
+1170(,)S
+1247(you)S
+1436(should)S
+1730(set)S
+1884(up)S
+2028(a)S
+2121(user)S
+2324(version)S
+2642(of)S
+2770(the)S
+2736 V
+360(LPRng)S
+643(software)S
+981(by)S
+1099(using)S
+1322(the)S
+1460(files)S
+1643(in)S
+1741(the)S
+9 C
+1910(TESTSUPPORT)S
+9 R
+2532(directory.)S
+2844 V
+360(This)S
+543(requires)S
+856(the)S
+989(following)S
+1362(steps.)S
+9 C
+2995 V
+432(cd)S
+594(TESTSUPPORT)S
+3211 V
+432(setenv)S
+810(USER)S
+1080(`whoami`)S
+3319 V
+432(setenv)S
+810(HOST)S
+9 I
+1080(fully)S
+1263(qualified)S
+1606(domain)S
+1899(name)S
+9 C
+3427 V
+432(setenv)S
+810(LPD_CONF)S
+1296(/tmp/LPD/lpd.conf)S
+3535 V
+432(set)S
+648(path=\()S
+1026(/tmp/LPD)S
+1512($path)S
+1836(\))S
+9 B
+3643 V
+432(OR)S
+9 C
+3751 V
+432(USER=`whoami`;)S
+1242(export)S
+1620(USER)S
+3859 V
+432(HOST=)S
+9 I
+756(fully)S
+939(qualified)S
+1282(domain)S
+1575(name)S
+9 C
+1770(;)S
+1878(export)S
+2256(HOST)S
+3967 V
+432(PATH=/tmp/LPD)S
+1188($path:$PATH)S
+4075 V
+432(LPD_CONF=/tmp/LPD/lpd.conf;)S
+1944(export)S
+2322(LPD_CONF)S
+4291 V
+432(make)S
+4431 V
+495(The)S
+728(test)S
+1015(files)S
+1356(and)S
+1589(executables)S
+2254(will)S
+2540(be)S
+2718(in-)S
+4539 V
+360(stalled)S
+807(in)S
+984(the)S
+1215(/tmp/LPD)S
+1716(directory.)S
+2379(This)S
+2664(tar-)S
+4647 V
+360(get)S
+589(directory)S
+1142(can)S
+1371(be)S
+1546(changed)S
+1991(by)S
+2166(modifying)S
+2718(the)S
+4755 V
+360(TESTSUPPORT/Makefile.)S
+4895 V
+495(During)S
+916(testing,)S
+1445(the)S
+1704(environment)S
+2394(variables)S
+5003 V
+360(should)S
+756(be)S
+936(set)S
+1170(in)S
+1350(the)S
+1584(.cshrc)S
+1980(or)S
+2160(.profile)S
+2664(ini-)S
+5111 V
+360(tialization)S
+1008(files.)S
+9 B
+5300 V
+1111(PORTABILTY)S
+1729(TESTING)S
+9 R
+5462 V
+495(If)S
+594(your)S
+798(system)S
+1087(is)S
+1186(not)S
+1340(listed)S
+1574(in)S
+1683(the)S
+9 C
+1863(README.ports)S
+9 R
+2550(file,)S
+2732(it)S
+2820(is)S
+5570 V
+360(strongly)S
+683(recommended)S
+1221(that)S
+1384(you)S
+1547(check)S
+1785(the)S
+1923(installation)S
+2350(for)S
+2482(portability.)S
+5678 V
+360(These)S
+605(tests)S
+795(use)S
+945(the)S
+9 C
+1116(TESTSUPPORT)S
+9 R
+1740(version,)S
+2058(installed)S
+2392(as)S
+2496(detailed)S
+2810(in)S
+5786 V
+360(the)S
+493(previous)S
+826(section.)S
+1150(The)S
+1313(executables)S
+1756(are)S
+1889(placed)S
+2147(in)S
+9 C
+2271(/tmp/LPD)S
+9 R
+2703(.)S
+5926 V
+495(The)S
+9 C
+692(checkpc)S
+9 R
+1096(program)S
+1427(has)S
+1573(several)S
+1854(portablility)S
+2280(tests)S
+2465(that)S
+2625(are)S
+2760(run)S
+6034 V
+360(by)S
+477(using)S
+699(the)S
+9 C
+867(checkpc)S
+1303(-T)S
+9 R
+1438(flag.)S
+1651(You)S
+1833(will)S
+2000(need)S
+2197(to)S
+2293(be)S
+2404(superuser)S
+2775(for)S
+6142 V
+360(some)S
+577(of)S
+679(these)S
+891(tests;)S
+1102(this)S
+1258(is)S
+1344(only)S
+1530(for)S
+1661(testing)S
+1927(that)S
+2088(the)S
+2224(SUID)S
+2460(functionali-)S
+6250 V
+360(ty)S
+461(is)S
+552(working.)S
+929(In)S
+1035(the)S
+1176(directory)S
+1532(where)S
+1783(you)S
+1949(generated)S
+2330(the)S
+9 C
+2502(checkpc)S
+9 R
+6358 V
+360(executable,)S
+793(execute)S
+1093(the)S
+1228(following)S
+1602(command,)S
+2004(where)S
+9 I
+2248(serial)S
+9 R
+2477(is)S
+2561(the)S
+2695(path-)S
+6466 V
+360(name)S
+578(of)S
+676(a)S
+739(serial)S
+957(port.)S
+9 C
+6617 V
+432(checkpc)S
+864(-T)S
+9 I
+1026(serial)S
+9 B
+6795 V
+360(SUID)S
+598(Test)S
+9 R
+6930 V
+495(The)S
+667(first)S
+844(test)S
+1001(involves)S
+1338(SUID)S
+1579(checking.)S
+1981(This)S
+2172(test)S
+2328(can)S
+2484(be)S
+2600(delayed)S
+7038 V
+360(until)S
+559(installation)S
+993(time,)S
+1210(but)S
+1359(must)S
+1568(be)S
+1687(done)S
+1896(before)S
+2159(installing)S
+2527(a)S
+2600(produc-)S
+7146 V
+360(tion)S
+540(version.)S
+891(If)S
+9 C
+1022(checkpc)S
+9 R
+1440(is)S
+1540(not)S
+1695(run)S
+1855(as)S
+1969(ROOT)S
+2253(or)S
+2367(as)S
+2481(a)S
+2560(SETUID)S
+670 V
+3168(ROOT)S
+3436(program,)S
+3787(this)S
+3940(test)S
+4088(is)S
+4171(skipped.)S
+810 V
+3303(To)S
+3436(create)S
+3684(a)S
+3756(SETUID)S
+4108(ROOT)S
+4385(checkpc)S
+4712(program)S
+5049(and)S
+5211(run)S
+5363(the)S
+5505(tests,)S
+918 V
+3168(carry)S
+3381(out)S
+3524(the)S
+3662(following)S
+4040(steps.)S
+4293(Delete)S
+4555(the)S
+4692(SETUID)S
+5039(after)S
+5231(finishing)S
+5578(the)S
+1026 V
+3168(tests!)S
+9 C
+1177 V
+3240(cd)S
+3402(/tmp/LPD)S
+1285 V
+3240(su)S
+9 R
+3960(become)S
+4263(root)S
+9 C
+1393 V
+3240(chown)S
+3564(root)S
+3834(checkpc)S
+9 R
+4320(change)S
+4598(ownership)S
+9 C
+1501 V
+3240(chmod)S
+3564(4111)S
+3834(checkpc)S
+9 R
+4320(make)S
+4538(SETUID)S
+4881(ROOT)S
+9 C
+1609 V
+3240(exit)S
+9 R
+3960(\(become)S
+4293(regular)S
+4571(user\))S
+9 C
+1717 V
+3240(checkpc)S
+3672(-T)S
+9 I
+3834(serial)S
+9 R
+4140(run)S
+4283(tests)S
+1825 V
+3456(\(check)S
+3719(test)S
+3867(results\))S
+9 C
+1933 V
+3240(su)S
+9 R
+3960(become)S
+4263(root)S
+9 C
+2041 V
+3240(chmod)S
+3564(755)S
+3780(checkpc)S
+2149 V
+3240(chown)S
+3564(`whoami`)S
+4050(checkpc)S
+2257 V
+3240(exit)S
+9 R
+4014(\(become)S
+4347(regular)S
+4625(user\))S
+2440 V
+3303(If)S
+3389(the)S
+3525(setuid)S
+3766(test)S
+3917(succeeds,)S
+4286(then)S
+4467(a)S
+4533(success)S
+4828(message)S
+5158(will)S
+5323(be)S
+5433(printed)S
+2548 V
+3168(out.)S
+3357(If)S
+3445(it)S
+3523(fails,)S
+3729(then)S
+3912(rerun)S
+4130(the)S
+4268(test)S
+4421(with)S
+4609(diagnostics)S
+5042(enabled)S
+5350(as)S
+5453(shown)S
+2656 V
+3168(below)S
+3412(and)S
+3566(save)S
+3750(the)S
+3884(output)S
+4138(to)S
+4232(a)S
+4296(file.)S
+4485(A)S
+4573(study)S
+4791(of)S
+4889(the)S
+5022(output)S
+5275(should)S
+5538(pro-)S
+2764 V
+3168(vide)S
+3346(detailed)S
+3654(information)S
+4102(as)S
+4200(to)S
+4293(the)S
+4426(cause)S
+4649(of)S
+4747(failure.)S
+9 C
+2915 V
+3240(checkpc)S
+3672(-D9)S
+3888(-T)S
+9 I
+4050(serial)S
+9 B
+3093 V
+3168(BIDIRECTIONAL)S
+3931(PIPES)S
+9 R
+3228 V
+3303(A)S
+3392(bidirectional)S
+3871(pipe)S
+4050(is)S
+4134(used)S
+4323(for)S
+4452(inter-filter)S
+4846(communication.)S
+5475(If)S
+5558(this)S
+3336 V
+3168(test)S
+3326(fails,)S
+3536(then)S
+3723(you)S
+3890(should)S
+4162(enable)S
+9 C
+4460(RWSOCKETS_CFLAGS)S
+9 R
+5356(option)S
+5618(in)S
+3444 V
+3168(the)S
+9 C
+3355(src/Makefile)S
+9 R
+4049(and)S
+4225(regenerate)S
+9 C
+4676(rw_pipe.o)S
+9 R
+5162(.)S
+5253(This)S
+5458(option)S
+3552 V
+3168(implements)S
+3611(bidirectional)S
+4089(pipes)S
+4302(by)S
+4415(using)S
+4633(a)S
+4696(socket)S
+4949(based)S
+5177(mechanism.)S
+9 B
+3687 V
+3168(SERIAL)S
+3526(DEVICE)S
+3899(OPEN)S
+4172(AND)S
+4390(LOCK)S
+9 R
+3822 V
+3303(The)S
+3506(next)S
+3724(test)S
+3912(checks)S
+4219(to)S
+4351(see)S
+4528(if)S
+4645(the)S
+9 C
+4848(Checkwrite\(\))S
+9 R
+5558(and)S
+9 C
+3930 V
+3168(Lock_device\(\))S
+9 R
+3908(routines)S
+4235(open)S
+4447(and)S
+4614(lock)S
+4806(a)S
+4883(serial)S
+5115(device.)S
+5433(Device)S
+4038 V
+3168(locking)S
+3463(is)S
+3548(done)S
+3747(by)S
+3861(using)S
+4080(the)S
+9 C
+4245(TIOCEXCL)S
+4732(ioctl\(\))S
+9 R
+5134(call.)S
+5334(If)S
+5418(locking)S
+4146 V
+3168(fails,)S
+3369(set)S
+9 C
+3523(-D4)S
+9 R
+3708(and)S
+3861(determine)S
+4244(which)S
+4487(lock)S
+4665(method)S
+4958(is)S
+5041(being)S
+5264(used.)S
+4286 V
+3303(See)S
+3531(the)S
+9 C
+3770(LOCK_DEVS_CFLAGS)S
+9 R
+4732(variable)S
+5120(description)S
+5618(in)S
+9 C
+4394 V
+3168(src/Makefile)S
+9 R
+3851(and)S
+4015(comments)S
+4419(in)S
+9 C
+4554(src/common/lockfile.c)S
+9 R
+4502 V
+3168(on)S
+3294(how)S
+3485(to)S
+3591(select)S
+3832(the)S
+3978(fallback)S
+4304(locking)S
+4609(method.)S
+4960(Once)S
+5185(selected,)S
+5533(You)S
+4610 V
+3168(will)S
+3334(need)S
+3530(to)S
+3626(regenerate)S
+9 C
+4058(lockfile.o)S
+9 R
+4624(and)S
+4780(the)S
+4916(executables)S
+5362(and)S
+5518(rein-)S
+4718 V
+3168(stall)S
+3341(them)S
+3544(in)S
+3637(the)S
+3770(test)S
+3918(location.)S
+9 B
+4853 V
+3168(FILE)S
+3401(OPEN)S
+3674(AND)S
+3892(LOCK)S
+9 R
+4988 V
+3303(The)S
+3476(next)S
+3664(set)S
+3797(of)S
+3905(tests)S
+4098(check)S
+4341(that)S
+4509(file)S
+4662(locking)S
+4965(works.)S
+5264(If)S
+5357(they)S
+5545(fail,)S
+5096 V
+3168(then)S
+3423(try)S
+3623(using)S
+3918(an)S
+4102(alternative)S
+4581(locking)S
+4950(method)S
+5319(with)S
+5578(the)S
+9 C
+5204 V
+3168(STATFS_CFLAGS)S
+9 R
+3899(variable)S
+4218(in)S
+4316(the)S
+9 C
+4485(src/Makefile)S
+9 R
+5133(.)S
+5207(See)S
+5365(the)S
+5503(com-)S
+5312 V
+3168(ments)S
+3416(in)S
+9 C
+3550(src/common/lockfile.c)S
+9 R
+4717(as)S
+4824(well.)S
+5057(You)S
+5244(will)S
+5416(need)S
+5618(to)S
+5420 V
+3168(regenerate)S
+9 C
+3597(lockfile.o)S
+9 R
+4160(and)S
+4313(the)S
+4446(executables.)S
+9 B
+5555 V
+3168(STTY)S
+3426(FUNCTIONS)S
+9 R
+5690 V
+3303(The)S
+3483(next)S
+3678(test)S
+3843(checks)S
+4128(the)S
+9 C
+4309(stty)S
+9 R
+4565(\(set)S
+4735(serial)S
+4969(line)S
+5143(characteristics\))S
+5798 V
+3168(capabilities.)S
+3651(In)S
+3753(order)S
+3970(to)S
+4067(do)S
+4184(as)S
+4286(system)S
+4563(independent)S
+5030(operations)S
+5432(as)S
+5533(pos-)S
+5906 V
+3168(sible,)S
+3385(line)S
+3544(status)S
+3773(is)S
+3857(displayed)S
+4225(using)S
+4443(the)S
+9 C
+4607(stty)S
+9 R
+4846(command.)S
+5270(You)S
+5448(should)S
+6014 V
+3168(check)S
+3415(the)S
+3562(output)S
+3829(of)S
+3941(this)S
+4108(command)S
+4500(to)S
+4607(make)S
+4839(sure)S
+5026(that)S
+5197(the)S
+5343(requested)S
+6122 V
+3168(STTY)S
+3416(operations)S
+3814(did)S
+3952(take)S
+4125(place.)S
+6262 V
+3303(If)S
+3391(a)S
+3459(stty)S
+3617(operation)S
+3985(failes,)S
+4231(using)S
+4454(the)S
+9 C
+4623(checkpc)S
+5060(-D9)S
+9 R
+5249(flag)S
+5416(and)S
+5573(ex-)S
+6370 V
+3168(amine)S
+3446(the)S
+3614(diagnostic)S
+4042(output)S
+4330(for)S
+4493(the)S
+4661(cause)S
+4919(of)S
+5052(failure.)S
+5391(See)S
+5578(the)S
+9 C
+6478 V
+3168(STTY_CFLAGS)S
+9 R
+3787(section)S
+4066(of)S
+9 C
+4196(src/Makefile)S
+9 R
+4868(on)S
+4982(how)S
+5161(to)S
+5255(select)S
+5484(an)S
+5593(al-)S
+6586 V
+3168(ternatve)S
+3492(STTY)S
+3751(interface)S
+4100(function)S
+4434(if)S
+4523(the)S
+4667(one)S
+4831(selected)S
+5155(by)S
+9 C
+5310(config-)S
+6694 V
+3168(ure)S
+9 R
+3362(is)S
+3454(not)S
+3601(suitable.)S
+3959(You)S
+4146(will)S
+4318(need)S
+4520(to)S
+4622(regenerate)S
+9 C
+5060(stty.o)S
+9 R
+5416(and)S
+5578(the)S
+6802 V
+3168(executables.)S
+9 B
+7450 V
+10 B
+360(2)S
+3146(LPRng - Portability Testing and Installation)S
+7920 V
+EP
+%%Page: 3 3
+BP
+/slant 0 def
+/height 1.000000 def
+10 B
+322 V
+4248(LPRng Portability)S
+670 V
+9 B
+360(PROCTITLE)S
+9 R
+805 V
+495(The)S
+9 C
+692(setproctitle\(\))S
+9 R
+1474(function)S
+1800(modifies)S
+2140(the)S
+2275(process)S
+2570(status)S
+2800(so)S
+913 V
+360(that)S
+529(the)S
+9 C
+704(ps\(1\))S
+9 R
+1008(command)S
+1396(will)S
+1569(display)S
+1862(the)S
+2005(process)S
+2308(activity.)S
+2657(If)S
+2750(this)S
+1021 V
+360(test)S
+541(fails,)S
+775(then)S
+986(you)S
+1177(might)S
+1443(want)S
+1674(to)S
+1800(see)S
+1971(if)S
+2082(you)S
+2273(can)S
+2454(modify)S
+2770(the)S
+9 C
+1129 V
+360(src/proctitle.c)S
+9 R
+1199(code)S
+1398(so)S
+1506(that)S
+1669(it)S
+1747(works.)S
+2041(Otherwise,)S
+2462(just)S
+2620(modify)S
+1237 V
+360(the)S
+9 C
+538(SETPROCTITLE_CFLAGS)S
+9 R
+1601(variable)S
+1928(in)S
+9 C
+2066(src/Makefile)S
+9 R
+2750(and)S
+1345 V
+360(recompile.)S
+9 B
+1534 V
+1358(Filter)S
+1596(Testing)S
+9 R
+1696 V
+495(You)S
+676(should)S
+942(test)S
+1093(the)S
+1229(filters)S
+1465(for)S
+1596(your)S
+1787(existing)S
+2098(printers)S
+2399(by)S
+2515(first)S
+2685(using)S
+1804 V
+360(the)S
+500(test)S
+655(version.)S
+996(You)S
+1181(can)S
+1336(simply)S
+1611(copy)S
+1816(the)S
+1956(existing)S
+2271(printcap)S
+2596(entry)S
+2810(to)S
+1912 V
+360(the)S
+497(test)S
+649(printcap)S
+971(file,)S
+1141(and)S
+1298(modify)S
+1585(the)S
+1722(entry)S
+1934(so)S
+2041(that)S
+2203(it)S
+2280(uses)S
+2462(the)S
+2599(test)S
+2750(set-)S
+2020 V
+360(up)S
+473(directories.)S
+2160 V
+495(Next,)S
+732(try)S
+871(running)S
+1190(a)S
+1268(job)S
+1421(through)S
+1739(the)S
+1887(filters,)S
+2158(and)S
+2326(see)S
+2479(if)S
+2572(it)S
+2660(works)S
+2268 V
+360(correctly.)S
+771(Some)S
+1021(filters)S
+9 B
+1276(require)S
+9 R
+1606(root)S
+1796(permissions)S
+2271(as)S
+2391(they)S
+2590(perform)S
+2376 V
+360(operations)S
+771(such)S
+972(as)S
+1083(opening)S
+1409(sockets)S
+1709(in)S
+1814(the)S
+1959(privileged)S
+2359(port)S
+2539(range.)S
+2820(If)S
+2484 V
+360(this)S
+527(is)S
+624(the)S
+771(case,)S
+986(you)S
+1158(will)S
+1335(need)S
+1542(to)S
+1649(set)S
+1785(the)S
+1931(filters)S
+2177(executables)S
+9 C
+2664(SUID)S
+2592 V
+360(ROOT)S
+9 R
+599(and)S
+752(executable)S
+1160(only)S
+1343(by)S
+1456(group)S
+1689(daemon.)S
+9 C
+2743 V
+432(chown)S
+756(root)S
+1026($filter)S
+2851 V
+432(chgrp)S
+756(daemon)S
+1134($filter)S
+2959 V
+432(chmod)S
+756(4010)S
+1026($filter)S
+9 B
+3191 V
+1400(Installation)S
+9 R
+3353 V
+495(Once)S
+715(you)S
+880(have)S
+1079(finished)S
+1398(testing,)S
+1690(you)S
+1854(can)S
+2008(perform)S
+2327(a)S
+2396(final)S
+2590(installa-)S
+3461 V
+360(tion.)S
+569(The)S
+732(following)S
+1105(steps)S
+1308(should)S
+1571(be)S
+1679(followed.)S
+3601 V
+360(1.  First,)S
+685(compile)S
+998(the)S
+1131(non-test)S
+1444(version)S
+1732(and)S
+1885(install)S
+2128(it)S
+2201(in)S
+2294(the)S
+2427(default)S
+2700(loca-)S
+3709 V
+474(tions.)S
+9 C
+3860 V
+432(rm)S
+594(src/default.o)S
+3968 V
+432(su)S
+9 I
+702(may)S
+875(need)S
+1068(root)S
+1241(perms)S
+1484(to)S
+1577(install)S
+9 C
+4076 V
+432(make)S
+702(install)S
+9 R
+4259 V
+360(2.  Next,)S
+702(if)S
+787(you)S
+952(are)S
+1092(performing)S
+1527(an)S
+1642(initial)S
+1882(installation,)S
+2335(a)S
+2405(simple)S
+2675(set)S
+2805(of)S
+9 C
+4367 V
+474(lpd.conf)S
+9 R
+929(and)S
+9 C
+1113(lpd.perms)S
+9 R
+1622(files)S
+1800(are)S
+1933(available.)S
+9 C
+4518 V
+432(make)S
+702(default)S
+9 R
+4701 V
+360(3.  Next,)S
+701(you)S
+865(should)S
+1134(stop)S
+1313(the)S
+1452(current)S
+1736(lpd)S
+1880(daemon)S
+2194(and)S
+2353(save)S
+2542(the)S
+2680(exist-)S
+4809 V
+474(ing)S
+612(printcap)S
+930(file.)S
+9 C
+4960 V
+432(ps)S
+594(-axu)S
+864(|)S
+972(grep)S
+1242(lpd)S
+5068 V
+432(kill)S
+9 I
+702(lpd)S
+840(pid)S
+9 R
+5251 V
+360(4.  If)S
+562(you)S
+725(need)S
+922(to,)S
+1042(copy)S
+1244(the)S
+1381(new)S
+1558(printcap)S
+1880(file)S
+2027(to)S
+9 C
+2155(/etc/printcap)S
+9 R
+2857(.)S
+5359 V
+474(Use)S
+9 C
+668(checkpc)S
+9 R
+1069(to)S
+1162(ensure)S
+1420(that)S
+1578(the)S
+1711(current)S
+1989(printcap)S
+2307(file)S
+2450(is)S
+2533(correct.)S
+9 C
+5510 V
+432(cp)S
+594(/etc/printcap)S
+1350(/etc/printcap.old)S
+5618 V
+432(checkpc)S
+5726 V
+432(checkpc)S
+864(-f)S
+9 I
+1080(if)S
+1153(necessary)S
+9 R
+5909 V
+360(5.  Start)S
+667(the)S
+800(lpd)S
+938(daemon)S
+1246(and)S
+1399(check)S
+1632(its)S
+1740(operation.)S
+9 C
+6060 V
+432(lpd)S
+6168 V
+432(exit)S
+9 I
+756(return)S
+1004(to)S
+1097(user)S
+9 C
+6276 V
+432(lpq)S
+9 R
+6459 V
+360(6.  Edit)S
+685(the)S
+856(print)S
+1087(spooler)S
+1413(startup)S
+1719(commands)S
+2170(in)S
+2300(the)S
+2470(appropriate)S
+9 C
+6567 V
+474(rc.local)S
+9 R
+1100(or)S
+1368(other)S
+1746(startup)S
+2184(file)S
+2497(to)S
+2760(use)S
+9 C
+6675 V
+474(/usr/local/bin/lpd)S
+9 R
+1446(.)S
+6815 V
+360(7.  Reboot)S
+757(system)S
+1030(to)S
+1123(ensure)S
+1381(that)S
+1539(server)S
+1782(is)S
+1865(started)S
+2128(correctly.)S
+9 B
+670 V
+4006(Periodic)S
+4349(Maintenance)S
+9 R
+832 V
+3303(It)S
+3393(is)S
+3488(recommended)S
+4033(that)S
+4203(the)S
+9 C
+4379(checkpc)S
+9 R
+4791(program)S
+5130(be)S
+5249(run)S
+5403(periodi-)S
+940 V
+3168(cally)S
+3378(to)S
+3483(remove)S
+3788(aborted)S
+4092(jobs)S
+4276(and)S
+4440(to)S
+4544(truncate)S
+4868(various)S
+5167(log)S
+5316(files.)S
+5528(This)S
+1048 V
+3168(can)S
+3316(be)S
+3424(done)S
+3622(by)S
+3735(putting)S
+4013(the)S
+4146(following)S
+4519(entry)S
+4727(in)S
+4820(the)S
+9 I
+4953(crontab)S
+9 R
+5256(for)S
+5384(root.)S
+9 C
+1199 V
+3240(15)S
+3402(5)S
+3510(*)S
+3618(*)S
+3726(*)S
+3834(/usr/local/lib/cleanlog)S
+9 R
+1382 V
+3303(The)S
+9 C
+3500(cleanlog)S
+9 R
+3958(script)S
+4184(can)S
+4335(be)S
+4446(used)S
+4637(to)S
+4733(clean)S
+4948(and/or)S
+5203(truncate)S
+5518(vari-)S
+1490 V
+3168(ous)S
+3316(files.)S
+3540(The)S
+3703(following)S
+4076(is)S
+4159(a)S
+4222(typical)S
+4490(script.)S
+9 C
+1641 V
+3240(#!/bin/sh)S
+1749 V
+3240(trunc)S
+3564(\(\))S
+3726({)S
+1857 V
+3420(tail)S
+3690($1)S
+3852(>/tmp/$$)S
+1965 V
+3420(cat)S
+3636(/tmp/$$)S
+4068(>$1)S
+2073 V
+3420(rm)S
+3582(/tmp/$$)S
+2181 V
+3240(})S
+2397 V
+3240(FILES="/usr/spool/lpd/log*)S
+4698(/usr/spool/lpd/accnt")S
+2505 V
+3240(for)S
+3456(i)S
+3564(in)S
+3726($FILES)S
+4104(do)S
+2613 V
+3420(echo)S
+3690($i)S
+2721 V
+3240(done)S
+9 B
+7450 V
+10 B
+360(LPRng - Portability Testing and Installation)S
+4990(3)S
+7920 V
+EP
+%%Trailer
+%%DocumentFonts: Times-Roman Times-Bold Times-Italic Courier
+%%Pages: 3

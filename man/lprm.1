@@ -1,0 +1,190 @@
+.ds VE LPRng-2.3.12
+.TH LPRM 1 \*(VE "LPRng"
+.ig
+$Id: lprm.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+..
+.SH NAME
+lprm \- remove jobs from the line printer spooling queue
+.SH SYNOPSIS
+.B lprm
+[
+.BI \-P printer
+] [
+.B \-a
+] [
+.B \-V
+] [
+.BI \-D debugopt
+] [
+jobid *
+] [
+all
+]
+.SH DESCRIPTION
+.PP
+.I Lprm
+will send a request to the LPD server to remove jobs
+from a spool queue.
+.I Lprm
+is normally the only method by which a user may remove a job.
+The jobs to be removed are specified by the job number or user name;
+with no specifiers the first removable in a queue will be
+selected for removal.
+Usually users may only remove jobs submitted by themselves from
+the host which originated the original lpr request.
+.PP
+The spool queue is searched first for jobs that the user has permissions to
+remove,
+then for jobs that match any of the specified set of tags.
+If no tags are specified,
+only the first job in the queue that the user has permissions to remove
+will be removed.
+.PP
+If the
+.B \-a
+flag is specified, 
+.I lprm
+will search all available spool queues for the specified jobs and remove them.
+.LP
+The all
+wildcard is used to match all jobs in a spool queue;
+however unless the user has
+.I control
+permissions  for the spool queue only his jobs will be removed.
+See the
+.BR lpd (1)
+man page for details about control permissions.
+.PP
+A jobid can be a job number,
+a user name,
+a job identifier,
+or a pattern for a
+.I glob
+based wild card match.
+This match is applied to the job identifier information.
+.PP
+.I Lprm
+will announce the names of any files it removes and is silent if
+there are no jobs in the queue which match the request list.
+If the job being removed is active,
+the LPD server will stop printing the job and then
+restart printing operations.
+.SH EXAMPLES
+.TP
+Remove the last job I submitted if it is in the queue:
+.sp
+lprm
+.TP
+Remove job 25 in spool queue p1:
+.sp
+lprm -Pt1 25
+.TP
+Remove job 25 and 30 in spool queue p1:
+.sp
+lprm -Pt1 25 30
+.TP
+Remove all of user john's jobs in spool queue p1:
+.sp
+lprm -Pt1 john
+.TP
+Remove all jobs in spool queue p1:
+.sp
+lprm -Pt1 all
+.TP
+Remove all jobs in all spool queues:
+.sp
+lprm -a all
+.TP
+Remove the jobs with identifier nobody@system in spool queue p1.
+Note that the quotes around the pattern are needed to suppress
+shell glob expansion.
+.sp
+lprm -Pt1 'nobody@system*'
+.SH OPTIONS
+.IP "\fB\-a\fR" 5
+Remove files from all spool queues available to the user.
+.IP "\fB\-P\fIprinter\fR" 5
+Specifies printer queue.
+If it is not provided,
+the default printer is the
+value of the PRINTER environment variable,
+or the first printer in the
+.I printcap
+database if it is not defined.
+.IP "\fB\-D\fIdebugopts\fR" 5
+Debugging is controlled using the
+.B \-D
+option. This accepts a comma-separated list of debugging
+settings. These settings take one of two forms: 
+.B facility=value , 
+or
+.B value 
+to set an overall default value.
+.IP "\fB\-V\fR" 5
+The \-V option prints the version information for the program and
+verbose information about activities.
+.SH WARNINGS
+.PP
+Users with
+CONTROL (i.e.- administrative) permissions on spool queues
+can remove any or all jobs.
+The
+.I all
+wildcard defaults to all user jobs,
+not just those submitted by the user.
+This allows administrators to purge a spool queue easily.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+/etc/printcap		printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.conf(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

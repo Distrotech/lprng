@@ -1,0 +1,3157 @@
+.\" ***************************************************************************
+.\" * LPRng - An Extended Print Spooler System
+.\" *
+.\" * Copyright 1988-1995 Patrick Powell, San Diego State University
+.\" *     papowell@sdsu.edu
+.\" * See LICENSE for conditions of use.
+.\" *
+.\" ***************************************************************************
+.\" * MODULE: README
+.\" * PURPOSE: Overview of Software
+.\" * $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" **************************************************************************/
+.\"
+.\"Uses the NROFF tmac.usenix macros
+.\"troff | dvi2dumb
+.\".fo 'README'%'Alpha Release'
+.\"
+.\" number of columns
+.\" ------------- usenix macros 
+.ds CC 1994 LISA \- September 19-23, 1994 \- San Diego, CA
+.nr PS 10
+.nr FU 0.22i	\" printer prints this much too low
+.nr VS 11
+.ds Q ``
+.ds U ''
+.\" footnote stuff
+.nr * 0 1
+.ds [. \|[
+.ds .] ]
+.ds [, \s-2\v'-.4m'\f2
+.ds ,] \v'.4m'\s+2\fP
+.ds * \*([,\\n+*\*(,]
+.ds [o ``
+.ds [c ''
+.ev 1
+.ps \n(PS
+.vs \n(VS
+.ev
+.de PP
+.LP
+.ti 0.3i
+..
+.de LP
+.sp 0.3
+.ne 1
+.in 0
+.nr Ia 0
+.nr Ic 0
+.fi
+..
+.de IP
+.sp 0.3
+.\" Ia = total indent for this guy
+.\" Ib = .ti value for this guy
+.\" Ic = auxiliary indent
+.nr Ib 0.0i
+.if \\n(Ia=0 .nr Ia 0.2i
+.if !\\$1 \{\
+.   nr Ia \w\\$1\ \ u
+.   nr Ib \\n(Ia
+.\}
+.if !\\$2 .nr Ia \\$2n
+.in \\n(Iau
+.in +\\n(Icu
+.ti -\\n(Ibu
+.if !\\$1 \{\
+\&\\$1\ \ \c
+.\}
+..
+.de QP
+.IP
+..
+.de RS
+.nr Ic +0.2i
+..
+.de RE
+.nr Ic -0.2i
+..
+.de PN
+.rs
+'sp |10.4i-\\n(FUu
+.rs
+'sp |10.4i-\\n(FUu	 \" how many traps could there be?
+.rs
+'sp |10.4i-\\n(FUu
+.PO
+'ie e \{\
+.ev 2
+'tl \s10\f3%\\*(CC\fP\s0
+.ev
+'\}
+'el \{\
+.ev 2
+'tl \s10\f3\\*(CC%\fP\s0
+.ev
+'\}
+.po
+.wh 0 hh
+'bp
+..
+.de ff
+.nr dn 0
+.if \\nx \{\
+. ev 1
+. vs \\n(VVu
+. mk QR
+' nr QS 11i+0.5v-1u+\\nyu
+' if \\n(QS>\\n(QR 'sp |\\n(QSu
+. nf
+. FN	\" print the footnotes
+. vs
+. rm FN
+. if \\n(.zfy .br\" end overflow diversion
+. if \\n(.zfy .di\" end overflow diversion
+. nr x 0 1
+. ev
+.\}
+.nr N +1
+.if \n(dn .fz	\" leftover footnote
+.ie \\nN<\\nC \{\
+'  sp |\\nTu
+'  ns
+'  po +3.05i+0.40i
+.\}
+.el \{\
+.  rF
+.  PN
+.  PO
+.  nr N 0
+.\}
+.nr y 0-\\nb
+.nr QQ 11i-\\nb
+.ch fx
+.ch ff
+.wh \\n(QQu ff
+.wh 12i fx
+.ch fx \\n(QQu
+.if \\n(dn .fz
+..
+.de fz   \" get leftover footnote
+.FS \&
+.nf
+.fy
+.FE
+..
+.de fx	 \" footnote overflow processing
+.if \\nx .di fy
+..
+.de FS	\" start a footnote
+.if \\n(.t<=1.7v .ne 2
+.da FN
+.nr YY \\n(.lu
+.ev 1
+.ll \\n(YYu
+.if \\n+x=1 .fs
+.fi
+.ie \\$1 \ \ \*([,\\n*\*(,]\c
+.el \ \ \*([,\\$1\*(,]\c
+.ps -1
+.vs -1
+.nr VV \\n(.v
+..
+.de FE
+.br
+.ps +1
+.vs +1
+.ev
+.da
+.nr y -\\n(dn
+.nr QR 11i-1v-1u+\\nyu   \" y is negative
+.ie \\n(nlu+1v<\\n(QRu .ch ff \\n(QRu
+.el .ch ff \\n(nlu+1v
+..
+.de fs
+.br
+.vs \\n(VS
+\v'-0.4v'\s16\D'l 1.5i 0'\s0
+.sp -0.4v
+.vs
+..
+.de PO
+.ie e .po 1.0i
+.el   .po 1.0i
+..
+.de NC
+'PO
+'ll \\n(LLu
+'nr N 0
+..
+.de 2C
+.br
+.nr LL 3.05i
+'NC
+'nr C 2
+'mk T
+'ns
+..
+.de 1C
+.br
+.nr LL 6.5i
+.NC
+'nr C 1
+'mk T
+'ns
+..
+.de rF	\" reset footer to nominal
+.nr b 1.0i+\\n(FUu	\" nominal footer place
+..
+.rF
+'nr x 0 1	\" init:
+.nr y 0-\nb
+.pl 11i
+.nr QQ 11i+\ny
+.wh \n(QQu ff
+.wh 12i fx
+.ch fx \n(QQu
+.de hh
+'rs
+'sp |0.5i-\\n(FUu
+.PO
+'ie e \{\
+.ev 2
+'tl \s10\f3\\*(T2\\*(A2\fP\s0
+.ev
+'\}
+'el \{\
+.ev 2
+'tl \s10\f3\\*(A2\\*(T2\fP\s0
+.ev
+'\}
+'sp |1i-\\n(FUu
+'mk T
+'ns
+'nr x 0 1	\" number of footnotes
+.nr y 0-\\nb
+.nr QQ 11i+\\ny
+.ch ff
+.wh \\n(QQu ff
+.ch fx
+.wh 12i fx
+.ch fx \\n(QQu
+..
+.\"-------------------
+.de TI
+.nh
+.rs
+.in 0i
+.nr % \\$1
+.fi
+.nr QS \\n(.lu
+.ll 100i
+.ps 22
+.vs 22
+.ft 3
+.ds TT \\
+..
+.de AA
+.nr DL \w\\*(TT
+.nr NN 1
+.nr NL \\n(QSu-1i	\" a nice line length for title
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.if \\n(NLu*\\n(NNu<\\n(DLu .nr NN +1
+.nr QR (\\n(DLu/\\n(NNu)+0.75i	\" +.75 cuz words don't always balance
+.ll \\n(QRu
+.di TU
+.ad l
+\\*(TT
+.br
+.di
+.sp |1.0i-\\n(FUu
+.nr NP 0
+.if \\n(QSu>\\n(QRu .nr NP (\\n(QSu-\\n(QRu)/2u
+.po +\\n(NPu
+.ce 999
+.TU
+.ce 0
+.po
+.ll \\n(QSu
+.sp 0.1i
+.ft 1
+.ps 12
+.vs 12
+.sp 0.5
+..
+.de A		\" .A "Brian Author" "Affiliation"
+.in 0
+.ie !\\$2 \{\
+.ce
+\f2\\$1\f1 \- \\$2
+.\}
+.el \{\
+.ce
+\f2\\$1\f1
+.\}
+..
+.de AB
+.sp 0.20i
+.po +0.5i
+.ll -1.125i
+.ce
+\f3\s12ABSTRACT\s0\f1
+.sp 0.5
+.ps \\n(PS
+.vs \\n(VS
+.ad b
+.fi
+..
+.de EA
+.sp
+.\".2C
+.1C
+.hy 14
+..
+.de AE
+.EA
+..
+.de SH
+.br
+.in 0
+.di St
+.ft 3
+.it 1 S2
+..
+.de SH
+.NH "\\$1" "\\$2" "\\$3"
+..
+.de S2
+.br
+.di
+.sp 0.75
+.ne 3
+.ce
+.St
+.br
+.ft 1
+.sp 0.5
+.ns
+..
+.de NH
+.br
+.ne 2
+.in 0
+.nr Ia 0
+.nr Ic 0
+.fi
+.nr L 1
+.if !\\$1 .nr L \\$1\" level
+.if \\nL1 .ft 3
+.if \\nL2 .ft 3
+.if \\nL3 .ft 2
+.di Nt
+.in 0.3i
+.ti 0
+.it 1 N2
+..
+.de N2
+.br
+.in 0
+.di
+.if \\nL1 .sp 0.75
+.if \\nL2 .sp 0.25
+.if \\nL3 .sp 0.25
+.if \\nL4 .sp 0.25
+.ne 3
+.if \\nL1 .ce
+.Nt
+.br
+.ft 1
+.if \\nL1 .sp 0.50
+.if \\nL2 .sp 0.25
+.if \\nL3 .sp 0.25
+.if \\nL4 .sp 0.25
+.ns
+..
+.de XP
+.sp 0.5
+.ne 2
+.in \w[3]\ \ u
+.ti 0
+.ns
+..
+.de I
+.nr PQ \\n(.f
+.ft 2
+.if !"\\$1"" \&\\$1\\f\\n(PQ\\$2
+..
+.de R
+.ft 1
+..
+.de B
+.nr PQ \\n(.f
+.ft 3
+.if !\\$1 \&\\$1\\f\\n(PQ\\$2
+..
+.de T
+.nr PQ \\n(.f
+.if !\\$1 \&\\$3\f(CW\\$1\\f\\n(PQ\\$2
+..
+.de Ds
+'sp 0.4
+'nr DY \\n(.i
+'in 0.1i
+.if !\\$1 .in \\$1
+.ft CW
+.nf
+..
+.de DS
+.br
+.Ds \\$1
+..
+.de DE
+.br
+.De
+..
+.de De
+'sp 0.4
+.in \\n(DYu
+.ft 1
+.fi
+..
+.de np
+.br
+.in \w\(bu\ \ u
+.ti -\w\(bu\ \ u
+\(bu\ \ \c
+..
+.de lp
+.br
+.in 0
+..
+.de TS
+.br
+.ul 0
+.sp 0.5
+..
+.de TE
+.sp 0.5
+..
+.de RT
+.ft 1
+.ce 0
+.ul 0
+'ll \\n(LLu
+.ps \\n(PS
+.vs \\n(VS
+.in 0
+.\"bd 1
+.ta 5n 10n 15n 20n 25n 30n 35n 40n 45n 50n 55n 60n 65n 70n 75n 80n
+.fi
+..
+.de KF
+'sp 0.4
+.ev 2
+.nr Zs \\n(.s
+.nr Zv \\n(.v
+.ll \\n(LLu
+.in 0
+..
+.de KE
+.br
+.ps \\n(Zs
+.vs \\n(Zvu
+.ev
+'sp 0.4
+..
+.de UX
+\\$3\s-2UNIX\s0\\$1\\$2
+..
+.de SM
+.ps -2
+..
+.	\" LG - larger
+.de LG
+.ps +2
+..
+.de EB
+.nr QQ 11i-\\nb-\\$1
+.nr b +\\n(QQu
+.nr y 0+\\nyu-\\n(QQu
+.nr QQ 11i+\\ny
+.ch ff
+.wh \\n(QQu ff
+.ch fx
+.wh 12i fx
+.ch fx \\n(QQu
+..
+.\"==============================================
+.de Zz
+.if \\nN=1 'ch Zz
+'sp 11i
+..
+.de Z
+.nr N_ \\n(N_+1
+.br
+.mk Qz
+.ev 2
+.nr Qy \\n(.l
+.ll 6.5i
+.di J
+.in 0
+.ft 1
+..
+.de ZZ
+.br
+.if !\\$1 \{\
+.  if !\\$2 .ll \\$2
+.sp 0.4
+.ce
+.ft 1
+\\$1
+.ft
+.if !\\$2 .ll
+.\}
+.di
+.ev
+.nr QQ \\n(.t-\\n(dn-10
+.if \\n(QQ<0 .tm oops -- \\*(S_ \\n(N_ called Z too late on page \\n%!
+.if \\n(QQ<0 .ex
+.mk Qj
+.sp \\n(QQu
+.mk Q2
+.ev 2
+.in 0
+.nf
+.J
+.fi
+.rm J
+.ll \\n(.lu
+.ev
+.sp |\\n(Qzu
+.nr QQ \\n(Q2-0.8v
+.EB \\n(QQu
+..
+.\"======================================================
+.de KS
+.\".tm KS:  Not implemented yet
+..
+.de KE
+.\".tm KE:  Not implemented yet
+..
+.de KF
+.\".tm KF:  Not implemented yet
+..
+.ds ' \h'\w'e'u*4/10'\z\(aa\h'-\w'e'u*4/10'
+.de BE
+.br
+..
+.lt 6.5i
+.de T1
+.ds T2 \\$1
+..
+.de A1
+.ds A2 \\$1
+..
+.nr P1 1.1i		\" picture width
+.nr P2 14u*\n(P1u/10u	\" picture depth 
+.de BB
+.in 0
+.\".nr QQ \\n(P2+0.1i
+.\".ne \\n(QQu
+.\".rs
+.\".ll -\\n(P1u
+.\".ll -0.1i
+.\".po +\\n(.lu+0.1i
+.\".sp 0.3
+.\"
+.\".sp -0.8
+.\"\!H\\n(.o
+.\".mk QQ
+.\"\!V\\n(QQ
+.\"\!DZ \\n(P1 \\n(P2
+.\".ie \\$1 .tm Picture not yet inserted for .BB
+.\".el \!P \\$1
+.\".sp -0.3
+.\".po
+.\".sp -1
+.\".if \\$1 \{\
+.\"\h'0.1i'\h'\\n(.lu'\D'l \\n(P1u 0'\D'l 0 \\n(P2u'\D'l -\\n(P1u 0'\D'l 0 -\\n(P2u'
+.\".sp -1
+.\".\}
+.\".sp 0.8
+.\".mk QQ
+.\".nr QQ +\\n(P2u
+.\".wh \\n(QQu Bb
+.\"=====
+.\" ::: .sp 1
+.\" ::: .ne 2
+.if \\n(SB=0 \{\
+.NH 1
+Author Information
+.\}
+.nr SB 1
+.PP
+..
+.de Bb
+'ch Bb
+'ll +\\n(P1u
+'ll +0.1i
+..
+.de GS
+.br
+..
+.de GE
+..
+.nr SL 0.3v
+.nr LI 0.28i
+.de BL         \" begin list
+.br
+.sp \\n(SL
+.in +\\n(LIu
+.ll -0.1i
+.if \\n(Ld \{\
+.ds Z\\n(Ld \\*(LT
+.af LN 1
+.nr N\\n(Ld \\n(LN
+.ds C\\n(Ld \\*(LC
+. \}
+.nr Ld +1
+.ds LT \\$1\" LT is the List Type: 1, a, or a bulletchar
+.if \\$1 .ds LT \(bu
+.af LN \\$1	\" number register type if it exists...
+.nr LN 0	\" LN is the list element number
+.ds LC\\$2
+.\" LC is the optional bullet trailer...
+..
+.de LE            \" list element
+.br
+.ie '\\$1'' .nr LN +1
+.el \{\
+.   nr LN 0
+.   nr LN \\$1
+.\}
+.ds LX \\*(LT\\*(LC
+.if \\*(LT1 .ds LX \\n(LN\\*(LC
+.if \\*(LTa .ds LX \\n(LN\\*(LC
+.if \\*(LTA .ds LX \\n(LN\\*(LC
+.if \\*(LTi .ds LX \\n(LN\\*(LC
+.if \\*(LTI .ds LX \\n(LN\\*(LC
+.if \\n(LN=0 \{\
+.    if !'\\$1'' .ds LX \\$1\\*(LC
+.\}
+.nr QQ 3u*\w' 'u/2u
+.ti -\\w'\\*(LX\h'\\n(QQu''u
+\\*(LX\h'\\n(QQu'\c
+..
+.de EL             \" end list
+.br
+.nr Ld -1
+.if \\n(Ld \{\
+.  ds LT \\*(Z\\n(Ld
+.  af LN \\*(LT
+.  nr LN \\n(N\\n(Ld
+.  ds LC \\*(C\\n(Ld
+. \}
+.in -\\n(LIu
+.ll +0.1i
+..
+.de F1
+.in 0
+\v'-0.4'\D'l \\n(.lu 0'
+.sp -0.7
+.in
+..
+.de F2
+.mk QQ
+.if !'\\nT'\\n(QQ' \{\
+.in 0
+\v'-0.4'\D'l \\n(.lu 0'
+.sp -0.4
+.in
+.\}
+..
+.de EM
+.br
+.if o \{\
+.ds A2 
+.ds T2 
+.rs
+.bp
+.ch ff
+.ch fx
+.PO
+.rs
+.sp |10.4i-\\n(FUu
+.mk QQ
+'ie e \{\
+. ev 2
+' tl \s10\f3%\\*(CC\fP\s0
+. ev
+'  \}
+'el \{\
+. ev 2
+' tl \s10\f3\\*(CC%\fP\s0
+. ev
+'  \}
+.\}
+..
+.de RF
+.sp 0.1
+.in 0.3i
+.ie !\\$1 \{\
+.nr QQ \w'\\$1\ '
+.ti -\\n(QQu
+\\$1\ \c
+.\}
+.el .ti 0
+..
+.de RZ
+.sp 0.1
+.in 0.3i
+.nr QQ \w'\\$1\ '
+.ti -\\n(QQu
+\\$1\ \c
+..
+.de z3
+.nr QQ \\$4
+\\!H\\n(QQ
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\$1 \\$2
+\\!P \\$3
+..
+.de zz
+.nr Z1 \\$1
+.nr Z2 \\$2
+.if \\n(.t<\\n(Z2 .tm note that figure ``\\$3'' does not fit at column bottom ------------------------
+.ie '\\n(.z'' \{\
+.sp 0.2
+.ne \\n(Z2u
+\\!H\\n(.o
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\n(Z1 \\n(Z2
+\\!P \\$3
+.rs
+.sp \\n(Z2u
+.sp 0.2
+.\}
+.el \{\
+.sp 0.2
+\\!.z3 \\n(Z1 \\n(Z2 "\\$3" \\n(.o
+.sp \\n(Z2u
+.sp 0.2
+.\}
+..
+.de z2
+.nr Z1 \\$1
+.nr Z2 \\$2
+.ie '\\n(.z'' \{\
+.sp 0.2
+.ne \\n(Z2u
+.nr QQ (\\n(.lu-\\$1)/2u
+.po +\\n(QQu
+\\!H\\n(.o
+.br
+.po -\\n(QQu
+.mk QQ
+.nr QQ +0.25v
+\\!V\\n(QQ
+\\!DZ \\n(Z1 \\n(Z2
+\\!P \\$3
+.rs
+.sp \\n(Z2u
+.sp 0.2
+.\}
+.el \{\
+.sp 0.2
+.nr QQ (\\n(.lu-\\$1)/2u+\\n(.ou
+\\!.z3 \\n(Z1 \\n(Z2 "\\$3" \\n(QQu
+.sp \\n(Z2u
+.sp 0.2
+.\}
+..
+.de sz
+.vs \\$1
+.ps \\$1
+..
+.de M
+\f2\\$1\f1\|(\\$2)\\$3
+..
+.de B1
+.br
+.mk Bz
+..
+.de B2
+.br
+.mk By
+.nr D \\n(Byu-\\n(Bzu
+.nr L \\n(.lu+0.2i-\\n(.iu
+\h'-0.1i'\v'-0.7v'\D'l \\nLu 0'\D'l 0 -\\nDu'\D'l -\\nLu 0'\D'l 0 \\nDu'
+.sp -1
+..
+.de []
+.][ \\$1
+..
+.de ][
+.if \\$1>5 .tm Bad arg to []
+.[\\$1
+..
+.de [5 \" tm style
+.FS
+\\*([A, \\f2\\*([T\\f1,
+.ie \\n(TN \\*([M.
+.el Bell Laboratories internal memorandum (\\*([D).
+.RT
+.FE
+..
+.de [0 \" other
+.FS
+.nr [: 0
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \{\
+.nr [: 1
+\\*([Q\c
+.\}
+.if !\\*([A \{\
+.nr [: 1
+\\*([A\c
+.\}
+.if !\\*([T \{\
+.if \\n([:>0 ,
+.nr [: 1
+\f2\\*([T\f1\c
+.\}
+.if !\\*([S , \\*([S\c
+.if !\\*([V , \\*([V\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+.if \\n([:>0 \&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [1
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+\f2\\*([J\f1\c
+.if !\\*([V , vol. \\*([V\c
+.if !\\*([N , no. \\*([N\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [2 \" book
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \f2\\*([T,\f1
+.if !\\*([S \\*([S,
+.if !\\*([V \\*([V,
+.if !\\*([P \{\
+.ie \\n([P>0 pp. \\*([P,
+.el p. \\*([P,
+.\}
+\\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [4 \" report
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+.if !\\*([R \\*([R\c
+.if !\\*([G \& (\\*([G)\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [3 \" article in book
+.FS
+.if !\\*([F .FP \\*([F
+.if !\\*([Q \\*([Q,
+.if !\\*([A \\*([A,
+.if !\\*([T \\*([o\\*([T,\\*([c
+in \f2\\*([B\f1\c
+.if !\\*([E , ed. \\*([E\c
+.if !\\*([S , \\*([S\c
+.if !\\*([V , vol. \\*([V\c
+.if !\\*([P \{\
+.ie \\n([P>0 , pp. \\*([P\c
+.el , p. \\*([P\c
+.\}
+.if !\\*([I , \\*([I\c
+.if !\\*([C , \\*([C\c
+.if !\\*([D , \\*([D\c
+\&.
+.if !\\*([O \\*([O
+.FE
+..
+.de [<
+.]>
+..
+.de ]<
+.SH
+References
+.LP
+.de FP
+.\".IP \\\\$1.
+.RZ \\\\$1.
+\\..
+.rm FS FE
+..
+.de [>
+.]>
+..
+.de ]>
+.sp
+..
+.de [-
+.]-
+..
+.de ]-
+.rm [Q [A [T [J [B [E [S [V
+.rm [N [P [I [C [D [O [R [G
+..
+.de FG
+.ds QQ \fB\\$1\\fP:  \\$2
+.ie \w\\*(QQ>\\n(.l \{\
+.in +0.25i
+.ti 0
+\\*(QQ
+.in 0
+.\}
+.el \{\
+.ce
+\\*(QQ
+.\}
+..
+.\" ------------- usenix macros 
+.1C
+.ds CC LPRng - Introduction
+.ll \n(LLu
+.de sz
+.ps \\$1
+.vs \\n(.su*\\n($ru
+.\".bd S B \\n(.su/3u
+..
+.nr $r \n(.v/\n(.s
+.de L
+.if \\n(.$>2 \&\\$3\c
+.ds p# "
+.nr PQ \\n(.f
+.if \\n(PQ>9 .ds p# (
+.ft CW
+.if \\n(.$>0 \\s-\\n(Ls\&\\$1\\f\\*(p#\\n(PQ\\s+\\n(Ls\\$2
+..
+.de NP
+.IP \\n(nP.
+.nr nP \\n(nP+1
+..
+.nf
+.ce 100
+.sz 20
+.B
+LPRng - An Enhanced Printer Spooler
+.sz 14
+Introduction
+.sz 10
+(Beta Release)
+.sp .5v
+.sz 12
+Patrick Powell <papowell@sdsu.edu>
+.AB                     \" abstract
+.PP
+The LPRng software is an enhanced, extended,
+and portable version of the Berkeley LPR software.
+While providing the same general functionality,
+the implementation is completely new and provides support for
+the following features:
+lightweight (no databases needed) lpr, lpc, and lprm programs;
+dynamic redirection of print queues;
+automatic job holding;
+highly verbose diagnostics;
+multiple printers serving a single queue;
+client programs do not need to run SUID root;
+greatly enhanced security checks;
+and
+a greatly improved permission and authorization mechanism.
+.br
+.EA                     \" end abstract, start paper
+.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.SH                     \" (.NH maps to .SH)
+Introduction
+.PP
+Print spooler software is one of the most common and heavily used
+system application programs.
+While printing may appear to be simple on the surface,
+in practice it is complicated by the following problems.
+Each model of printer has a peculiar set of interface
+and format requirements;
+this means that the printer software must be highly configurable
+at the device interface level.
+Next,
+multiple users may want to share the same printer;
+this leads to the need for a spooling system with the
+associated problems of priority and fair use.
+Printers are notorious for failing at the most inopportune times;
+the spooling software needs to report failures
+and to reconfigure or repair the system in a simple manner.
+Finally,
+the software should be portable so that the same software can be
+used on different systems;
+in a network based system this introduces the problems
+of security and authentication.
+.PP
+The LPRng Printer Spooling\*([.Pow95\*(.]
+software is a descendant of the
+4.3 BSD Line Printer Spooler Software (LPR),\*([.Cam94\*(.]
+but has totally redesigned and reimplemented.
+The evolution started in 1986 at the University of Waterloo,
+where the original 4.3 software was modified to support a variety
+of new printers.
+Due to restrictions with the original AT&T and Berkeley software
+license these modifications could not be distributed.
+The problems encountered during this process led to the
+development of the PLP (Public Line Printer) software\*([.Pow95a\*(.]
+and PLP Version 3.0 (PLP3.0) was released in 1988.
+The PLP software architecture was based on the
+the original LPR code,
+but with highly verbose diagnostics and a much more elaborate
+set of administration functions.
+.PP
+From 1988 to 1994 various sites
+and administrators modified and extended the PLP3.0
+software.
+The
+.T plp@iona.ie
+mailing list was formed to distribute and coordinate these changes,
+and in 1994 a major programming effort by
+Justin Mason
+<jmason@iona.ie>
+restructured the PLP3.0 code,
+integrated the majority of extensions,
+.ne 2
+and PLP4.0 was released in 1995.
+.PP
+Problems with the PLP software were discussed in the
+.T plp@iona.ie
+mailing list as well as various USENIX newsgroups.
+Given the current network security issues,
+client/server based applications,
+and growing administration problems,
+the PLP4.0 software needed extensive revisions.
+There was general agreement on the following design goals.
+.PP
+First,
+run time diagnostics and detailed error reporting were essential
+and should be the highest priority.
+When problems occur
+users and administrators must quickly diagnose the causes,
+and obtaining information is essential.
+Next,
+the user interface to the printing facilities should change as little as
+possible.
+This would allow a gradual evolution from LPR and PLP
+to the new software with as least surprises
+to the users as possible.
+However,
+the administrative interface could change,
+and many improvements and changes were suggested.
+It was essential that the new software be compatible
+at the network interface level
+with other implementations of the LPR spooling software. 
+While in 1990 the
+RFC1179 \- Line Printer Daemon Protocol\*([.McL90\*(.]
+documenting the network protocol to be used to transfer
+print jobs and
+status information between line printer spooling programs
+was published,
+many of the existing implementations do not conform
+to RFC1179 or have made extensions to the RFC.
+The existing LPR and PLP software uses a set of
+.I filter
+programs to interface to various printers.
+A major concern of administrators was that these
+.I vintage
+filter programs should be usable with the new software.
+Finally,
+the long list of security,
+administration,
+and networking problems should be eliminated if at all possible. 
+.PP
+These considerations led to the
+design and development of the LPRng software.
+While it is a totally new design and implementation of spooling software,
+it uses routines and support code from the
+Free Software Foundation GNU Project,
+and is distributed under the GNU Copyleft License.\*([.GNU91\*(.]
+The LPRng software was intentionally designed to use as few
+non-portable or non-standard Operating System facilities as possible,
+or to use them in a highly controlled and portable manner.
+The use of the GNU utilities such as
+.I autoconf
+and
+.I Gnumake
+allow operating system dependent versions of various support routines
+to be selected at compile time in an automatic manner.
+.PP
+The following sections discuss the overall architecture of the
+LPRng software,
+and then deal with the major components.
+The emphasis of this discussion are the added functionality or
+differences of LPRng.
+The LPRng configuration information,
+extensions to the printcap database,
+and changes to the
+.T lpr
+and other client programs is discussed.
+The operation of the job spool queues and the new algorithm used
+for job printing is then covered,
+together with a description of the filter interface mechanism.
+Security and associated problems with SETUID ROOT
+programs is briefly discussed,
+and the summary at the end lists some outstanding issues.
+.ne 2i
+.SH
+LPRng Software Architecture
+.PP
+The LPRng software architecture is shown in
+Figure 1.
+.Z
+.F1
+\!.po +0.2i
+.ft CW
+.ps 9
+.nf
+.PS
+.nf
+.\" No blank lines
+smallbht = .375i
+smallbwid = .5i
+mediumbht = .375i
+mediumbwid = .75i
+narrowbht = .25i
+narrowbwid = 1.i
+smallcrad = .25i
+smalleht = .5i
+smallewid = .75i
+.\" define macros
+define smallbox X
+$1: box ht smallbht wid smallbwid $2 X
+define mediumbox X
+$1: box ht mediumbht wid mediumbwid $2 X
+define smallcircle X
+$1: circle radius smallcrad $2 X
+define smallellipse X
+$1: ellipse ht smalleht wid smallewid $2 X
+define narrowbox X
+$1: box ht narrowbht wid narrowbwid $2 X
+.ft CW
+smallellipse(SQ1,"t1@h1")
+"/usr/export/LPD/t1" below at SQ1.s
+smallellipse(SQ2,"t2@h2") with .c at SQ1.c+(2.0,0)
+T1: "/usr/spool/t2" below at SQ2.s
+"control.t2" below at T1-(0,.125)
+smallcircle(JB,"file") with .c at SQ1.c-(1.25,0)
+narrowbox(JB1A,"cfA003h1") with .c at SQ1.c-(0.0,.75)
+narrowbox(JB1AD1,"dfA003h1") with .n at JB1A.s+(.25,0)
+narrowbox(JB1AD2,"dfB003h1") with .n at JB1AD1.s
+narrowbox(JB1B,"cfA004h1") with .n at (JB1A.s.x,JB1AD2.s.y-.25)
+narrowbox(JB1BD1,"dfA004h1") with .n at JB1B.s+(.25,0)
+narrowbox(JB2A,"cfA001h1") with .c at SQ2.c-(0.0,.75)
+narrowbox(JB2AD1,"dfA001h1") with .n at JB2A.s+(.25,0)
+"hfA001h1" below at JB2AD1.s
+narrowbox(JB2B,"cfA006h2.com") with .n at (JB2A.s.x,JB2AD1.s.y-.375)
+narrowbox(JB2BD1,"dfA006h2.com") with .n at JB2B.s+(.25,0)
+smallbox(LPD1,"LPD") with .s at SQ1.n+(0,.5i)
+smallbox(LPD2,"LPD") with .s at SQ2.n+(0,.5i)
+smallbox(LPR,"LPR") with .s at JB.n+(.25,.5i)
+arrow from LPD1.s-(0,.125) to SQ1.n+(0,.125)
+arrow from LPD2.s-(0,.125) to SQ2.n+(0,.125)
+arrow from JB.c to LPR.s-(0,.125) chop smallcrad+.0625 chop 0
+arrow dashed from LPR.e+(.125,0) to LPD1.w-(.125,0)
+arrow dashed from LPD1.e+(.125,0) to LPD2.w-(.125,0)
+smallbox(LPQ,"LPQ") with .s at LPD1.n+(0.0,.5i)
+smallbox(LPRM,"LPRM") with .e at LPQ.w+(-.25,0)
+smallbox(LPC,"LPC") with .w at LPQ.e+(.5,0)
+arrow dashed from LPQ.s-(0,.125) to LPD1.n+(0,.125)
+arrow dashed from LPRM.s-(0,.125) to LPD1.n+(0,.125)
+arrow dashed from LPC.s-(0,.125) to LPD1.ne+(0,.125)
+arrow dashed from LPC.s-(0,.125) to LPD2.nw+(0,.125)
+mediumbox(SUB,"t2 server" "(LPD)") with .w at LPD2.e+(.5,.75)
+.R
+"Filters" ljust at SUB.e+(.125,0)
+.ft CW
+mediumbox(OF,"of") with .nw at SUB.se+(.0,-.25)
+mediumbox(BP,"bp") with .n at OF.s+(.0,-.25)
+mediumbox(IF,"if") with .n at BP.s+(.0,-.25)
+arrow from LPD2.ne to SUB.sw
+mediumbox(PR,"lp" "(/dev/lp)") with .n at IF.s+(0.0,-.5)
+A: move to (SUB.se.x+.125,OF.n.y+.125)
+arrow dotted from SUB.se to A to (A.x,PR.n.y)
+narrowbox(CONFIG,"config" dotted) with .n at JB.s+(0.0,-.5)
+narrowbox(PC,"printcap" dotted) with .n at CONFIG.s+(0.0,-.125)
+narrowbox(PERMS,"permissions" dotted) with .n at PC.s+(0.0,-.125)
+.R
+"Databases" above at CONFIG.n+(0,.125)
+.PE
+.ps \n(PS
+\!.po -0.2i
+.FG "Figure 1" "LPRng Spooling Software Architecture
+.ZZ
+While LPRng is similar in structure to the Berkeley LPR software,
+it differs in many important details.
+The dashed lines indicated TCP/IP based communication between two programs;
+solid lines represent access to files
+or directories.
+Boxes with dotted outlines represent databases that may be accessed by
+all programs,
+either as files or by using network facilities.
+The user programs such as
+the print spooler
+.T lpr ,
+the status reporter
+.T lpq ,
+the job remover 
+.T lprm ,
+and the control program
+.T lpc
+are client programs which connect to one or more
+.T lpd
+server processes using TCP/IP.
+After validation and authentication
+the servers carry out requested activities
+on files and/or provide status information.
+The
+.I configuration
+and
+.I printcap
+databases provide the information needed by both server and client
+programs.
+While clients do not need access to the printcap database,
+in many cases a
+.I runt
+database is useful for providing printer configuration information.
+.PP
+As in the LPR software,
+the
+.T lpd
+server manages one or more spool queues where
+print jobs are stored.
+These are are implemented as directories
+in a file system.
+A print job consists of a control file,
+which contains user information and printing options,
+and data files which contain the actual information to be printed.
+A spool queue can be a
+.I bounce
+or
+.I forwarding
+queue,
+which temporarily stores print jobs before they are
+transferred to another queue,
+or a
+.I print
+queue which has an associated printer.
+.PP
+Operation of a
+spool queues is controlled by information
+in the spool queue printcap entry and
+the printer control file in the spool directory;
+individual print job
+may also have a job control file as well.
+.if \nt>0 .so Intro.f2
+.PP
+Jobs are submitted to the 
+.T lpd
+server by the
+.T lpr
+program which transfers the job
+over a TCP/IP connection.
+The
+.T lpd
+server then forwards the job to another server
+or print it.
+The
+.T lpq
+program requests and prints job status information,
+and the
+.T lprm
+program removes jobs from the spool queue.
+The LPRng software uses a
+.I permissions
+database
+and the printcap information to determine if a user is authorized
+to use a facility;
+authorization can be based on originating host,
+user name,
+and a variety of other attributes.
+.PP
+After a job is placed in a print queue,
+.T lpd
+creates a server process to manage the printing operations.
+This server process then creates the necessary
+filter processes which interface to the printer hardware.
+The data files are passed through the filters to the
+actual printer.
+.if \nt=0 .so Intro.f2
+.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.SH
+Configuration Information
+.PP
+Configuration information is used by both the
+LPRng clients and the
+.T lpd
+server.
+The configuration information controls the network behavior
+of the programs,
+and provides a set of default for commonly specified system information.
+Compile time defaults can be overridden by values read from
+a configuration file,
+whose format is shown in Figure 2.
+.PP
+In all LPRng database files
+leading whitespace,
+blank lines,
+and lines whose first non-whitespace character is
+a
+.T #
+are treated as comments and ignored;
+a
+.T \e
+as the last character of a non-comment line will
+logically continue this line to the next line,
+replacing the
+.T \e
+with one or more spaces.
+.PP
+Each line of the configuration file
+has a configuration variable and its value.
+The
+.T client_configuration_file
+and
+.T server_configuration_file
+values are used only at startup and initialization,
+and specify the configuration files for the LPRng client and
+.T lpd
+server programs.
+Each of the configuration files is read in sequence
+and variable values are updated as the files are read.
+.PP
+Much of the configuration information
+provides site dependent information
+or allows configuration for testing.
+The
+.T default_printer
+and
+\&\f(CWdefault_
+host\fP
+variables set the default printer and host to be used by client software;
+the
+.T %h
+and
+.T %H
+strings are replaced with the
+short or fully qualified domain name
+of the host on which the software is running.
+The
+\&\f(CWdefault_
+banner_printer\fP
+sets the default banner printing program to be used by
+the
+.T lpd
+server;
+the
+.T lockfile
+and
+.T logfile
+are used by the
+.T lpd
+server to prevent multiple servers from running and
+to record
+.T lpd
+logging information.
+.PP
+The
+.T lpd_port
+variable specifies the TCP/IP port on which the
+.T lpd
+server listens for client requests.
+In production versions this is usually 515 (the
+.T printer
+alias in the network service database);
+by setting it to some other port a test version can be run in parallel with
+production software.
+.PP
+The
+.T originate_port 
+value specifies a range of TCP/IP port numbers for originating connections.
+RFC1179 specifies that these connections should originate from port 721 to 731
+inclusive;
+in most UNIX environments these are
+.I privileged
+ports and cannot be used unless the program's
+effective UID is ROOT (0).
+On a UNIX system,
+if the client software is not SETUID ROOT,
+then only the ROOT user can successfully bind to a
+privileged port.
+See Security Considerations
+for details on problems this may expose.
+The
+.T user
+and
+.T group
+entries specify the effective user and group IDs
+to be used by the
+.T lpd
+server.
+For this to be effective,
+the
+.T lpd
+server must be SUID root or be started by a root process;
+see Security Considerations for details.
+.PP
+The
+.T printcap_path,
+.T lpd_printcap_path,
+and
+.T printer_perms
+configuration information
+specifies where database information will be found.
+All programs use the
+.T printcap_path,
+and
+.T printer_perms
+information;
+the
+.T lpd
+server will use the
+.T lpd_printcap_path
+information after the
+.T printcap_path
+informaiton.
+The
+.T use_info_cache
+option allows the
+.T lpd
+server to read the information once at startup
+and then use a cached copy of this information,
+as does the
+.T inet.d
+server.
+If 
+.T lpd
+receives a SIGHUP signal it rereads the database information.
+Finally,
+it is possible to use the
+.T include
+facility to read additional configuration files.
+This facility may be removed in later releases of the LPRng software.
+.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.SH
+Printcap Information
+.PP
+Entries in the
+.T printcap
+database define spool queues and their configuration available
+to the LPRng software.
+Figures 3a and 3b
+show a set of client and server
+printcap database entries.
+Leading whitespace,
+blank lines,
+and lines whose first character is
+.T `#'
+are ignored.
+For compatibility with the historical LPR printcap format,
+.T \e
+at the end of a line appends the next line to the current line.
+.F1
+.DS
+.ft CW
+# Client Printcap Database
+# printer p1@'local host'
+p1
+# remote printer
+p2
+  |full|double|rotate
+  |twosided|XDR Line Printer
+  :lp=p2@host
+# remote printer alternative
+p3:rp=p3:rm=host
+# connect to port 2000
+p4:2000%host
+# all entry (lpq -a)
+all:all=p1,p2,p3
+.DE
+.FG "Figure 3a" "Client Printcap Examples
+.F2
+.PP
+A printcap entry consists of a primary name
+followed by an optional set of aliases,
+followed by an optional set of variable tag names and values.
+The primary name is the name by which the printer is referred to in
+error messages and status information.
+The
+.T |
+separator starts an alias entry
+and the
+.T :
+separator starts an variable entry;
+entries extend to the end of line or the next separator character;
+leading and trailing in each entry whitespace is ignored.
+.PP
+The LPRng
+client programs need only the 
+.T lpd
+server host name and target printer on the server.
+This can be specified on the command line using the
+.T `-Pprinter'
+or
+.T `-Pprinter@host'
+option;
+if no default is specified in the
+configuration information the local host is the default server host.
+In Figure 3a,
+the simple printcap entry
+.T p1
+means printer
+.T p1
+on the default host;
+entry
+.T p2
+has has two aliases,
+the last of which is really a comment
+and will be used when displaying status information.
+.PP
+The
+.T lp
+(line printer)
+tag specifies the printer device or host.
+The form
+.T lp=printer@host
+is
+.T printer
+on
+.T host;
+the form
+.T lp=printer@host%2000
+indicates the
+.T lpd
+server is available on port 2000.
+This last form is extremely useful when running multiple versions
+of spooler software,
+and for connecting to network based printers with specialized needs.
+A file pathname such as
+\&\f(CWlp
+=/dev/ttya\fP
+specifies a printer device to be used by the server;
+the form
+.T lp=host%2000
+indicates port 2000 on host is network based printing device.
+.PP
+More printcap information is needed for the
+.T lpd
+server,
+as is shown in Figure 3b.
+Spool queues have printcap entries with a
+.T sd
+(spool directory)
+tag.
+The
+.T tc
+tag (recursively) appends a printcap
+entry to the end of the referencing entry.
+.F1
+.DS
+.sp
+# Server/Client Printcap Database
+# file: /etc/printcap
+# clients see p1 as remote pr
+# server use sd tag to get
+#  /usr/spool/LPD/p1/printcap
+p1
+  :cm=Test Printer 1
+  :sd=/usr/spool/LPD/p1
+  :lp=p1@host
+# second printer,
+p2
+  :sd=/usr/spool/LPD/p2
+  :tc=common
+# common information
+common:
+  :lf=log
+  :rw
+  :of=/tmp/LPD/psof
+  :if=/tmp/LPD/psif
+.sp 1.0
+# Printer specific information
+#   used by server,
+# file: /usr/spool/LPD/\e
+#        p1/printcap
+# Alternately, this information
+# could be part of the
+#   /etc/lpd_printcap file 
+p1
+  # override previous value
+  :lp=/dev/ttya
+  :lf=log
+  :rw
+  :of=/tmp/LPD/psof
+  :if=/tmp/LPD/psif
+# debug
+#   :db=9,remote=10
+# autohold
+#   :ah
+.DE
+.FG "Figure 3b" "Server/Client Printcap Examples
+.F2
+.PP
+The
+.T lpd
+server checks to see if a
+.T printcap
+file is in the spool directory,
+and will read the printcap information from this file,
+overridding existing information.
+This allows a single
+.I master
+printcap database to be
+used by both clients and servers;
+the clients ignore the
+.T sd
+tags and the server gets printer specific information
+from the printcap file in the spool directory.
+.PP
+In addition,
+the
+.T oh
+(options for host) entry can be used to specify that the
+printcap entry is used only by a host whose IP address
+matches the IP address of the entry.
+For example,
+if
+.T oh=dickory.sdsu.edu ,
+then only hosts with the same IP address as
+.T dickory.sdsu.edu
+would use the printcap entry.
+By using the
+.T oh
+entry in the server printcap entry a single printcap database file
+can be used.
+.PP
+A major administration problem
+is the distribution of printcap information.
+One solution is to use a network database such as
+Sun Microsystems NIS,
+HESIOD,
+Sybase,
+etc.
+Rather than build in a specific database access method
+the LPRng software uses the concept of
+.I "database filters"
+to access the information.
+In Figure 2,
+the
+configuration
+.T printcap_path
+value
+.T "|/tmp/LPD/dbserver"
+specifies using a filter program to get printcap information.
+.PP
+The filter program is started by the client
+or server process and
+a string containing the name of the desired printcap
+entry is sent to the filter's
+.T stdin
+port;
+the returned printcap information is read from the filter's
+.T stdout
+port.
+By convention,
+a
+.T all
+request
+returns either all the available printcap entries,
+or an
+.T all
+printcap entry whose
+.T all
+tag contains a list of available printers.
+.ds S_ F4
+.if \nt>0 .so Intro.f4
+.PP
+The Sun NIS database can be access by using a simple shell
+script and the
+.T ypmatch
+program;
+HESIOD,
+DBII,
+Sybase,
+and other databases can be supported in the same manner.
+.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.SH
+Job Submission
+.PP
+The
+.T lpr
+client program submits jobs to the
+.T lpd
+server by simply using a TCP/IP connection and
+sending the files to the server.
+The only information the client needs is the
+printer and hostname,
+and can run as a user application.
+.PP
+If the printer output is piped
+to the
+.T lpr
+client,
+then RFC1179 allows the output to be directly copied from the
+client to the server by using the
+.T "lpr -k"
+(for seKure) option.
+While LPRng supports this option,
+many other LPR server implementations are defective
+or do not support this capability.
+This is useful when creating large jobs,
+or there is are security related problems
+with creating a temporary file on the client host.
+.if \nt=0 .so Intro.f4
+.PP
+The LPRng clients can run as ordinary user processes;
+eliminates any problems with unauthorized
+access to files,
+as the client has no permission except those of the user.
+.ds S_ F5
+.if \nt>0 .so Intro.f5
+.PP
+However,
+for the
+.T lpr
+client to be compatible with
+.I vintage
+LPR spooling software (i.e.- SUN Microsystems),
+it must originate a connection from a
+.I privileged
+port.
+For this reason,
+when run as a SETUID ROOT
+program,
+after making a connection to the 
+the server,
+the
+.T lpr
+client uses
+.M setuid 2
+to drop the root permissions,
+and operates as an ordinary user program.
+.PP
+Several of the
+.I vintage
+.T lpr
+options such as
+the
+.T `-s'
+(use symbolic links)
+and
+.T `-r'
+options
+(remove on printing)
+are not supported;
+the
+symbolic link option has no effect as files are transferred directly
+to the server,
+and the remove option has caused more than one user to
+accidentaly delete the files that he wanted printed!
+.SH
+Permissions and Authorization Checking
+.PP
+One of the requirements of any printer spooling system
+is to deny access to unauthorized users and to record accounting
+information for authorized users.
+The LPRng software uses a rather elaborate permissions
+and authorization mechanism,
+similar to the ones used by
+computer network firewalls.
+.if \nt=0 .so Intro.f5
+.PP
+Since all spooling operations are carried out by the
+.T lpd
+server,
+it is the only process that needs to perform permissions checks.
+Permissions
+are checked when a connection is made to
+the server,
+and before the server performs and action or provides information
+requested by the various client programs.
+In addition,
+the server checks job permissions before it prints a job as well
+as when the job is submitted.
+This allows
+NFS based printer spooler software,
+which copies control and data files directly to a spool directory,
+to be used with the LPRng software.
+See the Security Considerations section for a discussion of problems
+related to allowing this type of activity.
+.PP
+Each request for service has a set of attributes and values;
+a list of these attributes is shown in Figure 4.
+Figure 5 shows a sample permissions database.
+Each line in the database consists of a
+match result and a list of attribute names and match patterns.
+Permissions checking is done by scanning the database in order,
+checking each line for a match.
+If all the entries on line match,
+then the result is the match result
+for the line or the current default.
+Note that each entry can have several alternate patterns;
+these patterns are tried in order until a match is found.
+.PP
+The
+.T default_permission
+configuration variable specifies an initial (default)
+permission database entry;
+additional permission databases are specified by the
+.T printer_perms_path
+configuration variable.
+When checking permissions for a spool queue
+with printcap entry,
+the
+.T xu
+printcap tag provides an additional set of databases to
+be searched as well.
+One of the database entries can be a
+.I filter ,
+which is invoked with the
+.I filter_options
+specified in the configuration database,
+and has the name of the printer written to its standard input.
+The filter options include the print job user name,
+which can be used to search a database to determine if the user
+has permission to access a file.
+The filter output is used as an additional permission file for permissions
+checking.
+.PP
+If no match is found after searching all specified databases
+then the last specified default permission will be used.
+.PP
+Permission attributes are treated as string,
+integer,
+or IP address values.
+The string patterns are based on the simple
+.T glob
+patterns of the Bourne and C shells,
+and use case insensitive matching with only the
+.T *
+metacharacter.
+For example,
+the pattern
+.T  A*b
+will match
+.T Ab ,
+and
+.T AthisB .
+IP address patterns are an address (ADDR) followed by an optional
+netmask (NM) which defaults to 255.255.255.255;
+the match succeeds if
+(using C language notation)
+.T (IP^ADDR)&NM
+is zero.
+For example,
+the pattern
+.T 130.191.163.0
+.T /
+.T 255.255.255.0
+matches all of the addresses in the
+.T 130.191.163.0 
+subnet range.
+The netmask can also be specified by the number of most significant
+non-zero bits.
+For example,
+.T 130.191.163.0\&/255.255.255.0
+and
+.T 130.191.163.0/24
+are the same address/mask pair.
+Number patters are a low to (optional) high integer range.
+.PP
+The special pattern
+\fIchar\fP\f(CW=
+pattern\fP
+matches the
+.I char
+line in the job control file against pattern.
+For example,
+.T "C=A*,B*,C*"
+will check the
+.I C
+(class) information line for a string starting with
+A, B, or C.
+The special pattern
+.I NULL
+matches missing or no information;
+for example
+the permissions entry
+.ft CW
+ALLOW
+SERVICE=R,P
+USER=NULL,*
+.R
+allows anonymous job spooling and printing.
+.SH
+Spool Queues and Job Files
+.PP
+The main activity of the
+.T lpd
+server is centered on
+managing print jobs in the spool queues.
+A print job consists of a control file,
+containing user and other information,
+and data files containing the information to be printed.
+The control file format is
+specified by
+.T RFC1179 ;
+a sample job control file is shown in Figure 6.
+Control file names have the format
+.T cfXnnnHOST ,
+where X is a letter,
+.T nnn
+is a 3 digit job number,
+and
+.T HOST
+is a host identifier.
+Data files names have the format
+.T dfXnnnHOST ,
+where X is a letter,
+and 
+.T nnn
+and
+.T HOST
+are identical to the corresponding control file.
+.F1
+.DS
+Htaco.sdsu.edu
+Ppapowell
+J(stdin)
+CA
+Lpapowell
+Qt1
+fdfA917taco.sdsu.edu
+N(stdin)
+UdfA917taco.sdsu.edu
+.DE
+.FG "Figure 6" "Job Control File
+.F2
+.PP
+Control file
+lines starting with an upper case letter provide information and
+those starting with lower case letters 
+specify a format and a data file to be printed with the format.
+For example,
+the
+.T P
+(person)
+and
+.T H
+(host)
+lines give the originating user and host name;
+the
+.T I
+(indent)
+and
+.T L
+(banner name)
+are used when printing the job.
+.PP
+The LPRng software extends the basic RFC1179 control file entries 
+by adding
+.T Z
+(output filters options)
+and
+.T Q
+(original queue).
+The value of these options are passed to the filters
+that format and print the data files.
+For example,
+Figure 3a shows an example of a printcap entry (p2)
+with several aliases.
+The
+.T lpr
+command
+\f(CWlpr -Q -Pdouble -Zheavy_paper
+will create a control file with the
+.T Qdouble
+and
+.T Zheavy_paper
+entries and sends it to the p2 printer.
+The output printing can use the
+.T Q
+and
+.T Z
+entries to select various paper and format options.
+.SH
+LPD Server Operations
+.PP
+The
+.T lpd
+server creates
+.I "queue server"
+process for each spool queue,
+and then waits for connections from clients.
+Each time a request arrives the server will
+create a new process to handle the requests.
+The
+.T max_servers_active
+configuration variable can be used to limit the
+number of active servers.
+The queue server process uses the printcap entry
+information and a set of control files in the
+spool directory to control its activities and report its actions
+(Figure 1).
+In the discussion below,
+.I printer
+is stands for the primary printer name;
+all files are in the spool directory unless
+otherwise indicated.
+.PP
+The
+Server lock file (\fIprinter\fP)
+is used to ensure that only one server
+process is active at a time.
+The spool control file (\f(CWcontrol.\fP\fIprinter\fP)
+has the format shown in Figure 7a,
+and controls one or more of the spool queue related activities.
+Entries in this file
+override defaults and values in the printcap database.
+Note: the information shown in this file
+may not be present at all times.
+.PP
+The control file
+.T spooling_disabled
+and
+\&\f(CWprinting_
+disabled\fP
+entries disable spooling to the queue
+and printing from the queue respectively.
+The
+.T redirect
+entry causes the server
+to transfer all spool jobs to the
+specified remote printer.
+When
+.T autohold
+is enabled,
+the server will not process a jobs until it is
+released by a request from the
+.T lpc
+program.
+The printcap
+.T ah
+flag can be used to set autohold on by default.
+.F1
+.DS
+printing_disabled 0
+spooling_disabled 1
+debug 10,remote=5,log=/tmp/log
+redirect  p3@mentor
+autohold  off
+class     A,B
+.DE
+.FG "Figure 7a" "Spool Control File
+.F2
+.PP
+The
+.T class
+entry restricts the printable jobs to the specified class.
+This facility allows special forms to be mounted on a printer
+and only jobs which need them to be printed.
+The special pattern
+\fIchar\f(CW=patterns
+.R
+restricts printing to jobs with a control file line
+starting with
+.I char
+which matches
+pattern.
+For example,
+.T P=accounting
+could be used to restrict printing to jobs from the
+.T accounting
+user.
+.PP
+The
+.T debug
+entry is a diagnostic and testing aid.
+The set of options are used used by the server
+to enable or disable specific testing functions.
+For example,
+\&\f(CW10,remote=5,log=
+/tmp/log\fP
+.R
+specifies a general debugging level of 10,
+setting the remote flag to 5,
+and logging to the
+.T /tmp/log
+file.
+.PP
+The
+.T lpc
+(line printer control)
+program is used to request the
+.T lpd
+server to change the spool control file
+values and take other actions,
+such as starting or stopping server processes.
+The
+.T lpc
+program can also request
+(brutal) spool server process termination,
+and (gentle) restarting of spooling activities.
+.PP
+The spool server process scans the spool queue,
+ordering jobs to be serviced in a first-in,
+first-out order within priority classes.
+Class A is the lowest (default) priority,
+and Z is the highest.
+When a job is selected for for servicing,
+the spool server forks a
+subserver process to carry out the actual work..
+.PP
+The reason for using a subserver process
+for per job servicing
+is based on experiences with a variety of 
+UNIX implementations.
+Some of these implementations have
+.I "memory leaks"
+or
+.I "file descriptor leaks"
+associated with various database and networking routines;
+each time a process uses these routines
+they open a new file descriptor or allocate some temporary storage.
+Unfortunately,
+these descriptors are never closed the descriptors or
+reclaim the storage.
+These defective functions are
+.I firewalled
+in a subserver process,
+which only exists while a particular job is processed.
+Note that the same problems exist in the
+.T lpd
+server,
+which also takes care to isolate these actions in a
+subserver process.
+.F1
+.DS
+active     2743
+hold       1
+priority   0x873486
+remove     1
+redirect   p4@mentor
+error      Printer timed out
+.DE
+.FG "Figure 7b" "Job Hold File
+.F2
+.PP
+When a job is selected for service,
+the subserver process creates a
+job hold file
+to record information;
+job
+.T cfA001mentor  
+will have hold file
+.T hfA001mentor  .
+The hold file has the format shown in Figure 7b.
+.PP
+The
+.T active
+entry records the process ID of the subserver process,
+and indicates that the job is active.
+A non-zero hold entry indicates that the
+job is being held by administrative actions;
+a hold value of 0 allows
+a job to be printed.
+The 
+.T lpc
+.I hold
+and 
+.I release
+commands can be used to hold and release jobs.
+.PP
+The
+.T priority
+field specifies an additional level of job priority;
+jobs with non-zero priority fields are
+serviced before jobs with 0 fields;
+the
+.T lpc
+.I topq
+command updates the priority value.
+.PP
+The
+.T redirect
+entry
+supplements the
+spool queue
+.T redirect
+information.
+This entry allows individual jobs
+to be moved to another spool queue.
+The
+.T lpc
+.I move
+command updates the redirect value.
+.PP
+The
+.T remove
+and
+.T error
+entries are used to solve a problem with defective
+or misconfigured printing software.
+After a job is serviced
+its files are removed from the spool directory.
+However,
+sometimes due to accident or intent,
+the files cannot be deleted,
+resulting in the job being endlessly printed and
+preventing normal operations.
+When a job is serviced,
+the job hold file is created and written in the spool directory;
+if the hold file cannot be modified the job is not serviced.
+After the job has been serviced
+the
+.T remove
+field is set to a non-zero value;
+this prevents the job from being reprinted,
+and the
+.T error
+field records any error conditions that might
+inhibit retrying servicing the job.
+This information is displayed by the
+.T lpq
+(line printer queue) program.
+After the job files have been successful removed,
+the server then removes the job hold file.
+.PP
+A
+.I bounce
+queue is used to temporarily hold jobs until they
+can be forwarded to a remote printer.
+This is useful when sending jobs to a network printer.
+The LPRng software
+.T lpr
+and
+.T lpd
+programs use the same algorithm to check file permissions
+and accessibility when sending jobs to a remote printer.
+Normally,
+data files are not modified when forwarding,
+but if the printcap
+.T bq=destsystem
+flag is set and there is an appropriate format filter,
+the data files will be processed by the filter before transfering
+to the destination system.
+Note that for correct operation,
+the printcap lp flag should be set to the name/host combination
+of the bounce queue, i.e.-
+.ds S_ F8A
+.if \nt>0 .so Intro.f8a
+.br
+.T "bqname:lp=bqname@host
+.br
+.T "  :bq=destq@host"
+.br
+.T "  :sd=/var/...
+.br
+.T "  :if=/if_filter
+.SH
+Printing Algorithm
+.PP
+On the surface,
+dealing with the printer hardware should be quite simple:
+the printer device is opened,
+the job data files are sent to the device,
+and the printing device is then closed.
+The actual algorithm used by the
+.T lpd
+server for printing a job is rather complex,
+in order to deal with the following problems.
+.IP 1.
+Each printer usually has specific requirements for
+connection and initialization,
+not to mention the actual transmission of data.
+.IP 2.
+If the connection to the printer is a serial line,
+.M stty 1
+(or a similar function) must set the speed,
+format,
+and other characteristics.
+When a serial line is closed and reopened
+the line characteristics may be reset to some default value,
+requiring the line to be held open throughout the printing process.
+.IP 3
+The effects of the failure printing a job
+job should be localized to that job.
+.if \nt>0 .ne 2i
+.ds S_ F8B
+.if \nt>0 .so Intro.f8b
+.IP 4
+Different types of output such as raster plots,
+PostScript files,
+text files,
+etc.,
+may require different handling when printing.
+This can be very device specific.
+.IP 5
+Multiple users may use the same printer;
+jobs need to be carefully separated,
+banner pages provided,
+and other administrative functions performed.
+.IP 6
+Administrators have a strong desire to record the printer usage
+so that users can be billed appropriately.
+.IP 7
+Some serial line devices must be opened in a
+.I nonblocking
+mode so that configuration operations can be performed.
+.PP
+In order to handle printer specific problems,
+each printer has a set of filters or support programs
+which provide support for specific operations.
+For example
+the
+.T of
+filter will print banners,
+page separators,
+and other high level queue control functions.
+Files whose print format is the (lower case) character
+.T ?
+will be printed using a
+.T ?f
+filter;
+the programs corresponding to each format
+are found in the printcap file.
+.LP
+The algorithm used by LPRng is shown in Figure 8.
+It is similar to the original Berkeley algorithm,
+but not identical.
+Names such as
+.T `of'
+refer to entries in the printcap database and
+.T OF
+is a filter process created from the
+.T `of'
+information;
+.T "OF = filter('of') -> LP"
+means create the OF filter from the
+.T of
+information in the printcap file,
+and send it output to the
+.T LP
+filter or device.
+.br
+.PP
+While the algorithm used by LPRng is similar to the
+original Berkeley LPR algorithm,
+there are some subtle differences.
+Before the job is printed,
+it is checked for the formats it uses.
+If there is no filter available for a data file
+the job is not printed and only an error message is generated.
+.ds S_ F8
+.if \nt=0 .so Intro.f8
+.ds S_ F8c
+.if \nt>0 .so Intro.f8c
+.PP
+The printing device is opened and closed for each print job.
+This eliminates a set of problems of printer failure;
+when various network and other printers will fail printing a file,
+they will not work correctly until reset
+by a network reconnection or a device open.
+In addition,
+the
+.T 'nb'
+printcap entry forces a
+.I nonblocking
+open to be done on a device.
+.PP
+The
+.T as
+and
+.T ae
+printcap
+entries specify a filter or format to be used to record accounting
+information at the beginning or end of a job respectively,
+and the
+.T af
+printcap entry specifies the accounting file where accounting information
+should be sent.
+For example,
+for a 230 byte long job spooled to printer
+.T p1
+by
+.T john
+on
+.T pc1
+the entry
+.T "as=start $P $u $H $b"
+will write 
+.ft CW
+start p1 john pc1 230
+.R
+in the accounting file.
+The entry
+.T "as=|/usr/local/psaccnt start"
+will run the
+.T psaccnt
+program,
+with the additional options specified by the
+.T filter_options
+configuration variable and waits for it to terminate.
+If the program terminates with a non-zero error status
+then the job will not be printed.
+Any error message printed by the program on its stderr output
+will be placed in the log file.
+The program stdout will be connected directly to the printer device
+or filter specified by the
+.T lp
+field.
+This allows any specialized probing of the printer to be done by the
+accounting program.
+The
+.T ae
+field specifies the string or filter to be used at the end of a job.
+Similar action is taken at the end of a job
+using the
+.T ae
+printcap entry.
+.PP
+In addition to the accounting done by the
+.T lpd
+program,
+filters can also do accounting and write their results to the accounting file.
+By convention,
+the name of this file will be passed to the filter,
+and FD 3 will be connected to the file.
+.PP
+In addition to these file and program based facilities,
+if the accounting file has the form
+.T af
+.T =host%port
+then it is assumed to specify a host and port for a remote accounting server.
+The
+.T lpd
+program will make a connection to the specified host and port,
+and then send the
+.T as
+string (with expanded options) to the server.
+If the
+.T accounting_check
+flag is TRUE,
+the server will check for a 
+.T ACCEPT
+reply from the server,
+and will reject the job if it is not received.
+The connection will be passed to filters as FD 3,
+and they can also send accounting information to the server.
+.PP
+Each site usually has a different set of needs for banner printing.
+LPRng has removed fancy bannner printing from the
+.T lpd
+server to a separate program.
+The
+.T bp
+(banner printer) program generates a banner for a job;
+users can modify the banner without modify the LPRng software.
+Note that banners can be printed at the beginning and end of jobs.
+All banner output is passed through the
+.T of
+filter if it is present.
+.PP
+LPRng can use
+.I vintage
+filters available for LPR and other spooling systems with a minimum of
+changes.
+The section on Filters discusses how they are accommodated.
+.ds S_ F9
+.if \nt=0 .so Intro.f9
+.PP
+LPRng supports multiple printers serving a single print queue.
+The master print queue has a
+.T sv=server1,server2,...
+(servers) printcap entry listing the server printer names;
+server printers have a corresponding
+.T ss=master
+(serves) printcap entry.
+The master spool queue server process
+creates a subserver process for each slave printer;
+the subserver processes print all of the jobs in the
+server spool queue and then terminate.
+As each of the subservers processes terminates,
+the master select a job from the master spool queue and then
+create a new subserver process.
+This subserver process will copy the job to the server spool queue
+and then process the job.
+Note that print jobs can be directly spooled to slave spool queues,
+allowing users to send jobs to a server printer as well as to the
+master spool queue.
+.ds S_ F9
+.if \nt>0 .so Intro.f9
+.SH
+Filters
+.PP
+The LPRng software makes heavy use of filter processes for
+printing and other operations.
+A filter specification has the form
+.DS
+| [-$] \fIpath options\P
+.DE
+.LP 
+Printcap printer filter entries usually drop the
+.T `|'
+filter indication.
+Filters run with
+EUID and RUID
+.I daemon ;
+the ROOT keyword runs EUID ROOT.
+See Security Considerations for details.
+.PP
+The
+.T path
+entry specifies the absolute pathname of an executable file
+and the
+.T options
+are a set of options to invoke the filter with.
+In addition to the user specified options,
+the LPRng software will append the
+configuration variable
+.T "filter_options"
+unless suppressed by the
+.T -$
+flag.
+.PP
+The options are scanned for variable
+substitutions indicated by
+.T $
+characters.
+If
+.I key
+has a non-zero length string value
+.T X ,
+then
+\f(CW$\fIkey\fR expands to \f(CW-\fIkey\f(CWX\fP,
+\f(CW$-\fIkey\fR expands to \f(CWX\fR,
+and
+\f(CW$0\fIkey\fR to \f(CW-\fIkey\fP\0\f(CWX\fR,
+i.e. a space separating the key and value.
+For a printer filter,
+if the data file format is binary
+.T $c
+expands
+.T -c .
+The substitution formats allow the user to
+create interfaces to
+.I vintage
+printer filters
+with a minimum of effort;
+see Figure 9 for an example.
+As a further aid,
+The printcap
+.T bkf
+(backwards filter) flag
+appends a list of options which are
+compatible with most
+.I vintage
+printer filters.
+.PP
+In addition to the command line options
+filters have the
+.T PRINTCAP, 
+.T CONTROL_FILE ,
+and
+.T DATA_FILE
+environment variables set to the
+printcap information,
+control file contents,
+and data file name being printed.
+This allows filters to use information in the
+control file or printcap entries with a minimum
+amount of effort.
+.PP
+By convention filters read input from
+.T stdin ,
+write to
+.T stdout ,
+and
+write errors to
+.T stderr .
+The error output is usually directed to the error logging file for
+the printer.
+Print filters have their current directory set to the printer
+spool directory.
+.SH
+Security Considerations
+.PP
+Security considerations were a major factor in the design of the
+LPRng software.
+Many of the problems center on the following issues.
+.IP 1.
+Users trying to use the printer spooler software to exploit
+bugs in the operating system and gain root access.
+.IP 2.
+Users trying to use the printer spooler software to gain
+unauthorized access to other users files,
+.IP 3.
+Users trying to gain illegal access to printing facilities.
+.IP 4.
+Users trying to avoid accounting procedures.
+.IP 5.
+Denial of service attacks.
+.PP
+The first issue to be dealt with is the problem of ROOT permissions.
+All of the client LPRng programs can run as ordinary users;
+this eliminates a large number of attacks on system security by
+trying to exploit various defects in the system based on
+SUID root programs.
+The LPD server is the only program that absolutely
+needs to run with real UID (RUID) ROOT
+as it uses a
+.I privileged
+TCP/IP port to listen for incoming connections,
+and 
+in most UNIX systems
+.M bind 2
+requires EUID ROOT permissions to bind to a privileged port.
+(It is not recommended that a non-privileged port be used as a
+trojan horse user program can bind to it and impersonate the LPRng software.)
+According to RFC1179
+a connection to a server
+must originate from a (privileged) port in the range
+721-731.
+.PP
+Given this need for ROOT permissions,
+the LPRng code goes to extreme lengths to ensure that only
+the
+.M bind 2
+calls are made with EUID root,
+and that all other operations are done
+either as daemon (server)
+or as user (clients).
+It is strongly recommended that the 
+.T lpd
+program not be SUID root,
+but should started up by the system initialization
+.M rc 4
+scripts or a root user.
+.PP
+It is recommended that all client programs be run
+as user (non privileged) jobs.
+Only files accessible to the user will be read or transferred to the server.
+If a user wants to access a printer that requires
+privileged ports,
+it is a simple matter to create a
+.I bounce
+queue on a server that will forward a job to the remote system.
+.PP
+The
+.T checkpc
+(check printcap) program
+scans the printcap and permissions databases,
+spool queues,
+and
+checks permissions of files and directories.
+If run by ROOT with the
+.T -f
+(fix) flag set,
+it will try to change ownerships,
+create files and/or directories,
+and remove junk or old job files from spool queues.
+This program also has some portability tests built into it,
+and can be used to check that the target system can safely run the LPRng
+software.
+.PP
+Most efforts to circumvent accounting and permissions checks are based
+on forging or impersonation of another user or network host.
+The current version of the LPRng software depends on the various
+system configuration and database utilities to provide
+user authentication and system authentication.
+This is clearly inadequate,
+and a future release of LPRng will support encryption based authentication;
+the KERBEROS and the PGP systems are under active study for possible use.
+The method will be base on using the
+.I filter
+mechanism to invoke a set of authentication programs rather than
+directly incorporating the code into the LPRng software.
+This allows a variety of mechanisms to be used.
+.PP
+One of the arguments for running client programs SUID ROOT
+is that it allows them to connect to the server from a privileged
+port,
+and the information provided will be authenticated in some manner
+by use of the operating system facilities.
+Unfortunately,
+the LPRng software uses various network databases to obtain connecting
+host information;
+by attacking the the system by spoofing database (DNS) server activities,
+it is possible to forge authentication.
+.PP
+The use of NFS exported and mounted spool directories exposes the
+LPRng software to extreme attack.
+One of the assumptions made by most spooling systems is that only
+the
+.I trusted
+spooling software
+or trusted application programs will have write access to the spool directory;
+when the directory is NFS mounted or exported this may no longer be true.
+Several spooling systems operate by writing job control and data files
+into an NFS mounted spool directory.
+By appropriately forging network identification,
+credentials,
+and various RPC calls,
+attackers can create or modify unprotected files in the spooling
+directory.
+The ability to read information in job or other files may also
+give them the ability to launch other forms of attack.
+One of the more malicious denial of service attacks is to create a
+file that cannot be removed or modified;
+the spooler software may end up repeatedly attempting to print the
+file,
+blocking other users from using the spool queue and consuming printer
+resources.
+.PP
+In order to protect the LPRng software from NFS spoofing based attacks,
+the  printcap
+.T "cd=" \fIdirectory\fP
+entry specifies a separate
+.I control
+file directory to be used by
+.T lpd
+for all spool queue files except the job and data files.
+This directory should
+.I not
+be NFS mounted or exported,
+and should reside on the local host file system.
+This directory should be carefully created so as to be accessible
+only by user
+.I daemon .
+Printcap and other information can be safely placed in this
+directory as it cannot be modified by NFS operations.
+.PP
+Avoiding
+printing accounting procedures has long been a
+tradition at educational institutions;
+while minor infringements are usually ignored,
+persistent and blatant offenses are worrisome.
+In addition,
+once an individual discovers a method then it apparently is 
+rapidly copied by others,
+leading to widespread abuse.
+One difficulty faced by administrators is
+determining the resources used by a job.
+As part of the printing algorithm,
+the LPRng software provides a set of
+.I hooks
+to allow the invocation of accounting programs before and after
+the actual job is printed.
+For example,
+most PostScript printers have a
+.I "page count"
+register whose value can be easily read by a simple Postscript Program.
+By reading this before and after a job the total usage can be calculated.
+.PP
+However,
+some students have discovered that by aborting a job in the
+middle of its printing
+or by printing a job that contains information that
+causes the printer to hang and not report the total pages used
+at the end of a job
+they can avoid the normal accounting procedures.
+By recording information
+.I before
+as well as
+.I after
+a job completes such incomplete jobs can be found.
+.PP
+Filters are a major security loophole,
+as most filters are shell scripts and inherit
+shell script vulnerabilities.
+To combat this,
+the LPRng software defaults to running all filters either as the
+user or as
+.I daemon,
+and provides a predefined and limited
+set of environment variables.
+Some network printer filters
+need to open a privileged port and must have root permissions.
+This is a serious vulnerability,
+and the
+.T lp=host%port
+printer specification has been provided to ameliorate this
+problem.
+It has been recommended that filters run as user
+.I nobody ,
+restricting capabilities to an even greater exent,
+and this consideration is under study.
+.PP
+If it is absolutely necessary that a filter execute with ROOT permissions,
+then the adminstrator should install the filter SUID root,
+but only allowing execution by group
+.L daemon .
+For example:
+.DS
+chown root $filter
+chgrp daemon $filter
+chmod 4010 $filter
+.DE
+.PP
+Filters which are actually shell scripts
+are vulnerable to attacks using
+metacharacters in option strings.
+To combat this,
+the LPRng software ruthlessly purges all
+non-alphanumberic,
+whitespace and simple punctuation
+(minus, equal, period, slash, and comma) characters
+from filter options.
+The raw option information is available in the
+PRINTCAP and CONTROL_FILE environment variables.
+Administrators would be wise to examine
+shell based printer filters for similar security
+loopholes.
+.PP
+Deliberate denial of service attacks are almost impossible to avoid.
+However,
+heavy usage of the printer system can produce almost the same symptoms.
+For example,
+when a large number of print jobs are queued it is possible to
+exhaust the spool queue file space.
+The
+printcap
+.T mx
+(maximum job size) entry specifies the maximum job size (in Kbytes)
+to be queued and
+the
+.T mi
+(minimum free space) entry specifies the minimum free space (in Kbytes)
+needed.
+.SH
+Example Printcap Files
+.LP
+The following is a typical set of LPRng printcap files
+that could be used With the psfilter programs.
+We assume we are talking to a HP IV printer, ecepr3,
+it us using a Jetdirect card which allows a direct printer
+connection on port 9100.
+We have installed the filter software as follows:
+.nf
+/usr/local/lib/ - directory
+  psif - IF filter
+  psof - OF filter
+  bannerx -  banner printer
+.LP
+.TP
+Version 1:
+.br
+by default, the psof filter will print a banner using information on the
+short banner line and/or parameters passed by LPRng.
+.DS
+.nf
+.ft CW
+.ta 4n +4n +4n
+.sz 9
+# LPRng printcap files
+# HP LaserJet 4m+
+lw4|lp|HP LaserJet 4M
+# job size information
+  :mx#0
+# spool directory
+  :sd=/usr/spool/cca_4mp:
+# device network address
+  :lp=ecepr3%9100
+  :rw
+# set up status and
+#  accounting files
+  :sf=status
+  :af=acct
+  :lf=log
+# page information size
+  :pl#60:pw#80:
+# you need SHORT BANNER
+# specify the SHORT BANNER
+#  line format
+  :sb
+  :bl=Seq\e: $-'j \e
+    Class\e: \e $-'C \e
+    User\e: $-'n Job\e: $-'J \e
+    Date\e: $-'t
+# turn FF off
+  :sf
+# filters
+  :if=/usr/local/lib/psif
+  :of=/usr/local/lib/psof
+.DE
+.TP
+Version 2:
+.br
+You want to have a special banner, so you specify a BP banner printers  explicitly
+and turn of the psof banner generation.
+Make the following changes to Version 1.
+.LP
+.DS
+.nf
+.ft CW
+.ta 4n +4n +4n
+.sz 9
+REMOVE:
+  :sb (you want full banners)
+ADD:
+  # use new banner printer
+  :bp=/usr/local/lib/bannerx
+CHANGE
+  # pass option to filter to
+  # turn of banner generation and
+  # pass through text
+  :of=/usr/local/lib/psof \
+     -Tbanner=off
+.DE
+.LP
+.TP
+Version 3:
+.br
+Printer is on /dev/ttya serial line. Note: the stty options
+are taken from an actual functioning printer connection and
+should work for HP printer on a serial line).
+Make the following changes to Version 1.
+.LP
+.DS
+.nf
+.ft CW
+.ta 4n +4n +4n
+CHANGE:
+  :lp=/dev/ttya
+ADD:
+  :sy=38400 -echo -crmod \e
+    -raw -oddp -evenp \e
+     pass8 cbreak ixon
+.DE
+.TP
+Version 4:
+you do not want banner pages at all.
+Make the following changes to Version 1.
+.LP
+.DS
+.nf
+.ft CW
+.ta 4n +4n +4n
+# LPRng printcap files
+   ADD:
+   # suppress all header info
+   :sh
+.DE
+.SH
+Summary and Acknowledgments
+.PP
+The LPRng software continues to evolve as users find problems
+and develop new printing requirements. 
+One of the areas to be pursued is the use of encryption for
+end to end authentication of users and print jobs.
+Another is adding interfaces to other network based spooling systems.
+Finally,
+documentation and automated management continues to be pursued.
+.PP
+The network based interfaces for client programs
+makes user developed GUI systems almost trivial to develop.
+PERL scripts and Tkl/Tk based front ends can be developed
+rapidly and with little effort.
+.PP
+The development of the PLP and LPRng software would not have been
+possible without the aid and assistance of literally hundreds of users.
+The main developer of the software was
+.\" OOOOOOOOOHHHHHHHH
+.\" This is TRICKY!!!
+.\" I wondered what it was doing!
+.\"
+.ta \n(.luR
+.de U
+.br
+.ie \w'\\$1'u+\w'\\$2\\$3'u>\\n(.lu \{\
+\\$1
+.if \\nt=0 \&	\\$2\\$3
+.if \\nt>0 \&	\\$2
+.if (\\nt>0) .if (\\w'\\$3'>0)  \&	\\$3
+.\}
+.el \{\
+\\$1	\\$2\\$3
+.br
+.\}
+..
+Patrick Powell
+.T <papowell@
+.T sdsu.edu> ,
+and
+Justin Mason
+.T <jmason@
+.T iona.ie>
+generated the PLP4.0 distribution,
+contributed much of the portability code,
+and organized the
+.T plp@iona.ie
+mailing list.
+Subscribe by sending email to
+.T plp-request@
+.T iona.ie
+with the word
+.T subscribe
+in the body.
+Marty Leisner
+.T <leisner@
+.T sdsp.mc.xerox.com> ,
+Ken Lalonde
+.T <ken@
+.T cs.toronto.edu> ,
+and
+Michael Joosten 
+.T <joost@
+.T ori.cadlab.de>
+performed invaluable portability testing and debugging of the
+LPRng Alpha Minus
+release;
+they discovered and provided fixes for literally hundreds of bugs.
+.PP
+LPRng was based on PLP Release 4.0,
+to which the following people (in alphabetical order) contributed:
+.nf
+.U "Dave Alden" "<alden@math.ohio-state.edu>"
+.U "Julian Anderson" "<jules@comp.vuw.ac.nz>"
+.U "Jan Barte" "<yann@uni-paderborn.de>"
+.U "Baba Z Buehler" "<baba@beckman.uiuc.edu>"
+.U "Lothar Butsch" "<but@unibw-hamburg.de>"
+.U "David M Clarke" "<dmc900@durras.anu.edu.au>"
+.U "Panos Dimakopoulos" "<dimakop@cti.gr>"
+.U "Angus Duggan" "<angus@harlequin.co.uk>"
+.U "Martin Forssen" "<maf@math.chalmers.se>"
+.U "Michael Haardt" "<u31b3hs@POOL.Informatik." "RWTH-Aachen.DE>"
+.U "Eric C Hagberg" "<hagberg@mail.med.cornell.edu>"
+.U "Paul Haldane" "<Paul.Haldane@edinburgh.ac.uk>"
+.U "George Harrach" "<ghharrac@ouray.Denver." "Colorado.EDU>"
+.U "Stefano Ianigro" "<w_stef@unibw-hamburg.de>"
+.U "Helmut Jarausch" "<jarausch@igpm" ".igpm.rwth-aachen.de>"
+.U "Michael Joosten" "<joost@ori.cadlab.de>"
+.U "Stuart Kemp" "<stuart@cs.jcu.edu.au>"
+.U "Hendrik Klompmaker" "<Hendrik.Klompmaker@Beheer." "zod.wau.nl>"
+.U "Rick Martin" "<rickm@cs.umb.edu>"
+.U "Todd C. Miller" "<Todd.Miller@cs.colorado.edu>"
+.U "Corey Minyard" "<minyard@wf-rch.cirr.com>"
+.U "Dorab Patel" "<dorab@twinsun.com>"
+.U "Ed Santiago" "<esm@lanl.gov>"
+.U "Bjarne Steinsbo" "<bjarne@hsr.no>"
+.U "Harlan Stenn" "<harlan@pfcs.com>"
+.U "Julian Turnbull" "<jst@dcs.edinburgh.ac.uk>"
+.U "Bertrand Wallrich" "<Bertrand.Wallrich@loria.fr>"
+.U "Greg Wohletz" "<greg@cs.unlv.edu>"
+.fi
+.BB                     \" biography information for first author
+Patrick Powell
+<papowell@sdsu.edu>
+is faculty in the Department of Computer and Electrical Engineering at
+San Diego State University, San Diego CA 92182, where he teaches
+Computer Networks, Real Time Systems, and Distributed Computing.
+.BE                     \" biography end
+.]<
+.ds [F Pow95
+.]-
+.ds [A Patrick A. Powell
+.ds [T LPRng \- Enanced Printer Spooler Software Reference Manual
+.ds [I Dept. of Electrical and Computer Engineering, San Diego State University
+.ds [C San Diego, CA 92182
+.ds [D 1995
+.ds [O FTP://ftp.iona.ie /pub/LPRng/, FTP:// dickory.sdsu.edu /pub/LPRng/
+.ds [K LPRng
+.nr [T 0
+.nr [A 0
+.nr [O 0
+.][ 2 book
+.ds [F Cam94
+.]-
+.ds [A Ralph Campbell
+.ds [T 4.3BSD Line Printer Spooler Manual
+.ds [R 4.4 Berkeley Software Distribution
+.ds [I Computer Systems Research Group
+.ds [C U.C. Berkeley, Berkeley CA
+.ds [D 1994
+.ds [O USENIX Association and O'Reilly & Associates, Inc.
+.ds [K LPR4
+.ds [L LPR4.4
+.nr [T 0
+.nr [A 0
+.nr [O 1
+.][ 4 tech-report
+.ds [F Pow95a
+.]-
+.ds [A Patrick A. Powell
+.ds [T PLP \- The Public Line Printer Spooler Reference Manual
+.ds [R PLP 4.0 Software Distribution
+.ds [D 1995
+.ds [O FTP://ftp. iona.ie/pub/plp-4.0
+.ds [K PLP4
+.nr [T 0
+.nr [A 0
+.nr [O 0
+.][ 4 tech-report
+.ds [F McL90
+.]-
+.ds [A Leo J. McLaughlin\0III
+.ds [T RFC1179 Line Printer Daemon Protocol
+.ds [I Internet Advisory Board
+.ds [D 1990
+.ds [K RFC1179
+.nr [T 0
+.nr [A 0
+.nr [O 0
+.][ 2 book
+.ds [F GNU91
+.]-
+.ds [A GNU
+.ds [T GNU General Public License
+.ds [I Free Software Foundation, Inc.
+.ds [C 675 Mass. Ave. Cambridge, MA 02139
+.ds [K GNUPL
+.ds [D 1991
+.nr [T 0
+.nr [A 0
+.nr [O 0
+.][ 2 book
+.]>
+.\".EM                     \" last line of paper

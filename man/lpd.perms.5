@@ -1,0 +1,278 @@
+.ds VE LPRng-2.3.12
+.TH LPD.PERMS 5 \*(VE "LPRng"
+.SH NAME
+.nf
+lpd.perms \- permissions control file for the LPRng line printer spooler system
+.fi
+.SH DESCRIPTION
+The file \fBlpd.perms\fR is used to provide permission information for
+the LPRng Printer spooler system.
+Blank lines and all
+characters after a hash sign (``#'') to the end of line are ignored.
+If a hash sign is desired in the
+permission information,
+it should be escaped with a backslash
+(``\\'').
+All other lines
+specify permissions entry and should be of the following form:
+.RS
+ACCEPT [ key = value[,value]* ]*
+.br
+REJECT [ key = value[,value]* ]*
+.br
+DEFAULT ACCEPT
+.br
+DEFAULT REJECT
+.RE
+.PP
+LPD access control is provided by two means:
+the pathnames or programs specified by the
+.I printer_perm_path
+configuration information and the
+printcap
+.B XU
+(check user) entry.
+These entries consist of a list of files separated by
+colons and/or a set of filters.
+For example:
+.ti +5n
+/etc/lpd.perms:|/usr/local/lib/perms
+.LP
+would specify a file and a filter.
+The filter program is invoked with the 
+.I filter_options
+specified in the configuration information,
+and is sent the name of the printer on the filter standard input.
+The filter should respond by writing a list of permissions entries
+on its standard output.
+.PP
+Each LPD service request is check against
+the entries in the permissions file and/or filter response.
+The following is a typical permissions file:
+.RS
+.nf
+.ft CW
+# Set default permissions
+DEFAULT ACCEPT
+# Reject any connections from outside our subnet
+REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
+# Only accept Printing (P) and spooling (LPR) from
+# Engineering Lab or the Dean's office
+REJECT SERVICE=P,R NOT HOST=*.eng.sdsu.edu,dean.sdsu.edu
+# Do not accept forwarded jobs for printing
+REJECT SERVICE=P FORWARD
+# Allow only the administrators control access
+ACCEPT SERVICE=C,M HOST=spooler.eng.sdsu.edu USER=root,papowell
+ACCEPT SERVICE=C,M SERVER USER=root,papowell
+# Allow only the user on the same host who spooled job to remove it
+ACCEPT SERVICE=M SAMEUSER SAMEHOST
+REJECT SERVICE=M,C
+.RE
+.fi
+.sp
+.LP
+Permission checking is done by using a set of keys (or fields)
+with associated values to check for permission.
+The SERVICE key has value P for printing (i.e.- unspooling),
+R for spooling (i.e.- LPR request),
+C and S for printer control and status respectively (i.e.- LPC request),
+M for removal (i.e.- LPRM request),
+Q for queue information (i.e.- LPRM request),
+and so forth.
+The
+.l X
+key indicates the initial connection to the LPD spooler,
+and can be used to control connections from remote systems.
+The
+values of the USER, HOST, and IP keys taken from the control file
+which is being received or checked for permissions.
+The REMOTEUSER, REMOTEHOST and REMOTEIP keys are those either sent
+as part of a command,
+or derived from information about the current network connection.
+Each line of the permissions file is scanned for key names and
+values, and these are matched against the request keys information.
+When all matches on a line are made,
+then search terminates with the specified action (ACCEPT/REJECT).
+If no match is found the default permission value is used.
+The
+DEFAULT key is used to specify the current default permission to
+be used for successful matches or if there is no match after
+scanning the entire permissions database.
+.LP
+The GROUP entry is used to check that the USER name appears in a
+group entry in the system user group database.
+For example,
+GROUP=student*,staff*
+would check to see if any of the group name matching
+student* or staff* have the specified user name in them.
+If a system has the
+I netgroups
+capability,
+a group name starting with a
+\f(CW@\fP
+will be treated as a netgroup name,
+and current user name from the job file will bechecked to see if
+it is in the group.
+Similarly,
+the
+REMOTEGROUP entry will check a remote user name.
+The
+PORT
+entry can be used to ensure that a connection to the server
+orignates from a specified range of ports.
+.LP
+The permissions database is scanned in order of the fixed file entries
+and then by invoking the specified filters for each
+of the permissions lists.
+It is recommended that the filters be placed at the end of the
+permissions lists.
+The user name is one of the parameters passed to the filter,
+and can be used to determine if a user has permissions to print a file.
+.sp
+.nf
+.ne 20v
+.ta \w'Key__________'u +\w'Match_'u +\w'Connect_'u +\w'Job___'u +\w'Job____'u +\w'LPQ__'u +\w'LPRM__'u +\w'LPC'u
+Key	Match	Connect	Job	Job	LPQ	LPRM	LPC
+\0	\0	\0	Spool	Print
+SERVICE	S	'X'	'R'	'P'	'Q'	'M'	'C,S'
+USER	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
+HOST	S	RH	JH	JH	JH	JH	JH
+GROUP	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
+IP	IP	RIP	JIP	JIP	RIP	JIP	JIP
+PORT	N	PORT	PORT	-	PORT	PORT	PORT
+REMOTEUSER	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
+REMOTEHOST	S	RH	RH	JH	RH	RH	RH
+REMOTEGROUP	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
+REMOTEIP	IP	RIP	RIP	JIP	RIP	RIP	RIP
+CONTROLLINE	S	-	CL	CL	CL	CL	CL
+PRINTER	S	-	PR	PR	PR	PR	PR
+FORWARD	V	-	-	SA	-	SA	SA
+SAMEHOST	V	-	SA	-	SA	SA	SA
+SAMEUSER	V	-	-	-	SU	SU	SU
+SERVER	V	-	SV	-	SV	SV	SV
+
+.ta 3m +\w'RH = REMOTEHOST    'u
+KEY:
+	JH = HOST	host in control file
+	RH = REMOTEHOST	connecting host name
+	JUSR = USER	user in control file
+	CUSR = REMOTEUSER	user from control request
+	JIP= IP	IP address of host in control file
+	RIP= REMOTEIP	IP address of requesting host
+	PORT=	connecting host origination port
+	CONTROLLINE=	pattern match of control line in control file
+	FW= IP of source of request = IP of host in control file
+	SA= IP of source of request = IP of host in control file
+	SU= user from request = user in control file
+	SA= IP of source of request = IP of server host
+	
+Match: S = string with wild card, IP = IPaddress[/netmask],
+	N = low[-high] number range, V = exact value match
+SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
+    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
+    'C' - lpc spool control request; 'S' - lpc spool status request
+NOTE: when printing (P action), the remote and job check values
+	(i.e. - RUSR, JUSR) are identical.
+.fi
+.sp
+.PP
+The special key
+.I letter=patterns
+searches the control file line starting with the 
+(upper case) letter,
+and is usually used with printing and spooling checks.
+For example,
+C=A*,B*
+would check that the class information (i.e.- line in the control file
+starting with C) had a value starting with A or B.
+.PP
+A permission line consists of list of tests and an a result value
+If all of the tests succeed,  then a match has been found and the
+permission testing completes with the result value.  You use the
+DEFAULT reserved word to set the default ACCEPT/DENY result.
+The NOT keyword will reverse the sense of a test.
+.PP
+Each test can have one or more optional values separated by
+commas. For example USER=john,paul,mark has 3 test values.
+The Match value specifies how the matching is done.
+.sp
+.nf
+S = string type match - string match with glob.
+.ta 4n +4n +4n +4n +4n +4n
+.nf
+	Format:  string with wildcards (*)
+		* matches 0 or more chars
+	Character comparison is case insensitive.
+	For example - USER=th*s matches uTHS, This, This, Theses
+.sp
+IP = IP address and submask.  IP address must be in dotted form.
+	Format: x.x.x.x[/y.y.y.y or /z] 
+		x.x.x.x is IP address
+	    y.y.y.y is optional submask, default is 255.255.255.255
+        z is a netmask with most significant z bits set.
+	Match is done by IP address to a 32 bit value and using:
+		success = ((x ^ IP ) & y) == 0   (C language notation)
+	i.e.- only bits where mask is non-zero are used in comparison.
+	For example - IP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+	IP=130.191.0.0/16 has the same value.
+.sp
+N = numerical range  -  low-high integer range.
+	Format: low[-high]
+	Example: PORT=0-1023 matches a port in range 0 - 1023 (privileged)
+.fi
+.PP
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+/etc/printcap		printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

@@ -1,0 +1,59 @@
+.ds VE LPRng-2.3.12
+.TH LPRACCNT 1 \*(VE "LPRng"
+.ig
+$Id: lprm.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+..
+.SH NAME
+lpraccnt \- receive accounting information
+.SH SYNOPSIS
+.B lpraccnt
+[
+.BI \-p port
+] [
+.BI \-D debuglevel
+]
+.SH DESCRIPTION
+.PP
+The
+.B lpraccnt
+program is a template for a printer accouting program.
+It will open the specified TCP port,
+and then wait for accounting or other information to be sent.
+It prints this information on it standard output.
+.SH OPTIONS
+.IP "\fB\-p \fIport\fR" 5
+wait for connections on this port (default 3000).
+.IP "\fB\-D \fIdebuglevel\fR" 5
+Set the debug level to the indicated value.
+.SH "SEE ALSO"
+.LP
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.conf(5),
+pr(1).
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

@@ -1,0 +1,82 @@
+.NH 1
+TESTSUPPORT
+.PP
+A simple set of test and support files is provided in the
+.L TESTSUPPORT
+directory of the
+LPRng distribution.
+These files,
+when processed and installed in the
+.L /tmp
+directory,
+will create a simple user level printer spooler system.
+.DS
+.nf
+.L
+.ta 12n +4n +4n +4n +4n +4n +4n +4n
+LPD 	- copy of spool directories
+Makefile	- generation and installation
+clearlog 	- shell script to clear log files
+dbserver.sh	- prototype database server
+filter.sh	- prototype shell based filter
+lpd.conf.proto	- prototype configuration file
+common.conf.proto	- prototype configuration file
+lpd.perms.proto	- prototype permissions file
+main.c	- prototype C based filter
+makedb	- database creation script
+printcap.proto	- prototype printcap file
+.DE
+.PP
+To install the files,
+carry out the following procedure in the
+.L TESTSUPPORT
+directory.
+.ne 3i
+.DS
+.L
+.nf
+.ta 4n +4n +4n +4n +4n +4n +4n
+CSH -
+	setenv HOST \fIfully qualified host name\fP
+	setenv USER \fIuserid\fP
+	setenv LPD_CONF /tmp/LPD/lpd.conf
+	path=( /tmp/LPD $path )
+
+Bourne Shell
+	HOST=\fIfully qualified host name\fP
+	USER=\fIuserid\fP
+	LPD_CONF=/tmp/LPD/lpd.conf
+	export HOST USER LPD_CONF
+	PATH=/tmp/LPD:$PATH
+
+make
+.DE
+.PP
+To check that the installation was successful,
+the command
+.L "lpd -D2 -F"
+should produce output similar to the following.
+.DS
+.L
+.nf
+.sz 9
+.ta 4n +4n +4n +4n +4n +4n +4n
+papowell@taco:70>lpd -D2 -F
+Sep 17 16:13:17 lpd [3665]  *** Get_debug_parms ***
+Sep 17 16:13:17 lpd [3665]  debug: 2
+Sep 17 16:13:17 lpd [3665]  test: 0
+Sep 17 16:13:17 lpd [3665]  remote: 0
+Sep 17 16:13:17 lpd [3665]  log: <NULL>
+Sep 17 16:13:17 lpd [3665]  *** <END> ***
+Sep 17 16:13:17 lpd [3665]  main: Configuration file '/tmp/LPD/lpd.conf'
+Sep 17 16:13:17 lpd [3665]  seteuid_wrapper: Before RUID/EUID 118/118,
+Sep 17 16:13:17 lpd [3665]  seteuid_wrapper: After uid/euid 118/118
+Sep 17 16:13:17 taco lpd [3665]  Getprintcap: paths '/tmp/LPD/printcap....
+Sep 17 16:13:17 taco lpd [3665]  Printcap file '/tmp/LPD/printcap....
+Sep 17 16:13:17 taco lpd [3665]  Get_perms: /tmp/LPD/lpd.perms.taco.sdsu.edu
+Sep 17 16:13:17 taco lpd [3665]  Permissions file '/tmp/LPD/lpd....
+Sep 17 16:13:17 taco Do_queue_jobs [3667]  t1: Open_log: log file log
+Sep 17 16:13:18 taco Do_queue_jobs [3668]  t2: Open_log: log file log
+Sep 17 16:13:19 taco Do_queue_jobs [3669]  t4: Open_log: log file log
+\&...
+.DE

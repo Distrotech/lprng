@@ -1,0 +1,51 @@
+.Z
+.F1
+.if \nt=0 \!.po +1.3i
+.nf
+.ta \w'REMOTEUSER  'u +\w'Match_'u +\w'Connect_'u +\w'Job___'u +\w'Job____'u +\w'LPQ__'u +\w'LPRM__'u +\w'LPC'u
+Key          Match Connect Job   Job    LPQ  LPRM  LPC
+	Spool Print
+.ft CW
+SERVICE	S	'X'	'R'	'P'	'Q'	'M'	'C,S'
+USER	S	-	JUSR	JUSR	JUSR JUSR	JUSR
+HOST	S	RH	JH	JH	JH	JH	JH
+GROUP	S	-	JUSR	JUSR	JUSR JUSR	JUSR
+IP	IP	RIP	JIP	JIP	RIP	JIP	JIP
+PORT	N	PORT	PORT	-	PORT PORT	PORT
+REMOTEUSER	S	-	JUSR	JUSR	JUSR CUSR	CUSR
+REMOTEHOST	S	RH	RH	JH	RH	RH	RH
+REMOTEGROUP	S	-	JUSR	JUSR	JUSR CUSR	CUSR
+REMOTEIP	IP	RIP	RIP	JIP	RIP	RIP	RIP
+CONTROLLINE	S	-	CL	CL	CL	CL	CL
+PRINTER	S	-	PR	PR	PR	PR	PR
+FORWARD	V	-	-	SA	-	SA	SA
+SAMEHOST	V	-	SA	-	SA	SA	SA
+SAMEUSER	V	-	-	-	SU	SU	SU
+SERVER	V	-	SV	-	SV	SV	SV
+.ft CW
+.ta 2m +\w'CUSR 'u +\w'CONNECT USER 'u
+.R
+.nf
+KEY:
+	JH = HOST	host in control file
+	RH = REMOTEHOST	connecting host name
+	JUSR = USER	user in control file
+	CUSR = REMOTEUSER	user from control request
+	JIP= IP	IP address of host in control file
+	RIP= REMOTEIP	IP address of requesting host
+	PORT= N	connecting host origination port
+	CONTROLLINE=	pattern match of control line in control file
+	FW= IP of source of request = IP of host in control file
+	SA= IP of source of request = IP of host in control file
+	SU= user from request = user in control file
+	SA= IP of source of request = IP of server host
+.R
+.sp 0.3
+Match: S = string with glob wild card, IP = IPaddress[/netmask],
+	i.e.- x.y.z.w/a.b.c.d or x.y.z.w/N where N is length of mask
+	N = low[-high] number range; NOT negates the test status
+.fi
+.if \nt=0 \!.po -1.3i
+.DE
+.FG "Figure 4" "Permission Attributes"
+.ZZ

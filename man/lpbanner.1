@@ -1,0 +1,90 @@
+.ds VE LPRng-2.3.12
+.TH LPBANNER 1 \*(VE "LPRng"
+.ig
+$Id: lprm.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+..
+.SH NAME
+lpbanner \- print a banner
+.SH SYNOPSIS
+.B lpbanner
+[
+.BI \-l length
+] [
+.BI \-w widht
+] [
+.BI \-P printer
+] [
+.BI \-L bannername
+] [
+.BI \-n loginname
+] [
+.BI \-h host
+] [
+.BI \-J jobtitle
+] [
+.BI \-C class
+] [
+.BI \-? option
+.BI args
+] [
+all
+]
+.SH DESCRIPTION
+.PP
+The
+.B lpbanner
+program is used to print a simple banner on a fixed size font printer.
+All information to be printed is passed using command line arguements.
+In order to be compatible with vintage line printer spoolers,
+reads a line form standard input, but ignores the information.
+.SH OPTIONS
+.IP "\fB\-w \fIwidth\fR" 5
+Page width in characters (default 132).
+.IP "\fB\-l \fIlength\fR" 5
+Page length in lines (default 60).
+.IP "\fB\-P \fIprinter\fR" 5
+printer queue for banner information.
+.IP "\fB\-L \fIbannername\fR" 5
+Name used on banner as main name.
+.IP "\fB\-n \fIloginname\fR" 5
+Name used on banner as login name.
+.IP "\fB\-h \fIhost\fR" 5
+Name used on banner as host name.
+.IP "\fB\-J \fIjobtitle\fR" 5
+String used on banner as main title.
+.IP "\fB\-C \fIclass\fR" 5
+String used on banner as class.
+.IP "\fB\-? \fIvalue\fR" 5
+All other options and arguments provided by LPRng are ignored.
+.SH "SEE ALSO"
+.LP
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.conf(5),
+pr(1).
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

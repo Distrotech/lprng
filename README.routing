@@ -1,0 +1,69 @@
+     Routing to Alternate/Multiple Destinations
+             Patrick Powell
+        Sun Aug 25 10:43:26 PDT 1996
+
+The LPD functionality bounce queue functionality has been extended
+to allow a job to not only be passed through filters before sending
+to a remote destination,  but also to reroute the job to one or
+more destinations in a dynamic manner.  This is accomplished by having
+a 'router' filter return a set of destinations.  Here is a sample printcap
+to accomplish this:
+
+
+t2|Test Printer 2:sd=/var/spool/LPD/t2
+	:lf=log
+	:lp=t2@printserver
+	:bq=t1@localhost
+	:router=/usr/local/LPD/router
+
+The lp entry is used to force all jobs to be sent to the bounce queue
+on host 'printserver'.  Once they arrive,  the 'router' filter
+is invoked with the standard set of command line options which include
+the user, host, and other information obtained from the control file.
+(In addition,  the CONTROL environment variable is set to the
+actual control file itself.)  The router filter returns one or more routing
+entries with the following format.  Note that entry order is not important,
+but each entry will end with the 'end' tag.
+
+dest <destination queue>
+copies number of copies to be made
+Xcontrolfile
+end
+
+Example of router output:
+
+dest t1@localhost
+copies 2
+CA
+end
+dest t2@localhost
+CZ
+end
+
+The above routing information will have copies of the job sent to the
+t1 and t2 spool queue servers.  Note that the use of localhost
+will cause the jobs to be rerouted to the server.
+If no valid routing information is returned by the router filter the job
+will be sent to the default bounce queue destination.
+
+LPQ will display job information in a slightly different format
+for muliple destination jobs.  For example:
+
+Printer: t2@ecepc110 'Test Printer 2' (routed/bounce queue to 't1@ecepc110.sdsu.edu')
+  Queue: 1 printable jobs in queue
+ Rank  Owner/ID        Class Job Files                           Size Time
+active  papowell@ecepc110+707 A 707  /tmp/hi                         3 10:04:49
+ - actv papowell@ecepc110+707.1 A 707 ->t1@localhost <cpy 1/2>       3 10:04:49
+ -      papowell@ecepc110+707.2 A 707 ->t4@localhost                 3 10:04:49
+
+The routing information is displayed below the main job information.
+Each destination will have its transfer status displayed as it is
+transferred.  By convention,  the job identifier of the routed jobs
+will have a suffix of the form .N added;  copies will have CN added
+as well.  For example, papowell@ecepc110+707.1C2 will be the job
+sent to the first destination, copy two.
+
+Routed jobs can be held, removed, etc., just as normal jobs.  In addition,
+the individual destination jobs can be manipulated as well.  The LPC
+functionality has been extended to recogize distination jobids as well
+as the main job id for control and/or selection operations.

@@ -1,0 +1,18 @@
+#!/bin/sh
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1995 Patrick Powell, San Diego State University
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: UTILS/killit
+# PURPOSE: find and kill the LPD daemon... sigh
+# $Id: killit,v 3.0 1996/05/19 04:06:49 papowell Exp $
+########################################################################## 
+ps -x >/tmp/$$
+cat /tmp/$$
+V=`cat /tmp/$$ |grep lpd | awk '{ print $1 }' | sort -n | tail -1`
+echo $V
+kill -INT $V

@@ -1,0 +1,306 @@
+.ds VE LPRng-2.3.12
+.TH LPC 1 \*(VE "LPRng"
+.ig
+$Id: lpc.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+Mon Jul 17 20:14:17 PDT 1995 Patrick Powell
+..
+.SH NAME
+lpc \- line printer control program
+.SH SYNOPSIS
+.B lpc
+[
+.BI \-P printer
+]
+[
+.BI \-D debugopts
+]
+[
+.B \-V
+]
+[ command [ argument ... ] ]
+.SH DESCRIPTION
+.I Lpc
+is used by the system administrator to control the
+operation of the line printer system.  
+For each line printer configured in 
+.I /etc/printcap 
+or the printcaps specified in the configuration file 
+.I lpd.conf
+(see lpd.conf(5)),
+.I lpc
+may be used to:
+.IP \(bu 3
+disable or enable a single or all printer,
+.IP \(bu 3
+disable or enable a single printer's or all printer's spooling queue,
+.IP \(bu 3
+rearrange the order of jobs in a spooling queue (moving jobs to the
+top or to the end of a queue or changing their priority in the queue),
+.IP \(bu 3
+find the status of printers, and their associated
+spooling queues and printer dameons,
+.IP \(bu 3
+start and stop printer servers for a queue with multiple print servers,
+.IP \(bu 3
+hold and release a specific job in a printer queue,
+.IP \(bu 3
+redirect printing to another printer
+.IP \(bu 3
+restart a printer job after having solved printer problems and let it
+print from the beginning, 
+.PP
+Without any arguments,
+.I lpc
+will prompt for commands from the standard input.
+If arguments are supplied,
+.IR lpc
+interprets the first argument as a command and the remaining
+arguments as parameters to the command.
+Permission to use spool queue control commands is determined by the
+printer permissions file
+(See FILES).
+.SH OPTIONS
+.PP
+.IP "\fB\-P\fIprinter\fR" 5
+Printer spool queue to operate on.
+if no name is given,
+the -P option,
+the printer selected by the value of the PRINTER enviroment variable,
+or the first entry in the printcap file will be used.
+When all printers are selected,
+the LPC command will first attempt to find the
+printcap entry for printer ``all'';
+the
+.I all
+printcap field value will be a list of printers to control. 
+If there is no printcap entry,
+then the request is directly forwarded to the default LPD host,
+which will do a lookup for all of the available printers.
+By specifying ``all@host'',
+the user can control all printers on a given host.
+.IP "\fB\-V\fR" 5
+Print program version information
+.PP
+.IP "\fB\-D\fIdebugopts\fP" 5
+Debugging is controlled using the
+.B \-D
+option. This accepts a comma-separated list of debugging
+settings. These settings take one of two forms: 
+.B facility=value , 
+or
+.B value 
+to set an overall default value.
+The form -D= will display a list of debugging options.
+.SH COMMANDS
+.PP
+The following is the alphabetical list of recognized commands.
+.TP
+?
+.br
+Help.
+Also, any unrecognized input produces a help listing.
+.TP
+abort { all | printer* }
+.br
+Disable any further unspooling for all printers or the selected printer
+and kill the active job.
+The active job will not be deleted from the queue.
+.TP
+autohold { all | printer* }
+.br
+Turn on automatic job holding.
+Jobs will be held until released with the hold command,
+or autohold turned off with the noautohold command.
+The :ah: printcap flag can enable automatic holding as well.
+The authold command will override the printcap entry.
+.TP
+debug { all | printer } [string | off ]
+.br
+Set the debugging string for the specified printer.
+This is a diagnostic aid and should be used with caution;
+refer to the reference manual for details of the debugging string format.
+In general,
+you can use: INTEGER [,key=integer] [log=pathname].
+The INTEGER is a general debugging level, key is the name of a special
+debugging flag, and log is the pathname of a log file.
+.TP
+disable { all | printer }
+.br
+Disable spooling to the specified spool queues.
+See
+.I enable.
+.TP
+down {all | printer }
+.br
+Disable both queuing and printing for all printers or the selected printer.
+See
+.I up.
+.TP
+enable { all | printer }
+.br
+Enable spooling for all printers or the selected printer.
+.TP
+exit or quit
+.br
+terminate LPC program
+.TP
+help
+.br
+Print a short help message.
+.TP
+hold printer { jobid }
+.br
+Holds the specified printer job (or jobs) in the queue.
+The job will not be
+printed even if spooling and printing is enabled. It must be released
+with the relase command.
+The autohold command
+or :ah: printcap flag can enable automatic holding of spooled jobs.
+.TP
+kill { all | printer ... }
+.br
+Do an abort followed by a start.
+This is a quick way to kill off a server that has problems.
+.TP
+lpd
+.br
+determines the LPD daemon process is running,
+This is handy to determine if the LPD daemon was killed or
+aborted due to abnormal conditions.
+.TP
+lpq printer [options]
+.br
+Run
+.I lpq
+from inside the 
+.I lpc
+program.
+.TP
+lprm printer [options]
+.br
+Run
+.I lprm
+from inside the 
+.I lpc
+program.
+.TP
+move printer { jobid }  destinationPrinter
+.br
+Send the specified jobs to the destination printer and remove them
+from the printer queue.
+.TP
+noautohold { all | printer* }
+.br
+Turn off automatic job holding.
+See autohold command.
+.TP
+quit or exit
+.br
+terminate LPC program
+.TP
+redirect [printer [destinationPrinter | off ]]
+.br
+redirect the jobs in the printer queue to another printer
+or turn redirection off.
+.TP
+release [printer [jobid]]
+.br
+Releases the selected job for printing.
+.TP
+reread [ printer ]
+.br
+Sends a request to the LPD server for the printer to reread the
+configuration and printcap information.
+This is equivalent to using
+kill -HUP serverpid,
+but can be done for servers on remote hosts.
+.TP
+start { all | printer }
+.br
+Start the printer.
+This is useful when some abnormal condition causes the server to
+terminate unexpectedly leaving jobs in the queue.
+.I Lpq
+will report that there is no daemon present when this condition occurs. 
+.TP
+status { all | printer }
+Display the status of daemons and queues on the local machine.
+.TP
+stop { all | printer }
+.br
+Disable any further unspooling after the current job completes.
+.TP
+topq printer [ jobid ]
+.br
+Place the selected jobs at the top of the printer queue.
+.TP
+up {all | printer ...}
+Enables queuing and printing for the specified or all printers.
+Privileged.
+.SH JOBIDS
+.PP
+The LPQ command displays a job identifier for each job,
+which can be used in LPC commands to identify a specific job.
+In the commands descriptions above,
+the jobid can be a user name,
+a job number,
+a job identifier,
+or a glob pattern.
+The glob pattern is matched against the job identifier.
+In command which have an optional jobid,
+if none is specified then the first printable job in the queue is acted on.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+/etc/printcap		printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

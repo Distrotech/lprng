@@ -1,0 +1,11 @@
+SVR4 lp and lpstat support
+
+Sun Mar  3 16:55:52 PST 1996
+Patrick Powell
+
+The following two scripts have been created to provide
+primitive functionality similar to the lp and lpstat program.
+
+By using the Perl script for lpstat as a starting point,
+I suspect you can make the lpstat as close to what you need as possible.
+I have tried to provide a minimal functionality here.

@@ -1,0 +1,725 @@
+.ds VE LPRng-2.3.12
+.TH PRINTCAP 5 \*(VE "LPRng"
+.SH NAME
+printcap \- printer capability data base
+.SH SYNOPSIS
+/etc/printcap database
+.SH DESCRIPTION
+The format of the LPNng
+.I printcap
+database was based on the
+.IR termcap (5)
+data base file format.
+Entries in the 
+.I printcap
+Each entry in the data base is used to define various options and
+values to control the printing and spooling of print jobs.
+.SH CAPABILITIES
+The database is a simplified form of the
+.I termcap (5)
+database.
+Leading whitespace on each line is discarded,
+and blank lines or lines which then start with a
+comment character (#) are discarded.
+A line which does not start with a colon (:) or bar (|) starts
+a printer entry definition.
+Lines ending with a backslash (\e) are assumed to continue
+to the next line; this is for compatibility with other
+historical printcap file formats.
+Trailing blanks and tabs (whitespace) for an option value
+are deleted unless the last one is escaped with a backslash
+(``\\'').
+.LP
+A printer definition starts with a  primary printer name,
+followed by zero or more alternative printer names,
+followed by a set of keyword entries and values.
+For example:
+.nf
+.sp
+.ft CW
+#comment
+# primary printer name
+lp
+#alternate names
+ |lp2|lp3
+ |Example of a printer
+ :sd=/usr/spool/LPD/lp
+ :rw:lp=/dev/lp:mx#100
+include /etc/printcap/mainprintcap
+.sp
+.fi
+.LP
+The special printcap definition
+.I include
+will read the named file,
+which must have an absolute pathname,
+as the next set of printcap entries.
+.LP
+Keywords can be 1 to an indefinate number of characters long,
+and are case sensitive.
+Values for keywords can be strings
+(:st=string:),
+signed integer values using the C language notation,
+(:nu#12:max#-2:mask#0x1EF:),
+or flags
+(:flag: to set to 1, :flag@: to clear to 0).
+Integer values must be representable as 32 bit 2's complement numbers;
+care should be taken with extremely large numbers.
+.LP
+The following is a list of the keywords currently used by the LPRng software.
+Many of these keywords are used only by the
+.I LPD
+server,
+others are used by the client programs
+.I LPR,
+.I LPC,
+.I LPRM,
+.I PAC,
+as well as the server.
+In the Use column in the table below,
+an
+.B A
+stands for all programs,
+.B D
+stands for
+.IR lpd ,
+and
+.B R
+stands for the client programs such as
+.I LPR.
+.SH "ENTRIES BY ALPHABETICAL ORDER"
+.sp
+.nf
+.ta \w'\0\0\0\0'u +\w'\0\0\0\0'u +\w'Type 'u +\w'Default     'u +4n +4n +4n 8i
+\fBFL	Use	Type	Default	Description\fR
+Xf	D	str	NULL	output filter for format X (used by lpd)
+ab	D	bool	false	always print banner, ignore lpr -h option
+ac	A	str	NULL	allowed classes to be printed (default is all classes)
+achk	D	bool false
+				If TRUE LPD will check for a 'ACCEPT' reply to the initial
+				accounting information written to a filter at the start
+				of a job.
+ae	D	str		accounting format for end of job (see also af, la, ar
+				and Accounting)
+af	D	str	NULL
+				name of accounting file or server (see also la, ar)
+				If the af field has the format |program,  a filter will
+				be started and used for recording accounting information;
+				if the format is host%port,  a tcp socket connection will
+				be made to the port on the host.  The as and ae strings
+				will be printed to the specified destination.  This
+				connection will be passed to filters as file descriptor 3.
+ah	D	bool	false	auto-hold - job held until explicitly released
+all	A	str	NULL	a list of all printers; (see ALL PRINTERS)
+ar	D	bool	true	write remote transfer accounting (if af, and as/ae set)
+as	D	str		accounting format for start of job (see also af, la, ar
+				and Accounting)
+bk	R	bool	false	backwards-compatible: be strictly RFC-compliant
+bkf	R	bool	false	backwards-compatible filter: use Berkeley filter options
+be	D	str		banner printing program for end (overrides bp, hl)
+bp	D	str		banner printing program (see hl)
+				(default: configuration variable default_banner_printer)
+bq	D	str	NULL	specifies the next destination for jobs sent to this queue.
+				Job data files are first sent through any filters listed in
+				printcap entry before transfer.  (See Bounce Queues)
+br	D	num	none	if lp is a tty, set the baud rate (see ty)
+bs	D	str		banner printing program for start (overrides bp, hl)
+cd	D	str	NULL	control information directory for LPD server
+cf	D	str	NULL	cifplot data filter
+cm	A	str	NULL	comment identifying printer (LPQ)
+connect_grace	A	num	0
+				time between jobs to allow printer recovery
+connect_interval	A	num	10
+				time between open or connection attempts
+connect_retry	A	num	0
+				number of open or connect attempts
+				(0 is infinite number)
+connect_timeout	A	num	10
+				timeout value for connection or open
+db	A	str	NULL	LPD debug options when serving this queue.
+				See lf (log file) entry as well.
+default_format	R	str	f
+				default format for printing jobs
+default_priority	R	str	A
+				default priority for printing jobs
+df	D	str	NULL	tex data filter (DVI format)
+fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
+fd	D	bool	false	if true, no forwarded jobs accepted
+ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
+fo	D	bool	false	print a form feed when device is opened
+fq	D	bool	false	print a form feed when device is closed
+fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
+fx	A	str	``flp''	valid output filter formats
+gf	D	str	NULL	graph data filter (plot (3X) format)
+hl	D	bool	false	print banner after job instead of before
+if	D	str	NULL	filter command, run on a per-file basis
+la	D	bool	true	write local printer accounting (if af is set)
+ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
+lf	D	str	``log''	error and debugging log file (LPD)
+lk	D	bool	false	lock the lp device to force arbitration
+logger_destination	D	str	NULL
+				destination for logging information.  Format is
+				host[%port][,(TCP|UDP)]
+longnumber	D	bool	false	use 6 digit job numbers
+lp	D	str	NULL	device name or pipe to send output to
+mc	R	num	1	maximum copies allowed
+mi	D	num	0	minimum space (Kb) to be left in spool filesystem
+ml	R	num	32	minimum printable characters for printable check
+mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
+nb	D	num	0	if non-zero, do a nonblocking open on lp device
+nf	D	str	NULL	DITROFF data filter
+nw	A	bool	false	spool dir is on an NFS file system
+				(take precautions when reading/writing files)
+of	D	str	NULL	output filter, run once for all output
+				(used for banner printing, form feeds between files)
+oh	A	str	NULL	Specific printcap entry for host;
+				(printcap entry ignored unless IP address of host and
+				entry value match.  Value can be a list of hosts)
+pl	D	num	66	page length (in lines)
+pr	D	str	``/bin/pr''	pr program for p format
+ps	A	str	''status''	printer status file name
+pw	D	num	132	page width (in characters)
+px	D	num	0	page width in pixels (horizontal)
+py	D	num	0	page length in pixels (vertical)
+qq	A	bool	false	LPR - puts in the queue name (Q entry)
+				in the job control file when spooled or transferred.
+				LPD - when receiving or transferring a job,
+				if the queue name (Q entry) in the job control
+				file is not present,  puts in the queue name.
+rf	D	str	NULL	filter for printing FORTRAN style text files
+rm	A	str	NULL	remote-queue machine (hostname) (with rp)
+rp	A	str	NULL	remote-queue printer name (with rm)
+rs	D	num	300	number of seconds between spool queue status scans
+rt	D	num	3	number of times to try printing (0=infinite)
+				see send_failure_action, send_timeout, send_try
+rw	D	bool	false	open the printer for reading and writing
+sb	D	bool	false	short banner (one line only)
+sc	R	bool	false	suppress multiple copies
+sd	A	str	NULL	spool directory (only ONE printer per directory!)
+send_failure_action	D	str	abort
+				Action on print or transmission failure after send_try
+				attempts; use 'abort', 'retry', 'remove', or 'hold'
+send_timeout	D	num	6000
+				timeout on write operation when sending job to
+				printer or remote host (0 is infinite timeout)
+send_try			alias for rt - numbers of times to try sending
+				or printing a job. 0 is infinite.
+sf	D	bool	false	suppress form feeds separating jobs
+sh	D	bool	false	suppress headers and/or banner page
+ss	D	str	NULL	name of queue that server serves (with sv)
+sy	D	str	NULL	alias for ty
+sv	D	str	NULL	names of servers for queue (with ss)
+tf	D	str	NULL	troff data filter (C/A/T phototypesetter)
+tr	D	str	NULL	trailer string to print when queue empties
+translate_format	D	str	NULL
+					translate job format (similar to tr(1) utility)
+					only valid when transferring to remote spool queue.
+					Example: translate_format=pfml
+					p format changed to f, m format to l
+ty	D	str	NULL	stty commands to set output line characteristics
+use_identifier	R	bool	false
+				add job identifier lines ('A') in the control file
+use_shorthost	R	bool	false
+				use only the hostname for job control
+				and data file names.  Host information in job file
+				will still be fully qualified domain name.
+vf	D	str	NULL	(Versatek) raster image filter
+xc	D	num	0	if lp is a tty, clear local mode bits (see STTY)
+xs	D	num	0	like `xc' but set bits (see STTY)
+xt	R	bool	true	lpr checks f and p formats for printable files
+xu	A	str	NULL	additional permissions information for this queue
+.fi
+.SH "ENTRIES BY FUNCTION"
+.LP
+See the alphabetical listing for detailed information.
+.sp
+.nf
+.ta \w'\0\0\0\0'u +\w'\0\0\0\0'u +\w'Type 'u +\w'Default     'u +4n +4n +4n 8i
+.sp
+.B "Filters and Page Formats"
+Xf	D	str	NULL	output filter for format X (used by lpd)
+cf	D	str	NULL	cifplot data filter
+df	D	str	NULL	tex data filter (DVI format)
+fx	A	str	``flp''	valid output filter formats
+gf	D	str	NULL	graph data filter (plot (3X) format)
+if	D	str	NULL	filter command, run on a per-file basis
+nf	D	str	NULL	DITROFF data filter
+of	D	str	NULL	output filter, run once for all output
+pl	D	num	66	page length (in lines)
+pr	D	str	``/bin/pr''	pr program for p format
+pw	D	num	132	page width (in characters)
+px	D	num	0	page width in pixels (horizontal)
+py	D	num	0	page length in pixels (vertical)
+rf	D	str	NULL	filter for printing FORTRAN style text files
+translate_format	D	str	NULL
+					translate job format (similar to tr(1) utility)
+					only valid when transferring to remote spool queue.
+					Example: translate_format=pfml
+					p format changed to f, m format to l
+tf	D	str	NULL	troff data filter (C/A/T phototypesetter)
+vf	D	str	NULL	(Versatek) raster image filter
+xt	R	bool	true	lpr checks f and p formats for printable files
+
+.B Banners
+ab	D	bool	false	always print banner, ignore lpr -h option
+be	D	str		banner printing program for end (overrides bp, hl)
+bp	D	str		banner printing program (use hl to print banner at end)
+bs	D	str		banner printing program for start (overrides bp, hl)
+hl	D	bool	false	print banner after job instead of before
+sb	D	bool	false	short banner (one line only)
+sh	D	bool	false	suppress headers and/or banner page, overrides ab
+
+.B Accounting
+ae	D	str		accounting format for end of job (see also af, la, ar
+				and Accounting)
+af	D	str	NULL	name of accounting file (see also la, ar)
+ar	D	bool	true	write remote transfer accounting (if af, and as/ae set)
+as	D	str		accounting format for start of job (see also af, la, ar
+				and Accounting)
+la	D	bool	true	write local printer accounting (if af is set)
+
+.B "Queue control"
+ac	A	str	NULL	allowed classes to be printed (default is all classes)
+ah	D	bool	false	auto-hold - job held until explicitly released
+bk	R	bool	false	backwards-compatible: be strictly RFC-compliant
+bkf	R	bool	false	backwards-compatible filter: use Berkeley filter options
+bqfilter	D	bool	false	if a bounce queue (sends jobs to remote site)
+				then when bqfilter true and a format filter is specified,
+				sends data files through format filter before transfer.
+				See also 'qq'.
+cd	D	str	NULL	control information directory for LPD server
+cm	A	str	NULL	comment identifying printer (LPQ)
+fd	D	bool	false	if true, no forwarded jobs accepted
+lf	D	str	``log''	error and debugging log file (LPD)
+mc	R	num	1	maximum copies allowed
+mi	D	num	0	minimum space (Kb) to be left in spool filesystem
+ml	R	num	32	minimum printable characters for printable check
+mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
+ps	A	str	''status''	printer status file name
+nw	A	bool	false	spool dir is on an NFS file system
+				(take precautions when reading/writing files)
+qq	A	bool	false	place queue information in control file. See
+				alphabetical for details.
+rm	A	str	NULL	remote-queue machine (hostname) (with rp)
+rp	A	str	NULL	remote-queue printer name (with rm)
+sd	A	str	NULL	spool directory (only ONE printer per directory!)
+ss	D	str	NULL	name of queue that server serves (with sv)
+sv	D	str	NULL	names of servers for queue (with ss)
+sc	R	bool	false	suppress multiple copies
+use_identifier	R	bool	false
+				add job identifier lines ('A') in the control file
+use_shorthost	R	bool	false	use only the hostname for job control
+				and data file names.  Host information in job file
+				will still be fully qualified domain name.
+xu	A	str	NULL	additional permissions information for this queue
+
+.B "Connection and Interface to Printer"
+db	A	num	0	debug level when using this printer
+connect_interval	A	num	10
+				time between open or connection attempts
+connect_retry	A	num	0
+				number of open or connect attempts
+				(0 is infinite number)
+connect_timeout	A	num	10
+				timeout value for connection or open
+				(0 is infinite number)
+ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
+fo	D	bool	false	print a form feed when device is opened
+fq	D	bool	false	print a form feed when device is closed
+ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
+
+lp	D	str	NULL	device name or pipe to send output to
+lk	D	bool	false	lock the lp device to force arbitration
+nb	D	num	0	if non-zero, do a nonblocking open on lp device
+
+rs	D	num	300	number of seconds between spool queue status scans
+rt	D	num	3	number of times to try printing (0=infinite).
+rw	D	bool	false	open the printer for reading and writing
+send_failure_action	D	str	abort
+				Action on print or transmission failure
+				(can be 'abort', 'retry', 'remove')
+send_try			alias for rt
+send_timeout	D	num	6000
+				timeout when sending job to remote device
+				(0 or -1 is infinite timeout)
+sf	D	bool	false	suppress form feeds separating jobs
+tr	D	str	NULL	trailer string to print when queue empties
+
+.B "Serial Line Setup"
+br	D	num	none	if lp is a tty, set the baud rate (see ty)
+fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
+fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
+sy	D	str	NULL	alias for ty
+ty	D	str	NULL	stty commands to set output line characteristics
+xc	D	num	OBSOLETE	if lp is a tty, clear local mode bits (see STTY)
+xs	D	num	0	like `xc' but set bits (see STTY)
+
+.B Miscellaneous
+all	A	str	NULL	a list of all printers; (see ALL PRINTERS)
+oh	D	str	NULL	Specific printcap entry for host.
+logger_destination	D	str	NULL
+				destination for logging information.  Format is
+				host[%port][,(TCP|UDP)]
+
+.nf
+.SH "FILTERS"
+.PP
+By convention,
+all output filter names have the form
+.B Xf,
+where
+.B X
+is the lower case letter corresponding to the lpr formatting option.
+The
+.B if
+and
+.B of
+filters are the standard output filters.
+The
+.B of
+filter is started for each job and is used to print the
+banner page and any FF separators between individual files of the job.
+It is sent a special stop sequence by the lpd server,
+and must suspend operations until sent a
+SIGCONT signal.
+An
+.B if
+filter is run separately for each file;
+at the end of the job the 
+.B of
+filter is restarted and used to print the trailing banner (if any)
+and FF separators.
+.LP
+Filters are invoked with a standard set of options defined by the
+bk_filter_options and
+filter_options configuration variable.
+See the
+lpd(8)
+manual page for details.
+If the first characters of the filter specification are -$,
+i.e.- Xf=-$ filter,
+then the command line options are not added.
+.SH "SPOOL QUEUES"
+.LP
+Printcap entries which have a spool directory value
+(sd) are called spool queues.
+Jobs sent to a printer with a spool queue are place in the
+spool directory. 
+When checking the spool queue for jobs,
+the server will check to see if there is a printcap file in the
+directory with the name
+.BR printcap. host.
+If there is,
+the additional printcap information is processed and used by the
+server.
+.LP
+If the spool directory is NFS exported,
+then remote hosts can manipulate the spool entries directly;
+this can have catastrophic effects,
+especially in systems where the NFS implementation has defects.
+The printcap information is particularly vulnerable to exploitation,
+as well as symbolic links,
+jobs which cannot be removed,
+etc.
+.LP
+In order to support systems which require NFS exported spool directories,
+the LPRng system has the following options.
+The NFS (nw) printcap flag is an indication that the spool directory is
+NFS exported and/or mounted.
+The server will not read the directory for printcap information.
+The next step up in security is to specify a separate
+control directory (cd) for the non-job control and data files.
+If this is done,
+then only job control files and job data files will be read from the
+spool directory.
+In addition,
+if there are any problems with a job,
+a special error file will be written in the control directory,
+preventing run away activity on a suspicious job.
+.SH "LOCAL PRINTERS"
+.LP
+Local printers have an
+.B lp
+entry,
+which is the device that output should be sent
+to,
+usually a serial port tty.
+PLP supplements this by
+using the lp field to indicate a remote printer,
+or by allowing communication with the printer using a separate
+program, known as an
+.I lp-pipe,
+instead of a serial line.
+If the printcap
+.B lp
+entry contains a string of the form
+.B printer@host,
+jobs are forwarded to the specified remote printer on the host.
+If the printcap
+.B lp
+entry contains a string of the form
+.B | command args
+, the command
+.B command
+is run, with the arguments
+.B args .
+This can be used to communicate with printers connected to
+network terminal servers, some TCP/IP-capable
+printers, and just about anything you can hack up a
+communication program for. Read the PLP Manual for more
+details.
+.SH "TY (STTY) OPTIONS"
+.PP
+The
+.B ty
+(stty) printcap parameter recognises a set of
+.IR stty (1)
+options 
+that can be used to set serial line characteristics for the printer.
+However, due to the differences between implementations of UNIX,
+there are several sets of
+.B ty
+options supported. Invoke
+.IR lpd (8)
+with the ``-v'' command-line option to see which set your
+installation is using.
+.PP
+Systems using the
+.IR sgtty 
+tty manipulation interface may use the following
+.IR stty (1)
+options:
+.nf
+.PP
+.ta 16n +16n +16n +16n +16n +16n +16n +16n +16n
+bs0	bs1	[-]cbreak	cooked	cr0	
+cr1	cr2	cr3	[-]decctlq	[-]echo	
+[-]even	ff0	ff1	[-]lcase	[-]litout	
+nl0	nl1	nl2	nl3	[-]nl	
+[-]noflsh	new	[-]nohang	old	[-]odd	
+[-]raw	start	stop	tab0	tab1	
+tab2	[-]tabs	[-]tandem	tek	ti700	
+[-]tilde	tn300	tty33	tty37	vt05	
+[-]evenp	[-]oddp	[-]pass8
+.fi
+.PP
+Systems using
+.IR termio 
+may use the following options:
+.nf
+.PP
+[-]ignbrk	[-]brkint	[-]ignpar	[-]parmrk	[-]inpck
+[-]istrip	[-]inlcr	[-]igncr	[-]icrnl	[-]iuclc
+[-]ixon	[-]ixany	[-]ixoff	[-]decctlq	[-]tandem
+[-]imaxbel	[-]opost	[-]olcuc	[-]onlcr	[-]ocrnl
+[-]onocr	[-]onlret	[-]ofill	[-]ofdel	[-]cstopb
+[-]cread	[-]parenb	[-]parodd	[-]hupcl	[-]clocal
+[-]loblk	[-]parity	[-]evenp	[-]oddp	[-]stopb
+[-]hup	[-]crtscts	[-]isig	[-]noisig	[-]icanon
+[-]cbreak	[-]xcase	[-]echo	[-]echoe	[-]echok
+[-]crterase	[-]lfkc	[-]echonl	[-]noflsh	[-]tostop
+[-]echoctl	[-]ctlecho	[-]echoprt	[-]prterase	[-]echoke
+[-]crtkill	[-]lcase	[-]nl	[-]litout	[-]pass8
+[-]raw	[-]sane	[-]cooked	[-]nopost	fill
+nl0	nl1	cr0	cr1	cr2
+cr3	tab0	tab1	tab2	tab3
+bs0	bs1	vt0	vt1	ff0
+ff1	cs5	cs6	cs7	cs8
+nul-fill	del-fill	-tabs 
+.fi
+.PP
+And systems using
+.IR termios
+may use the following options:
+.nf
+.PP
+[-]ignbrk	[-]brkint	[-]ignpar	[-]parmrk	[-]inpck
+[-]istrip	[-]inlcr	[-]igncr	[-]icrnl	[-]iuclc
+[-]ixon	[-]ixany	[-]ixoff	[-]imaxbel	[-]pass8
+[-]opost	[-]olcuc	[-]onlcr	[-]ocrnl	[-]onocr
+[-]onlret	[-]ofill	[-]ofdel	[-]tabs	nl0
+nl1	cr0	cr1	cr2	cr3
+tab0	tab1	tab2	tab3	bs0
+bs1	vt0	vt1	ff0	ff1
+cs5	cs6	cs7	cs8	[-]cstopb
+[-]cread	[-]parenb	[-]parodd	[-]hupcl	[-]clocal
+[-]crtscts	[-]evenp	[-]parity	[-]oddp	[-]pass8
+[-]isig	[-]icanon	[-]xcase	[-]echo	[-]echoe
+[-]echok	[-]echonl	[-]noflsh	[-]tostop	[-]iexten
+[-]echoctl	[-]ctlecho	[-]echoprt	[-]prterase	[-]echoke
+[-]crtkill	[-]flusho	[-]pendin
+.fi
+.PP
+The
+.B fc
+,
+.B fs
+,
+.B xc
+, and
+.B xs
+printcap entries are obsolete,
+and if present with non-zero values will abort print job processing.
+.SH "INITIALIZATION"
+.LP
+Many printers require an initialization string to be sent to them
+in order to configure their operation.
+The leader (ld) and trailer (tr) strings are sent at the start and
+end of job processing.
+These strings are interpreted using the C language conventions for
+character representation:
+\ennn is replaced with a character with the value nnn,
+\en with a new line,
+\er with a carriage return,
+and so forth.
+.SH "ALL PRINTERS"
+.LP
+The LPRng software has the capability to use a remote database
+for obtaining printcap and other information.
+One of the difficulties arises when a list of all printers
+available is needed.
+By convention,
+the special printer name
+.B all
+is reserved for this information;
+the
+.B all 
+field is a list of printers separated by spaces or punctuation.
+For example:
+.sp
+.nf
+#all printers
+all:all=lp1,lp2,lp3,lp4
+.sp
+.R
+.fi
+.SH ACCOUNTING
+.PP
+Accounting is done by writing information to an accounting file,
+filter,
+or remote connection specified by the
+af printcap entry.
+If af has the form  |filter,
+a filter is started and all accounting information is passed through the filter.
+The filter is passed the options specified by the
+filter_options configuration variable.
+The special form |-$ filter will suppress adding options.
+If af has the form host%port,
+then a tcp socket is opened to the specified port on the remote host
+and all accounting information is sent on the socket.
+If the achk flag is set,
+then after the string specified by the as field has been sent
+a reply of the form ACCEPT will be expected,
+otherwise the job will not be printed.
+.PP
+The printcap as and ae specify the format of the accounting
+information sent at the start and end of job printing
+respectively,
+or filters to be used to generate and/or report accounting information.
+If as and ae specify filters, the filters are opened with STDIN set to /dev/null
+and STDOUT set to the device,
+and are passed the command line options specified by the
+filter_options configuration variable (see lpd.conf(5)).
+The special form |-$ filter will suppress adding options.
+The as filter should exit with 0 (JSUCC) status if successful and the
+job can be printed, nonzero status JABORT for abnormal queue termination,
+JREMOVE if the job cannot be printed,
+and
+JRETRY if the job should be retried.
+The filter's STDERR is set to the printer error logging file.
+.SH "BOUNCE QUEUES AND PRINT FORMATS"
+.PP
+Bounce queues are designed to allow users to have their files
+preprocessed by a set of filters before being sent to the final
+destination.
+If a queue is being used as a bounce queue,
+then the
+lp printcap entry
+.B must
+be set to the name of the printer on the server,
+and the
+bq entry 
+.B must
+be the destination after filtering.
+This will cause all jobs to be sent to the bounce queue,
+rather than directly to the final destination.
+For example,
+pr:lp=pr@host:bq=destpr@desthost.
+.PP
+The filters used by the bounce queue are those that would normally be
+used by the LPD server for printing a job.
+For example,
+the :if: entry would specify the filter for the f format.
+Each job file is processed individually.
+The
+lpr -p option will cause the LPD server to process job files by
+the program specified by the pr
+printcap entry (default is /bin/pr) and then pass through the if filter.
+However,
+if a bounce queue is used the format of the output data may be changed.
+To accomodate this action,
+the translate_format value can be used to reconfigure the format.
+The value has the form SdSdSd...,
+where S is the original format and d is the final format.
+This is similar to the format used  by the UNIX tr(1) utility.
+For example, the value pfml would convert format specifications
+p to f and m to l,
+but only in the job information sent to a remote destination.
+Note that the original format would still be supplied to any filters,
+and that the p filter would need to provide any options and/or values
+to be used to do formatting.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+/etc/printcap		printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
+.SH "SEE ALSO"
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system,
+with functionality similar to the Berkeley LPR software,
+and is derived from the PLP (Public Line Printer) software,
+version 4.0.
+LPRng has many advanced features, which are described in
+.I "LPRng - An Enhanced Line Printer Spooler"
+by Patrick Powell, San Diego State University (papowell@sdsu.edu),
+et al.
+It is available from
+dickory.sdsu.edu:/pub/LPRng.
+.LP
+The LPRng software is based on PLP4.0,
+supported and extended by Justin Mason (jmason@iona.ie),
+which is available from ftp://ftp.iona.ie/pub/PLP4.0.
+Justin greatly aided in the design and development of many of the
+software features,
+as well as contributing a large number of bug fixes,
+design reviews,
+and other suggestions.

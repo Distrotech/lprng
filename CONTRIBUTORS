@@ -1,0 +1,52 @@
+Thanks to the following folks who made the LPRng software possible:
+
+Developer:
+Patrick Powell <papowell@sdsu.edu>
+Contributors:
+    Justin Mason <jmason@iona.ie> - archvist and maintainer, wizard code fixer
+
+LPRng - The Alpha Version
+  The plp@iona.ie mailing list,  and many folks on it who made
+  comments and requests for features, changes, etc.
+
+  Alpha Minus Portablility Testers:
+    Michael Joosten <joost@ori.cadlab.de>
+    Ken Lalonde <ken@cs.toronto.edu>
+    Marty Leisner <leisner@sdsp.mc.xerox.com>
+
+  psfilter (psrev, banner) derived from: LPRPS Version 2.6 PLP
+	James Clark <jjc@jclark.com>
+
+PLP4.0 - The baseline distribution
+    Justin Mason <jmason@iona.ie> - PLP4.0 - archvist and maintainer
+
+PLP4.0 Contributors:
+  Corey Minyard <minyard@wf-rch.cirr.com>
+  Stuart Kemp <stuart@cs.jcu.edu.au>
+  Angus Duggan <angus@harlequin.co.uk>
+  Julian Turnbull <jst@dcs.edinburgh.ac.uk>
+  Paul Haldane <Paul.Haldane@edinburgh.ac.uk>
+  Michael Joosten <joost@ori.cadlab.de>
+  Bjarne Steinsbo <bjarne@hsr.no>
+  Todd C. Miller <Todd.Miller@cs.colorado.edu>
+  Eric C Hagberg <hagberg@mail.med.cornell.edu>
+  maf@math.chalmers.se (Martin Forssen)
+  Stefano Ianigro <w_stef@unibw-hamburg.de>
+  Greg Wohletz <greg@cs.unlv.edu>
+  Michael Haardt <u31b3hs@POOL.Informatik.RWTH-Aachen.DE>
+  Julian Anderson <jules@comp.vuw.ac.nz>
+  George Harrach <ghharrac@ouray.Denver.Colorado.EDU>
+  but@unibw-hamburg.de (Lothar Butsch)
+  dmc900@durras.anu.edu.au (David M Clarke)
+  Harlan Stenn <harlan@landmark.com>
+  Ed Santiago <esm@lanl.gov>
+  Panos Dimakopoulos <dimakop@cti.gr>
+  dorab@twinsun.com (Dorab Patel)
+  Rick Martin <rickm@cs.umb.edu>
+  Baba Z Buehler <baba@beckman.uiuc.edu>
+  Bertrand Wallrich <Bertrand.Wallrich@loria.fr>
+  jarausch@igpm.igpm.rwth-aachen.de (Helmut Jarausch)
+  Dave Alden <alden@math.ohio-state.edu>
+  Jan Barte <yann@uni-paderborn.de>
+  Hendrik.Klompmaker@Beheer.zod.wau.nl (hendrik klompmaker)
+  

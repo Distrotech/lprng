@@ -1,0 +1,520 @@
+dnl process this file with GNU autoconf to produce a configure script.
+dnl
+dnl jmason 23 dec 94 -- fixed union wait and sys_errlist checks
+dnl Patrick Powell Fri Jul  7 21:08:48 PDT 1995
+dnl $Id: configure.in,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $
+dnl  Original version from PLP4.0 Release
+
+AC_INIT(src/include/lp.h)
+AC_CONFIG_AUX_DIR(.)
+AC_CANONICAL_SYSTEM
+AC_CONFIG_HEADER(config.h)
+AC_PREFIX_DEFAULT(/usr/local)
+AC_SUBST(TERMLIBS)
+AC_SUBST(INSTALL)
+AC_SUBST(INSTALL_MAN)
+AC_SUBST(SHELL)
+AC_SUBST(CPP)
+AC_SUBST(CFLAGS)
+
+
+dnl ----------------------------------------------------------------------------
+dnl -----------   C compiler checks    -----------------------------------------
+AC_PROG_CC
+
+if test $ac_cv_prog_gcc = yes; then
+cat >conftest.c <<EOF
+#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+yes;
+#endif
+EOF
+    if ${CC-cc} -E conftest.c | egrep yes >/dev/null 2>&1; then
+        gcc -v
+		echo "WARNING: gcc -O (version 2.4.5 and below) produces incorrect code"
+		echo "  for lpd.c and other large routines."
+		CFLAGS="`echo ${CFLAGS} | sed s/-O//`"
+	fi;
+	CFLAGS="${CFLAGS} -Wall"
+	echo "using CFLAGS=${CFLAGS}"
+fi;
+
+dnl ----------------------------------------------------------------------------
+dnl ------------   OS Checks  --------------------------------------------------
+AC_ISC_POSIX
+AC_MINIX
+AC_AIX
+
+system_type="`echo $target | sed 's/-.*//'`"
+echo "Target is $target, architecture $system_type"
+AC_DEFINE_UNQUOTED(ARCHITECTURE,"$system_type")
+
+checklibs=
+case $target in
+	 *-sgi-irix5* )
+		AC_DEFINE(HAVE_BROKEN_TIOCEXCL)
+		AC_DEFINE(SVR4)
+		checklibs=no
+		;;
+	*solaris* )
+		AC_DEFINE(SVR4)
+		AC_DEFINE(SOLARIS)
+		;;
+	*hpux* )
+		AC_DEFINE(_HPUX_SOURCE)
+		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
+		;;
+	*sunos4.1.4* )
+		AC_DEFINE(SUNOS4_1_4)
+		;;
+esac
+
+dnl if egrep _HPUX_SOURCE /usr/include/sys/types.h > /dev/null 2>&1 ; then
+dnl     # HP/UX support (kludgety kludge!)
+dnl     AC_DEFINE(_HPUX_SOURCE)
+dnl 	CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
+dnl fi
+
+dnl these must be before anything that links.
+
+
+dnl check to see if we suppress probing for libraries
+dnl this is done by using the checklibs variable
+
+if test -z "$checklibs"; then
+
+	dnl A/UX uses this...
+	AC_CHECK_LIB(posix, getpwent, [LIBS="$LIBS -lposix"])
+
+	dnl use old-style shared libs if we have 'em.
+	AC_CHECK_LIB(socket_s, socket, [LIBS="$LIBS -lsocket_s"; have_socket=1], ,-lnsl)
+	if test -z "$have_socket"; then
+		AC_CHECK_LIB(socket, socket, [LIBS="$LIBS -lsocket"], , -lnsl)
+	fi
+
+	AC_CHECK_LIB(nsl_s, gethostbyaddr, [LIBS="$LIBS -lnsl_s"; have_nsl=1])
+	if test -z "$have_nsl"; then
+		AC_CHECK_LIB(nsl, gethostbyaddr, [LIBS="$LIBS -lnsl"])
+	fi
+
+	AC_CHECK_LIB(net_s, gethostbyaddr, [LIBS="$LIBS -lnet_s"; have_net=1])
+	if test -z "$have_net"; then
+		AC_CHECK_LIB(net, gethostbyaddr, [LIBS="$LIBS -lnet"])
+	fi
+
+	dnl IRIX 4 uses these... NIS calls, shared C lib
+	AC_CHECK_LIB(sun, getpwnam, [LIBS="$LIBS -lsun"])
+	AC_CHECK_LIB(c_s, atoi, [LIBS="$LIBS -lc_s"])
+
+fi
+dnl **** end library checks 
+
+AC_C_CONST
+AC_C_INLINE
+
+AC_HEADER_STDC
+AC_HEADER_DIRENT
+AC_HEADER_SYS_WAIT
+AC_HEADER_TIME
+
+dnl typedefs:
+AC_TYPE_SIGNAL
+AC_TYPE_UID_T
+AC_TYPE_SIZE_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+
+dnl ----------------------------------------------------------------------------
+dnl headers:
+AC_CHECK_HEADERS(a.out.h aouthdr.h ar.h arpa/inet.h)
+AC_CHECK_HEADERS(assert.h ctype.h curses.h dirent.h)
+AC_CHECK_HEADERS(errno.h fcntl.h filehdr.h float.h)
+AC_CHECK_HEADERS(grp.h limits.h locale.h machine/vmparam.h malloc.h minix/config.h)
+AC_CHECK_HEADERS(ndir.h netdb.h netinet/in.h nlist.h)
+AC_CHECK_HEADERS(pwd.h reloc.h sgs.h sgtty.h)
+AC_CHECK_HEADERS(signal.h stab.h stdarg.h stdio.h)
+AC_CHECK_HEADERS(stdlib.h string.h sys/dir.h sys/exec.h sys/exechdr.h)
+AC_CHECK_HEADERS(sys/fcntl.h sys/file.h sys/ioctl.h sys/loader.h sys/mount.h)
+AC_CHECK_HEADERS(sys/ndir.h sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/socket.h)
+AC_CHECK_HEADERS(sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h)
+AC_CHECK_HEADERS(sys/termios.h sys/ttold.h sys/ttycom.h sys/types.h)
+AC_CHECK_HEADERS(sys/utsname.h sys/vfs.h sys/wait.h syslog.h term.h termcap.h)
+AC_CHECK_HEADERS(termio.h termios.h unistd.h utsname.h)
+AC_CHECK_HEADERS(varargs.h vfork.h)
+
+dnl ----------------------------------------------------------------------------
+dnl function checks:
+AC_CHECK_FUNCS(assert cfsetispeed fchmod fcntl flock)
+AC_CHECK_FUNCS(fseek fstat ftime ftruncate getdtablesize gethostname)
+AC_CHECK_FUNCS(gethrtime getrusage gettimeofday getwd innetgr killpg lockf)
+AC_CHECK_FUNCS(mkstemp mktemp seteuid setpgid setproctitle)
+AC_CHECK_FUNCS(setsid setresuid setreuid sigaction)
+AC_CHECK_FUNCS(sigprocmask sigsetjmp socketpair statvfs strcasecmp strchr strcspn strdup)
+AC_CHECK_FUNCS(strerror strncasecmp strndup strtok strtoul)
+AC_CHECK_FUNCS(sysinfo tcsetattr times uname vfork wait3 waitpid)
+
+if test ! "$ac_cv_func_setreuid" = yes -a ! "$ac_cv_func_seteuid" = yes -a ! "$ac_cv_func_setresuid" = yes; then
+	echo "WARNING: missing setreuid(), seteuid(), and setresuid()"
+fi
+
+AC_FUNC_VFORK
+AC_FUNC_VPRINTF
+
+AC_TRY_COMPILE([#include <errno.h>],[int i = errno],AC_DEFINE(HAVE_ERRNO_DECL))
+
+dnl ----------------------------------------------------------------------------
+
+AC_MSG_CHECKING(how to manipulate tty attributes)
+AC_CACHE_VAL(ac_cv_struct_term,
+[
+
+if test "$ac_cv_header_termios_h" = yes; then
+	ac_cv_struct_term=termios
+fi
+if test "$ac_cv_header_sys_termios_h" = yes; then
+	ac_cv_struct_term=termios
+fi
+
+dnl test to see if we need to compile
+if test -z "$ac_cv_struct_term" ; then
+AC_TRY_COMPILE([
+#ifdef HAVE_TERMIO_H
+#include <termio.h>
+#endif
+#ifdef HAVE_SYS_TERMIO_H
+#include <sys/termio.h>
+#endif],[struct termio t;t.c_iflag = 0],
+ac_cv_struct_term=termio)
+fi
+
+dnl now you have determined if you have termio
+if test -z "$ac_cv_struct_term" ; then
+    AC_TRY_COMPILE([#include <sgtty.h>],[
+    struct sgttyb s;s.sg_flags = 0],
+    ac_cv_struct_term=sgttyb)
+fi
+if test -z "$ac_cv_struct_term" ; then
+	ac_cv_struct_term=UNDEFINED
+fi
+])
+AC_MSG_RESULT(using $ac_cv_struct_term)
+
+if test "$ac_cv_struct_term" = "sgttyb"; then
+	AC_DEFINE(USE_SGTTYB)
+	AC_DEFINE(USE_STTY,SGTTYB)
+fi
+if test "$ac_cv_struct_term" = "termio"; then
+	AC_DEFINE(USE_TERMIO)
+	AC_DEFINE(USE_STTY,TERMIO)
+fi
+if test "$ac_cv_struct_term" = "termios"; then
+	AC_DEFINE(USE_TERMIOS)
+	AC_DEFINE(USE_STTY,TERMIOS)
+fi
+
+dnl ----------------------------------------------------------------------------
+
+AC_MSG_CHECKING(checking for struct exec)
+AC_CACHE_VAL(ac_cv_struct_exec,
+[
+ac_cv_struct_exec=no
+if test "$ac_cv_header_a_out_h" != no ; then
+  AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <a.out.h>],[struct exec b; b.a_text = 0],
+	ac_cv_struct_exec=yes, ac_cv_struct_exec=no )
+fi
+])
+AC_MSG_RESULT($ac_cv_struct_exec)
+if test $ac_cv_struct_exec = yes; then
+  AC_DEFINE(HAVE_STRUCT_EXEC)
+fi
+
+dnl ----------------------------------------------------------------------------
+
+AC_MSG_CHECKING(how to get filesystem free space)
+
+AC_CACHE_VAL(ac_cv_struct_fstype,
+[
+fstype=
+
+dnl do this check if statvfs is a valid function
+if test "$ac_cv_func_statvfs" != no ; then		#{
+  AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+# include <sys/statfs.h>
+#endif
+
+#ifdef HAVE_SYS_MOUNT_H
+# include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+# include <sys/vfs.h>
+#endif],[struct statvfs s; statvfs ("/", &s); return(s.f_bavail+s.f_bsize)],
+  fstype=statvfs)
+fi							#}
+
+dnl do these checks if statfs is a valid function
+
+if test "$ac_cv_func_statfs" != no ; then		#{
+  if test -z "$fstype" ; then				#{
+    AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef HAVE_SYS_STATFS_H
+# include <sys/statfs.h>
+#endif
+
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+# include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+# include <sys/vfs.h>
+#endif],[struct fs_data s; return(s.fd_bfree+s.fd_bsize)],
+    fstype=Ultrix-statfs)
+  fi							#}
+
+  if test -z "$fstype" ; then				#{
+    AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif],[struct statfs s; return(s.f_bavail+s.f_bsize)],
+    fstype=statfs)
+  fi							# }
+
+  if test -z "$fstype" ; then				# {
+    AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/param.h>
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif],[struct statfs s; return(s.f_bfree+s.f_bsize)],
+    fstype=SVR3-statfs)
+  fi							# }
+fi							# }
+
+if test -z "$fstype" ; then
+    echo "cannot find a valid statfs-like structure!"
+	fstype=UNKNOWN
+fi
+
+ac_cv_struct_fstype=$fstype
+
+])
+
+AC_MSG_RESULT(using $ac_cv_struct_fstype)
+
+if test "$ac_cv_struct_fstype" = SVR3-statfs; then
+	AC_DEFINE(USE_STATFS_TYPE,SVR3_STATFS)
+fi
+if test "$ac_cv_struct_fstype" = Ultrix-statfs; then
+	AC_DEFINE(USE_STATFS_TYPE,ULTRIX_STATFS)
+fi
+if test "$ac_cv_struct_fstype" = statfs; then
+	AC_DEFINE(USE_STATFS_TYPE,STATFS)
+fi
+if test "$ac_cv_struct_fstype" = statvfs; then
+	AC_DEFINE(USE_STATFS_TYPE,STATVFS)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl
+
+AC_MSG_CHECKING(for sys_nerr)
+AC_CACHE_VAL(ac_cv_decl_sys_nerr,
+[AC_TRY_LINK(,[extern int sys_nerr; return (sys_nerr);],
+	ac_cv_decl_sys_nerr=yes, ac_cv_decl_sys_nerr=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_nerr)
+if test $ac_cv_decl_sys_nerr = yes; then
+	AC_DEFINE(HAVE_SYS_NERR)
+fi;
+
+AC_MSG_CHECKING(for sys_nerr declaration)
+AC_CACHE_VAL(ac_cv_decl_sys_nerr_def,
+[AC_TRY_LINK([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],[printf("%d",sys_nerr);],
+ac_cv_decl_sys_nerr_def=yes, ac_cv_decl_sys_nerr_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_nerr_def)
+if test $ac_cv_decl_sys_nerr_def = yes; then
+    AC_DEFINE(HAVE_SYS_NERR_DEF)
+fi
+
+AC_MSG_CHECKING(for sys_errlist array)
+AC_CACHE_VAL(ac_cv_decl_sys_errlist,
+[AC_TRY_LINK(,[extern char *sys_errlist[];
+	sys_errlist[0];],
+	ac_cv_decl_sys_errlist=yes, ac_cv_decl_sys_errlist=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_errlist)
+if test $ac_cv_decl_sys_errlist = yes; then
+	AC_DEFINE(HAVE_SYS_ERRLIST)
+fi
+
+AC_MSG_CHECKING(for sys_errlist declaration)
+AC_CACHE_VAL(ac_cv_decl_sys_errlist_def,
+[AC_TRY_LINK([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],[printf("%s",sys_errlist[0]);],
+ac_cv_decl_sys_errlist_def=yes, ac_cv_decl_sys_errlist_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_errlist_def)
+if test $ac_cv_decl_sys_errlist_def = yes; then
+    AC_DEFINE(HAVE_SYS_ERRLIST_DEF)
+fi
+
+
+dnl ----------------------------------------------------------------------------
+dnl sys_siglist array (list of signals)
+
+AC_MSG_CHECKING(for sys_siglist array)
+AC_CACHE_VAL(ac_cv_decl_sys_siglist,
+[AC_TRY_LINK(,[extern char *sys_siglist[]; printf("%s",sys_siglist[0]);],
+	ac_cv_decl_sys_siglist=yes, ac_cv_decl_sys_siglist=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_siglist)
+if test $ac_cv_decl_sys_siglist = yes; then
+	AC_DEFINE(HAVE_SYS_SIGLIST)
+fi
+
+AC_MSG_CHECKING(for sys_siglist declaration)
+AC_CACHE_VAL(ac_cv_decl_sys_siglist_def,
+[AC_TRY_LINK([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif],[printf("%s",sys_siglist[0]);],
+ac_cv_decl_sys_siglist_def=yes, ac_cv_decl_sys_siglist_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_sys_siglist_def)
+if test $ac_cv_decl_sys_siglist_def = yes; then
+    AC_DEFINE(HAVE_SYS_SIGLIST_DEF)
+fi
+
+
+dnl ----------------------------------------------------------------------------
+dnl check to see if you have getpgrp(0) or getpgrp()
+
+AC_MSG_CHECKING(for getprgp form)
+AC_CACHE_VAL(ac_cv_func_getpgrp_0,
+[AC_TRY_COMPILE([
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif],[getpgrp(0);],
+	ac_cv_func_getpgrp_0=getpgrp_0, ac_cv_func_getpgrp_0=getpgrp)
+])
+AC_MSG_RESULT($ac_cv_func_getpgrp_0)
+if test $ac_cv_func_getpgrp_0 = getpgrp_0; then
+	AC_DEFINE(HAVE_GETPGRP_0)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl check to see if you have setpgrp(n,m) or setpgrp()
+
+AC_MSG_CHECKING(for setprgp form)
+AC_CACHE_VAL(ac_cv_func_setpgrp_0,
+[AC_TRY_COMPILE([
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+],[setpgrp(0,0);],
+	ac_cv_func_setpgrp_0=setpgrp_0, ac_cv_func_setpgrp_0=setpgrp)
+])
+AC_MSG_RESULT($ac_cv_func_setpgrp_0)
+if test $ac_cv_func_setpgrp_0 = setpgrp_0; then
+	AC_DEFINE(HAVE_SETPGRP_0)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl just for (really) backwards compatibility
+dnl we really try not to use union wait -- it's heinously unportable.
+dnl nicked this check from Tcl as well. ;)
+dnl
+dnl The check below checks whether <sys/wait.h> defines the type
+dnl "union wait" correctly.  It's needed because of weirdness in
+dnl HP-UX where "union wait" is defined in both the BSD and SYS-V
+dnl environments.  Checking the usability of WIFEXITED seems to do
+dnl the trick.
+
+AC_MSG_CHECKING(for obsolete union wait compatibility)
+AC_CACHE_VAL(ac_cv_unionwait,
+[
+AC_TRY_COMPILE([#include <sys/types.h> 
+#include <sys/wait.h>], [union wait x;WIFEXITED(x);],
+ac_cv_unionwait=yes, ac_cv_unionwait=no)
+])
+AC_MSG_RESULT($ac_cv_unionwait)
+if test $ac_cv_unionwait = yes; then
+	AC_DEFINE(HAVE_UNION_WAIT)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl make stuff:
+
+TERMLIBS=
+AC_CHECK_LIB(curses, tgetent, [TERMLIBS="$TERMLIBS -lcurses"])
+AC_CHECK_LIB(termlib, tgetent, [TERMLIBS="$TERMLIBS -ltermlib"])
+AC_CHECK_LIB(termcap, tgetent, [TERMLIBS="$TERMLIBS -ltermcap"])
+
+AC_PROG_INSTALL
+AC_CHECK_PROG(INSTALL_MAN,auxman,auxman,[$INSTALL -m 644 -c])
+
+AC_PROG_RANLIB
+AC_PROG_MAKE_SET
+
+dnl ----------------- force this to be Bourne Shell for now ---------------
+AC_MSG_CHECKING(for shell)
+SHELL=/bin/sh
+AC_MSG_RESULT(using $SHELL (FORCED))
+
+dnl ----------------- GCC Compilation ----------------------------------
+AC_OUTPUT(Makefile src/Makefile man/Makefile TESTSUPPORT/Makefile )

@@ -1,0 +1,120 @@
+     LPRng Accounting
+Sun Apr 21 06:47:28 PDT 1996
+    Patrick Powell
+
+The LPRng method for doing accounting is based on experiences in a
+Academic environment,  where avoiding printing accounting procedures
+has long been practiced.  While the LPRng procedures are not bombproof,
+they do provide a wide range of facilities,  with various degrees
+of trust built into them.
+
+The accounting facilities are controlled and enabled by the following
+entries in the printcap file.  The standard default value is indicated.
+
+Tag     Default            Purpose
+        Value   
+af      NULL               accounting file name
+as      "jobstart $H $n $P $k $b $t"  accounting info for job start 
+ae      "jobend $H $n $P $k $b $t"    accounting info for job end
+accounting_server  NULL
+accounting_check   FALSE
+la       TRUE              do accounting for 'local' printer
+ra       FALSE             do accounting for 'remote' transfers
+
+Accounting Information Using Accounting Files
+
+The most common method of accounting is to record the start and end
+times of a job and its size to the accounting file. A typical entry
+for the printcap defaults are shown below.
+
+jobstart -H'taco.sdsu.edu' -n'root' -P'ps' -k'cfA938taco.sdsu.edu' \
+	-b'3' -t'Nov  5 19:39:59'
+start -q'12942' -k'cfA938taco.sdsu.edu' -n'root' -h'taco.sdsu.edu' -P'ps' \
+	-b'0' -c'0' -F'o' -t'Sun Nov  5 19:39:25 1995'
+start -q'12944' -k'cfA938taco.sdsu.edu' -n'root' -h'taco.sdsu.edu' -P'ps' \
+	-b'0' -c'0' -F'f' -t'Sun Nov  5 19:39:27 1995'
+end -q'12944' -k'cfA938taco.sdsu.edu' -n'root' -h'taco.sdsu.edu' -P'ps' \
+	-b'3' -c'0' -F'f' -t'Sun Nov  5 19:39:58 1995'
+end -q'12942' -k'cfA938taco.sdsu.edu' -n'root' -h'taco.sdsu.edu' -P'ps' \
+	-b'2' -c'0' -F'o' -t'Sun Nov  5 19:39:59 1995'
+jobend -H'taco.sdsu.edu' -n'root' -P'ps' -k'cfA938taco.sdsu.edu' \
+	-b'3' -t'Nov  5 19:39:59'
+
+The jobstart and jobend lines are added by the LPD server,  as
+specified by the :as: and :ae: printcap flags.  The 'start' and 'end'
+lines are produced by the filters; the of filter has an -Fo, and the if
+filter a -Ff entry.  The filters in the LPRng distribution produce the
+indicated output format by default; the -q entry process id of the
+process.  The  jobend line is produced by the LPRng server at the end
+of a job.  The -b is followed by the number of bytes in the job and the
+-c with the pages (pagecount).
+
+It should be clear that a simple AWK or Perl script will be able to
+process an accounting file and update accounting information for
+accounting purposes;  the usual problems with truncation, time stamps,
+etc., are left as an exercise for the system administrator.
+
+Using Filters For Accounting
+
+Some sites have expressed interest in using a central accounting
+mechanism to check that users have permissions.  This can be done by
+using the an alternative form of the as (accounting start) and ae
+(accounting end) printcap tags.  If the as and ae are filter
+specifications,  then a filter is invoked.  If the as (accounting
+start) filter returns a non-zero exit status,  then the job is
+terminated and discarded.  As a convenience, fd 3 will be set to the
+destination specified by the af field.
+
+For example, here is a sample entry to check and update accounting
+
+printer
+   :as=|/usr/local/bin/checkaccnt
+   # suppress options with -$
+   :ae=|-$ /usr/local/bin/updateaccnt
+
+The checkaccnt program would be invoked with the default filters options
+as specified by the filter_options configuration variable; the -$ shown
+for the ae entry will suppress adding these options. For example, if
+
+filter_options = $C $F $H $J $L $P $Q $R $Z $a $c $d $e $f \
+   $h $i $j $k $l $n $s $w $x $y $-a
+
+Then the checkaccnt program would be invoked as:
+
+ /usr/local/bin/checkaccnt -CA -Fo -Htaco.sdsu.edu -J(stdin) -Lroot -Pps \
+ -aacct -d/usr/spool/lpd/control.ps -htaco.sdsu.edu -j994 \
+ -kcfA994taco.sdsu.edu -l66 -nroot -sstatus -w80 -x0 -y0 acct \
+
+The filter stderr is attached to the log file specified by the :lf:
+printcap entry, and error status can be written there.  If the :as:
+filter exits with a non-zero error status,  then the file will not be
+printed.
+
+Similarly,  at the end of the job the updateaccnt filter will be invoked
+with a similar set of parameters.  The return status from this program
+is ignored.  The -k option value is the name of the control file for the
+print job.  This can be used as a key to consolidate accounting 
+information.
+
+
+Remote Server
+
+To accommodate even more agressive and centrallized accouting,
+a method to make a connection to a print server and send information
+to the server has been provided as well.  If af has the form
+host%port, the LPD server will open a connection to the specified port
+on the remote host and send the accounting information to the remote host.
+If the :achk: flag is set,  then after the string specified by the as
+field has been sent a return line of 'ACCEPT' will cause the LPD server to print the job;
+any other value will not print the job.
+
+Finally, at the end of the job the :ae: string will be sent to the server.
+No reponse is expected.
+
+Accounting Assistance For Filters
+
+Some filters can query the printers for the actual job pagecount.
+To assist with this reporting, a connection to the destination
+(file or filter) specified by the af field  is passed as file descriptor
+3 to format filters.  This allows them to send information to the
+destination in a simple manner.

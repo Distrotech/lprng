@@ -1,0 +1,58 @@
+#!/bin/sh
+# stripjunk - strip out meaningless errors
+# example: make 2>errs ; stripjunk errs
+sed \
+-e '/^gcc/d' \
+-e '/^a -/d' \
+-e '/^r -/d' \
+-e '/^ar /d' \
+-e '/^ar:/d' \
+-e '/^ranlib/d' \
+-e '/^make/d' \
+-e '/^gmake/d' \
+-e '/implicit dec.*_flsbuf/d' \
+-e '/implicit dec.*accept/d' \
+-e '/implicit dec.*bind/d' \
+-e '/implicit dec.*bzero/d' \
+-e '/implicit dec.*connect/d' \
+-e '/implicit dec.*endgrent/d' \
+-e '/implicit dec.*fclose/d' \
+-e '/implicit dec.*fflush/d' \
+-e '/implicit dec.*flock/d' \
+-e '/implicit dec.*fprintf/d' \
+-e '/implicit dec.*ftruncate/d' \
+-e '/implicit dec.*getdtablesize/d' \
+-e '/implicit dec.*gethostname/d' \
+-e '/implicit dec.*getpeername/d' \
+-e '/implicit dec.*getsockname/d' \
+-e '/implicit dec.*getsockopt/d' \
+-e '/implicit dec.*ioctl/d' \
+-e '/implicit dec.*killpg/d' \
+-e '/implicit dec.*listen/d' \
+-e '/implicit dec.*lockf/d' \
+-e '/implicit dec.*lstat/d' \
+-e '/implicit dec.*memset/d' \
+-e '/implicit dec.*mkstemp/d' \
+-e '/implicit dec.*openlog/d' \
+-e '/implicit dec.*printf/d' \
+-e '/implicit dec.*rename/d' \
+-e '/implicit dec.*select/d' \
+-e '/implicit dec.*setgrent/d' \
+-e '/implicit dec.*setreuid/d' \
+-e '/implicit dec.*setsockopt/d' \
+-e '/implicit dec.*socket/d' \
+-e '/implicit dec.*socketpair/d' \
+-e '/implicit dec.*statfs/d' \
+-e '/implicit dec.*strcasecmp/d' \
+-e '/implicit dec.*strncasecmp/d' \
+-e '/implicit dec.*strtol/d' \
+-e '/implicit dec.*syslog/d' \
+-e '/implicit dec.*system/d' \
+-e '/implicit dec.*tgetent/d' \
+-e '/implicit dec.*time/d' \
+-e '/implicit dec.*tolower/d' \
+-e '/implicit dec.*toupper/d' \
+-e '/implicit dec.*tputs/d' \
+-e '/implicit dec.*vfprintf/d' \
+-e '/At top level:/d' \
+ "$@"

@@ -1,0 +1,84 @@
+.if \nt>0 .Z
+.F1
+.DS
+.ta 3n +3n +3n +3n +3n +3n +3n +3n +3n +3n +3n +3n
+.sz -1
+.\"LP = open( 'lp' );  // open device
+.\"OF = IF = LP;		// set defaults
+.\"if( 'of' ) OF = filter( 'of' ) -> LP;
+.\"                   // make OF filter
+.\"if( accounting at start 'as')
+.\"	do accounting;
+.\"if( leader on open 'ld' ) `ld` -> OF;
+.\"                  // send leader
+.\"if( FF on open 'fo' ) `fo` -> OF;
+.\"                  // send FF
+.\".sp 0.5
+.\"// check to see if banner required
+.\"do_banner = 
+.\"	(always banner 'ab'
+.\"		|| (!suppress banner 'sb'
+.\"			&& control file 'L' ));
+.\"if( ! header last 'hl' && do_banner ){
+.\"	BP = OF; bnr = null;
+.\"	if( banner start 'bs' ) bnr = 'bs'
+.\"	else if( banner program 'bp' ) bnr = 'bp'
+.\"	if( bnr ){
+.\"		BP = filter( bnr ) -> OF;
+.\"	}
+.\"	short banner info -> BP;
+.\"	if( BP != OF ) close( BP );
+.\"}
+.\"// suspend the OF filter
+.\"if( OF != LP ) suspend OF filter;
+.\".sp 0.5
+.\"for each data file df in job do
+.\"	// send FF between files of job
+.\"	if( !first job && ! suppress FF 'sf' ){
+.\"		if( OF != LP ) wake up OF filter;
+.\"		'ff' -> OF;
+.\"		if( OF != LP ) suspend OF filter;
+.\"	}
+.\"	// get filter for job
+.\"	?F = LP; // default - no filter
+.\"	format = jobformat;
+.\"	if( jobformat == 'f' or
+.\"		jobformat = 'l' ){
+.\"			format = 'f';
+.\"	}
+.\"	filter = format filter from printcap;
+.\"	if( filter ){
+.\"		?F = filter( filter ) -> LP;
+.\"	}
+.\"	// send data file to printer
+.\"	// through filter
+.\"	data file -> ?F;
+.\"	// kill filter
+.\"	if( ?F != LP ) close( ?F )
+.\"endfor
+.\".sp 0.5
+// finish printing
+if( OF != LP ) wake up OF filter;
+if( header last 'hl' && do_banner ){
+	if( ! no FF separator 'sf' )
+		'ff' -> OF;
+	BP = OF; bnr = null;
+	if( banner end program 'be' ) bnr = 'be'
+	else if( banner program 'bp' ) bnr = 'bp'
+	if( bnr ){
+		BP = filter( bnr ) -> OF;
+	}
+	short banner info -> BP;
+	if( BP != OF ) close( BP );
+}
+.sp 0.5
+if( ff on close 'fq' ) 'ff' -> OF;
+if( trailer on close 'tr' ) tr -> OF;
+if( accounting at end 'ae') do accounting;
+if( OF != LP ) close( OF );
+close( LP );
+.sz +1
+.DE
+.FG "Figure 8c" "Printing algorithm used by LPRng
+.if \nt=0 .F2
+.if \nt>0 .ZZ

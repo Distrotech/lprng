@@ -1,0 +1,283 @@
+.NH 1
+LPC
+.PP
+The
+.L lpc
+program displays the current status of one or more spool queues.
+.Rp
+.Np
+In one window,
+start the LPD server using
+.L "lpd -F"  .
+.Np
+The 
+.L lpc
+program can run in interactive or line mode.
+We will first run it in interactive mode.
+In another window,
+run the
+.L lpc
+program.
+You should see a status display similar to the following:
+.DS
+.L
+.nf
+lpc >
+.DE
+.PP
+Try entering the help command:
+.L "lpc > help" ;
+this will display the help information.
+.DS
+.L
+.nf
+.in 0
+.sz 9
+usage: lpc [-Ddebuglevel] [-V] [-Pprinter] [commands]
+ with no commands, reads from stdin  -Pprinter    - specify printer
+  -V           - increase information verbosity
+  -Ddebuglevel - debug level
+ commands:
+ abort   (printer[@host] | all)  - stop server
+ autohold (printer[@host] | all)  - autohold on
+ disable (printer[@host] | all)  - disable queueing
+ debug   (printer[@host] | all) debugparms - set debug level for printer
+ enable  (printer[@host] | all)  - enable  queueing
+ hold    (printer[@host] | all) (name[@host] | job | all)* - hold job
+ kill    (printer[@host] | all)  - stop and restart server
+ lpd [HUP]  - get LPD PID, signal it to reread printcap and configuration
+ lpq (printer[@host] | all) (name[@host] | job | all)*     - invoke LPQ
+ lprm (printer[@host] | all) (name[@host]|host|job| all)*  - invoke LPRM
+ noautohold (printer[@host] | all)  - autohold off
+ printcap (printer[@host] | all) - report printcap values
+ quit                            - exit LPC
+ redirect (printer[@host] | all) (printer@host | off )*    - redirect jobs
+ release  (printer[@host] | all) (name[@host] | job | all)* - release job
+ reread                          - LPD reread database information
+ start   (printer[@host] | all)  - start printing
+ status  (printer[@host] | all)  - status of printers
+ stop    (printer[@host] | all)  - stop  printing
+ topq    (printer[@host] | all) (name[@host] | job | all)* - reorder job
+.DE
+.PP
+The 
+.L lpc
+command can be used to start and stop printing,
+spooling, and redirect jobs to other queues.
+By default,
+most commands work on the currently selected printer,
+which is the users default printer or the last selected printer.
+.NH 2
+Status Reports
+.PP
+The
+.L "status"
+command can be used to show the status of printers.
+.
+.DS
+.L
+.nf
+.sz 9
+.in 0
+lpc >status all
+Printer              Printing Spooling Jobs  Server   Slave Redirect Debug
+t1@taco               enabled  enabled    3    none    none          
+t2@taco               enabled  enabled    0    none    none          
+t3@taco               enabled  enabled    0    none    none          
+t4@taco               enabled  enabled    0    none    none          
+t5@taco               enabled  enabled    0    none    none          
+t6@taco               enabled  enabled    0    none    none          
+t3@taco               enabled  enabled    0    none    none          
+.DE
+.PP
+The status display shows the name of the printer,
+its print and spooling status,
+the number of jobs in the queue,
+if there is a server process active,
+and if there is a slave process for the server process. 
+The
+redirect field indicates if the queue is being redirected to another print
+queue and the debug field is the current debugging level set by the
+lpc command.
+.NH 2
+Starting and Stopping Printing and Spooling
+.PP
+The
+.I start
+and
+.I stop
+commands can be used to start and stop printing.
+.Rp
+.Np
+Enter the command
+.L "stop t1" ,
+.L "status" ,
+.L "start" ,
+and
+.L "status"
+as shown below.
+.DS
+.L
+.nf
+.in 0
+.sz 9
+lpc >stop t1
+t1 stopped
+lpc >status
+Printer              Printing Spooling Jobs  Server   Slave Redirect Debug
+t1@taco              disabled  enabled    3    none    none          
+lpc >start
+t1 started
+lpc >status
+Printer              Printing Spooling Jobs  Server   Slave Redirect Debug
+t1@taco               enabled  enabled    3    none    none          
+.DE
+.PP
+The
+.L enable
+and
+.L disable
+commands can be used to enable or disable spooling to the queue in a
+similar manner.
+.DS
+.L
+.nf
+.in 0
+.sz 9
+lpc >disable t1
+t1 disabled
+lpc >status
+Printer              Printing Spooling Jobs  Server   Slave Redirect Debug
+t1@taco               enabled disabled    3    none    none          
+lpc >enable t1
+t1 enabled
+lpc >status
+Printer              Printing Spooling Jobs  Server   Slave Redirect Debug
+t1@taco               enabled  enabled    3    none    none          
+.DE
+.NH 2
+LPQ and LPRM Commands
+.PP
+For convenience,
+the 
+.L lprm
+and
+.L lpq
+commands are available in interactive mode.
+This allows jobs to be removed from a print queue and the
+status of the print queue to be viewed after performing commands.
+.NH 2
+Killing and Aborting Print Queue
+.PP
+The abort and kill commands are used to kill of printing of a job.
+The kill command will perform an abort operation followed by
+a start operation.
+.PP
+The abort command is useful when a job is being printed and needs to be
+restarted,
+but at a later time using the start command.
+The kill command is useful when a job can be immediately restarted.
+.NH 2
+TOPQ - Changing job priority
+.PP
+The topq command can be used to reorder the priority of user jobs.
+Jobs that have their priority altered will be printed before
+jobs that have not.
+Updated jobs will be printed in last updated,
+first out order.
+.PP
+For example,
+the command
+.L "topq root"
+will have all of the root users jobs printed first,
+starting with the oldest job in the queue.
+.NH 2
+Hold, Autohold, and Release
+.PP
+The hold,
+autohold,
+noautohold,
+and release commands
+are used to temporarily prevent a job from being printed.
+The hold command is used to hold a job and the release command
+to release it.
+.PP
+The
+autohold option can be enabled in the
+.L printcap
+file using the
+.L :ah:
+printcap field.
+If autohold is enabled,
+then all jobs will be held until released using the
+release command.
+The interactive
+autohold command can be used to override the printcap information.
+The status of the autohold option is recorded in the
+spool queue
+.L control
+file and will persist over system restarts.
+Autohold can be turned off using the noautohold command.
+.PP
+When a job is released
+the printer may need to be started if it is disabled.
+.NH 2
+Job and Queue Redirection
+.PP
+The move and redirect commands are used to move jobs
+between different queues.
+.PP
+The
+move command will move a selected set of jobs to a new queue.
+For example,
+.L "move t1 root t2"
+will move all of the jobs on printer t1 submitted by root to the t2 printer.
+.PP
+The
+redirect command will cause all jobs submitted to a particular spool
+queue to be forwarded to the new printer.
+The
+.L "redirect off"
+command will turn redirection off.
+.NH 2
+Diagnostic Commands - debug, lpd, reread, printcap
+.PP
+The debug,
+lpd,
+and lpq
+commands are available for diagnostic purposes.
+.PP
+The debug command allows the adminstrator to set debugging
+information and values for a specific spool queue.
+For example,
+.L "debug 7,remote=5,log=/tmp/x"
+would set debugging to level 7,
+the remote flag to 5,
+and send debugging log information to the
+.L /tmp/x
+file.
+The
+.L "debug"
+command with no options will turn all debugging options off.
+.PP
+The lpd command will print the process ID (PID) of the LPD server process.
+The reread command will send it a
+.L SIGHUP
+signal,
+causing it to reread the various databases.
+.PP
+The printcap command will cause the printcap entry for the specified
+printer to be returned.
+This is useful when trying to determine the actual values of a printcap
+entry being used by the LPRng software.
+.NH
+Command Line Interface
+.PP
+The command line interface is identical to the interactive interface,
+but only allows a single command to be entered at a time.
+For example:
+.L "lpc status all"
+will print the status of all the printers,
+and
+.L "lpc start all"
+will start all printers.
