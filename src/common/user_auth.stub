@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.stub,v 1.12 2002/02/25 17:43:17 papowell Exp $
+ * $Id: user_auth.stub,v 1.19 2002/03/06 17:02:55 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -392,7 +392,7 @@ int Test_connect( struct job *job, int *sock, char **real_host,
 	
 	if(DEBUGL1)Dump_line_list("Test_connect: info", info );
 	*sock = Link_open_list( RemoteHost_DYN,
-			real_host, 0, connect_timeout, 0, 1 );
+			real_host, 0, connect_timeout, 0, Unix_socket_path_DYN );
 	if( *sock >= 0 ){
 		cmd = Find_str_value(info, CMD, Value_sep );
 		secure = safestrdup2(cmd,"\n",__FILE__,__LINE__);
@@ -609,7 +609,7 @@ int md5_connect( struct job *job, int *sock, char **real_host,
 	memcpy( destkey, s, destkeylength );
 
 	*sock = Link_open_list( RemoteHost_DYN,
-			real_host, 0, connect_timeout, 0, 1 );
+			real_host, 0, connect_timeout, 0, Unix_socket_path_DYN );
 	if( *sock >= 0 ){
 		cmd = Find_str_value(info, CMD, Value_sep );
 		secure = safestrdup2(cmd,"\n",__FILE__,__LINE__);

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.12 2002/02/25 17:43:12 papowell Exp $";
+"$Id: getqueue.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
 
 
 /***************************************************************************
@@ -358,6 +358,7 @@ void Setup_job( struct job *job, struct line_list *spool_control, const char *di
 		Set_decimal_value(&job->info,SIZE,size);
 	}
 
+	Make_identifier( job );
 	Check_for_hold( job, spool_control );
 
 	if(DEBUGL3)Dump_job("Setup_job",job);
@@ -615,8 +616,6 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 				buffer[0] = c; buffer[1] = 0;
 				DEBUG4("Setup_cf_info: control '%s'='%s'", buffer, s+1 );
 				Set_str_value(&job->info,buffer,s+1);
-			} else if( c == '_' ){
-				Set_str_value(&job->info,AUTHINFO,s+1); break;
 			}
 		}
 	}
@@ -1724,6 +1723,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
 		lp = (void *)job->datafiles.list[linecount];
 		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+		Set_str_value(lp,OTRANSFERNAME,transfername);
 		if( !(s = Find_casekey_str_value(&outfiles,transfername,Value_sep)) ){
 			/* we add the entry */
 			offset = count % 52;
@@ -1945,10 +1945,6 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 			Set_str_value(&controlfile,IDENTIFIER,s);
 		}
 	}
-	if( (Is_server && Auth_forward_DYN == 0) ){
-		/* clobber the authentication information */
-		Set_str_value(&controlfile,AUTHINFO,0);
-	}
 	if( !Find_str_value(&controlfile,DATE,Value_sep) ){
 		Set_str_value(&controlfile,DATE, Time_str( 0, 0 ) );
 	}
@@ -2092,9 +2088,6 @@ int Create_control( struct job *job, char *error, int errlen, char *auth_id,
 	if(DEBUGL3) Dump_job( "Create_control: before fixing", job );
 
 	/* deal with authentication */
-	if( auth_id ){
-		Set_str_value(&job->info,AUTHINFO,auth_id);
-	}
 
 	Make_identifier( job );
 

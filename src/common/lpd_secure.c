@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.12 2002/02/25 17:43:14 papowell Exp $";
+"$Id: lpd_secure.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -328,8 +328,7 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 					tempfile, Errormsg(errno));
 			goto error;
 		}
-		s = Find_str_value(header_info, CLIENT, Value_sep );
-		status = Scan_block_file( fd, error, sizeof(error), s );
+		status = Scan_block_file( fd, error, sizeof(error), (char *)Perm_check.authuser );
 	} else {
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;

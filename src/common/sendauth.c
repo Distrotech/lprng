@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.12 2002/02/25 17:43:16 papowell Exp $";
+"$Id: sendauth.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
 
 #include "lp.h"
 #include "sendauth.h"
@@ -505,7 +505,7 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 		}
 		Set_str_value(info,FROM,from);
 		if( job ){
-			client = Find_str_value(&job->info,AUTHINFO,Value_sep);
+			client = Find_str_value(&job->info,AUTHUSER,Value_sep);
 			Set_str_value(info,CLIENT,client);
 		} else {
 			client = (char *)Perm_check.authuser;

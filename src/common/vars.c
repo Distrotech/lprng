@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.12 2002/02/25 17:43:17 papowell Exp $";
+"$Id: vars.c,v 1.19 2002/03/06 17:02:56 papowell Exp $";
 
 
 /* force local definitions */
@@ -81,9 +81,6 @@ Put all of the variables in a separate file.
 #endif
 #if !defined(DONE_JOBS_MAX_AGE)
 #error Missing DONE_JOBS_MAX_AGE definition
-#endif
-#if !defined(UNIXSOCKET)
-#error Missing UNIXSOCKET definition
 #endif
 #if !defined(UNIXSOCKETPATH)
 #error Missing UNIXSOCKETPATH definition
@@ -297,6 +294,8 @@ struct keywords Pc_var_list[] = {
 { "lpd_bounce", 0, FLAG_K, &Lpd_bounce_DYN,0,0},
    /* force a poll operation */
 { "lpd_force_poll", 0, FLAG_K, &Force_poll_DYN,0,0},
+   /* lpd server listen port port, "off" does not open port */
+{ "lpd_listen_port", 0, STRING_K, &Lpd_listen_port_DYN,0,0},
    /*  lpd pathname for server use */
 { "lpd_path", 0,  STRING_K,  &Lpd_path_DYN,0,0},
    /*  interval in secs between starting up all servers */
@@ -495,8 +494,6 @@ struct keywords Pc_var_list[] = {
 { "translate_format", 0,  STRING_K,  &Xlate_format_DYN,0,0},
    /*  translate incoming job file formats - similar to tr(1) utility */
 { "translate_incoming_format", 0,  STRING_K,  &Xlate_incoming_format_DYN,0,0},
-   /*  use UNIX socket for localhost connections */
-{ "unix_socket", 0,  FLAG_K,  &Unix_socket_DYN,0,0,"=" UNIXSOCKET},
    /*  path for UNIX socket for localhost connections */
 { "unix_socket_path", 0,  STRING_K,  &Unix_socket_path_DYN,0,0,"=" UNIXSOCKETPATH},
    /*  read and cache information */

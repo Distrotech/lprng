@@ -26,7 +26,7 @@
       <div class="TITLEPAGE">
         <h1 class="TITLE"><a name="AEN2">LPRng-HOWTO</a></h1>
 
-        <h2 class="SUBTITLE">25 Feb 2002 (For LPRng-3.8.8)</h2>
+        <h2 class="SUBTITLE">6 Mar 2002 (For LPRng-3.8.9)</h2>
 
         <h3 class="AUTHOR"><a name="AEN5">Patrick A Powell</a></h3>
 
@@ -24118,9 +24118,9 @@
           Kerberos 5 for Authentication</a></h1>
 
           <p><b class="APPLICATION">LPRng</b> Kerberos 5
-          authentication is based on the Kerberos5-1.1.1 release as
-          of December 28, 1999. This was obtained from MIT from the
-          <i class="EMPHASIS"><a href=
+          authentication is based on the Kerberos5-1.2.4 release as
+          of 3 March 2020. The distribution was obtained from MIT
+          from the <i class="EMPHASIS"><a href=
           "http://web.mit.edu/kerberos/www/" target=
           "_top">http://web.mit.edu/kerberos/www/</a></i>
           Website.</p>
@@ -24248,7 +24248,7 @@
 <pre class="SCREEN">
     Example:
     #&gt; kadmin   OR #&gt; kadmin.local 
-    ktadd -k lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
+    ktadd -k /etc/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
     quit
 </pre>
                 </div>
@@ -24257,19 +24257,21 @@
               </li>
 
               <li>
-                <p>The <tt class="LITERAL">keytab</tt> file
+                <p>The <tt class=
+                "LITERAL">/etc/lpr.wayoff.private</tt> file
                 contains the keytab information which is the
-                equivalent information for the server Copy each <tt
-                class="LITERAL">keytab</tt> file to <tt class=
-                "FILENAME">/etc/lpd.keytab</tt> file on the server.
-                See the warnings about of keytab files in the
-                Kerberos Installation and Kerberos Administration
-                manuals. You should copy the file using an
-                encrypted connection, set the permissions to read
-                only by the owner (<tt class="LITERAL">400</tt>),
-                and set the owner to <tt class=
-                "LITERAL">daemon</tt> or the user that <b class=
-                "APPLICATION">lpd</b> will run as.</p>
+                equivalent of a password for a server program. You
+                should create these files and then copy the
+                appropriate <tt class="LITERAL">keytab</tt> file to
+                <tt class="FILENAME">/etc/lpd.keytab</tt> file on
+                each server. See the warnings about of keytab files
+                in the Kerberos Installation and Kerberos
+                Administration manuals. You should copy the file
+                using an encrypted connection, set the permissions
+                to read only by the owner (<tt class=
+                "LITERAL">400</tt>), and set the owner to <tt
+                class="LITERAL">daemon</tt> or the user that <b
+                class="APPLICATION">lpd</b> will run as.</p>
 
                 <div class="INFORMALEXAMPLE">
                   <a name="AEN9166"></a>
@@ -24289,10 +24291,10 @@
 
               <li>
                 <p>If you want to have MIT Kerberos4 printing
-                compatibility, then you will need to set up
-                Kerberos 4 <tt class="LITERAL">servertabs</tt>
-                instead of Kerberos 5 keytabs. Assuming that you
-                have put the Kerberos 5 keytab in <tt class=
+                compatibility then you will need to set up Kerberos
+                4 <tt class="LITERAL">servertabs</tt> instead of
+                Kerberos 5 keytabs. Assuming that you have put the
+                Kerberos 5 keytab in <tt class=
                 "FILENAME">/etc/lpd.keytab</tt>, then you extract
                 the Kerberos 4 srvtab version of the Kerberos 5
                 keytab using the following commands. You must put
@@ -26965,7 +26967,7 @@
 <pre class="SCREEN">
     \003printer [id]* \n    short
     \004printer [id]* \n    long
-    \009printer [id]* \n    <b class=
+    \011printer [id]* \n    <b class=
 "APPLICATION">LPRng</b> extension- verbose
 </pre>
           </div>

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: krb5_auth.h,v 1.12 2002/02/25 17:43:19 papowell Exp $
+ * $Id: krb5_auth.h,v 1.19 2002/03/06 17:02:58 papowell Exp $
  ***************************************************************************/
 
 
@@ -22,7 +22,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen );
 char *krb4_err_str( int err );
 int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 	int connect_timeout, char *errmsg, int errlen,
-	struct security *security, struct line_list *info  );
+	struct security *security, struct line_list *info );
 int Receive_k4auth( int *sock, char *input );
 int Krb5_receive( int *sock, char *user, char *jobsize, int from_server,
 	char *authtype, struct line_list *info,

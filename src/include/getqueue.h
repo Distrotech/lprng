@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.12 2002/02/25 17:43:19 papowell Exp $
+ * $Id: getqueue.h,v 1.19 2002/03/06 17:02:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -23,7 +23,6 @@ EXTERN const char * ATTEMPT				DEFINE( = "attempt" );
 EXTERN const char * AUTH				DEFINE( = "auth" );
 EXTERN const char * AUTHFROM			DEFINE( = "authfrom" );
 EXTERN const char * AUTHFROM_ID			DEFINE( = "authfrom_id" );
-EXTERN const char * AUTHINFO			DEFINE( = "_" );
 EXTERN const char * AUTHTYPE			DEFINE( = "authtype" );
 EXTERN const char * AUTHUSER			DEFINE( = "authuser" );
 EXTERN const char * AUTOHOLD			DEFINE( = "autohold" );
@@ -136,6 +135,7 @@ EXTERN const char * STATUS_FD			DEFINE( = "status_fd" );
 EXTERN const char * SUBSERVER			DEFINE( = "subserver" );
 EXTERN const char * TRACE				DEFINE( = "trace" );
 EXTERN const char * TRANSFERNAME		DEFINE( = "transfername" );
+EXTERN const char * OTRANSFERNAME		DEFINE( = "otransfername" );
 EXTERN const char * UPDATE				DEFINE( = "update" );
 EXTERN const char * UPDATE_TIME			DEFINE( = "update_time" );
 EXTERN const char * USER				DEFINE( = "user" );

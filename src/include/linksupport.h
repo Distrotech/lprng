@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 1.12 2002/02/25 17:43:19 papowell Exp $
+ * $Id: linksupport.h,v 1.19 2002/03/06 17:02:58 papowell Exp $
  ***************************************************************************/
 
 
@@ -28,16 +28,16 @@ int Link_setkeepalive( int sock );
 int connect_timeout( int timeout,
 	int sock, struct sockaddr *name, int namelen);
 int getconnection ( char *hostname, char *dest_port,
-	int timeout, int connection_type, struct sockaddr *bindto, int use_unix_socket );
+	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path );
 void Set_linger( int sock, int n );
-int Link_listen( void );
-int Unix_link_listen( void );
+int Link_listen( char *port_name );
+int Unix_link_listen( char *unix_socket_path );
 int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto,
-	int allow_unix_socket );
+	char *unix_socket_path );
 int Link_open_type(char *host, char *port, int timeout, int connection_type,
-	struct sockaddr *bindto, int allow_unix_socket );
+	struct sockaddr *bindto, char * unix_socket_path );
 int Link_open_list( char *hostlist, char **result,
-	char *port, int timeout, struct sockaddr *bindto, int allow_unix_socket );
+	char *port, int timeout, struct sockaddr *bindto, char *unix_socket_path );
 void Link_close( int *sock );
 int Link_send( char *host, int *sock, int timeout,
 	char *sendstr, int count, int *ack );

@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.8
+VERSION=3.8.9
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -23,7 +23,6 @@ ALL_LINGUAS="fr"
 
 WITH_CC dnl
 WITH_CCOPTS dnl
-WITH_LINKER dnl
 WITH_LDOPTS dnl
 WITH_CPPOPTS dnl
 if test -z "$LOCALEDIR" ; then
@@ -56,19 +55,6 @@ AC_SUBST(CHGRP)dnl
 
 dnl ----------------------------------------------------------------------------
 dnl ----------- XXXXXX START OF OPTIONS ----------------------------------------
-
-dnl check to see if we use a unix socket as well as TCP/IP port 515
-AC_MSG_CHECKING(if UNIX socket for localhost connections)
-AC_ARG_ENABLE( unix_socket,
-[  --disable-unix_socket               use unix socket for localhost connections],
-[v=no;UNIXSOCKET=0;],
-[v=yes;UNIXSOCKET=1;],
-],
-[v=no;],
-)
-AC_MSG_RESULT($v)
-AC_SUBST(UNIXSOCKET)
-
 
 dnl Unix socket pathname
 AC_MSG_CHECKING(unix socket pathname)
@@ -382,11 +368,11 @@ dnl default strip binaries
 AC_MSG_CHECKING(disable stripped binaries)
 AC_ARG_ENABLE( strip,
 [  --disable-strip                   disable stripping binaries by default],
-[v=no; STRIP=""; ],
-[v=yes;  STRIP="-s"; ]
+[v=no; STRIP_OPTION=""; ],
+[v=yes;  STRIP_OPTION=" -s "; ]
 )
 AC_MSG_RESULT($v)
-AC_SUBST(STRIP)
+AC_SUBST(STRIP_OPTION)
 
 dnl ----------------------------------------------------------------------------
 dnl ------------   OS Checks  --------------------------------------------------
@@ -443,6 +429,7 @@ AM_PROG_LIBTOOL
 
 AC_C_CONST
 AC_C_INLINE
+AC_C_VOLATILE
 
 AC_HEADER_STDC
 AC_HEADER_DIRENT

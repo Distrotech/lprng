@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.12 2002/02/25 17:43:12 papowell Exp $";
+"$Id: linelist.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -2611,6 +2611,12 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 	char *s;
 
 	DEBUG1("Make_passthrough: cmd '%s', flags '%s'", line, flags );
+	if( job ){
+		s = Find_str_value( &job->info,QUEUENAME, Value_sep );
+		if( !ISNULL(s) ){
+			Set_DYN(&Queue_name_DYN,s );
+		}
+	}
 	Init_line_list(&env);
 	if( env_init ){
 		Merge_line_list(&env,env_init,Value_sep,1,1);

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.12 2002/02/25 17:43:14 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -133,9 +133,11 @@
 
 /*
  * Signal handler to set flags and terminate system calls
+ *  NOTE: use 'volatile' so that the &*()()&* optimizing compilers
+ *  handle the value correctly. 
  */
 
- static int Susr1, Chld;
+ static volatile int Susr1, Chld;
 
  static void Sigusr1(void)
 {
@@ -268,6 +270,7 @@ void Get_subserver_info( struct line_list *order,
 	int i;
 	char *s;
 
+	Unescape( old_order ); /* this is ugly - we make it forwards compatible */
 	Init_line_list(&server_order);
 	Init_line_list(&server);
 
@@ -350,6 +353,9 @@ char *Make_temp_copy( char *srcfile, char *destdir )
  * Do_queue_jobs: process the job queue
  ***************************************************************************/
 
+ static int Done_count;
+ static time_t Done_time;
+
 int Do_queue_jobs( char *name, int subserver )
 {
 	int master = 0;		/* this is the master */
@@ -366,6 +372,7 @@ int Do_queue_jobs( char *name, int subserver )
 	struct line_list servers, tinfo, *sp, *datafile, chooser_list, chooser_env;
 	plp_block_mask oblock;
 	struct job job;
+	int jobs_printed = 0;
 
 	Init_line_list(&tinfo);
 
@@ -541,6 +548,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 			if( printable || move || change || forwarding || done_remove ){
 				pid = Fork_subserver( &servers, i, 0 );
+				jobs_printed = 1;
 			}
 			Set_flag_value(sp,CHANGE,0);
 		}
@@ -613,9 +621,17 @@ int Do_queue_jobs( char *name, int subserver )
 		plp_unblock_all_signals( &oblock );
 		plp_set_signal_mask( &oblock, 0 );
 
+		if( (Done_jobs_DYN > 0 && Done_count > Done_jobs_DYN)
+			 || (Done_jobs_max_age_DYN > 0
+					&& Done_time
+					&& (time(0) - Done_time) > Done_jobs_max_age_DYN) ){
+			Susr1 = 1;
+		}
 		DEBUG1( "Do_queue_jobs: Susr1 before scan %d", Susr1 );
 		while( Susr1 ){
 			Susr1 = 0;
+			Done_time = 0;
+			Done_count = 0;
 			DEBUG1( "Do_queue_jobs: rescanning" );
 
 			Get_spool_control( Queue_control_file_DYN, &Spool_control);
@@ -634,6 +650,7 @@ int Do_queue_jobs( char *name, int subserver )
 				pid = Find_flag_value(sp,SERVER,Value_sep);
 				if( i > 0 && change && pid == 0 ){
 					pid = Fork_subserver( &servers, i, 0 );
+					jobs_printed = 1;
 				}
 				Set_flag_value(sp,CHANGE,0);
 			}
@@ -1093,14 +1110,16 @@ int Do_queue_jobs( char *name, int subserver )
 			/* set up the new context */
 			safestrncpy(savename,Printer_DYN);
 			buffer[0] = 0;
+
+			/* we have to chdir to the destination directory */
 			if( Setup_printer( pr, buffer, sizeof(buffer), 1 ) ){
 				Errorcode = JABORT;
 				FATAL(LOG_ERR) "Do_queue_jobs: subserver '%s' setup failed - %s'",
 						pr, buffer );
 			}
 
-			/* we have to chdir to the destination directory */
-			i =  Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0, -1 );
+			/* get the job set up */
+			i = Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0, -1 );
 			Free_job(&jcopy);
 
 			/* now we switch back to the old context */
@@ -1121,23 +1140,14 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 
 			/* now we deal with the job in the original queue */
-			Set_flag_value(&job.info,DONE_TIME,time((void *)0));
-			Set_hold_file(&job, 0, 0);
+			Update_status(&job, JSUCC);
 
 			Set_str_value(sp,IDENTIFIER,id);
 			setstatus(&job, "transfer '%s' to subserver '%s' finished", id, pr );
 			setmessage(&job,STATE,"COPYTO %s",pr);
-			if( !(Save_when_done_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
-				if( Remove_job( &job ) ){
-					setstatus( &job, _("could not remove job '%s'"), id);
-				} else {
-					setstatus( &job, _("job '%s' removed"), id );
-				}
-			} else {
-				setstatus( &job, _("job '%s' saved"), id );
-			}
 			setstatus(&job, "starting subserver '%s'", pr );
 			pid = Fork_subserver( &servers, use_subserver, 0 );
+			jobs_printed = 1;
 		} else {
 			Free_line_list(&tinfo);
 			Set_str_value(&tinfo,HF_NAME,hf_name);
@@ -1150,10 +1160,9 @@ int Do_queue_jobs( char *name, int subserver )
 				Set_str_value(sp,HF_NAME,hf_name);
 				Set_str_value(sp,IDENTIFIER,id);
 			}
+			jobs_printed = 1;
 		}
 	}
-
-	Remove_done_jobs();
 
 	/* now we reset the server order */
 
@@ -1161,7 +1170,8 @@ int Do_queue_jobs( char *name, int subserver )
 	Free_job(&job);
 	Free_line_list(&tinfo);
 	if( Server_names_DYN ){
-		setstatus( 0, "no more jobs to process in load balance queue" );
+		if( jobs_printed ) setstatus( 0, "no more jobs to process in load balance queue" );
+		jobs_printed = 0;
 		for( i = 1; i < servers.count; ++i ){
 			sp = (void *)servers.list[i];
 			s = Find_str_value(sp,PRINTER,Value_sep);
@@ -1892,6 +1902,10 @@ void Update_status( struct job *job, int status )
 					}
 				} else {
 					setstatus( job, _("job '%s' saved"), id );
+					if( Done_jobs_DYN || Done_jobs_max_age_DYN ){
+						++Done_count;
+						if( !Done_time ) Done_time = time(0);
+					}
 				}
 			}
 		}
@@ -2087,7 +2101,7 @@ int Check_print_perms( struct job *job )
 	perm.printer = Printer_DYN;
 	perm.user = Find_str_value(&job->info,LOGNAME,Value_sep);
 	perm.remoteuser = perm.user;
-	perm.host = 0;
+	perm.authuser = Find_str_value(&job->info,AUTHUSER,Value_sep);
 	s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
 		perm.host = &PermHost_IP;

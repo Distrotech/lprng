@@ -25,6 +25,17 @@ CAVEATS and WARNINGS:
     LPRng is compiled and tested using GCC and Gnu Make.  It uses libtool
     to create a shared library on systems where this is supported.
 
+INCLUDE FILES AND LIBRARIES 
+
+If you are using GETOPT or Kerberos you may need to extend the search
+paths for include files and libraries as shown below:
+
+    --with-ldopts="-L/usr/local/lib" \
+     --with-cppopts="-I/usr/local/include"
+  OR (for example)
+    --with-ldopts="-L/usr/local/lib -L/usr/lib/krb5" \
+     --with-cppopts="-I/usr/local/include -I/usr/include/krb5"
+
 Solaris Users:
 
    You can get precompiled versions of the GCC compiler and GNU Make
@@ -342,6 +353,14 @@ KERBEROS:
   ./configure --enable-kerberos
   - for Kerberos 5 and Kerberos 4 legacy support:
   ./configure --enable-kerberos --enable-mit_kerberos4
+
+  You may need to add the following if your libraries and include files are
+  not in the 'usual' places.  Replace /usr/local/lib with the directory
+  where the Kerberos libraries are and /usr/local/include where the include
+  files are.
+
+    --with-ldopts="-L/usr/local/lib" \
+     --with-cppopts="-I/usr/local/include"
 
          --- CONFIGURE (autoconf) DOCUMENTATION ---
 

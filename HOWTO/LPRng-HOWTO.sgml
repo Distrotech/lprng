@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 25 Feb 2002 (For LPRng-3.8.8)</subtitle>
+<subtitle> 6 Mar 2002 (For LPRng-3.8.9)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.12 2002/02/25 17:43:26 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.19 2002/03/06 17:03:04 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -19243,7 +19243,8 @@ this is highly undesirable and should not be used under any circumstances.</para
 
 <para>&LPRng; Kerberos 5 authentication is
 based on the
-Kerberos5-1.1.1 release as of December 28, 1999.  This was obtained
+Kerberos5-1.2.4 release as of 3 March 2020.
+The distribution was obtained
 from MIT from the
 <emphasis remap=tt><ulink URL="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</ulink></emphasis>
 Website.</para>
@@ -19356,7 +19357,7 @@ quit</screen>
 <screen>
 Example:
 #> kadmin   OR #> kadmin.local 
-ktadd -k lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
+ktadd -k /etc/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
 quit</screen>
 </informalexample>
 </para>
@@ -19364,12 +19365,13 @@ quit</screen>
 
 <listitem>
 <para>The
-<literal>keytab</literal>
+<literal>/etc/lpr.wayoff.private</literal>
 file contains the keytab information which is the
-equivalent information for the server
-Copy each
+equivalent of a password for a server program.
+You should create these files and then
+copy the appropriate
 <literal>keytab</literal>
-file  to <filename>/etc/lpd.keytab</filename> file on the server.
+file  to <filename>/etc/lpd.keytab</filename> file on each server.
 See the warnings about of keytab files in the
 Kerberos Installation and  Kerberos  Administration manuals.
 You should copy the file using an encrypted connection,
@@ -19389,7 +19391,7 @@ and set the owner to
 </listitem>
 
 <listitem>
-<para>If you want to have MIT Kerberos4 printing compatibility,
+<para>If you want to have MIT Kerberos4 printing compatibility
 then you will need to set up Kerberos 4
 <literal>servertabs</literal>
 instead of Kerberos 5 keytabs.
@@ -21401,7 +21403,7 @@ The lpq requests have the format:
 <informalexample>
 <screen>\003printer [id]* \n    short
 \004printer [id]* \n    long
-\009printer [id]* \n    &LPRng; extension- verbose</screen>
+\011printer [id]* \n    &LPRng; extension- verbose</screen>
 </informalexample>
 </para>
 

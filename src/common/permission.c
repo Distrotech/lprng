@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.12 2002/02/25 17:43:16 papowell Exp $";
+"$Id: permission.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
 
 
 #include "lp.h"
@@ -328,7 +328,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				default: break;
 				case 'Q': case 'M': case 'C':
 					/* check succeeds if remoteuser == user */
-					t = Find_str_value(&job->info,AUTHINFO,Value_sep);
+					t = Find_str_value(&job->info,AUTHUSER,Value_sep);
 					m = (safestrcmp( check->authuser, t ) != 0);
 					if( invert ) m = !m;
 					DEBUGF(DDB3)(
@@ -344,7 +344,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				default: break;
 				case 'Q': case 'M': case 'C':
 					/* check succeeds if authinfo present */
-					t = Find_str_value(&job->info,AUTHINFO,Value_sep);
+					t = Find_str_value(&job->info,AUTHUSER,Value_sep);
 					m = !t;
 					if( invert ) m = !m;
 					DEBUGF(DDB3)(

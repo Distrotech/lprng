@@ -74,7 +74,7 @@ libdir=@libdir@
 
 # install options
 
-STRIP=@STRIP@
+STRIP=@STRIP_OPTION@
 
 CFLAGS:= \
 	-I${top_builddir} \
@@ -96,7 +96,6 @@ CFLAGS:= \
 	-DLOCALEDIR=\"@LOCALEDIR@\" \
 	-DDONE_JOBS=\"@DONE_JOBS@\" \
 	-DDONE_JOBS_MAX_AGE=\"@DONE_JOBS_MAX_AGE@\" \
-	-DUNIXSOCKET=\"@UNIXSOCKET@\" \
 	-DUNIXSOCKETPATH=\"@UNIXSOCKETPATH@\"
 
 USER_OBJS := @USER_OBJS@
@@ -105,7 +104,6 @@ LDFLAGS   := @LDFLAGS@
 FILTER_DIR = @FILTER_DIR@
 LPD_DIR    = @LPD_DIR@
 
-STRIP      = @STRIP@
 
 #********************** End of configure modifiable settings ************
 

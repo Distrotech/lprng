@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.12 2002/02/25 17:43:13 papowell Exp $";
+"$Id: linksupport.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
 
 
 /***************************************************************************
@@ -217,7 +217,7 @@ int connect_timeout( int timeout,
 }
 
 int getconnection ( char *hostname, char *dest_port,
-	int timeout, int connection_type, struct sockaddr *bindto, int use_unix_socket )
+	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path )
 {
 	int sock;	         /* socket */
 	int i, err;            /* ACME Generic Integers */
@@ -265,11 +265,10 @@ int getconnection ( char *hostname, char *dest_port,
 	}
 
 	/* UNIX socket connection for localhost support */
-	DEBUGF(DNW1)("getconnection: use_unix_socket %d, Unix_socket_DYN %d, path %s", 
-		use_unix_socket, Unix_socket_DYN, Unix_socket_path_DYN );
+	DEBUGF(DNW1)("getconnection: unix_socket_path %s", unix_socket_path );
 	/* check to see if the flag is set and the destination
 		is one of the localhost addresses */
-	if( use_unix_socket &&
+	if( !ISNULL(unix_socket_path) && safestrcasecmp( "off", unix_socket_path ) &&
 			( !Same_host(&LookupHost_IP,&Host_IP)
 			|| !Same_host(&LookupHost_IP,&Localhost_IP) ) ){
 		/* taken from Unix Network Programming, Volume 1, 2nd Edition
@@ -282,7 +281,7 @@ int getconnection ( char *hostname, char *dest_port,
 		DEBUGF(DNW1)("getconnection: using unix socket");
 		plp_block_all_signals( &oblock );
 		if( UID_root ) (void)To_euid_root();
-		safestrncpy( dest_un.sun_path, Unix_socket_path_DYN );
+		safestrncpy( dest_un.sun_path, unix_socket_path );
 #ifdef AF_LOCAL
 		dest_un.sun_family = AF_LOCAL;
 #else
@@ -329,13 +328,13 @@ int getconnection ( char *hostname, char *dest_port,
 		errno = err;
 		return (sock);
 	}
+	if( ISNULL(dest_port) ) dest_port = Lpd_port_DYN;
 	dest_sin.sin_port = Link_dest_port_num(dest_port);
 	if( dest_sin.sin_port == 0 ){
-		LOGERR(LOG_INFO)
-		"getconnection: bad port number for LPD connection!\n"
-		"check 'lpd-port' in configuration file, or the\n"
-		"/etc/services file for a missing 'printer 515/tcp' entry" );
-		return( LINK_OPEN_FAIL );
+		LOGMSG(LOG_INFO)
+		"getconnection: using illegal port '%s' for connection to '%s'!\n",
+			dest_port, hostname );
+		return( JABORT );
 	}
 
 	/* handle multi-homed hosts with bad ideas about
@@ -620,7 +619,7 @@ void Set_linger( int sock, int n )
  *  3. does a bind to port determined by Link_dest_port_num();
  */
 
-int Link_listen( void )
+int Link_listen( char *port_name )
 {
 	int sock;                   /* socket */
 	int status;                   /* socket */
@@ -639,9 +638,9 @@ int Link_listen( void )
 	 */
 	sinaddr.sin_family = AF_Protocol();
 	sinaddr.sin_addr.s_addr = INADDR_ANY;
-	if( (s = safestrchr( Lpd_port_DYN, '%')) ){
+	if( (s = safestrchr( port_name, '%')) ){
 		*s = 0;
-		if( Find_fqdn( &LookupHost_IP, Lpd_port_DYN ) ){
+		if( Find_fqdn( &LookupHost_IP, port_name ) ){
 			/*
 			 * Get the destination host address and remote port number to connect to.
 			 */
@@ -655,16 +654,16 @@ int Link_listen( void )
 			memcpy( &sinaddr.sin_addr,
 				LookupHost_IP.h_addr_list.list[0],
 				LookupHost_IP.h_length );
-		} else if( inet_pton( AF_Protocol(), Lpd_port_DYN, &sinaddr.sin_addr ) != 1 ){
+		} else if( inet_pton( AF_Protocol(), port_name, &sinaddr.sin_addr ) != 1 ){
 			*s = '%';
 			Errorcode = JABORT;
 			FATAL(LOG_ERR) "Link_listen: bad lpd_port value, cannot resolve IP address '%s'",
-				Lpd_port_DYN );
+				port_name );
 		}
 		sinaddr.sin_port = Link_dest_port_num(s+1);
 		*s = '%';
-	} else if( Lpd_port_DYN ){
-		sinaddr.sin_port = Link_dest_port_num(Lpd_port_DYN);
+	} else if( port_name ){
+		sinaddr.sin_port = Link_dest_port_num(port_name);
 	}
 	port = ntohs( sinaddr.sin_port );
 	DEBUGF(DNW2)("Link_listen: bind to IP '%s' port %d",
@@ -707,7 +706,7 @@ int Link_listen( void )
 	return (sock);
 }
 
-int Unix_link_listen( void )
+int Unix_link_listen( char *unix_socket_path )
 {
 	int sock;                   /* socket */
 	int status;                 /* socket */
@@ -718,11 +717,8 @@ int Unix_link_listen( void )
 
 	euid = geteuid();
 
-	DEBUGF(DNW2)("Unix_link_listen: Unix_socket_DYN %d, path %s",
-		Unix_socket_DYN, Unix_socket_path_DYN );
-	if( !Unix_socket_DYN ){
-		return(0);
-	}
+	DEBUGF(DNW2)("Unix_link_listen: path %s", unix_socket_path );
+	
 	/*
 	 * Zero out the sunaddr struct
 	 */
@@ -781,30 +777,30 @@ int Unix_link_listen( void )
 }
 
 int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto,
-	int allow_unix_socket )
+	char *unix_socket_path )
 {
 	int sock;
 	DEBUGF(DNW4) ("Link_open: host '%s', port '%s', timeout %d",
 		host,port,timeout);
-	sock = Link_open_type( host, port, timeout, SOCK_STREAM, bindto, allow_unix_socket );
+	sock = Link_open_type( host, port, timeout, SOCK_STREAM, bindto, unix_socket_path );
 	DEBUGF(DNW4) ("Link_open: socket %d", sock );
 	return(sock);
 }
 
 int Link_open_type(char *host, char *port, int timeout, int connection_type,
-	struct sockaddr *bindto, int allow_unix_socket )
+	struct sockaddr *bindto, char * unix_socket_path )
 {
 	int sock = -1;
 	DEBUGF(DNW4)(
 		"Link_open_type: host '%s', port '%s', timeout %d, type %d",
 		host,port, timeout, connection_type );
-	sock = getconnection( host, port, timeout, connection_type, bindto, allow_unix_socket );
+	sock = getconnection( host, port, timeout, connection_type, bindto, unix_socket_path );
 	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
 }
 
 int Link_open_list( char *hostlist, char **result,
-	char *port, int timeout, struct sockaddr *bindto, int allow_unix_socket )
+	char *port, int timeout, struct sockaddr *bindto, char *unix_socket_path )
 {
 	int sock = -1, i, err = 0;
 	struct line_list list;
@@ -820,7 +816,7 @@ int Link_open_list( char *hostlist, char **result,
 	err = errno = 0;
 	for( i = 0; sock < 0 && i < list.count; ++i ){
 		DEBUGF(DNW4) ("Link_open_list: host trying '%s'", list.list[i] );
-		sock = getconnection( list.list[i], port, timeout, SOCK_STREAM, bindto, allow_unix_socket );
+		sock = getconnection( list.list[i], port, timeout, SOCK_STREAM, bindto, unix_socket_path );
 		err = errno;
 		DEBUGF(DNW4) ("Link_open_list: result host '%s' socket %d", list.list[i], sock );
 		if( sock >= 0 ){
@@ -1106,7 +1102,7 @@ int Link_dest_port_num( char *port )
  * int Link_line_read(char *host, int *sock, int timeout,
  *	  char *str, int *count )
  *    reads and copies characters from socket to str until '\n' read,
- *      '\n' NOT copied
+ *      '\n' NOT copied. \r\n -> \n
  *    *count points to maximum number of bytes to read;
  *      updated with actual value read (less 1 for '\n' )
  *    if read does not complete within timeout seconds,
@@ -1124,7 +1120,7 @@ int Link_line_read(char *host, int *sock, int timeout,
 {
 	int i, len, max, err = 0;	/* ACME Integer, Inc. */
 	int status;				/* status of operation */
-	int lf;					/* lf found */
+	int cr, lf;					/* lf found */
 
 	len = i = status = 0;	/* shut up GCC */
 	max = *count;
@@ -1141,12 +1137,18 @@ int Link_line_read(char *host, int *sock, int timeout,
 	/*
 	 * set up timeout and then do operation
 	 */
-	lf = len = 0;
+	cr = lf = len = 0;
 	errno = 0;
 	while( len < max-1
 		&&(i = Read_fd_len_timeout(timeout, *sock, &buf[len], 1 )) > 0
-		&& !Alarm_timed_out && !(lf = (buf[len] == '\n')) ){
-		len += i;
+		&& !Alarm_timed_out ){
+		if( (lf = (buf[len] == '\n')) ){
+			break;
+		} if( (cr = (buf[len] == '\r')) ){
+			cr = 1;
+		} else {
+			++len;
+		}
 	}
 	err = errno;
 	buf[len] = 0;

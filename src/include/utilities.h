@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 1.12 2002/02/25 17:43:23 papowell Exp $
+ * $Id: utilities.h,v 1.19 2002/03/06 17:03:01 papowell Exp $
  ***************************************************************************/
 
 
@@ -14,8 +14,8 @@
 
 #include <setjmp.h>
 
-EXTERN int Alarm_timed_out;                                     /* flag */
-EXTERN int Timeout_pending;
+EXTERN volatile int Alarm_timed_out;      /* flag */
+EXTERN volatile int Timeout_pending;
 
 #if defined(HAVE_SIGLONGJMP)
 EXTERN sigjmp_buf Timeout_env;

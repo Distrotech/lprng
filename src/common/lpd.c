@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.12 2002/02/25 17:43:13 papowell Exp $";
+"$Id: lpd.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
 
 
 #include "lp.h"
@@ -22,16 +22,6 @@
 #include "getopt.h"
 #include "proctitle.h"
 #include "lockfile.h"
-#if 0
-#include "patchlevel.h"
-#include "gethostinfo.h"
-#include "getprinter.h"
-#include "permission.h"
-#include "krb5_auth.h"
-#include "lpd_secure.h"
-#include "lpd_jobs.h"
-#include "lpd_dispatch.h"
-#endif
 
 /* force local definitions */
 #undef EXTERN
@@ -43,6 +33,10 @@
 #define DEFS
 
 #include "lpd.h"
+
+ char* Lpd_listen_port_arg;	/* command line listent port value */
+ char* Lpd_port_arg;	/* command line port value */
+ char* Lpd_socket_arg; /* command line unix socket value */
 
 /**** ENDINCLUDE ****/
 
@@ -160,21 +154,6 @@ int main(int argc, char *argv[], char *envp[])
 
 	Setup_configuration();
 
-#if 0
-	if( Worker_LPD ){
-		struct line_list args;
-		Name = "LPD_WORKER";
-		DEBUG1("Lpd_worker: argc %d, optind %d", argc, Optind );
-		Init_line_list( &args );
-		while( Optind < argc ){
-			Add_line_list(&args,argv[Optind++],Value_sep,1,1);
-		}
-		if(DEBUGL1)Dump_line_list("Lpd_worker - args", &args );
-		Do_work(0,Worker_LPD,args);
-		cleanup(0);
-	}
-#endif
-
 	/* get the maximum number of servers allowed */
 	max_servers = Get_max_servers();
 	n = Get_max_fd();
@@ -190,20 +169,6 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = JABORT;
 		LOGERR_DIE(LOG_ERR) "cannot chdir to /");
 	}
-
-	/*
-	 * This is the one of the two places where we need to be
-	 * root in order to open a socket
-	 */
-
-	if( Lpd_port_arg ){
-		Set_DYN( &Lpd_port_DYN, Lpd_port_arg );
-	}
-	if( Lpd_socket_arg ){
-		Unix_socket_DYN = safestrcmp( Lpd_socket_arg, "off");
-		Set_DYN( &Unix_socket_path_DYN, Lpd_socket_arg );
-	}
-
 	pid = Get_lpd_pid();
 #if defined(__CYGWIN__)
 	if( (pid > 0 && ( kill(pid,0) || (errno != ESRCH) )) {
@@ -226,17 +191,27 @@ int main(int argc, char *argv[], char *envp[])
 	Set_lpd_pid( lockfd );
 #endif
 
-	sock = Link_listen();
-	DEBUG1("lpd: listening socket fd %d",sock);
-	if( sock < 0 ){
-		Errorcode = 1;
-		DIEMSG("Cannot bind to port '%s'", Lpd_port_DYN);
+	s = Lpd_listen_port_arg;
+	if( ISNULL(s) ) s = Lpd_listen_port_DYN;
+	if( ISNULL(s) ) s = Lpd_port_DYN;
+	if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
+		sock = Link_listen(s);
+		DEBUG1("lpd: listening socket fd %d",sock);
+		if( sock < 0 ){
+			Errorcode = 1;
+			DIEMSG("Cannot bind to lpd port '%s'", s);
+		}
 	}
-	unix_sock = Unix_link_listen();
-	DEBUG1("lpd: unix listening socket fd %d, path '%s'",unix_sock, Unix_socket_path_DYN);
-	if( unix_sock < 0 ){
-		Errorcode = 1;
-		DIEMSG("Cannot bind to UNIX socket '%s'", Unix_socket_path_DYN );
+
+	s = Lpd_socket_arg;
+	if( ISNULL(s) ) s = Unix_socket_path_DYN;
+	if( !ISNULL(s) && safestrcasecmp( s,"off") ){
+		unix_sock = Unix_link_listen(s);
+		DEBUG1("lpd: unix listening socket fd %d, path '%s'",unix_sock, s);
+		if( unix_sock < 0 ){
+			Errorcode = 1;
+			DIEMSG("Cannot bind to UNIX socket '%s'", s );
+		}
 	}
 
 	/* setting nonblocking on the listening fd
@@ -738,17 +713,15 @@ int Read_server_status( int fd )
  ***************************************************************************/
 
  static char *msg[] = {
-	N_("usage: %s [-FV] [-D dbg] [-L log]\n"),
+	N_("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destination port]\n"),
 	N_(" Options\n"),
 	N_(" -D dbg      - set debug level and flags\n"),
-	N_("                 Example: -D10,remote=5\n"),
-	N_("                 set debug level to 10, remote flag = 5\n"),
 	N_(" -F          - run in foreground, log to STDERR\n"),
-	N_("               Example: -D10,remote=5\n"),
 	N_(" -L logfile  - append log information to logfile\n"),
 	N_(" -V          - show version info\n"),
-	N_(" -p port     - TCP/IP listen port, port = 0 disables\n"),
-	N_(" -P path     - UNIX socket path, path = off disables\n"),
+	N_(" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"),
+	N_(" -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"),
+	N_(" -R port     - remote LPD server port (lpd_port)\n"),
 	0,
 };
 
@@ -756,6 +729,7 @@ void usage(void)
 {
 	int i;
 	char *s;
+	FPRINTF( STDERR, "%s\n", Version );
 	for( i = 0; (s = msg[i]); ++i ){
 		if( i == 0 ){
 			FPRINTF( STDERR, _(s), Name);
@@ -763,6 +737,7 @@ void usage(void)
 			FPRINTF( STDERR, "%s", _(s) );
 		}
 	}
+	Parse_debug("=",1);
 	exit(1);
 }
 
@@ -780,7 +755,7 @@ void Get_parms(int argc, char *argv[] )
 		case 'L': Logfile_LPD = Optarg; break;
 		case 'V': ++verbose; break;
         case 'X': Worker_LPD = Optarg; break;
-		case 'p': Lpd_port_arg = Optarg; break;
+		case 'p': Lpd_listen_port_arg = Optarg; break;
 		case 'P': Lpd_socket_arg = Optarg; break;
 		default: usage(); break;
 		}

@@ -1,8 +1,76 @@
+Version LPRng-3.8.9 - Sat Mar  2 15:02:11 PST 2002
+
+  The 'unix_socket_path' and 'lpd_port' options have been modified
+  slightly to correct some ambiguous behaviour, and a 'lpd_listen_port'
+  option has been added.
+    lpd -p lpd_listen_port -P unix_socket_path
+     - the -p and -P command line options override the
+       lpd.conf lpd_listen_port and unix_socket_path options
+     - the default values for lpd_listen_port is "", indicating
+       the use the 'lpd_port' value.
+   The value "off" suppresses opening a port or socket.
+
+     This allows the following operation:
+     No unix socket:
+        lpd -Poff   (/etc/lpd.conf unix_socket_path=off)
+     No lpd listening socket:
+        lpd -poff   (/etc/lpd.conf lpd_listen_port=off)
+        Note that LPD will still open connections to the
+        remote LPD servers using 'lpd_port'.
+   If you want to override the destination lpd port, you must
+      modify the lpd.conf file.
+
+  Jeff Chua of FexEx (Federal Express) <jchua@fedex.com>
+  showed up at my office armed with a set of test scripts and a laptop
+  running LPRng.  He demonstrated the problem of the 'missing datafile'
+  during job transfers.  I have fixed the problem in this release.
+  See the UTIL/testpr file.  
+   (Thanks to: Jeff Chua: <jchua@fedex.com>)
+    
+  more autoconf + automake + libtool insanity:
+     WITH_LINK removed
+     STRIP now used by libtool, changed to STRIP_OPTION
+     Added AC_C_VOLATILE (see note on volatile below)
+  (Reported by: Rick Troxel <rick@helix.nih.gov>)
+
+  Forced a rescan of the input queue when the number of done jobs
+   exceeds 'done_jobs' or the time since the first done job exceeds
+   done_jobs_max_age .  This solves a silly problem that shows up
+   when you have a slew of jobs in a queue,  the subserver is processing
+   them,  and no new jobs arrive while it is processing them.  Under these
+   conditions the 'done jobs' would not have been removed until all were
+   done.  If you were printing 1000 jobs then you could not submit any
+   new jobs, even though you have done 999 of them... :-)
+
+   Sigh... these boundary conditions are the pits.
+
+  Added the 'volatile' option to declarations of static and nonstatic
+  variables updated in signal handlers.  You really don't want to
+  hear the frothing about over-enthusiastic optimizing compilers, do you?
+
+  Ran the Kerberos tests, discovered minor definition problems with
+  krb4_auth.h and Kerberos4 support.  Have no way to test this,  hope
+  the problem is resolved.
+
+  The AUTHUSER information received at job submission time was not
+  not being stored and used later when printing permissions were checked.
+  (Discovered by: Toby Blake <toby@cogsci.ed.ac.uk>)
+
+  Added a 'UTILS/README.ForKerberosHackers' file so that Kerbero Hackers
+  can quickly and brutally set up a test LPRng system.  Not for the
+  faint hearted.  Carry a dog nummy when you read this stuff...
+
+  Some users hit themselves in the head and complain about headaches.
+  If the 'lpd_port' value is 0,  then checkpc and lpd squawk.
+   (Not telling me who the user was, but reported by:
+      Craig Small <csmall@eye-net.com.au>)
+
+ 
+
 Version LPRng-3.8.8 - Sat Feb 23 07:35:45 PST 2002
 
   Restored include file functions to lpd.conf.  Also put in recursion
   depth checks so that it will stop if you have a loop.
-
 
 Version LPRng-3.8.7 - Fri Feb 22 12:24:38 PST 2002
 

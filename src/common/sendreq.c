@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.12 2002/02/25 17:43:17 papowell Exp $";
+"$Id: sendreq.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -140,7 +140,7 @@ int Send_request(
 		if( status ) goto error;
 	} else {
 		sock = Link_open_list( RemoteHost_DYN,
-			&real_host, 0, connnect_timeout, 0, Unix_socket_DYN );
+			&real_host, 0, connnect_timeout, 0, Unix_socket_path_DYN );
 	}
 	err = errno;
 	if( sock < 0 ){

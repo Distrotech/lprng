@@ -1,4 +1,4 @@
-.ds VE LPRng-3.8.8
+.ds VE LPRng-3.8.9
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -491,9 +491,9 @@ See \fBprintcap\fP(5) for details.
 See \fBprintcap\fP(5) for details.
 .TP
 \fBprintcap_path\fR
-(default: "etc/printcap:/usr/etc/printcap:/var/spool/lpd/printcap.%h")
-The location of the printcap database information.
-If a file or filter does not exist, it is skipped.
+(default: "/etc/printcap")
+The location of the printcap database file.
+If a file or filter does not exist, it is considered a fatal error.
 All valid entries in these files will be used.
 See PRINTCAP LOOKUP for details.
 .TP
@@ -637,24 +637,19 @@ See
 for more details.
 .PP
 To find the printcap information,
-client programs will first search the database files specified in the
+LPRng programs will read the database files specified in the
 .I printcap_path
 entry.
-If the
-.I lpd_printcap_path
-entry is nonblank the
+The
 .I lpd
-will use the
+server will read any additional files specified in the
 .I lpd_printcap_path
-entries,
-otherwise it will use the
-.I printcap_path
-entries.
+entry.
+If any of the files is missing or non-readable a fatal error will result.
 After having searched the various files,
 if a filter has been specified the filter will be started and
 the required printer name will be sent to the filter.
 The output from the filter will be used as the printcap information.
-
 .SH "SECURITY-RELATED PARAMETERS"
 .PP
 Environment variables are sanitized by \fBlpd\fR and the other

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.12 2002/02/25 17:43:11 papowell Exp $";
+"$Id: checkpc.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
 
 
 
@@ -25,6 +25,7 @@
 #include "stty.h"
 #include "proctitle.h"
 #include "lpd_remove.h"
+#include "linksupport.h"
 #include "gethostinfo.h"
 
 /**** ENDINCLUDE ****/
@@ -517,6 +518,18 @@ void Scan_printer(struct line_list *spooldirs)
 
 	for( names = filter_names; (s = *names); ++names ){
 		Check_executable_filter( s, 0 );
+	}
+
+	/* check the Lpd_port_DYN */
+	n = 0;
+	if( (s = safestrchr( Lpd_port_DYN, '%')) ){
+		n = Link_dest_port_num(s+1);
+	} else if( Lpd_port_DYN ){
+		n = Link_dest_port_num(Lpd_port_DYN);
+	}
+	if( n == 0 ){
+		WARNMSG( "%s: bad lpd_port value '%s'",
+			Printer_DYN, Lpd_port_DYN );
 	}
 }
 

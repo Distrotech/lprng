@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.12 2002/02/25 17:43:12 papowell Exp $";
+"$Id: krb5_auth.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -19,6 +19,7 @@
 #include "gethostinfo.h"
 #include "permission.h"
 #include "lpd_secure.h"
+#include "lpd_dispatch.h"
 #include "krb5_auth.h"
 
 #if defined(KERBEROS)
@@ -1115,7 +1116,7 @@ char *krb4_err_str( int err )
 
 int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 	int connect_timeout, char *errmsg, int errlen,
-	struct security *security, struct line_list *info  )
+	struct security *security, struct line_list *info )
 {
 	int status = JFAIL;
 	int ack, i;
@@ -1132,7 +1133,7 @@ int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 		Host_IP.h_length );
 
 	*sock = Link_open_list( RemoteHost_DYN, real_host, 0, connect_timeout, 
-				(struct sockaddr *)&sinaddr );
+				(struct sockaddr *)&sinaddr, 1 );
 	if( *sock < 0 ){
 		/* this is to fix up the error message */
 		return(JSUCC);
@@ -1263,14 +1264,19 @@ int Receive_k4auth( int *sock, char *input )
 	}
 	strcpy(k4instance, "*");
 	euid = geteuid();
-	if( Is_server ) To_root();  /* Need root here to read srvtab */
+	/* this is a nasty hack to get around krb4 library problems
+	 * it appears to use the EUID/UID values to get the service
+	 * to read, so you need to set it to uid root/euid root
+	 */
+	if( Is_server ) setuid(0);  /* Need root here to read srvtab */
 	k4error = krb_recvauth(0, *sock, &k4ticket, KLPR_SERVICE,
 			      k4instance,
 			      &faddr,
 			      (struct sockaddr_in *)NULL,
 			      &k4data, "", NULL,
 			      k4version);
-	if( Is_server ) (void)To_daemon();
+	/* now we can set the euid back */
+	if( Is_server ) (void)To_euid(euid);
 	DEBUG1("Receive_k4auth: krb_recvauth returned %d, '%s'",
 		k4error, krb_err_txt[k4error] );
 	if (k4error != KSUCCESS) {

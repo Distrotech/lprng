@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 25 Feb 2002
-          (For LPRng-3.8.8)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 6 Mar 2002
+          (For LPRng-3.8.9)</th>
         </tr>
 
         <tr>
@@ -43,8 +43,8 @@
       for Authentication</a></h1>
 
       <p><b class="APPLICATION">LPRng</b> Kerberos 5 authentication
-      is based on the Kerberos5-1.1.1 release as of December 28,
-      1999. This was obtained from MIT from the <i class=
+      is based on the Kerberos5-1.2.4 release as of 3 March 2020.
+      The distribution was obtained from MIT from the <i class=
       "EMPHASIS"><a href="http://web.mit.edu/kerberos/www/" target=
       "_top">http://web.mit.edu/kerberos/www/</a></i> Website.</p>
 
@@ -166,7 +166,7 @@
 <pre class="SCREEN">
     Example:
     #&gt; kadmin   OR #&gt; kadmin.local 
-    ktadd -k lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
+    ktadd -k /etc/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
     quit
 </pre>
             </div>
@@ -175,12 +175,13 @@
           </li>
 
           <li>
-            <p>The <tt class="LITERAL">keytab</tt> file contains
-            the keytab information which is the equivalent
-            information for the server Copy each <tt class=
-            "LITERAL">keytab</tt> file to <tt class=
-            "FILENAME">/etc/lpd.keytab</tt> file on the server. See
-            the warnings about of keytab files in the Kerberos
+            <p>The <tt class="LITERAL">/etc/lpr.wayoff.private</tt>
+            file contains the keytab information which is the
+            equivalent of a password for a server program. You
+            should create these files and then copy the appropriate
+            <tt class="LITERAL">keytab</tt> file to <tt class=
+            "FILENAME">/etc/lpd.keytab</tt> file on each server.
+            See the warnings about of keytab files in the Kerberos
             Installation and Kerberos Administration manuals. You
             should copy the file using an encrypted connection, set
             the permissions to read only by the owner (<tt class=
@@ -206,7 +207,7 @@
 
           <li>
             <p>If you want to have MIT Kerberos4 printing
-            compatibility, then you will need to set up Kerberos 4
+            compatibility then you will need to set up Kerberos 4
             <tt class="LITERAL">servertabs</tt> instead of Kerberos
             5 keytabs. Assuming that you have put the Kerberos 5
             keytab in <tt class="FILENAME">/etc/lpd.keytab</tt>,

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.12 2002/02/25 17:43:20 papowell Exp $
+ * $Id: lp.h,v 1.19 2002/03/06 17:02:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -113,9 +113,6 @@ EXTERN uid_t DaemonUID;    /* Daemon UID */
 EXTERN uid_t UID_root;     /* UID is root */
 EXTERN gid_t DaemonGID;    /* Daemon GID */
 EXTERN int Max_fd DEFINE(=4);	   /* Maximum FD opened */
-
-EXTERN char* Lpd_port_arg;	/* command line port value */
-EXTERN char* Lpd_socket_arg; /* command line unix socket value */
 
 extern void Max_open(int fd);
 
@@ -372,8 +369,9 @@ EXTERN int Long_number_DYN; /* long job number (6 digits) */
 EXTERN int Max_datafiles_DYN; /* maximum datafiles */
 EXTERN int Lpd_bounce_DYN; /* force LPD to do bounce queue filtering */
 EXTERN char* Lp_device_DYN; /* device name or lp-pipe command to send output to */
+EXTERN char* Lpd_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
 EXTERN char* Lpd_path_DYN; /* LPD path for server use */
-EXTERN char* Lpd_port_DYN;
+EXTERN char* Lpd_port_DYN;	/* client/lpd connect to remote (non-local) lpd servers on this port */
 EXTERN char* Lpd_printcap_path_DYN;
 EXTERN int Lpr_bounce_DYN; /* allow LPR to do bounce queue filtering */
 EXTERN char* Lpq_status_file_DYN; /* cached lpq status */
@@ -470,7 +468,6 @@ EXTERN int Suppress_header_DYN; /* suppress headers and/or banner page */
 EXTERN int Suspend_OF_filter_DYN; /* suspend OF filter */
 EXTERN char* Syslog_device_DYN;	/* default syslog() facility */
 EXTERN char* Trailer_on_close_DYN; /* trailer string to print when queue empties */
-EXTERN int Unix_socket_DYN;		/* use UNIX socket for localhost */
 EXTERN char* Unix_socket_path_DYN;	/* UNIX socket pathname */
 EXTERN int Use_info_cache_DYN;
 EXTERN int Use_queuename_DYN;	/* put queuename in control file */

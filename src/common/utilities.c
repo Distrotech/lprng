@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.12 2002/02/25 17:43:17 papowell Exp $";
+"$Id: utilities.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
 
 #include "lp.h"
 
@@ -251,11 +251,13 @@ int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
  */
 
 /* plp_signal will set flags so that signal handlers will continue
- * note that in Solaris,  you MUST reinstall the
+ * Note that in Solaris,  you MUST reinstall the
  * signal hanlders in the signal handler!  The default action is
  * to try to restart the system call - note that the code should
- * be written so that you check for error returns, and continue
- * so this is merely a convenience.
+ * be written so that you check for error returns from a system call
+ * and continue if no error.
+ * WARNING: read/write may terminate early? who knows...
+ * See plp_signal_break.
  */
 
 plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
@@ -283,6 +285,9 @@ plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
  * TERMINATION of a system call if possible.  This allows
  * you to force a signal to cause termination of a system
  * wait or other action.
+ * WARNING: read/write may terminate early? who knows... so
+ * beware if you are expecting this and don't believe that
+ * you got an entire buffer read/written.
  */
 
 plp_sigfunc_t plp_signal_break (int signo, plp_sigfunc_t func)

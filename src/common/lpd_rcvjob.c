@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2001, Patrick Powell, San Diego, CA
+ * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.12 2002/02/25 17:43:14 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -639,6 +639,7 @@ int Scan_block_file( int fd, char *error, int errlen, char *auth_id )
 	Init_job(&job);
 
 	/* first we find the file position */
+	
 	startpos = lseek( fd, 0, SEEK_CUR );
 	DEBUGF(DRECV2)("Scan_block_file: starting at %d", startpos );
 	while( (status = Read_one_line( fd, line, sizeof(line) )) > 0 ){
@@ -855,37 +856,31 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	struct stat statb;
 	struct timeval start_time;
 
+	if(DEBUGL1)Dump_job("Check_for_missing_files - start", job );
+
 	if( gettimeofday( &start_time, 0 ) ){
 		Errorcode = JABORT;
 		LOGERR_DIE(LOG_INFO) "Check_for_missing_files: gettimeofday failed");
 	}
+	/* Setup_job must be called first */
+
 	DEBUG1("Check_for_missing_files: time 0x%x usec 0x%x",
 		(int)start_time.tv_sec, (int)start_time.tv_usec );
 
 	Set_flag_value(&job->info,JOB_TIME,(int)start_time.tv_sec);
 	Set_flag_value(&job->info,JOB_TIME_USEC,(int)start_time.tv_usec);
 
-	Make_identifier( job );
-
 	Init_line_list(&datafiles);
-
-	if( files ){
-		if(DEBUGL1)Dump_line_list("Check_for_missing_files - files", files );
-		Setup_job( job, &Spool_control, Spool_dir_DYN, 0, 0, 0);
-	} else {
-		Check_for_hold( job, &Spool_control );
-	}
-
-	if(DEBUGL1)Dump_job("Check_for_missing_files - job after setup", job );
 
 	/* we can get this as a new job or as a copy.
 	 * if we get a copy,  we do not need to check this stuff
 	 */
 	if( files ){
 		if( Do_perm_check( job, error, errlen ) == P_REJECT ){
+			status = 1;
 			goto error;
 		}
-	
+
 		jobsize = 0;
 		error[0] = 0;
 		/* RedHat Linux 6.1 - sends a control file with NO data files */
@@ -910,7 +905,8 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		}
 		for( count = 0; count < job->datafiles.count; ++count ){
 			lp = (void *)job->datafiles.list[count];
-			transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+			transfername = Find_str_value(lp,OTRANSFERNAME,Value_sep);
+			if( ISNULL(transfername) ) transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
 			/* find the open name and replace it in the information */
 			if( (openname = Find_casekey_str_value(files,transfername,Value_sep)) ){
 				Set_str_value(lp,OPENNAME,openname);
@@ -957,6 +953,9 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	Set_str_value(&job->info,HPFORMAT,0);
 	Set_str_value(&job->info,INCOMING_TIME,0);
 
+	if( !ISNULL(auth_id) ){
+		Set_str_value(&job->info,AUTHUSER,auth_id);
+	}
 	/* now we do the renaming */
 	status = 0;
 	for( count = 0; status == 0 && count < job->datafiles.count; ++count ){
@@ -1038,7 +1037,10 @@ int Set_up_temporary_control_file( struct job *job,
 	int fd = -1;
 	/* now we need to assign a control file number */
 	DEBUG1("Set_up_temporary_control_file: starting" );
+
+	/* sets identifier and hold information */
 	Setup_job( job, &Spool_control, Spool_dir_DYN, 0, 0, 0);
+	/* now we get collision resolution */
 	if( (fd = Find_non_colliding_job_number( job )) < 0 ){
 		SNPRINTF(error,errlen)
 			"cannot allocate hold file");
@@ -1046,13 +1048,15 @@ int Set_up_temporary_control_file( struct job *job,
 	}
 	DEBUG1("Set_up_temporary_control_file: hold file fd '%d'", fd );
 	
-	Make_identifier( job );
+	/* create the control file */
 	if( Create_control( job, error, errlen, auth_id, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Set_up_temporary_control_file: Create_control error '%s'", error );
 		close(fd); fd = -1;
 		goto error;
 	}
+	/* mark as incoming */
 	Set_flag_value(&job->info,INCOMING_TIME,time((void *)0) );
+	/* write status */
 	if( Set_hold_file( job, 0, fd ) ){
 		SNPRINTF( error,errlen)
 			"error setting up hold file - %s",
