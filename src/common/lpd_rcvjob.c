@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 #include "lp.h"
@@ -391,6 +391,9 @@ int Receive_job( int *sock, char *input )
 		Link_close( sock );
 		Remove_tempfiles();
 		/* update the spool queue */
+		Get_spool_control( Queue_control_file_DYN, &Spool_control );
+		Set_flag_value(&Spool_control,CHANGE,1);
+		Set_spool_control( 0, Queue_control_file_DYN, &Spool_control );
 		if( Lpq_status_file_DYN ){
 			unlink( Lpq_status_file_DYN );
 		}
@@ -956,6 +959,14 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	}
 	DEBUG1("Check_for_missing_files: hold file fd '%d'", holdfile_fd );
 
+	if( header_info && User_is_authuser_DYN ){
+		char *s = Find_str_value(header_info,AUTHUSER,Value_sep);
+		if( !ISNULL(s) ){
+			Set_str_value( &job->info,LOGNAME,s);
+			DEBUG1("Check_for_missing_files: setting user to authuser '%s'", s );
+		}
+	}
+
 	if( Create_control( job, error, errlen, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Check_for_missing_files: Create_control error '%s'", error );
 		status = 1;
@@ -965,13 +976,16 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	Set_str_value(&job->info,INCOMING_TIME,0);
 
 	if( header_info ){
-		char *authfrom, *authuser, *authtype;
+		char *authfrom, *authuser, *authtype, *authca;
 		authfrom = Find_str_value(header_info,AUTHFROM,Value_sep);
 		authuser = Find_str_value(header_info,AUTHUSER,Value_sep);
 		authtype = Find_str_value(header_info,AUTHTYPE,Value_sep);
+		authca = Find_str_value(header_info,AUTHCA,Value_sep);
+		if( ISNULL(authuser) ) authuser = authfrom;
 		Set_str_value(&job->info,AUTHUSER,authuser);
 		Set_str_value(&job->info,AUTHFROM,authfrom);
 		Set_str_value(&job->info,AUTHTYPE,authtype);
+		Set_str_value(&job->info,AUTHCA,authca);
 	}
 	/* now we do the renaming */
 	status = 0;

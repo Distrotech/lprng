@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.31 2002/05/06 16:03:46 papowell Exp $
+ * $Id: lp.h,v 1.33 2002/07/22 16:11:28 papowell Exp $
  ***************************************************************************/
 
 
@@ -20,7 +20,6 @@
  * get the portability information and configuration 
  *****************************************************************/
 #include "portable.h"
-
 
 /*****************************************************************
  * Global variables and routines that will be common to all programs
@@ -53,34 +52,6 @@ struct line_list;
 #include "debug.h"
 #include "errormsg.h"
 #include "plp_snprintf.h"
-
-/***************************************************************
- * Security stuff - needs to be in a common place
- ***************************************************************/
-
-struct security;
-typedef int (*CONNECT_PROC)( struct job *job, int *sock,
-	char **real_host,
-	int connect_timeout, char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
-
-typedef int (*RECEIVE_PROC)( int *sock, char *user, char *jobsize,
-	int from_server,
-	char *authtype, struct line_list *config,
-	char *error, int errlen, struct line_list *header_info,
-	char *tempfile );
-
-typedef int (*SEND_PROC)( int *sock, int transfer_timeout, char *tempfile,
-	char *error, int errlen,
-	struct security *security, struct line_list *info );
-
-struct security {
-	char *name;				/* authentication name */
-	char *config_tag;		/* use this tag for configuration information */
-	CONNECT_PROC connect;		/* make the connection, talk to verify */
-	SEND_PROC    send;		/* authenticate transfer, talk to transfer */
-	RECEIVE_PROC receive;		/* receive from transfer */
-};
 
 /*****************************************************************
  * General variables use in the common routines;
@@ -298,7 +269,6 @@ EXTERN char* Chooser_DYN;	/* choose the destination for a load balance queue */
 EXTERN int Chooser_interval_DYN;	/* interval between tests for load balance destination */
 EXTERN char* Chooser_routine_DYN;	/* choose the destination for a load balance queue */
 EXTERN int Class_in_status_DYN;	/* Show class in status information */
-EXTERN int Client_flag_DYN;	/* Client flag set in printcap information */
 EXTERN char* Comment_tag_DYN; /* comment identifying printer (LPQ) */
 EXTERN char* Config_file_DYN;
 EXTERN int Connect_grace_DYN; /* grace period for reconnections */
@@ -364,11 +334,9 @@ EXTERN int Logger_max_size_DYN; /* log record size */
 EXTERN char* Logger_path_DYN; /* path to status log file */
 EXTERN int Logger_timeout_DYN; /* logger timeout size */
 EXTERN char* Logname_DYN;		/* Username for logging */
-EXTERN char* Lpr_opts_DYN;		/* addional options for LPR */
 EXTERN int Long_number_DYN; /* long job number (6 digits) */
-EXTERN int Max_datafiles_DYN; /* maximum datafiles */
-EXTERN int Lpd_bounce_DYN; /* force LPD to do bounce queue filtering */
 EXTERN char* Lp_device_DYN; /* device name or lp-pipe command to send output to */
+EXTERN int Lpd_bounce_DYN; /* force LPD to do bounce queue filtering */
 EXTERN char* Lpd_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
 EXTERN char* Lpd_path_DYN; /* LPD path for server use */
 EXTERN char* Lpd_port_DYN;	/* client/lpd connect to remote (non-local) lpd servers on this port */
@@ -378,10 +346,12 @@ EXTERN char* Lpq_status_file_DYN; /* cached lpq status */
 EXTERN int   Lpq_status_cached_DYN;  /* how many to cache */
 EXTERN int   Lpq_status_interval_DYN;  /* interval between updates */
 EXTERN int   Lpq_status_stale_DYN;  /* cached lpq status is stale after this */
+EXTERN char* Lpr_opts_DYN;		/* addional options for LPR */
 EXTERN char* Mail_from_DYN;
 EXTERN char* Mail_operator_on_error_DYN;
 EXTERN int Max_connect_interval_DYN;	/* maximum connect interval */
 EXTERN int Max_copies_DYN; /* maximum copies allowed */
+EXTERN int Max_datafiles_DYN; /* maximum datafiles */
 EXTERN int Max_job_size_DYN; /* maximum job size (1Kb blocks, 0 = unlimited) */
 EXTERN int Max_accounting_file_size_DYN;	/* maximum accounting file size */
 EXTERN int Max_log_file_size_DYN;	/* maximum log file size */
@@ -408,7 +378,8 @@ EXTERN int Page_length_DYN; /* page length (in lines) */
 EXTERN int Page_width_DYN; /* page width (in characters) */
 EXTERN int Page_x_DYN; /* page width in pixels (horizontal) */
 EXTERN int Page_y_DYN; /* page length in pixels (vertical) */
-EXTERN char* Pass_env_DYN;		/* pass these environment variables */
+EXTERN char* Pass_env_DYN;	/* pass these environment variables */
+EXTERN char* Pgp_path_DYN;	/* pgp path */
 EXTERN int Poll_time_DYN; /* force polling job queues */
 EXTERN int Poll_start_interval_DYN; /* interval between trying to start servers */
 EXTERN int Poll_servers_started_DYN; /* maximum servers to start at one time */
@@ -451,7 +422,6 @@ EXTERN int Send_query_rw_timeout_DYN;
 EXTERN int Send_try_DYN;
 EXTERN int Sendmail_to_user_DYN;
 EXTERN char* Sendmail_DYN;
-EXTERN int Server_flag_DYN;	/* Server flag set in printcap information */
 EXTERN char* Server_names_DYN; /* names of servers for queue (with ss) */
 EXTERN char* Server_queue_name_DYN; /* name of queue that server serves (with sv) */
 EXTERN char* Server_tmp_dir_DYN;	/* default temporary file directory */
@@ -462,6 +432,12 @@ EXTERN int Socket_linger_DYN;	/* set SO_linger for connections to remote hosts *
 EXTERN char* Spool_dir_DYN; /* spool directory (only ONE printer per directory!) */
 EXTERN int Spool_dir_perms_DYN;
 EXTERN int Spool_file_perms_DYN;
+EXTERN char *Ssl_ca_file_DYN;	/* ssl cert file */
+EXTERN char *Ssl_ca_path_DYN;	/* ssl cert directory (path) */
+EXTERN char *Ssl_crl_file_DYN;	/* ssl crl cert directory (path) */
+EXTERN char *Ssl_crl_path_DYN;	/* ssl crl cert directory (path) */
+EXTERN char *Ssl_server_cert_DYN;	/* ssl server cert file */
+EXTERN char *Ssl_server_password_file_DYN;	/* ssl server password file */
 EXTERN int Stalled_time_DYN; /* amount of time before reporing stalled job */
 EXTERN char* Status_file_DYN; /* printer status file name */
 EXTERN int Stop_on_abort_DYN; /* stop when job aborts */
@@ -476,6 +452,7 @@ EXTERN int Use_queuename_DYN;	/* put queuename in control file */
 EXTERN int Use_queuename_flag_DYN;	/* Specified with the -Q option */
 EXTERN int Use_shorthost_DYN;	/* Use short hostname in control file information */
 EXTERN char* User_printcap_DYN;	/* Allow a ${HOME}/.printcap file - name of file*/
+EXTERN int User_is_authuser_DYN;	/* set user to be authentication user value */ 
 EXTERN char* Xlate_incoming_format_DYN;	/* translate format ids on incoming jobs */
 EXTERN char* Xlate_format_DYN;	/* translate format ids on outgoing jobs */
 

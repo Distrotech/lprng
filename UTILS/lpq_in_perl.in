@@ -21,7 +21,7 @@ $| = 1;
 $Debug = 0;
 Set_Debug($Debug);
 
-getopt( "P:svl", \%Args);
+getopts( "P:svl", \%Args);
 Setup_LPRng( %Args );
 
 

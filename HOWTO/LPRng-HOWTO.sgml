@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 6 May 2002 (For LPRng-3.8.12)</subtitle>
+<subtitle> 22 Jul 2002 (For LPRng-3.8.13)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.30 2002/05/06 16:03:47 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.32 2002/07/22 16:11:30 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -92,7 +92,9 @@ The SVR4 lp and lpstat functionality is provided by a set of emulator
 programs,
 and &LPRng; can be easily integrated with the Samba SMB support package.
 For users that require secure and/or authenticated printing support,
-&LPRng; supports Kerberos 5,
+&LPRng; supports
+SSL (using <application/OpenSSL/),
+Kerberos 5,
 MIT Kerberos 4 extensions to LPR,
 PGP,
 and simple MD5 based authentication.
@@ -1302,17 +1304,66 @@ For debugging and diagnostic purposes.</para>
 </listitem>
 </varlistentry>
 
-<varlistentry><term><literal>--enable-unixsocket</literal></term>
+<varlistentry><term><literal>--with-unixsocketpath=PATHNAME</literal></term>
 <listitem>
-<para>enable the use of UNIX sockets for localhost connections</para>
+<para>the pathname of the UNIX socket (blank to disable)</para>
 </listitem>
 </varlistentry>
 
-<varlistentry><term><literal>--with-unixsocketpath=PATHNAME</literal></term>
+<varlistentry><term><literal>--disable-ssl</literal></term>
 <listitem>
-<para>the pathname of the UNIX socket</para>
+<para>disable ssl support</para>
 </listitem>
 </varlistentry>
+
+<varlistentry><term><literal>--with-openssl=DIR</literal></term>
+<listitem>
+<para>root location for OpenSSL</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-openssl-inc</literal></term>
+<listitem>
+<para>OpenSSL include files</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-openssl-lib</literal></term>
+<listitem>
+<para>OpenSSL library files</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-ssl_ca_file=FILE</literal></term>
+<listitem>
+<para>ssl Certificate Authority CERT file (default ${sysconfdir}/lpd/ssl.ca/ca.crt)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-ssl_ca_key=KEY</literal></term>
+<listitem>
+<para>ssl Certificate Authority private key file (default ${sysconfdir}/lpd/ssl.ca/ca.key)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-ssl_certs_dir=DIR</literal></term>
+<listitem>
+<para>ssl Certificate Authority certs working directory (default ${sysconfdir}/lpd/ssl.certs/)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-ssl_server_cert=FILE</literal></term>
+<listitem>
+<para>ssl server certificate file (default ${sysconfdir}/lpd/ssl.server/server.crt)</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-ssl_server_password_file=FILE</literal></term>
+<listitem>
+<para>ssl server private key in password file (default ${sysconfdir}/lpd/ssl.server/server.pwd)</para>
+</listitem>
+</varlistentry>
+
 
 </variablelist>
 </para>
@@ -2324,7 +2375,7 @@ The SAMBA code is extremely easy to install
 and the <acronym>SWAT</acronym> (Samba Web Administration Tool)
 makes configuration almost trivial.</para>
 
-<para>The
+<para>
 See the SAMBA
 <filename>doc/text/Printing.txt</filename> and related documentation for details on
 printing.
@@ -2362,6 +2413,7 @@ authenticated users.
 </screen>
 </informalexample>
 </para>
+
 
 <orderedlist>
 <listitem>
@@ -2470,6 +2522,52 @@ For example:
 </listitem>
 
 </orderedlist>
+
+<para>
+When Samba gets a request for print queue status,
+it runs the <literal/lpq command/ program and then
+parses the output of this command.
+Unfortunately,
+different versions of Samba have different ways of parsing
+the output - some are more flexible than others.
+<para/>
+<para>
+One of the problems that might occur is when the
+&LPRng; <literal/done_jobs/ feature is enabled.
+This causes that status of the last few jobs to be retained
+so that users can see what happened to their jobs.
+For example:
+<informalexample>
+<screen>
+h110: {588} % lpq
+Printer: t1@h110 'Test Printer 1'
+ Queue: no printable jobs in queue
+ Server: no server active
+ Status: job 'papowell@h110+336' saved at 14:42:54.607
+ Filter_status: FILTER DONE
+ Rank   Owner/ID         Class Job Files    Size Time
+done   papowell@h110+336   A   336 /tmp/hi     3 14:42:53
+</screen>
+</informalexample>
+</para>
+<para>
+In this example, the <literal/done/ job will have its status
+displayed by the lpq command.
+However, this may confuse Samba, and it may report odd or
+unusual status for your jobs. 
+If the
+<application/lpq/ command reports that your job has completed
+but Samba reports that it is printing or is stopped,
+then you should disable the <literal/done_jobs/ option
+in the printcap entry:
+<informalexample>
+<screen>
+lp:
+  :done_jobs=0
+  :...
+</screen>
+</informalexample>
+</para>
 
 </sect1>
 
@@ -17670,7 +17768,6 @@ The following table is a summary of the available keywords.</para>
 <row><entry><acronym>PORT</acronym></entry><entry>Alias for PORT</entry></row>
 <row><entry><acronym>UNIXSOCKET</acronym></entry><entry>Connection is on a UNIX socket, i.e. from localhost</entry></row>
 <row><entry><acronym>SAMEUSER</acronym></entry><entry>USER and REMOTEUSER matches</entry></row>
-<row><entry><acronym>SAMEHOST</acronym></entry><entry>HOST and REMOTEHOST matches</entry></row>
 <row><entry><acronym>SERVER</acronym></entry><entry>request originates on lpd server</entry></row>
 <row><entry><acronym>FORWARD</acronym></entry><entry>destination of job is not host</entry></row>
 <row><entry><acronym>REMOTEGROUP</acronym></entry><entry>REMOTEUSER is in the specified group or netgroup in the <application>lpd</application> server group database.</entry></row>
@@ -17679,8 +17776,10 @@ The following table is a summary of the available keywords.</para>
 <row><entry><acronym>CONTROLLINE</acronym></entry><entry>match a line in control file</entry></row>
 <row><entry><acronym>AUTH</acronym></entry><entry>authentication type</entry></row>
 <row><entry><acronym>AUTHUSER</acronym></entry><entry>authenticated user</entry></row>
+<row><entry><acronym>AUTHSAMEUSER</acronym></entry><entry>same authenticated user</entry></row>
 <row><entry><acronym>AUTHFROM</acronym></entry><entry>authenticated forwarder</entry></row>
 <row><entry><acronym>AUTHJOB</acronym></entry><entry>authenticated job in queue</entry></row>
+<row><entry><acronym>AUTHCA</acronym></entry><entry>SSL signing certificates for job</entry></row>
 </tbody>
 </tgroup>
 </table>
@@ -18619,6 +18718,9 @@ and/or encryption.</para>
 <para>&LPRng; provides native support for the MIT Kerberos 4 extensions and
 Kerberos 5 authentication.</para>
 
+<para>&LPRng; uses the OpenSSL libraries to support SSL 
+authentication and encrypted data transfers.</para>
+
 <para>&LPRng; has native support for the PGP (Pretty Good Privacy) program
 and can sign and optionally encrypt command and responses between servers
 and clients.
@@ -19252,7 +19354,7 @@ this is highly undesirable and should not be used under any circumstances.</para
 
 <para>&LPRng; Kerberos 5 authentication is
 based on the
-Kerberos5-1.2.4 release as of 3 March 2020.
+Kerberos5-1.2.5 release as of 3 June 2002.
 The distribution was obtained
 from MIT from the
 <emphasis remap=tt><ulink URL="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</ulink></emphasis>
@@ -19614,6 +19716,307 @@ and differ only in the authentication type.
 Note that only client to server authentication is supported.</para>
 
 </sect2>
+</sect1>
+
+<sect1><title>Using SSL for Authentication</title>
+<para>&LPRng; has built-in support for using SSL as an
+authentication method.
+The implementation is based on OpenSSL 0.9.6c
+and the associated libraries as of
+of 3 June 2002.
+The distribution was obtained
+from the OpenSSL group from the
+<emphasis remap=tt><ulink URL="http://www.openssl.org">http://www.openssl.org</ulink></emphasis>
+Website.
+</para>
+
+<para>
+SSL authentication is based a private key/secret key technology,
+where the various keys are placed in files (or data structures) called
+<emphasis/certificates/ or <literal/certs/,
+and the certificates are
+<emphasis/signed/ by calculating a checksum over the certificate,
+encypting the checksum and other information using the private key
+of a
+<emphasis/signing/ certificate. 
+The top level or <emphasis/root/ certificate is signed by its own key;
+lower level signing certificates can be created which are signed by the
+top level or root certificate,
+and in turn can sign other signing certificates.
+User certificates can be created and signed by a signing certificate
+which can be used in the SSL protocol for authentication purposes.
+The following objects are needed to use SSL encryption.
+</para>
+
+<para>
+<orderedlist>
+
+<listitem>
+<para>
+A top level or root certificates and a set of signing certificates.
+By convention,
+these are stored in the
+<filename>/etc/lpd/ssl.ca</filename>
+directory;
+the root certificate is usually the
+<filename>ca.crt</filename>
+file.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Each server has a certificate and private key  file which are used to identify the
+server and sign the SSL messages.
+The private key file is usually stored in an encrypted form and a password
+is required unlock the file.
+By convention,
+the server files are stored in the
+<filename>/etc/lpd/ssl.server</filename>
+directory;
+the 
+<filename>server.crt</filename>
+file contains the server certificate and (encrypted) private key;
+the
+<filename>server.pwd</filename>
+file contains the password to decrypt the private key.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Each user has a certificate and private key  file which are used to identify the
+user and sign the SSL messages.
+The private key file is usually stored in an encrypted form and a password
+is required unlock the file.
+By convention,
+the user files are stored in the
+<filename>${HOME}/.lpr</filename>
+directory;
+the 
+<filename>client.crt</filename>
+file contains the client certificate and (encrypted) private key;
+the
+<filename>client.pwd</filename>
+file contains the password to decrypt the private key.
+</para>
+</listitem>
+
+<listitem>
+<para>
+A utility to create and manage the SSL certificate files.
+</para>
+</listitem>
+
+</orderedlist>
+
+</para>
+
+<para>
+The locations of the SSL files can be specified by various options
+to <application/configure/ facility
+and by values in the the <literal/lpd.conf/ file.
+</para>
+
+<sect2><title>Certificate Management</title>
+<para>
+The <application/lprng_cert/ utility is used to set up the various
+directories and files required for SSL authentication.
+This code was derived from similar facilities developed for
+the <literal/mod_ssl/ extensions to the <application/Apache/
+web server.
+This interactive utility is very verbose and has extensive comments and
+assistance. 
+<informalexample>
+<screen>h110: {111} % lprng_certs
+lprng_certs -- LPRng SSL Certificate Management
+Copyright (c) 2002 Patrick Powell
+Based on CCA by Ralf S. Engelschall
+(Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+
+usage: lprng_certs option
+  init              - make directory structure
+  newca             - make new root CA and default values for certs
+  defaults          - set new default values for certs
+  gen               - generate user, server, or signing cert
+  verify [cert]     - verify cert file
+  index [dir]       - make certificate index files in directory dir
+  encrypt keyfile   - set or change password on private key file
+</screen>
+</informalexample>
+</para>
+
+<para>
+The <literal/lprng_certs init/ option will create the
+necessary directories for the &LPRng; software on a system.
+The <literal/lprng_certs newca/ option will create the root level
+certificate and set up a set of defaults for the creation of other
+certificates.
+The <literal/lprng_certs defaults/ option allows viewing and editting of the various
+default values.
+The <literal/lprng_certs gen/ option is used to create and sign new certificate files.
+The OpenSSL software assumes that the file names of the signing certificate files have a special
+format; the <literal/lprng_certs index/ creates links of the required format to the
+certificate files.
+Finally,
+the <literal/lprng_certs verify/ and
+the <literal/lprng_certs encrypt/ facilities can be used to
+verify that the certificate files have the proper format and to
+change the private key password respectively.
+</para>
+
+</sect2>
+
+<sect2><title>Creating Root Certificate</title>
+<para>
+The <literal/lprng_certs newca/
+option is used to create a new root signing certificate and to establish defaults.
+<informalexample>
+<screen>h110: {112} #> lprng_certs newca
+lprng_certs -- LPRng SSL Certificate Management
+Copyright (c) 2002 Patrick Powell
+Based on CCA by Ralf S. Engelschall
+(Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+
+INITIALIZATION - SET DEFAULTS
+...  
+______________________________________________________________________
+
+STEP 1: Generating RSA private key for CA (1024 bit)
+______________________________________________________________________
+
+STEP 2: Generating X.509 certificate signing request for CA
+______________________________________________________________________
+
+STEP 3: Generating X.509 certificate for CA signed by itself
+______________________________________________________________________
+
+RESULT:
+/etc/lpd/ssl.ca/ca.crt:
+/C=US/ST=California/L=San Diego/O=Astart/OU=Certificate Authority/\
+ CN=Astart CA/Email=id@astart.com
+error 18 at 0 depth lookup:self signed certificate
+OK
+______________________________________________________________________
+
+STEP 4. Encrypting RSA private key with a pass phrase for security
+The contents of the certificate key file (the generated private
+key) should be echo kept secret, especially so if it is used to
+sign Certificates or for User authentication.  SSL experts strongly
+recommend you to encrypt the key file with a Triple-DES cipher and
+a Pass Phrase.  When using LPRng, you provide the password via a
+file specified by the LPR_SSL_PASSWORD environent variable, or in
+the ${HOME}/.lpr/client.pwd file.  The LPD server uses the
+ssl_server_password_file option to specify the location of a file
+containing the password.  See the LPRng HOWTO for details, or the
+printcap(5) man page.
+
+key file is /etc/lpd/ssl.ca/ca.key
+Encrypt the private key now? [Y/n]: y
+Fine, you're using an encrypted private key to sign CERTS.
+</screen>
+</informalexample>
+</para>
+</sect2>
+
+<sect2><title>Creating Client and Server Certificates</title>
+<para>
+The <literal/lprng_certs gen/
+option allows the creation of client and server identification
+certificates.
+By convention,
+these are created in a default directory and the
+system administrator then copies them to the appropriate client
+or server directory.
+
+<informalexample>
+<screen>h110: {112} #> lprng_certs gen
+lprng_certs -- LPRng SSL Certificate Management
+Copyright (c) 2002 Patrick Powell
+Based on CCA by Ralf S. Engelschall
+(Copyright (c) 1998-2001 Ralf S. Engelschall, All Rights Reserved.)
+
+CERTIFICATE GENERATION
+What type of certificate? User/Server/Signing Authority/Help? [u/s/a/H]
+Create in '/etc/lpd/ssl.certs' [return for yes, or specify directory]
+CERT name 'user-10'? [return for yes, or specify name] papowell
+CERT name 'papowell'? [return for yes, or specify name] 
+Creating papowell in /etc/lpd/ssl.certs
+Sign with Certificate '/etc/lpd/ssl.ca/ca.crt' \
+   [return for yes, ? for list, or specify cert file] ?
+Possible CERTS in directory '/etc/lpd/ssl.ca' are:
+/etc/lpd/ssl.ca/ca.crt
+/etc/lpd/ssl.ca/signer1.crt
+/etc/lpd/ssl.ca/tsign.crt
+Sign with Certificate '/etc/lpd/ssl.ca/ca.crt'  \
+  [return for yes, ? for list, or specify cert file] signer1
+Match Found /etc/lpd/ssl.ca/signer1.crt
+Sign with Certificate '/etc/lpd/ssl.ca/signer1.crt'  \
+  [return for yes, ? for list, or specify cert file]
+Private key in /etc/lpd/ssl.ca/signer1.crt
+
+Generating user Certificate [papowell] 
+
+STEP 1: Generating RSA private key for user (1024 bit)
+
+STEP 2: Generating X.509 certificate signing request for user
+....
+
+STEP 3: Generating X.509 certificate signed by /etc/lpd/ssl.ca/signer1.crt
+...
+
+RESULT:
+/etc/lpd/ssl.certs/papowell.crt: OK
+
+STEP 4. Enrypting RSA private key /etc/lpd/ssl.certs/papowell.key
+  with a pass phrase for security
+
+Encrypt the private key now? [Y/n]: Fine, you're using an encrypted
+  private key to sign CERTS.
+
+STEP 5: Combine CERT and KEY file
+Generate single CERT and KEY file? [Y/n] 
+
+Use the following commands to examine the CERT and KEY files:
+   openssl x509 -text -in /etc/lpd/ssl.certs/papowell.crt
+   openssl rsa -text -in /etc/lpd/ssl.certs/papowell.crt
+</screen>
+</informalexample>
+</para>
+
+<para>
+After the certificate file has been created,
+then it should be copied to the appropriate location:
+<filename>/etc/lpd/ssl.server/server.crt</filename>
+and the password in
+<filename>/etc/lpd/ssl.server/server.pwd</filename>,
+for a server
+or
+<filename>${HOME}/.lpr/client.crt</filename>
+and the password in
+<filename>${HOME}/.lpr/client.pwd</filename>
+for a user.
+</para>
+</sect2>
+
+<sect2><title>Creating Signing Certificates</title>
+<para>
+Having only one signing certificate, i.e. - the root certificate,
+may make it difficult to delegate authority for the creation of user
+certificates and/or server certificates.
+The <literal/lprng_certs gen/ facility can be used to create a
+certificate that can be used to sign other certificates.
+</para>
+
+<sect2><title>Permissions and Certificate Revocation</title>
+<para>
+The certificate revocation facility is not implemented in
+&LPRng;, due to various technical and management issues.
+Instead, the
+<literal/AUTHUSER/ and
+<literal/AUTHCA/ and
+</para>
+
 </sect1>
 
 <sect1><title>Using MD5 for Authentication</title>

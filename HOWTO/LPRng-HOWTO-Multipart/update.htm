@@ -9,7 +9,7 @@
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Installation" href="installation.htm">
     <link rel="PREVIOUS" title="Installation Problems" href=
-    "x959.htm">
+    "x1000.htm">
     <link rel="NEXT" title=
     "Emulation for UNIX SystemV lp and lpstat " href=
     "lpsimulation.htm">
@@ -21,13 +21,13 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 May 2002
-          (For LPRng-3.8.12)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
+          (For LPRng-3.8.13)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x959.htm" accesskey="P">Prev</a></td>
+          "x1000.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter 2.
           Installation</td>
@@ -61,7 +61,7 @@
       out the steps described here by hand.</p>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN1052">2.10.1. SunOS, Linux,
+        <h2 class="SECT2"><a name="AEN1093">2.10.1. SunOS, Linux,
         and BSD Derived Systems</a></h2>
 
         <p>The <tt class="LITERAL">SunOS</tt>, <tt class=
@@ -98,7 +98,7 @@
             file that contains the startup command.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN1085"></a>
+              <a name="AEN1126"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {23} #</tt> <tt class=
 "USERINPUT"><b>cd /etc</b></tt>
@@ -119,7 +119,7 @@
             <b class="APPLICATION">lpd</b> print server.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN1096"></a>
+              <a name="AEN1137"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {25} #</tt> <tt class=
 "USERINPUT"><b>more /etc/rc.local</b></tt>
@@ -152,7 +152,7 @@
         "APPLICATION">lpd</b> process.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1106"></a>
+          <a name="AEN1147"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {26} #</tt> <tt class=
 "USERINPUT"><b>ps -auxw |grep lpd</b></tt>
@@ -174,7 +174,7 @@
         candidates.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1116"></a>
+          <a name="AEN1157"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {29} #</tt> <tt class=
 "USERINPUT"><b>find /usr -type f -name lp\*  -print &gt;/tmp/candidates</b></tt>
@@ -226,7 +226,7 @@
         functional.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1142"></a>
+          <a name="AEN1183"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {38} #</tt> <tt class=
 "USERINPUT"><b>checkpc -f</b></tt>
@@ -290,7 +290,7 @@
         outlined below can be used on other SystemVR4 systems.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1171"></a>
+          <a name="AEN1212"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # This is an effort to automate the setup
@@ -347,7 +347,7 @@
         find these files by using:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1179"></a>
+          <a name="AEN1220"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {43} #</tt> <tt class=
 "USERINPUT"><b>cd /</b></tt>
@@ -376,7 +376,7 @@
         printing related commands and rename them. For example:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1191"></a>
+          <a name="AEN1232"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {47} #</tt> <tt class=
 "USERINPUT"><b>find /usr -type f -name lp\* -print &gt;/etc/printingfiles</b></tt>
@@ -426,7 +426,7 @@
         is not present on all systems.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1210"></a>
+          <a name="AEN1251"></a>
 <pre class="SCREEN">
     printer stream tcp nowait root /usr/lib/print/in.lpd in.lpd
 </pre>
@@ -440,7 +440,7 @@
         system.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1215"></a>
+          <a name="AEN1256"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {51} #</tt> <tt class=
 "USERINPUT"><b>nlsadmin -v tcp</b></tt>
@@ -463,7 +463,7 @@
         below.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1225"></a>
+          <a name="AEN1266"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h2.private: {2} #</tt> <tt class=
 "USERINPUT"><b>pmadm -l</b></tt>
@@ -484,7 +484,7 @@
         host.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1236"></a>
+          <a name="AEN1277"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {54} #</tt> <tt class=
 "USERINPUT"><b>shutdown -y "Whooga! Whooga! Dive! Dive! System going down."</b></tt>
@@ -497,7 +497,7 @@
         process listening on port 515 (printer port) by using:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1241"></a>
+          <a name="AEN1282"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {55} #</tt> <tt class=
 "USERINPUT"><b>telnet localhost 515</b></tt>
@@ -522,7 +522,7 @@
         "FILENAME">/etc/init.d/lprng</tt> startup file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1253"></a>
+          <a name="AEN1294"></a>
 <pre class="SCREEN">
     LPD_PATH=/usr/sbin/lpd
     SHOWALL=-e
@@ -551,7 +551,7 @@
         test it: 
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN1256"></a>
+          <a name="AEN1297"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {56} #</tt> <tt class=
 "USERINPUT"><b>checkpc -f</b></tt>
@@ -575,7 +575,7 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x959.htm" accesskey="P">Prev</a></td>
+          "x1000.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>

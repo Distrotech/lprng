@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.12
+VERSION=3.8.13
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -21,10 +21,9 @@ AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 ALL_LINGUAS="fr"
 
-WITH_CC dnl
 WITH_CCOPTS dnl
-WITH_LDOPTS dnl
 WITH_CPPOPTS dnl
+WITH_LDOPTS dnl
 if test -z "$LOCALEDIR" ; then
     LOCALEDIR='${prefix}/share/locale'
 fi;
@@ -53,6 +52,11 @@ AC_PATH_PROG(CHGRP,chgrp)dnl
 AC_SUBST(CHGRP)dnl
 AC_PATH_PROG(PRUTIL,pr)dnl
 AC_SUBST(PRUTIL)dnl
+AC_PATH_PROG(OPENSSL,openssl)dnl
+AC_SUBST(OPENSSL)dnl
+AC_PATH_PROG(PGP_PATH,pgp)dnl
+AC_SUBST(PGP_PATH)dnl
+AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH")
 
 
 dnl ----------------------------------------------------------------------------
@@ -147,13 +151,13 @@ LPD_DIR=\${sbindir}
 )
 AC_MSG_RESULT($LPD_DIR)
 AC_SUBST(LPD_DIR)
-dnl  lpd.conf location
 
+dnl  lpd.conf location
 AC_MSG_CHECKING(lpd.conf location)
 AC_ARG_WITH(lpd_conf_path,
-[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/lpd.conf)],
+[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}${lpd_dir}/lpd.conf)],
 LPD_CONF_PATH=$withval,
-LPD_CONF_PATH=\${sysconfdir}/lpd.conf,
+LPD_CONF_PATH=\${sysconfdir}${lpd_dir}/lpd.conf,
 )
 AC_MSG_RESULT($LPD_CONF_PATH)
 AC_SUBST(LPD_CONF_PATH)
@@ -162,9 +166,9 @@ dnl  lpd.perms location
 dnl
 AC_MSG_CHECKING(lpd.perms location)
 AC_ARG_WITH(lpd_perms_path,
-[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/lpd.perms)],
+[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}${lpd_dir}/lpd.perms)],
 LPD_PERMS_PATH=$withval,
-LPD_PERMS_PATH=\${sysconfdir}/lpd.perms,
+LPD_PERMS_PATH=\${sysconfdir}${lpd_dir}/lpd.perms,
 )
 AC_MSG_RESULT($LPD_PERMS_PATH)
 AC_SUBST(LPD_PERMS_PATH)
@@ -184,13 +188,12 @@ dnl  lpd_printcap location
 dnl
 AC_MSG_CHECKING(lpd_printcap location)
 AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd_printcap)],
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}${lpd_dir}/lpd_printcap)],
 LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=\${sysconfdir}/lpd_printcap,
+LPD_PRINTCAP_PATH=\${sysconfdir}${lpd_dir}/lpd_printcap,
 )
 AC_MSG_RESULT($LPD_PRINTCAP_PATH)
 AC_SUBST(LPD_PRINTCAP_PATH)
-
 dnl  startup file location
 dnl
 AC_MSG_CHECKING(startup (initialization) file location)
@@ -379,12 +382,6 @@ AC_SUBST(STRIP_OPTION)
 
 dnl ----------------------------------------------------------------------------
 dnl ------------   OS Checks  --------------------------------------------------
-
-AC_ISC_POSIX
-AC_MINIX
-AC_AIX
-
-
 changequote(, )dnl
 release=`uname -r 2>/dev/null; exit 0`;
 version=`echo $target_os | sed -e 's/[^0-9][^0-9]*//' -e 's/\./X/' -e 's/\.//g' -e 's/X/./' \
@@ -411,6 +408,11 @@ dnl -----------   C compiler checks    -----------------------------------------
 
 AC_PROG_CPP
 AC_PROG_CC
+
+AC_AIX
+AC_ISC_POSIX
+AC_MINIX
+
 
 if test "$ac_cv_prog_gcc" = yes; then
 	cat >conftest.c <<EOF
@@ -446,6 +448,11 @@ AC_TYPE_SIZE_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
+
+AC_CHECK_TYPES( socklen_t,,,[
+#include <sys/types.h>
+#include <sys/socket.h>
+] )
 
 AC_CACHE_CHECK(checking for long long,
 ac_cv_long_long,
@@ -1400,17 +1407,176 @@ AC_ARG_ENABLE( tcpwrappers,
 ]
 )
 
+dnl check to see if ssl is disabled
+AC_MSG_CHECKING(if ssl authentication is disabled)
+AC_ARG_ENABLE( use_openssl,
+[  --disable-ssl                 disable ssl support],
+[v=disabled; SSL_ENABLE=;],
+[v=enabled;  SSL_ENABLE=1;]
+)
+AC_MSG_RESULT($v);dnl
+
+dnl See if we can find OpenSSL
+dnl We can compile without OpenSSL if we have to
+ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
+ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
+
+AC_ARG_WITH(openssl,
+[  --with-openssl=DIR          root location for OpenSSL],
+[
+	ac_openssl_lib_dir="$withval/lib $withval"
+	ac_openssl_inc_dir="$withval/include $withval"
+]
+)
+
+AC_ARG_WITH(openssl-inc,
+[  --with-openssl-inc        OpenSSL include files],
+	ac_openssl_inc_dir=$withval
+)
+AC_ARG_WITH(openssl-lib,
+[  --with-openssl-lib        OpenSSL library files],
+	ac_openssl_lib_dir=$withval
+)
+
+dnl Now look for OpenSSL
+if test "$SSL_ENABLE" != ""; then
+	ac_found_openssl_inc_dir="no"
+	AC_MSG_CHECKING(for OpenSSL include files)
+	for dir in $ac_openssl_inc_dir; do
+		if test -f $dir/openssl/ssl.h; then
+		   ac_found_openssl_inc_dir=$dir
+		   break
+		fi
+        done
+	if test "$ac_found_openssl_inc_dir" != "no"; then
+	   	echo "found in $ac_found_openssl_inc_dir"
+	else
+		echo "not found."
+		SSL_ENABLE=""
+	fi
+fi
+
+if test "$SSL_ENABLE" != ""; then
+	ac_found_openssl_lib_dir="no"
+	AC_MSG_CHECKING(for OpenSSL libraries)
+	for dir in $ac_openssl_lib_dir; do
+		found_ssl="false"
+		if test -f $dir/libssl.a -a -f $dir/libcrypto.a; then
+		  found_ssl="true"
+		fi
+		if test -f $dir/libssl.so -a -f $dir/libcrypto.so; then
+		  found_ssl="true"
+		fi
+		if $found_ssl != "false"; then
+		dnl Ok, we think we've found them, but check that they
+		dnl actually ontain the right functions
+		save_LIBS=$LIBS
+		save_LDFLAGS=$LDFLAGS
+		LIBS="-lssl -lcrypto $LIBS"
+		LDFLAGS="$LDFLAGS -L$dir "
+		AC_TRY_LINK_FUNC(SSL_load_error_strings,ac_linked_libssl="true",
+			ac_linked_libssl="false");
+		AC_TRY_LINK_FUNC(RC4_set_key,ac_linked_libcrypto="true",
+			ac_linked_libcrypto="false");
+		if test "$ac_linked_libssl" != "false" -a \
+			"$ac_linked_libcrypto" != "false"; then
+				ac_found_openssl_lib_dir=$dir
+				break
+		fi
+		LIBS=$save_LIBS
+		LDFLAGS=$save_LDFLAGS
+		fi
+	done
+	if test "$ac_found_openssl_lib_dir" != "no"; then
+	   	echo "found in $ac_found_openssl_lib_dir"
+		CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir "
+	else
+		echo "not found."
+		SSL_ENABLE=""
+	fi
+fi
+
+test "$SSL_ENABLE" != "" && AC_DEFINE(SSL_ENABLE)
+
+
+dnl  ssl certificate authority CERT file
+dnl
+AC_MSG_CHECKING(ssl Certificate Authority CERT file)
+AC_ARG_WITH(ssl_ca_file,
+[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/lpd/ssl.ca/ca.crt)],
+SSL_CA_FILE=$withval,
+SSL_CA_FILE=\${sysconfdir}/lpd/ssl.ca/ca.crt,
+)
+AC_MSG_RESULT($SSL_CA_FILE)
+AC_SUBST(SSL_CA_FILE)
+
+dnl  ssl certificate authority private key file
+dnl
+AC_MSG_CHECKING(ssl Certificate Authority private key file)
+AC_ARG_WITH(ssl_ca_key,
+[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/lpd/ssl.ca/ca.key)],
+SSL_CA_KEY=$withval,
+SSL_CA_KEY=\${sysconfdir}/lpd/ssl.ca/ca.key,
+)
+AC_MSG_RESULT($SSL_CA_KEY)
+AC_SUBST(SSL_CA_KEY)
+
+dnl  ssl certificate authority certs working directory
+dnl
+AC_MSG_CHECKING(ssl Certificate Authority certs working directory)
+AC_ARG_WITH(ssl_certs_dir,
+[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/lpd/ssl.certs/)],
+SSL_CERTS_DIR=$withval,
+SSL_CERTS_DIR=\${sysconfdir}/lpd/ssl.certs,
+)
+AC_MSG_RESULT($SSL_CERTS_DIR)
+AC_SUBST(SSL_CERTS_DIR)
+
+dnl  ssl certificate revocation list
+dnl
+AC_MSG_CHECKING(ssl Certificate Revocation List (CRL) file)
+AC_ARG_WITH(ssl_crl_file,
+[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/lpd/ssl.crl/ssl.crl)],
+SSL_CRL_FILE=$withval,
+SSL_CRL_FILE=\${sysconfdir}/lpd/ssl.crl/ssl.crl,
+)
+AC_MSG_RESULT($SSL_CRL_FILE)
+AC_SUBST(SSL_CRL_FILE)
+
+dnl  ssl server certificate file
+dnl
+AC_MSG_CHECKING(ssl server certificate file)
+AC_ARG_WITH(ssl_server_cert,
+[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/lpd/ssl.server/server.crt)],
+SSL_SERVER_CERT=$withval,
+SSL_SERVER_CERT=\${sysconfdir}/lpd/ssl.server/server.crt,
+)
+AC_MSG_RESULT($SSL_SERVER_CERT)
+AC_SUBST(SSL_SERVER_CERT)
+
+dnl  ssl server password file for private key file
+dnl
+AC_MSG_CHECKING(ssl server password file for private key file)
+AC_ARG_WITH(ssl_server_password_file,
+[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/lpd/ssl.server/server.pwd)],
+SSL_SERVER_PASSWORD=$withval,
+SSL_SERVER_PASSWORD=\${sysconfdir}/lpd/ssl.server/server.pwd,
+)
+AC_MSG_RESULT($SSL_SERVER_PASSWORD)
+AC_SUBST(SSL_SERVER_PASSWORD)
+
 dnl ----------------------------------------------------------------------------
 dnl ---------------- START OF KERBEROS -----------------------------------------
 
 dnl Kerberos stuff again
 
 if test -n "$KERBEROS" ; then
+	echo "Kerberos checks with CFLAGS '$CFLAGS', LDFLAGS '$LDFLAGS"
 	if test -d /usr/kerberos/include; then
 		CPPFLAGS="$CPPFLAGS -I/usr/kerberos/include"
 	fi
 	if test -d /usr/kerberos/lib; then
-		LDFLAGS="$LDFLAGS -L/usr/kerberos/lib"
+		LDFLAGS="-L/usr/kerberos/lib $LDFLAGS"
 	fi
 	dnl Kerberos 5 - release 1.1.1
 	found=
@@ -1450,38 +1616,50 @@ configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L
 		dnl we check for the library we need to use
 		dnl courtesy of mandrake linux and friends.
 		dnl  Christian Zoffoli <czoffoli@linux-mandrake.com>
-		SAVELIBS=$LIBS
-		found=
-		if test "$found" = "" ; then
-			LIBS=" -lcrypto -lcom_err $SAVELIBS"
-			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
-			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
-		fi;
-		if test "$found" = "" ; then
-			LIBS=" -lk5crypto -lcom_err $SAVELIBS"
-			AC_CHECKING(for krb5_des_string_to_keyin $LIBS, )
-			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
-		fi;
-		if test "$found" = "" ; then
-			echo "Kerberos 5 encryption support library not found."
-			echo " You may need to use:"
-			echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
-			exit 1
-		fi
+dnl X		SAVELIBS=$LIBS
+dnl X		found=
+dnl X		if test "$found" = "" ; then
+dnl X			LIBS=" -lcrypto -lcom_err $SAVELIBS"
+dnl X			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
+dnl X			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
+dnl X		fi;
+dnl X		if test "$found" = "" ; then
+dnl X			LIBS=" -lk5crypto -lcom_err $SAVELIBS"
+dnl X			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
+dnl X			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
+dnl X		fi;
+dnl X		if test "$found" = "" ; then
+dnl X			echo "Kerberos 5 encryption support library not found."
+dnl X			echo " You may need to use:"
+dnl X			echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
+dnl X			exit 1
+dnl X		fi
 
 		SAVELIBS=$LIBS
 
 		found= 
 		if test "$found" = "" ; then
-			LIBS=" -lkrb5 $SAVELIBS"
-			AC_CHECKING(for krb5_init_context in $LIBS, )
+			LIBS=" -lkrb5 -lcrypto -lcom_err $SAVELIBS"
+			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+			if test "$found" = "yes" ; then
+				AC_TRY_LINK_FUNC(krb5_read_message,found="yes",found="")
+			fi
 		fi;
 		if test "$found" = "" ; then
-			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_secure_context or krb5_init_context )
+			LIBS=" -lkrb5 -lk5crypto -lcom_err $SAVELIBS"
+			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
+			AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+			if test "$found" = "yes" ; then
+				AC_TRY_LINK_FUNC(krb5_read_message,found="yes",found="")
+			fi
+		fi;
+		if test "$found" = "" ; then
+			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context or krb5_read_message )
 			  AC_MSG_WARN(use configure --disable-kerberos or check your Kerberos 5 installation)
 			  exit 1
         fi
+		AC_MSG_RESULT(found in $LIBS)
 
 		if test "$MIT_KERBEROS4" != "" ; then
 			SAVELIBS=$LIBS
@@ -1489,15 +1667,15 @@ configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L
 			if test "$found" = "" ; then
 				LIBS=" -lkrb4 -ldes425 $SAVELIBS"
 				AC_CHECKING(for krb_recvauth in $LIBS, )
-				AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+				AC_TRY_LINK_FUNC(krb_recvauth,found="yes")
 			fi;
 			if test "$found" = "" ; then
 				LIBS=" -lkrb4 -ldes $SAVELIBS"
 				AC_CHECKING(for krb_recvauth in $LIBS, )
-				AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+				AC_TRY_LINK_FUNC(krb_recvauth,found="yes")
 			fi;
 			if test "$found" = "" ; then
-			  AC_MSG_WARN(MIT Kerberos 4 support wanted and cannot link to Kerberos 4 libraries)
+			  AC_MSG_WARN(MIT Kerberos 4 support wanted and cannot find krb_recvauth in Kerberos 4 libraries)
 			  exit 1
             fi
 		fi;

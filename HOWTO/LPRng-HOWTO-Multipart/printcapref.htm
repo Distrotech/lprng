@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 May 2002
-          (For LPRng-3.8.12)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
+          (For LPRng-3.8.13)</th>
         </tr>
 
         <tr>
@@ -53,22 +53,22 @@
           <dt>12.3. <a href="cm.htm">Simple Server Printcap
           Example</a></dt>
 
-          <dt>12.4. <a href="x5679.htm">Using :oh To Select
+          <dt>12.4. <a href="x5734.htm">Using :oh To Select
           Printcap Information</a></dt>
 
-          <dt>12.5. <a href="x5705.htm">Using the Wildcard Printcap
+          <dt>12.5. <a href="x5760.htm">Using the Wildcard Printcap
           Entry</a></dt>
 
-          <dt>12.6. <a href="x5717.htm">Enterprise Strength
+          <dt>12.6. <a href="x5772.htm">Enterprise Strength
           Printcap Example</a></dt>
 
-          <dt>12.7. <a href="x5734.htm">Remote Printer Using
+          <dt>12.7. <a href="x5789.htm">Remote Printer Using
           RFC1179</a></dt>
 
-          <dt>12.8. <a href="x5768.htm">Remote Printer Using Socket
+          <dt>12.8. <a href="x5823.htm">Remote Printer Using Socket
           API</a></dt>
 
-          <dt>12.9. <a href="x5795.htm">Parallel Printer</a></dt>
+          <dt>12.9. <a href="x5850.htm">Parallel Printer</a></dt>
 
           <dt>12.10. <a href="serial.htm">Serial Printer</a></dt>
 
@@ -89,20 +89,20 @@
           <dt>12.16. <a href="secoh.htm">Single Printcap File for
           Large Installation</a></dt>
 
-          <dt>12.17. <a href="x6065.htm">Management Strategies for
+          <dt>12.17. <a href="x6120.htm">Management Strategies for
           Large Installations</a></dt>
 
           <dt>12.18. <a href="secnis.htm">Using Programs To Get
           Printcap Information</a></dt>
 
-          <dt>12.19. <a href="x6175.htm">Lexmark Printers</a></dt>
+          <dt>12.19. <a href="x6230.htm">Lexmark Printers</a></dt>
 
           <dt>12.20. <a href="p450.htm">Tektronix Phaser
           Printers</a></dt>
 
-          <dt>12.21. <a href="x6189.htm">Duplex Printing</a></dt>
+          <dt>12.21. <a href="x6244.htm">Duplex Printing</a></dt>
 
-          <dt>12.22. <a href="x6210.htm">Solaris, Newsprint and
+          <dt>12.22. <a href="x6265.htm">Solaris, Newsprint and
           FrameMaker</a></dt>
         </dl>
       </div>
@@ -275,7 +275,7 @@
             values. Unspecified values will not be modified.</p>
 
             <div class="INFORMALTABLE">
-              <a name="AEN5361"></a>
+              <a name="AEN5416"></a>
 
               <table border="1" class="CALSTABLE">
                 <thead>
@@ -383,7 +383,7 @@
         printcap entry into several parts. Here is an example:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN5402"></a>
+          <a name="AEN5457"></a>
 <pre class="SCREEN">
     # seen by both client and server
     lp1:lp=lp@pr1:mx=100
@@ -409,7 +409,7 @@
             server will have:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN5410"></a>
+              <a name="AEN5465"></a>
 <pre class="SCREEN">
     lp1:lp=lp@pr1
       :mx=0
@@ -428,7 +428,7 @@
             see:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN5416"></a>
+              <a name="AEN5471"></a>
 <pre class="SCREEN">
     lp1
       :lp=lp@pr1
@@ -442,7 +442,7 @@
             and the server will see: 
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN5418"></a>
+              <a name="AEN5473"></a>
 <pre class="SCREEN">
     lp1
       :lp=lp@pr1
@@ -479,7 +479,7 @@
         include facility. For example:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN5430"></a>
+          <a name="AEN5485"></a>
 <pre class="SCREEN">
     .hp:
       :sd=/usr/local/spool/%P
@@ -502,7 +502,7 @@
             information would resemble:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN5438"></a>
+              <a name="AEN5493"></a>
 <pre class="SCREEN">
     hp1
       :lp=lp@10.0.0.1
@@ -526,7 +526,7 @@
             name, so we would have:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN5444"></a>
+              <a name="AEN5499"></a>
 <pre class="SCREEN">
     hp1
       :lp=lp@10.0.0.1

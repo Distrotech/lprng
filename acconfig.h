@@ -339,6 +339,9 @@
 /* Define to the name of the distribution.  */
 #undef PACKAGE
 
+/* Define path to pgp */
+#undef PGP_PATH
+
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef pid_t
 
@@ -366,6 +369,9 @@
 
 /* Define on SUN Solaris */
 #undef SOLARIS
+
+/* SSL */
+#undef SSL_ENABLE
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be

@@ -1509,7 +1509,10 @@ lp:
   <emphasis/OR/
   :lp=|/usr/local/lib/filters/atalkprint
   # and the magic happens here
-  :options=authfile="auth" host="h114" printer="lp" workgroup="ASTART"
+  :options=authfile="auth" host="h114" printer="lp" \
+       workgroup="ASTART"
+  # or you can use
+  #:options=share="//h114/lp" workgroup="ASTART"
   # See the LPRng/UTILS directory
 </screen>
       </figure>
@@ -1546,6 +1549,8 @@ if [ "$translate" = "yes" ]; then
 else
  command="print -"
 fi
+
+if [ "$share" = "" ] ; then share="//$host/$printer" ; fi
 
 echo $smbclient "$share" ${password:+password} -E \
  ${username:+-U} ${username:+username} ${hostip:+-I} \

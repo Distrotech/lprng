@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpd_control.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 #include "lp.h"

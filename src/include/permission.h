@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: permission.h,v 1.31 2002/05/06 16:03:46 papowell Exp $
+ * $Id: permission.h,v 1.33 2002/07/22 16:11:29 papowell Exp $
  ***************************************************************************/
 
 
@@ -51,6 +51,7 @@
 #define P_AUTHJOB		27	/* job has authentication */
 #define P_REMOTEPORT	28	/* alias for PORT */
 #define P_UNIXSOCKET	29	/* connection via unixsocket - localhost + port 0 */
+#define P_AUTHCA		30	/* Certifying authority */
 
 /*
  * First character of protocol to letter mappings
@@ -83,10 +84,7 @@ struct perm_check {
 	const char *authtype;			/* authentication type */
 	const char *authfrom;			/* authentication from */
 	const char *authuser;			/* user from */
-#if 0
-	const char *auth_client_id;	/* client authentication info */
-	const char *auth_from_id;	/* sender (client/server) authentication info */
-#endif
+	const char *authca;				/* authentication certifying authority */
 };
 
 EXTERN struct perm_check Perm_check;

@@ -18,8 +18,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 May 2002
-          (For LPRng-3.8.12)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
+          (For LPRng-3.8.13)</th>
         </tr>
 
         <tr>
@@ -79,7 +79,7 @@
       need to change the indicated lines:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN1408"></a>
+        <a name="AEN1463"></a>
 <pre class="SCREEN">
     # Purpose: lpd port
     #   default lpd_port=printer
@@ -106,7 +106,7 @@
       suppose that a user decided to spool a job as follows:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN1418"></a>
+        <a name="AEN1473"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {66} #</tt> <tt class=
 "USERINPUT"><b>lpr "-J`;rm -rf /;`" /tmp/a</b></tt>
@@ -115,7 +115,7 @@
       This would create a job file with the line: 
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN1422"></a>
+        <a name="AEN1477"></a>
 <pre class="SCREEN">
     J`rm -rf /;`
 </pre>
@@ -123,7 +123,7 @@
       and gets passed to a print filter as 
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN1424"></a>
+        <a name="AEN1479"></a>
 <pre class="SCREEN">
     /usr/local/printfilter  -J`rm -rf /;`
 </pre>

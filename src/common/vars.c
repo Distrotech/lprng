@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.31 2002/05/06 16:03:45 papowell Exp $";
+"$Id: vars.c,v 1.33 2002/07/22 16:11:28 papowell Exp $";
 
 
 /* force local definitions */
@@ -17,6 +17,7 @@
 #define DEFS
 
 #include "lp.h"
+#include "defs.h"
 #include "child.h"
 #include "gethostinfo.h"
 #include "getqueue.h"
@@ -163,8 +164,6 @@ struct keywords Pc_var_list[] = {
 { "chooser_routine", 0, FLAG_K, &Chooser_routine_DYN,0,0,0},
    /* show classname in status display */
 { "class_in_status", 0, FLAG_K, &Class_in_status_DYN,0,0,0},
-   /* client flag set in printcap entry */
-{ "client", 0, FLAG_K, &Client_flag_DYN,0,0,0},
    /*  comment identifying printer (LPQ) */
 { "cm", 0,  STRING_K,  &Comment_tag_DYN,0,0,0},
    /* configuration file */
@@ -377,6 +376,8 @@ struct keywords Pc_var_list[] = {
 { "pass_env", 0,  STRING_K,  &Pass_env_DYN,0,0,"=PGPPASS,PGPPATH,PGPPASSFD,LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL" },
    /* lpd.perms files */
 { "perms_path", 0, STRING_K, &Printer_perms_path_DYN,1,0,"=" LPD_PERMS_PATH },
+   /*  pgp path */
+{ "pgp_path", 0,  STRING_K,  &Pgp_path_DYN,0,0,"=" PGP_PATH },
    /*  page length (in lines) */
 { "pl", 0,  INTEGER_K,  &Page_length_DYN,0,0,"=66"},
    /*  pr program for p format */
@@ -405,7 +406,7 @@ struct keywords Pc_var_list[] = {
 { "queue_status_file", 0,  STRING_K,  &Queue_status_file_DYN,0,0,"=status.pr"},
    /*  print queue unspooler pid file name */
 { "queue_unspooler_file", 0,  STRING_K,  &Queue_unspooler_file_DYN,0,0,"=unspooler.pr"},
-   /*  operations allowed to remote host */
+   /*  operations allowed to remote host (lpr=R,lprm=M,lpq=Q,lpq -v=V,lpc=C) */
 { "remote_support", 0,  STRING_K,  &Remote_support_DYN,0,0,"=RMQVC"},
    /* remove these -Z options from options list on outgoing or filters */
 { "remove_z", 0, STRING_K, &Remove_Z_DYN,0,0,0},
@@ -463,8 +464,6 @@ struct keywords Pc_var_list[] = {
 { "sendmail", 0, STRING_K, &Sendmail_DYN,0,0,"=/usr/sbin/sendmail -oi -t"},
    /* allow mail to user using the sendmail program */
 { "sendmail_to_user", 0, FLAG_K, &Sendmail_to_user_DYN,0,0,"=1"},
-   /* server flag set in printcap entry */
-{ "server", 0, FLAG_K, &Server_flag_DYN,0,0,0},
    /* server temporary file directory */
 { "server_tmp_dir", 0, STRING_K, &Server_tmp_dir_DYN,0,0,"=/tmp"},
    /*  no form feed separator between job files */
@@ -483,6 +482,18 @@ struct keywords Pc_var_list[] = {
 { "spool_file_perms", 0, INTEGER_K, &Spool_file_perms_DYN,0,0,"=000600"},
    /*  name of queue that server serves (with sv) */
 { "ss", 0,  STRING_K,  &Server_queue_name_DYN,0,0,0},
+   /*  ssl signer cert file directory */
+{ "ssl_ca_file", 0,  STRING_K,  &Ssl_ca_file_DYN,0,0,"=" SSL_CA_FILE },
+   /*  ssl signer cert files (concatenated) */
+{ "ssl_ca_path", 0,  STRING_K,  &Ssl_ca_path_DYN,0,0,0 },
+   /*  ssl crl file (certificate revocation list) */
+{ "ssl_crl_file", 0,  STRING_K,  &Ssl_crl_file_DYN,0,0,"=" SSL_CRL_FILE },
+   /*  ssl crl directory (certificate revocation list) */
+{ "ssl_crl_path", 0,  STRING_K,  &Ssl_crl_path_DYN,0,0,0 },
+   /*  ssl server certificate */
+{ "ssl_server_cert", 0,  STRING_K,  &Ssl_server_cert_DYN,0,0,"=" SSL_SERVER_CERT },
+   /*  ssl server cert password is in this file */
+{ "ssl_server_password_file", 0,  STRING_K,  &Ssl_server_password_file_DYN,0,0,"=" SSL_SERVER_PASSWORD },
    /*  stalled job timeout */
 { "stalled_time", 0, INTEGER_K, &Stalled_time_DYN,0,0,"=120"},
    /*  stop processing queue on filter abort */
@@ -509,6 +520,8 @@ struct keywords Pc_var_list[] = {
 { "use_shorthost", 0,  FLAG_K,  &Use_shorthost_DYN,0,0,0},
    /*  server user for SUID purposes */
 { "user", 0, STRING_K, &Daemon_user_DYN,1,0,"=" USERID},
+   /*  set user to be authenication user identification */
+{ "user_is_authuser", 0, FLAG_K, &User_is_authuser_DYN,0,0,0},
    /*  allow users to use local ${HOME}/.printcap */
 { "user_printcap", 0, STRING_K, &User_printcap_DYN,1,0,".printcap"},
 /* END */

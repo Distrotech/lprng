@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.31 2002/05/06 16:03:45 papowell Exp $";
+"$Id: permission.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
 
 
 #include "lp.h"
@@ -54,6 +54,7 @@
 {"SERVICE", 0, P_SERVICE,0,0,0,0},
 {"USER", 0, P_USER,0,0,0,0},
 {"UNIXSOCKET", 0, P_UNIXSOCKET,0,0,0,0},
+{"AUTHCA", 0, P_AUTHCA,0,0,0,0},
 
 {0,0,0,0,0,0,0}
 };
@@ -224,6 +225,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					if( invert ) m = !m;
 				}
 				break;
+
 			case P_AUTHTYPE:
 				m = 1;
 				switch (check->service){
@@ -234,6 +236,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					m = match( &args, check->authtype, invert );
 				}
 				break;
+
 			case P_AUTHFROM:
 				m = 1;
 				switch (check->service){
@@ -242,6 +245,16 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					m = match( &args, check->authfrom, invert );
 				}
 				break;
+
+			case P_AUTHCA:
+				m = 1;
+				switch (check->service){
+				case 'X': break;
+				default:
+					m = match( &args, check->authca, invert );
+				}
+				break;
+
 			case P_AUTHUSER:
 				m = 1;
 				switch (check->service){
@@ -675,8 +688,8 @@ void Dump_perm_check( char *title,  struct perm_check *check )
 */
 		LOGDEBUG( "  port %d, unix_socket %d",
 			check->port, check->unix_socket );
-		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s'",
-			check->authtype, check->authfrom, check->authuser );
+		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s', authca '%s'",
+			check->authtype, check->authfrom, check->authuser, check->authca );
 	}
 }
 

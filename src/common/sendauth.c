@@ -8,10 +8,10 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.31 2002/05/06 16:03:45 papowell Exp $";
+"$Id: sendauth.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
 
 #include "lp.h"
-#include "sendauth.h"
+#include "user_auth.h"
 #include "sendjob.h"
 #include "globmatch.h"
 #include "permission.h"
@@ -22,6 +22,7 @@
 #include "fileopen.h"
 #include "child.h"
 #include "gethostinfo.h"
+#include "sendauth.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -157,10 +158,10 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 		}
 		/* we turn off IO from the socket */
 		shutdown(*sock,1);
-		if( (s = safestrchr(buffer,'\n')) ) *s = 0;
+		if( (s = safestrchr(secure,'\n')) ) *s = 0;
 		SNPRINTF( error, errlen)
 			"error '%s' sending '%s' to %s@%s\n",
-			Link_err_str(status), buffer, RemotePrinter_DYN, RemoteHost_DYN );
+			Link_err_str(status), secure, RemotePrinter_DYN, RemoteHost_DYN );
 		Write_fd_str( fd, error );
 		error[0] = 0;
 		DEBUG2("Send_auth_transfer: starting read");
@@ -202,11 +203,13 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
      * now we do the protocol dependent exchange
      */
 
-	status = security->send( sock, transfer_timeout, tempfile,
+	status = security->client_send( sock, transfer_timeout, tempfile,
 		error, errlen, security, info );
 
  error:
 
+	DEBUG3("Send_auth_transfer: sock %d, exit status %d, error '%s'",
+		*sock, status, error );
 	/* we are going to put the returned error status in the temp file
 	 * as the device to read from
 	 */
@@ -215,7 +218,7 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 		if( job ){
 			SETSTATUS(logjob)"Send_auth_transfer: %s", error );
 			Set_str_value(&job->info,ERROR,error);
-			Set_flag_value(&job->info,ERROR_TIME,time(0));
+			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 		}
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
 			Errorcode = JFAIL;
@@ -242,217 +245,14 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 	return( status );
 }
 
-
-/*
- * 
- * The following routines simply implement the encryption and transfer of
- * the files and/or values
- * 
- * By default, when sending a command,  the file will contain:
- *   key=value lines.
- *   KEY           PURPOSE
- *   client        client or user name
- *   from          originator - server if forwarding, client otherwise
- *   command       command to send
- * 
- */
-
-/*************************************************************
- * PGP Transmission
- * 
- * Configuration:
- *   pgp_id            for client to server
- *   pgp_forward_id    for server to server
- *   pgp_forward_id    for server to server
- *   pgp_path          path to pgp program
- *   pgp_passphrasefile     user passphrase file (relative to $HOME/.pgp)
- *   pgp_server_passphrasefile server passphrase file
- * User ENVIRONMENT Variables
- *   PGPPASS           - passphrase
- *   PGPPASSFD         - passfd if set up
- *   PGPPASSFILE       - passphrase in this file
- *   HOME              - for passphrase relative to thie file
- * 
- *  We encrypt and sign the file,  then send it to the other end.
- *  It will decrypt it, and then send the data back, encrypted with
- *  our public key.
- * 
- *  Keyrings must contain keys for users.
- *************************************************************/
-
-int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
-	char *error, int errlen,
-	struct security *security, struct line_list *info )
-{
-	char *pgpfile;
-	struct line_list pgp_info;
-	char buffer[LARGEBUFFER];
-	int status, i, tempfd, len, n, fd;
-	struct stat statb;
-	char *from, *destination, *s, *t;
-	int pgp_exit_code = 0;
-	int not_a_ciphertext = 0;
-
-	DEBUG1("Pgp_send: sending on socket %d", *sock );
-
-	len = 0;
-	error[0] = 0;
-	from = Find_str_value( info, FROM, Value_sep);
-	destination = Find_str_value( info, ID, Value_sep );
-
-	tempfd = -1;
-
-	Init_line_list( &pgp_info );
-    pgpfile = safestrdup2(tempfile,".pgp",__FILE__,__LINE__); 
-    Check_max(&Tempfiles,1);
-    Tempfiles.list[Tempfiles.count++] = pgpfile;
-
-	status = Pgp_encode( info, tempfile, pgpfile, &pgp_info,
-		buffer, sizeof(buffer), error, errlen, 
-        from, destination, &pgp_exit_code );
-
-	if( status ){
-		goto error;
-	}
-	if( !Is_server && Verbose ){
-		for( i = 0; i < pgp_info.count; ++i ){
-			if( Write_fd_str(1,pgp_info.list[i]) < 0
-				|| Write_fd_str(1,"\n") < 0 ) cleanup(0);
-		}
-	}
-	Free_line_list(&pgp_info);
-
-	if( (tempfd = Checkread(pgpfile,&statb)) < 0 ){
-		SNPRINTF(error,errlen)
-			"Pgp_send: cannot open '%s' - %s", pgpfile, Errormsg(errno) );
-		goto error;
-	}
-
-	DEBUG1("Pgp_send: encrypted file size '%0.0f'", (double)(statb.st_size) );
-	SNPRINTF(buffer,sizeof(buffer))"%0.0f\n",(double)(statb.st_size) );
-	Write_fd_str(*sock,buffer);
-
-	while( (len = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
-		buffer[len] = 0;
-		DEBUG4("Pgp_send: file information '%s'", buffer );
-		if( write( *sock, buffer, len) != len ){
-			SNPRINTF(error,errlen)
-			"Pgp_send: write to socket failed - %s", Errormsg(errno) );
-			goto error;
-		}
-	}
-
-	DEBUG2("Pgp_send: sent file" );
-	close(tempfd); tempfd = -1;
-	/* we close the writing side */
-	shutdown( *sock, 1 );
-	if( (tempfd = Checkwrite(pgpfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-		SNPRINTF(error,errlen)
-			"Pgp_send: open '%s' for write failed - %s", pgpfile, Errormsg(errno));
-		goto error;
-	}
-	DEBUG2("Pgp_send: starting read");
-	len = 0;
-	while( (n = read(*sock,buffer,sizeof(buffer)-1)) > 0 ){
-		buffer[n] = 0;
-		DEBUG4("Pgp_send: read '%s'", buffer);
-		if( write(tempfd,buffer,n) != n ){
-			SNPRINTF(error,errlen)
-			"Pgp_send: write '%s' failed - %s", tempfile, Errormsg(errno) );
-			goto error;
-		}
-		len += n;
-	}
-	close( tempfd ); tempfd = -1;
-
-	DEBUG2("Pgp_send: total %d bytes status read", len );
-
-	Free_line_list(&pgp_info);
-
-	/* decode the PGP file into the tempfile */
-	if( len ){
-		status = Pgp_decode( info, tempfile, pgpfile, &pgp_info,
-			buffer, sizeof(buffer), error, errlen, from, info,
-			&pgp_exit_code, &not_a_ciphertext );
-		if( not_a_ciphertext ){
-			DEBUG2("Pgp_send: not a ciphertext" );
-			if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-				SNPRINTF(error,errlen)
-				"Pgp_send: open '%s' for write failed - %s",
-					tempfile, Errormsg(errno));
-			}
-			if( (fd = Checkread(pgpfile,&statb)) < 0){
-				SNPRINTF(error,errlen)
-				"Pgp_send: open '%s' for write failed - %s",
-					pgpfile, Errormsg(errno));
-			}
-			if( error[0] ){
-				Write_fd_str(tempfd,error);
-				Write_fd_str(tempfd,"\n Contents -\n");
-			}
-			error[0] = 0;
-			len = 0;
-			while( (n = read(fd, buffer+len, sizeof(buffer)-len-1)) > 0 ){
-				DEBUG2("Pgp_send: read '%s'", buffer );
-				while( (s = strchr( buffer, '\n')) ){
-					*s++ = 0;
-					for( t = buffer; *t; ++t ){
-						if( !isprint(cval(t)) ) *t = ' ';
-					}
-					SNPRINTF(error,errlen)"  %s\n", buffer);
-					Write_fd_str(tempfd, error );
-					DEBUG2("Pgp_send: wrote '%s'", error );
-					memmove(buffer,s,safestrlen(s)+1);
-				}
-				len = safestrlen(buffer);
-			}
-			DEBUG2("Pgp_send: done" );
-			error[0] = 0;
-			close(fd); fd = -1;
-			close(tempfd); tempfd = -1;
-			error[0] = 0;
-		}
-	}
-
- error:
-	if( error[0] ){
-		DEBUG2("Pgp_send: writing error to file '%s'", error );
-		if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-			SNPRINTF(error,errlen)
-			"Pgp_send: open '%s' for write failed - %s",
-				tempfile, Errormsg(errno));
-		}
-		strncpy( buffer, error, sizeof(buffer) -1 );
-		buffer[sizeof(buffer)-1 ] = 0;
-		while( (s = strchr( buffer, '\n')) ){
-			*s++ = 0;
-			for( t = buffer; *t; ++t ){
-				if( !isprint(cval(t)) ) *t = ' ';
-			}
-			SNPRINTF(error,errlen)"  %s\n", buffer);
-			Write_fd_str(tempfd, error );
-			DEBUG2("Pgp_send: wrote '%s'", error );
-			memmove(buffer,s,safestrlen(s)+1);
-		}
-		close( tempfd ); tempfd = -1;
-		error[0] = 0;
-	}
-	Free_line_list(&pgp_info);
-	return(status);
-}
 /***************************************************************************
- * void Fix_send_auth() - get the Use_auth_DYN value for the remote printer
- ***************************************************************************/
-
- extern struct security SendSecuritySupported[];
-
-/****************************************************************************************
+ *
  * struct security *Fix_send_auth( char *name, struct line_list *info
  * 	char *error, int errlen )
  * 
  * Find the information about the encrypt type and then make up the string
  * to send to the server requesting the encryption
- ****************************************************************************************/
+ **************************************************************************/
 
 struct security *Fix_send_auth( char *name, struct line_list *info,
 	struct job *job, char *error, int errlen )
@@ -469,7 +269,7 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	}
 	DEBUG1("Fix_send_auth: name '%s'", name );
 	if( name ){
-		for( security = SendSecuritySupported; security->name; ++security ){
+		for( security = SecuritySupported; security->name; ++security ){
 			DEBUG1("Fix_send_auth: security '%s'", security->name );
 			if( !Globmatch(security->name, name ) ) break;
 		}
@@ -485,11 +285,17 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 		return( 0 );
 	}
 
+	/* check to see if we use unix_socket */
+	if( security->auth_flags & IP_SOCKET_ONLY ){
+		Set_DYN( &Unix_socket_path_DYN, 0 );
+	}
+
 	if( !(tag = security->config_tag) ) tag = security->name;
 	SNPRINTF(buffer,sizeof(buffer))"%s_", tag );
 	Find_default_tags( info, Pc_var_list, buffer );
 	Find_tags( info, &Config_line_list, buffer );
 	Find_tags( info, &PC_entry_line_list, buffer );
+	Expand_hash_values( info );
 	if(DEBUGL1)Dump_line_list("Fix_send_auth: found info", info );
 
 	if( !(tag = security->config_tag) ) tag = security->name;
@@ -578,27 +384,3 @@ void Put_in_auth( int tempfd, const char *key, char *value )
 	}
 	if( v ) free(v); v = 0;
 }
-
-
-/*
- * we include user specified code for authentication
- */
-
-#define SENDING
-#include "user_auth.stub"
-
- struct security SendSecuritySupported[] = {
-	/* name,       config_tag, connect,    send,   receive */
-#if defined(KERBEROS)
-	{ "kerberos*", "kerberos", 0,           Krb5_send, 0 },
-# if defined(MIT_KERBEROS4)
-	{ "kerberos4", "kerberos", Send_krb4_auth, 0, 0 },
-# endif
-#endif
-	{ "pgp",       "pgp",      0,           Pgp_send,  0 },
-	{ "none",      "none",     0,           0,         0 },
-#if defined(USER_SEND)
- USER_SEND
-#endif
-	{0,0,0,0,0}
-};

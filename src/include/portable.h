@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.31 2002/05/06 16:03:46 papowell Exp $
+ * $Id: portable.h,v 1.33 2002/07/22 16:11:29 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H

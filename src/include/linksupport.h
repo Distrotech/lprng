@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 1.31 2002/05/06 16:03:45 papowell Exp $
+ * $Id: linksupport.h,v 1.33 2002/07/22 16:11:28 papowell Exp $
  ***************************************************************************/
 
 
@@ -45,6 +45,8 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 	char *src, int fd, double pcount);
 int Link_dest_port_num( char *port );
 int Link_line_read(char *host, int *sock, int timeout,
+	  char *buf, int *count );
+int Link_line_peek(char *host, int *sock, int timeout,
 	  char *buf, int *count );
 int Link_read(char *host, int *sock, int timeout,
 	  char *buf, int *count );

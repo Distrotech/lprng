@@ -8,7 +8,7 @@
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="PREVIOUS" title="ifhp Filter " href="ifhp.htm">
     <link rel="NEXT" title="Rule Matching Procedures" href=
-    "x8558.htm">
+    "x8617.htm">
   </head>
 
   <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
@@ -17,8 +17,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 May 2002
-          (For LPRng-3.8.12)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
+          (For LPRng-3.8.13)</th>
         </tr>
 
         <tr>
@@ -29,7 +29,7 @@
           </td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x8558.htm" accesskey="N">Next</a></td>
+          "x8617.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -47,48 +47,51 @@
           "permsref.htm#DEFAULTPERMISSION">Permission Checking
           Algorithm</a></dt>
 
-          <dt>17.2. <a href="x8558.htm">Rule Matching
+          <dt>17.2. <a href="x8617.htm">Rule Matching
           Procedures</a></dt>
 
           <dt>17.3. <a href="permspath.htm">Permission File
           Location</a></dt>
 
-          <dt>17.4. <a href="x8797.htm">Example Permission
+          <dt>17.4. <a href="x8856.htm">Example Permission
           File</a></dt>
 
-          <dt>17.5. <a href="x8810.htm">Complex Permission
+          <dt>17.5. <a href="x8869.htm">Complex Permission
           Checking</a></dt>
 
-          <dt>17.6. <a href="x8825.htm">More Examples</a></dt>
+          <dt>17.6. <a href="x8884.htm">More Examples</a></dt>
 
           <dt>17.7. <a href="authref.htm">Authentication</a></dt>
 
-          <dt>17.8. <a href="x8840.htm">Authentication</a></dt>
+          <dt>17.8. <a href="x8901.htm">Authentication</a></dt>
 
-          <dt>17.9. <a href="x8852.htm">Identifiers</a></dt>
+          <dt>17.9. <a href="x8913.htm">Identifiers</a></dt>
 
-          <dt>17.10. <a href="x8858.htm">RFC1179 Protocol
+          <dt>17.10. <a href="x8919.htm">RFC1179 Protocol
           Extensions</a></dt>
 
           <dt>17.11. <a href="auth.htm">Authentication
           Operations</a></dt>
 
-          <dt>17.12. <a href="x8961.htm">Permission
+          <dt>17.12. <a href="x9022.htm">Permission
           Checking</a></dt>
 
-          <dt>17.13. <a href="x8993.htm">PGP Authentication
+          <dt>17.13. <a href="x9054.htm">PGP Authentication
           Support</a></dt>
 
           <dt>17.14. <a href="kerberos.htm">Using Kerberos 5 for
           Authentication</a></dt>
 
-          <dt>17.15. <a href="x9264.htm">Using Kerberos 4 for
+          <dt>17.15. <a href="x9325.htm">Using Kerberos 4 for
           Authentication</a></dt>
 
-          <dt>17.16. <a href="x9290.htm">Using MD5 for
+          <dt>17.16. <a href="x9351.htm">Using SSL for
           Authentication</a></dt>
 
-          <dt>17.17. <a href="x9357.htm">Adding Authentication
+          <dt>17.17. <a href="x9428.htm">Using MD5 for
+          Authentication</a></dt>
+
+          <dt>17.18. <a href="x9495.htm">Adding Authentication
           Support</a></dt>
         </dl>
       </div>
@@ -108,7 +111,7 @@
       "FILENAME">lpd.perms</tt> file.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN8341"></a>
+        <a name="AEN8396"></a>
 <pre class="SCREEN">
     # allow root on server to control jobs
     ACCEPT SERVICE=C SERVER REMOTEUSER=root
@@ -257,14 +260,6 @@
 
             <tr>
               <td align="LEFT" valign="TOP"><span class=
-              "ACRONYM">SAMEHOST</span></td>
-
-              <td align="LEFT" valign="TOP">HOST and REMOTEHOST
-              matches</td>
-            </tr>
-
-            <tr>
-              <td align="LEFT" valign="TOP"><span class=
               "ACRONYM">SERVER</span></td>
 
               <td align="LEFT" valign="TOP">request originates on
@@ -330,6 +325,14 @@
 
             <tr>
               <td align="LEFT" valign="TOP"><span class=
+              "ACRONYM">AUTHSAMEUSER</span></td>
+
+              <td align="LEFT" valign="TOP">same authenticated
+              user</td>
+            </tr>
+
+            <tr>
+              <td align="LEFT" valign="TOP"><span class=
               "ACRONYM">AUTHFROM</span></td>
 
               <td align="LEFT" valign="TOP">authenticated
@@ -342,6 +345,14 @@
 
               <td align="LEFT" valign="TOP">authenticated job in
               queue</td>
+            </tr>
+
+            <tr>
+              <td align="LEFT" valign="TOP"><span class=
+              "ACRONYM">AUTHCA</span></td>
+
+              <td align="LEFT" valign="TOP">SSL signing
+              certificates for job</td>
             </tr>
           </tbody>
         </table>
@@ -628,7 +639,7 @@
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x8558.htm" accesskey="N">Next</a></td>
+          "x8617.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

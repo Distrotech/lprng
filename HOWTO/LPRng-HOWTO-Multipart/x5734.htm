@@ -2,16 +2,16 @@
 <html>
   <head>
     <meta name="generator" content="HTML Tidy, see www.w3.org">
-    <title>Remote Printer Using RFC1179</title>
+    <title>Using :oh To Select Printcap Information</title>
     <meta name="GENERATOR" content=
     "Modular DocBook HTML Stylesheet Version 1.73 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Printcap Database " href=
     "printcapref.htm">
-    <link rel="PREVIOUS" title=
-    "Enterprise Strength Printcap Example" href="x5717.htm">
-    <link rel="NEXT" title="Remote Printer Using Socket API" href=
-    "x5768.htm">
+    <link rel="PREVIOUS" title="Simple Server Printcap Example"
+    href="cm.htm">
+    <link rel="NEXT" title="Using the Wildcard Printcap Entry"
+    href="x5760.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -20,93 +20,86 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 May 2002
-          (For LPRng-3.8.12)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 22 Jul 2002
+          (For LPRng-3.8.13)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x5717.htm" accesskey="P">Prev</a></td>
+          "cm.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           12. Printcap Database</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x5768.htm" accesskey="N">Next</a></td>
+          "x5760.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
     </div>
 
     <div class="SECT1">
-      <h1 class="SECT1"><a name="AEN5734">12.7. Remote Printer
-      Using RFC1179</a></h1>
+      <h1 class="SECT1"><a name="AEN5734">12.4. Using :oh To Select
+      Printcap Information</a></h1>
 
-      <p>Options used:</p>
-
-      <ul>
-        <li>
-          <p><tt class="LITERAL">lp=</tt><span class="emphasis"><i
-          class="EMPHASIS">destination</i></span></p>
-        </li>
-
-        <li>
-          <p><tt class="LITERAL">rm=</tt><span class="emphasis"><i
-          class="EMPHASIS">remote host (machine)</i></span></p>
-        </li>
-
-        <li>
-          <p><tt class="LITERAL">rp=</tt><span class="emphasis"><i
-          class="EMPHASIS">remote printer (machine)</i></span></p>
-        </li>
-      </ul>
-      <br>
-      <br>
-
-      <p>You can have the <b class="APPLICATION">lpd</b> server
-      forward jobs to another server or print which supports the
-      RFC1179 protocol by using the following printcap:</p>
+      <p>When administering a large number of printers over a large
+      area, it is sometimes desirable to have a <span class=
+      "emphasis"><i class="EMPHASIS">default</i></span> printer for
+      each host. This default printer may be different for each
+      host, and can be selected by using the <tt class=
+      "LITERAL">oh</tt> entry. The <tt class="LITERAL">oh</tt>
+      value is a list of the following entries</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN5752"></a>
+        <a name="AEN5740"></a>
 <pre class="SCREEN">
-    # Simplest
-    remote|Remote Printer
-       :lp=raw@server
-    # historical
-    remote:
-      rp=raw:rm=server
-    # Sometimes you have to connect to a non-standard port
-    special:lp=lp@server%2000
+    [!] IP/n     - address + mask length    10.0.0.0/8
+    [!] IP/IP    - address + mask           10.0.0.0/255.0.0.0
+    [!] vvv      - glob for hostname        pc*.org.com
 </pre>
       </div>
-
-      <ol type="1">
-        <li>
-          <p>If the <tt class="LITERAL">lp</tt> printer entry is
-          present, it will override the <tt class="LITERAL">rm</tt>
-          and <tt class="LITERAL">rp</tt> printer entries.</p>
-        </li>
-
-        <li>
-          <p>The <tt class="LITERAL">lp=pr@host</tt> format
-          specifies that the output device is actually a remote
-          spool queue, and jobs should be transferred using RFC1179
-          protocol.</p>
-        </li>
-
-        <li>
-          <p>By default, <b class="APPLICATION">LPRng</b> will
-          attempt to <span class="emphasis"><i class=
-          "EMPHASIS">sanitize</i></span> all jobs that it
-          originates or forwards. This sanitization will result in
-          an RFC1179 compliant <tt class="LITERAL">control
-          file</tt>, and will not modify any of the job
-          information.</p>
-        </li>
-      </ol>
       <br>
       <br>
+
+      <p>The <b class="APPLICATION">LPRng</b> software will
+      determine the hostnames and IP addresses assigned to the host
+      and then check to see if there is a match in the listed
+      hostnames or IP addresses. The optional test inversion (<tt
+      class="LITERAL">!</tt>) causes the sense of the match to be
+      inverted. The list of addresses or entries are tested in
+      sequence until a match is found. If no match is found the
+      printcap entry will not be used. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5745"></a>
+<pre class="SCREEN">
+    lp:oh=*.admin.org.com,10.0.0.5,10.2.0.0/16:lp=pr1@server1
+    lp:oh=*.eng.org.com:lp=hp@server2
+    color:oh=*.eng.org.com:lp=color@server3
+    color:oh=!*.eng.org.com:lp=color@server4
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In the above example, if our host name is <tt class=
+      "FILENAME">booster.admin.org.com</tt>, then we would use <tt
+      class="LITERAL">lp=pr1@server1</tt>, as the <tt class=
+      "FILENAME">*.admin.org.com</tt> glob pattern would match our
+      host name.</p>
+
+      <p>if our host name is <tt class=
+      "FILENAME">booster.dev.org.com</tt> and our IP address is
+      10.2.0.1, then we would use <tt class=
+      "LITERAL">lp=pr1@server1</tt>, as the <tt class=
+      "FILENAME">10.2.0.0/16</tt> ip address would be in the
+      specified address range.</p>
+
+      <p>Finally we have an example of the use of the match
+      inversion operator (<tt class="LITERAL">!</tt>). All hosts
+      whose name matches <tt class="FILENAME">*.eng.org.com</tt>
+      will use <tt class="LITERAL">color@server3</tt> and the
+      others will use <tt class="LITERAL">color@server4</tt>.</p>
     </div>
 
     <div class="NAVFOOTER">
@@ -116,24 +109,24 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x5717.htm" accesskey="P">Prev</a></td>
+          "cm.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x5768.htm" accesskey="N">Next</a></td>
+          "x5760.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>
-          <td width="33%" align="left" valign="top">Enterprise
-          Strength Printcap Example</td>
+          <td width="33%" align="left" valign="top">Simple Server
+          Printcap Example</td>
 
           <td width="34%" align="center" valign="top"><a href=
           "printcapref.htm" accesskey="U">Up</a></td>
 
-          <td width="33%" align="right" valign="top">Remote Printer
-          Using Socket API</td>
+          <td width="33%" align="right" valign="top">Using the
+          Wildcard Printcap Entry</td>
         </tr>
       </table>
     </div>

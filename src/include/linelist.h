@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.31 2002/05/06 16:03:45 papowell Exp $
+ * $Id: linelist.h,v 1.33 2002/07/22 16:11:28 papowell Exp $
  ***************************************************************************/
 
 
@@ -196,6 +196,7 @@ void Set_str_value( struct line_list *l, const char *key, const char *value );
 void Set_expanded_str_value( struct line_list *l, const char *key, const char *orig );
 void Set_casekey_str_value( struct line_list *l, const char *key, const char *value );
 void Set_flag_value( struct line_list *l, const char *key, long value );
+void Set_nz_flag_value( struct line_list *l, const char *key, long value );
 void Set_double_value( struct line_list *l, const char *key, double value );
 void Set_decimal_value( struct line_list *l, const char *key, long value );
 void Remove_line_list( struct line_list *l, int mid );
@@ -242,6 +243,7 @@ int Check_str_keyword( const char *name, int *value );
 void Config_value_conversion( struct keywords *key, const char *s );
 void Expand_percent( char **var );
 void Expand_vars( void );
+void Expand_hash_values( struct line_list *hash );
 char *Set_DYN( char **v, const char *s );
 void Clear_config( void );
 char *Find_default_var_value( void *v );
@@ -288,15 +290,6 @@ char *Find_str_in_str( char *str, const char *key, const char *sep );
 int Find_key_in_list( struct line_list *l, const char *key, const char *sep, int *m );
 char *Fix_str( char *str );
 int Shutdown_or_close( int fd );
-int Pgp_get_pgppassfd( struct line_list *info, char *error, int errlen );
-int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
-	struct line_list *pgp_info, char *buffer, int bufflen,
-	char *error, int errlen, char *esc_to_id, struct line_list *from_info,
-	int *pgp_exit_code, int *not_a_ciphertext );
-int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
-	struct line_list *pgp_info, char *buffer, int bufflen,
-	char *error, int errlen, char *esc_from_id, char *esc_to_id,
-	int *pgp_exit_code );
 void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
 int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args );
 void Do_work( char *name, struct line_list *args );

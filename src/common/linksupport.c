@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: linksupport.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 /***************************************************************************
@@ -564,8 +564,13 @@ int getconnection ( char *hostname, char *dest_port,
 			goto next_addr;
 		}
 	} else {
-		i = sizeof( src_sin );
-		if( getsockname( sock, (struct sockaddr *)&src_sin, &i ) < 0 ){
+#if defined(HAVE_SOCKLEN_T)
+		socklen_t len;
+#else
+		int len;
+#endif
+		len = sizeof( src_sin );
+		if( getsockname( sock, (struct sockaddr *)&src_sin, &len ) < 0 ){
 			LOGERR_DIE(LOG_ERR)"getconnnection: getsockname failed" );
 		}
 		DEBUGF(DNW1)( "getconnection: sock %d, src ip %s, port %d", sock,
@@ -585,7 +590,11 @@ int getconnection ( char *hostname, char *dest_port,
 void Set_linger( int sock, int n )
 {
 #ifdef SO_LINGER
+#if defined(HAVE_SOCKLEN_T)
+	socklen_t len;
+#else
 	int len;
+#endif
 	struct linger option;
 	len = sizeof( option );
 
@@ -1176,6 +1185,70 @@ int Link_line_read(char *host, int *sock, int timeout,
 	*count = len;
 
 	DEBUGF(DNW4)("Link_line_read: status %d, len %d", status, len );
+	errno = err;
+	return( status );
+}
+
+
+/***************************************************************************
+ * int Link_line_peek(char *host, int *sock, int timeout,
+ *	  char *str, int *count )
+ *    peeks at input on socket
+ *       and copies characters from socket to str until '\n'
+ *        or max chars found.
+ *    *count points to maximum number of bytes to read;
+ *      updated with actual value read
+ *    if \n not found within timeout seconds,
+ *      terminate action with error.
+ *    if timeout == 0, wait indefinitely
+ *    returns 0 if '\n' read or *count characters
+ *            LINK errorcode otherwise
+ ***************************************************************************/
+
+int Link_line_peek(char *host, int *sock, int timeout,
+	  char *buf, int *count )
+{
+	int err = 0;	/* ACME Integer, Inc. */
+	int status, max, len;				/* status of operation */
+
+	status = 0;	/* shut up GCC */
+	max = *count;
+	*count = 0;
+	buf[0] = 0;
+	DEBUGF(DNW1) ("Link_line_peek: peeking for %d from '%s' on %d, timeout %d",
+		max, host, *sock, timeout );
+	/* check for valid socket */
+	if(*sock < 0) {
+		DEBUGF(DNW1)("Link_line_peek: bad socket" );
+		*count = 0;
+		return (LINK_OPEN_FAIL);
+	}
+	/*
+	 * set up timeout and then do operation
+	 */
+	len = -1;
+	if( Set_timeout() ){
+		Set_timeout_alarm( timeout );
+		len = recv( *sock, buf, max, MSG_PEEK );
+	} else {
+		len = -1;
+	}
+	err = errno;
+	DEBUGF(DNW1)( "Link_line_peek: read %d, timeout %d, '%s'", len, Alarm_timed_out, buf);
+	/*
+	 * conditions will be:
+	 * long line, timeout, error, or OK
+	 */
+	if( len <= 0 ){
+		DEBUGF(DNW1)("Link_line_peek: read from '%s' failed - %s", host,
+			Errormsg(err) );
+		status = LINK_TRANSFER_FAIL;
+	} else {
+		*count = len;
+		status = 0;
+	}
+
+	DEBUGF(DNW1)("Link_line_peek: status %d, len %d", status, len );
 	errno = err;
 	return( status );
 }

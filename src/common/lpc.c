@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpc.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 /***************************************************************************
@@ -62,6 +62,7 @@
  */
 
 #include "lp.h"
+#include "defs.h"
 #include "initialize.h"
 #include "getprinter.h"
 #include "sendreq.h"
@@ -293,6 +294,7 @@ void doaction( struct line_list *args )
 		Merge_line_list(&l,&Config_line_list, 0, 0, 0);
 		Escape_colons( &l );
 		s = Join_line_list_with_sep(&l,"\n :");
+		Expand_percent( &s );
 		if( s ){
 			if( Write_fd_str( 1, ".config\n :" ) < 0 ) cleanup(0);
 			if( Write_fd_str( 1, s ) < 0 ) cleanup(0);

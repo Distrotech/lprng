@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.31 2002/05/06 16:03:45 papowell Exp $";
+"$Id: printjob.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
 
 
 #include "lp.h"
@@ -111,7 +111,7 @@ int Print_job( int output, int status_device, struct job *job,
 	char *FF_str, *leader_str, *trailer_str, *filter;
 	int i, of_stdin, of_stderr, if_error[2],
 		of_pid, copy, copies,
-		do_banner, n, pid, count, size, fd, tempfd,
+		do_banner, n, pid, count, fd, tempfd,
 		files_printed;
 
 	char msg[SMALLBUFFER];
@@ -219,7 +219,6 @@ int Print_job( int output, int status_device, struct job *job,
 		transfername = Find_str_value(datafile,TRANSFERNAME,Value_sep);
 		openname = Find_str_value(datafile,OPENNAME,Value_sep);
 		format = Find_str_value(datafile,FORMAT,Value_sep);
-		size = Find_flag_value(datafile,SIZE,Value_sep);
 		copies = Find_flag_value(datafile,COPIES,Value_sep);
 		if( copies == 0 ) copies = 1;
 

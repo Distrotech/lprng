@@ -85,7 +85,7 @@ lpq(1),
 lprm(1),
 printcap(5),
 lpd.conf(5),
-pr(1).
+pr(1), lprng_certs(1), lprng_index_certs(1).
 .SH "HISTORY"
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpd_status.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 #include "lp.h"
@@ -269,9 +269,10 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	int status = 0, len, ix, nx, flag, count, held, move,
 		server_pid, unspooler_pid, fd, nodest,
 		printable, dcount, destinations = 0,
-		d_copies, d_copy_done, permission, jobsize, jobnumber, db, dbflag,
+		d_copies, d_copy_done, permission, jobnumber, db, dbflag,
 		matches, tempfd, savedfd, lockfd, delta, err, cache_index,
 		total_held, total_move, jerror, jdone;
+	double jobsize;
 	struct stat statb;
 	struct job job;
 	time_t modified = 0;
@@ -572,7 +573,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		filenames = Find_str_value(&job.info,FILENAMES,Value_sep);
 		jobnumber = Find_decimal_value(&job.info,NUMBER,Value_sep);
 		joberror = Find_str_value(&job.info,ERROR,Value_sep);
-		jobsize = Find_flag_value(&job.info,SIZE,Value_sep);
+		jobsize = Find_double_value(&job.info,SIZE,Value_sep);
 		job_time = Find_str_value(&job.info,JOB_TIME,Value_sep );
 		destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep);
 
@@ -655,8 +656,12 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 				job_time = Time_str(1, Convert_to_time_t(job_time));
 				if( !Full_time_DYN && (s = safestrchr(job_time,'.')) ) *s = 0;
 
-				SNPRINTF( sizestr, sizeof(sizestr)) "%*d %-s",
-					SIZEW-1,jobsize, job_time );
+				{
+					char jobb[32];
+					SNPRINTF(jobb,sizeof(jobb)) "%0.0f", jobsize );
+					SNPRINTF( sizestr, sizeof(sizestr)) "%*s %-s",
+						SIZEW-1,jobb, job_time );
+				}
 
 				len = Max_status_line_DYN;
 				if( len >= (int)sizeof(msg)) len = sizeof(msg)-1;
@@ -735,7 +740,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			SNPRINTF( msg, sizeof(msg)) _("%s status= %s"),
 				header, number );
 			Add_line_list(&outbuf,msg,0,0,0);
-			SNPRINTF( msg, sizeof(msg)) _("%s size= %d"),
+			SNPRINTF( msg, sizeof(msg)) _("%s size= %0.0f"),
 				header, jobsize );
 			Add_line_list(&outbuf,msg,0,0,0);
 			SNPRINTF( msg, sizeof(msg)) _("%s time= %s"),

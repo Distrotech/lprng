@@ -1,33 +1,4 @@
 dnl
-dnl set $(CC) from --with-cc=value
-dnl
-define(WITH_CC,[
-AC_ARG_WITH([cc],
-[  --with-cc=COMPILER      select compiler to use])
-AC_MSG_CHECKING(for C compiler)
-if test "$with_cc" != ""; then
-  if test "$ac_cv_prog_cc" != "" && test "$ac_cv_prog_cc" != "$with_cc"; then
-    AC_MSG_ERROR(Specified compiler doesn't match cached compiler name;
-	remove cache and try again.)
-  else
-    CC="$with_cc"
-  fi
-else
-AC_PROG_CC
-fi
-AC_CACHE_VAL(ac_cv_prog_cc,[dnl
-  test -z "$CC" && CC=gcc
-  AC_TRY_LINK([#include <stdio.h>],[printf("hi\n");], ,
-    AC_MSG_ERROR(Can't find a working compiler.))
-  ac_cv_prog_cc="$CC"
-])
-CC="$ac_cv_prog_cc"
-AC_MSG_RESULT($CC)
-AC_PROG_CC
-])dnl
-dnl
-
-dnl
 dnl set $(CCOPTS) from --with-ccopts=value
 dnl
 define(WITH_CCOPTS,[

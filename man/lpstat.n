@@ -273,7 +273,7 @@ lpq(1),
 lprm(1),
 printcap(5),
 lpd.perms(5),
-pr(1).
+pr(1), lprng_certs(1), lprng_index_certs(1).
 .SH DIAGNOSTICS
 .nf
 Most of the diagnostics are self explanatory.

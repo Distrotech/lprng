@@ -8,9 +8,10 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: initialize.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 #include "lp.h"
+#include "defs.h"
 #include "initialize.h"
 #include "getopt.h"
 #include "child.h"
@@ -136,10 +137,10 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
             }
         }
     }
-#if HAVE_LOCALE_H
+#if defined (HAVE_LOCALE_H)
 	setlocale(LC_ALL, "");
 #endif
-	/* FPRINTF(STDERR,"PACKAGE '" PACKAGE "', LOCALEDIR '" LOCALEDIR "'\n"); */
+	/* FPRINTF(STDERR,"LOCALEDIR '" LOCALEDIR "'\n"); FPRINTF(STDERR,"PACKAGE '" PACKAGE "'\n"); */
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 

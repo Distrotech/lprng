@@ -126,7 +126,7 @@ TAGS clean::
 
 clean::
 	-rm -f header lpd.conf $(FILES) $(SCRIPTS) postinstall preremove postremove a.out
-	-rm -f *.bak ? ?.* core *.old
+	-rm -f *.bak ? ?.* core *.old *~
 
 install: all
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(INSTALLDIRS)
@@ -245,9 +245,6 @@ update:
 ###############################################################################
 
 tar: distclean
-	cp /dev/null /tmp/X
-	for i in '*RCS*' \
-		; do  echo "$$i" >>/tmp/X.LPRng; done
 	rm -f */Makefile Makefile
 	chmod 755 `find . -name install-sh -print`
 	chmod 755 `find . -name mkinstalldirs -print`
@@ -257,7 +254,7 @@ tar: distclean
 	echo $${DIR}; \
 	DIR=`echo $${DIR} | sed 's,.*/,,'`; \
 		cd ..; \
-		tar zXcf /tmp/X.LPRng $${DIR}.tgz $${DIR}; \
+		tar '--exclude=RCS' -zcf $${DIR}.tgz $${DIR}; \
 		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
 	@echo ""
 

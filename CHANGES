@@ -1,3 +1,100 @@
+Version LPRng-3.8.13 - Mon Jul 22 09:07:57 PDT 2002
+
+  Major Enhancement In Printcap and Configuration Functionality
+  After much consideration, added the 'client.xxx' and 'server.xxx'
+  facility.  Briefly,  if you have a printcap entry of the form
+  client.xxx or server.xxx then this can be used to set the corresponding
+  xxx variable when the printcap entry is used by the lpd server
+  or the LPRng client programs lpr, lpq, lprm, checkpc, etc.
+
+    Entry               Program Type          Sets
+    server.xxx = vvv    lpd (server)          xxx = vvv
+    client.xxx = vvv    lpr,lpq... (client)   xxx = vvv
+
+  The purpose of this enhancement is to allow a single printcap
+  entry to be used for both client and server operation, especially
+  in situations where the lpd server is forwarding or sending jobs
+  to another lpd queue.
+
+  Example of use:
+    lp:
+        # used by clients, forcess them to send to
+        # specified server
+     :lp=%P@server.hostname:force_localhost@
+        # used by lpd server
+        # the server will now send jobs to the
+        # specified destination
+     :server.lp=%P@destination
+
+  This is equivalent to and replaces the :client and :server
+  printcap flags, as shown below:
+
+    lp:client
+     :lp=%P@server.hostname:force_localhost@
+    lp:server
+     :lp=%P@destination
+
+  This selection operation also works with values in the
+  lpd.conf file, allowing global overrides for clients and
+  servers.  (I can't imagine a use for this,  but it is there
+  if somebody wants to use it.)
+
+  The lpc client and lpc server commands will display the
+  selected client.xxx and server.xxx values.  They are also
+  propagated to the PRINTCAP_ENTRY environment variables
+  for filters.
+
+  Typo's in documentation corrected.
+  (Patch by: Stepan Kasal <kasal@math.cas.cz>)
+
+  lpr Kerberos authentication failures were not being reported.
+  (Problem noticed by: Rick Cochran <rcc2@cornell.edu>)
+
+  Added SSL authentication.  See the README.SSL.SECURITY file for
+  the truly complicated details.  Note that testing with certificates
+  signed by non-root CA indicates that the client is not sending
+  a certificate, even though one has been requested and the
+  certificates and signing certs are in the right places.
+
+  lpd.conf did not have 'include' functionality working.
+    (Patch by: Stepan Kasal <kasal@math.cas.cz>)
+  
+  Added Yet Another LPRng Option: user_is_authuser
+      user_is_authuser:
+       if( header_info && User_is_authuser_DYN
+               && (s = Find_str_value(header_info,AUTHUSER,Value_sep)) ){
+               Set_str_value(&job->info,LOGNAME,s);
+               DEBUG1("Check_for_missing_files: authuser '%s'", s );
+       }
+  printcap:
+  lp:auth=kerberos5:user_is_authuser:...
+   Causes the principle name to be used as the user name.
+
+  lpq_in_perl was screwed up
+  (Patches by: Anthony Thyssen <anthony@cit.gu.edu.au>)
+
+  generate_banner core dumped.  Turned out not to be setting
+  banner format ("f") when generating entry, so that control
+  file generation core dumped when generating new control file.
+  (Problem reported by: "Keith Rinaldo" <rinaldok@egr.unlv.edu>)
+
+  Updated Remove_done_jobs to sort jobs by completion time.
+  Added 'Set_nz_flag_value' function to stop the ERROR_TIME value
+  from being gratuitously updated by various routines.
+
+  Found possible cause of 'job data files not removed' problem
+  in the Remove_done_jobs() code.  There is a possibility of a
+  data file being orphaned if a 'done job' is removed by the
+  spooler at the same time that another processes such as lpq
+  information gathering examines the print job.  Rare, but possible.
+
+  Put warnings in the LPRng-HOWTO section on Samba about the
+  done_jobs option and interaction with SAMBA job status.
+  (Suggested by: Marcus Manske <manske@dramedia.de>)
+
+  Added yet another wakeup and kick to the master server process
+  so that printer pools will respond faster.  Sigh...
+
 Version LPRng-3.8.12 - Mon May 6 08:21:49 PDT 2002
 
   patch for TCPWRAPPERS added a gratuitous -lwrap to the src/Makefile.
@@ -140,7 +237,7 @@ Version LPRng-3.8.9 - Sat Mar  2 15:02:11 PST 2002
    If you want to override the destination lpd port, you must
       modify the lpd.conf file.
 
-  Jeff Chua of FexEx (Federal Express) <jchua@fedex.com>
+  Jeff Chua of FedEx (Federal Express) <jchua@fedex.com>
   showed up at my office armed with a set of test scripts and a laptop
   running LPRng.  He demonstrated the problem of the 'missing datafile'
   during job transfers.  I have fixed the problem in this release.
@@ -173,7 +270,7 @@ Version LPRng-3.8.9 - Sat Mar  2 15:02:11 PST 2002
   the problem is resolved.
 
   The AUTHUSER information received at job submission time was not
-  not being stored and used later when printing permissions were checked.
+  being stored and used later when printing permissions were checked.
   (Discovered by: Toby Blake <toby@cogsci.ed.ac.uk>)
 
   Added a 'UTILS/README.ForKerberosHackers' file so that Kerbero Hackers

@@ -81,7 +81,7 @@ static unsigned char PADDING[64] = {
   }
 
 void MD5Init (mdContext)
-MD5_CTX *mdContext;
+MD5_CONTEXT *mdContext;
 {
   mdContext->i[0] = mdContext->i[1] = (UINT4)0;
 
@@ -94,7 +94,7 @@ MD5_CTX *mdContext;
 }
 
 void MD5Update (mdContext, inBuf, inLen)
-MD5_CTX *mdContext;
+MD5_CONTEXT *mdContext;
 unsigned char *inBuf;
 unsigned int inLen;
 {
@@ -129,7 +129,7 @@ unsigned int inLen;
 }
 
 void MD5Final (mdContext)
-MD5_CTX *mdContext;
+MD5_CONTEXT *mdContext;
 {
   UINT4 in[16];
   int mdi;

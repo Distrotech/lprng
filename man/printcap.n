@@ -596,6 +596,18 @@ socket_linger	A	num	10
 spool_dir_perms	D	num	042700	permissions for spool directory
 spool_file_perms	D	num	0600	permissions for spool file
 ss	D	str	NULL	name of queue that server serves (with sv)
+ssl_XXX	D	str	NULL
+				SSL authentication and encryption options.
+				See lprng_certs(1) for details.
+ssl_ca_file	str	A	_SSL_CA_FILE_
+				SSL signing certificate file
+ssl_ca_path	str	A	NULL
+				SSL signing certificate directory. Default is
+				directory containing ssl_ca_file.
+ssl_server_cert	str	A	_SSL_SERVER_CERT_
+				SSL server certificate
+ssl_server_password	str	A	_SSL_SERVER_PASSWORD_
+				SSL server certificate password
 stalled_time	D	num	120
 				Time after which to report an active job as stalled
 stop_on_abort	D	bool	true
@@ -1162,7 +1174,12 @@ LPRng supports built in kerberos authentication.
 To enable this, the
 LPD protocol has been extended to provide a way to transfer authenticated
 and/or encrypted jobs and commands.
-The details are covered in other LPRng documentation.
+The details are covered in the LPRng HOWTO documentation.
+.PP
+Also, SSL can be used.
+See
+.BR lprng_certs (1)
+for details.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -1190,7 +1207,7 @@ lpr(1),
 lpq(1),
 lprm(1),
 lpd.perms(5),
-pr(1).
+pr(1), lprng_certs(1), lprng_index_certs(1).
 .SH DIAGNOSTICS
 .nf
 Most of the diagnostics are self explanatory.

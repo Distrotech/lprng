@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpd.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 #include "lp.h"
@@ -179,7 +179,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	pid = Get_lpd_pid();
 #if defined(__CYGWIN__)
-	if( (pid > 0 && ( kill(pid,0) || (errno != ESRCH) )) {
+	if( (pid > 0) && ( kill(pid,0) || (errno != ESRCH) )) {
 		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
   				pid );
 	}

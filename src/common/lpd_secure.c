@@ -8,10 +8,11 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: lpd_secure.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 #include "lp.h"
+#include "user_auth.h"
 #include "lpd_dispatch.h"
 #include "getopt.h"
 #include "getqueue.h"
@@ -168,7 +169,7 @@ int Receive_secure( int *sock, char *input )
 		status = JFAIL;
 		goto error;
 	}
-	if( !security->receive ){
+	if( !security->server_receive ){
 		SNPRINTF( error+1, sizeof(error)-1)
 			_("no receive method supported for '%s'"), authtype );
 		ack = ACK_FAIL;	/* no retry, don't send again */
@@ -212,9 +213,12 @@ int Receive_secure( int *sock, char *input )
 	DEBUGF(DRECV1)("Receive_secure: sock %d, user '%s', jobsize '%s'",  
 		*sock, user, jobsize );
 
-	status = security->receive( sock, user, jobsize, from_server,
-		authtype, &info, error+1, sizeof(error)-1,
-		&header_info, tempfile );
+	status = security->server_receive( sock,
+		user, jobsize, from_server, authtype,
+		&info,
+		error+1, sizeof(error)-1,
+		&header_info,
+		security, tempfile );
 
  error:
 	DEBUGF(DRECV1)("Receive_secure: status %d, ack %d, error '%s'",
@@ -249,7 +253,7 @@ int Receive_secure( int *sock, char *input )
 	return(0);
 }
 
-int Do_secure_work( int use_line_order, char *jobsize, int from_server,
+int Do_secure_work( char *jobsize, int from_server,
 	char *tempfile, struct line_list *header_info )
 {
 	int n, len, linecount = 0, done = 0, fd, status = 0;
@@ -319,6 +323,7 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 		goto error;
 	}
 
+
 	buffer[0] = 0;
 	if( jobsize ){
 		if( (fd = Checkread(tempfile, &statb) ) < 0 ){
@@ -329,6 +334,13 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 			goto error;
 		}
 		status = Scan_block_file( fd, error, sizeof(error), header_info );
+		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
+			status = JFAIL;
+			SNPRINTF( error, sizeof(error))
+				"Do_secure_work: reopen of '%s' for write failed - %s",
+					tempfile, Errormsg(errno));
+			goto error;
+		}
 	} else {
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
@@ -362,7 +374,6 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 	return( status );
 }
 
- extern struct security ReceiveSecuritySupported[];
 
 /***************************************************************************
  * void Fix_auth() - get the Use_auth_DYN value for the remote printer
@@ -380,7 +391,7 @@ struct security *Fix_receive_auth( char *name, struct line_list *info )
 		}
 	}
 
-	for( s = ReceiveSecuritySupported; s->name && Globmatch(s->name, name ); ++s );
+	for( s = SecuritySupported; s->name && Globmatch(s->name, name ); ++s );
 	DEBUG1("Fix_receive_auth: name '%s' matches '%s'", name, s->name );
 	if( s->name == 0 ){
 		s = 0;
@@ -391,150 +402,12 @@ struct security *Fix_receive_auth( char *name, struct line_list *info )
 		Find_default_tags( info, Pc_var_list, buffer );
 		Find_tags( info, &Config_line_list, buffer );
 		Find_tags( info, &PC_entry_line_list, buffer );
+		Expand_hash_values( info );
 	}
 	if(DEBUGL1)Dump_line_list("Fix_receive_auth: info", info );
 	return(s);
 }
 
-int Pgp_receive( int *sock, char *user, char *jobsize, int from_server,
-	char *authtype, struct line_list *info,
-	char *error, int errlen, struct line_list *header_info, char *tempfile )
-{
-	char *pgpfile;
-	int tempfd, status, n;
-	char buffer[LARGEBUFFER];
-	struct stat statb;
-	struct line_list pgp_info;
-	double len;
-	char *id = Find_str_value( info, ID, Value_sep );
-	char *from = 0;
-	int pgp_exit_code = 0;
-	int not_a_ciphertext = 0;
-
-	Init_line_list(&pgp_info);
-	tempfd = -1;
-	error[0] = 0;
-
-	pgpfile = safestrdup2(tempfile,".pgp",__FILE__,__LINE__);
-	Check_max(&Tempfiles,1);
-	Tempfiles.list[Tempfiles.count++] = pgpfile;
-
-	if( id == 0 ){
-		status = JABORT;
-		SNPRINTF( error, errlen) "Pgp_receive: no pgp_id or auth_id value");
-		goto error;
-	}
-
-	if( Write_fd_len( *sock, "", 1 ) < 0 ){
-		status = JABORT;
-		SNPRINTF( error, errlen) "Pgp_receive: ACK 0 write error - %s",
-			Errormsg(errno) );
-		goto error;
-	}
-
-
-	if( (tempfd = Checkwrite(pgpfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
-		status = JFAIL;
-		SNPRINTF( error, errlen)
-			"Pgp_receive: reopen of '%s' for write failed - %s",
-			pgpfile, Errormsg(errno) );
-		goto error;
-	}
-	DEBUGF(DRECV4)("Pgp_receive: starting read from %d", *sock );
-	while( (n = read(*sock, buffer,1)) > 0 ){
-		/* handle old and new format of file */
-		buffer[n] = 0;
-		DEBUGF(DRECV4)("Pgp_receive: remote read '%d' '%s'", n, buffer );
-		if( isdigit(cval(buffer)) ) continue;
-		if( isspace(cval(buffer)) ) break;
-		if( write( tempfd,buffer,1 ) != 1 ){
-			status = JFAIL;
-			SNPRINTF( error, errlen)
-				"Pgp_receive: bad write to '%s' - '%s'",
-				tempfile, Errormsg(errno) );
-			goto error;
-		}
-		break;
-	}
-	while( (n = read(*sock, buffer,sizeof(buffer)-1)) > 0 ){
-		buffer[n] = 0;
-		DEBUGF(DRECV4)("Pgp_receive: remote read '%d' '%s'", n, buffer );
-		if( write( tempfd,buffer,n ) != n ){
-			status = JFAIL;
-			SNPRINTF( error, errlen)
-				"Pgp_receive: bad write to '%s' - '%s'",
-				tempfile, Errormsg(errno) );
-			goto error;
-		}
-	}
-	if( n < 0 ){
-		status = JFAIL;
-		SNPRINTF( error, errlen)
-			"Pgp_receive: bad read from socket - '%s'",
-			Errormsg(errno) );
-		goto error;
-	}
-	close(tempfd); tempfd = -1;
-	DEBUGF(DRECV4)("Pgp_receive: end read" );
-
-	status = Pgp_decode(info, tempfile, pgpfile, &pgp_info,
-		buffer, sizeof(buffer), error, errlen, id, header_info,
-		&pgp_exit_code, &not_a_ciphertext );
-	if( status ) goto error;
-
-	DEBUGFC(DRECV1)Dump_line_list("Pgp_receive: header_info", header_info );
-
-	from = Find_str_value(header_info,FROM,Value_sep);
-	if( from == 0 ){
-		status = JFAIL;
-		SNPRINTF( error, errlen)
-			"Pgp_receive: no 'from' information" );
-		goto error;
-	}
-
-	status = Do_secure_work( 0, jobsize, from_server, tempfile, header_info );
-
-	Free_line_list( &pgp_info);
- 	status = Pgp_encode(info, tempfile, pgpfile, &pgp_info,
-		buffer, sizeof(buffer), error, errlen,
-		id, from, &pgp_exit_code );
-	if( status ) goto error;
-
-	/* we now have the encoded output */
-	if( (tempfd = Checkread(pgpfile,&statb)) < 0 ){
-		status = JFAIL;
-		SNPRINTF( error, errlen)
-			"Pgp_receive: reopen of '%s' for read failed - %s",
-			tempfile, Errormsg(errno) );
-		goto error;
-	}
-	len = statb.st_size;
-	DEBUGF(DRECV1)( "Pgp_receive: return status encoded size %0.0f",
-		len);
-	while( (n = read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
-		buffer[n] = 0;
-		DEBUGF(DRECV4)("Pgp_receive: sending '%d' '%s'", n, buffer );
-		if( write( *sock,buffer,n ) != n ){
-			status = JFAIL;
-			SNPRINTF( error, errlen)
-				"Pgp_receive: bad write to socket - '%s'",
-				Errormsg(errno) );
-			goto error;
-		}
-	}
-	if( n < 0 ){
-		status = JFAIL;
-		SNPRINTF( error, errlen)
-			"Pgp_receive: read '%s' failed - %s",
-			tempfile, Errormsg(errno) );
-		goto error;
-	}
-
- error:
-	if( tempfd>=0) close(tempfd); tempfd = -1;
-	Free_line_list(&pgp_info);
-	return(status);
-}
 
 int Check_secure_perms( struct line_list *options, int from_server,
 	char *error, int errlen )
@@ -549,11 +422,10 @@ int Check_secure_perms( struct line_list *options, int from_server,
 	authfrom = Find_str_value(options,AUTHFROM,Value_sep);
 	if( !authfrom ) authfrom = Find_str_value(options,FROM,Value_sep);
 	authuser = Find_str_value(options,AUTHUSER,Value_sep);
-	if( !authuser ) authuser = Find_str_value(options,CLIENT,Value_sep);
 	if( !from_server ){
-		if( !authuser ) authuser = authfrom;
-		if( !authfrom ) authfrom = authuser;
+		if( !authuser && authfrom ) authuser = authfrom;
 	}
+	if( !authuser ) authuser = Find_str_value(options,CLIENT,Value_sep);
 	Set_str_value(options, AUTHTYPE, Perm_check.authtype );
 	Set_str_value(options, AUTHFROM, authfrom );
 	Set_str_value(options, AUTHUSER, authuser );
@@ -566,23 +438,8 @@ int Check_secure_perms( struct line_list *options, int from_server,
 			Printer_DYN,Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 		return( JABORT );
 	}
+	Perm_check.authca = Find_str_value(options,AUTHCA,Value_sep);
+	DEBUGFC(DRECV1)Dump_line_list("Check_secure_perms - after",options);
+	DEBUGFC(DRECV1)Dump_perm_check( "Check_secure_perms - checking", &Perm_check );
 	return(0);
 }
-#define RECEIVE 1
-#include "user_auth.stub"
-
- struct security ReceiveSecuritySupported[] = {
-	/* name, config_tag, connect, send, receive */
-#if defined(KERBEROS)
-# if defined(MIT_KERBEROS4)
-	{ "kerberos4", "kerberos",  0, 0, 0 },
-# endif
-	{ "kerberos*", "kerberos",   0, 0, Krb5_receive },
-#endif
-	{ "pgp",       "pgp",   0, 0, Pgp_receive, },
-#if defined(USER_RECEIVE)
-/* this should have the form of the entries above */
- USER_RECEIVE
-#endif
-	{0,0,0,0,0}
-};

@@ -8,11 +8,12 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: checkpc.c,v 1.33 2002/07/22 16:11:25 papowell Exp $";
 
 
 
 #include "lp.h"
+#include "defs.h"
 #include "getopt.h"
 #include "checkpc.h"
 #include "patchlevel.h"
@@ -50,7 +51,7 @@ int main( int argc, char *argv[], char *envp[] )
 	char *path;		/* end of string */
 	int ruid, euid, rgid, egid;
 	char *printcap;
-	char *serial_line = 0;
+	/*char *serial_line = 0;*/
 	struct line_list raw, spooldirs;
 	char *s, *t;
 	struct stat statb;
@@ -113,7 +114,7 @@ int main( int argc, char *argv[], char *envp[] )
 			case 'P': User_specified_printer = Optarg; break;
 			case 'T':
 				initsetproctitle( argc, argv, envp );
-				Test_port( getuid(), geteuid(), serial_line );
+				Test_port( getuid(), geteuid(), Optarg );
 				exit(0);
 				break;
 		}
@@ -329,9 +330,6 @@ void Scan_printer(struct line_list *spooldirs)
 		}
 		goto test_filters;
 	}
-	if( Is_server && Client_flag_DYN ){
-		return;
-	}
 	if( !Find_first_key(&PC_entry_line_list,"bq",Value_sep,&n)
 		|| !Find_first_key(&Config_line_list,"bq",Value_sep,&n ) ){
 		WARNMSG( "%s: bq option is no longer supported, use 'lpd_bounce' option", Printer_DYN);
@@ -362,7 +360,7 @@ void Scan_printer(struct line_list *spooldirs)
 		return;
 	}
 	if( (s =  Find_str_value(spooldirs,Spool_dir_DYN,Value_sep)) ){
-		WARNMSG("%s: CATASTOPHIC ERROR! queue '%s' also has spool directory '%s'",
+		WARNMSG("%s: CATASTROPHIC ERROR! queue '%s' also has spool directory '%s'",
 			Printer_DYN, s, Spool_dir_DYN);
 		return;
 	}
@@ -961,7 +959,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	static int fd;
 	static int i, err;
 	struct stat statb;
-	char *Stty_command;
+	/*char *Stty_command;*/
 
 	status = 0;
 	fd = -1;
@@ -1195,6 +1193,9 @@ void Test_port(int ruid, int euid, char *serial_line )
 			sttycmd = "stty -a >%s";	/* on STDOUT */
 #elif defined(BSD) /* old style BSD4.[23] */
 			sttycmd = "stty everything 2>%s";
+#else /* That is: All other System V derivatives and AIX as well */
+			ttyfd = 0;	/* STDIN is reported */
+			sttycmd = "/bin/stty -a >%s";	/* on STDOUT */
 #endif
 			if( fd != ttyfd ){
 				i = dup2(fd, ttyfd );
@@ -1212,8 +1213,8 @@ void Test_port(int ruid, int euid, char *serial_line )
 				cmd, fd, ttyfd );
 			i = system( cmd );
 			FPRINTF( STDERR, "\n\n" );
-			Stty_command = "9600 -even odd echo";
-			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command );
+			Stty_command_DYN = "9600 -even odd echo";
+			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command_DYN );
 			Do_stty( ttyfd );
 			SNPRINTF( stty, sizeof(stty)) sttycmd, t2 );
 			SNPRINTF( cmd, sizeof(cmd))
@@ -1221,14 +1222,14 @@ void Test_port(int ruid, int euid, char *serial_line )
 			FPRINTF( STDERR, "Doing '%s'\n", cmd );
 			i = system( cmd );
 			FPRINTF( STDERR, "\n\n" );
-			Stty_command = "1200 -odd even";
-			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command );
+			Stty_command_DYN = "1200 -odd even";
+			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command_DYN );
 			Do_stty( ttyfd );
 			FPRINTF( STDERR, "Doing '%s'\n", cmd );
 			i = system( cmd );
 			FPRINTF( STDERR, "\n\n" );
-			Stty_command = "300 -even -odd -echo cbreak";
-			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command );
+			Stty_command_DYN = "300 -even -odd -echo cbreak";
+			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command_DYN );
 			Do_stty( ttyfd );
 			SNPRINTF( stty, sizeof(stty)) sttycmd, serial_line, t2 );
 			FPRINTF( STDERR, "Doing '%s'\n", cmd );

@@ -52,7 +52,6 @@
 PATH=/bin:/usr/bin:/usr/local/bin
 export PATH
 
-
 # get options from  general.cfg file
 if [ -f ./general.cfg ] ; then
 	source ./general.cfg

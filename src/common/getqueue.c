@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: getqueue.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 
 /***************************************************************************
@@ -504,7 +504,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 			SNPRINTF(buffer,sizeof(buffer))
 				"no control file %s - %s", s, Errormsg(errno) );
 			Set_str_value(&job->info,ERROR,buffer);
-			Set_flag_value(&job->info,ERROR_TIME,time(0));
+			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 			returnstatus = 1;
 			goto done;
 		}
@@ -557,7 +557,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 					SNPRINTF(buffer,sizeof(buffer))
 						"missing data file %s - %s", file_found, Errormsg(errno) );
 					Set_str_value(&job->info,ERROR,buffer);
-					Set_flag_value(&job->info,ERROR_TIME,time(0));
+					Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 					returnstatus = 1;
 					goto done;
 				}

@@ -16,7 +16,7 @@ fix () {
     p=`echo $2 | sed -e 's/:.*//'`; d=`dirname $p`;
 	if expr "$p" : "\|" >/dev/null ; then
 		echo "$v is a filter '$p'" 
-		exit 0
+		return 0
 	fi
 	echo "Checking for $v.sample in $d"
 	if [ ! -d "$d" ] ; then

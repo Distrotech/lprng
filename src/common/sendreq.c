@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.31 2002/05/06 16:03:45 papowell Exp $";
+"$Id: sendreq.c,v 1.33 2002/07/22 16:11:27 papowell Exp $";
 
 
 #include "lp.h"
@@ -18,6 +18,7 @@
 #include "getqueue.h"
 #include "linksupport.h"
 #include "readstatus.h"
+#include "user_auth.h"
 #include "sendreq.h"
 #include "sendauth.h"
 
@@ -91,9 +92,8 @@ int Send_request(
 
 	DEBUG1("Send_request: security %s", security?security->name:0 );
 	if( security ){
-		DEBUG1("Send_request: security name '%s', tag '%s', connect 0x%x, send 0x%x, receive 0x%x",
-		security->name, security->config_tag, Cast_ptr_to_int(security->connect),
-		Cast_ptr_to_int(security->send), Cast_ptr_to_int(security->receive) );
+		DEBUG1("Send_request: security name '%s', tag '%s'",
+		security->name, security->config_tag );
 	}
 	if( errormsg[0] ){
 		goto error;
@@ -132,16 +132,8 @@ int Send_request(
 	cmd = safeextend2(cmd,"\n", __FILE__,__LINE__ );
 	errno = 0;
 
-	if( security && security->connect ){
-		DEBUG1("Send_request: security '%s', using connect", security->name ); 
-		status = security->connect( 0, &sock, &real_host, connnect_timeout,
-			errormsg, sizeof(errormsg), security, &info );
-		DEBUG1("Send_request: connect status %d, error  '%s'", status, errormsg ); 
-		if( status ) goto error;
-	} else {
-		sock = Link_open_list( RemoteHost_DYN,
-			&real_host, 0, connnect_timeout, 0, Unix_socket_path_DYN );
-	}
+	sock = Link_open_list( RemoteHost_DYN,
+		&real_host, 0, connnect_timeout, 0, Unix_socket_path_DYN );
 	err = errno;
 	if( sock < 0 ){
 		char *msg = "";
@@ -166,8 +158,17 @@ int Send_request(
 	Set_DYN(&RemoteHost_DYN, real_host );
 	if( real_host ) free( real_host ); real_host = 0;
 
+	if( security && security->client_connect ){
+		DEBUG1("Send_request: security '%s', using connect", security->name ); 
+		status = security->client_connect( 0, &sock,
+				transfer_timeout,
+				errormsg, sizeof(errormsg),
+				security, &info );
+		DEBUG1("Send_request: connect status %d, error  '%s'", status, errormsg ); 
+		if( status ) goto error;
+	}
 	/* now send the command line */
-	if( security && security->send ){
+	if( security && security->client_send ){
 		status = Send_auth_transfer( &sock, transfer_timeout, 0, 0,
 			errormsg, sizeof(errormsg), cmd, security, &info );
 	} else {

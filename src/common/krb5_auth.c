@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: krb5_auth.c,v 1.33 2002/07/22 16:11:26 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -390,6 +390,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 			error_message(retval) );
 		goto done;
 	}
+#if 0
 	if (!valid_cksumtype(CKSUMTYPE_CRC32)) {
 		SNPRINTF( err, errlen)
 			"valid_cksumtype CKSUMTYPE_CRC32 - %s",
@@ -397,6 +398,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 		retval = 1;
 		goto done;
 	}
+#endif
 	DEBUG1( "client_krb5_auth: using host='%s', server_principal '%s'",
 		host, server_principal );
 
@@ -1114,7 +1116,7 @@ char *krb4_err_str( int err )
 	return(s);
 }
 
-int Send_krb4_auth( struct job *job, int *sock, char **real_host,
+int Send_krb4_auth( struct job *job, int *sock,
 	int connect_timeout, char *errmsg, int errlen,
 	struct security *security, struct line_list *info )
 {
@@ -1132,8 +1134,6 @@ int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 	memmove( &sinaddr.sin_addr, Host_IP.h_addr_list.list[0],
 		Host_IP.h_length );
 
-	*sock = Link_open_list( RemoteHost_DYN, real_host, 0, connect_timeout, 
-				(struct sockaddr *)&sinaddr, 0 );
 	if( *sock < 0 ){
 		/* this is to fix up the error message */
 		return(JSUCC);
@@ -1363,9 +1363,12 @@ int Receive_k4auth( int *sock, char *input )
 # endif
 
 
-int Krb5_receive( int *sock, char *user, char *jobsize, int from_server,
-	char *authtype, struct line_list *info,
-	char *error, int errlen, struct line_list *header_info, char *tempfile )
+int Krb5_receive( int *sock,
+	char *user, char *jobsize, int from_server, char *authtype,
+	struct line_list *info,
+	char *errmsg, int errlen,
+	struct line_list *header_info,
+	struct security *security, char *tempfile )
 {
 	int status = 0;
 	char *from = 0;
@@ -1373,8 +1376,7 @@ int Krb5_receive( int *sock, char *user, char *jobsize, int from_server,
 	char *service = 0;
 	char *principal = 0;
 
-	error[0] = 0;
-	DEBUGF(DRECV1)("Krb5_receive: starting, jobsize '%s'", jobsize );
+	errmsg[0] = 0;
 	keytab = Find_str_value(info,"keytab",Value_sep);
 	service = Find_str_value(info,"service",Value_sep);
 	if( !(principal = Find_str_value(info,"server_principal",Value_sep)) ){
@@ -1382,25 +1384,27 @@ int Krb5_receive( int *sock, char *user, char *jobsize, int from_server,
 	}
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
-		SNPRINTF( error, errlen) "Krb5_receive: ACK 0 write error - %s",
+		SNPRINTF( errmsg, errlen) "Krb5_receive: ACK 0 write errmsg - %s",
 			Errormsg(errno) );
 	} else if( (status = server_krb5_auth( keytab, service, principal, *sock,
-		&from, error, errlen, tempfile )) ){
-		if( error[0] == 0 ){
-			SNPRINTF( error, errlen) "Krb5_receive: server_krb5_auth failed - no reason given" );
+		&from, errmsg, errlen, tempfile )) ){
+		if( errmsg[0] == 0 ){
+			SNPRINTF( errmsg, errlen) "Krb5_receive: server_krb5_auth failed - no reason given" );
 		}
 	} else {
 		DEBUGF(DRECV1)("Krb5_receive: from '%s'", from );
 		Set_str_value( header_info, FROM, from );
-		status = Do_secure_work( 1, jobsize, from_server, tempfile, header_info );
-		if( server_krb5_status( *sock, error, errlen, tempfile ) ){
-			SNPRINTF( error, errlen) "Krb5_receive: status send failed - '%s'",
-				error );
+		status = Do_secure_work( jobsize, from_server, tempfile, header_info );
+		if( server_krb5_status( *sock, errmsg, errlen, tempfile ) ){
+			SNPRINTF( errmsg, errlen) "Krb5_receive: status send failed - '%s'",
+				errmsg );
 		}
 	}
-	if( *error ){
-		LOGMSG(LOG_INFO)"%s", error );
+#if 0
+	if( *errmsg ){
+		LOGMSG(LOG_INFO)"%s", errmsg );
 	}
+#endif
 	if( from ) free(from); from = 0;
 	return(status);
 }
@@ -1469,8 +1473,9 @@ int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 		status, error );
 	if( status && error[0] == 0 ){
 		SNPRINTF( error, errlen)
-		"pgp authenticated transfer to remote host failed");
+		"krb5 authenticated transfer to remote host failed");
 	}
+#if 0
 	if( error[0] ){
 		DEBUG2("Krb5_send: writing error to file '%s'", error );
 		if( safestrlen(error) < errlen-2 ){
@@ -1486,6 +1491,7 @@ int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 		close( fd ); fd = -1;
 		error[0] = 0;
 	}
+#endif
   error:
 	return(status);
 }

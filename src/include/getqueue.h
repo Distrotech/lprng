@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.31 2002/05/06 16:03:45 papowell Exp $
+ * $Id: getqueue.h,v 1.33 2002/07/22 16:11:28 papowell Exp $
  ***************************************************************************/
 
 
@@ -14,13 +14,14 @@
 
 EXTERN char *CTRL_A_str DEFINE( = "\001" );
 
-
+/* SSL */
 EXTERN const char * ACTION				DEFINE( = "action" );
 EXTERN const char * ACTIVE_TIME			DEFINE( = "active_time" );
 EXTERN const char * ADDR				DEFINE( = "addr" );
 EXTERN const char * ALL					DEFINE( = "all" );
 EXTERN const char * ATTEMPT				DEFINE( = "attempt" );
 EXTERN const char * AUTH				DEFINE( = "auth" );
+EXTERN const char * AUTHCA				DEFINE( = "authca" );
 EXTERN const char * AUTHFROM			DEFINE( = "authfrom" );
 EXTERN const char * AUTHTYPE			DEFINE( = "authtype" );
 EXTERN const char * AUTHUSER			DEFINE( = "authuser" );

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.31 2002/05/06 16:03:44 papowell Exp $";
+"$Id: getprinter.c,v 1.33 2002/07/22 16:11:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -145,6 +145,9 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		}
 		if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - final PC_entry_line_list",
 			&PC_entry_line_list );
+		Find_default_tags( &PC_entry_line_list, Pc_var_list, "client." );
+		Find_tags( &PC_entry_line_list, &Config_line_list, "client." );
+		Find_tags( &PC_entry_line_list, &PC_entry_line_list, "client." );
 		Set_var_list( Pc_var_list, &PC_entry_line_list);
 		if( RemoteHost_DYN && Lp_device_DYN && report_conflict ){
 			SNPRINTF(report_conflict,report_len)
@@ -229,13 +232,16 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			s = Queue_name_DYN;
 		}
 		Set_DYN(&Printer_DYN,s);
-
 		DEBUG2("Fix_Rm_Rp_info: found '%s'", Printer_DYN );
 	}
 	if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_alias_line_list",
 		&PC_alias_line_list );
 	if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_entry_line_list",
 		&PC_entry_line_list );
+	/* now get the Server_xxx variables */
+	Find_default_tags( &PC_entry_line_list, Pc_var_list, "server." );
+	Find_tags( &PC_entry_line_list, &Config_line_list, "server." );
+	Find_tags( &PC_entry_line_list, &PC_entry_line_list, "server." );
 	Set_var_list( Pc_var_list, &PC_entry_line_list);
 	if( RemoteHost_DYN && Lp_device_DYN && report_conflict ){
 		SNPRINTF(report_conflict,report_len)

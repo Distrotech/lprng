@@ -17,7 +17,7 @@ ${AWK} '
 /XXSTART/,/END/{
 	if ( $0 ~ /XXSTARTXX/ ) next;
 	if ( $0 ~ /END/ ) next;
-	if ( $0 ~ /\{/ ) {
+	if ( $0 ~ /^\{/ ) {
 		print "XXX" $0;
 	} else {
 		print "YYY" $0;

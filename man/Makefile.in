@@ -35,10 +35,10 @@ COMPRESS=gzip -c
 
 PAGES= cancel.1 checkpc.8 lp.1 lpbanner.1 lpc.8 lpd.8 lpd.conf.5 \
 	 lpd.perms.5 lpf.1 lpq.1 lpr.1 lprm.1 lpstat.1 monitor.1 pclbanner.1 \
-	 printcap.5 psbanner.1
+	 printcap.5 psbanner.1 lprng_certs.1 lprng_index_certs.1
 RAW= cancel.n checkpc.n lp.n lpbanner.n lpc.n lpd.n lpd.conf.n \
 	 lpd.perms.n lpf.n lpq.n lpr.n lprm.n lpstat.n monitor.n pclbanner.n \
-	 printcap.n psbanner.n 
+	 printcap.n psbanner.n  lprng_certs.n lprng_index_certs.n
 
 
 # prefix
@@ -63,6 +63,11 @@ LPD_CONF_PATH=@LPD_CONF_PATH@
 PRINTCAP_PATH=@PRINTCAP_PATH@
 LPD_PATH=@LPD_DIR@/lpd
 LOCKFILE=@LOCKFILE@
+SSL_CA_FILE=@SSL_CA_FILE@
+SSL_CA_KEY=@SSL_CA_KEY@
+SSL_CERTS_DIR=@SSL_CERTS_DIR@
+SSL_SERVER_CERT=@SSL_SERVER_CERT@
+SSL_SERVER_PASSWORD=@SSL_SERVER_PASSWORD@
 
 all: ${PAGES}
 
@@ -75,6 +80,11 @@ ${PAGES}: ${RAW} Makefile
 		 -e "s!_LPD_PERMS_PATH_!${LPD_PERMS_PATH}!" \
 		 -e "s!_LPD_CONF_PATH_!${LPD_CONF_PATH}!" \
 		 -e "s!_LOCKFILE_!${LOCKFILE}!" \
+		 -e "s!_SSL_CA_FILE_!${SSL_CA_FILE}!" \
+		 -e "s!_SSL_CA_KEY_!${SSL_CA_KEY}!" \
+		 -e "s!_SSL_CERTS_DIR_!${SSL_CERTS_DIR}!" \
+		 -e "s!_SSL_SERVER_CERT_!${SSL_SERVER_CERT}!" \
+		 -e "s!_SSL_SERVER_PASSWORD_!${SSL_SERVER_PASSWORD}!" \
 		${SRC}/$$v.n > $$i; \
 	done
 

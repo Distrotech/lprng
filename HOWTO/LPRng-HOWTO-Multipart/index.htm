@@ -5,7 +5,7 @@
     <title>LPRng-HOWTO</title>
     <meta name="GENERATOR" content=
     "Modular DocBook HTML Stylesheet Version 1.73 ">
-    <link rel="NEXT" title="Preface" href="f37.htm">
+    <link rel="NEXT" title="Preface" href="f38.htm">
   </head>
 
   <body class="BOOK" bgcolor="#FFFFFF" text="#000000" link=
@@ -27,7 +27,7 @@
       <div class="TITLEPAGE">
         <h1 class="TITLE"><a name="AEN2">LPRng-HOWTO</a></h1>
 
-        <h2 class="SUBTITLE">6 May 2002 (For LPRng-3.8.12)</h2>
+        <h2 class="SUBTITLE">22 Jul 2002 (For LPRng-3.8.13)</h2>
 
         <h3 class="AUTHOR"><a name="AEN5">Patrick A Powell</a></h3>
 
@@ -83,8 +83,9 @@
             "APPLICATION">LPRng</b> can be easily integrated with
             the Samba SMB support package. For users that require
             secure and/or authenticated printing support, <b class=
-            "APPLICATION">LPRng</b> supports Kerberos 5, MIT
-            Kerberos 4 extensions to LPR, PGP, and simple MD5 based
+            "APPLICATION">LPRng</b> supports SSL (using <b class=
+            "APPLICATION">OpenSSL</b>), Kerberos 5, MIT Kerberos 4
+            extensions to LPR, PGP, and simple MD5 based
             authentication. Additional authentication support is
             extremely simple to add.</p>
 
@@ -132,20 +133,20 @@
         <dl>
           <dt><b>Table of Contents</b></dt>
 
-          <dt><a href="f37.htm">Preface</a></dt>
+          <dt><a href="f38.htm">Preface</a></dt>
 
           <dd>
             <dl>
-              <dt>1. <a href="f37.htm#AEN39">Introduction</a></dt>
+              <dt>1. <a href="f38.htm#AEN40">Introduction</a></dt>
 
-              <dt>2. <a href="x52.htm">Acknowledgements</a></dt>
+              <dt>2. <a href="x53.htm">Acknowledgements</a></dt>
 
-              <dt>3. <a href="x57.htm">Shell Prompts</a></dt>
+              <dt>3. <a href="x58.htm">Shell Prompts</a></dt>
 
-              <dt>4. <a href="x76.htm">Typographic
+              <dt>4. <a href="x77.htm">Typographic
               Conventions</a></dt>
 
-              <dt>5. <a href="x125.htm">Notes, warnings, and
+              <dt>5. <a href="x126.htm">Notes, warnings, and
               examples</a></dt>
             </dl>
           </dd>
@@ -160,42 +161,42 @@
               <dt>1.2. <a href="maillist.htm">Additional
               Resources</a></dt>
 
-              <dt>1.3. <a href="x215.htm">Frequently Asked
+              <dt>1.3. <a href="x216.htm">Frequently Asked
               Questions</a></dt>
 
-              <dt>1.4. <a href="x224.htm">License, Copyright, and
+              <dt>1.4. <a href="x225.htm">License, Copyright, and
               Disclaimer</a></dt>
 
-              <dt>1.5. <a href="x231.htm">Commercial
+              <dt>1.5. <a href="x232.htm">Commercial
               Support</a></dt>
 
-              <dt>1.6. <a href="x236.htm">Web Site</a></dt>
+              <dt>1.6. <a href="x237.htm">Web Site</a></dt>
 
               <dt>1.7. <a href="secftp.htm">FTP Sites</a></dt>
 
-              <dt>1.8. <a href="x276.htm">Mailing List</a></dt>
+              <dt>1.8. <a href="x277.htm">Mailing List</a></dt>
 
               <dt>1.9. <a href="faqref.htm">PGP Public Key</a></dt>
 
-              <dt>1.10. <a href="x290.htm">References and
+              <dt>1.10. <a href="x291.htm">References and
               Standards</a></dt>
 
               <dd>
                 <dl>
                   <dt>1.10.1. <a href=
-                  "x290.htm#AEN294">RFCs</a></dt>
+                  "x291.htm#AEN295">RFCs</a></dt>
 
                   <dt>1.10.2. <a href=
-                  "x290.htm#POSTSCRIPT">PostScript</a></dt>
+                  "x291.htm#POSTSCRIPT">PostScript</a></dt>
 
-                  <dt>1.10.3. <a href="x290.htm#PCL">HP PCL
+                  <dt>1.10.3. <a href="x291.htm#PCL">HP PCL
                   5</a></dt>
 
-                  <dt>1.10.4. <a href="x290.htm#PJL">HP
+                  <dt>1.10.4. <a href="x291.htm#PJL">HP
                   PJL</a></dt>
 
                   <dt>1.10.5. <a href=
-                  "x290.htm#AEN337">PDF</a></dt>
+                  "x291.htm#AEN338">PDF</a></dt>
                 </dl>
               </dd>
             </dl>
@@ -205,10 +206,10 @@
 
           <dd>
             <dl>
-              <dt>2.1. <a href="installation.htm#AEN349">Getting
+              <dt>2.1. <a href="installation.htm#AEN350">Getting
               Source Code and Support Programs</a></dt>
 
-              <dt>2.2. <a href="x432.htm"><tt class=
+              <dt>2.2. <a href="x433.htm"><tt class=
               "ENVAR">PATH</tt> Environment Variable and
               Utilities</a></dt>
 
@@ -218,19 +219,19 @@
               <dt>2.4. <a href="usergroup.htm">Daemon User and
               Daemon Group</a></dt>
 
-              <dt>2.5. <a href="x484.htm">Configuration</a></dt>
+              <dt>2.5. <a href="x485.htm">Configuration</a></dt>
 
               <dt>2.6. <a href="requireconfig.htm">System and User
               Printcap, lpd.conf, and lpd.perms files</a></dt>
 
-              <dt>2.7. <a href="x885.htm">Checking System
+              <dt>2.7. <a href="x926.htm">Checking System
               Installation with <b class=
               "APPLICATION">checkpc</b></a></dt>
 
-              <dt>2.8. <a href="x921.htm">Compilation and
+              <dt>2.8. <a href="x962.htm">Compilation and
               Install</a></dt>
 
-              <dt>2.9. <a href="x959.htm">Installation
+              <dt>2.9. <a href="x1000.htm">Installation
               Problems</a></dt>
 
               <dt>2.10. <a href="update.htm">Updating Print Spooler
@@ -238,7 +239,7 @@
 
               <dd>
                 <dl>
-                  <dt>2.10.1. <a href="update.htm#AEN1052">SunOS,
+                  <dt>2.10.1. <a href="update.htm#AEN1093">SunOS,
                   Linux, and BSD Derived Systems</a></dt>
 
                   <dt>2.10.2. <a href=
@@ -340,11 +341,11 @@
               <dd>
                 <dl>
                   <dt>4.10.1. <a href=
-                  "jobfileformatconversion.htm#AEN2734">Simple
+                  "jobfileformatconversion.htm#AEN2789">Simple
                   Filter with File Format Detection</a></dt>
 
                   <dt>4.10.2. <a href=
-                  "jobfileformatconversion.htm#AEN2783">The <b
+                  "jobfileformatconversion.htm#AEN2838">The <b
                   class="APPLICATION">ifhp</b> Filter</a></dt>
 
                   <dt>4.10.3. <a href=
@@ -352,77 +353,77 @@
                   - LF to CR-LF Conversion With lpf</a></dt>
 
                   <dt>4.10.4. <a href=
-                  "jobfileformatconversion.htm#AEN2976">Store and
+                  "jobfileformatconversion.htm#AEN3031">Store and
                   Forward Spool Queues</a></dt>
 
                   <dt>4.10.5. <a href=
-                  "jobfileformatconversion.htm#AEN3009">Filtering
+                  "jobfileformatconversion.htm#AEN3064">Filtering
                   Job Files In Transit</a></dt>
                 </dl>
               </dd>
 
-              <dt>4.11. <a href="x3050.htm">Printcap
+              <dt>4.11. <a href="x3105.htm">Printcap
               Basics</a></dt>
 
               <dd>
                 <dl>
-                  <dt>4.11.1. <a href="x3050.htm#AEN3089">Printcap
+                  <dt>4.11.1. <a href="x3105.htm#AEN3144">Printcap
                   Processing Format</a></dt>
 
-                  <dt>4.11.2. <a href="x3050.htm#AEN3148">Printcap
+                  <dt>4.11.2. <a href="x3105.htm#AEN3203">Printcap
                   Information From Programs and Databases</a></dt>
 
-                  <dt>4.11.3. <a href="x3050.htm#AEN3207">User
+                  <dt>4.11.3. <a href="x3105.htm#AEN3262">User
                   Printcap Information</a></dt>
                 </dl>
               </dd>
 
-              <dt>4.12. <a href="x3220.htm">Banner Printing and the
+              <dt>4.12. <a href="x3275.htm">Banner Printing and the
               OF filter</a></dt>
 
-              <dt>4.13. <a href="x3323.htm">Printing from <b class=
+              <dt>4.13. <a href="x3378.htm">Printing from <b class=
               "APPLICATION">lpr</b> Directly To A Device</a></dt>
 
-              <dt>4.14. <a href="x3370.htm">Moving Jobs From Queue
+              <dt>4.14. <a href="x3425.htm">Moving Jobs From Queue
               to Queue and Redirecting Queues</a></dt>
 
-              <dt>4.15. <a href="x3417.htm">Print Job Classes, User
+              <dt>4.15. <a href="x3472.htm">Print Job Classes, User
               Requested Job Priority, and Form Support</a></dt>
 
-              <dt>4.16. <a href="x3462.htm">Holding and Releasing
+              <dt>4.16. <a href="x3517.htm">Holding and Releasing
               Jobs</a></dt>
 
-              <dt>4.17. <a href="x3540.htm">Load Balance Queues and
+              <dt>4.17. <a href="x3595.htm">Load Balance Queues and
               Printer Pools</a></dt>
 
-              <dt>4.18. <a href="x3641.htm">Routing Jobs To Print
+              <dt>4.18. <a href="x3696.htm">Routing Jobs To Print
               Queues</a></dt>
 
-              <dt>4.19. <a href="x3714.htm">Job Options and the Z
+              <dt>4.19. <a href="x3769.htm">Job Options and the Z
               Control File Entry</a></dt>
 
               <dd>
                 <dl>
-                  <dt>4.19.1. <a href="x3714.htm#AEN3752">Setting
+                  <dt>4.19.1. <a href="x3769.htm#AEN3807">Setting
                   Job Options Using the Printcap</a></dt>
 
                   <dt>4.19.2. <a href=
-                  "x3714.htm#AEN3774">Converting SystemV Options to
+                  "x3769.htm#AEN3829">Converting SystemV Options to
                   LPRng Options</a></dt>
 
-                  <dt>4.19.3. <a href="x3714.htm#AEN3788">Selecting
+                  <dt>4.19.3. <a href="x3769.htm#AEN3843">Selecting
                   a Single Option - Muliple Queues</a></dt>
 
                   <dt>4.19.4. <a href=
-                  "x3714.htm#INCOMINGCONTROLFILTER">Selecting
+                  "x3769.htm#INCOMINGCONTROLFILTER">Selecting
                   Multiple Options - Single Queue</a></dt>
                 </dl>
               </dd>
 
-              <dt>4.20. <a href="x3832.htm">Interfacing to
+              <dt>4.20. <a href="x3887.htm">Interfacing to
               Non-LPRng Spoolers</a></dt>
 
-              <dt>4.21. <a href="x3864.htm">Debugging, Tracing, and
+              <dt>4.21. <a href="x3919.htm">Debugging, Tracing, and
               Log Files</a></dt>
             </dl>
           </dd>
@@ -437,20 +438,20 @@
               "lprngclients.htm#PRINTERINFO">Printer and Server
               Information</a></dt>
 
-              <dt>5.2. <a href="x4060.htm">Command Line
+              <dt>5.2. <a href="x4115.htm">Command Line
               -Pprinter@host</a></dt>
 
-              <dt>5.3. <a href="x4066.htm">Command Line
+              <dt>5.3. <a href="x4121.htm">Command Line
               -Pprinter</a></dt>
 
-              <dt>5.4. <a href="x4072.htm">PRINTER, LPDEST,
+              <dt>5.4. <a href="x4127.htm">PRINTER, LPDEST,
               NPRINTER, and NGPRINTER Environment
               Variables</a></dt>
 
-              <dt>5.5. <a href="x4088.htm">Wildcard Printcap
+              <dt>5.5. <a href="x4143.htm">Wildcard Printcap
               Entry</a></dt>
 
-              <dt>5.6. <a href="x4095.htm">First Printcap
+              <dt>5.6. <a href="x4150.htm">First Printcap
               Entry</a></dt>
 
               <dt>5.7. <a href="defaultrmrp.htm">Default Printer
@@ -472,7 +473,7 @@
               <dt>6.1. <a href="lpr.htm#DEFAULTFORMAT">Job Format
               Options</a></dt>
 
-              <dt>6.2. <a href="x4214.htm">Job Pretty Printing,
+              <dt>6.2. <a href="x4269.htm">Job Pretty Printing,
               Banners, Priority, and Accounting</a></dt>
 
               <dt>6.3. <a href="classpriority.htm">Job Class and
@@ -484,7 +485,7 @@
               <dt>6.5. <a href="jobcompletion.htm">Job Completion
               Notification Requested</a></dt>
 
-              <dt>6.6. <a href="x4320.htm">Remove Files After
+              <dt>6.6. <a href="x4375.htm">Remove Files After
               Spooling</a></dt>
 
               <dt>6.7. <a href="append-z.htm">The -Z Passthrough to
@@ -518,45 +519,45 @@
 
           <dd>
             <dl>
-              <dt>7.1. <a href="lpq.htm#AEN4513"><b class=
+              <dt>7.1. <a href="lpq.htm#AEN4568"><b class=
               "APPLICATION">lpq</b> Queue Selection (lpq -Pprinter,
               lpq -a)</a></dt>
 
-              <dt>7.2. <a href="x4519.htm"><b class=
+              <dt>7.2. <a href="x4574.htm"><b class=
               "APPLICATION">lpq</b> Job Selection</a></dt>
 
-              <dt>7.3. <a href="x4526.htm"><b class=
+              <dt>7.3. <a href="x4581.htm"><b class=
               "APPLICATION">lpq</b> Short Format (lpq -s)</a></dt>
 
-              <dt>7.4. <a href="x4537.htm"><b class=
+              <dt>7.4. <a href="x4592.htm"><b class=
               "APPLICATION">lpq</b> Long Format (lpq, lpq -l, lpq
               -L)</a></dt>
 
-              <dt>7.5. <a href="x4548.htm"><b class=
+              <dt>7.5. <a href="x4603.htm"><b class=
               "APPLICATION">lpq</b> Verbose Format (lpq
               -v)</a></dt>
 
               <dt>7.6. <a href="stalledtime.htm">Job Taking Too
               Long - Stalled</a></dt>
 
-              <dt>7.7. <a href="x4566.htm">Configuring Format and
+              <dt>7.7. <a href="x4621.htm">Configuring Format and
               Displayed Information</a></dt>
 
               <dd>
                 <dl>
                   <dt>7.7.1. <a href=
-                  "x4566.htm#CLASSINSTATUS">Display Class
+                  "x4621.htm#CLASSINSTATUS">Display Class
                   Information</a></dt>
 
                   <dt>7.7.2. <a href=
-                  "x4566.htm#REVERSELPQFORMAT">Reverse Short and
+                  "x4621.htm#REVERSELPQFORMAT">Reverse Short and
                   Long <b class="APPLICATION">lpq</b>
                   Formats</a></dt>
 
-                  <dt>7.7.3. <a href="x4566.htm#SHORTSTATUS">Status
+                  <dt>7.7.3. <a href="x4621.htm#SHORTSTATUS">Status
                   Line Length and Line Count</a></dt>
 
-                  <dt>7.7.4. <a href="x4566.htm#FORCELPQSTATUS"><b
+                  <dt>7.7.4. <a href="x4621.htm#FORCELPQSTATUS"><b
                   class="APPLICATION">lpq</b> Status Format
                   Determined by Requesting Host Address</a></dt>
                 </dl>
@@ -569,11 +570,11 @@
 
           <dd>
             <dl>
-              <dt>8.1. <a href="lprm.htm#AEN4660"><b class=
+              <dt>8.1. <a href="lprm.htm#AEN4715"><b class=
               "APPLICATION">lprm</b> Queue Selection (lprm
               -Pprinter, lprm -a)</a></dt>
 
-              <dt>8.2. <a href="x4666.htm"><b class=
+              <dt>8.2. <a href="x4721.htm"><b class=
               "APPLICATION">lprm</b> Job Selection</a></dt>
             </dl>
           </dd>
@@ -583,19 +584,19 @@
 
           <dd>
             <dl>
-              <dt>9.1. <a href="lpc.htm#AEN4700">Informational
+              <dt>9.1. <a href="lpc.htm#AEN4755">Informational
               Commands - status, flush, active, reread</a></dt>
 
-              <dt>9.2. <a href="x4718.htm">Queue Management -
+              <dt>9.2. <a href="x4773.htm">Queue Management -
               enable, disable, up, down</a></dt>
 
-              <dt>9.3. <a href="x4730.htm">Printing Management -
+              <dt>9.3. <a href="x4785.htm">Printing Management -
               start, stop, up, down</a></dt>
 
-              <dt>9.4. <a href="x4739.htm">Problem Management -
+              <dt>9.4. <a href="x4794.htm">Problem Management -
               abort, redo, kill</a></dt>
 
-              <dt>9.5. <a href="x4745.htm">Job Scheduling - topq,
+              <dt>9.5. <a href="x4800.htm">Job Scheduling - topq,
               holdall, noholdall, hold, release</a></dt>
 
               <dt>9.6. <a href="lpcredirect.htm">Queue Management -
@@ -610,9 +611,9 @@
           <dd>
             <dl>
               <dt>10.1. <a href=
-              "checkpc.htm#AEN4782">Maintenance</a></dt>
+              "checkpc.htm#AEN4837">Maintenance</a></dt>
 
-              <dt>10.2. <a href="x4798.htm">Printcap
+              <dt>10.2. <a href="x4853.htm">Printcap
               Information</a></dt>
             </dl>
           </dd>
@@ -626,7 +627,7 @@
               "printercomm.htm#NETWORKPRINTER">Network
               Printers</a></dt>
 
-              <dt>11.2. <a href="x4814.htm">RFC1179 (LPD)
+              <dt>11.2. <a href="x4869.htm">RFC1179 (LPD)
               Connection</a></dt>
 
               <dt>11.3. <a href="socketapi.htm">Socket API</a></dt>
@@ -637,55 +638,55 @@
               <dt>11.5. <a href="secnetwork.htm">Network Print
               Server Boxes</a></dt>
 
-              <dt>11.6. <a href="x4923.htm">Network Print Server
+              <dt>11.6. <a href="x4978.htm">Network Print Server
               Configuration Information</a></dt>
 
-              <dt>11.7. <a href="x5104.htm">HP JetDirect
+              <dt>11.7. <a href="x5159.htm">HP JetDirect
               Interface</a></dt>
 
               <dd>
                 <dl>
-                  <dt>11.7.1. <a href="x5104.htm#AEN5109">Resetting
+                  <dt>11.7.1. <a href="x5159.htm#AEN5164">Resetting
                   To Factory Defaults</a></dt>
 
-                  <dt>11.7.2. <a href="x5104.htm#AEN5116">Setting
+                  <dt>11.7.2. <a href="x5159.htm#AEN5171">Setting
                   Up IP Networking and Address</a></dt>
 
-                  <dt>11.7.3. <a href="x5104.htm#AEN5121">BOOTP
+                  <dt>11.7.3. <a href="x5159.htm#AEN5176">BOOTP
                   Information</a></dt>
 
-                  <dt>11.7.4. <a href="x5104.htm#AEN5129">Telnet
+                  <dt>11.7.4. <a href="x5159.htm#AEN5184">Telnet
                   Configuration</a></dt>
 
-                  <dt>11.7.5. <a href="x5104.htm#AEN5134">Disabling
+                  <dt>11.7.5. <a href="x5159.htm#AEN5189">Disabling
                   Banner Page Generation</a></dt>
                 </dl>
               </dd>
 
-              <dt>11.8. <a href="x5140.htm">Problems With Network
+              <dt>11.8. <a href="x5195.htm">Problems With Network
               Print Servers</a></dt>
 
               <dd>
                 <dl>
-                  <dt>11.8.1. <a href="x5140.htm#AEN5144">Network
+                  <dt>11.8.1. <a href="x5195.htm#AEN5199">Network
                   Print Server Not Responding</a></dt>
 
-                  <dt>11.8.2. <a href="x5140.htm#AEN5153">Network
+                  <dt>11.8.2. <a href="x5195.htm#AEN5208">Network
                   Print Server Does Not Handle LPQ, LPRM</a></dt>
 
                   <dt>11.8.3. <a href=
-                  "x5140.htm#AEN5161">Incomplete Job
+                  "x5195.htm#AEN5216">Incomplete Job
                   Transfers</a></dt>
                 </dl>
               </dd>
 
-              <dt>11.9. <a href="x5171.htm">Printing to a SMB
+              <dt>11.9. <a href="x5226.htm">Printing to a SMB
               (MicroSoft) Printer</a></dt>
 
-              <dt>11.10. <a href="x5185.htm">Printing to AppleTalk
+              <dt>11.10. <a href="x5240.htm">Printing to AppleTalk
               Printers</a></dt>
 
-              <dt>11.11. <a href="x5209.htm">Parallel Port
+              <dt>11.11. <a href="x5264.htm">Parallel Port
               Printers</a></dt>
 
               <dt>11.12. <a href="secserial.htm">Serial
@@ -707,22 +708,22 @@
               <dt>12.3. <a href="cm.htm">Simple Server Printcap
               Example</a></dt>
 
-              <dt>12.4. <a href="x5679.htm">Using :oh To Select
+              <dt>12.4. <a href="x5734.htm">Using :oh To Select
               Printcap Information</a></dt>
 
-              <dt>12.5. <a href="x5705.htm">Using the Wildcard
+              <dt>12.5. <a href="x5760.htm">Using the Wildcard
               Printcap Entry</a></dt>
 
-              <dt>12.6. <a href="x5717.htm">Enterprise Strength
+              <dt>12.6. <a href="x5772.htm">Enterprise Strength
               Printcap Example</a></dt>
 
-              <dt>12.7. <a href="x5734.htm">Remote Printer Using
+              <dt>12.7. <a href="x5789.htm">Remote Printer Using
               RFC1179</a></dt>
 
-              <dt>12.8. <a href="x5768.htm">Remote Printer Using
+              <dt>12.8. <a href="x5823.htm">Remote Printer Using
               Socket API</a></dt>
 
-              <dt>12.9. <a href="x5795.htm">Parallel
+              <dt>12.9. <a href="x5850.htm">Parallel
               Printer</a></dt>
 
               <dt>12.10. <a href="serial.htm">Serial
@@ -746,7 +747,7 @@
               <dd>
                 <dl>
                   <dt>12.15.1. <a href=
-                  "printcappath.htm#AEN6023">Separate Server and
+                  "printcappath.htm#AEN6078">Separate Server and
                   Client Printcap Files</a></dt>
 
                   <dt>12.15.2. <a href="printcappath.htm#ALLPC"><tt
@@ -757,7 +758,7 @@
               <dt>12.16. <a href="secoh.htm">Single Printcap File
               for Large Installation</a></dt>
 
-              <dt>12.17. <a href="x6065.htm">Management Strategies
+              <dt>12.17. <a href="x6120.htm">Management Strategies
               for Large Installations</a></dt>
 
               <dt>12.18. <a href="secnis.htm">Using Programs To Get
@@ -765,26 +766,26 @@
 
               <dd>
                 <dl>
-                  <dt>12.18.1. <a href="secnis.htm#AEN6085">How to
+                  <dt>12.18.1. <a href="secnis.htm#AEN6140">How to
                   use NIS and <b class=
                   "APPLICATION">LPRng</b></a></dt>
 
-                  <dt>12.18.2. <a href="secnis.htm#AEN6112">How to
+                  <dt>12.18.2. <a href="secnis.htm#AEN6167">How to
                   use NIS and <b class="APPLICATION">LPRng</b> -
                   Sven Rudolph</a></dt>
                 </dl>
               </dd>
 
-              <dt>12.19. <a href="x6175.htm">Lexmark
+              <dt>12.19. <a href="x6230.htm">Lexmark
               Printers</a></dt>
 
               <dt>12.20. <a href="p450.htm">Tektronix Phaser
               Printers</a></dt>
 
-              <dt>12.21. <a href="x6189.htm">Duplex
+              <dt>12.21. <a href="x6244.htm">Duplex
               Printing</a></dt>
 
-              <dt>12.22. <a href="x6210.htm">Solaris, Newsprint and
+              <dt>12.22. <a href="x6265.htm">Solaris, Newsprint and
               FrameMaker</a></dt>
             </dl>
           </dd>
@@ -794,7 +795,7 @@
 
           <dd>
             <dl>
-              <dt>13.1. <a href="spoolqueue.htm#AEN6260">Spool
+              <dt>13.1. <a href="spoolqueue.htm#AEN6315">Spool
               Queue</a></dt>
 
               <dt>13.2. <a href="queuelockfile.htm">Queue Lock
@@ -808,7 +809,7 @@
 
               <dt>13.5. <a href="jobfiles.htm">Job Files</a></dt>
 
-              <dt>13.6. <a href="x6607.htm">Job Hold File</a></dt>
+              <dt>13.6. <a href="x6662.htm">Job Hold File</a></dt>
 
               <dt>13.7. <a href="ah.htm">Job State</a></dt>
 
@@ -823,10 +824,10 @@
           <dd>
             <dl>
               <dt>14.1. <a href=
-              "configfile.htm#AEN6731">Configuration File
+              "configfile.htm#AEN6786">Configuration File
               Format</a></dt>
 
-              <dt>14.2. <a href="x6745.htm">Legacy
+              <dt>14.2. <a href="x6800.htm">Legacy
               Compatibility</a></dt>
             </dl>
           </dd>
@@ -854,7 +855,7 @@
               <dt>15.6. <a href="printingjob.htm">Printing Job
               Files</a></dt>
 
-              <dt>15.7. <a href="x7309.htm">Printing Banner At End
+              <dt>15.7. <a href="x7364.htm">Printing Banner At End
               of Job</a></dt>
 
               <dt>15.8. <a href="normalterm.htm">Normal
@@ -873,7 +874,7 @@
 
           <dd>
             <dl>
-              <dt>16.1. <a href="filters.htm#AEN7640">Filter
+              <dt>16.1. <a href="filters.htm#AEN7695">Filter
               Functions</a></dt>
 
               <dt>16.2. <a href="exitcodes.htm">Filter Exit
@@ -919,7 +920,7 @@
               <dt>16.5. <a href="pr.htm"><b class=
               "APPLICATION">lpr</b> -p format</a></dt>
 
-              <dt>16.6. <a href="x7862.htm"><b class=
+              <dt>16.6. <a href="x7917.htm"><b class=
               "APPLICATION">lpr</b> binary (-l) format</a></dt>
 
               <dt>16.7. <a href="chainingfilters.htm">Chaining
@@ -928,12 +929,12 @@
               <dt>16.8. <a href="filteroptions.htm">Filter Command
               Line Options and Environment Variables</a></dt>
 
-              <dt>16.9. <a href="x8279.htm"><b class=
+              <dt>16.9. <a href="x8334.htm"><b class=
               "APPLICATION">LPRng</b> Supported Filters</a></dt>
 
               <dd>
                 <dl>
-                  <dt>16.9.1. <a href="x8279.htm#AEN8286">Filter
+                  <dt>16.9.1. <a href="x8334.htm#AEN8341">Filter
                   Support Conventions</a></dt>
                 </dl>
               </dd>
@@ -954,115 +955,115 @@
               "permsref.htm#DEFAULTPERMISSION">Permission Checking
               Algorithm</a></dt>
 
-              <dt>17.2. <a href="x8558.htm">Rule Matching
+              <dt>17.2. <a href="x8617.htm">Rule Matching
               Procedures</a></dt>
 
               <dd>
                 <dl>
                   <dt>17.2.1. <a href=
-                  "x8558.htm#AEN8586">DEFAULT</a></dt>
+                  "x8617.htm#AEN8645">DEFAULT</a></dt>
 
                   <dt>17.2.2. <a href=
-                  "x8558.htm#AEN8594">SERVICE</a></dt>
+                  "x8617.htm#AEN8653">SERVICE</a></dt>
 
                   <dt>17.2.3. <a href=
-                  "x8558.htm#AEN8642">USER</a></dt>
+                  "x8617.htm#AEN8701">USER</a></dt>
 
                   <dt>17.2.4. <a href=
-                  "x8558.htm#AEN8649">REMOTEUSER</a></dt>
+                  "x8617.htm#AEN8708">REMOTEUSER</a></dt>
 
                   <dt>17.2.5. <a href=
-                  "x8558.htm#AEN8658">HOST</a></dt>
+                  "x8617.htm#AEN8717">HOST</a></dt>
 
                   <dt>17.2.6. <a href=
-                  "x8558.htm#AEN8665">REMOTEHOST</a></dt>
+                  "x8617.htm#AEN8724">REMOTEHOST</a></dt>
 
                   <dt>17.2.7. <a href=
-                  "x8558.htm#AEN8671">REMOTEPORT</a></dt>
+                  "x8617.htm#AEN8730">REMOTEPORT</a></dt>
 
                   <dt>17.2.8. <a href=
-                  "x8558.htm#AEN8677">PORT</a></dt>
+                  "x8617.htm#AEN8736">PORT</a></dt>
 
                   <dt>17.2.9. <a href=
-                  "x8558.htm#AEN8680">IP</a></dt>
+                  "x8617.htm#AEN8739">IP</a></dt>
 
                   <dt>17.2.10. <a href=
-                  "x8558.htm#AEN8683">REMOTEIP</a></dt>
+                  "x8617.htm#AEN8742">REMOTEIP</a></dt>
 
                   <dt>17.2.11. <a href=
-                  "x8558.htm#AEN8686">LPC</a></dt>
+                  "x8617.htm#AEN8745">LPC</a></dt>
 
                   <dt>17.2.12. <a href=
-                  "x8558.htm#AEN8693">SAMEUSER</a></dt>
+                  "x8617.htm#AEN8752">SAMEUSER</a></dt>
 
                   <dt>17.2.13. <a href=
-                  "x8558.htm#AEN8699">SAMEHOST</a></dt>
+                  "x8617.htm#AEN8758">SAMEHOST</a></dt>
 
                   <dt>17.2.14. <a href=
-                  "x8558.htm#AEN8705">SERVER</a></dt>
+                  "x8617.htm#AEN8764">SERVER</a></dt>
 
                   <dt>17.2.15. <a href=
-                  "x8558.htm#AEN8714">FORWARD</a></dt>
+                  "x8617.htm#AEN8773">FORWARD</a></dt>
 
                   <dt>17.2.16. <a href=
-                  "x8558.htm#AEN8722">GROUP</a></dt>
+                  "x8617.htm#AEN8781">GROUP</a></dt>
 
                   <dt>17.2.17. <a href=
-                  "x8558.htm#AEN8730">REMOTEGROUP</a></dt>
+                  "x8617.htm#AEN8789">REMOTEGROUP</a></dt>
 
                   <dt>17.2.18. <a href=
-                  "x8558.htm#AEN8735">CONTROLLINE</a></dt>
+                  "x8617.htm#AEN8794">CONTROLLINE</a></dt>
 
                   <dt>17.2.19. <a href=
-                  "x8558.htm#AEN8744">AUTH</a></dt>
+                  "x8617.htm#AEN8803">AUTH</a></dt>
 
                   <dt>17.2.20. <a href=
-                  "x8558.htm#AEN8750">AUTHTYPE</a></dt>
+                  "x8617.htm#AEN8809">AUTHTYPE</a></dt>
 
                   <dt>17.2.21. <a href=
-                  "x8558.htm#AEN8756">AUTHUSER</a></dt>
+                  "x8617.htm#AEN8815">AUTHUSER</a></dt>
 
                   <dt>17.2.22. <a href=
-                  "x8558.htm#AEN8762">IFIP</a></dt>
+                  "x8617.htm#AEN8821">IFIP</a></dt>
                 </dl>
               </dd>
 
               <dt>17.3. <a href="permspath.htm">Permission File
               Location</a></dt>
 
-              <dt>17.4. <a href="x8797.htm">Example Permission
+              <dt>17.4. <a href="x8856.htm">Example Permission
               File</a></dt>
 
-              <dt>17.5. <a href="x8810.htm">Complex Permission
+              <dt>17.5. <a href="x8869.htm">Complex Permission
               Checking</a></dt>
 
-              <dt>17.6. <a href="x8825.htm">More Examples</a></dt>
+              <dt>17.6. <a href="x8884.htm">More Examples</a></dt>
 
               <dt>17.7. <a href=
               "authref.htm">Authentication</a></dt>
 
-              <dt>17.8. <a href="x8840.htm">Authentication</a></dt>
+              <dt>17.8. <a href="x8901.htm">Authentication</a></dt>
 
-              <dt>17.9. <a href="x8852.htm">Identifiers</a></dt>
+              <dt>17.9. <a href="x8913.htm">Identifiers</a></dt>
 
-              <dt>17.10. <a href="x8858.htm">RFC1179 Protocol
+              <dt>17.10. <a href="x8919.htm">RFC1179 Protocol
               Extensions</a></dt>
 
               <dt>17.11. <a href="auth.htm">Authentication
               Operations</a></dt>
 
-              <dt>17.12. <a href="x8961.htm">Permission
+              <dt>17.12. <a href="x9022.htm">Permission
               Checking</a></dt>
 
-              <dt>17.13. <a href="x8993.htm">PGP Authentication
+              <dt>17.13. <a href="x9054.htm">PGP Authentication
               Support</a></dt>
 
               <dd>
                 <dl>
-                  <dt>17.13.1. <a href="x8993.htm#PGPPATH">Printcap
+                  <dt>17.13.1. <a href="x9054.htm#PGPPATH">Printcap
                   Configuration</a></dt>
 
-                  <dt>17.13.2. <a href="x8993.htm#AEN9083">User
+                  <dt>17.13.2. <a href="x9054.htm#AEN9144">User
                   Files and Environment Variables</a></dt>
                 </dl>
               </dd>
@@ -1072,62 +1073,86 @@
 
               <dd>
                 <dl>
-                  <dt>17.14.1. <a href="kerberos.htm#AEN9124"><b
+                  <dt>17.14.1. <a href="kerberos.htm#AEN9185"><b
                   class="APPLICATION">LPRng</b>
                   Configuration</a></dt>
 
                   <dt>17.14.2. <a href=
-                  "kerberos.htm#AEN9138">Kerberos Installation
+                  "kerberos.htm#AEN9199">Kerberos Installation
                   Procedure</a></dt>
 
-                  <dt>17.14.3. <a href="kerberos.htm#AEN9190"><b
+                  <dt>17.14.3. <a href="kerberos.htm#AEN9251"><b
                   class="APPLICATION">LPRng</b>
                   Configuration</a></dt>
 
                   <dt>17.14.4. <a href=
-                  "kerberos.htm#AEN9200">Printcap Entries</a></dt>
+                  "kerberos.htm#AEN9261">Printcap Entries</a></dt>
 
-                  <dt>17.14.5. <a href="kerberos.htm#AEN9259">User
+                  <dt>17.14.5. <a href="kerberos.htm#AEN9320">User
                   Environment Variables and Files</a></dt>
                 </dl>
               </dd>
 
-              <dt>17.15. <a href="x9264.htm">Using Kerberos 4 for
+              <dt>17.15. <a href="x9325.htm">Using Kerberos 4 for
               Authentication</a></dt>
 
               <dd>
                 <dl>
-                  <dt>17.15.1. <a href="x9264.htm#AEN9270">Printcap
+                  <dt>17.15.1. <a href="x9325.htm#AEN9331">Printcap
                   Entries</a></dt>
                 </dl>
               </dd>
 
-              <dt>17.16. <a href="x9290.htm">Using MD5 for
+              <dt>17.16. <a href="x9351.htm">Using SSL for
               Authentication</a></dt>
 
               <dd>
                 <dl>
-                  <dt>17.16.1. <a href="x9290.htm#AEN9299">Printcap
+                  <dt>17.16.1. <a href=
+                  "x9351.htm#AEN9384">Certificate
+                  Management</a></dt>
+
+                  <dt>17.16.2. <a href="x9351.htm#AEN9401">Creating
+                  Root Certificate</a></dt>
+
+                  <dt>17.16.3. <a href="x9351.htm#AEN9407">Creating
+                  Client and Server Certificates</a></dt>
+
+                  <dt>17.16.4. <a href="x9351.htm#AEN9418">Creating
+                  Signing Certificates</a></dt>
+
+                  <dt>17.16.5. <a href=
+                  "x9351.htm#AEN9422">Permissions and Certificate
+                  Revocation</a></dt>
+                </dl>
+              </dd>
+
+              <dt>17.17. <a href="x9428.htm">Using MD5 for
+              Authentication</a></dt>
+
+              <dd>
+                <dl>
+                  <dt>17.17.1. <a href="x9428.htm#AEN9437">Printcap
                   Entries</a></dt>
 
-                  <dt>17.16.2. <a href="x9290.htm#AEN9347">User
+                  <dt>17.17.2. <a href="x9428.htm#AEN9485">User
                   Environment Variables and Files</a></dt>
                 </dl>
               </dd>
 
-              <dt>17.17. <a href="x9357.htm">Adding Authentication
+              <dt>17.18. <a href="x9495.htm">Adding Authentication
               Support</a></dt>
 
               <dd>
                 <dl>
-                  <dt>17.17.1. <a href="x9357.htm#AEN9365">Printcap
+                  <dt>17.18.1. <a href="x9495.htm#AEN9503">Printcap
                   Support</a></dt>
 
-                  <dt>17.17.2. <a href="x9357.htm#AEN9379">Code
+                  <dt>17.18.2. <a href="x9495.htm#AEN9517">Code
                   Support</a></dt>
 
-                  <dt>17.17.3. <a href=
-                  "x9357.htm#AEN9438">Connection and Transfer
+                  <dt>17.18.3. <a href=
+                  "x9495.htm#AEN9576">Connection and Transfer
                   Authentication</a></dt>
                 </dl>
               </dd>
@@ -1142,22 +1167,22 @@
               "accountingref.htm#ACCOUNTINGSERVER">Accounting
               Printcap Options</a></dt>
 
-              <dt>18.2. <a href="x9483.htm">Accounting
+              <dt>18.2. <a href="x9621.htm">Accounting
               Information</a></dt>
 
-              <dt>18.3. <a href="x9497.htm">Accounting
+              <dt>18.3. <a href="x9635.htm">Accounting
               File</a></dt>
 
-              <dt>18.4. <a href="x9537.htm">Authorization and
+              <dt>18.4. <a href="x9675.htm">Authorization and
               Quotas</a></dt>
 
-              <dt>18.5. <a href="x9562.htm">Accessing Printer
+              <dt>18.5. <a href="x9700.htm">Accessing Printer
               Hardware Pagecounters</a></dt>
 
-              <dt>18.6. <a href="x9573.htm">Reliable
+              <dt>18.6. <a href="x9711.htm">Reliable
               Accounting</a></dt>
 
-              <dt>18.7. <a href="x9588.htm">\<b class=
+              <dt>18.7. <a href="x9726.htm">\<b class=
               "APPLICATION">LPRng</b> accounting.pl
               Utility</a></dt>
             </dl>
@@ -1177,16 +1202,16 @@
               <dt>19.3. <a href="jobtransfer.htm">Job
               Transfer</a></dt>
 
-              <dt>19.4. <a href="x9971.htm">Data File
+              <dt>19.4. <a href="x10109.htm">Data File
               Transfer</a></dt>
 
-              <dt>19.5. <a href="x10007.htm">Control File
+              <dt>19.5. <a href="x10145.htm">Control File
               Contents</a></dt>
 
-              <dt>19.6. <a href="x10210.htm"><b class=
+              <dt>19.6. <a href="x10348.htm"><b class=
               "APPLICATION">lpq</b> Requests</a></dt>
 
-              <dt>19.7. <a href="x10233.htm"><b class=
+              <dt>19.7. <a href="x10371.htm"><b class=
               "APPLICATION">lprm</b> Requests</a></dt>
 
               <dt>19.8. <a href="lpcreread.htm">LPC
@@ -1195,7 +1220,7 @@
               <dt>19.9. <a href="sendblockformat.htm">Block Job
               Transfer</a></dt>
 
-              <dt>19.10. <a href="x10436.htm">Authenticated
+              <dt>19.10. <a href="x10574.htm">Authenticated
               Transfer</a></dt>
             </dl>
           </dd>
@@ -1205,26 +1230,26 @@
 
           <dd>
             <dl>
-              <dt>20.1. <a href="faq.htm#AEN10455">Why do I get
+              <dt>20.1. <a href="faq.htm#AEN10593">Why do I get
               malformed from address errors?</a></dt>
 
-              <dt>20.2. <a href="x10483.htm">It was working
+              <dt>20.2. <a href="x10621.htm">It was working
               normally, then I get connection refused
               errors</a></dt>
 
-              <dt>20.3. <a href="x10515.htm">Job is not in print
+              <dt>20.3. <a href="x10653.htm">Job is not in print
               queue, but it gets printed!</a></dt>
 
-              <dt>20.4. <a href="x10570.htm">Job disappears and is
+              <dt>20.4. <a href="x10708.htm">Job disappears and is
               never printed, but lpr works</a></dt>
 
-              <dt>20.5. <a href="x10587.htm">I get messages about
+              <dt>20.5. <a href="x10725.htm">I get messages about
               bad control file format</a></dt>
 
               <dt>20.6. <a href="rfc1179.htm">What is RFC 1179, the
               Line Printer Daemon Protocol?</a></dt>
 
-              <dt>20.7. <a href="x10619.htm">I want to replace lp,
+              <dt>20.7. <a href="x10757.htm">I want to replace lp,
               lpstat, etc, but my programs need them</a></dt>
             </dl>
           </dd>
@@ -1237,20 +1262,20 @@
               <dt>21.1. <a href="remotelogger.htm#LOGGER">Logger
               Network Communication</a></dt>
 
-              <dt>21.2. <a href="x10672.htm">Logger
+              <dt>21.2. <a href="x10810.htm">Logger
               Messages</a></dt>
 
-              <dt>21.3. <a href="x10677.htm">Message
+              <dt>21.3. <a href="x10815.htm">Message
               Format</a></dt>
 
-              <dt>21.4. <a href="x10705.htm">Dump Messages</a></dt>
+              <dt>21.4. <a href="x10843.htm">Dump Messages</a></dt>
 
-              <dt>21.5. <a href="x10708.htm">LPD Messages</a></dt>
+              <dt>21.5. <a href="x10846.htm">LPD Messages</a></dt>
 
-              <dt>21.6. <a href="x10713.htm">Job Status Messages -
+              <dt>21.6. <a href="x10851.htm">Job Status Messages -
               UPDATE</a></dt>
 
-              <dt>21.7. <a href="x10725.htm">Printer Status
+              <dt>21.7. <a href="x10863.htm">Printer Status
               Messages - PRSTATUS</a></dt>
             </dl>
           </dd>
@@ -1265,18 +1290,18 @@
 
           <dd>
             <dl>
-              <dt>C.1. <a href="testing.htm#AEN11432">Compiling the
+              <dt>C.1. <a href="testing.htm#AEN11570">Compiling the
               Test Version</a></dt>
 
-              <dt>C.2. <a href="x11439.htm">Setting Up The Test
+              <dt>C.2. <a href="x11577.htm">Setting Up The Test
               Version Spool Queues</a></dt>
 
-              <dt>C.3. <a href="x11467.htm">Running the Test
+              <dt>C.3. <a href="x11605.htm">Running the Test
               Version Software</a></dt>
             </dl>
           </dd>
 
-          <dt><a href="i11496.htm">Index</a></dt>
+          <dt><a href="i11634.htm">Index</a></dt>
         </dl>
       </div>
 
@@ -1295,7 +1320,7 @@
           "jobfileformatconversion.htm#IFHPOPTS"><b class=
           "APPLICATION">:ifhp=</b> Options</a></dt>
 
-          <dt>11-1. <a href="x4923.htm#NEWPS">Network Print Server
+          <dt>11-1. <a href="x4978.htm#NEWPS">Network Print Server
           Configuration Information</a></dt>
 
           <dt>13-1. <a href="jobfiles.htm#CFLINE">Control File
@@ -1309,7 +1334,7 @@
           "filteroptions.htm#FILTEROPTIONFLAGS">Filter Command Line
           Options and Values</a></dt>
 
-          <dt>16-3. <a href="filteroptions.htm#AEN8153">Filter
+          <dt>16-3. <a href="filteroptions.htm#AEN8208">Filter
           Command Line Option Format</a></dt>
 
           <dt>16-4. <a href="filteroptions.htm#FILTERENV">Filter
@@ -1322,7 +1347,7 @@
           "remotesupport.htm#RF1179COMMANDS">RFC1179
           Commands</a></dt>
 
-          <dt>19-2. <a href="x10007.htm#CFLINES">Control File Lines
+          <dt>19-2. <a href="x10145.htm#CFLINES">Control File Lines
           and Purpose</a></dt>
 
           <dt>19-3. <a href="lpcreread.htm#LPCCOMMANDS">LPC
@@ -1345,7 +1370,7 @@
           <td width="34%" align="center" valign="top">&nbsp;</td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "f37.htm" accesskey="N">Next</a></td>
+          "f38.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>
