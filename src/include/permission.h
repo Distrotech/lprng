@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: permission.h,v 1.62 2003/12/13 00:11:48 papowell Exp $
+ * $Id: permission.h,v 1.65 2004/02/04 00:54:14 papowell Exp $
  ***************************************************************************/
 
 
@@ -76,7 +76,7 @@ struct perm_check {
 							/* or HOST if no control file */
 	int	port;				/* port for remote connection */
 	const char *printer;			/* printer name */
-	// struct sockaddr addr;	/* IF address information */
+	/* struct sockaddr addr;	/ * IF address information */
 	int unix_socket;		/* connection via unix socket */
 	int service;			/* first character service */
 	const char *lpc;				/* lpc operation */

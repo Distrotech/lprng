@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: debug.h,v 1.62 2003/12/13 00:11:47 papowell Exp $
+ * $Id: debug.h,v 1.65 2004/02/04 00:54:13 papowell Exp $
  ***************************************************************************/
 
 
@@ -65,8 +65,6 @@ EXTERN int DbgTest;	/* debug flags */
 #define DEBUGL5     DEBUGL(5,0)
 #define DEBUG6      DEBUGC(6,0)
 #define DEBUGL6     DEBUGL(6,0)
-
-/* PROTOTYPES */
 
 #endif
 
@@ -147,6 +145,6 @@ void Parse_debug( char *arg, int interactive);
 #define DEBUG7 printf
 #endif
 
-/* PROTOTYPES */
+/* PRO TO TYPES */
 
 #endif

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.62 2003/12/13 00:11:48 papowell Exp $
+ * $Id: lp.h,v 1.65 2004/02/04 00:54:14 papowell Exp $
  ***************************************************************************/
 
 
@@ -288,6 +288,7 @@ EXTERN char* Default_priority_DYN;	/* default priority */
 EXTERN char* Default_remote_host_DYN;
 EXTERN char* Default_tmp_dir_DYN;	/* default temporary file directory */
 EXTERN char* Destinations_DYN; /* printers that a route filter may return and we should query */
+EXTERN int   Discard_large_jobs_DYN;  /* discard jobs that exceed max job size */
 EXTERN int   Done_jobs_DYN;        /* keep the last NN done jobs */
 EXTERN int   Done_jobs_max_age_DYN; /* keep the done jobs for at least max age seconds */
 EXTERN int Direct_DYN;		/* allow LPR to send jobs to a socket */

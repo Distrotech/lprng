@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.62 2003/12/13 00:11:45 papowell Exp $";
+"$Id: getqueue.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
 
 
 /***************************************************************************
@@ -116,15 +116,12 @@ int Scan_queue( struct line_list *spool_control,
 		DEBUG2("Scan_queue: processing file '%s'", hf_name );
 
 		/* read the hf file and get the information */
-		Get_file_image_and_split( hf_name, 0, 0,
-			&job.info, Line_ends, 1, Hash_value_sep,1,1,1,0);
-		if(DEBUGL5)Dump_line_list("Scan_queue: hf", &job.info );
+		Get_hold_file( &job, hf_name, 1 );
+		if(DEBUGL3)Dump_line_list("Scan_queue: hf", &job.info );
 		if( job.info.count == 0 ){
 			continue;
 		}
 
-		/* get the data file from the control file */
-		Setup_cf_info( &job, 1 );
 		Job_printable(&job,spool_control, &p,&h,&m,&e,&dn);
 		if( p ) ++printable;
 		if( h ) ++held;
@@ -303,77 +300,6 @@ void Check_for_hold( struct job *job, struct line_list *spool_control )
 	Set_flag_value(&job->info,HELD,held);
 }
 
-/*
- * Setup_job: called only when you REALLY want to
- *  read the control file and hold file.
- */
-
-void Setup_job( struct job *job, struct line_list *spool_control,
-	const char *cf_name, const char *hf_name, int check_for_existence )
-{
-	struct stat statb;
-	char *path, *s;
-	struct line_list *lp;
-	int i, j, size = 0;
-
-	/* add the hold file information directly */ 
-	DEBUG3("Setup_job: hf_name '%s', cf_name (TRANSFERNAME) '%s'", hf_name, cf_name );
-	if( cf_name ){
-		Set_str_value(&job->info,TRANSFERNAME, cf_name);
-	}
-	cf_name = Find_str_value(&job->info,TRANSFERNAME);
-
-	if( hf_name ){
-		Set_str_value(&job->info,HF_NAME,hf_name);
-	}
-	hf_name = Find_str_value(&job->info,HF_NAME);
-
-	if( cf_name && !Find_str_value(&job->info,NUMBER) ){
-		Check_format( CONTROL_FILE, cf_name, job );
-	}
-
-	if( !Find_str_value(&job->info,JOB_TIME)
-		&& (path = Find_str_value(&job->info,OPENNAME)) ){
-		j = 0;
-		if( stat(path,&statb) ){
-			i = time((void *)0);
-		} else {
-			i = statb.st_mtime;
-#ifdef ST_MTIMESPEC_TV_NSEC
-			j = statb.st_mtimespec.tv_nsec/1000;
-#endif
-#ifdef ST_MTIMENSEC
-			j = statb.st_mtimensec/1000;
-#endif
-		}
-		Set_flag_value(&job->info,JOB_TIME,i);
-		Set_flag_value(&job->info,JOB_TIME_USEC,j);
-	}
-
-	/* set up the control file information */
-	Setup_cf_info( job, check_for_existence );
-
-	/* set the class of the job */
-	if( !Find_str_value(&job->info,CLASS)
-		&& (s = Find_str_value(&job->info,PRIORITY)) ){
-		Set_str_value(&job->info,CLASS,s);
-	}
-	/* set the size of the job */
-	if( !Find_flag_value(&job->info,SIZE) ){
-		size = 0;
-		for( i = 0; i < job->datafiles.count; ++i ){
-			lp = (void *)job->datafiles.list[i];
-			size +=  Find_flag_value(lp,SIZE);
-		}
-		Set_decimal_value(&job->info,SIZE,size);
-	}
-
-	Make_identifier( job );
-	Check_for_hold( job, spool_control );
-
-	if(DEBUGL3)Dump_job("Setup_job",job);
-}
-
 /* Get_hold_class( spool_control, job )
  *  check to see if the spool class and the job class are compatible
  *  returns:  non-zero if held, 0 if not held
@@ -485,7 +411,7 @@ void Append_Z_value( struct job *job, char *s )
 	}
 }
 
-int Setup_cf_info( struct job *job, int check_for_existence )
+int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file )
 {
 	char *s;
 	int i, c, n, copies = 0, last_format = 0;
@@ -493,7 +419,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 	struct line_list *datafile = 0;
 	struct stat statb;
 	char buffer[SMALLBUFFER], *t;
-	char *file_found;
+	char *file_found, *priority;
 	char *names = 0;
 	int returnstatus = 0;
 	int hpformat;
@@ -502,35 +428,35 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 	names = 0;
 
 	hpformat = Find_flag_value(&job->info,HPFORMAT);
-	if( (s = Find_str_value(&job->info,DATAFILES)) ){
-		Split(&cf_line_list,s,"\001",0,0,0,0,0,0);
-	} else {
+	if( read_cf_file ){
 		s = Find_str_value(&job->info,OPENNAME);
-		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
-		DEBUG3("Setup_cf_info: control file '%s', hpformat '%d'", s, hpformat );
-		if( Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0)
-			 && check_for_existence ){
-			DEBUG3("Setup_cf_info: missing or empty control file '%s'", s );
-			SNPRINTF(buffer,sizeof(buffer))
-				"no control file %s - %s", s, Errormsg(errno) );
-			Set_str_value(&job->info,ERROR,buffer);
-			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-			returnstatus = 1;
-			goto done;
+		DEBUG3("Set_hf_from_cf_info: control file '%s', hpformat '%d'",
+			s, hpformat );
+		if( s &&  Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
+				DEBUG3("Set_hf_from_cf_info: missing or empty control file '%s'", s );
+				SNPRINTF(buffer,sizeof(buffer))
+					"no control file %s - %s", s, Errormsg(errno) );
+				Set_str_value(&job->info,ERROR,buffer);
+				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+				returnstatus = 1;
+				goto done;
 		}
+	}
+	if( cf_file_image ){
+		Split( &cf_line_list, cf_file_image, Line_ends, 0, 0, 0, 0, 0 ,0);
 	}
 
 	Free_listof_line_list( &job->datafiles );
 
 	file_found = 0;
 	datafile = malloc_or_die(sizeof(datafile[0]),__FILE__,__LINE__);
-	memset(datafile,0,sizeof(datafile[0]));
 
+	memset(datafile,0,sizeof(datafile[0]));
 	for( i = 0; i < cf_line_list.count; ++i ){
 		s = cf_line_list.list[i];
 		Clean_meta(s);
 		c = cval(s);
-		DEBUG3("Setup_cf_info: doing line '%s'", s );
+		DEBUG3("Set_hf_from_cf_info: doing line '%s'", s );
 		if( islower(c) ){
 			t = s;
 			while( (t = strpbrk(t," \t")) ) *t++ = '_';
@@ -550,28 +476,10 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 			++copies;
 			Set_flag_value(datafile,COPIES,copies);
 
-			Set_str_value(datafile,TRANSFERNAME,s+1);
-			Set_str_value(datafile,OPENNAME,s+1);
-			file_found = Find_str_value(datafile,TRANSFERNAME);
-			DEBUG4("Setup_cf_info: doing file '%s', format '%c', copies %d",
+			Set_str_value(datafile,OTRANSFERNAME,s+1);
+			file_found = Find_str_value(datafile,OTRANSFERNAME);
+			DEBUG4("Set_hf_from_cf_info: doing file '%s', format '%c', copies %d",
 				file_found, last_format, copies );
-
-			/* now we check for the status */
-			if( check_for_existence ){
-				if( stat(file_found, &statb) == 0 ){
-					double size;
-					size = statb.st_size;
-					DEBUG4("Setup_cf_info: '%s' - size %0.0f", file_found, size );
-					Set_double_value(datafile,SIZE,size );
-				} else {
-					SNPRINTF(buffer,sizeof(buffer))
-						"missing data file %s - %s", file_found, Errormsg(errno) );
-					Set_str_value(&job->info,ERROR,buffer);
-					Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-					returnstatus = 1;
-					goto done;
-				}
-			}
 		} else if( c == 'N' ){
 			if( hpformat && cval(s+1) == ' '){
 				/* this is an HP Format option */
@@ -608,13 +516,19 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 				names =  safeextend3(names,",",s+1,__FILE__,__LINE__);
 			}
 		} else if( c == 'U' ){
-			Set_str_value(datafile,"U",s+1);
+			/* Set_str_value(datafile,"U",s+1)*/ ;
 		} else {
+			/*
+			 * HP UX has some  VERY odd problems
+			 */
 			if( hpformat && c == 'Z' ){
+				/* Multiple Z lines */
 				Append_Z_value( job, s+1 );
 			} else if( hpformat && c == 'R' ){
+				/* Uses R and not M */
 				Set_str_value(&job->info,"M",s+1);
 			} else if( hpformat && c == 'A' ){
+				/* Uses Annn for priority */
 				n = strtol( s+1,0,10);
 				if( n >= 0 && n <=10){
 					c = n + 'A';
@@ -624,7 +538,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 				}
 			} else if( isupper(c) ){
 				buffer[0] = c; buffer[1] = 0;
-				DEBUG4("Setup_cf_info: control '%s'='%s'", buffer, s+1 );
+				DEBUG4("Set_hf_from_cf_info: control '%s'='%s'", buffer, s+1 );
 				Set_str_value(&job->info,buffer,s+1);
 			}
 		}
@@ -633,20 +547,79 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 		Check_max(&job->datafiles,1);
 		job->datafiles.list[job->datafiles.count++] = (void *)datafile;
 		datafile = 0;
-	} else {
-		free(datafile);
-		datafile = 0;
 	}
+
 	Set_str_value(&job->info,FILENAMES,names);
+
+	/*
+	 * now fix up priority using
+     *  ignore requested user priority
+     *    ignore_requested_user_priority=0
+	 *  do not set priority from class name
+     *     break_classname_priority_link=0
+	 */
+
+	priority = 0;
+	if( !Ignore_requested_user_priority_DYN &&
+		!Break_classname_priority_link_DYN ) priority = Find_str_value( &job->info,CLASS);
+	if( ISNULL(priority) ) priority = Default_priority_DYN;
+	if( ISNULL(priority) ) priority = "A";
+	buffer[0] = toupper(cval(priority)); buffer[1] = 0;
+	if( cval(buffer) < 'A' || cval(buffer) > 'Z' ){
+		priority = "A";
+	} else {
+		priority = buffer;
+	}
+
+	Set_str_value(&job->info,PRIORITY,priority);
+	priority = Find_str_value(&job->info,PRIORITY);
+
+	if( !Find_str_value(&job->info,CLASS) ){
+		Set_str_value(&job->info,CLASS,priority);
+	}
 
  done:
 
-	if( datafile )	free(datafile); datafile=0;
+	if( datafile ) Free_line_list( datafile );
+	if( datafile ) free(datafile); datafile=0;
 	if( names )	free(names); names=0;
 	Free_line_list( &cf_line_list );
-	if(DEBUGL4)Dump_job("Setup_cf_info - final",job);
+	if(DEBUGL4)Dump_job("Set_hf_from_cf_info - final",job);
 	return(returnstatus);
 }
+
+/*
+ * Set the hold file datafile information in the HFDATAFILES line
+ */
+
+void Set_hf_datafile_info( struct job *job )
+{
+	int linecount, i, len;
+	char *s, *dataline;
+	struct line_list *lp;
+
+	dataline = 0;
+
+	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
+		lp = (void *)job->datafiles.list[linecount];
+		if(DEBUGL4)Dump_line_list("Set_hf_datafile_info - info", lp );
+		for( i = 0; i < lp->count; ++i ){
+			int c;
+			s = lp->list[i];
+			
+			if( !strncmp(s,"openname", 8 ) ) continue;
+			if( !strncmp(s,"otransfername", 13 ) ) continue;
+			dataline = safeextend3(dataline, s, "\002",__FILE__,__LINE__);
+		}
+		len = strlen(dataline);
+		if( len ){
+			dataline[len-1] = '\001';
+		}
+	}
+	Set_str_value(&job->info,HFDATAFILES,dataline);
+	if( dataline ) free(dataline); dataline = 0;
+}
+
 
 char *Make_hf_image( struct job *job )
 {
@@ -677,13 +650,15 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 	status = 0;
 	outstr = 0;
 
-	if(DEBUGL4)Dump_job("Set_hold_file",job);
+	Set_hf_datafile_info( job );
+	if(DEBUGL4)Dump_job("Set_hold_file - init",job);
 	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
+	outstr = Make_hf_image( job );
+	DEBUG4("Set_hold_file: '%s'", outstr );
 	if( !(hf_name = Find_str_value(&job->info,HF_NAME)) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Set_hold_file: LOGIC ERROR- no HF_NAME in job information");
+		FATAL(LOG_ERR)"Set_hold_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
 	}
-	outstr = Make_hf_image( job );
 	if( !fd ){
 		fd = Make_temp_fd( &tempfile );
 		if( Write_fd_str(fd, outstr) < 0 ){
@@ -736,7 +711,7 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
  *  get hold file contents and initialize job->info hash with them
  */
 
-void Get_hold_file( struct job *job, char *hf_name )
+void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  )
 {
 	char *s;
 	if( (s = safestrchr(hf_name, '=')) ){
@@ -746,9 +721,28 @@ void Get_hold_file( struct job *job, char *hf_name )
 
 	Get_file_image_and_split( hf_name, 0, 0,
 		&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
-	if( !Find_str_value(&job->info,HF_NAME) ){
-		Set_str_value(&job->info,HF_NAME,hf_name);
+	if( &job->info.count ) {
+		struct line_list cf_line_list, *datafile;
+		Init_line_list(&cf_line_list);
+		int i;
+		char *s;
+
+		if( (s = Find_str_value(&job->info,HFDATAFILES)) ){
+			Split(&cf_line_list,s,"\001",0,0,0,0,0,0);
+		}
+		Free_listof_line_list( &job->datafiles );
+		Check_max(&job->datafiles,cf_line_list.count);
+		for( i = 0; i < cf_line_list.count; ++i ){
+			s = cf_line_list.list[i];
+			DEBUG3("Set_hf_from_cf_info: doing line '%s'", s );
+			datafile = malloc_or_die(sizeof(datafile[0]),__FILE__,__LINE__);
+			memset(datafile,0,sizeof(datafile[0]));
+			job->datafiles.list[job->datafiles.count++] = (void *)datafile;
+			Split(datafile,s,"\002",1,Option_value_sep,1,1,1,0);
+		}
+		Free_line_list( &cf_line_list );
 	}
+	if(DEBUGL4)Dump_job("Get_hold_file",job);
 }
 
 /*
@@ -938,6 +932,7 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 	char *s;
 	int status = 0;
 	char name[SMALLBUFFER];
+	struct stat statb;
 
 	DEBUG3( "Setup_printer: checking printer '%s'", prname );
 
@@ -960,9 +955,11 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 	Set_DYN(&Printer_DYN,name);
 	Fix_Rm_Rp_info(0,0);
 
-	if( Spool_dir_DYN == 0 || *Spool_dir_DYN == 0 ){
+	if( Spool_dir_DYN == 0 || *Spool_dir_DYN == 0 || stat(Spool_dir_DYN, &statb) ){
 		SNPRINTF( error, errlen)
-"spool queue for '%s' does not exist on server %s\n   non-existent printer or you need to run 'checkpc -f'",
+"spool queue for '%s' does not exist on server %s\n"
+"check for correct printer name or you may need to run\n"
+"'checkpc -f' to create queue",
 			name, FQDNHost_FQDN );
 		status = 2;
 		goto error;
@@ -1682,27 +1679,6 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 }
 
 /********************************************************************
- * int Fix_control( struct job *job, char *order )
- *   fix the order of lines in the control file so that they
- *   are in the order of the letters in the order string.
- * Lines are checked for metacharacters and other trashy stuff
- *   that might have crept in by user efforts
- *
- * job - control file area in memory
- * order - order of options
- *
- *  order string: Letter - relative position in file
- *                * matches any character not in string
- *                  can have only one wildcard in string
- *   Berkeley-            HPJCLIMWT1234
- *   PLP-                 HPJCLIMWT1234*
- *
- * RETURNS: 0 if fixed correctly
- *          non-zero if there is something wrong with this file and it should
- *          be rejected out of hand
- ********************************************************************/
-
-/********************************************************************
  * BSD and LPRng order
  * We use these values to determine the order of jobs in the file
  * The order of the characters determines the order of the options
@@ -1712,30 +1688,31 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
  static char BSD_order[] = "HPJCLIMWT1234" ;
  static char LPRng_order[] = "HPJCLIMWT1234*" ;
 
-char *Fix_datafile_info( struct job *job, char *number, char *suffix,
-	char *xlate_format )
+char *Fix_datafile_infox( struct job *job, char *number, char *suffix,
+	char *xlate_format, int update_df_names )
 {
 	int i, copies, linecount, count, jobcopies, copy, group, offset;
-	char *s, *Nline, *transfername, *dataline, *jobline;
+	char *s, *Nline, *transfername, *dataline;
 	struct line_list *lp, outfiles;
 	char prefix[8];
 	char fmt[2];
 	
 	Init_line_list(&outfiles);
-	transfername = dataline = Nline = jobline = 0;
+	transfername = dataline = Nline = 0;
 	if(DEBUGL4)Dump_job("Fix_datafile_info - starting", job );
 
 	/* now we find the number of different data files */
 
 	count = 0;
 	/* we look through the data file list, looking for jobs with the name
-	 * TRANSFERNAME.  If we find a new one, we create the correct form
+	 * OTRANSFERNAME.  If we find a new one, we create the correct form
 	 * of the job datafile
 	 */
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
 		lp = (void *)job->datafiles.list[linecount];
-		transfername = Find_str_value(lp,TRANSFERNAME);
-		Set_str_value(lp,OTRANSFERNAME,transfername);
+		transfername = Find_str_value(lp,OTRANSFERNAME);
+		if( ! transfername ) transfername = Find_str_value(lp,DFTRANSFERNAME);
+		Set_str_value(lp,NTRANSFERNAME,transfername);
 		if( !(s = Find_casekey_str_value(&outfiles,transfername,Hash_value_sep)) ){
 			/* we add the entry */
 			offset = count % 52;
@@ -1749,10 +1726,10 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 			("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz")[offset] );
 			s = safestrdup3(prefix,number,suffix,__FILE__,__LINE__);
 			if( transfername ) Set_casekey_str_value(&outfiles,transfername,s);
-			Set_str_value(lp,TRANSFERNAME,s);
+			Set_str_value(lp,NTRANSFERNAME,s);
 			if(s) free(s); s = 0;
 		} else {
-			Set_str_value(lp,TRANSFERNAME,s);
+			Set_str_value(lp,NTRANSFERNAME,s);
 		}
 	}
 	Free_line_list(&outfiles);
@@ -1766,10 +1743,9 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	DEBUG4("Fix_datafile_info: jobcopies %d", jobcopies );
 	for(copy = 0; copy < jobcopies; ++copy ){
 		for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
-			jobline = 0;
 			lp = (void *)job->datafiles.list[linecount];
 			if(DEBUGL5)Dump_line_list("Fix_datafile_info - info", lp  );
-			transfername = Find_str_value(lp,TRANSFERNAME);
+			transfername = Find_str_value(lp,NTRANSFERNAME);
 			Nline = Find_str_value(lp,"N");
 			fmt[0] = 'f';
 			if( (s = Find_str_value(lp,FORMAT)) ){
@@ -1789,39 +1765,40 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 			if( copies == 0 ) copies = 1;
 			for(i = 0; i < copies; ++i ){
 				if( Nline && !Nline_after_file_DYN ){
-					jobline = safeextend4(jobline,"N",Nline,"\n",__FILE__,__LINE__);
+					dataline = safeextend4(dataline,"N",Nline,"\n",__FILE__,__LINE__);
 				}
-				jobline = safeextend4(jobline,fmt,transfername,"\n",__FILE__,__LINE__);
+				dataline = safeextend4(dataline,fmt,transfername,"\n",__FILE__,__LINE__);
 				if( Nline && Nline_after_file_DYN ){
-					jobline = safeextend4(jobline,"N",Nline,"\n",__FILE__,__LINE__);
+					dataline = safeextend4(dataline,"N",Nline,"\n",__FILE__,__LINE__);
 				}
 			}
-			DEBUG4("Fix_datafile_info: file [%d], jobline '%s'",
-				linecount, jobline);
-			dataline = safeextend2(dataline,jobline,__FILE__,__LINE__);
-			if( jobline ) free(jobline); jobline = 0;
+			DEBUG4("Fix_datafile_info: file [%d], dataline '%s'",
+				linecount, dataline);
 		}
 	}
 	DEBUG4("Fix_datafile_info: adding remove lines" );
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
-		jobline = 0;
 		lp = (void *)job->datafiles.list[linecount];
 		if(DEBUGL4)Dump_line_list("Fix_datafile_info - info", lp );
-		transfername = Find_str_value(lp,TRANSFERNAME);
+		transfername = Find_str_value(lp,NTRANSFERNAME);
+		if( update_df_names ){
+			transfername = Find_str_value(lp,NTRANSFERNAME);
+			Set_str_value(lp,DFTRANSFERNAME,transfername);
+			Set_str_value(lp,OTRANSFERNAME,0);
+		}
 		if( !Find_casekey_str_value(&outfiles,transfername,Hash_value_sep) ){
-			jobline = safeextend4(jobline,"U",transfername,"\n",__FILE__,__LINE__);
+			dataline = safeextend4(dataline,"U",transfername,"\n",__FILE__,__LINE__);
 			Set_casekey_str_value(&outfiles,transfername,"YES");
 		}
-		DEBUG4("Fix_datafile_info: file [%d], jobline '%s'",
-			linecount, jobline);
-		dataline = safeextend2(dataline,jobline,__FILE__,__LINE__);
-		if( jobline ) free(jobline); jobline = 0;
+		DEBUG4("Fix_datafile_info: file [%d], dataline '%s'",
+			linecount, dataline);
+		Set_str_value(lp,NTRANSFERNAME,0);
 	}
 	Free_line_list(&outfiles);
 	Set_str_value(&job->info,DATAFILES,dataline);
+	if( dataline ) free(dataline); dataline = 0;
 	s = Find_str_value(&job->info,DATAFILES);
-	while( (s = safestrchr(s,'\n')) ) *s++ = '\001';
-	return(dataline);
+	return(s);
 }
 
 int ordercomp(  const void *left, const void *right, const void *orderp)
@@ -1852,16 +1829,6 @@ int ordercomp(  const void *left, const void *right, const void *orderp)
 		*((const char **)left), *((const char **)right), cmp );
 	return( cmp );
 }
-
-/************************************************************************
- * Fix_control:
- *  Fix up the control file,  setting the various entries
- *  to be compatible with transfer to the remote location
- * 1. info will have fromhost, priority, and number information
- *   if not, you will need to add it.
- *
- ************************************************************************/
-
  struct maxlen{
 	int c, len;
  } maxclen[] = {
@@ -1873,10 +1840,39 @@ int ordercomp(  const void *left, const void *right, const void *orderp)
 	{0,0}
 	};
 
-void Fix_control( struct job *job, char *filter, char *xlate_format )
+
+/********************************************************************
+ * int Fix_control( struct job *job, char *filexter,
+ * char *xlate_format, char *update_df_names )
+ *   fix the order of lines in the control file so that they
+ *   are in the order of the letters in the order string.
+ * Lines are checked for metacharacters and other trashy stuff
+ *   that might have crept in by user efforts
+ *
+ * job - control file area in memory
+ * order - order of options
+ *
+ *  order string: Letter - relative position in file
+ *                * matches any character not in string
+ *                  can have only one wildcard in string
+ *   Berkeley-            HPJCLIMWT1234
+ *   PLP-                 HPJCLIMWT1234*
+ *
+ * RETURNS: 0 if fixed correctly
+ *          non-zero if there is something wrong with this file and it should
+ *          be rejected out of hand
+ *
+ *  Fix up the control file,  setting the various entries
+ *  to be compatible with transfer to the remote location
+ * 1. info will have fromhost, priority, and number information
+ *   if not, you will need to add it.
+ *
+ ************************************************************************/
+
+void Fix_control( struct job *job, char *filter, char *xlate_format,
+	int update_df_names )
 {
-	char *s, *file_hostname, *number, *priority,
-		*order;
+	char *s, *t, *file_hostname, *number, *priority, *order;
 	char buffer[SMALLBUFFER], pr[2];
 	int tempfd, tempfc;
 	int i, n, j, cccc, wildcard, len;
@@ -1919,7 +1915,6 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	pr[1] = 0;
 
 	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
-
 	if( !file_hostname ){
 		file_hostname = Find_str_value(&job->info,FROMHOST);
 		if( file_hostname == 0 || *file_hostname == 0 ){
@@ -1929,18 +1924,17 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 	}
 
+	t = 0;
 	if( (Backwards_compatible_DYN || Use_shorthost_DYN)
-		&& (s = safestrchr( file_hostname, '.' )) ){
-		*s = 0;
+		&& (t = safestrchr( file_hostname, '.' )) ){
+		*t = 0;
 	}
 
-	if(DEBUGL3) Dump_job( "Fix_control: before fixing", job );
-
 	/* fix control file name */
-
 	s = safestrdup4("cf",pr,number,file_hostname,__FILE__,__LINE__);
-	Set_str_value(&job->info,TRANSFERNAME,s);
+	Set_str_value(&job->info,CFTRANSFERNAME,s);
 	if(s) free(s); s = 0;
+	if(t) *t = '.';
 
 	/* fix control file contents */
 
@@ -1977,9 +1971,9 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	for( i = 0; i < job->destination.count; ++i ){
 		s = job->destination.list[i];
 		cccc = cval(s);
-		buffer[0] = cccc;
-		if( isupper(cccc) && Find_str_value(&controlfile,buffer) ){
-			Set_str_value( &controlfile,buffer,s+1);
+		if( isupper(cccc) && cval(s+1) == '=' ){
+			buffer[0] = cccc;
+			Set_str_value( &controlfile,buffer,s+2 );
 		}
 	}
 
@@ -2040,19 +2034,20 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		char *temp = Join_line_list(&controlfile,"\n");
 		DEBUG3( "Fix_control: control info '%s'", temp );
 
-		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
+		datalines = Fix_datafile_infox( job, number, file_hostname,
+			xlate_format, update_df_names );
 		DEBUG3( "Fix_control: data info '%s'", datalines );
 		temp = safeextend2(temp,datalines,__FILE__,__LINE__);
-		if( datalines ) free(datalines); datalines = 0;
 		Set_str_value(&job->info,CF_OUT_IMAGE,temp);
 		if( temp ) free(temp); temp = 0;
 	}
 	
 	if( filter ){
+		char *f_name = 0, *c_name = 0;
 		DEBUG3("Fix_control: filter '%s'", filter );
 
-		tempfd = Make_temp_fd( 0 );
-		tempfc = Make_temp_fd( 0 );
+		tempfd = Make_temp_fd( &f_name );
+		tempfc = Make_temp_fd( &c_name );
 		s = Find_str_value(&job->info,CF_OUT_IMAGE );
 		if( Write_fd_str( tempfc, s ) < 0 ){
 			Errorcode = JFAIL;
@@ -2081,204 +2076,13 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		DEBUG4("Fix_control: control filter output '%s'", s);
 		Set_str_value(&job->info,CF_OUT_IMAGE,s);
 		if(s) free(s); s = 0;
+		if( f_name ) unlink(f_name); f_name = 0;
+		if( c_name ) unlink(c_name); c_name = 0;
 		close( tempfc ); tempfc = -1;
 		close( tempfd ); tempfd = -1;
 	}
 }
 
-/************************************************************************
- * Create_control:
- *  Create the control file,  setting the various entries.  This is done
- *  on job submission.
- *
- ************************************************************************/
-
-int Create_control( struct job *job, char *error, int errlen,
-	char *xlate_format )
-{
-	char *fromhost, *file_hostname, *number, *priority, *openname;
-	int status = 0, fd, i;
-	struct stat statb;
-
-	if(DEBUGL3) Dump_job( "Create_control: before fixing", job );
-
-	/* deal with authentication */
-
-	Make_identifier( job );
-
-	if( !(fromhost = Find_str_value(&job->info,FROMHOST)) || Is_clean_name(fromhost) ){
-		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
-		fromhost = Find_str_value(&job->info,FROMHOST);
-	}
-	/*
-	 * accounting name fixup
-	 * change the accounting name ('R' field in control file)
-	 * based on hostname
-	 *  hostname(,hostname)*=($K|value)*(;hostname(,hostname)*=($K|value)*)*
-	 *  we have a semicolon separated list of entrires
-	 *  the RemoteHost_IP is compared to these.  If a match is found then the
-	 *    user name (if any) is used for the accounting name.
-	 *  The user name list has the format:
-	 *  ${K}  - value from control file or printcap entry - you must use the
-	 *          ${K} format.
-	 *  username  - user name value to substitute.
-	 */
-	if( Accounting_namefixup_DYN ){
-		struct line_list l, listv;
-		char *accounting_name = 0;
-		Init_line_list(&l);
-		Init_line_list(&listv);
-
-		DEBUG1("Create_control: Accounting_namefixup '%s'", Accounting_namefixup_DYN );
-		Split(&listv,Accounting_namefixup_DYN,";",0,0,0,0,0,0);
-		for( i = 0; i < listv.count; ++i ){
-			char *s, *t;
-			int j;
-			s = listv.list[i];
-			if( (t = safestrpbrk(s,"=")) ) *t++ = 0;
-			Free_line_list(&l);
-			DEBUG1("Create_control: hostlist '%s'", s );
-			Split(&l,s,",",0,0,0,0,0,0);
-			if( Match_ipaddr_value(&l,&RemoteHost_IP) == 0 ){
-				Free_line_list(&l);
-				DEBUG1("Create_control: match, using users '%s'", t );
-				Split(&l,t,",",0,0,0,0,0,0);
-				if(DEBUGL1)Dump_line_list("Create_control: before Fix_dollars", &l );
-				Fix_dollars(&l,job,0,0);
-				if(DEBUGL1)Dump_line_list("Create_control: after Fix_dollars", &l );
-				for( j = 0; j < l.count; ++j ){
-					if( !ISNULL(l.list[j]) ){
-						accounting_name = l.list[j];
-						break;
-					}
-				}
-				break;
-			}
-		}
-		DEBUG1("Create_control: accounting_name '%s'", accounting_name );
-		if( !ISNULL(accounting_name) ){
-			Set_str_value(&job->info,ACCNTNAME,accounting_name );
-		}
-		Free_line_list(&l);
-		Free_line_list(&listv);
-	}
-
-	if( Force_IPADDR_hostname_DYN ){
-		char buffer[SMALLBUFFER];
-		const char *const_s;
-		int family;
-		/* We will need to create a dummy record. - no host */
-		family = RemoteHost_IP.h_addrtype;
-		const_s = (char *)inet_ntop( family, RemoteHost_IP.h_addr_list.list[0],
-			buffer, sizeof(buffer) );
-		DEBUG1("Create_control: remotehost '%s'", const_s );
-		Set_str_value(&job->info,FROMHOST,const_s);
-		fromhost = Find_str_value(&job->info,FROMHOST);
-	}
-	{
-		char *s, *t;
-		if( Force_FQDN_hostname_DYN && !safestrchr(fromhost,'.')
-			&& (t = safestrchr(FQDNRemote_FQDN,'.')) ){
-			s = safestrdup2(fromhost, t, __FILE__,__LINE__ );
-			Set_str_value(&job->info,FROMHOST,s);
-			if( s ) free(s); s = 0;
-			fromhost = Find_str_value(&job->info,FROMHOST);
-		}
-	}
-
-
-	if( !Find_str_value(&job->info,DATE) ){
-		char *s = Time_str(0,0);
-		Set_str_value(&job->info,DATE,s);
-	}
-	if( (Use_queuename_DYN || Force_queuename_DYN)
-		&& !Find_str_value(&job->info,QUEUENAME) ){
-		char *s = Force_queuename_DYN;
-		if( s == 0 ) s = Queue_name_DYN;
-		if( s == 0 ) s = Printer_DYN;
-		Set_str_value(&job->info,QUEUENAME,s);
-		Set_DYN(&Queue_name_DYN,s);
-	}
-	if( Hld_all(&Spool_control) || Auto_hold_DYN ){
-		Set_flag_value( &job->info,HOLD_TIME,time((void *)0) );
-	} else {
-		Set_flag_value( &job->info,HOLD_TIME,0);
-	}
-
-	number = Find_str_value( &job->info,NUMBER);
-
-	priority = Find_str_value( &job->info,PRIORITY);
-	if( !priority ){
-		priority = Default_priority_DYN;
-		if( !priority ) priority = "A";
-		Set_str_value(&job->info,PRIORITY,priority);
-		priority = Find_str_value(&job->info,PRIORITY);
-	}
-
-	file_hostname = Find_str_value(&job->info,FROMHOST);
-	if( ISNULL(file_hostname) ) file_hostname = FQDNRemote_FQDN;
-	if( ISNULL(file_hostname) ) file_hostname = FQDNHost_FQDN;
-
-	if( isdigit(cval(file_hostname)) ){
-		char * s = safestrdup2("ADDR",file_hostname,__FILE__,__LINE__);
-		Set_str_value(&job->info,FILE_HOSTNAME,s);
-		if( s ) free(s); s = 0;
-	} else {
-		Set_str_value(&job->info,FILE_HOSTNAME,file_hostname);
-	}
-	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
-
-	/* fix Z options */
-	Fix_Z_opts( job );
-	/* fix control file name */
-
-	{
-		char *s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
-		Set_str_value(&job->info,TRANSFERNAME,s);
-		if(s) free(s); s = 0;
-	}
-
-	{
-		/* now we generate the control file image by getting the info
-		 * from the hold file
-		 */
-		char *cf, *datalines;
-		cf = datalines = 0;
-		for( i = 0; i < job->info.count; ++i ){
-			char *t = job->info.list[i];
-			int c;
-			if( t && (c = t[0]) && isupper(c) && c != 'N' && c != 'U' 
-				&& t[1] == '=' ){
-				t[1] = 0;
-				cf = safeextend4(cf,t,t+2,"\n",__FILE__,__LINE__);
-				t[1] = '=';
-			}
-		}
-
-		DEBUG4("Create_control: first part '%s'", cf );
-		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
-		DEBUG4("Create_control: data info '%s'", datalines );
-		cf = safeextend2(cf,datalines,__FILE__,__LINE__);
-		DEBUG4("Create_control: joined '%s'", cf );
-		if( datalines ) free(datalines); datalines = 0;
-
-		openname = Find_str_value(&job->info,OPENNAME); 
-		if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME); 
-		DEBUG4("Create_control: writing to '%s'", openname );
-		if( (fd = Checkwrite(openname,&statb,0,1,0)) < 0
-			|| ftruncate(fd,0) || Write_fd_str(fd,cf) < 0 ){
-			SNPRINTF(error,errlen)"Write_control: cannot write '%s' - '%s'",
-				openname, Errormsg(errno) );
-			status = 1;
-		}
-		Max_open(fd);
-		if( fd > 0 ) close(fd); fd = -1;
-		if( cf ) free(cf); cf = 0;
-	}
-
-
-	return( status );
-}
 
 /*
  * Buffer management

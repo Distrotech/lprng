@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpd_control.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
 
 
 #include "lp.h"
@@ -176,7 +176,7 @@ int Job_control( int *sock, char *input )
 			/* we have Nprinter user move jobid* target */
 			if( tokencount < 5 ){
 				SNPRINTF( error, sizeof(error))
-					_("Use: OP_MOVE printer (user|jobid)* target") );
+					_("Use: move printer (user|jobid)* target") );
 				goto error;
 			}
 			break;
@@ -616,10 +616,10 @@ int Do_control_file( int action, int *sock,
 		 * check to see if this entry matches any of the patterns
 		 */
 		Free_job(&job);
-		Get_hold_file( &job, Sort_order.list[i] );
+		Get_hold_file( &job, Sort_order.list[i], 0 );
 		DEBUGFC(DCTRL2)Dump_job("Do_control_file - getting info",&job);
 		identifier = Find_str_value(&job.info,IDENTIFIER);
-		if( identifier == 0 ) identifier = Find_str_value(&job.info,TRANSFERNAME);
+		if( identifier == 0 ) identifier = Find_str_value(&job.info,CFTRANSFERNAME);
 		if( identifier == 0 ) continue;
 		DEBUGF(DCTRL4)("Do_control_file: checking id '%s'", identifier );
 

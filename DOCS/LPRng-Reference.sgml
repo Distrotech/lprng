@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng Reference Manual</title>
-<subtitle> 12 Dec 2003 (For LPRng-3.8.24)</subtitle>
+<subtitle> 3 Feb 2004 (For LPRng-3.8.25)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-751-2435</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-Reference.sgml,v 1.12 2003/12/13 00:11:50 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-Reference.sgml,v 1.15 2004/02/04 00:54:16 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -4276,23 +4276,21 @@ we see the command line options and
 values of the shell variables.
 For a full discussion of the environment variables passed to a
 filter see
-
 <link linkend="filteroptions">Filter Command Line Options and Environment Variables</link>.
-The more interesting environment variables include the
-<envar>PRINTCAP_ENTRY</envar>
-variable,
-which is a copy of the printcap entry for this printer,
-and the <envar>CONTROL</envar> variable,
-which is a copy of the control file for the the print job.</para>
+The more interesting environment variables include
+<envar>PRINTCAP_ENTRY</envar> - the printcap entry for this printer,
+<envar>CONTROL</envar> - the control file,
+and <envar>HF</envar> - the hold file.
+</para>
 
 <sect2 id="controlfiles"><title>Control Files and Filter Options</title>
 
 <para>
-When you submit a print job the <application/lpd/ print spooler
-stores it in the spool queue as two or more files:
-a <emphasis>control</emphasis>
+When you transfer a print job the <application/lpd/ print spooler
+will send the job as two or more files: 
+<emphasis>control</emphasis>
 file that contains information about
-the job and the <emphasis>data</emphasis>
+the job and <emphasis>data</emphasis>
 files that contain the information to be printed.
 Here is sample control file:
 <informalexample>
@@ -4692,6 +4690,16 @@ CONTROL=Hh4.private
  N/tmp/hi
  fdfA105h4.private
  UdfA105h4.private
+HF=H=h4.private
+ P=papowell
+ J=/tmp/hi
+ C=A
+ L=papowell
+ A=papowell@h4+105
+ D=2000-04-12-15:27:26.662
+ Q=lp
+ transfername=cfA105h4.private
+ datafiles=N=/tmp/hi,transfername=fdfA105h4.private,
 HOME=/home/daemon
 LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
 LOGDIR=/home/daemon
@@ -4738,10 +4746,13 @@ if the defaults are not suitable for their sites.</para>
 <para>The <application>lpd</application> server sets the
 <literal/PRINTER/,
 <literal/PRINTCAP_ENTRY/,
-and
 <literal/CONTROL/
+and
+<literal/HF/
 environment variables to the printer name,
-printcap entry, and control file for the print job.
+printcap entry,
+control file,
+and hold file for the print job.
 This information is very useful to filters that must
 make decisions based on values passed to the print server
 in the control file
@@ -8234,12 +8245,43 @@ that processes the incoming job control file.
 It should be used to update and/or modify information on the option lines of
 the control files of incoming jobs.
 It reads the control file on its <acronym/STDIN/,
-writes the new control file on its <acronym/STDOUT/,
+writes the new or modified  control file lines on its <acronym/STDOUT/,
 and then exits.
 A 0 exit code value causes normal processing of the job,
 <literal/JHOLD/ will hold the job,
 and any other value will cause the job to be discarded.
 </para>
+
+<para>
+In addition, the control file filter can specify new values for
+the hold file entries, as well as new values control file values.
+This latter capability can be used to modify priority or other
+facilities,  such as using the hold file <literal/move=/ field
+to reroute a job.
+The hold file output has the format:
+<informalexample>
+<screen>
+X&lt;option&gt;       - change value of control file X option
+X&lt;no option&gt;    - set value of X option to empty or none
+...
+&lt;blank line&gt;    - separator keyword=value options
+key=&lt;option&gt;    - set value of 'key' to option
+key=&lt;no option&gt;    - set value of 'key' to empty or none
+</screen>
+</informalexample>
+</para>
+
+<para>
+The <literal/key=value/ form can be used to set option values
+that are outside of the range of the control file options.
+For example, the
+<literal/move=/ option specifies a destination for the job,
+overriding the default destintation.  By adding a <literal/move=/
+entry, simple job routing can be done.
+This is an alternative to the more powerful routing filter
+capabilities.
+</para>
+
 <para>
 The following shows how we can set up a single queue that will
 allow various combinations of options to be selected by the format
@@ -8350,6 +8392,7 @@ options into longer ones:
 }</screen>
 </informalexample>
 </para>
+
 </sect2>
 </sect1>
 <sect1><title>Interfacing to Non-LPRng Spoolers</title>
@@ -14698,25 +14741,38 @@ This must be used with care when operating with non-&LPRng; software.</para>
 
 <sect1><title>Job Hold File</title>
 
-<para>Associated with each control file is a
-hold file that has additional information controlling the printing operations.
+<para>The information used to control the printing
+of a job is string in a <emphasis>hold file</emphasis>.
 The entries in this file have the form:
 <informalexample>
-<screen>key [value]</screen>
+<screen>key=[value]</screen>
 </informalexample>
 </para>
 
 <para>The following is an example of a hold file:
 <informalexample>
-<screen>server 0
-subserver 0
-attempt 3
-error cannot open printer
-hold 0
-priority 0
-remove 0
-routed 0</screen>
+<screen>server=0
+A=papowell@astart.com
+J=jobname
+transfername=cfA001astart.com
+datafiles=N=file\002transfername=dfA001astart.com
+subserver=0
+attempt=3
+error=cannot open printer
+hold=0
+priority=0
+remove=0
+routed=0</screen>
 </informalexample>
+</para>
+
+<para>
+The contents of the control file are stored as X=&lt;value>
+entries, where X is the upper case letter corresponding to the control
+file entry.
+The <literal/datafiles/
+entry contains the data file information,
+as a set of fields separated by field separator characters.
 </para>
 
 <para>The
@@ -14765,7 +14821,7 @@ The routing information is provided by a
 <link linkend="destinations">routing filter</link>.
 The information is recorded by information in the hold file.
 The following is an example of routing information.
-Normally this information is stored in a URL escaped format,
+Normally this information is stored in a compressed format
 with one line per destination,
 but for clarity this has been broken out into plain text form:</para>
 
@@ -17707,7 +17763,8 @@ with the following environment variables.
 <row><entry>Variable Name</entry><entry>Meaning</entry></row>
 </thead>
 <tbody>
-<row><entry><literal> CONTROL </literal></entry><entry>control file name</entry></row>
+<row><entry><literal> CONTROL </literal></entry><entry>control file image</entry></row>
+<row><entry><literal> HF </literal></entry><entry>hold file image</entry></row>
 <row><entry><literal> DATAFILES </literal></entry><entry>list of data file names</entry></row>
 <row><entry><literal> HOME </literal></entry><entry>Home directory (client only)</entry></row>
 <row><entry><literal> IFS </literal></entry> <entry><literal>" \t"</literal></entry></row>
@@ -23087,9 +23144,7 @@ The
 <literal>value</literal>
 field reports the control file contents:
 <informalexample>
-<screen>cf_esc_image=Apapowell@h4+676%0aCA%0aD1999-03-23-20:51:17.151%0aHh4.as
-   tart.com%0aJ/tmp/hi%0aLpapowell%0aPpapowell%0aQt1%0aN/tmp/hi%0afdfA676h4.as
-   tart.com%0aUdfA676h4.private%0a
+<screen>
 class=A
 date=1999-03-23-20:51:17.151
 file_hostname=h4.private

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_objs.h,v 1.62 2003/12/13 00:11:49 papowell Exp $
+ * $Id: user_objs.h,v 1.65 2004/02/04 00:54:15 papowell Exp $
  ***************************************************************************/
 
 

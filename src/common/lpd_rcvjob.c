@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -119,6 +119,7 @@ int Receive_job( int *sock, char *input )
 	struct line_list files, info, l;
 	struct job job;
 	struct stat statb;
+	int discarding_large_job = 0;
 
 	Init_line_list(&l);
 	Init_line_list(&files);
@@ -199,7 +200,7 @@ int Receive_job( int *sock, char *input )
 	/* fifo order enforcement */
 	if( Fifo_DYN ){
 		char * path = Make_pathname( Spool_dir_DYN, Fifo_lock_file_DYN );
-		path = safestrappend4( path,"." , RemoteHost_IP.fqdn, 0  );
+		path = safestrdup3( path,"." , RemoteHost_IP.fqdn, __FILE__,__LINE__ );
 		DEBUG1( "Receive_job: checking fifo_lock file '%s'", path );
 		fifo_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( fifo_fd < 0 ){
@@ -279,14 +280,20 @@ int Receive_job( int *sock, char *input )
 		 ************************************************/
 		jobsize += file_len;
 		read_len = file_len;
+		DEBUGF(DRECV4)("Receive_job: receiving '%s' jobsize %0.0f, file_len %0.0f, read_len %0.0f",
+			filename, jobsize, file_len, read_len );
 
 		if( read_len == 0 ) read_len = Max_job_size_DYN*1024;
 		if( Max_job_size_DYN > 0 && (jobsize/1024) > (0.0+Max_job_size_DYN) ){
-			SNPRINTF( error, errlen)
-				_("%s: job size %0.3fK is larger than %d K"),
-				Printer_DYN, jobsize/1024, Max_job_size_DYN );
-			ack = ACK_RETRY;
-			goto error;
+			if( Discard_large_jobs_DYN ){
+				discarding_large_job = 1;
+			} else {
+				SNPRINTF( error, errlen)
+					_("size %0.3fK exceeds %dK"),
+					jobsize/1024, Max_job_size_DYN );
+				ack = ACK_RETRY;
+				goto error;
+			}
 		} else if( !Check_space( read_len, Minfree_DYN, Spool_dir_DYN ) ){
 			SNPRINTF( error, errlen)
 				_("%s: insufficient file space"), Printer_DYN );
@@ -297,8 +304,10 @@ int Receive_job( int *sock, char *input )
 		/*
 		 * we are ready to read the file; send 0 ack saying so
 		 */
+		DEBUGF(DRECV4)("Receive_job: next, receiving '%s' jobsize %0.0f, file_len %0.0f, read_len %0.0f",
+			filename, jobsize, file_len, read_len );
 
-		DEBUGF(DRECV2)("Receive_job: sending 0 ACK to transfer '%s'", filename );
+		DEBUGF(DRECV2)("Receive_job: sending 0 ACK to transfer '%s', length %0.0f", filename, file_len );
 		status = Link_send( ShortRemote_FQDN, sock, Send_job_rw_timeout_DYN, "", 1, 0 );
 		if( status ){
 			SNPRINTF( error, errlen)
@@ -307,14 +316,20 @@ int Receive_job( int *sock, char *input )
 			goto error;
 		}
 
-		temp_fd = Make_temp_fd(&tempfile);
+		if( discarding_large_job ){
+			temp_fd = Checkwrite( "/dev/null", &statb,0,0,0);
+			tempfile = 0;
+		} else {
+			temp_fd = Make_temp_fd(&tempfile);
+		}
 
 		/*
 		 * If the file length is 0, then we transfer only as much as we have
 		 * space available. Note that this will be the last file in a job
 		 */
 
-		DEBUGF(DRECV4)("Receive_job: receiving '%s' %d bytes ", filename, read_len );
+		DEBUGF(DRECV4)("Receive_job: receiving '%s' read_len %0.0f bytes, file_len %0.0f",
+			filename, read_len, file_len );
 		len = read_len;
 		status = Link_file_read( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, 0, temp_fd, &read_len, &ack );
@@ -344,26 +359,68 @@ int Receive_job( int *sock, char *input )
 			DEBUGF(DRECV2)("Receive_job: receiving new control file, old job.info.count %d, old files.count %d",
 				job.info.count, files.count );
 			if( job.info.count ){
-				/* we received another control file */
-				if( Check_for_missing_files(&job, &files, error, errlen, 0, &hold_fd) ){
-					goto error;
+				/* we received another control file, finish this job up */
+				if( !discarding_large_job ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+						goto error;
+					}
+					Set_str_value(&job.info,INCOMING_TIME,0);
+				} else {
+					SNPRINTF( error, errlen)
+						_("size %0.3fK exceeds %dK"),
+						jobsize/1024, Max_job_size_DYN );
+					Set_str_value(&job.info,ERROR,error);
+					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+					Set_str_value(&job.info,INCOMING_TIME,0);
+					error[0] = 0;
+					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+						SNPRINTF( error,errlen)
+							"Error setting up hold file - %s",
+							Errormsg( errno ) );
+						goto error;
+					}
+					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+					discarding_large_job = 0;
 				}
-				hold_fd = -1;
+				close( hold_fd ); hold_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 			}
+
 			Free_job(&job);
 			Set_str_value(&job.info,OPENNAME,tempfile);
-			Set_str_value(&job.info,TRANSFERNAME,filename);
-			hold_fd = Set_up_temporary_hold_file( &job, error, errlen );
+
+			hold_fd = Setup_temporary_hold_file( &job, filename, 1, 0, error, errlen );
+			if( hold_fd < 0 ){
+				goto error;
+			}
 			if( files.count ){
 				/* we have datafiles, FOLLOWED by a control file,
 					followed (possibly) by another control file */
 				/* we receive another control file */
-				if( Check_for_missing_files(&job, &files, error, errlen, 0, &hold_fd) ){
-					goto error;
+				if( !discarding_large_job ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+						goto error;
+					}
+					Set_str_value(&job.info,INCOMING_TIME,0);
+				} else {
+					SNPRINTF( error, errlen)
+						_("size %0.3fK exceeds %dK"),
+						jobsize/1024, Max_job_size_DYN );
+					Set_str_value(&job.info,ERROR,error);
+					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+					Set_str_value(&job.info,INCOMING_TIME,0);
+					error[0] = 0;
+					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+						SNPRINTF( error,errlen)
+							"Error setting up hold file - %s",
+							Errormsg( errno ) );
+						goto error;
+					}
+					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+					discarding_large_job = 0;
 				}
-				hold_fd = -1;
+				close( hold_fd ); hold_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 				Free_job(&job);
@@ -377,24 +434,34 @@ int Receive_job( int *sock, char *input )
 
 	DEBUGF(DRECV2)("Receive_job: eof on transfer, job.info.count %d, files.count %d",
 		job.info.count, files.count );
-	if( job.info.count ){
-		/* we receive another control file */
-		if( Check_for_missing_files(&job, &files, error, errlen, 0, &hold_fd) ){
+	if( !discarding_large_job ){
+		if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
 			goto error;
 		}
-		hold_fd = -1;
-		Free_line_list(&files);
-		jobsize = 0;
-		Free_job(&job);
+		Set_str_value(&job.info,INCOMING_TIME,0);
+	} else {
+		SNPRINTF( error, errlen)
+			_("size %0.3fK exceeds %dK"),
+			jobsize/1024, Max_job_size_DYN );
+		Set_str_value(&job.info,ERROR,error);
+		Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+		Set_str_value(&job.info,INCOMING_TIME,0);
+		error[0] = 0;
+		if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+			SNPRINTF( error,errlen)
+				"Error setting up hold file - %s",
+				Errormsg( errno ) );
+			goto error;
+		}
+		if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+		discarding_large_job = 0;
 	}
 
  error:
 
+	if( hold_fd > 0 ) close(hold_fd); hold_fd = -1;
 	if( temp_fd > 0 ) close(temp_fd); temp_fd = -1;
-	if( fifo_fd > 0 ){
-		Do_unlock( fifo_fd );
-		close(fifo_fd); fifo_fd = -1;
-	}
+	if( fifo_fd > 0 ) close(fifo_fd); fifo_fd = -1;
 
 	Remove_tempfiles();
 	if( error[0] ){
@@ -410,10 +477,8 @@ int Receive_job( int *sock, char *input )
 		(void)Link_send( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
 		Link_close( Send_query_rw_timeout_DYN, sock );
-		if( hold_fd >= 0 ){
-			close(hold_fd); hold_fd = -1;
-		}
 	} else {
+		Set_str_value(&job.info,INCOMING_TIME,0);
 		Link_close( Send_query_rw_timeout_DYN, sock );
 		/* update the spool queue */
 		Get_spool_control( Queue_control_file_DYN, &Spool_control );
@@ -431,12 +496,6 @@ int Receive_job( int *sock, char *input )
 			LOGERR_DIE(LOG_ERR) _("Receive_jobs: write to fd '%d' failed"),
 				Lpd_request );
 		}
-		Free_line_list(&info);
-		Free_line_list(&files);
-		Free_job(&job);
-		Free_line_list(&l);
-
-		/* Do_queue_jobs( s, 0 ); */
 	}
 	Free_line_list(&info);
 	Free_line_list(&files);
@@ -475,6 +534,7 @@ int Receive_block_job( int *sock, char *input )
 	struct stat statb;
 	struct line_list l;
 	int db, dbf;
+	int discarding_large_job = 0;
 
 
 	error[0] = 0;
@@ -546,11 +606,15 @@ int Receive_block_job( int *sock, char *input )
 	read_len = file_len;
 
 	if( Max_job_size_DYN > 0 && (read_len+1023)/1024 > Max_job_size_DYN ){
-		SNPRINTF( error, errlen)
-			_("%s: job size %0.3f is larger than %dK"),
-			Printer_DYN, file_len/1024, Max_job_size_DYN );
-		ack = ACK_RETRY;
-		goto error;
+		if( Discard_large_jobs_DYN ){
+			discarding_large_job = 1;
+		} else {
+			SNPRINTF( error, errlen)
+				_("size %0.3fK exceeds %dK"),
+				read_len/1024, Max_job_size_DYN );
+			ack = ACK_RETRY;
+			goto error;
+		}
 	} else if( !Check_space( read_len, Minfree_DYN, Spool_dir_DYN ) ){
 		SNPRINTF( error, errlen-4)
 			_("%s: insufficient file space"), Printer_DYN );
@@ -674,6 +738,8 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 	struct line_list l, info, files;
 	struct job job;
 	struct stat statb;
+	int discarding_large_job = 0;
+	double jobsize = 0;
 
 	if( fstat( fd, &statb) < 0 ){
 		Errorcode = JABORT;
@@ -690,6 +756,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 	
 	startpos = lseek( fd, 0, SEEK_CUR );
 	DEBUGF(DRECV2)("Scan_block_file: starting at %d", startpos );
+	error[0] = 0;
 	while( (status = Read_one_line( Send_job_rw_timeout_DYN, fd, line, sizeof(line) )) > 0 ){
 		/* the next position is the start of data */
 		Free_line_list(&l);
@@ -719,7 +786,22 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		DEBUGFC(DRECV2)Dump_line_list("Scan_block_file- input", &info );
 		read_len = atoi( info.list[0] );
 		filename = info.list[1];
-		tempfd = Make_temp_fd( &tempfile );
+
+		jobsize += read_len;
+		if( Max_job_size_DYN > 0 && (jobsize/1024) > (0.0+Max_job_size_DYN) ){
+			if( Discard_large_jobs_DYN ){
+				SNPRINTF( error, errlen)
+					_("size %0.3fK exceeds %dK"),
+					jobsize/1024, Max_job_size_DYN );
+				discarding_large_job = 1;
+			}
+		}
+		if( discarding_large_job ){
+			tempfd = Checkwrite( "/dev/null", &statb,0,0,0);
+			tempfile = 0;
+		} else {
+			tempfd = Make_temp_fd( &tempfile );
+		}
 		DEBUGF(DRECV2)("Scan_block_file: tempfd %d, read_len %d", read_len, tempfd );
 		for( len = read_len; len > 0; len -= count ){
 			n = sizeof(buffer);
@@ -750,30 +832,69 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		tempfd = -1;
 
 		if( filetype == CONTROL_FILE ){
-			DEBUGF(DRECV2)("Scan_block_file: control file '%s'", filename );
-			DEBUGF(DRECV2)("Scan_block_file: received control file, job.info.count %d, files.count %d",
+			DEBUGF(DRECV2)("Scan_block_file: receiving new control file, old job.info.count %d, old files.count %d",
 				job.info.count, files.count );
 			if( job.info.count ){
-				if( Check_for_missing_files(&job, &files, error, errlen, 0, &hold_fd) ){
-					goto error;
+				/* we received another control file, finish this job up */
+				if( discarding_large_job ){
+					SNPRINTF( error, errlen)
+						_("size %0.3fK exceeds %dK"),
+						jobsize/1024, Max_job_size_DYN );
+					Set_str_value(&job.info,ERROR,error);
+					Set_str_value(&job.info,INCOMING_TIME,0);
+					error[0] = 0;
+					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+						SNPRINTF( error,errlen)
+							"Error setting up hold file - %s",
+							Errormsg( errno ) );
+						goto error;
+					}
+					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+				} else {
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+						goto error;
+					}
+					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
-				hold_fd = -1;
+				close( hold_fd ); hold_fd = -1;
 				Free_line_list(&files);
-				Free_job(&job);
+				jobsize = 0;
 			}
+			Free_job(&job);
 			Set_str_value(&job.info,OPENNAME,tempfile);
-			Set_str_value(&job.info,TRANSFERNAME,filename);
-			hold_fd = Set_up_temporary_hold_file( &job, error, errlen );
-			if( hold_fd < 0 ) goto error;
+
+			hold_fd = Setup_temporary_hold_file( &job, filename, 1, 0, error, errlen );
+			if( hold_fd < 0 ){
+				goto error;
+			}
 			if( files.count ){
 				/* we have datafiles, FOLLOWED by a control file,
 					followed (possibly) by another control file */
 				/* we receive another control file */
-				if( Check_for_missing_files(&job, &files, error, errlen, 0, &hold_fd) ){
-					goto error;
+				if( discarding_large_job ){
+					SNPRINTF( error, errlen)
+						_("size %0.3fK exceeds %dK"),
+						jobsize/1024, Max_job_size_DYN );
+					Set_str_value(&job.info,ERROR,error);
+					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+					Set_str_value(&job.info,INCOMING_TIME,0);
+					error[0] = 0;
+					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+						SNPRINTF( error,errlen)
+							"Error setting up hold file - %s",
+							Errormsg( errno ) );
+						goto error;
+					}
+					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+				} else {
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+						goto error;
+					}
+					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
-				hold_fd = -1;
+				close( hold_fd ); hold_fd = -1;
 				Free_line_list(&files);
+				jobsize = 0;
 				Free_job(&job);
 			}
 		} else {
@@ -782,21 +903,37 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 	}
 
 	if( files.count ){
-		/* we receive another control file */
-		if( Check_for_missing_files(&job, &files, error, errlen, header_info, &hold_fd) ){
-			goto error;
+		if( discarding_large_job ){
+			SNPRINTF( error, errlen)
+				_("size %0.3fK exceeds %dK"),
+				jobsize/1024, Max_job_size_DYN );
+			Set_str_value(&job.info,ERROR,error);
+			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+			Set_str_value(&job.info,INCOMING_TIME,0);
+			error[0] = 0;
+			if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+				SNPRINTF( error,errlen)
+					"Error setting up hold file - %s",
+					Errormsg( errno ) );
+				goto error;
+			}
+			if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+		} else {
+			if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+				goto error;
+			}
+			Set_str_value(&job.info,INCOMING_TIME,0);
 		}
-		hold_fd = -1;
-		Free_line_list(&files);
-		Free_job(&job);
 	}
 
  error:
-	if( hold_fd >= 0 ){
+	if( error[0] ){
+		Remove_tempfiles();
 		Remove_job( &job );
-		close(hold_fd); hold_fd = -1;
 	}
-	if( tempfd >= 0 ) close(tempfd); tempfd = -1;
+	Set_str_value(&job.info,INCOMING_TIME,0);
+	if( hold_fd > 0 ) close(hold_fd); hold_fd = -1;
+	if( tempfd > 0 ) close(tempfd); tempfd = -1;
 	Free_line_list(&l);
 	Free_line_list(&info);
 	Free_line_list(&files);
@@ -834,7 +971,7 @@ int Check_space( double jobsize, int min_space, char *pathname )
 	jobsize = ((jobsize+1023)/1024);
 	ok = ((jobsize + min_space) < space);
 
-	DEBUGF(DRECV1)("Check_space: path '%s', space %0.0f, jobsize %0.0fK, ok %d",
+	DEBUGF(DRECV1)("Check_space: path '%s', space %0.0f Bytes, jobsize %0.0fK, ok %d",
 		pathname, space, jobsize, ok );
 
 	return( ok );
@@ -893,33 +1030,31 @@ int Do_perm_check( struct job *job, char *error, int errlen )
  */
 
 int Check_for_missing_files( struct job *job, struct line_list *files,
-	char *error, int errlen, struct line_list *header_info, int *holdfile_fd )
+	char *error, int errlen, struct line_list *header_info, int holdfile_fd )
 {
-	int count;
+	int count, fd, i, status = 0, copies;
 	struct line_list *lp = 0, datafiles;
-	int status = 0;
 	char *openname, *transfername;
 	double jobsize;
-	int copies;
 	struct stat statb;
 	struct timeval start_time;
+	char *fromhost, *file_hostname, *number, *priority, *cf;
+
+	Init_line_list(&datafiles);
 
 	if( gettimeofday( &start_time, 0 ) ){
 		Errorcode = JABORT;
 		LOGERR_DIE(LOG_INFO) "Check_for_missing_files: gettimeofday failed");
 	}
-	DEBUG1("Check_for_missing_files: holdfile_fd %d, start time 0x%x usec 0x%x",
-		*holdfile_fd,
+
+	DEBUG1("Check_for_missing_files: start time 0x%x usec 0x%x",
 		(int)start_time.tv_sec, (int)start_time.tv_usec );
 	if(DEBUGL1)Dump_job("Check_for_missing_files - start", job );
 	if(DEBUGL1)Dump_line_list("Check_for_missing_files- files", files );
 	if(DEBUGL1)Dump_line_list("Check_for_missing_files- header_info", header_info );
 
-
 	Set_flag_value(&job->info,JOB_TIME,(int)start_time.tv_sec);
 	Set_flag_value(&job->info,JOB_TIME_USEC,(int)start_time.tv_usec);
-
-	Init_line_list(&datafiles);
 
 	/* we can get this as a new job or as a copy.
 	 * if we get a copy,  we do not need to check this stuff
@@ -929,14 +1064,165 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		Set_flag_value(&job->info,UNIXSOCKET,Perm_check.unix_socket);
 		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
 	}
-	if( files ){
-		if( Do_perm_check( job, error, errlen ) == P_REJECT ){
-			status = 1;
-			goto error;
-		}
 
+	if( header_info && User_is_authuser_DYN ){
+		char *s = Find_str_value(header_info,AUTHUSER);
+		if( !ISNULL(s) ){
+			Set_str_value( &job->info,LOGNAME,s);
+			DEBUG1("Check_for_missing_files: setting user to authuser '%s'", s );
+		}
+	}
+
+	if(DEBUGL3) Dump_job( "Check_for_missing_files: before fixing", job );
+
+	/* deal with authentication */
+
+	Make_identifier( job );
+
+	if( !(fromhost = Find_str_value(&job->info,FROMHOST)) || Is_clean_name(fromhost) ){
+		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
+		fromhost = Find_str_value(&job->info,FROMHOST);
+	}
+
+
+	if( header_info ){
+		char *authfrom, *authuser, *authtype, *authca;
+		authfrom = Find_str_value(header_info,AUTHFROM);
+		authuser = Find_str_value(header_info,AUTHUSER);
+		authtype = Find_str_value(header_info,AUTHTYPE);
+		authca = Find_str_value(header_info,AUTHCA);
+		if( ISNULL(authuser) ) authuser = authfrom;
+		Set_str_value(&job->info,AUTHUSER,authuser);
+		Set_str_value(&job->info,AUTHFROM,authfrom);
+		Set_str_value(&job->info,AUTHTYPE,authtype);
+		Set_str_value(&job->info,AUTHCA,authca);
+	}
+
+	/*
+	 * check permissions now that you have set up all the information
+	 */
+
+	if( Do_perm_check( job, error, errlen ) == P_REJECT ){
+		status = 1;
+		goto error;
+	}
+
+
+	/*
+	 * accounting name fixup
+	 * change the accounting name ('R' field in control file)
+	 * based on hostname
+	 *  hostname(,hostname)*=($K|value)*(;hostname(,hostname)*=($K|value)*)*
+	 *  we have a semicolon separated list of entrires
+	 *  the RemoteHost_IP is compared to these.  If a match is found then the
+	 *    user name (if any) is used for the accounting name.
+	 *  The user name list has the format:
+	 *  ${K}  - value from control file or printcap entry - you must use the
+	 *          ${K} format.
+	 *  username  - user name value to substitute.
+	 */
+	if( Accounting_namefixup_DYN ){
+		struct line_list l, listv;
+		char *accounting_name = 0;
+		Init_line_list(&l);
+		Init_line_list(&listv);
+
+		DEBUG1("Check_for_missing_files: Accounting_namefixup '%s'", Accounting_namefixup_DYN );
+		Split(&listv,Accounting_namefixup_DYN,";",0,0,0,0,0,0);
+		for( i = 0; i < listv.count; ++i ){
+			char *s, *t;
+			int j;
+			s = listv.list[i];
+			if( (t = safestrpbrk(s,"=")) ) *t++ = 0;
+			Free_line_list(&l);
+			DEBUG1("Check_for_missing_files: hostlist '%s'", s );
+			Split(&l,s,",",0,0,0,0,0,0);
+			if( Match_ipaddr_value(&l,&RemoteHost_IP) == 0 ){
+				Free_line_list(&l);
+				DEBUG1("Check_for_missing_files: match, using users '%s'", t );
+				Split(&l,t,",",0,0,0,0,0,0);
+				if(DEBUGL1)Dump_line_list("Check_for_missing_files: before Fix_dollars", &l );
+				Fix_dollars(&l,job,0,0);
+				if(DEBUGL1)Dump_line_list("Check_for_missing_files: after Fix_dollars", &l );
+				for( j = 0; j < l.count; ++j ){
+					if( !ISNULL(l.list[j]) ){
+						accounting_name = l.list[j];
+						break;
+					}
+				}
+				break;
+			}
+		}
+		DEBUG1("Check_for_missing_files: accounting_name '%s'", accounting_name );
+		if( !ISNULL(accounting_name) ){
+			Set_str_value(&job->info,ACCNTNAME,accounting_name );
+		}
+		Free_line_list(&l);
+		Free_line_list(&listv);
+	}
+
+	if( Force_IPADDR_hostname_DYN ){
+		char buffer[SMALLBUFFER];
+		const char *const_s;
+		int family;
+		/* We will need to create a dummy record. - no host */
+		family = RemoteHost_IP.h_addrtype;
+		const_s = (char *)inet_ntop( family, RemoteHost_IP.h_addr_list.list[0],
+			buffer, sizeof(buffer) );
+		DEBUG1("Check_for_missing_files: remotehost '%s'", const_s );
+		Set_str_value(&job->info,FROMHOST,const_s);
+		fromhost = Find_str_value(&job->info,FROMHOST);
+	}
+	{
+		char *s, *t;
+		if( Force_FQDN_hostname_DYN && !safestrchr(fromhost,'.')
+			&& (t = safestrchr(FQDNRemote_FQDN,'.')) ){
+			s = safestrdup2(fromhost, t, __FILE__,__LINE__ );
+			Set_str_value(&job->info,FROMHOST,s);
+			if( s ) free(s); s = 0;
+			fromhost = Find_str_value(&job->info,FROMHOST);
+		}
+	}
+
+	if( !Find_str_value(&job->info,DATE) ){
+		char *s = Time_str(0,0);
+		Set_str_value(&job->info,DATE,s);
+	}
+	if( (Use_queuename_DYN || Force_queuename_DYN)
+		&& !Find_str_value(&job->info,QUEUENAME) ){
+		char *s = Force_queuename_DYN;
+		if( s == 0 ) s = Queue_name_DYN;
+		if( s == 0 ) s = Printer_DYN;
+		Set_str_value(&job->info,QUEUENAME,s);
+		Set_DYN(&Queue_name_DYN,s);
+	}
+	if( Hld_all(&Spool_control) || Auto_hold_DYN ){
+		Set_flag_value( &job->info,HOLD_TIME,time((void *)0) );
+	} else {
+		Set_flag_value( &job->info,HOLD_TIME,0);
+	}
+
+	number = Find_str_value( &job->info,NUMBER);
+
+	file_hostname = Find_str_value(&job->info,FROMHOST);
+	if( ISNULL(file_hostname) ) file_hostname = FQDNRemote_FQDN;
+	if( ISNULL(file_hostname) ) file_hostname = FQDNHost_FQDN;
+
+	if( isdigit(cval(file_hostname)) ){
+		char * s = safestrdup2("ADDR",file_hostname,__FILE__,__LINE__);
+		Set_str_value(&job->info,FILE_HOSTNAME,s);
+		if( s ) free(s); s = 0;
+	} else {
+		Set_str_value(&job->info,FILE_HOSTNAME,file_hostname);
+	}
+	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
+
+	/* fix Z options */
+	Fix_Z_opts( job );
+	/* fix control file name */
+
+	{
 		jobsize = 0;
-		error[0] = 0;
 		/* RedHat Linux 6.1 - sends a control file with NO data files */
 		if( job->datafiles.count == 0 && files->count > 0 ){
 			Check_max(&job->datafiles,files->count+1);
@@ -950,7 +1236,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 				 */
 				transfername = files->list[count];
 				if( (openname = strchr(transfername,'=')) ) *openname++ = 0;
-				Set_str_value(lp,TRANSFERNAME,transfername);
+				Set_str_value(lp,OTRANSFERNAME,transfername);
 				Set_str_value(lp,FORMAT,"f");
 				Set_flag_value(lp,COPIES,1);
 				if( openname ) openname[-1] = '=';
@@ -958,9 +1244,9 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 			if(DEBUGL1)Dump_job("RedHat Linux fix", job );
 		}
 		for( count = 0; count < job->datafiles.count; ++count ){
+			double size;
 			lp = (void *)job->datafiles.list[count];
 			transfername = Find_str_value(lp,OTRANSFERNAME);
-			if( ISNULL(transfername) ) transfername = Find_str_value(lp,TRANSFERNAME);
 			/* find the open name and replace it in the information */
 			if( (openname = Find_casekey_str_value(files,transfername,Hash_value_sep)) ){
 				Set_str_value(lp,OPENNAME,openname);
@@ -977,7 +1263,9 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 			}
 			copies = Find_flag_value(lp,COPIES);
 			if( copies == 0 ) copies = 1;
-			jobsize += copies * statb.st_size;
+			size = statb.st_size;
+			Set_double_value(lp,SIZE,size);
+			jobsize += copies * size;
 		}
 		Set_double_value(&job->info,SIZE,jobsize);
 
@@ -988,52 +1276,20 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 			goto error;
 		}
 		Free_line_list(&datafiles);
+		Fix_datafile_infox( job, number,
+			file_hostname, Xlate_incoming_format_DYN, 1 );
 	}
 
-	/* now we need to assign a control file number */
-	if( *holdfile_fd <= 0 && (*holdfile_fd = Find_non_colliding_job_number( job )) < 0 ){
-		SNPRINTF(error,errlen)
-			"cannot allocate hold file");
-		status = 1;
-		goto error;
-	}
-	DEBUG1("Check_for_missing_files: holdfile_fd  now '%d'", *holdfile_fd );
-
-	if( header_info && User_is_authuser_DYN ){
-		char *s = Find_str_value(header_info,AUTHUSER);
-		if( !ISNULL(s) ){
-			Set_str_value( &job->info,LOGNAME,s);
-			DEBUG1("Check_for_missing_files: setting user to authuser '%s'", s );
-		}
-	}
-
-	if( Create_control( job, error, errlen, Xlate_incoming_format_DYN ) ){
-		DEBUG1("Check_for_missing_files: Create_control error '%s'", error );
-		status = 1;
-		goto error;
-	}
 	Set_str_value(&job->info,HPFORMAT,0);
 	Set_str_value(&job->info,INCOMING_TIME,0);
 
-	if( header_info ){
-		char *authfrom, *authuser, *authtype, *authca;
-		authfrom = Find_str_value(header_info,AUTHFROM);
-		authuser = Find_str_value(header_info,AUTHUSER);
-		authtype = Find_str_value(header_info,AUTHTYPE);
-		authca = Find_str_value(header_info,AUTHCA);
-		if( ISNULL(authuser) ) authuser = authfrom;
-		Set_str_value(&job->info,AUTHUSER,authuser);
-		Set_str_value(&job->info,AUTHFROM,authfrom);
-		Set_str_value(&job->info,AUTHTYPE,authtype);
-		Set_str_value(&job->info,AUTHCA,authca);
-	}
-	/* now we do the renaming */
+	/* now rename the data files */
 	status = 0;
 	for( count = 0; status == 0 && count < job->datafiles.count; ++count ){
 		lp = (void *)job->datafiles.list[count];
 		openname = Find_str_value(lp,OPENNAME);
 		if( stat(openname,&statb) ) continue;
-		transfername = Find_str_value(lp,TRANSFERNAME);
+		transfername = Find_str_value(lp,DFTRANSFERNAME);
 		DEBUG1("Check_for_missing_files: renaming '%s' to '%s'",
 			openname, transfername );
 		if( (status = rename(openname,transfername)) ){
@@ -1043,21 +1299,18 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		}
 	}
 	if( status ) goto error;
-	if( (status = Get_route( job, error, errlen )) ){
-		DEBUG1("Check_for_missing_files: Routing_filter error '%s'", error );
-		goto error;
+
+
+	Generate_control_file( job );
+	if( Routing_filter_DYN || Incoming_control_filter_DYN ){
+		if( (status = Get_route( job, error, errlen )) ){
+			DEBUG1("Check_for_missing_files: Routing_filter error '%s'", error );
+			goto error;
+		}
+		Generate_control_file( job );
 	}
-	openname = Find_str_value(&job->info,OPENNAME);
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
-	DEBUG1("Check_for_missing_files: renaming '%s' to '%s'",
-		openname, transfername );
-	if( (status = rename(openname,transfername)) ){
-		SNPRINTF( error,errlen)
-			"error renaming '%s' to '%s' - %s",
-			openname, transfername, Errormsg( errno ) );
-		goto error;
-	}
-	if( (status = Set_hold_file( job, 0, *holdfile_fd )) ){
+
+	if( (status = Set_hold_file( job, 0, holdfile_fd )) ){
 		SNPRINTF( error,errlen)
 			"error setting up hold file - %s",
 			Errormsg( errno ) );
@@ -1066,20 +1319,19 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	if(DEBUGL1)Dump_job("Check_for_missing_files - ending", job );
 
  error:
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
 	if( status ){
-		LOGMSG(LOG_INFO) "Check_for_missing_files: FAIL '%s' %s", transfername, error);
+		LOGMSG(LOG_INFO) "Check_for_missing_files: FAILED '%s' %s",
+			transfername?transfername:"???", error);
 		/* we need to unlink the data files */
 		openname = Find_str_value(&job->info,OPENNAME);
-		transfername = Find_str_value(&job->info,TRANSFERNAME);
 		if( openname ) unlink( openname );
-		if( transfername) unlink( transfername );
 		for( count = 0; count < job->datafiles.count; ++count ){
 			lp = (void *)job->datafiles.list[count];
-			transfername = Find_str_value(lp,TRANSFERNAME);
+			transfername = Find_str_value(lp,DFTRANSFERNAME);
 			openname = Find_str_value(lp,OPENNAME);
-			unlink(openname);
-			unlink(transfername);
+			if( transfername ) unlink(transfername);
+			if( openname ) unlink(openname);
 		}
 		openname = Find_str_value(&job->info,HF_NAME);
 		if( openname ) unlink(openname);
@@ -1090,33 +1342,42 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		setmessage( job, "STATE", "CREATE" );
 	}
 
-	if( *holdfile_fd >= 0 ) close(*holdfile_fd); *holdfile_fd = -1;
 	Free_line_list(&datafiles);
 	return( status );
 }
 
 /***************************************************************************
- * int Set_up_temporary_hold_file( struct job *job,
+ * int Setup_temporary_hold_file( struct job *job,
  *	char *error, int errlen )
  *  sets up a hold file and control file
  ***************************************************************************/
 
-int Set_up_temporary_hold_file( struct job *job,
+int Setup_temporary_hold_file( struct job *job, char *filename,
+	int read_control_file,
+	char *cf_file_image,
 	char *error, int errlen  )
 {
 	int fd = -1;
 	/* now we need to assign a control file number */
-	DEBUG1("Set_up_temporary_hold_file: starting" );
+	DEBUG1("Setup_temporary_hold_file: starting, filename %s, read_control_file %d, cf_file_image %s",
+		filename, read_control_file, cf_file_image );
 
-	/* sets identifier and hold information */
-	Setup_job( job, &Spool_control, 0, 0, 0);
-	/* now we get collision resolution */
+	/* job id collision resolution */
+	Check_format( CONTROL_FILE, filename, job );
+
 	if( (fd = Find_non_colliding_job_number( job )) < 0 ){
 		SNPRINTF(error,errlen)
-			"cannot allocate hold file");
+			"Maximum number of jobs in queue. Delete some and retry");
 		goto error;
 	}
-	DEBUG1("Set_up_temporary_hold_file: hold file fd '%d'", fd );
+
+	/* set up the control file information */
+	Set_hf_from_cf_info( job, cf_file_image, read_control_file );
+
+	Make_identifier( job );
+	Check_for_hold( job, &Spool_control );
+
+	DEBUG1("Setup_temporary_hold_file: hold file fd '%d'", fd );
 	
 	/* mark as incoming */
 	Set_flag_value(&job->info,INCOMING_TIME,time((void *)0) );
@@ -1173,7 +1434,7 @@ int Find_non_colliding_job_number( struct job *job )
 			Set_str_value(&job->info,HF_NAME,hold_file);
 		}
 	}
-	DEBUGF(DRECV1)("Find_non_colliding_job_number: using %s", hold_file );
+	DEBUGF(DRECV1)("Find_non_colliding_job_number: fd %d", hold_file );
 	return( hold_fd );
 }
 
@@ -1187,28 +1448,26 @@ int Get_route( struct job *job, char *error, int errlen )
 
 	DEBUG1("Get_route: routing filter '%s', control filter '%s'",
 		Routing_filter_DYN, Incoming_control_filter_DYN );
-	if( Routing_filter_DYN == 0 && Incoming_control_filter_DYN == 0 ){
-		return(errorcode);
-	}
 
 	Init_line_list(&info);
 	Init_line_list(&dest);
 	Init_line_list(&env);
 	Init_line_list(&cf_line_list);
+	tempfd = -1;
+	tempfile = 0;
 
 	/* build up the list of files and initialize the DATAFILES
 	 * environment variable
 	 */
 
+	s = 0;
 	for( i = 0; i < job->datafiles.count; ++i ){
 		lp = (void *)job->datafiles.list[i];
-		openname = Find_str_value(lp,TRANSFERNAME);
-		Add_line_list(&env,openname,Hash_value_sep,1,1);
+		openname = Find_str_value(lp,DFTRANSFERNAME);
+		s = safestrdup3( s,openname," ",__FILE__,__LINE__);
 	}
-	s = Join_line_list_with_sep(&env," ");
-	Free_line_list( &env );
 	Set_str_value(&env,DATAFILES,s);
-	free(s); s = 0;
+	if( s ) free(s); s = 0;
 
 	openname = Find_str_value(&job->info,OPENNAME);
 	if( (fd = open(openname,O_RDONLY,0)) < 0 ){
@@ -1218,13 +1477,14 @@ int Get_route( struct job *job, char *error, int errlen )
 		goto error;
 	}
 	Max_open(fd);
-	tempfd = Make_temp_fd(&tempfile);
 
 	/* we pass the control file through the incoming control filter */
 	if( Incoming_control_filter_DYN ){
+		tempfd = Make_temp_fd(&tempfile);
 		DEBUG1("Get_route: running '%s'",
 			Incoming_control_filter_DYN );
-		errorcode = Filter_file( Send_job_rw_timeout_DYN, fd, tempfd, "INCOMING_CONTROL_FILTER",
+		errorcode = Filter_file( Send_job_rw_timeout_DYN, fd, tempfd,
+			"INCOMING_CONTROL_FILTER",
 			Incoming_control_filter_DYN, Filter_options_DYN, job, &env, 0);
 		switch(errorcode){
 			case 0: break;
@@ -1232,7 +1492,9 @@ int Get_route( struct job *job, char *error, int errlen )
 				Set_flag_value(&job->info,HOLD_TIME,time((void *)0) );
 				errorcode = 0;
 				break;
-			case JREMOVE: break;
+			case JREMOVE:
+				goto error;
+				break;
 			default:
 				SNPRINTF(error,errlen)"Get_route: incoming control filter '%s' failed '%s'",
 					Incoming_control_filter_DYN, Server_status(errorcode) );
@@ -1258,27 +1520,40 @@ int Get_route( struct job *job, char *error, int errlen )
                 "Get_route: open failed - modified control file  %s - %s", openname, Errormsg(errno) );
 			goto error;
 		}
-		for( i = 'A'; i <= 'Z'; ++i ){
-			buffer[1] = 0;
-			buffer[0] = i;
-			Set_str_value(&job->info,buffer,0);
-		}
 		for( i = 0; i < cf_line_list.count; ++i ){
 			s = cf_line_list.list[i];
-			Clean_meta(s);
+			/* check for blank line */
 			c = cval(s);
-			DEBUG3("Get_route: doing line '%s'", s );
+			if( !c ) break;
+			DEBUG3("Get_route: doing CF line '%s'", s );
 			if( isupper(c) && c != 'U' && c != 'N' ){
+				char *t;
 				buffer[0] = c; buffer[1] = 0;
-				DEBUG3("Get_route: control '%s'='%s'", buffer, s+1 );
-				Set_str_value(&job->info,buffer,s+1);
+				t = Find_str_value(&job->info,buffer);
+				if( safestrcmp(s+1,t) ){
+					DEBUG3("Get_route: update control '%s'='%s'", buffer, s+1 );
+					Set_str_value(&job->info,buffer,s+1);
+				}
 			}
 		}
-		tempfd = Make_temp_fd(&tempfile);
+		for( ; i < cf_line_list.count; ++i ){
+			char *t;
+			s = cf_line_list.list[i];
+			DEBUG3("Get_route: doing option line '%s'", s );
+			/* check for blank line */
+			t = safestrchr( s, '=');
+			if( t ){
+				*t = 0;
+				DEBUG3("Get_route: update control '%s'='%s'", s, t+1 );
+				Set_str_value(&job->info,s,t+1);
+				*t = '=';
+			}
+		}
 	}
 
 	if( Routing_filter_DYN == 0 ) goto error;
 
+	tempfd = Make_temp_fd(&tempfile);
 	errorcode = Filter_file( Send_query_rw_timeout_DYN, fd, tempfd, "ROUTING_FILTER",
 		Routing_filter_DYN, Filter_options_DYN, job, &env, 0);
 	if(errorcode)switch(errorcode){
@@ -1287,7 +1562,9 @@ int Get_route( struct job *job, char *error, int errlen )
 			Set_flag_value(&job->info,HOLD_TIME,time((void *)0) );
 			errorcode = 0;
 			break;
-		case JREMOVE: break;
+		case JREMOVE:
+			goto error;
+			break;
 		default:
 			SNPRINTF(error,errlen)"Get_route: incoming control filter '%s' failed '%s'",
 				Incoming_control_filter_DYN, Server_status(errorcode) );
@@ -1298,6 +1575,7 @@ int Get_route( struct job *job, char *error, int errlen )
 
 	Free_line_list( &env );
 	Get_file_image_and_split(tempfile,0,1,&env,Line_ends,0,0,0,1,0,0);
+	DEBUGFC(DRECV1)Dump_line_list("Get_route: information", &env );
 	Free_line_list(&job->destination);
 
 	id = Find_str_value(&job->info,IDENTIFIER);
@@ -1309,13 +1587,21 @@ int Get_route( struct job *job, char *error, int errlen )
 	count = 0;
 	for(i = 0; i < env.count; ++i ){
 		s = env.list[i];
+		DEBUG1("Get_route: line '%s'", s );
 		if( safestrcasecmp(END,s) ){
-			if( !isupper(cval(s))
-				&& (t = safestrpbrk(s,Hash_value_sep)) ){
-				*t = '=';
+			if( isupper(cval(s)) ){
+				buffer[0] = cval(s); buffer[1] = 0;
+				Set_str_value(&job->destination,buffer,s+1);
+			} else if( (t = safestrpbrk(s,Hash_value_sep))
+					|| (t = safestrpbrk(s,Whitespace)) ){
+				*t++ = 0;
+				while( isspace(cval(t)) ) ++t;
+				Set_str_value(&job->destination,s,t);
+			} else {
+				Set_str_value(&job->destination,s,"");
 			}
-			Add_line_list(&job->destination,s,Hash_value_sep,1,1);
 		} else {
+			DEBUGFC(DRECV1)Dump_line_list("Get_route: dest", &job->destination );
 			if( (s = Find_str_value(&job->destination, DEST)) ){
 				int n;
 				DEBUG1("Get_route: destination '%s'", s );
@@ -1334,6 +1620,7 @@ int Get_route( struct job *job, char *error, int errlen )
 			Free_line_list(&job->destination);
 		}
 	}
+	DEBUGFC(DRECV1)Dump_line_list("Get_route: dest", &job->destination );
 	if( (s = Find_str_value(&job->destination, DEST)) ){
 		int n;
 		DEBUG1("Get_route: destination '%s'", s );
@@ -1354,9 +1641,50 @@ int Get_route( struct job *job, char *error, int errlen )
 	if(DEBUGL1)Dump_job("Get_route: final", job );
 
  error:
+	if( tempfile ) unlink(tempfile);
 	Free_line_list(&info);
 	Free_line_list(&dest);
 	Free_line_list(&env);
 	Free_line_list(&cf_line_list);
 	return( errorcode );
+}
+
+
+/*
+ * Generate_control_file:
+ *  Generate a control file from hold file contents
+ *  Use the X= lines and the DATAFILES entry
+ */
+
+void Generate_control_file( struct job *job )
+{
+	/* generate the control file */
+	struct stat statb;
+	int i, fd = -1;
+	char *cf = 0;
+	char *priority = Find_str_value(&job->info,PRIORITY);
+	char *number = Find_str_value( &job->info,NUMBER);
+	char *file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
+	char *s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
+	Set_str_value(&job->info,CFTRANSFERNAME,s);
+	if(s) free(s); s = 0;
+	char *datalines = Find_str_value(&job->info,DATAFILES);
+	char *openname = Find_str_value(&job->info,OPENNAME); 
+	char *transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	for( i = 0; i < job->info.count; ++i ){
+		char *t = job->info.list[i];
+		int c;
+		if( t && (c = t[0]) && isupper(c) && c != 'N' && c != 'U' 
+			&& t[1] == '=' ){
+			t[1] = 0;
+			cf = safeextend4(cf,t,t+2,"\n",__FILE__,__LINE__);
+			t[1] = '=';
+		}
+	}
+
+	DEBUG4("Generate_control_file: cf start '%s'", cf );
+	cf = safeextend2(cf,datalines,__FILE__,__LINE__);
+	DEBUG4("Generate_control_file: cf final '%s'", cf );
+	Set_str_value(&job->info,CF_OUT_IMAGE,cf);
+	if( cf ) free(cf); cf = 0;
 }

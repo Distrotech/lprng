@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: debug.c,v 1.62 2003/12/13 00:11:45 papowell Exp $";
+ "$Id: debug.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
 
 
 /*************************************************************
@@ -30,17 +30,11 @@
  struct keywords debug_vars[]		/* debugging variables */
  = {
 #if !defined(NODEBUG)
-    { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
-    { "network+1",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
-    { "network+2",0,FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK,0},
-    { "network+3",0,FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK,0},
-    { "network+4",0,FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK,0},
-    { "database",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
-    { "database+1",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
-    { "database+2",0,FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK,0},
-    { "database+3",0,FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK,0},
-    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK,0},
-    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK,0},
+    { "print",  0,FLAG_K,(void *)&Debug,1, 0,0},
+    { "print+1",0,FLAG_K,(void *)&Debug,1, 0,0},
+    { "print+2",0,FLAG_K,(void *)&Debug,2, 0,0},
+    { "print+3",0,FLAG_K,(void *)&Debug,3, 0,0},
+    { "print+4",0,FLAG_K,(void *)&Debug,4, 0,0},
     { "lpr",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK,0},
     { "lpr+1",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK,0},
     { "lpr+2",0,FLAG_K,(void *)&DbgFlag,DRECV2|DRECV1, DRECVMASK,0},
@@ -61,6 +55,17 @@
     { "lpq+2",0,FLAG_K,(void *)&DbgFlag,DLPQ2|DLPQ1, DLPQMASK,0},
     { "lpq+3",0,FLAG_K,(void *)&DbgFlag,DLPQ3|DLPQ2|DLPQ1, DLPQMASK,0},
     { "lpq+4",0,FLAG_K,(void *)&DbgFlag,DLPQ4|DLPQ3|DLPQ2|DLPQ1, DLPQMASK,0},
+    { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
+    { "network+1",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
+    { "network+2",0,FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK,0},
+    { "network+3",0,FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK,0},
+    { "network+4",0,FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK,0},
+    { "database",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
+    { "database+1",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
+    { "database+2",0,FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK,0},
+    { "database+3",0,FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK,0},
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK,0},
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK,0},
     { "log",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK,0},
     { "log+1",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK,0},
     { "log+2",0,FLAG_K,(void *)&DbgFlag,DLOG2|DLOG1, DLOGMASK,0},
@@ -74,7 +79,7 @@
 /*
 
  Parse_debug (char *dbgstr, struct keywords *list, int interactive );
- Input string:  value,key=value,flag,flag@,...
+ Input string:  value,key=value,flag+n
 
  1. crack the input line at the ','
  2. crack each option at = 
@@ -83,6 +88,25 @@
 
 */
 
+	static char *guide[] = {
+	" use on command line, or in printcap :db=... entry", 
+	" for server:",
+	"   print:     show queue (printing) actions, larger number, more information",
+	"     NUMBER     same as print+NUMBER",
+	"   lpr:       show servicing lpr actions",
+	"   lpq:       show servicing lpq actions",
+	"   lprm:      show servicing lprm actions",
+	"   network:   show low level network actions",
+	"   database:  show low level database actions",
+	"   log:       Testing.  Don't use this unless you read the code.",
+	"   test:      Testing.  don't use this unless you read the code.",
+	" for clients (lpr, lpq, etc):",
+	"   print:     show client actions, larger number, more information",
+	"     NUMBER     same as print+NUMBER",
+	"   network:   show low level network actions.",
+	"   database:  show low level database actions.",
+		0
+	};
 void Parse_debug (char *dbgstr, int interactive )
 {
 #if !defined(NODEBUG)
@@ -131,22 +155,17 @@ void Parse_debug (char *dbgstr, int interactive )
 			}
 		}
 		if(!found && interactive ){
-			int lastflag = 0;
-			int nooutput = 0;
-		    FPRINTF (STDERR,
-	"debug flags: [ num | flag=num | flag=str | flag | flag@ | flag+N ]*\n");
-		    FPRINTF (STDERR, "  flags recognized:");
+		    int i;
+		    int lastflag = 0;
+		    FPRINTF (STDERR, "debug flag format: num | flag[+num] | flag=str\n");
+		    FPRINTF (STDERR, "  flag names:");
 		    for (i = 0; list[i].keyword; i++) {
 				if( safestrchr( list[i].keyword, '+' ) ) continue;
-				if( nooutput == 0 ){
-					if( i ){
-						FPRINTF( STDERR, ", " );
-						if( !(i % 4) ) FPRINTF( STDERR, "\n   " );
-					} else {
-						FPRINTF( STDERR, " " );
-					}
+				if( lastflag ){
+					FPRINTF( STDERR, ", " );
+					if( !(lastflag % 4) ) FPRINTF( STDERR, "\n   " );
 				} else {
-					nooutput = 0;
+					FPRINTF( STDERR, " " );
 				}
 				switch( list[i].type ){
 				case INTEGER_K:
@@ -156,18 +175,18 @@ void Parse_debug (char *dbgstr, int interactive )
 					FPRINTF (STDERR, "%s=str", list[i].keyword);
 					break;
 				case FLAG_K:
-					if( list[i].maxval == 0 || lastflag != list[i].flag ){
-						FPRINTF (STDERR, "%s[+N,@]", list[i].keyword );
-						lastflag = list[i].maxval;
-					} else {
-						nooutput = 1;
-					}
+					FPRINTF (STDERR, "%s[+N]", list[i].keyword );
 					break;
 				default:
 					break;
 				}
+				++lastflag;
 			}
 		    FPRINTF (STDERR, "\n");
+		    for(i = 0; guide[i]; ++i ){
+				FPRINTF (STDERR, "%s\n", guide[i]);
+		    }
+
 			Errorcode = JABORT;
 			if( interactive > 0 ) cleanup(0);
 		}

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 1.62 2003/12/13 00:11:49 papowell Exp $
+ * $Id: utilities.h,v 1.65 2004/02/04 00:54:15 papowell Exp $
  ***************************************************************************/
 
 
@@ -59,7 +59,6 @@ int safestrncmp( const char *s1, const char *s2, int len );
 char *safestrchr( const char *s1, int c );
 char *safestrrchr( const char *s1, int c );
 char *safestrpbrk( const char *s1, const char *s2 );
-char *safestrappend4( char *s1, const char *s2, const char *s3, const char *s4 );
 int plp_usleep( int i );
 int plp_sleep( int i );
 int Get_max_servers( void );

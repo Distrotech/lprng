@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.62 2003/12/13 00:11:47 papowell Exp $";
+"$Id: utilities.c,v 1.65 2004/02/04 00:54:13 papowell Exp $";
 
 #include "lp.h"
 
@@ -481,21 +481,6 @@ char *safestrpbrk( const char *s1, const char *s2 )
 {
 	if( s1 && s2 ) return( strpbrk( s1, s2 ) );
 	return( 0 );
-}
-
-/* perform string concatentaton with malloc */
-char *safestrappend4( char *s1, const char *s2, const char *s3, const char *s4 )
-{
-	int m, len;
-	m = safestrlen(s1);
-	len = m + safestrlen(s2) + safestrlen(s3) + safestrlen(s4);
-	s1 = realloc(s1,len+1);
-	len = m;
-	if( s2 ) strcpy( s1+len, s2 ); len += strlen(s1+len);
-	if( s3 ) strcpy( s1+len, s3 ); len += strlen(s1+len);
-	if( s4 ) strcpy( s1+len, s4 ); len += strlen(s1+len);
-	s1[ len ] = 0;
-	return(s1);
 }
 
 /***************************************************************************

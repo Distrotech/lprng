@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: sendjob.c,v 1.65 2004/02/04 00:54:13 papowell Exp $";
 
 
 #include "lp.h"
@@ -97,7 +97,7 @@ int Send_job( struct job *job, struct job *logjob,
 	/* send job to the LPD server for the RemotePrinter_DYN */
 
 	id = Find_str_value( &job->info,IDENTIFIER);
-	if( id == 0 ) id = Find_str_value( &job->info,TRANSFERNAME);
+	if( id == 0 ) id = Find_str_value( &job->info,CFTRANSFERNAME);
 	DEBUG3("Send_job: '%s'->%s@%s,connect(timeout %d,interval %d)",
 		id, RemotePrinter_DYN, RemoteHost_DYN,
 			connect_timeout_len, connect_interval );
@@ -282,7 +282,7 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 		Send_data_first_DYN, *sock, block_fd );
 
 	id = Find_str_value(&job->info,"A");
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
 	
 	if( !block_fd ){
 		SETSTATUS(logjob) "requesting printer %s@%s",
@@ -335,15 +335,11 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 	 */
 
 	if( !(cf = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
-		s = Find_str_value(&job->info,OPENNAME);
-		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
-		s = Get_file_image( s, 0 );
-		Set_str_value(&job->info, CF_OUT_IMAGE, s );
-		if( s ) free(s); s = 0;
-		cf = Find_str_value(&job->info,CF_OUT_IMAGE);
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "Send_control: LOGIC ERROR! missing CF_OUT_IMAGE");
 	}
 	size = safestrlen(cf);
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
 
 	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
 		transfername, size, *sock, block_fd, cf );
@@ -435,7 +431,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 	int transfer_timeout, int block_fd, char *final_filter )
 {
 	int count, fd, err, status = 0, ack;
-	double size, sendsize;
+	double size;
 	struct line_list *lp;
 	char *openname, *transfername, *id, *s;
 	char msg[SMALLBUFFER];
@@ -444,26 +440,34 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 
 	DEBUG3( "Send_data_files: data file count '%d'", job->datafiles.count );
 	id = Find_str_value(&job->info,"identification");
-	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME);
+	if( id == 0 ) id = Find_str_value(&job->info,CFTRANSFERNAME);
 	for( count = 0; count < job->datafiles.count; ++count ){
 		lp = (void *)job->datafiles.list[count];
 		if(DEBUGL3)Dump_line_list("Send_data_files - entries",lp);
+		transfername = Find_str_value(lp,DFTRANSFERNAME);
 		openname = Find_str_value(lp,OPENNAME);
-		transfername = Find_str_value(lp,TRANSFERNAME);
-		DEBUG3("Send_data_files: opening file '%s'", openname );
+		if( !openname ) openname = transfername;
+		DEBUG3("Send_data_files: opening file '%s', transfername '%s'",
+			openname, transfername );
 
 		/*
 		 * open file as user; we should be running as user
 		 */
-		sendsize = size = 0;
-		if( openname == 0 ){
+		size = 0;
+		if( !strcmp(openname,"-") ){
 			openname = "(STDIN)";
 			fd = 0;
 			size = 0;
-			sendsize = Fake_large_file_DYN * 1024;
 		} else {
 			fd = Checkread( openname, &statb );
-			sendsize = size = statb.st_size;
+			if( fd < 0 ){
+				status = JFAILNORETRY;
+				SNPRINTF(error,sizeof(error))
+					"cannot open '%s' - '%s'", openname, Errormsg(errno) );
+				Set_str_value(&job->info,ERROR,error);
+				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+				goto error;
+			}
 			if( statb.st_size == 0 ){
 				SNPRINTF(error,sizeof(error))
 				"zero length file '%s'", transfername );
@@ -472,19 +476,10 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
+			size = statb.st_size;
 		}
 		if( count == job->datafiles.count -1 && final_filter ){
 			size = 0;
-			sendsize = Fake_large_file_DYN * 1024;
-		}
-		err = errno;
-		if( fd < 0 ){
-			status = JFAIL;
-			SNPRINTF(error,sizeof(error))
-				"cannot open '%s' - '%s'", openname, Errormsg(err) );
-			Set_str_value(&job->info,ERROR,error);
-			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-			goto error;
 		}
 
 		DEBUG3( "Send_data_files: openname '%s', fd %d, size %0.0f",
@@ -637,7 +632,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 
 	error[0] = 0;
 	id = Find_str_value(&job->info,IDENTIFIER);
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
 	if( id == 0 ) id = transfername;
 
 	tempfd = Make_temp_fd( &tempfile );
@@ -646,7 +641,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 	status = Send_normal( &tempfd, job, logjob, transfer_timeout, tempfd, 0 );
 
 	id = Find_str_value(&job->info,IDENTIFIER);
-	transfername = Find_str_value(&job->info,TRANSFERNAME);
+	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
 	if( id == 0 ) id = transfername;
 
 	DEBUG1("Send_block: sendnormal of '%s' returned '%s'", id, Server_status(status) );

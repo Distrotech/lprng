@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: plp_snprintf.h,v 1.62 2003/12/13 00:11:48 papowell Exp $
+ * $Id: plp_snprintf.h,v 1.65 2004/02/04 00:54:14 papowell Exp $
  ***************************************************************************/
 
 
@@ -12,7 +12,7 @@
 #ifndef _PLP_SNPRINTF_
 #define _PLP_SNPRINTF_
 
-/* PROTOTYPES */
+/* PRO TO TYPES */
 /* VARARGS3 */
 #ifdef HAVE_STDARGS
  int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)

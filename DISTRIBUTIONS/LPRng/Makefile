@@ -6,7 +6,7 @@
 #
 
 PORTNAME=LPRng
-PORTVERSION=3.8.24
+PORTVERSION=3.8.25
 CATEGORIES=	sysutils print
 MASTER_SITES=	ftp://ftp.lprng.com/pub/%SUBDIR%/ \
 		ftp://ftp.cise.ufl.edu/pub/mirrors/%SUBDIR%/ \
@@ -35,25 +35,19 @@ CONFIGURE_ARGS=	\
 .if defined(SYSCONFDIR)
   CONFIGURE_ARGS+=  --sysconfdir="${SYSCONFDIR}"
 .endif
+.if defined(MANDIR)
+  CONFIGURE_ARGS+=  --mandir="${MANDIR}"
+.endif
 
 MAN1= cancel.1 lp.1 lpbanner.1 lpf.1 lpq.1 lpr.1 lprm.1 lprng_certs.1 lprng_index_certs.1 lpstat.1 monitor.1 pclbanner.1 psbanner.1
 MAN5= lpd.conf.5  lpd.perms.5  printcap.5 
 MAN8= checkpc.8  lpc.8  lpd.8 
 
 pre-everything::
-	@${ECHO_MSG} "If you want to replace the default printing system with LPRng, use:"
-	@${ECHO_MSG} "  make PREFIX=/usr SYSCONFDIR=/etc clean all install"
+	@${ECHO_MSG} "If you want to replace the default FreeBSD lpd software with LPRng, use:"
+	@${ECHO_MSG} "  make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man clean all install"
 	@${ECHO_MSG} " OR"
 	@${ECHO_MSG} "  make CONFIGURE_SCRIPT=STANDARD_configuration clean all install"
-	@if [ "${PREFIX}" = "/usr" -a ! -d /usr/man ] ; then \
-		${ECHO_MSG} "The man pages will be installed in /usr/man." ; \
-		${ECHO_MSG} "You should make a symbolic link /usr/share/man from /usr/man"; \
-		${ECHO_MSG} "   ln -s /usr/share/man /usr/man"; \
-		${ECHO_MSG} "If you do not, you will retain the old FreeBSD man pages."; \
-		${ECHO_MSG} "See the hier(7) man page for details of the FreeBSD file system"; \
-		${ECHO_MSG} "layout.  Configure is not equipped to determine the location of"; \
-		${ECHO_MSG} 'man pages and defaults to $${PREFIX}/man, which is incorrect for FreeBSD.'; \
-	fi
 
 post-install:
 .if !defined(NOPORTSDOCS)

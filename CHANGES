@@ -1,13 +1,141 @@
+Version LPRng-3.8.25 - Wed Jan 7 04:46:12 PST 2004
+
+  MAJOR CHANGE in internals:
+    The legacy 'control file' has been removed from the spool
+  queue as all of the information is duplicated in the hold
+  file.  The various LPRng documents will be updated to reflect
+  this.   Users who access the control file information external
+  to LPRng should be warned that this is not a good idea due
+  to file locking, etc.
+
+  MAJOR CHANGE in 'move' operation:
+    The 'lpc move' is now 'nonblocking'.  If you request
+  a job to be moved, the LPD server will start a process to
+  (almost) immediately move the job.  Until this job is moved,
+  no other job processing for the queue will be done.
+  If the move is to a local queue on the same host, then the
+  job will be copied via a file copy.  This action is identical
+  to the action for sending a job to a 'load balance' queue,
+  with the difference that the job is immediately marked as done
+  rather than after the load balance queue has printed it.
+
+  Note: if you enter a non-existent remote queue,  then the
+  LPD subserver process trying to move the job will/may sit
+  in an endless loop trying to move the job.
+
+  Added: discard_large_jobs option
+    discard_large_jobs   - if this option is set, large jobs are
+    accepted and then discarded.
+
+  Fixed: Priority and Class
+    For incoming jobs, the first letter of the C (class) field
+    in the control file is used to set the priority.
+    This action is modified by the:
+      # ignore requested user priority
+      ignore_requested_user_priority=0
+      # do not set priority from class name
+      break_classname_priority_link=0
+
+    If not present or the break_classname_priority_link,
+    the default priority value is used to set the priority.
+    (C=) and class (class=) values in the control file.
+
+    This deals with several lpd print clients that appear to
+    to assign random control file names and do not have a
+    C field in the control file.  Not to mention users
+    who try to manipulate queue priorities.
+
+  Modified: incoming_control_filter action
+    This filter is applied to the incoming job control file.
+    and is used to modify the actions of the LPD server.
+    options.  The output can be in the form:
+     Xoption      X (no option)
+     Xoption
+      ...
+     <blank line>
+     key=value
+     key=value
+    
+   The Xoption is equivalent to X=option.  The key=value
+   set of options is separated from the first by a blank line.
+   If an option is not specified, it is not modified. The
+   X (no option) or X=  (no option) form will remove the
+   option from the control file.  It is dangerous to try to
+   modify the A (identifier) option unless the user has intimate
+   knowledge of the LPRng lpd server operation.
+
+  Modified: filter environment variables
+    Filters are now invoked with the HF environment variable
+    set to the hold file contents.  This assists with the
+    incoming_control_filter and control_filter actions.
+
+  Fixed:
+
+    The 'Remove_done_jobs' code now removes done and error jobs.
+    This makes the 'done_jobs' and 'done_jobs_max_age' actions
+    symmetrical.
+
+  Documented:  added more details to the -D flags.
+
+    debug flag format: num | flag[+num] | flag=str
+      flag names: print[+N], lpr[+N], lpc[+N], lprm[+N], 
+       lpq[+N], network[+N], database[+N], log[+N], 
+       test=num
+     use on command line, or in printcap :db=... entry
+     for server:
+       print:     show queue (printing) actions,
+                  larger number, more information
+         NUMBER     same as print+NUMBER
+       lpr:       show servicing lpr actions
+       lpq:       show servicing lpq actions
+       lprm:      show servicing lprm actions
+       network:   show low level network actions
+       database:  show low level database actions
+       log:       Testing.  Don't use this unless you read the code.
+       test:      Testing.  don't use this unless you read the code.
+     for clients (lpr, lpq, etc):
+       print:     show client actions, larger number, more information
+         NUMBER     same as print+NUMBER
+       network:   show low level network actions.
+       database:  show low level database actions.
+
+   Modified:
+
+      The lpq display now shows Pr/Class (Priority/Class)
+      information if the priority is different than the
+      class information.  This better shows information on
+      the class/priority relationshiop.
+
+      The Class information is in the 'class=' field in the
+      control file and the Priority information is in the
+      priority field.
+
+   The 'nonexistent printer message' has been modified to be a little
+      more helpful, or at least more verbose:
+
+            Status Information, attempt 1 of 3:
+            sending job 'papowell@h110+563' to xx@localhost
+             connecting to 'localhost', attempt 1
+             connected to 'localhost'
+             requesting printer xx@localhost
+             job 'papowell@h110+563' transfer to xx@localhost failed
+              error 'NONZERO RFC1179 ERROR CODE FROM SERVER' with ack 'ACK_FAIL'
+              sending str '^Bxx' to xx@localhost
+             error msg: 'spool queue for 'xx' does not exist on server h110.private'
+             error msg: 'check for correct printer name or you may need to run'
+             error msg: ''checkpc -f' to create queue'
+            Waiting 10 seconds before retry
+
 Version LPRng-3.8.24 - Fri Dec 12 15:03:02 PST 2003
 
   Small bugfixes
 
-	Cygwin patch applied.
+    Cygwin patch applied.
      (From "Luke Bakken"<Luke.Bakken@getronics.com>
-	Comment:
-	 I thought I'd check LPRng to make sure that the latest version still
-	 works OK with Cygwin. Everything seems OK except for the checkpc.c
-	 "root" user warning. Will this patch be OK for that file?
+    Comment:
+     I thought I'd check LPRng to make sure that the latest version still
+     works OK with Cygwin. Everything seems OK except for the checkpc.c
+     "root" user warning. Will this patch be OK for that file?
 
     GCC 3.xx giveth, GCC 2.95 taketh a hard line.
      Patch for -  t = 0; char buffer[128]; in user_auth.c

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpd_status.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -527,7 +527,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		 Rank  Owner/ID  Class Job Files   Size Time
 		*/
 		Add_line_list(&outbuf,
-" Rank   Owner/ID                  Class Job Files                 Size Time"
+" Rank   Owner/ID               Pr/Class Job Files                 Size Time"
 		,0,0,0);
 	}
 	error[0] = 0;
@@ -537,9 +537,14 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	total_move = 0;
 	for( count = 0; count < Sort_order.count; ++count ){
 		int printable, held, move;
+		char prclass[32];
 		printable = held = move = 0;
 		Free_job(&job);
-		Get_hold_file(&job, Sort_order.list[count] );
+		Get_hold_file(&job, Sort_order.list[count], 0 );
+		if( job.info.count == 0 ){
+			/* job was removed */
+			continue;
+		}
 		Job_printable(&job,&Spool_control, &printable,&held,&move,&jerror,&jdone);
 		DEBUGF(DLPQ3)("Get_queue_status: printable %d, held %d, move %d, error %d, done %d",
 			printable, held, move, jerror, jdone );
@@ -576,20 +581,8 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		jobsize = Find_double_value(&job.info,SIZE);
 		job_time = Find_str_value(&job.info,JOB_TIME );
 		destinations = Find_flag_value(&job.info,DESTINATIONS);
-
-		openname = Find_str_value(&job.info,OPENNAME);
-		if( !openname ){
-			openname = Find_str_value(&job.info,TRANSFERNAME);
-		}
-		if( !openname ){
-			DEBUGF(DLPQ4)("Get_queue_status: no openname or transfername");
-			continue;
-		}
+		openname = Find_str_value(&job.info,CFTRANSFERNAME);
 		hf_name = Find_str_value(&job.info,HF_NAME);
-		if( !hf_name ){
-			DEBUGF(DLPQ4)("Get_queue_status: no hf_name");
-			continue;
-		}
 
 		/* we report this jobs status */
 
@@ -597,8 +590,13 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		DEBUGF(DLPQ3)("Get_queue_status: class '%s', priority '%s'",
 			class, priority );
 
-		if( (Class_in_status_DYN && class) || priority == 0 ){
-			priority = class;
+		if( class ){
+			if( safestrcmp(class,priority)
+				|| Class_in_status_DYN || priority == 0 ){
+				SNPRINTF( prclass, sizeof(prclass)) "%s/%s",
+					priority?priority:"?", class );
+				priority = prclass;
+			}
 		}
 
 		if( displayformat == REQ_DLONG ){
@@ -647,22 +645,18 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 					SNPRINTF(msg+len,sizeof(msg)-len)
 					"ERROR: %s", joberror );
 			} else {
+				char jobb[32];
 				DEBUGF(DLPQ3)("Get_queue_status: jobname '%s'", jobname );
 
 				len = safestrlen(msg);
 				SNPRINTF(msg+len,sizeof(msg)-len)"%-s",jobname?jobname:filenames);
+				SNPRINTF(jobb,sizeof(jobb)) "%0.0f", jobsize );
 
 				job_time = Time_str(1, Convert_to_time_t(job_time));
-				DEBUGF(DLPQ3)("Get_queue_status: jobtime '%s', full_time %d",
-					job_time,Full_time_DYN );
-				if( !Full_time_DYN && (s = safestrchr(job_time,'.')) ) *s = 0;
-
-				{
-					char jobb[32];
-					SNPRINTF(jobb,sizeof(jobb)) "%0.0f", jobsize );
-					SNPRINTF( sizestr, sizeof(sizestr)) "%*s %-s",
-						SIZEW-1,jobb, job_time );
-				}
+				if( !Full_time_DYN && (t = safestrchr(job_time,'.')) ) *t = 0;
+				SNPRINTF( sizestr, sizeof(sizestr)) "%*s %-s",
+					SIZEW-1,jobb, job_time );
+				DEBUGF(DLPQ3)("XGet_queue_status: size_str '%s'",sizestr);
 
 				len = Max_status_line_DYN;
 				if( len >= (int)sizeof(msg)) len = sizeof(msg)-1;
@@ -752,15 +746,16 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 						header, joberror );
 				Add_line_list(&outbuf,msg,0,0,0);
 			}
-			SNPRINTF( msg, sizeof(msg)) _("%s CONTROL="), header );
-			Add_line_list(&outbuf,msg,0,0,0);
-			s = Get_file_image(openname,0);
-			Add_line_list(&outbuf,s,0,0,0);
-			if( s ) free(s); s = 0;
+			if( openname ){
+				SNPRINTF( msg, sizeof(msg)) _("%s CONTROL="), header );
+				Add_line_list(&outbuf,msg,0,0,0);
+				s = Find_str_value(&job.info,CF_OUT_IMAGE);
+				Add_line_list(&outbuf,s,0,0,0);
+			}
 
 			SNPRINTF( msg, sizeof(msg)) _("%s HOLDFILE="), header );
 			Add_line_list(&outbuf,msg,0,0,0);
-			s = Get_file_image(hf_name,0);
+			s = Make_hf_image(&job);
 			Add_line_list(&outbuf,s,0,0,0);
 			if( s ) free(s); s = 0;
 		} else if( displayformat == REQ_DSHORT ){

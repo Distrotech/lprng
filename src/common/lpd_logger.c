@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpd_logger.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -136,7 +136,7 @@ int Dump_queue_status(int outfd)
 
 		for( count = 0; count < Sort_order.count; ++count ){
 			Free_job(&job);
-			Get_hold_file( &job, Sort_order.list[count] );
+			Get_hold_file( &job, Sort_order.list[count], 0 );
 			
 			if( job.info.count == 0 ) continue;
 			if( Write_fd_str( outfd, "UPDATE%3d" ) < 0 ){ return(1); }

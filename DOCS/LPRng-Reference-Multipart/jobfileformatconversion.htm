@@ -12,7 +12,7 @@
     "tutorial.htm">
     <link rel="PREVIOUS" title="Print Job Filters" href=
     "printjobfilters.htm">
-    <link rel="NEXT" title="Printcap Basics" href="x3103.htm">
+    <link rel="NEXT" title="Printcap Basics" href="x3105.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng Reference Manual: 12
-          Dec 2003 (For LPRng-3.8.24)</th>
+          <th colspan="3" align="center">LPRng Reference Manual: 3
+          Feb 2004 (For LPRng-3.8.25)</th>
         </tr>
 
         <tr>
@@ -33,7 +33,7 @@
           Print Spooling Tutorial</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x3103.htm" accesskey="N">Next</a></td>
+          "x3105.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -53,7 +53,7 @@
       your printer.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2761"></a>
+        <a name="AEN2763"></a>
 <pre class="SCREEN">
     lp:filter=/usr/local/lib/filters/myfilter:...
     
@@ -128,7 +128,7 @@
       text or other files.</p>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN2787">4.10.1. Simple Filter
+        <h2 class="SECT2"><a name="AEN2789">4.10.1. Simple Filter
         with File Format Detection</a></h2>
 
         <p>Since this is a tutorial, we will demonstrate a simple
@@ -142,7 +142,7 @@
         For example:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2793"></a>
+          <a name="AEN2795"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {191} %</samp> <kbd class=
 "USERINPUT">cd /tmp</kbd>
@@ -175,7 +175,7 @@
         simple yet very powerful shell script that does this.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2811"></a>
+          <a name="AEN2813"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # set up converters
@@ -223,7 +223,7 @@
         of the script:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2816"></a>
+          <a name="AEN2818"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {198} %</samp> <kbd class=
 "USERINPUT">/tmp/majik &lt;test.ps.gz</kbd>
@@ -268,7 +268,7 @@
         "APPLICATION">majikperl</b>:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2834"></a>
+          <a name="AEN2836"></a>
 <pre class="SCREEN">
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
@@ -320,7 +320,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN2836">4.10.2. The <b class=
+        <h2 class="SECT2"><a name="AEN2838">4.10.2. The <b class=
         "APPLICATION">ifhp</b> Filter</a></h2>
 
         <p>The <a href="secftp.htm">ifhp</a> Print Filter is the
@@ -419,7 +419,7 @@
         <b class="APPLICATION">lpd</b>.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2879"></a>
+          <a name="AEN2881"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -438,7 +438,7 @@
         "APPLICATION">emacs</b> that shows control characters:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2886"></a>
+          <a name="AEN2888"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {200} %</samp> <kbd class=
 "USERINPUT">cp /dev/null /tmp/lp</kbd>
@@ -623,7 +623,7 @@
         that their output suffers from a case of the jaggies.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2977"></a>
+          <a name="AEN2979"></a>
 <pre class="SCREEN">
     Input file:
     
@@ -655,7 +655,7 @@
         You can find it by using the command:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2988"></a>
+          <a name="AEN2990"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h9: {160} %</samp> <kbd class=
 "USERINPUT">find /usr/ -type f -name lpf -print</kbd>
@@ -673,7 +673,7 @@
         server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2997"></a>
+          <a name="AEN2999"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -691,7 +691,7 @@
         file.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3002"></a>
+          <a name="AEN3004"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {203} %</samp> <kbd class=
 "USERINPUT">cp /dev/null /tmp/lp</kbd>
@@ -714,7 +714,7 @@
         information.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3014"></a>
+          <a name="AEN3016"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -729,7 +729,7 @@
         <p>Now reprint the file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3017"></a>
+          <a name="AEN3019"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {206} %</samp> <kbd class=
 "USERINPUT">cp /dev/null /tmp/lp</kbd>
@@ -752,7 +752,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN3029">4.10.4. Store and
+        <h2 class="SECT2"><a name="AEN3031">4.10.4. Store and
         Forward Spool Queues</a></h2>
 
         <p>Up to now we have assumed that associated with each
@@ -768,7 +768,7 @@
         you can specify a store and forward queue.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3035"></a>
+          <a name="AEN3037"></a>
 <pre class="SCREEN">
     # store and forward using classical BSD :rm:rp
     lp:rp=pr:rm=host
@@ -799,7 +799,7 @@
         to restart the <b class="APPLICATION">lpd</b> server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3048"></a>
+          <a name="AEN3050"></a>
 <pre class="SCREEN">
     lp:force_localhost
     lp:server
@@ -815,7 +815,7 @@
         "FILENAME">/tmp/hi</tt> file and observe the results: 
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3051"></a>
+          <a name="AEN3053"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {209} %</samp> <kbd class=
 "USERINPUT">lpr /tmp/hi</kbd>
@@ -860,7 +860,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN3062">4.10.5. Filtering Job
+        <h2 class="SECT2"><a name="AEN3064">4.10.5. Filtering Job
         Files In Transit</a></h2>
 
         <p>One of the major problems with store and forward
@@ -883,7 +883,7 @@
         "APPLICATION">lpd</b> server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3072"></a>
+          <a name="AEN3074"></a>
 <pre class="SCREEN">
     # set /tmp/testf to contain the following
     #   and chmod 755 /tmp/testf
@@ -909,7 +909,7 @@
         "FILENAME">/tmp/hi</tt> file and observe the results: 
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3075"></a>
+          <a name="AEN3077"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {211} %</samp> <kbd class=
 "USERINPUT">lpr /tmp/hi</kbd>
@@ -1005,7 +1005,7 @@
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x3103.htm" accesskey="N">Next</a></td>
+          "x3105.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

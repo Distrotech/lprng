@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpd_remove.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -212,7 +212,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	DEBUGFC(DLPRM3)Dump_line_list("Get_queue_remove - tokens", tokens );
 	for( count = 0; count < Sort_order.count; ++count ){
 		Free_job(&job);
-		Get_hold_file(&job, Sort_order.list[count] );
+		Get_hold_file(&job, Sort_order.list[count], 0 );
 
 		DEBUGFC(DLPRM3)Dump_job("Get_queue_remove - info",&job);
         if( tokens->count && Patselect( tokens, &job.info, 0) ){
@@ -220,10 +220,10 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
         }
 
 		/* get everything for the job now */
-		Setup_cf_info( &job, 0 );
+		/* Setup_cf_info( &job, 0 ); */
 		identifier = Find_str_value(&job.info,IDENTIFIER);
 		if( !identifier ) identifier
-			= Find_str_value(&job.info,TRANSFERNAME);
+			= Find_str_value(&job.info,CFTRANSFERNAME);
 
 		DEBUGF(DLPRM3)("Get_queue_remove: matched '%s'", identifier );
 		SNPRINTF( msg, sizeof(msg)) _("  checking perms '%s'\n"),
@@ -454,7 +454,7 @@ int Remove_job( struct job *job )
 	identifier = Find_str_value(&job->info,IDENTIFIER);
 	setmessage( job, TRACE, "remove START" );
 	if( !identifier ){
-		identifier = Find_str_value(&job->info,TRANSFERNAME);
+		identifier = Find_str_value(&job->info,CFTRANSFERNAME);
 	}
 
 	DEBUGF(DLPRM1)("Remove_job: identifier '%s'",identifier);
@@ -463,12 +463,12 @@ int Remove_job( struct job *job )
 		datafile = (void *)job->datafiles.list[i];
 		openname = Find_str_value(datafile,OPENNAME);
 		fail |= Remove_file( openname );
-		openname = Find_str_value(datafile,TRANSFERNAME);
+		openname = Find_str_value(datafile,DFTRANSFERNAME);
 		fail |= Remove_file( openname );
 	}
 	openname = Find_str_value(&job->info,OPENNAME);
 	fail |= Remove_file( openname );
-	openname = Find_str_value(&job->info,TRANSFERNAME);
+	openname = Find_str_value(&job->info,CFTRANSFERNAME);
 	fail |= Remove_file( openname );
 	openname = Find_str_value(&job->info,HF_NAME);
 	fail |= Remove_file( openname );

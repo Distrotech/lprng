@@ -2,10 +2,19 @@
           Patrick Powell <papowell@lprng.com>
        Last Updated Sun Aug 19 14:49:25 PDT 2001
 
-SUPER EXPRESS INSTALLATION FOR TERMINALLY IMPATIENT SYSADMINS
+  SUPER EXPRESS INSTALLATION FOR TERMINALLY IMPATIENT SYSADMINS
 
-The "STANDARD configuration" is the most common configuration for UNIX/LINUX
-  systems:
+READ THE NEXT COUPLE OF PARAGRAPHS:
+
+To put files and executables in the most common 'STANDARD locations' 
+
+   sh STANDARD_configuration
+   make clean; make all; make install;
+   checkpc -f
+
+The "STANDARD_configuration" script will run configure and set the most common
+configuration for UNIX/LINUX systems:
+
   - /etc/printcap, /etc/lpd/lpd.conf, /etc/lpd/lpd.perms configuration files.
     (Note: the new suggested file system hierarchy puts configuration files
     in a subdirectory such as /etc/lpd.  However, if /etc/printcap is put
@@ -14,6 +23,7 @@ The "STANDARD configuration" is the most common configuration for UNIX/LINUX
   - you do not need any include files from /usr/local/include
     or libraries from /usr/local/lib
   - no Kerberos support
+
 
    Here is the contents of the STANDARD_configuration file:
     #!/bin/sh
@@ -31,14 +41,19 @@ The "STANDARD configuration" is the most common configuration for UNIX/LINUX
        make install
        checkpc -f
 
+
+USING CONFIGURE DEFAULTS DIRECTORIES
+ 
+  By default, configure will put files in /usr/local/... directories.
   If you want to install LPRng in parallel with your existing printing system,
-  do:
+  you can have configure put the executables in the /usr/local/... locations:
      configure;
      make clean all
      (as root):
        make install
        checkpc -f
-   Note that the existing LPD server must be shut down and the LPRng lpd
+
+   The currently running LPD server must be shut down and the LPRng lpd
    server started.
 
 CAVEATS and WARNINGS:

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.62 2003/12/13 00:11:47 papowell Exp $
+ * $Id: getqueue.h,v 1.65 2004/02/04 00:54:14 papowell Exp $
  ***************************************************************************/
 
 
@@ -36,6 +36,7 @@ EXTERN const char * CLIENT				DEFINE( = "client" );
 EXTERN const char * CMD					DEFINE( = "cmd" );
 EXTERN const char * COPIES				DEFINE( = "copies" );
 EXTERN const char * COPY_DONE			DEFINE( = "copy_done" );
+EXTERN const char * HFDATAFILES			DEFINE( = "hfdatafiles" );
 EXTERN const char * DATAFILES			DEFINE( = "datafiles" );
 EXTERN const char * DATAFILE_COUNT		DEFINE( = "datafile_count" );
 EXTERN const char * DATE				DEFINE( = "D" );
@@ -137,7 +138,10 @@ EXTERN const char * STATUS_CHANGE		DEFINE( = "status_change" );
 EXTERN const char * STATUS_FD			DEFINE( = "status_fd" );
 EXTERN const char * SUBSERVER			DEFINE( = "subserver" );
 EXTERN const char * TRACE				DEFINE( = "trace" );
-EXTERN const char * TRANSFERNAME		DEFINE( = "transfername" );
+/* EXTERN const char * TRANSFERNAME		DEFINE( = "transfername" ); */
+EXTERN const char * DFTRANSFERNAME		DEFINE( = "dftransfername" );
+EXTERN const char * CFTRANSFERNAME		DEFINE( = "cftransfername" );
+EXTERN const char * NTRANSFERNAME		DEFINE( = "ntransfername" );
 EXTERN const char * OTRANSFERNAME		DEFINE( = "otransfername" );
 EXTERN const char * UNIXSOCKET			DEFINE( = "unixsocket" );
 EXTERN const char * UPDATE				DEFINE( = "update" );
@@ -163,14 +167,13 @@ int Get_file_image_and_split( const char *file,
 	int sort, const char *keysep, int uniq, int trim, int nocomments,
 	char **return_image );
 void Check_for_hold( struct job *job, struct line_list *spool_control );
-void Setup_job( struct job *job, struct line_list *spool_control,
-	const char *cf_name, const char *hf_name, int check_for_existence );
 int Get_hold_class( struct line_list *info, struct line_list *sq );
 void Append_Z_value( struct job *job, char *s );
-int Setup_cf_info( struct job *job, int check_for_existence );
+int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file );
+void Set_hf_datafile_info( struct job *job );
 char *Make_hf_image( struct job *job );
 int Set_hold_file( struct job *job, struct line_list *perm_check, int fd );
-void Get_hold_file( struct job *job, char *hf_name );
+void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  );
 void Get_spool_control( const char *file, struct line_list *info );
 void Set_spool_control( struct line_list *perm_check, const char *file,
 	struct line_list *info );
@@ -208,12 +211,11 @@ void Update_destination( struct job *job );
 int Get_destination( struct job *job, int n );
 int Get_destination_by_name( struct job *job, char *name );
 int Trim_status_file( int status_fd, char *file, int max, int min );
-char *Fix_datafile_info( struct job *job, char *number, char *suffix,
-	char *xlate_format );
+char *Fix_datafile_infox( struct job *job, char *number, char *suffix,
+	char *xlate_format, int update_df_names );
 int ordercomp(  const void *left, const void *right, const void *orderp);
-void Fix_control( struct job *job, char *filter, char *xlate_format );
-int Create_control( struct job *job, char *error, int errlen,
-	char *xlate_format );
+void Fix_control( struct job *job, char *filter, char *xlate_format,
+	int update_df_names );
 void Init_buf(char **buf, int *max, int *len);
 void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len );
 void Put_buf_str( const char *s, char **buf, int *max, int *len );

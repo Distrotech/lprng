@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.62 2003/12/13 00:11:47 papowell Exp $";
+"$Id: vars.c,v 1.65 2004/02/04 00:54:13 papowell Exp $";
 
 
 /* force local definitions */
@@ -205,6 +205,8 @@ struct keywords Pc_var_list[] = {
 { "destinations", 0, STRING_K, &Destinations_DYN,0,0,0},
    /* allow LPR to make direct socket connection to printer */
 { "direct", 0, FLAG_K, &Direct_DYN,0,0,0},
+   /* discard jobs that exceed max job size */
+{ "discard_large_jobs", 0, FLAG_K, &Discard_large_jobs_DYN,0,0,"=1"},
    /* keep the last NN done jobs for status purposes */
 { "done_jobs", 0, INTEGER_K, &Done_jobs_DYN,0,0,"=" DONE_JOBS},
    /* keep done jobs for at most max age seconds */
@@ -470,7 +472,7 @@ struct keywords Pc_var_list[] = {
    /*  short banner (one line only) */
 { "sb", 0,  FLAG_K,  &Short_banner_DYN,0,0,0},
    /*  spool directory (only ONE printer per directory!) */
-{ "sd", 0,  STRING_K,  &Spool_dir_DYN,0,0,SD_DEFAULT "%P"},
+{ "sd", 0,  STRING_K,  &Spool_dir_DYN,0,0,SD_DEFAULT "/%P"},
    /* send block of data, rather than individual files */
 { "send_block_format", 0, FLAG_K, &Send_block_format_DYN,0,0,0},
    /* send data files first, then control file */

@@ -218,12 +218,17 @@ files to get its operational parameters.
 The the &printcap; file defines a set of
 spool queues,
 each of which holds print jobs.
-The a print job consists of a <emphasis/control/ file
+A print job
+if transfered to the print server as a
+a <emphasis/control/ file
 (<literal/cfAnnnHHHHHHH/)
 and one or more data files
 (<literal/dfAnnnHHHHHHH/
-<literal/dfBnnnHHHHHHH/, etc);
-the control file contains  information such as the user name,
+<literal/dfBnnnHHHHHHH/, etc).
+The information in the control file is extracted and stored
+in the <emphasis/hold/ file
+(<literal/hfAnnn/) for the job.
+The hold file contains  information such as the user name,
 file names, and printing options, while the data files
 contain the data to be printed.
 </para>
@@ -2318,6 +2323,13 @@ Environment:
     N/tmp/hi
     fdfA383h110.private
     UdfA383h110.private
+  HF=A=root@h110+383    - job control file
+    C=A
+    D=2001-10-19-06:40:59.968
+    H=h110.private
+    J=/tmp/hi
+    priority=B
+    transfername=cfA383h110.private
 </screen>
       </figure>
 
@@ -2327,7 +2339,12 @@ before every colon (<literal/:/) so you can split it up easily in the
 filter.
 See <xref linkend="wrapper"> for an example of this use.
 The <literal/CONTROL/ value is the job control file.
-The control file contains the job print request sent to &lpd;.
+The control file contains an image of the control file corresponding
+to the current job state.
+The <literal/HF/ value is the current <emphasis/hold/ file
+contents.
+This contains detailed information about processing and other options
+used by the <literal/lpd/ server. 
 The output device is opened <literal/Read-Write/ if the
 <literal/:rw/ flag is set and it is a real device.
 Also,
@@ -2866,7 +2883,7 @@ This is equivalent to using the &printcap; <literal/ifhp/ option.
 <para>
 There are several printers that have network interfaces but
 which require very special treatment.
-Among these printers are the Tektronixs <literal/Phaser/ printers,
+Among these printers are the Tektronix <literal/Phaser/ printers,
 some legacy Xerox printers,
 and some plotters.
 These devices require that the network connection be opened and closed
@@ -3541,7 +3558,8 @@ lp:tc=.common
 Now you can add one option at a time.  But what if you want
 to do landscape and duplex mode at the same time?
 You need to create a <literal/landscape_duplex/ queue.
-The combinations become very unweildy.
+The combinations of options and the need to remember
+their exact order becomes very unweildy.
 </para>
 
 <sect1 id=incoming><title>Adding Options By Modifying Control File</title>
@@ -3572,19 +3590,19 @@ h110: {838} % lpr -Plp_landscape_duplex -Zother
       </figure>
 
 <para>
-You can use a <emphasis/wildcard/ in the printer name.
-The &LPRng; code will first try to match a printer name against the
-non-wildcard printer names.  If this fails then it will look for the first
-match using a <emphasis/glob/ type of match.
+If you use a <emphasis/wildcard/ in the printer or alias fields in the printcap file,
+the &LPRng; code will first try to match the printer name against the
+non-wildcard printer or aliases fields.  If this fails it will
+then repeat the search using a <emphasis/glob/ type of match.
 </para>
 
 <para>
-When the job is received the name that was used to send the job will be
-put into the control file as the <literal/Q/ line
-and is passed as a <literal/-Q/ option to and filters.
-The <literal/:incoming_control_filter/ is passed the original control
-file on its <literal/STDIN/ and sends a modified version on <literal/STDOUT/.
-This allows the control file to be modified as it is received.
+When the job is received the requested print queue name will be
+retained as the <literal/Q/ (Queue) information
+and is passed as the <literal/-Q/ option to filters.
+The <literal/:incoming_control_filter/ program is given the control
+file on its <literal/STDIN/ and produces
+a set of modified fiels on on <literal/STDOUT/.
 </para>
 
 <para>
@@ -3593,52 +3611,38 @@ print queue name (i.e. - <literal/_option/) to <literal/-Z/ option values and
 append these to the <literal/Z/ line of the control file.
 </para>
 
-      <figure id=updatez><title>Using <literal/update_z/</title>
-<screen>
-#!/usr/bin/perl
-...
-  See <xref linkend="filtertemplate">
-
-# read stdin
-my( $file, $Zopts, $Q );
-$file = join "", &lt;STDIN>;
-print STDERR "File '$file'\n" if $debug;
-
-# first use command line Queue name, then control file Q
-# then the printer name, then control file P
-$Q = $opt{Q}; ($Q) = $file =~ /^Q(.*)$/m if not $Q;
-# if no queue name fall back to printer name
-$Q = $opt{P} if not $Q; ($Q) = $file =~ /^P(.*)$/m if not $Q;
-$Q = "" if not $Q;  # stupid -w... sigh...
-
-# get Zopts
-($Zopts) = $file =~ /^Z(.*)$/m;
-$Zopts = "" if not $Zopts; # stupid -w ... sigh ...
-
-print STDERR "Q '$Q', Zopts '$Zopts'\n" if $debug;
-
-# now we split up the name and use as parameters for Z options
-while( $Q =~ /_([^_]+)/g ){
-    # you can simply append them:
-    $Zopts .= ",$1";
-    # or you can test and then append translated format
-    # $Zopts .= $xlate{$1} if $late{$1}
-}
-$Zopts =~ s/^,//; # remove leading comma
-print "Final '$Zopts'\n" if $debug;
-if( $Zopts ){
-    $file = "Z$Zopts\n" . $file if( not ($file =~ s/^Z.*$/Z$Zopts/m));
-}
-print $file;
-exit 0
-</screen>
-      </figure>
 
 <para>
 The <literal/-Q/ option or control file <literal/Q/ line is used
 to get the name of the print queue.
 The suffixes are then processed in turn. You can either simply append
 them or have a hash translate these values.
+</para>
+
+      <figure id=newzfmt><title>Alternate Option Modification Method</title>
+<screen>
+filter output:
+
+Xvalue       <- modify option X value
+...
+(blank line) <- separator for format change
+
+X=xxx        <- modify option X value
+key=xxx      <- modify key option value
+</screen>
+      </figure>
+<para>
+Newer versions of LPRng allow other fields and information in the
+hold file to be modified.
+The output of the filter has the format shown in
+<xref linkend="newzfmt">.
+For historical compatibility, the
+control file format is supported.
+If these entries are followed by a blank separator line,
+then the <literal/key=value/ format  can be used.
+This allows not only the control file values to be modified,
+but also fields in the hold file,
+such as the priority and other information.
 </para>
 
 </chapter>

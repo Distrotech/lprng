@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.62 2003/12/13 00:11:45 papowell Exp $";
+"$Id: linelist.c,v 1.65 2004/02/04 00:54:11 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -580,7 +580,9 @@ void Split( struct line_list *l, char *str, const char *sep,
 		DEBUG5("Split: after trim len %d, str 0x%lx, end 0x%lx, t 0x%lx",
 			len, Cast_ptr_to_long(str),
 			Cast_ptr_to_long(end), Cast_ptr_to_long(t));
-		if( len <= 0 || (nocomments && *str == '#') ) continue;
+		if( len < 0 ) continue;
+		if( trim && len == 0 ) continue;
+		if( nocomments && (cval(str) == '#') ) continue;
 		if( blen <= len ){
 			blen = 2*len;
 			buffer = realloc_or_die(buffer,blen+1,__FILE__,__LINE__);
@@ -2266,15 +2268,13 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 		if(u) free(u); u = 0;
 	}
 	if( job ){
-		if( !(s = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
-			s = Find_str_value(&job->info,OPENNAME);
-			if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
-			s = Get_file_image( s, 0 );
-			Set_str_value(&job->info, CF_OUT_IMAGE, s );
-			if( s ) free(s); s = 0;
-			s = Find_str_value(&job->info,CF_OUT_IMAGE);
+		if( (s = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
+			Set_str_value(env, "CONTROL", s );
 		}
-		Set_str_value(env, "CONTROL", s );
+		if( (s = Make_hf_image( job )) ){
+			Set_str_value(env, "HF", s );
+			free(s); s = 0;
+		}
 	}
 
 	if( Pass_env_DYN ){
@@ -3317,7 +3317,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 					str = job?Find_str_value(&job->info,NUMBER):0;
 					break;
 				case 'k':
-					str = job?Find_str_value(&job->info,TRANSFERNAME):0;
+					str = job?Find_str_value(&job->info,CFTRANSFERNAME):0;
 					break;
 				case 'l':
 					kind = INTEGER_K; n = Page_length_DYN; break;

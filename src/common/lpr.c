@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
+"$Id: lpr.c,v 1.65 2004/02/04 00:54:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -241,7 +241,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if(DEBUGL1)Dump_job("lpr - before Fix_control",&prjob);
-	Fix_control( &prjob, Control_filter_DYN, 0 );
+	Fix_control( &prjob, Control_filter_DYN, 0, 1 );
 	if(DEBUGL1)Dump_job("lpr - after Fix_control",&prjob);
 
 	if( send_to_pr &&
@@ -1048,6 +1048,7 @@ int Make_job( struct job *job )
 			SNPRINTF(nstr,sizeof(nstr))"%c",Format_JOB);
 			Set_str_value(lp,FORMAT,nstr);
 			Set_double_value(lp,SIZE,0 );
+			Set_str_value(lp,OPENNAME,"-");
 			job_size = 1;	/* make checker happy */
 		} else {
 			job_size = Copy_STDIN( job );
@@ -1145,7 +1146,7 @@ double Copy_STDIN( struct job *job )
 		job->datafiles.list[job->datafiles.count++] = (void *) lp;
 		Set_str_value(lp,"N","(STDIN)");
 		Set_str_value(lp,OPENNAME,tempfile);
-		Set_str_value(lp,TRANSFERNAME,tempfile);
+		Set_str_value(lp,DFTRANSFERNAME,tempfile);
 		Set_flag_value(lp,COPIES,1);
 		SNPRINTF(buffer,sizeof(buffer))"%c",Format_JOB);
 		Set_str_value(lp,FORMAT,buffer);
@@ -1201,7 +1202,7 @@ double Check_files( struct job *job )
 			Check_max(&job->datafiles,1);
 			job->datafiles.list[job->datafiles.count++] = (void *) lp;
 			Set_str_value(lp,OPENNAME,tempfile);
-			Set_str_value(lp,TRANSFERNAME,s);
+			Set_str_value(lp,DFTRANSFERNAME,s);
 			Clean_meta(s);
 			Set_str_value(lp,"N",s);
 			Set_flag_value(lp,COPIES,1);

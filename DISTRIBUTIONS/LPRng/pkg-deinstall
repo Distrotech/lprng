@@ -11,7 +11,7 @@ FILTER_DIR=/usr/local/libexec/filters
 LOCKFILE="/var/run/lpd"
 CONFIG_SUBDIR=lpd
 PSHOWALL="-ax"
-VERSION=3.8.23
+VERSION=3.8.25
 INIT=
 MANDIR=/usr/local/man
 #
