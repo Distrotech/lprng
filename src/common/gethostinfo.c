@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 1.23 2001/09/29 22:28:46 papowell Exp $";
+"$Id: gethostinfo.c,v 1.25 2001/10/15 13:25:27 papowell Exp $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)
@@ -372,10 +372,10 @@ char *Get_hostinfo_byaddr( struct host_information *info,
 }
 
 char *Get_remote_hostbyaddr( struct host_information *info,
-	struct sockaddr *sinaddr )
+	struct sockaddr *sinaddr, int force_ip_addr_use )
 {
 	char *fqdn;
-	fqdn = Get_hostinfo_byaddr( info, sinaddr, 0 );
+	fqdn = Get_hostinfo_byaddr( info, sinaddr, force_ip_addr_use );
 	DEBUG3("Get_remote_hostbyaddr: %s", fqdn );
 	Set_DYN( &FQDNRemote_FQDN, info->fqdn );
 	Set_DYN( &ShortRemote_FQDN, info->shorthost );

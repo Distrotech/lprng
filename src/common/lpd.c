@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.23 2001/09/29 22:28:49 papowell Exp $";
+"$Id: lpd.c,v 1.25 2001/10/15 13:25:30 papowell Exp $";
 
 
 #include "lp.h"
@@ -595,7 +595,7 @@ void Service_connection( struct line_list *args )
 	/* get the remote name and set up the various checks */
 	Perm_check.addr = &sinaddr;
 
-	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr );
+	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr, 0 );
 	Perm_check.remotehost  =  &RemoteHost_IP;
 	Perm_check.host = &RemoteHost_IP;
 	Perm_check.port =  ntohs(port);

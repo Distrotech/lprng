@@ -11,6 +11,11 @@
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
 
+Release LPRng 3.7.9 Mon Oct 15 06:18:43 PDT 2001
+  Version control strikes again.  Sigh...
+  Now all the files are carefully put into place
+   (Fumble fingers by:  Patrick Powell <papowell@astart.com>)
+
 Release LPRng 3.7.8 Tue Sep 25 12:35:46 PDT 2001
 
   Can't spell... fixed typos in man pages.

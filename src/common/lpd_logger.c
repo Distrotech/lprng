@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.23 2001/09/29 22:28:49 papowell Exp $";
+"$Id: lpd_logger.c,v 1.25 2001/10/15 13:25:30 papowell Exp $";
 
 
 #include "lp.h"
@@ -86,7 +86,7 @@ int Dump_queue_status(int outfd)
 				buffer[count] = 0;
 				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
-				free(s);
+				if(s) free(s); s = 0;
 			}
 			close(fd);
 		}
@@ -98,7 +98,7 @@ int Dump_queue_status(int outfd)
 				buffer[count] = 0;
 				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
-				free(s);
+				if(s) free(s); s = 0;
 			}
 			close(fd);
 		}

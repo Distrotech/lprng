@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getopt.h,v 1.23 2001/09/29 22:28:56 papowell Exp $
+ * $Id: getopt.h,v 1.25 2001/10/15 13:25:37 papowell Exp $
  ***************************************************************************/
 
 

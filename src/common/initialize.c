@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.23 2001/09/29 22:28:47 papowell Exp $";
+"$Id: initialize.c,v 1.25 2001/10/15 13:25:28 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -124,7 +124,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
 #endif
 
 	/* set suid information */
-	To_user();
+	Setup_uid();
 
     if(DEBUGL3){
 		struct stat statb;

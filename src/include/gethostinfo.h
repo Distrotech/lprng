@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: gethostinfo.h,v 1.23 2001/09/29 22:28:55 papowell Exp $
+ * $Id: gethostinfo.h,v 1.25 2001/10/15 13:25:37 papowell Exp $
  ***************************************************************************/
 
 
@@ -56,7 +56,7 @@ void Get_local_host( void );
 char *Get_hostinfo_byaddr( struct host_information *info,
 	struct sockaddr *sinaddr, int addr_only );
 char *Get_remote_hostbyaddr( struct host_information *info,
-	struct sockaddr *sinaddr );
+	struct sockaddr *sinaddr, int force_ip_addr_use );
 int Same_host( struct host_information *host,
 	struct host_information *remote );
 void Dump_host_information( char *title,  struct host_information *info );

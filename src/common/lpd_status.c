@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.23 2001/09/29 22:28:50 papowell Exp $";
+"$Id: lpd_status.c,v 1.25 2001/10/15 13:25:31 papowell Exp $";
 
 
 #include "lp.h"
@@ -1272,7 +1272,7 @@ void Print_status_info( int *sock, char *file,
 		if( !Full_time_DYN ){
 			for( u = s; (t = strstr(u,atmsg)); u = t+strlen(atmsg) );
 			if( u != s && (t = strrchr( u, '-' )) ){
-				memmove( u, t+1, strlen(t)+1 );
+				memmove( u, t+1, strlen(t+1)+1 );
 			}
 		}
 		if( prefix && Write_fd_str(*sock,prefix) < 0 ) cleanup(0);

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.23 2001/09/29 22:28:54 papowell Exp $";
+"$Id: utilities.c,v 1.25 2001/10/15 13:25:35 papowell Exp $";
 
 #include "lp.h"
 
@@ -1023,14 +1023,14 @@ void Clear_timeout( void )
 #endif
 
 /***************************************************************************
- * setup_info()
+ * Setup_uid()
  * 1. checks for the correct daemon uid
  * 2. checks to see if called (only needs to do this once)
  * 3. if UID 0 or EUID 0 forces both UID and EUID to 0 (test)
  * 4. Sets UID_root flag to indicate that we can change
  ***************************************************************************/
 
- static void setup_info(void)
+void Setup_uid(void)
 {
 	int err = errno;
 	static int SetRootUID;	/* did we set UID to root yet? */
@@ -1040,9 +1040,9 @@ void Clear_timeout( void )
 		OriginalRUID = getuid();	
 		OriginalEGID = getegid();	
 		OriginalRGID = getgid();	
-		DEBUG1("setup_info: OriginalEUID %d, OriginalRUID %d",
+		DEBUG1("Setup_uid: OriginalEUID %d, OriginalRUID %d",
 			OriginalEUID, OriginalRUID );
-		DEBUG1("setup_info: OriginalEGID %d, OriginalRGID %d",
+		DEBUG1("Setup_uid: OriginalEGID %d, OriginalRGID %d",
 			OriginalEGID, OriginalRGID );
 		/* we now make sure that we are able to use setuid() */
 		/* notice that setuid() will work if EUID or RUID is 0 */
@@ -1056,12 +1056,12 @@ void Clear_timeout( void )
 #				endif
 				){
 				FATAL(LOG_ERR)
-					"setup_info: RUID/EUID Start %d/%d seteuid failed",
+					"Setup_uid: RUID/EUID Start %d/%d seteuid failed",
 					OriginalRUID, OriginalEUID);
 			}
 			if( getuid() || geteuid() ){
 				FATAL(LOG_ERR)
-				"setup_info: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
+				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
 					OriginalRUID, OriginalEUID, 
 					getuid(), geteuid() );
 			}
@@ -1157,22 +1157,22 @@ void Clear_timeout( void )
 /*
  * Superhero functions - change the EUID to the requested one
  *  - these are really idiot level,  as all of the tough work is done
- * in setup_info() and seteuid_wrapper() 
+ * in Setup_uid() and seteuid_wrapper() 
  *  We also change the groups, just to be nasty as well, except for
  *  To_ruid and To_uid,  which only does the RUID and EUID
  *    Sigh...  To every rule there is an exception.
  */
 int To_euid_root(void)
 {
-	setup_info();
+	Setup_uid();
 	return( seteuid_wrapper( 0 )	);
 }
 
-static int To_daemon_called;
+ static int To_daemon_called;
 
 int To_daemon(void)
 {
-	setup_info();
+	Setup_uid();
 	Set_full_group( DaemonUID, DaemonGID );
 	To_daemon_called = 1;
 	return( seteuid_wrapper( DaemonUID )	);
@@ -1182,19 +1182,20 @@ int To_user(void)
 {
 	if( To_daemon_called ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR) "To_user: LOGIC ERROR! To_daemon has been called");
+		LOGMSG(LOG_ERR) "To_user: LOGIC ERROR! To_daemon has been called");
+		abort();
 	}
-	setup_info();
+	Setup_uid();
 	/* Set_full_group( OriginalRUID, OriginalRGID ); */
 	return( seteuid_wrapper( OriginalRUID )	);
 }
 int To_ruid(int ruid)
 {
-	setup_info(); return( setruid_wrapper( ruid )	);
+	Setup_uid(); return( setruid_wrapper( ruid )	);
 }
 int To_euid( int euid )
 {
-	setup_info(); return( seteuid_wrapper( euid ) );
+	Setup_uid(); return( seteuid_wrapper( euid ) );
 }
 
 /*
@@ -1222,21 +1223,21 @@ int setuid_wrapper(int to)
 
 int Full_daemon_perms(void)
 {
-	setup_info();
+	Setup_uid();
 	Set_full_group( DaemonUID, DaemonGID );
 	return(setuid_wrapper(DaemonUID));
 }
 
 int Full_root_perms(void)
 {
-	setup_info();
+	Setup_uid();
 	Set_full_group( 0, 0 );
 	return(setuid_wrapper( 0 ));
 }
 
 int Full_user_perms(void)
 {
-	setup_info();
+	Setup_uid();
 	Set_full_group( OriginalRUID, OriginalRGID );
 	return(setuid_wrapper(OriginalRUID));
 }

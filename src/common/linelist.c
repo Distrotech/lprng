@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.23 2001/09/29 22:28:47 papowell Exp $";
+"$Id: linelist.c,v 1.25 2001/10/15 13:25:29 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -3631,6 +3631,7 @@ char *Fix_str( char *str )
 /***************************************************************************
  * int Shutdown_or_close( int fd )
  * - if the file descriptor is a socket, then do a shutdown (write), return fd;
+ *   or if the 
  * - otherwise close it and return -1;
  ***************************************************************************/
 
@@ -3640,7 +3641,8 @@ int Shutdown_or_close( int fd )
 
 	if( fd < 0 || fstat( fd, &statb ) == -1 ){
 		fd = -1;
-	} else if( Half_close_DYN || !(S_ISSOCK(statb.st_mode)) || shutdown( fd, 1 ) == -1 ){
+	} else if( Backwards_compatible_DYN || !Half_close_DYN
+		|| !(S_ISSOCK(statb.st_mode)) || shutdown( fd, 1 ) == -1 ){
 		close(fd);
 		fd = -1;
 	}

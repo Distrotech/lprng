@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.23 2001/09/29 22:28:44 papowell Exp $";
+"$Id: checkpc.c,v 1.25 2001/10/15 13:25:26 papowell Exp $";
 
 
 
@@ -110,7 +110,7 @@ int main( int argc, char *argv[], char *envp[] )
 			case 'p': ++Printcap; break;
 			case 'P': User_specified_printer = Optarg; break;
 			case 'T':
-				To_user();
+				To_daemon();
 				initsetproctitle( argc, argv, envp );
 				Test_port( getuid(), geteuid(), serial_line );
 				exit(0);
@@ -773,7 +773,7 @@ int Fix_create_dir( char  *path, struct stat *statb )
 		} else {
 			err = Fix_owner( path );
 		}
-		To_user();
+		To_daemon();
 	}
 	return( err );
 }
@@ -795,7 +795,7 @@ int Fix_owner( char *path )
 		}
 		errno = err;
 	}
-	To_user();
+	To_daemon();
 	return( status != 0 );
 }
 
@@ -974,7 +974,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 			"checkpc: To_euid() seteuid code failed!! Portability problems\n" );
 			exit(1);
 		}
-		if( To_user() ){
+		if( To_daemon() ){
 			FPRINTF( STDERR,
 			"checkpc: To_usr() seteuid code failed!! Portability problems\n" );
 			exit(1);

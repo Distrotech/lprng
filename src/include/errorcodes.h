@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: errorcodes.h,v 1.23 2001/09/29 22:28:55 papowell Exp $
+ * $Id: errorcodes.h,v 1.25 2001/10/15 13:25:36 papowell Exp $
  ***************************************************************************/
 
 
