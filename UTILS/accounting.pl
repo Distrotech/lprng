@@ -272,7 +272,7 @@ sub Get_count {
 	print STDERR "XX:$0 vals:\nXX ".join("\nXX ",@vals)."\n" if $debug;
 	foreach (@vals) {
 		print STDERR "XX:$0 testing '$_'\n" if $debug;
-		if( /^-p/ ){
+		if( /^'*-p/ ){
 			print STDERR "XX:$0 found '$_'\n" if $debug;
 			($pages) = ($_ =~ m/(\d+)/);
 			print STDERR "XX:$0 pages '$pages'\n" if $debug;

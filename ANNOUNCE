@@ -18,9 +18,11 @@ Mirrors:
     ftp://ftp.cs.umn.edu/pub/LPRng                    (US)
     ftp://ftp.iona.com/pub/plp/LPRng                  (US)
     ftp://uiarchive.uiuc.edu/pub/packages/LPRng       (US)
+    ftp://uabgate.uab.ericsson.se/pub/unix/LPRng      (SE)
+
 
 To join the LPRng mailing list,  please send mail to
-  lprng-request@iona.ie with the word 'subscribe' in the BODY
+  lprng-request@lprng.com with the word 'subscribe' in the BODY
 
 Patrick Powell                 Astart Technologies,
 papowell@astart.com            9475 Chesapeake Drive, Suite D,

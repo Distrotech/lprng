@@ -1,0 +1,41 @@
+#!/usr/local/bin/perl
+for (@ARGV){
+	#print "arg '$_'\n";
+	$hfile = $_;
+	($cfile = $hfile) =~ s/.*\///;
+	$cfile = "common/" . $cfile;
+	$cfile =~ s/\.h$/.c/;
+	#print "cfile '$cfile', hfile '$hfile'\n";
+	open( CFILE, "<$cfile") or die "cannot open '$cfile'";
+	while (<CFILE>) {
+		chop;	# strip record separator
+		if (/^[a-z]/ .. /^{/) {
+			chomp;
+			if( /{/ ){
+				$s .= ";\n";
+				$t .= $s;
+				$s = "";
+			} elsif( $s ){
+				$s .= "\n" . $_;
+			} else {
+				$s = $_;
+			}
+		}
+	}
+	close CFILE ;
+	$t .= "\n#endif\n" if $t;
+	#print $t;
+	open( HFILE, "<$hfile") or die "cannot open '$hfile'";
+	while( <HFILE> ){
+		$h .= $_;
+		if( /PROTOTYPE/ ) {
+			$h .= $t;
+			last;
+		}
+	}
+	# print $h;
+	`cp $hfile $hfile.bak`;
+	open( HFILE,">$hfile") or die "cannot open '$hfile'";
+	print HFILE $h;
+	close HFILE;
+}

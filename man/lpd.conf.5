@@ -1,4 +1,4 @@
-.ds VE LPRng-3.5.1
+.ds VE LPRng-3.6.12
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -129,6 +129,27 @@ and it is used when
 expanding the special sequence \fB%a\fR in 
 pathname and filename strings in this config file.
 .TP
+\fBauth\fR (default: NULL)
+Authentication type to be used for client to server communication.
+.TP
+\fBauth_client_filter\fR (default: NULL)
+Program to be used for client to server communication.
+.TP
+\fBauth_forward\fR (default: NULL)
+Authentication type to be used for server to server communication.
+.TP
+\fBauth_forward_filter\fR (default: NULL)
+Program to be used for server to server communication.
+.TP
+\fBauth_forward_id\fR (default: NULL)
+Authentication id of remote server for server to server communication.
+.TP
+\fBauth_receive_filter\fR (default: NULL)
+Program to be used by server receive server or client communication.
+.TP
+\fBauth_server_id\fR (default: NULL)
+Authentication id of originating client or server.
+.TP
 \fBas\fR (default: "jobstart $H $n $P $k $b $t")
 See \fBas\fR.
 .TP
@@ -165,9 +186,6 @@ command_line option is supplied. Note that
 files containing HPGL or other printer control
 languages would often be classed as ``non_printable''.
 .TP
-\fBclient_auth_command\fR (defaults: "")
-The default authorization command for a client to use.
-.TP
 \fBconnect_grace\fR (default: 0 seconds)
 The time to pause before opening a new connection to a printer.
 This allows the printer time to recover from the previous job.
@@ -184,12 +202,6 @@ A zero value is infinite timeout.
 When TRUE and the LPD server is printing or transfering a job,
 then an indefinate number of attempts to connect to or open the IO device
 will be made.
-.TP
-\fBdefault_auth\fR (default: "")
-The default authentication type to be used when requested by a user.
-See the
-.I use_auth
-entry.
 .TP
 \fBdefault_banner_printer\fR (default: "")
 The default banner printer program to be used for printing banners.
@@ -260,12 +272,6 @@ and job information.
 The value for the environment variable PATH, both used to find filters
 and passed on to filters run by \fBlpd\fR and \fBlpr\fR.
 .TP
-\fBfix_bad_job\fR (default: yes)
-Fix a bad job file - usually by ignoring multiple
-U (unlink) entries,  badly formatted file names,
-or other common botches produced by various PC based
-LPR clients.
-.TP
 \fBforce_poll\fR (default: no)
 Some software packages put print jobs directly into the spool queues.
 The
@@ -273,10 +279,6 @@ The
 looking for jobs and no server.
 The
 \fBpoll_time\fR variable sets the interval between polls.
-.TP
-\fBforward_auth\fR (default use_auth value)
-Server uses authentication when forwarding a command.
-Only done if the original command was authenticated.
 .TP
 \fBfull_time\fR (default: no)
 Use full time and date format in logging and error messages.
@@ -303,10 +305,17 @@ The lifetime of a Kerberos ticket.
 NULL selects the default lifetime.
 Time should be specified using the standard Kerberos time representations.
 .TP
+\fBkerberos_forward_principal\fR (default NULL)
+remote principal used by server when forwarding
+.TP
 \fBkerberos_renew\fR (default NULL)
 The renewal of a Kerberos ticket.
 NULL selects a non-renewable ticket.
 Time should be specified using the standard Kerberos time representations.
+.TP
+\fBkerberos_server_principal\fR (default "lpr")
+Server principal used when client sending to server or
+when server is originating connection to another server for forwarding.
 .TP
 \fBkerberos_service\fR (default "lpr")
 The service name used to make requests to the LPD server
@@ -340,16 +349,12 @@ and use it as the origination address for local connections.
 This is done to avoid problems with multi-homed hosts
 who originate connections from different interfaces.
 .TP
-\fBlockfile\fR (default: /var/spool/lpd/lpd.lock.%h)
+\fBlockfile\fR (default: /var/spool/lpd/lpd)
 The file used to indicate the presence of an \fBlpd\fR
-server running on the host.
-.TP
-\fBlogfile\fR
-(default: /var/spool/lpd/lpd.log.%h)
-The file that \fBlpd\fR initially logs debugging and
-informational messages to. Individual \fBprintcap\fR
-entries can also specify log files for each
-printer.
+server running on the host.  The lpd_port value is appended
+to the lockfile value to provide a unique lockfile
+even when different versions of LPRng are running
+on the same system.
 .TP
 \fBlogger_destination\fR
 (default: "")
@@ -498,13 +503,6 @@ See PERMISSIONS LOOKUP for details.
 \fBpw\fR (default: 80)
 See \fBprintcap\fP(5) for details.
 .TP
-\fBremote_user\fR (default: "")
-The authentication information name of the remote server.
-If no value provided for this name,
-the default is the "user" value.
-This name can have a %X field which is expanded in the
-same manner as the configuration information.
-.TP
 \fBsave_on_error\fR
 (default: no)
 Save a job in the spool queue if it has an error
@@ -559,18 +557,8 @@ accept the message on stdin, with \fIno\fR arguments.
 The message will contain the \fBTo:\fR, \fBFrom:\fR,
 \fBCc:\fR and \fBSubject:\fR headers.
 .TP
-\fBserver_auth_command\fR (default: "")
-The authentication program to be used by the server.
-.TP
 \fBserver_tmp_dir\fR (default: /tmp)
 Temporary dir for the server.
-.TP
-\fBserver_user\fR (default: "daemon")
-The authentication userid for a server.
-Note that this entry will have %P, %R, %M
-keys replaced by the printer,
-remote printer,
-and remote host names.
 .TP
 \fBspool_dir_perms\fR (default: 042700)
 Permissions of the spool directories.
@@ -580,9 +568,6 @@ Permissions of the spool files.
 .TP
 \fBsyslog_device\fR (default: /dev/console)
 Log to this device if all else fails.
-.TP
-\fBuse_auth\fR (default: "")
-The authenication type to be used when sending a command.
 .TP
 \fBuse_date\fR (default: no)
 No information about this parameter available.
@@ -660,8 +645,6 @@ After having searched the various files,
 if a filter has been specified the filter will be started and
 the required printer name will be sent to the filter.
 The output from the filter will be used as the printcap information.
-\fBuser_auth_command\fR (defaults: "")
-No description available.
 
 .SH "SECURITY-RELATED PARAMETERS"
 .PP
@@ -678,23 +661,28 @@ group and user variables.
 
 .SH EXAMPLE
 .nf
-# LPRng configuration file
+# lpd.conf generated from  on Wed Apr  7 07:59:48 PDT 1999
 
-user daemon
-remote_user daemon_%M
-server_user daemon_%H
+#   The values in this file are the default values.
+#   If you modify the file,  set the value to something other than the default
+#   For example, '# default force_localhost' means
+#     the 'force_localhost' option value is on or 1.
+#   Uncomment this and change it to read 'force_localhost@'
 
-logfile   /var/spool/lpd/lpd.log.%h
-lockfile  /var/spool/lpd/lpd.lock.%h
-
-printcap_path  /etc/printcap:/var/spool/lpd/printcap.%h
-lpd.perms_path /etc/lpd.perms:/var/spool/lpd/lpd.perms.%h
-
-filter_path /bin:/usr/bin:/usr/local/bin:/usr/ucb:/usr/local/bin.%a
-filter_ld_path /lib:/usr/lib:/usr/ucblib:/usr/5lib:/usr/ccs/lib:/usr/openwin/lib
-
-lpd_port  printer
-minfree   1024
+# Purpose: always print banner, ignore lpr -h option 
+#   default ab@
+# Purpose: query accounting server when connected 
+#   default achk@
+# Purpose: accounting at end (see also af, la, ar, as) 
+#   default ae=jobend $H $n $P $k $b $t
+# Purpose: name of accounting file (see also la, ar) 
+#   default af=
+af=acct
+# Purpose: automatically hold all jobs 
+#   default ah@
+ah
+# Purpose: Allow duplicate command line arguments (legacy requirement) 
+#   default allow_duplicate_args@
 .fi
 .SH FILES
 .PP
@@ -731,25 +719,11 @@ The debugging information will
 help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
-.LP
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.
-In 1988 Patrick Powell released
-the PLP (Public Line Printer) software,
-which went through several evolutions.
-Justin Mason (jmason@iona.ie)
-generated PLP4.0 from several older releases of PLP.
-In 1992 Patrick Powell
-release LPRng,
-a completely redesigned and newly written version of the software.
-.LP
-The LPRng mailing list is plp@iona.ie;
-subscribe by sending mail to plp-request@iona.ie with
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
 the word subscribe in the body.
-The software is available from ftp://iona.ie/pub/LPRng.
-.LP
-LPRng is distributed under the GNU software license for non-commercial
-use,
-the Artistic License for limited commercial use. 
-Commerical support and licensing is available through
-Patrick Powell <papowell@sdsu.edu>.
+The software is available from ftp://ftp.astart.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@astart.com>.

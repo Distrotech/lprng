@@ -1,57 +1,53 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: controlword.c
- * PURPOSE: decode control words
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"controlword.c,v 3.6 1997/12/24 20:10:12 papowell Exp";
+ static char *const _id =
+"$Id: controlword.c,v 5.2 1999/10/23 02:36:44 papowell Exp papowell $";
+
 
 #include "lp.h"
 #include "control.h"
 /**** ENDINCLUDE ****/
 
-#undef PAIR
-#ifndef _UNPROTO_
-# define PAIR(X) { #X, INTEGER_K, (void *)0, X }
-#else
-# define __string(X) "X"
-# define PAIR(X) { __string(X), INTEGER_K, (void *)0, X }
-#endif
+ static struct keywords controlwords[] = {
 
-static struct keywords controlwords[] = {
-PAIR(STATUs),
-PAIR(START),
-PAIR(STOP),
-PAIR(ENABLE),
-PAIR(DISABLE),
-PAIR(ABORT),
-PAIR(KILL),
-PAIR(HOLD),
-PAIR(RELEASE),
-PAIR(TOPQ),
-PAIR(LPQ),
-PAIR(LPRM),
-PAIR(REDIRECT),
-PAIR(LPD),
-PAIR(PRINTCAP),
-PAIR(UP),
-PAIR(DOWN),
-PAIR(REREAD),
-PAIR(MOVE),
-PAIR(DEBUG),
-PAIR(HOLDALL),
-PAIR(NOHOLDALL),
-PAIR(CLAss),
-PAIR(DEFAULTQ),
-PAIR(ACTive),
-PAIR(REDO),
+{ "ABORT", OP_ABORT },
+{ "ACTIVE", OP_ACTIVE },
+{ "CLASS", OP_CLASS },
+{ "CLIENT", OP_CLIENT },
+{ "DEBUG", OP_DEBUG },
+{ "DEFAULTQ", OP_DEFAULTQ },
+{ "DISABLE", OP_DISABLE },
+{ "DOWN", OP_DOWN },
+{ "ENABLE", OP_ENABLE },
+{ "HOLD", OP_HOLD },
+{ "HOLDALL", OP_HOLDALL },
+{ "KILL", OP_KILL },
+{ "LPD", OP_LPD },
+{ "LPQ", OP_LPQ },
+{ "LPRM", OP_LPRM },
+{ "MOVE", OP_MOVE },
+{ "MSG", OP_MSG },
+{ "NOHOLDALL", OP_NOHOLDALL },
+{ "PRINTCAP", OP_PRINTCAP },
+{ "REDIRECT", OP_REDIRECT },
+{ "REDO", OP_REDO },
+{ "RELEASE", OP_RELEASE },
+{ "REREAD", OP_REREAD },
+{ "START", OP_START },
+{ "STATUS", OP_STATUS },
+{ "STOP", OP_STOP },
+{ "TOPQ", OP_TOPQ },
+{ "UP", OP_UP },
+{ "SERVER", OP_SERVER },
+{ "DEFAULTS", OP_DEFAULTS },
+
 {0}
 };
 
@@ -63,22 +59,10 @@ PAIR(REDO),
 
 int Get_controlword( char *s )
 {
-	int i;
-	for( i = 0; controlwords[i].keyword; ++i ){
-		if( strcasecmp( s, controlwords[i].keyword ) == 0 ){
-			return( controlwords[i].maxval );
-		}
-	}
-	return( 0 );
+	return( Get_keyval( s, controlwords ) );
 }
 
 char *Get_controlstr( int c )
 {
-	int i;
-	for( i = 0; controlwords[i].keyword; ++i ){
-		if( controlwords[i].maxval == c ){
-			return( controlwords[i].keyword );
-		}
-	}
-	return( 0 );
+	return( Get_keystr( c, controlwords ) );
 }

@@ -1,34 +1,29 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: fileopen.h
- * PURPOSE: fileopen.c functions
- * fileopen.h,v 3.3 1997/02/25 04:50:25 papowell Exp
- **************************************************************************/
+ * $Id: fileopen.h,v 5.1 1999/09/12 21:32:57 papowell Exp papowell $
+ ***************************************************************************/
 
-#ifndef _FILEOPEN_H
-#define _FILEOPEN_H
+
+
+#ifndef _FILEOPEN_H_
+#define _FILEOPEN_H_ 1
 
 /*****************************************************************
  * File open functions
  * These perform extensive checking for permissions and types
  *  see fileopen.c for details
  *****************************************************************/
-int Checkread( char *file, struct stat *statb );
-int Checkwrite( char *file, struct stat *statb, int rw, int create, int del );
-int Make_temp_fd( char *path, int len );
-char *Init_tempfile( void );
-void Remove_files( void *p );
-void Remove_tempfiles( void );
-int Checkwrite_timeout(int timeout,
-	char *file, struct stat *statb, int rw, int create, int delay );
 
-EXTERN struct filter Passthrough_send;
-EXTERN struct filter Passthrough_receive;
+/* PROTOTYPES */
+
+int Checkread( const char *file, struct stat *statb );
+int Checkwrite( const char *file, struct stat *statb, int rw, int create, int del );
+void Remove_files( void *p );
+int Checkwrite_timeout(int timeout,
+	const char *file, struct stat *statb, int rw, int create, int delay );
 
 #endif

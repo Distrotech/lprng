@@ -1,42 +1,50 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: control.h
- * PURPOSE: LPC control information
- * control.h,v 3.5 1997/12/24 20:10:12 papowell Exp
- **************************************************************************/
+ * $Id: control.h,v 5.2 1999/10/23 02:37:11 papowell Exp papowell $
+ ***************************************************************************/
 
-#define  START		1
-#define  STOP		2
-#define  ENABLE		3
-#define  DISABLE	4
-#define  ABORT		6
-#define  KILL		7
-#define  HOLD		8
-#define  RELEASE	9
-#define  TOPQ		10
-#define  LPQ		11
-#define  LPRM		12
-#define  STATUs		13
-#define  REDIRECT	14
-#define  LPD		15
-#define  PRINTCAP	16
-#define  UP			17
-#define  DOWN		18
-#define  REREAD		19
-#define  MOVE		20
-#define  DEBUG		21
-#define  HOLDALL	22
-#define  NOHOLDALL	23
-#define  CLAss 		24
-#define	 DEFAULTQ	25
-#define	 ACTive		26
-#define	 REDO		27
+
+#ifndef _CONTROL_H_
+#define _CONTROL_H_ 1
+
+#define  OP_START		1
+#define  OP_STOP		2
+#define  OP_ENABLE		3
+#define  OP_DISABLE		4
+#define  OP_ABORT		6
+#define  OP_KILL		7
+#define  OP_HOLD		8
+#define  OP_RELEASE		9
+#define  OP_TOPQ		10
+#define  OP_LPQ			11
+#define  OP_LPRM		12
+#define  OP_STATUS		13
+#define  OP_REDIRECT	14
+#define  OP_LPD			15
+#define  OP_PRINTCAP	16
+#define  OP_UP			17
+#define  OP_DOWN		18
+#define  OP_REREAD		19
+#define  OP_MOVE		20
+#define  OP_DEBUG		21
+#define  OP_HOLDALL		22
+#define  OP_NOHOLDALL	23
+#define  OP_CLASS 		24
+#define  OP_DEFAULTQ	25
+#define  OP_ACTIVE		26
+#define  OP_REDO		27
+#define  OP_CLIENT		28
+#define  OP_SERVER		29
+#define  OP_MSG			30
+#define  OP_DEFAULTS	31
+
+/* PROTOTYPES */
 
 int Get_controlword( char *s );
 char *Get_controlstr( int c );
+
+#endif

@@ -1,22 +1,21 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: getprinter.h
- * PURPOSE: get printer name from printcap database
- * getprinter.h,v 3.3 1997/02/15 15:01:30 papowell Exp
- **************************************************************************/
+ * $Id: getprinter.h,v 5.2 1999/10/12 22:30:19 papowell Exp papowell $
+ ***************************************************************************/
 
 
-/*****************************************************************
- * Get_printer()
- * - get printer and remote host names
- * Fix_remote_name()
- * - check printer name for printer@remote; if not, get printcap entry
- *****************************************************************/
-void Get_printer( struct printcap_entry **pce );
-void Fix_remote_name( struct printcap_entry **pce );
+
+
+#ifndef _GETPRINTER_H_
+#define _GETPRINTER_H_ 1
+
+/* PROTOTYPES */
+char *Get_printer(void);
+void Fix_Rm_Rp_info(void);
+void Get_all_printcap_entries(void);
+
+#endif

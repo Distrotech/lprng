@@ -1,0 +1,18 @@
+This is the PORTS directory corresponding to the /usr/ports/sysutils/LPRng
+in the FreeBSD Ports install.
+
+1. copy these files to another location:
+   cp -r LPRng /.../mystuff
+   cd /.../mystuff/LPRng
+   
+2. Edit the Makefile and update the version information.
+
+3. make checksum
+   make makesum
+   make
+
+   This will get the distribution and install it in the
+   /usr/ports/distfiles directory and then calculate the
+   checksum.  This will fail, and the make makesum will
+   recalculate the right values.  Now the install will
+   proceed correctly.

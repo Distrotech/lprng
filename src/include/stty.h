@@ -1,22 +1,19 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: stty.h
- * PURPOSE: stty.c functions
- * stty.h,v 3.1 1996/12/28 21:40:36 papowell Exp
- **************************************************************************/
+ * $Id: stty.h,v 5.1 1999/09/12 21:33:10 papowell Exp papowell $
+ ***************************************************************************/
 
-#ifndef _STTY_H
-#define _STTY_H
 
-/*****************************************************************
- * Serial line configuration
- *****************************************************************/
+
+#ifndef _STTY_H_
+#define _STTY_H_ 1
+
+/* PROTOTYPES */
+
 void Do_stty( int fd );
 
 #endif

@@ -35,7 +35,7 @@
 ## 
 ## Key          Match Connect Job   Job    LPQ  LPRM  LPC
 ##                            Spool Print
-## SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C,S'
+## SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C'
 ## USER         S     -       JUSR  JUSR   JUSR JUSR  JUSR
 ## HOST         S     RH      JH    JH     JH   JH    JH
 ## GROUP        S     -       JUSR  JUSR   JUSR JUSR  JUSR
@@ -51,6 +51,12 @@
 ## SAMEHOST     V     -       SA    -      SA   SA    SA
 ## SAMEUSER     V     -       -     -      SU   SU    SU
 ## SERVER       V     -       SV    -      SV   SV    SV
+## LPC          S     -       -     -      -    -     LPC
+## AUTH         V     -       AU    AU     AU   AU    AU
+## AUTHTYPE     S     -       AU    AU     AU   AU    AU
+## AUTHUSER     S     -       AU    AU     AU   AU    AU
+## AUTHFROM     S     -       AU    AU     AU   AU    AU
+## AUTHSAMEUSER S     -       AU    AU     AU   AU    AU
 ## 
 ## KEY:
 ##   JH = HOST          host in control file
@@ -64,16 +70,26 @@
 ##   FW= IP of source of request = IP of host in control file
 ##   SA= IP of source of request = IP of host in control file
 ##   SU= user from request = user in control file
-##   SA= IP of source of request = IP of server host
+##   SA= IP of source of request = IP of host in control file FROM info
+##   SV= IP of source of request = IP of server host or server Localhost
+##   LPC= lpc command globmatched against values
+##   AU= Authorization check on transfer
+##       AUTH will match (true) if authenticated transfer
+##       AUTHTYPE will match authentication type
+##       AUTHUSER will match client authentication type
+##       AUTHFROM will match server authentication type and is NULL if not from server
+##       AUTHSAMEUSER will match client authentication to save authentication in job
 ## 
-## Match: S = string with wild card, IP = IPaddress[/netmask],
+## Match: S = globmatch, IP = IPaddress[/netmask],
 ##   N = low[-high] number range, V= matching or compatible values
 ## SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
 ##    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
-##    'C' - lpc spool control request; 'S' - lpc spool status request
+##    'C' - lpc spool control request;
 ## NOTE: when printing (P action), the remote and job check values
 ##   (i.e. - RUSR, JUSR) are identical.
-## 
+## NOTE: the HOST, USER, SAMEUSER and SAMEHOST checks always succeed
+##   when checking permissions for a spool queue;  they are active only when
+##   checking permissions of a spooled job.  
 ## 
 ## The SAMEHOST match checks to see that one (or more) of the
 ##  IP addresses of the host originating the request are the
@@ -107,11 +123,13 @@
 ## commas. For example USER=john,paul,mark has 3 test values.
 ## 
 ## The Match type specifies how the matching is done.
-## S = string type match - string match with glob.
-##     Format:  string with wildcards (*)
+## S = glob type string match
+##     Format:  string with wildcards (*) and ranges
 ##              * matches 0 or more chars
+##              [a-d] matches a or b or c or d
 ##     Character comparison is case insensitive.
 ##     For example - USER=th*s matches uTHS, This, This, Theses
+##                   USER=[d-f]x matches dx, ex, fx
 ## 
 ## IP = IP address and submask.  IP address must be in dotted form.
 ##      Format: x.x.x.x[/y.y.y.y]  x.x.x.x is IP address
@@ -136,6 +154,22 @@
 ## in the control file currently being checked for permissions.  The
 ## REMOTEUSER, REMOTEHOST, and REMOTEIP are based on values supplied as part
 ## of a connection to the LPD server,  or on the actual TCP/IP connection.
+##
+## The LPC entry matches an LPC command.  For example LPC=topq would match 
+## when an lpc topq command is being executed.  You must still have the
+## SERVICE=C entry to trigger this action.
+##
+## Note: the SERVICE=R and SERVICE=P both check the LPR actions
+## of sending a job.  However, SERVICE=R does it when the job is being
+## sent to the LPD server.  Some LPD (and LPR) implementations cannot
+## handle a job being rejected due to lack of permissions,  and sit in
+## an endless loop trying to resend the job.  This is the reason for
+## the SERVICE=P check.  You can accept the job for printing,  and then
+## have the SERVICE=P check remove the job.
+##
+## NOTE: if you do not have an explicit ACCEPT SERVICE=P or
+## DEFAULT ACCEPT action then your print jobs will be accepted
+## and then quietly discarded.
 ## 
 ## Example Permissions
 ## 
@@ -161,12 +195,22 @@
 ## #Do not allow forwarded jobs or requests
 ##   REJECT SERVICE=R,C,M FORWARD
 ## 
+
+## You can make sure that connections come from a privileged port.
+## Default is to allow them from any port so that non-setuid programs
+#  can do printing.
+#  Totally RFC1179
+#REJECT SERVICE=X NOT PORT=1-1023
+#REJECT SERVICE=X NOT PORT=1-1023
+#  Privileged
+#REJECT SERVICE=X NOT PORT=721-731
+#
 # allow root on server to control jobs
 ACCEPT SERVICE=C SERVER REMOTEUSER=root
-# allow anybody to get status
-ACCEPT SERVICE=S
-# reject all others, including lpc commands permitted by user_lpc
-REJECT SERVICE=CSU
+# allow anybody to get server, status, and printcap
+ACCEPT SERVICE=C LPC=lpd,status,printcap
+# reject all others
+REJECT SERVICE=C
 #
 # allow same user on originating host to remove a job
 ACCEPT SERVICE=M SAMEHOST SAMEUSER

@@ -346,3 +346,82 @@ __argz_count __argz_stringify __argz_next])
    sed -e "/^#/d" -e "/^\$/d" -e "s,.*,	$posrcprefix& \\\\," -e "\$s/\(.*\) \\\\/\1/" \
 	< $srcdir/po/POTFILES.in > po/POTFILES
   ])
+
+dnl
+dnl set $(CC) from --with-cc=value
+dnl
+define(WITH_CC,[
+AC_ARG_WITH([cc],
+[  --with-cc=COMPILER      select compiler to use])
+AC_MSG_CHECKING(for C compiler)
+if test "$with_cc" != ""; then
+  if test "$ac_cv_prog_cc" != "" && test "$ac_cv_prog_cc" != "$with_cc"; then
+    AC_MSG_ERROR(Specified compiler doesn't match cached compiler name;
+	remove cache and try again.)
+  else
+    CC="$with_cc"
+  fi
+else
+AC_PROG_CC
+fi
+AC_CACHE_VAL(ac_cv_prog_cc,[dnl
+  test -z "$CC" && CC=gcc
+  AC_TRY_LINK([#include <stdio.h>],[printf("hi\n");], ,
+    AC_MSG_ERROR(Can't find a working compiler.))
+  ac_cv_prog_cc="$CC"
+])
+CC="$ac_cv_prog_cc"
+AC_MSG_RESULT($CC)
+AC_PROG_CC
+])dnl
+dnl
+
+dnl set $(LD) from --with-linker=value
+dnl
+define(WITH_LINKER,[
+AC_ARG_WITH([linker],
+[  --with-linker=LINKER    select linker to use],
+AC_MSG_RESULT(LD=$withval)
+LD=$withval,
+if test -z "$LD" ; then LD=$CC; fi
+[AC_MSG_RESULT(LD defaults to $LD)])dnl
+AC_SUBST([LD])])dnl
+
+dnl
+dnl set $(CCOPTS) from --with-ccopts=value
+dnl
+define(WITH_CCOPTS,[
+AC_ARG_WITH([ccopts],
+[  --with-ccopts=CFLAGS    select compiler command line options],
+AC_MSG_RESULT(CFLAGS is $withval)
+CFLAGS="$withval",
+CFLAGS="$CFLAGS"
+[AC_MSG_RESULT(CFLAGS defaults to $CFLAGS)]dnl
+)dnl
+AC_SUBST(CFLAGS)])dnl
+
+dnl
+dnl set $(LDFLAGS) from --with-ldopts=value
+dnl
+define(WITH_LDOPTS,[
+AC_ARG_WITH([ldopts],
+[  --with-ldopts=LDFLAGS    select linker command line options],
+AC_MSG_RESULT(LDFLAGS is $withval)
+LDFLAGS=$withval,
+LDFLAGS="$LDFLAGS"
+[AC_MSG_RESULT(LDFLAGS defaults to $LDFLAGS)]dnl
+)dnl
+AC_SUBST(LDFLAGS)])dnl
+
+dnl
+dnl set $(CPPOPTS) from --with-cppopts=value
+dnl
+define(WITH_CPPOPTS,[
+AC_ARG_WITH([cppopts],
+[  --with-cppopts=CPPFLAGS  select compiler preprocessor command line options],
+AC_MSG_RESULT(CPPFLAGS is $withval)
+CPPFLAGS="$withval",
+CPPFLAGS="$CPPFLAGS"
+[AC_MSG_RESULT(CPPFLAGS defaults to $CPPFLAGS)]
+)dnl
+AC_SUBST(CPPFLAGS)])dnl

@@ -1,0 +1,43 @@
+TMP=/tmp
+
+PKG=LPRng
+PKG_NAME="Line Printer Daemon"
+VERSION=@VERSION@
+
+MANSRC=../man
+
+pkg: ${PKG}.pkg
+
+clean:
+	rm -f pkginfo prototype ${PKG}.pkg
+
+distclean:
+	rm -f Makefile
+
+${PKG}.pkg: pkginfo prototype
+	pkgmk -o -d ${TMP} -f prototype -p `date +%Y%m%d%H%M`
+	pkgtrans -s ${TMP} `pwd`/${PKG}.pkg ${PKG}
+	rm -rf ${TMP}/${PKG}
+
+pkginfo: Makefile
+	rm -f pkginfo
+	echo "PKG=${PKG}" >> pkginfo
+	echo "ARCH=`uname -p`" >> pkginfo
+	echo "VERSION=${VERSION}" >> pkginfo
+	echo "NAME=${PKG_NAME}" >> pkginfo
+	echo "CATEGORY=application" >> pkginfo
+	echo "BASEDIR=/" >> pkginfo
+	echo "CLASSES=none" >> pkginfo
+
+prototype: prototype.proto
+	rm -f prototype
+	cat prototype.proto >prototype
+	for i in `(cd ${MANSRC}; ls *.1)`; do \
+	    echo "f none /usr/local/man/man1/$$i=${MANSRC}/$$i 0444 root bin" >>prototype; \
+	done
+	for i in `(cd ${MANSRC}; ls *.5)`; do \
+	    echo "f none /usr/local/man/man5/$$i=${MANSRC}/$$i 0444 root bin" >>prototype; \
+	done
+	for i in `(cd ${MANSRC}; ls *.8)`; do \
+	    echo "f none /usr/local/man/man8/$$i=${MANSRC}/$$i 0444 root bin" >>prototype; \
+	done

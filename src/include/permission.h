@@ -1,89 +1,54 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: permission.h
- * PURPOSE: permission file parsing
- * permission.h,v 3.7 1997/12/24 20:10:12 papowell Exp
- **************************************************************************/
+ * $Id: permission.h,v 5.1 1999/09/12 21:33:05 papowell Exp papowell $
+ ***************************************************************************/
 
-#ifndef _PERMISSION_H
-#define _PERMISSION_H
-/*
- * See permission.c for details on the follow datastructures
- * each permission ntry has the following information
- */
 
-struct perm_val {
-	int key;			/* keyword of permssion entry */
-	char *token;		/* token for it */
-	int list;			/* index into list of strings */
-	/* int value;			/ * single value if neccessary */
-};
 
-struct perm_line {
-	int flag;	/* flags */
-	int list;	/* index into list of perm_vals */
-};
-
-/*
- * The permission files are stored using the following data structures
- * The fields field points to the lines in the printcap files
- * The entry
- */
-
-struct perm_file {
-	struct malloc_list files;	/* list of buffers */
-	struct malloc_list filters;	/* list of filters */
-	struct malloc_list lines;	/* lines in permisson */
-	struct malloc_list values;	/* values in permisson */
-	struct malloc_list list;	/* list of options for each value */
-};
-
-EXTERN struct perm_file Perm_file;
+#ifndef _PERMISSION_H_
+#define _PERMISSION_H_ 1
 
 /***************************************************************************
  * Permissions keywords
  ***************************************************************************/
 
-#define REJECT		-1
-#define ACCEPT		1
-#define NOT			2	/* invert test condition */
-#define SERVICE		3	/* Service listed below */
-#define USER		4	/* USER field from control file (LPR) or command */
-						/* if a command, then the user name sent with command */
-#define HOST		5	/* HOST field from control file */
-						/* if not a printing operation, then host name
+#define P_REJECT		-1
+#define P_ACCEPT		1
+#define P_NOT			2	/* invert test condition */
+#define P_SERVICE		3	/* Service listed below */
+#define P_USER			4	/* USER field from control file (LPR) or command */
+							/* if a command, the user name is sent with command */
+#define P_HOST			5	/* HOST field from control file */
+							/* if not a printing operation, then host name
 							sent with command */
-#define IP			6	/* IP address of HOST */
-#define PORT		7	/* remote connect */
-#define REMOTEHOST	8	/* remote end of connnection host name */
-						/* if printing, has the same value as HOST */
-#define REMOTEIP	9	/* remote end of connnection IP address */
-						/* if printing, has the same value as IP */
-#define PRINTER		10	/* printer */
-#define DEFAULT		11
-#define FORWARD		12	/* forward - REMOTE IP != IP */
-#define SAMEHOST	13	/* same host - REMOTE IP == IP */
-#define SAMEUSER	14	/* remote user name on command line == user in file */
-#define CONTROLLINE	15	/* line from control file */
-#define GROUP	 	16	/* user is in named group - uses getpwname() */
-#define SERVER	 	17	/* request is from the server */
-#define REMOTEUSER 	18	/* USER from control information */
-#define REMOTEGROUP	19	/* remote user is in named group - uses getpwname() */
-#define AUTH		20	/* authentication type - USER, SERVER, NONE */
-#define AUTHUSER	21	/* authentication user name */
-#define FWDUSER		22	/* forwarded user name */
-#define IFIP		23	/* interface IP address */
-#define AUTHTYPE	24	/* authentication type */
-
-#define AUTH_NONE	0	/* authentication type - USER, SERVER, NONE */
-#define AUTH_USER	1	/* authentication type - USER, SERVER, NONE */
-#define AUTH_SERVER	2	/* authentication type - USER, SERVER, NONE */
+#define P_IP			6	/* IP address of HOST */
+#define P_PORT			7	/* remote connect */
+#define P_REMOTEHOST	8	/* remote end of connnection host name */
+							/* if printing, has the same value as HOST */
+#define P_REMOTEIP		9	/* remote end of connnection IP address */
+							/* if printing, has the same value as IP */
+#define P_PRINTER		10	/* printer */
+#define P_DEFAULT		11
+#define P_FORWARD		12	/* forward - REMOTE IP != IP */
+#define P_SAMEHOST		13	/* same host - REMOTE IP == IP */
+#define P_SAMEUSER		14	/* remote user name on command line == user in file */
+#define P_CONTROLLINE	15	/* line from control file */
+#define P_GROUP	 		16	/* user is in named group - uses getpwname() */
+#define P_SERVER	 	17	/* request is from the server */
+#define P_REMOTEUSER 	18	/* USER from control information */
+#define P_REMOTEGROUP	19	/* remote user is in named group - uses getpwname() */
+#define P_IFIP			20	/* interface IP address */
+#define P_LPC			21	/* LPC operations */
+#define P_AUTH			22	/* authentication type - USER, SERVER, NONE */
+#define P_AUTHTYPE		23	/* authentication type */
+#define P_AUTHUSER		24	/* authentication user name */
+#define P_AUTHFROM		25	/* from client/host name */
+#define P_AUTHSAMEUSER	26	/* from same authenticated user name */
+#define P_AUTHJOB		27	/* job has authentication */
 
 /*
  * First character of protocol to letter mappings
@@ -98,40 +63,42 @@ EXTERN struct perm_file Perm_file;
 #define CONNECTION  'X'  /* connection from remote host */
 
 struct perm_check {
-	char *user;				/* USER field from control file */
+	const char *user;				/* USER field from control file */
 							/* or REMOTEUSER from command line */
-	char *remoteuser;		/* remote user name sent on command line */
+	const char *remoteuser;		/* remote user name sent on command line */
 							/* or USER field if no command line */
 	struct host_information *host;	/* HOST field from control file */
 							/* or REMOTEHOST if no control file */
 	struct host_information *remotehost;/* remote HOST name making connection */
 							/* or HOST if no control file */
 	int	port;				/* port for remote connection */
-	char *printer;			/* printer name */
+	const char *printer;			/* printer name */
 	struct sockaddr *addr;	/* IF address information */
 	int service;			/* first character service */
-	char *authtype;			/* authentication type */
-	char *lpc;				/* lpc command */
+	const char *lpc;				/* lpc operation */
+
+	const char *authtype;			/* authentication type */
+	const char *authfrom;			/* authentication from */
+	const char *auth_client_id;	/* client authentication info */
+	const char *auth_from_id;	/* sender (client/server) authentication info */
 };
 
-EXTERN struct perm_file Perm_file;
-EXTERN struct perm_file Local_perm_file;
-EXTERN struct perm_file Perm_queue;
 EXTERN struct perm_check Perm_check;
-EXTERN int Last_default_perm;	/* last default permission */
 
-char *perm_str( int val );
-int Get_perms( char *name, struct perm_file *perms, char *path );
-int Filter_perms( char *name, struct perm_file *perms, char *filter );
-
-int Buffer_perms( struct perm_file *perms, char *file, char *buffer );
-char *perm_str( int val );
-
-void Init_perms_check( void );
-void Free_perms( struct perm_file *perms );
-int Perms_check( struct perm_file *perms, struct perm_check *check,
-	struct control_file *cf );
-int Check_for_rg_group( char *user );
-int Match_ipaddr_value( char *str, struct host_information *host );
+/* PROTOTYPES */
+char *perm_str( int n );
+int perm_val( char *s );
+int Perms_check( struct line_list *perms, struct perm_check *check,
+	struct job *job, int job_check );
+int match( struct line_list *list, const char *str, int invert );
+int match_host( struct line_list *list, struct host_information *host,
+	int invert );
+int portmatch( char *val, int port );
+int match_range( struct line_list *list, int port, int invert );
+int match_char( struct line_list *list, int value, int invert );
+int match_group( struct line_list *list, const char *str, int invert );
+int ingroup( char *group, const char *user );
+void Dump_perm_check( char *title,  struct perm_check *check );
+void Perm_check_to_list( struct line_list *list, struct perm_check *check );
 
 #endif

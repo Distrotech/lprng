@@ -1,3 +1,4 @@
+# Generated automatically from Makefile.in by configure.
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
@@ -21,6 +22,7 @@ CO=-kv
 
 cifast ci:
 	checkin() { \
+		rcs -l $$1; \
 		ci $(CI) -mUpdate -t-Initial $$1; \
 		co $(CO) $$1; \
 	}; \

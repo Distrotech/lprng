@@ -1,17 +1,15 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: merge.c
- * PURPOSE: mergesort
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"merge.c,v 3.3 1998/03/24 02:43:22 papowell Exp";
+ static char *const _id =
+"$Id: merge.c,v 5.1 1999/09/12 21:32:48 papowell Exp papowell $";
+
 
 /*-
  * copyright (c) 1992, 1993
@@ -50,7 +48,7 @@ static char *const _id =
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)merge.c	8.2 (Berkeley) 2/14/94";
+ static char sccsid[] = "@(#)merge.c	8.2 (Berkeley) 2/14/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -69,10 +67,10 @@ static char sccsid[] = "@(#)merge.c	8.2 (Berkeley) 2/14/94";
 
 #include "lp.h"
 
-static void
+ static void
 setup(unsigned char *list1, unsigned char *list2, size_t n, size_t size,
 	int (*cmp) (const void *, const void *));
-static void
+ static void
 insertionsort(unsigned char *a, size_t n, size_t size,
 	int (*cmp)(const void *, const void *));
 
@@ -134,7 +132,7 @@ Mergesort(void *base, size_t nmemb, size_t size,
 	if (!(size % ISIZE) && !(((char *)base - (char *)0) % ISIZE))
 		iflag = 1;
 
-	list2 = malloc_or_die( (nmemb * size + PSIZE));
+	list2 = malloc_or_die( (nmemb * size + PSIZE),__FILE__,__LINE__);
 
 	list1 = base;
 	setup(list1, list2, nmemb, size, cmp);
@@ -268,7 +266,7 @@ COPY:	    			b = t;
  * when THRESHOLD/2 pairs compare with same sense.  (Only used when NATURAL
  * is defined.  Otherwise simple pairwise merging is used.)
  */
-static void
+ static void
 setup(unsigned char *list1, unsigned char *list2, size_t n, size_t size,
 	int (*cmp) (const void *, const void *))
 {
@@ -340,7 +338,7 @@ setup(unsigned char *list1, unsigned char *list2, size_t n, size_t size,
  * This is to avoid out-of-bounds addresses in sorting the
  * last 4 elements.
  */
-static void
+ static void
 insertionsort(unsigned char *a, size_t n, size_t size,
 	int (*cmp)(const void *, const void *))
 {

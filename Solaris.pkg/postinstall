@@ -1,0 +1,11 @@
+#!/bin/sh
+if test -f /etc/lpd.conf ; then
+	cp /etc/lpd.conf.sample /etc/lpd.conf
+fi;
+if test -f /etc/lpd.perms ; then
+	cp /etc/lpd.perms.sample /etc/lpd.perms
+fi;
+# Send hup signal to inetd
+PID=`/usr/bin/ps -e -u 0|/usr/bin/fgrep inetd|/usr/bin/awk '{print $1}'`
+kill -HUP $PID || exit 2
+exit 0

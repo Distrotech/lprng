@@ -1,7 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
 <HEAD>
-<TITLE> LPRng-HOWTO</TITLE>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO</TITLE>
+ <LINK HREF="LPRng-HOWTO-1.html" REL=next>
+
+
 </HEAD>
 <BODY>
 <A HREF="LPRng-HOWTO-1.html">Next</A>
@@ -11,29 +15,35 @@ Contents
 <H1> LPRng-HOWTO</H1>
 
 <H2>Patrick Powell <CODE>
-<A HREF="mailto:papowell@astart.com">papowell@astart.com</A></CODE></H2> 29 March 1998 (For LPRng-3.4.5)
+<A HREF="mailto:papowell@astart.com">papowell@astart.com</A></CODE></H2> 24 Oct 1999 (For LPRng-3.6.12)
 <P><HR>
 <EM>The LPRng software is an enhanced, extended, and portable implementation
 of the Berkeley LPR print spooler functionality. While providing the same
 interface and meeting RFC1179 requirements, the implementation is completely
-new and provides support for the following features: lightweight (no databases
+independent and provides support for the following features: lightweight (no databases
 needed) lpr, lpc, and lprm programs; dynamic redirection of print queues;
 automatic job holding; highly verbose diagnostics; multiple printers serving
-a single queue; client programs do not need to run SUID root; greatly enhanced
-security checks; and a greatly improved permission and authorization mechanism.
+a single queue; client programs do not need to run SETUID root; greatly enhanced
+security checks; load balancing across multiple printers;
+and a greatly improved permission and authorization mechanism.
 The source software compiles and runs on a wide variety of UNIX systems,
 and is compatible with other print spoolers and network printers that use
 the LPR interface and meet RFC1179 requirements. The package comes with filters for PostScript and HP printers, as well
-as the usual 'dumb' printers. Note that the PostScript and HP filters do
-page counting and produce accounting information accounting. In addition,
-there are a wide variety of other filters that can do page formatting,
-and produce banner pages. For users that require compatibility with the SVR4 lp and lpstat interface,
-lpr and lpq will simulate this interface, eliminating the need for another
-print spooler package. In addition, a publically available PCNFSD server
-is distributed with LPRng, and interfaces with the PC/DOS/Windows based
-NFS style print spoolers. For users that require secure and/or authenticated printing support,
-LPRng supports Kerberos V and/or PGP authentication methods. Additional
-authentication support is extremely simple to add. </EM>
+as the usual 'dumb' printers, and the PostScript and HP filters support
+page counting and produce accounting information accounting. In addition
+there are a wide variety of filters for page formatting
+and to produce banner pages. For users that require compatibility with the SVR4 lp and lpstat programs,
+the LPRng package provides emulation of these programs.
+In addition, a publicly available PCNFSD server
+is distributed with LPRng and interfaces with the PC/DOS/Windows based
+NFS style print spoolers.
+In addition,
+LPRng can be easily integrated with the Samba SMB support package.
+For users that require secure and/or authenticated printing support,
+LPRng supports Kerberos 5,
+MIT Kerberos 4 extensions to LPR,
+and PGP authentication methods.
+Additional authentication support is extremely simple to add. </EM>
 <HR>
 <P>
 <H2><A NAME="toc1">1.</A> <A HREF="LPRng-HOWTO-1.html">Introduction</A></H2>
@@ -41,210 +51,256 @@ authentication support is extremely simple to add. </EM>
 <UL>
 <LI><A HREF="LPRng-HOWTO-1.html#ss1.1">1.1 What is LPRng?</A>
 <LI><A HREF="LPRng-HOWTO-1.html#ss1.2">1.2 More Information</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.3">1.3 Copyright</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.4">1.4 Disclaimer</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.5">1.5 Commercial Support</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.6">1.6 Web Site</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.7">1.7 FTP Sites</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.8">1.8 Mailing List</A>
-<LI><A HREF="LPRng-HOWTO-1.html#ss1.9">1.9 PGP Public Key</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.3">1.3 Frequently Asked Questions</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.4">1.4 Copyright</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.5">1.5 Disclaimer</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.6">1.6 Commercial Support</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.7">1.7 Web Site</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.8">1.8 FTP Sites</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.9">1.9 Mailing List</A>
+<LI><A HREF="LPRng-HOWTO-1.html#ss1.10">1.10 PGP Public Key</A>
 </UL>
 <P>
-<H2><A NAME="toc2">2.</A> <A HREF="LPRng-HOWTO-2.html">The Most Frequently Asked Questions</A></H2>
+<H2><A NAME="toc2">2.</A> <A HREF="LPRng-HOWTO-2.html">Print Spooling Overview</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.1">2.1 Why do I get malformed from address errors?</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.2">2.2 It was working normally, then I get connection refused errors</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.3">2.3 Job is not in print queue, but it gets printed!</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.4">2.4 Job disappears and is never printed, but lpr works</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.5">2.5 I get messages about bad control file format</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.6">2.6 What is RFC 1179, the Line Printer Daemon Protocol?</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.7">2.7 I want to replace lp, lpstat, etc, but my programs need them</A>
-<LI><A HREF="LPRng-HOWTO-2.html#ss2.8">2.8 What are the drawbacks to LPRng?</A>
+<LI><A HREF="LPRng-HOWTO-2.html#ss2.1">2.1 Overview</A>
+<LI><A HREF="LPRng-HOWTO-2.html#ss2.2">2.2 Sample Printcap Entry</A>
+<LI><A HREF="LPRng-HOWTO-2.html#ss2.3">2.3 Print Server Configuration</A>
 </UL>
 <P>
-<H2><A NAME="toc3">3.</A> <A HREF="LPRng-HOWTO-3.html">Installing your printer</A></H2>
+<H2><A NAME="toc3">3.</A> <A HREF="LPRng-HOWTO-3.html">Attaching Your Printer</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-3.html#ss3.1">3.1 Parallel Printers</A>
-<LI><A HREF="LPRng-HOWTO-3.html#ss3.2">3.2 Serial Printers</A>
-<LI><A HREF="LPRng-HOWTO-3.html#ss3.3">3.3 Network Printers</A>
+<LI><A HREF="LPRng-HOWTO-3.html#ss3.1">3.1 Network Printers</A>
+<LI><A HREF="LPRng-HOWTO-3.html#ss3.2">3.2 Network Print Server Boxes</A>
+<LI><A HREF="LPRng-HOWTO-3.html#ss3.3">3.3 Parallel Printers</A>
+<LI><A HREF="LPRng-HOWTO-3.html#ss3.4">3.4 Serial Printers</A>
 </UL>
 <P>
-<H2><A NAME="toc4">4.</A> <A HREF="LPRng-HOWTO-4.html">Installing the programs</A></H2>
+<H2><A NAME="toc4">4.</A> <A HREF="LPRng-HOWTO-4.html">Installing the Software</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.1">4.1 Files and Setup</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.2">4.2 Source Code and Installation</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.3">4.3 Preparing to run the daemon</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.4">4.4 Replacing UNIX SystemV lp, lpstat Printing Services</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.5">4.5 Setuid ROOT and Security Issues</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.6">4.6 System specific notes</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.7">4.7 Solaris 2.4, 2.5, 2.6</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.8">4.8 Solaris, Newsprint and FrameMaker</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.9">4.9 Linux</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.10">4.10 AIX</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.11">4.11 Appletalk Support</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.12">4.12 Apple to LPRng Printing</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.13">4.13 LPRng to Appletalk Printing</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.14">4.14 SAMBA Support</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.15">4.15 Printer Specific notes</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.16">4.16 HP Deskjet</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.17">4.17 HP Deskjet 1600CM</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.18">4.18 Lexmark Printers</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.19">4.19 Tektronix P450 and Family</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.20">4.20 Duplex Printing</A>
-<LI><A HREF="LPRng-HOWTO-4.html#ss4.21">4.21 TESTVERSION  and Portability Testing</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.1">4.1 Source Code and Support Programs</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.2">4.2 Configuration</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.3">4.3 Installation</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.4">4.4 Solving Installation Problems</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.5">4.5 Advanced Configuration Options</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.6">4.6 Printcap and lpd.conf files</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.7">4.7 Security, Permissions, and CHECKPC</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.8">4.8 Stopping Existing Spooler Software</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.9">4.9 Initial System Testing</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.10">4.10 Startup Scripts</A>
+<LI><A HREF="LPRng-HOWTO-4.html#ss4.11">4.11 Replacing UNIX SystemV lp, lpstat Printing Services</A>
 </UL>
 <P>
-<H2><A NAME="toc5">5.</A> <A HREF="LPRng-HOWTO-5.html">/etc/printcap Print Spool Database File</A></H2>
+<H2><A NAME="toc5">5.</A> <A HREF="LPRng-HOWTO-5.html">System Specific Notes</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.1">5.1 Index To All The Options</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.2">5.2 A very simple example</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.3">5.3 A serial printer queue</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.4">5.4 A remote printer queue</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.5">5.5 Network Printing With /etc/printcap</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.6">5.6 Spooling To Local Server</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.7">5.7 Shared printcap files</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.8">5.8 Master Printcap Files</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.9">5.9 Printcap options for lpr, lpq, lprm, and lpc</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.10">5.10 Bounce queues</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.11">5.11 LPR Filtering</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.12">5.12 Dynamic Routing</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.13">5.13 Support for Network Print Servers</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.14">5.14 Printer load balancing</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.15">5.15 The Missing Details</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.16">5.16 Management Strategy for Large Sites</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.17">5.17 Using Programs To Get Printcap Information</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.18">5.18 The Record Queue Name qq and force_queuename flags</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.19">5.19 Using the check_for_nonprintable Flag</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.20">5.20 The fd Forwarding Off Option</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.21">5.21 The rg Restrict Use to Group Members Option</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.22">5.22 The fx Allowed Formats Option</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.23">5.23 Fixing Bad Control Files and Metacharacters</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.24">5.24 Maximum Copies</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.25">5.25 The mi Minimum Spool Queue Space Option</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.26">5.26 Debugging</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.27">5.27 LPD Specific</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.28">5.28 Legacy Compatibility</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.29">5.29 Unused Legacy Printcap Options</A>
-<LI><A HREF="LPRng-HOWTO-5.html#ss5.30">5.30 Compatibility with BSD printcap</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.1">5.1 Solaris 2.4, 2.5, 2.6, 2.7</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.2">5.2 Solaris, Newsprint and FrameMaker</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.3">5.3 Linux</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.4">5.4 AIX</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.5">5.5 AppleTalk Support</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.6">5.6 Apple to LPRng Printing</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.7">5.7 LPRng to AppleTalk Printing</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.8">5.8 SAMBA, SMB and LPRng</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.9">5.9 Printing to a NetBEUI Printer</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.10">5.10 Printer Specific notes</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.11">5.11 HP Deskjet</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.12">5.12 HP LaserJet IIISiMX</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.13">5.13 HP JetDirect Interface</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.14">5.14 Lexmark Printers</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.15">5.15 Network Base Tektronix Phaser Printers</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.16">5.16 Duplex Printing</A>
+<LI><A HREF="LPRng-HOWTO-5.html#ss5.17">5.17 Test Version  and Portability Testing</A>
 </UL>
 <P>
-<H2><A NAME="toc6">6.</A> <A HREF="LPRng-HOWTO-6.html">Filters</A></H2>
+<H2><A NAME="toc6">6.</A> <A HREF="LPRng-HOWTO-6.html">The Most Frequently Asked Questions</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.1">6.1 What are filters?</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.2">6.2 What are print formats?</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.3">6.3 OF Filter</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.4">6.4 The lpr -p  format and pr option</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.5">6.5 The lpr -l  format and binary format</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.6">6.6 Job Processing and Printcap Options</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.7">6.7 Filter Command Line Flags</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.8">6.8 Bounce queues and filters: caveats</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.9">6.9 The lpr -p  format and :pr filter</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.10">6.10 LPRng Supported Filters</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.11">6.11 CTI-ifhp ifhp Filters</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.12">6.12 psfilter PostScript Printer Filter</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.13">6.13 lp_pipe Filters</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.14">6.14 apsfilter Filter</A>
-<LI><A HREF="LPRng-HOWTO-6.html#ss6.15">6.15 Using your own filters</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.1">6.1 Why do I get malformed from address errors?</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.2">6.2 It was working normally, then I get connection refused errors</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.3">6.3 Job is not in print queue, but it gets printed!</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.4">6.4 Job disappears and is never printed, but lpr works</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.5">6.5 I get messages about bad control file format</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.6">6.6 What is RFC 1179, the Line Printer Daemon Protocol?</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.7">6.7 I want to replace lp, lpstat, etc, but my programs need them</A>
+<LI><A HREF="LPRng-HOWTO-6.html#ss6.8">6.8 What are the drawbacks to LPRng?</A>
 </UL>
 <P>
-<H2><A NAME="toc7">7.</A> <A HREF="LPRng-HOWTO-7.html">Spool Queues and Files</A></H2>
+<H2><A NAME="toc7">7.</A> <A HREF="LPRng-HOWTO-7.html">Client To Server Connection Information</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.1">7.1 Spool Queue and Control Queue</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.2">7.2 Job State</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.3">7.3 Printer Lock File</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.4">7.4 Spool Control File</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.5">7.5 Log and Status Files</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.6">7.6 Job Control File</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.7">7.7 Job Hold File</A>
-<LI><A HREF="LPRng-HOWTO-7.html#ss7.8">7.8 Job Identifier</A>
+<LI><A HREF="LPRng-HOWTO-7.html#ss7.1">7.1 Printer Name and Server IP Address</A>
+<LI><A HREF="LPRng-HOWTO-7.html#ss7.2">7.2 LPD Server Runnning on Localhost</A>
 </UL>
 <P>
-<H2><A NAME="toc8">8.</A> <A HREF="LPRng-HOWTO-8.html">/etc/lpd.conf Configuration File</A></H2>
+<H2><A NAME="toc8">8.</A> <A HREF="LPRng-HOWTO-8.html">Using the Printcap Database</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-8.html#ss8.1">8.1 Configuration File Format</A>
-<LI><A HREF="LPRng-HOWTO-8.html#ss8.2">8.2 Obtaining Configuration Information</A>
-<LI><A HREF="LPRng-HOWTO-8.html#ss8.3">8.3 Useful Configuration Options</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.1">8.1 Simple Client Printcap Entry</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.2">8.2 Simple Server Printcap Example</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.3">8.3 The Printcap Parsing Rules</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.4">8.4 Displaying Printcap Information</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.5">8.5 Remote Printer Using RFC1179</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.6">8.6 Remote Printer Using Socket API</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.7">8.7 Parallel Printer</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.8">8.8 A serial printer queue</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.9">8.9 Single Printcap File for Large Installation</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.10">8.10 Bounce queues</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.11">8.11 Changing Job Formats</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.12">8.12 LPR Filters Files</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.13">8.13 Dynamic Routing</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.14">8.14 Printer Load Balancing</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.15">8.15 Locations of Printcap Files</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.16">8.16 Management Strategies for Large Installations</A>
+<LI><A HREF="LPRng-HOWTO-8.html#ss8.17">8.17 Using Programs To Get Printcap Information</A>
 </UL>
 <P>
-<H2><A NAME="toc9">9.</A> <A HREF="LPRng-HOWTO-9.html">The /etc/lpd.perms Permissions File</A></H2>
+<H2><A NAME="toc9">9.</A> <A HREF="LPRng-HOWTO-9.html">LPRng checkpc Utility</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.1">9.1 Information for matching</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.2">9.2 Permission Checks</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.3">9.3 Match Procedure</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.4">9.4 Permission File Location</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.5">9.5 Example Permission File</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.6">9.6 Complex Permission Checking</A>
-<LI><A HREF="LPRng-HOWTO-9.html#ss9.7">9.7 More Examples</A>
+<LI><A HREF="LPRng-HOWTO-9.html#ss9.1">9.1 Maintenance</A>
+<LI><A HREF="LPRng-HOWTO-9.html#ss9.2">9.2 Printcap Information</A>
 </UL>
 <P>
-<H2><A NAME="toc10">10.</A> <A HREF="LPRng-HOWTO-10.html">Running the software</A></H2>
+<H2><A NAME="toc10">10.</A> <A HREF="LPRng-HOWTO-10.html">Spool Queues and Files</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-10.html#ss10.1">10.1 LPRng's little helper: checkpc</A>
-<LI><A HREF="LPRng-HOWTO-10.html#ss10.2">10.2 Starting the daemon</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.1">10.1 Spool Queue</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.2">10.2 Queue Lock File</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.3">10.3 Spool Control File</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.4">10.4 Log and Status Files</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.5">10.5 Job Files</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.6">10.6 Job Hold File</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.7">10.7 Job State</A>
+<LI><A HREF="LPRng-HOWTO-10.html#ss10.8">10.8 Job Identifier</A>
 </UL>
 <P>
-<H2><A NAME="toc11">11.</A> <A HREF="LPRng-HOWTO-11.html">Accounting</A></H2>
+<H2><A NAME="toc11">11.</A> <A HREF="LPRng-HOWTO-11.html">Configuration File lpd.conf and Options</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.1">11.1 Printer Accounting Reality Check</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.2">11.2 How HP Printers Implement Page Counters</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.3">11.3 Accounting Printcap Options</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.4">11.4 Accounting File</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.5">11.5 Remote Server Accounting</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.6">11.6 Using Filters For Accounting</A>
-<LI><A HREF="LPRng-HOWTO-11.html#ss11.7">11.7 Accounting Utility accounting.pl</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.1">11.1 Configuration File Format</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.2">11.2 Configuration Information</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.3">11.3 Configuration Options</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.4">11.4 The Record Queue Name qq and force_queuename flags</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.5">11.5 The check_for_nonprintable Flag</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.6">11.6 The rg Restrict Use to Group Members Option</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.7">11.7 The fx Allowed Formats Option</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.8">11.8 Fixing Bad Control Files and Metacharacters</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.9">11.9 Using the bk Option and Control File Filters</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.10">11.10 Maximum Copies</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.11">11.11 The minfree Minimum Spool Queue Space Option</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.12">11.12 Debugging</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.13">11.13 LPD Specific</A>
+<LI><A HREF="LPRng-HOWTO-11.html#ss11.14">11.14 Legacy Compatibility</A>
 </UL>
 <P>
-<H2><A NAME="toc12">12.</A> <A HREF="LPRng-HOWTO-12.html">Authentication and Encryption</A></H2>
+<H2><A NAME="toc12">12.</A> <A HREF="LPRng-HOWTO-12.html">Job Processing</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.1">12.1 Authentication</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.2">12.2 Identifiers</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.3">12.3 RFC1179 Protocol Extensions</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.4">12.4 Client Operations for Client To lpd Server Authentication</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.5">12.5 Server Operations for Client To lpd Server Authentication</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.6">12.6 lpd Server to Server Authentication</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.7">12.7 Permission Checking</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.8">12.8 Using PGP for Authentication</A>
-<LI><A HREF="LPRng-HOWTO-12.html#ss12.9">12.9 Using Kerberos for Authentication</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.1">12.1 Opening the Output Device</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.2">12.2 Printing Banner At Beginning</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.3">12.3 Printing Job Files</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.4">12.4 Printing Banner At End</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.5">12.5 Normal Termination</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.6">12.6 Abnormal Termination</A>
+<LI><A HREF="LPRng-HOWTO-12.html#ss12.7">12.7 LPD Spool Queue Processing</A>
 </UL>
 <P>
-<H2><A NAME="toc13">13.</A> <A HREF="LPRng-HOWTO-13.html">Status Monitoring and Logging</A></H2>
+<H2><A NAME="toc13">13.</A> <A HREF="LPRng-HOWTO-13.html">Filters</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.1">13.1 LPQ status reporting</A>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.2">13.2 LPQ Short Format (lpq -s)</A>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.3">13.3 LPQ Long Format (lpq default)</A>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.4">13.4 LPQ Verbose Format (lpq -v)</A>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.5">13.5 lpc status</A>
-<LI><A HREF="LPRng-HOWTO-13.html#ss13.6">13.6 Remote Logger Operation</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.1">13.1 What are filters?</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.2">13.2 What are print formats?</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.3">13.3 OF Filter</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.4">13.4 LPR -p format</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.5">13.5 LPR binary (-l) format</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.6">13.6 Filter Command Line Flags</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.7">13.7 LPRng Supported Filters</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.8">13.8 lpf</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.9">13.9 IFHP Filter</A>
+<LI><A HREF="LPRng-HOWTO-13.html#ss13.10">13.10 Using your own filters</A>
 </UL>
 <P>
-<H2><A NAME="toc14">14.</A> <A HREF="LPRng-HOWTO-14.html">RFC 1179 - Line Printer Daemon Protocol</A></H2>
+<H2><A NAME="toc14">14.</A> <A HREF="LPRng-HOWTO-14.html">Permissions and Authentication</A></H2>
 
 <UL>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.1">14.1 Ports and Connections</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.2">14.2 Protocol Requests and Replies</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.3">14.3 Job Transfer</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.4">14.4 Data File Transfer</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.5">14.5 Control File Contents</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.6">14.6 LPQ Requests</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.7">14.7 LPRM Requests</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.8">14.8 LPC Requests</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.9">14.9 Block Job Transfer</A>
-<LI><A HREF="LPRng-HOWTO-14.html#ss14.10">14.10 Authenticated Transfer</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.1">14.1 Information for matching</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.2">14.2 Permission Checks</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.3">14.3 Match Procedure</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.4">14.4 Permission File Location</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.5">14.5 Example Permission File</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.6">14.6 Complex Permission Checking</A>
+<LI><A HREF="LPRng-HOWTO-14.html#ss14.7">14.7 More Examples</A>
 </UL>
 <P>
-<H2><A NAME="toc15">15.</A> <A HREF="LPRng-HOWTO-15.html">Acknowledgements</A></H2>
+<H2><A NAME="toc15">15.</A> <A HREF="LPRng-HOWTO-15.html">Accounting</A></H2>
+
+<UL>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.1">15.1 Printer Accounting Reality Check</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.2">15.2 How HP Printers Implement Page Counters</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.3">15.3 Accounting Printcap Options</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.4">15.4 Accounting File</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.5">15.5 Accounting Using an Accounting Server</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.6">15.6 Using Filters For Accounting</A>
+<LI><A HREF="LPRng-HOWTO-15.html#ss15.7">15.7 Accounting Utility accounting.pl</A>
+</UL>
+<P>
+<H2><A NAME="toc16">16.</A> <A HREF="LPRng-HOWTO-16.html">Authentication and Encryption</A></H2>
+
+<UL>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.1">16.1 Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.2">16.2 Identifiers</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.3">16.3 RFC1179 Protocol Extensions</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.4">16.4 Client Operations for Client To lpd Server Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.5">16.5 Server Operations for Client To lpd Server Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.6">16.6 lpd Server to Server Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.7">16.7 Permission Checking</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.8">16.8 Using PGP for Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.9">16.9 Using Kerberos 5 for Authentication</A>
+<LI><A HREF="LPRng-HOWTO-16.html#ss16.10">16.10 Using Kerberos 4 for Authentication</A>
+</UL>
+<P>
+<H2><A NAME="toc17">17.</A> <A HREF="LPRng-HOWTO-17.html">Status Monitoring and Logging</A></H2>
+
+<UL>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.1">17.1 LPQ status reporting</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.2">17.2 LPQ Short Format (lpq -s)</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.3">17.3 LPQ Long Format (lpq default, lpq -l, lpq -L)</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.4">17.4 LPQ Verbose Format (lpq -v)</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.5">17.5 lpc status</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.6">17.6 Remote Logger Operation</A>
+<LI><A HREF="LPRng-HOWTO-17.html#ss17.7">17.7 LPR -mhost%port and user logging support</A>
+</UL>
+<P>
+<H2><A NAME="toc18">18.</A> <A HREF="LPRng-HOWTO-18.html">RFC 1179 - Line Printer Daemon Protocol</A></H2>
+
+<UL>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.1">18.1 Ports and Connections</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.2">18.2 Protocol Requests and Replies</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.3">18.3 Job Transfer</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.4">18.4 Data File Transfer</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.5">18.5 Control File Contents</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.6">18.6 LPQ Requests</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.7">18.7 LPRM Requests</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.8">18.8 LPC Requests</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.9">18.9 Block Job Transfer</A>
+<LI><A HREF="LPRng-HOWTO-18.html#ss18.10">18.10 Authenticated Transfer</A>
+</UL>
+<P>
+<H2><A NAME="toc19">19.</A> <A HREF="LPRng-HOWTO-19.html">Defective RFC1179 Implementations</A></H2>
+
+<UL>
+<LI><A HREF="LPRng-HOWTO-19.html#ss19.1">19.1 OS2 Print Spoolers</A>
+<LI><A HREF="LPRng-HOWTO-19.html#ss19.2">19.2 Serious Security Loophole</A>
+</UL>
+<P>
+<H2><A NAME="toc20">20.</A> <A HREF="LPRng-HOWTO-20.html">Acknowledgements</A></H2>
+
+<P>
+<H2><A NAME="toc21">21.</A> <A HREF="LPRng-HOWTO-21.html">Index To All The Configuration and Printcap Options</A></H2>
 
 <HR>
 <A HREF="LPRng-HOWTO-1.html">Next</A>

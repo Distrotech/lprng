@@ -1,509 +1,160 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
 <HEAD>
-<TITLE> LPRng-HOWTO: Spool Queues and Files</TITLE>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Client To Server Connection Information</TITLE>
+ <LINK HREF="LPRng-HOWTO-8.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-6.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc7" REL=contents>
 </HEAD>
 <BODY>
 <A HREF="LPRng-HOWTO-8.html">Next</A>
 <A HREF="LPRng-HOWTO-6.html">Previous</A>
 <A HREF="LPRng-HOWTO.html#toc7">Contents</A>
 <HR>
-<H2><A NAME="s7">7. Spool Queues and Files</A></H2>
+<H2><A NAME="s7">7. Client To Server Connection Information</A></H2>
 
-<P>When files are accepted by the <CODE>lpd</CODE> server for printing,
-they are stored in a spool queue directory,
-together with other files controlling the print operation.
-This section describes these files and how the LPRng software uses them.
-<P>For descriptive purposes,
-we will use the following printcap entry as a guide:
-<P>
-<PRE>
-pr|alias
-  :sd=/var/lpd/pr_public
-  :cd=/var/lpd/pr
-</PRE>
-<H2><A NAME="ss7.1">7.1 Spool Queue and Control Queue</A>
+<P>The LPRng software is a true set of client/server applications.
+The LPRng clients,
+<CODE>lpr, lprm, lpq,</CODE> and <CODE>lpc</CODE> connect to a <CODE>lpd</CODE> server using a
+TCP/IP connection.
+This means that you must have TCP/IP networking enabled on your workstation
+to use LPRng.
+<P>However,
+you do not need to have an external network connection to the Internet.
+For most single system users,
+the <CODE>lpd</CODE> server is running on the same workstation as the client program,
+and the clients will simply talk to the <CODE>localhost</CODE>.
+<H2><A NAME="forcelocalhost"></A> <A NAME="defaultprinterwhenunknown"></A> <A NAME="defaultprinter"></A> <A NAME="defaulthost"></A> <A NAME="PRINTER"></A> <A NAME="printerenv"></A> <A NAME="ss7.1">7.1 Printer Name and Server IP Address</A>
 </H2>
 
-<P>
+<P>Options used:
 <UL>
-<LI> <CODE>sd=</CODE><EM>Spool queue directory name</EM></LI>
-<LI> <CODE>cd=</CODE><EM>Control queue directory name</EM></LI>
+<LI> <CODE>PRINTER</CODE><EM>&nbsp;&nbsp;Environment variable </EM></LI>
+<LI> <CODE>force_localhost</CODE><EM>&nbsp;&nbsp;force clients to send requests to localhost </EM></LI>
+<LI> <CODE>default_printer_when_unknown</CODE>&nbsp;&nbsp; <EM>used by LPD when printer name not in printcap </EM></LI>
 </UL>
-<P>The
-<CODE>sd</CODE>
-option in the printcap entry specifies the spool queue
-directory.
-If there is no
-<CODE>sd</CODE>
-entry or value,
-then the printer can only be used by the clients such as <CODE>lpr</CODE>
-to locate the destination for a print job.
-<P>Normally,
-all information,
-files,
-etc.,
-for a print queue is stored in the spool directory.
-However,
-some software packages such as the PC-NFS spooling package from
-Sun Microsystems originally required read/write access to the directory
-in order to create print jobs on behalf of the user.
-To prevent unauthorized or accidental tampering with LPRng operations,
-the <CODE>cd</CODE> (control directory) entry specifies that only the
-print job files should be placed in the spool queue,
-and that all the control and informational files should be in the
-control directory.
-<P>By default,
-the <CODE>cd</CODE> value will be the same as the <CODE>sd</CODE>
-value unless explicitly overridden in the printcap entry.
-<H2><A NAME="ss7.2">7.2 Job State</A>
-</H2>
-
-<P>
-<A NAME="ah"></A> <P>Options used:
-<UL>
-<LI> <CODE>ah</CODE><EM>&nbsp;&nbsp;Automatically hold jobs</EM></LI>
-</UL>
-<P>A job can be in the following state:
+<P>When an LPRng client such as
+<CODE>lpr</CODE>,
+<CODE>lpq</CODE>,
+<CODE>lprm</CODE>,
+or
+<CODE>lprc</CODE>
+needs to communicate with a print server,
+the only information they normally need is:
 <OL>
-<LI>Initial.
-This is the state during job submission.
-Jobs in the initial state do not have any status displayed for them.</LI>
-<LI>Held.
-Once a job is submitted,
-it can either be printed or <EM>held</EM>.
-The <CODE>ah</CODE> printcap option specifies that all jobs are
-automatically held on submission.
-The
-<CODE>lpc release</CODE>
-and
-<CODE>lpc redo</CODE>
-command will cause these jobs to be printed and
-the <CODE>lprm</CODE> command can remove these jobs.</LI>
-<LI>Active.
-The job is being processed for printing or transfer to another queue.</LI>
-<LI>Pending.
-Jobs which can be printed but are not active.</LI>
-<LI>Error.
-Jobs which have encountered an error during printing.
-The
-<CODE>lpc release</CODE>
-and
-<CODE>lpc redo</CODE>
-command will cause these jobs to be printed and
-the <CODE>lprm</CODE> command can remove these jobs.</LI>
-<LI>Done.
-Jobs which have completed printing,
-but which are not yet removed from the print queue.
-See the
-<CODE>
-<A HREF="LPRng-HOWTO-6.html#savewhendone">save_when_done</A></CODE>
-flag for more information.
-The <CODE>lprm</CODE> command can remove these jobs.</LI>
+<LI>The spool queue or <I>remote printer</I>
+to be used in requests to the <CODE>lpd</CODE> print server.
+This is sometimes referred to as the <I>printer</I> or <I>print queue</I> name.</LI>
+<LI>The IP address or hostname of the <I>print server</I> or <I>remote server</I>.
+This is sometimes called the <I>remote host</I> or simply <I>server</I>.</LI>
+<LI>Options that control <EM>how</EM> jobs or commands are transferred to the server host.
+These options might include encryption and client side job filtering.
+We will discuss these capabilities later.</LI>
 </OL>
-<P>Normally the job sequences is initial, pending, active, and done.
-However, a job may be put in the error state by problems processing the job
-or by actions of the <CODE>lpc</CODE> command.
-<H2><A NAME="ss7.3">7.3 Printer Lock File</A>
-</H2>
+<P>LPRng has several ways to specify the <I>printer queue</I> and <I>server</I> information.
+<H3>Command Line -Pprinter@host</H3>
 
-<P>When the <CODE>lpd</CODE> server starts printing,
-it will fork individual worker processes to service each queue.
-To prevent multiple processes from working on the same queue,
-a printer lock file with the cannonical spool queue name is used.
-In our example,
-the lock file would be:
-<CODE>/var/lpd/pr/pr</CODE>.
-<P>The process ID of the currently active printer is stored in the lock file.
-By reading the lock file and testing to see if the process is still active,
-programs such as <CODE>lpq</CODE> can determine queue activity.
-<P>Similarly,
-the worker process may need to create other processes to assist it.
-These in turn will create lock or temporary files in the spool directory
-as well.
-<H2><A NAME="ss7.4">7.4 Spool Control File</A>
-</H2>
-
-<P>The spool control file is used to control the operations of the
-spooler,
-and is in the spool or control directory.
-The file name has the form <CODE>control.<EM>printer</EM></CODE>;
-in our example,
-the control file would be:
-<CODE>/var/lpd/pr/control.pr</CODE>.
-<P>The <CODE>lpc</CODE> program sends spool control requests to the
-<CODE>lpd</CODE> daemon,
-which updates the control file and then signals the appropriate
-spool server processes that an update has been performed.
-The control file contents have the form:
+<P>The <CODE>-P printer@host</CODE> option specifies both the print queue and
+server.
+<BLOCKQUOTE><CODE>
 <PRE>
-key value
+lpr -Plaser@10.0.0.1
+lpq -Plp@myserver
 </PRE>
-<P>The following keys and their values are currently supported.
-<P>
-<CENTER><TABLE BORDER><TR><TD>
-<BR>
-Key</TD><TD>Values</TD><TD>Purpose</TD></TR><TR><TD>
-printing_disabled</TD><TD>0 or 1</TD><TD>disable printing of jobs in queue</TD></TR><TR><TD>
-spooling_disabled</TD><TD>0 or 1</TD><TD>disable placing jobs in queue</TD></TR><TR><TD>
-holdall</TD><TD>0 or 1</TD><TD>hold jobs until released</TD></TR><TR><TD>
-redirect</TD><TD>printer</TD><TD>transfer jobs to indicated printer</TD></TR><TR><TD>
-class</TD><TD>glob expression</TD><TD>print only jobs whose class matches glob expression</TD></TR><TR><TD>
-server_order</TD><TD>printer name list</TD><TD>preferred order of printer use</TD></TR><TR><TD>
-debug</TD><TD>debugging options</TD><TD>debugging and tracing</TD></TR><TR><TD>
-
-</TD></TR></TABLE></CENTER>
-<P>The <CODE>printing_disabled</CODE> and <CODE>spooling_disabled</CODE>
-are managed using the <CODE>lpc start</CODE>, <CODE>lpc stop</CODE>,
-<CODE>lpc enable</CODE> and <CODE>lpc disable</CODE>
-commands.
-Similary,
-<CODE>holdall</CODE> is enabled and disabled by <CODE>holdall</CODE> and
-<CODE>noholdall</CODE>
-commands respectively.
-When holdall is enabled,
-jobs placed in the print queue will be held until they are explicitly
-released for printing by an <CODE>lpc release</CODE> command.
-<P>The <CODE>redirect</CODE> entry is used to redirect or transfer jobs
-which are spooled to this queue to another queue,
-and is managed by the redirect command.
-The <CODE>lpc redirect off</CODE> removes the redirect entry from the
-control file.
-<P>The <CODE>class</CODE> entry is similar in operation to the
-<CODE>holdall</CODE>,
-but allows jobs whose class identification matches the glob
-expression to be printed.
-This can be useful when you have special forms or paper required for a
-print job,
-and want to run only these jobs when the paper is in the printer.
-<P>The <CODE>server_order</CODE>
-entry is created and updated for a multiple printer queue.
-It records the order in which printers should next be used
-for normal print operations.
-This allows <EM>round robin</EM> use of printers,
-rather than having all jobs printed to the first printer in the
-list of printers.
-<P>The <CODE>debug</CODE>
-entry is set by the <CODE>lpc debug</CODE> command,
-and is used to enable or disable debugging and tracing information
-for a spool queue.
-This facility is for diagnostic purposes only.
-<A NAME="lf"></A> 
-<A NAME="ps"></A> 
-<A NAME="maxstatusline"></A> 
-<A NAME="maxstatussize"></A> 
-<A NAME="minstatussize"></A> 
-<A NAME="maxlogfilesize"></A> 
-<A NAME="minlogfilesize"></A> <H2><A NAME="ss7.5">7.5 Log and Status Files</A>
-</H2>
-
-<P>
-<UL>
-<LI> <CODE>lf=</CODE><EM>log file name (default: log)</EM></LI>
-<LI> <CODE>max_log_file_size#</CODE><EM>&nbsp;&nbsp;maximum log file size (Kbytes)</EM></LI>
-<LI> <CODE>min_log_file_size#</CODE><EM>&nbsp;&nbsp;minimum log file size (Kbytes)</EM></LI>
-<LI> <CODE>max_status_line#</CODE><EM>&nbsp;&nbsp;maximum status line length (characters) </EM></LI>
-<LI> <CODE>max_status_size#</CODE><EM>&nbsp;&nbsp;maximum status file size (Kbytes)</EM></LI>
-<LI> <CODE>min_status_size#</CODE><EM>&nbsp;&nbsp;minimum status file size (Kbytes)</EM></LI>
-<LI> <CODE>ps=</CODE><EM>filter status file name (default: status)</EM></LI>
-</UL>
-<P>During operation,
-the <CODE>lpd</CODE> server records the current printing operations
-in the <CODE>status.<EM>printer</EM></CODE> file.
-For our example, this would be
-<CODE>/var/lpd/pr/status.pr</CODE>.
-In order to prevent this file from growing too large,
-the server will periodically truncate the file.
-The
-<CODE>max_status_size</CODE> configuration or printcap option
-sets the maximum size (in Kbytes) of the status file;
-if the file exceeds this,  only the last
-<CODE>min_status_size</CODE> bytes
-or 25% of the maximum size (default if not specified)
-will be preserved.
-<P>Similarly,
-the server logs its operations in the log file specified by the
-<CODE>lf</CODE> (log file) option (default is <CODE>lf=log</CODE>).
-The <CODE>max_log_file_size</CODE>
-value
-(default 0)
-specifies the maximum length
-of the log file in Kbytes.
-If this value is non-zero,
-then the log file is truncated to
-<CODE>min_log_file_size</CODE> bytes
-or 25% of the maximum file size.
-Again, the last portion of the log file is preserved.
-If the <CODE>max_log_file_size</CODE> value is 0,
-then the log file grows without limit.
-<P>Some filters require an additional filter status file
-that they use for recording additional filter status or
-other operational information.
-The
-<CODE>ps</CODE> names this file,
-and it is passed to a print filter using the <CODE>$s</CODE>
-option
-(see
-<A HREF="LPRng-HOWTO-6.html#filtercmd">Filter Command Line Flags</A>).
-<P>The log file (<CODE>lf</CODE>) is opened and used as the
-STDERR output for filters and debugging information from
-the <CODE>lpd</CODE> server.
-<P>When reporting status information,
-the length of line returned can be a problem.
-The <CODE>max_status_line#79</CODE> option restricts the status line
-to a maximum of 79 characters.
-<H2><A NAME="ss7.6">7.6 Job Control File</A>
-</H2>
-
-<P>
-<UL>
-<LI> <CODE>longnumber</CODE><EM>&nbsp;&nbsp; long job number</EM></LI>
-<LI> <CODE>default_priority=</CODE><EM>default job priority</EM></LI>
-</UL>
-<P>A print job consists of a control file and one or more data files.
-<A HREF="LPRng-HOWTO-2.html#rfc1179">RFC1179</A>
-specifies the general format of these files and how they are to be
-transfered between servers.
-LPRng has extended the contents of the control files and the transfer protocol
-to provide a more powerful set of features,
-but has extensive provisions for backwards compatibility with
-non-LPRng software.
-A sample control file is shown below:
-<PRE>
-Hastart4.astart.com
-J/tmp/file1 /tmp/file2
-CA
-Lpapowell
-Ppapowell
-fdfA002230astart4.astart.com
-N/tmp/file1
-UdfA002230astart4.astart.com
-fdfB002230astart4.astart.com
-N/tmp/file2
-UdfB002230astart4.astart.com
-</PRE>
-<P>The first part of the control file contains general information generated
-by the <CODE>lpr</CODE> or other spooling program.
-The information lines start with an uppercase letter or digit.
-Some other spooling systems also start information lines with
-various punctuation marks such as underscores (_) or periods (.).
-<P>Following this are a set of entries about each of the various files to
-be printed.
-These lines start with a lower case letter,
-followed by the print file name.
-The lower case letter is the
-<EM>format</EM> to be used to process the file.
-See
-<A HREF="LPRng-HOWTO-6.html#format">print file formats</A>
-for more information about its use.
-<P>
-<CENTER><TABLE BORDER><TR><TD>
-<BR>
-Key</TD><TD>Meaning</TD><TD>Generated By</TD></TR><TR><TD>
-A</TD><TD>identifier *</TD><TD>LPRng internal</TD></TR><TR><TD>
-C</TD><TD>class</TD><TD>lpr -C class</TD></TR><TR><TD>
-D</TD><TD>date</TD><TD>lpr</TD></TR><TR><TD>
-H</TD><TD>originating host</TD><TD>lpr</TD></TR><TR><TD>
-I</TD><TD>indent</TD><TD>lpr -i indent</TD></TR><TR><TD>
-J</TD><TD>jobname</TD><TD>lpr -J jobname (default: list of files)</TD></TR><TR><TD>
-L</TD><TD>bnrname</TD><TD>lpr -U username</TD></TR><TR><TD>
-N</TD><TD>filename</TD><TD>(see text)</TD></TR><TR><TD>
-M</TD><TD>mailname</TD><TD>lpr -m mailname</TD></TR><TR><TD>
-P</TD><TD>logname</TD><TD>lpr</TD></TR><TR><TD>
-Q</TD><TD>queuename</TD><TD>lpr -Q</TD></TR><TR><TD>
-R</TD><TD>accntname</TD><TD>lpr -R accntname</TD></TR><TR><TD>
-S</TD><TD>slinkdata *</TD><TD>lpr</TD></TR><TR><TD>
-T</TD><TD>prtitle</TD><TD>lpr -T prtitle</TD></TR><TR><TD>
-U</TD><TD>unlnkfile</TD><TD>(see text)</TD></TR><TR><TD>
-W</TD><TD>width</TD><TD>lpr -w width</TD></TR><TR><TD>
-Z</TD><TD>zopts *</TD><TD>lpr -Z zopts</TD></TR><TR><TD>
-1</TD><TD>font1</TD><TD>lpr -1 font1</TD></TR><TR><TD>
-2</TD><TD>font2</TD><TD>lpr -2 font2</TD></TR><TR><TD>
-3</TD><TD>font3</TD><TD>lpr -3 font3</TD></TR><TR><TD>
-4</TD><TD>font4</TD><TD>lpr -4 font4</TD></TR><TR><TD>
-
-</TD></TR></TABLE></CENTER>
-<P>The entries marked with * are used only by LPRng.
-<CODE>N</CODE> and <CODE>U</CODE> lines
-are associated with a print file.
-The <CODE>N</CODE> line is the original name of the print
-file.
-The <CODE>U</CODE> line originally was used to indicate that the
-named file was to be unlinked after printing.
-This information is now ignored by LPRng.
-These lines are always grouped with a print file entry.
-<P>The names of control and data files follow a very strict pattern.
-Control files have the format <CODE>cfX<EM>number</EM><B>host</B></CODE>,
-where X is an upper case letter,
-<EM>number</EM> is (usually) a 3 digit number,
-and <B>host</B> is the host name.
-<A HREF="LPRng-HOWTO-2.html#rfc1179">RFC1179</A>
-restricted the total length of the control file name to 32 characters;
-LPRng has a much looser limit.
-<P>Data file names must follow the same pattern as the control file name,
-and have the format
-<CODE>dfX<EM>number</EM><B>host</B></CODE>.
-The X can be in the range A-Za-z,
-allowing at most 52 data files for a job.
-The <EM>number</EM> and <B>host</B> must be identical to the corresponding
-control file.
-<P>By convention,
-LPRng uses the X of the control file name to set a priority for the
-job.
-A job with control file name
-<CODE>cfA...</CODE>
-will have <EM>lower</EM> format
-than a job with format
-<CODE>cfB...</CODE>,
-and so forth.
-The <CODE>lpr</CODE> program uses the first letter of the class name
-or an explicit priority indication to set the letter value.
-If none of these are specified, then the
-<CODE>default_priority</CODE> value from the configuration or printcap
-entry is used.
-<P>The job number is usually a 3 digit value.
+</CODE></BLOCKQUOTE>
+<P>When used as a command line option,
+the printcap database will not be consulted for other options or information.
+This allows LPRng clients to function without a printcap database,
+and without a <CODE>lpd</CODE> print server running on their local host.
 However,
-in systems where a large number of jobs are spooled and need to be
-kept for printing at scheduled times,
-this can lead to problems.
-The
-<CODE>longnumber</CODE>
-option will use 6 digit job numbers.
-This must be used with care when operating with non-LPRng software.
-<H2><A NAME="ss7.7">7.7 Job Hold File</A>
+options set in the <CODE>/etc/lpd.conf/</CODE> and the compile time defaults
+will still be used.
+<H3>Command Line -Pprinter</H3>
+
+<P>This form will cause the LPRng clients to look in the
+<CODE>/etc/printcap</CODE>
+for a printcap entry with the name or alias <CODE>printer</CODE>
+and use the information in that printcap entry.
+We will discuss the format of the printcap entry in a moment.
+Example:
+<BLOCKQUOTE><CODE>
+<PRE>
+lpr -Plp
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>PRINTER Environment Variable</H3>
+
+<P>If no command line option is specified,
+the LPRng clients will check for a <CODE>PRINTER</CODE> environment variable value
+and will use it as though specified as a
+<CODE>-P$PRINTER</CODE> command line option.
+<P>If the $PRINTER value has the form
+<CODE>printer@host</CODE> the print queue will be <CODE>printer</CODE> on server <CODE>host</CODE>.
+and not consult the printcap database
+If the $PRINTER value has the form <CODE>printer</CODE> then the printcap will be searched
+for a <CODE>printer</CODE> printcap entry.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+export PRINTER=laser@10.0.0.1; lpr
+export PRINTER=pr; lpr
+</PRE>
+</CODE></BLOCKQUOTE>
+<H3>Default Printer From Printcap</H3>
+
+<P>If you do not specify a printer on the command line or in the <CODE>PRINTER</CODE>
+environment variable,
+then LPRng will search the printcap and use the first valid printcap entry
+as the printer.
+<H3>Default Printer When No Printcap</H3>
+
+<P>If you do not have a <CODE>/etc/printcap</CODE> file,
+then LPRng will use the
+<CODE>default_printer</CODE>
+and
+<CODE>default_remote_host</CODE>
+<I>fallback</I>
+values set in the <CODE>/etc/lpd.conf</CODE> file or by the compile time defaults.
+<P>Using the fallback values is usually not a desirable event and may indicate
+that you have a misconfigured host, so the fallback values are usually set
+by administrators to <CODE>missingprinter@localhost</CODE> to provoke an annoying message for users.
+<H3>LPD Default Printer</H3>
+
+<P>For completeness,
+there is even a <CODE>default_printer_when_unknown</CODE> configuration
+entry for use by LPD when it is given a printer name not in its printcap
+database.
+By default,
+it will look up this name in the database and treat the job as though it was
+sent to this printer.
+<H2><A NAME="ss7.2">7.2 LPD Server Runnning on Localhost</A>
 </H2>
 
-<P>Associated with each control file is a
-hold file that has additional information controlling the printing operations.
-The entries in this file have the form:
-<PRE>
-key [value]
-</PRE>
-<P>The following is an example of a hold file:
-<PRE>
-server 0
-subserver 0
-attempt 3
-error cannot open printer
-hold 0
-priority 0
-remove 0
-routed 0
-</PRE>
-<P>The
-<CODE>server</CODE>
-and
-<CODE>subserver</CODE>
-entry records the process ID of the server process
-and the subserver process that is printing the job.
+<P>Workstations for personal use or in extremely simple configurations
+will always run an <CODE>lpd</CODE> server on the <I>localhost</I>.
+This is the most common situation for the majority of new
+users,
+and the
+default LPRng installation sets the default value of the
+<CODE>force_localhost</CODE> configuration parameter to <B>TRUE</B> or to 1.
 The
-<CODE>attempt</CODE>
-field records the total number of attempts to print the job.
-The
-<CODE>error</CODE>
-field records any error that would prevent the job from being printed.
-This information is reported by the <CODE>lpq</CODE> program.
-<P>The
-<CODE>hold</CODE>
-field is non-zero when the
-<CODE>lpc hold</CODE>
-command is used to
-explicitly prevent the job from being printed;
-<CODE>lpc release</CODE>
-will clear the field and allow the job to be printed.
-<P>The
-<CODE>priority</CODE>
-field is modified by the
-<CODE>lpc topq</CODE>
-command and is used to provide an overriding priority to printing the file.
-<P>The
-<CODE>remove</CODE>
-field is non-zero when the file has been printed and should be removed.
-<P>The
-<CODE>routed</CODE>
-field is used to indicate that there is routing information present in
-the hold file,
-and that special handling is needed.
-The routing information is provided by a
-<A HREF="LPRng-HOWTO-5.html#routing">routing filter</A>.
-The information is recorded by information in the hold file.
-The following is an example of routing information:
-<P>
-<PRE>
-active 0
-attempt 0
-done 0
-hold 0
-priority 0
-remove 0
-routed 880892602
-route dest t1
-route ident papowell@astart4+705.1
-route error 
-route copies 1
-route copy_done 0
-route status 0
-route active 0
-route attempt 0
-route done 0
-route hold 0
-route sequence 0
-route priority B
-route CB
-route end 
-route dest t1
-route ident papowell@astart4+705.2
-route error 
-route copies 0
-route copy_done 0
-route status 0
-route active 0
-route attempt 0
-route done 0
-route hold 0
-route sequence 1
-route end 
-</PRE>
-<P>Routing information lines start with
-<CODE>route</CODE> followed by individual routing entry information.
-The <CODE>route</CODE> <CODE>dest</CODE>,
-<CODE>copies</CODE>,
-<CODE>priority</CODE>,
+<CODE>lpr</CODE>
+<CODE>lpq</CODE>
+<CODE>lprm</CODE>
 and
-<CODE>Xnnnn</CODE>
-entries are
-derived from the output of the router program;
-other fields are used during the printing process.
-The <CODE>copy_done</CODE> records the numbers of copies done,
-while the <CODE>done</CODE> records that the entry has been completed.
-The <CODE>status</CODE> is the process ID of the server process
-doing the printing.
-<P>The output from  route filter  that generated the above file was:
-<PRE>
-dest t1
-copies 1
-priority B
-CB
-end
-dest t1
-end
-</PRE>
-
-<A NAME="useidentifier"></A> <H2><A NAME="ss7.8">7.8 Job Identifier</A>
-</H2>
-
-<P>Options:
-<UL>
-<LI> <CODE>use_identifier</CODE><EM>&nbsp;&nbsp;put job identifier in control file</EM></LI>
-</UL>
-<P>For each job in a spool queue,
-the LPRng software creates a unique identifier.
-This identifier is recorded in the control file <CODE>A</CODE> line.
-It can be used by the various client programs for identifying jobs,
-and is displayed by the <CODE>lpq</CODE> program as status information.
-<P>
-<A NAME="configfile"></A> 
-<A NAME="lpdconf"></A> <HR>
+<CODE>lpc</CODE> will connect to <CODE>localhost</CODE> (usually IP address 127.0.0.1)
+unless explicitly overridden by the command line <CODE>-Pprinter@host</CODE> argument.
+<P>Larger sites or organizations which want to use a central print server
+to handle multiple printers or printer sharing
+may want the clients to connect directly to the server.
+In this case the system administrator should set
+<CODE>force_localhost@</CODE> in the
+<CODE>/etc/lpd.conf</CODE> or modify the compile time default.
+See 
+<A HREF="LPRng-HOWTO-8.html#lp">Simple Client Printcap Entry</A>
+for ways to change this.
+<HR>
 <A HREF="LPRng-HOWTO-8.html">Next</A>
 <A HREF="LPRng-HOWTO-6.html">Previous</A>
 <A HREF="LPRng-HOWTO.html#toc7">Contents</A>

@@ -7,21 +7,25 @@ and install the system.
 
 Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
      Solaris/SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4
-     Solaris 2.5, 2.5.1, 2.6
+     Solaris 2.5, 2.5.1, 2.6, 2.7
 BSDI (BSD/OS): BSDI 2.0.0, 2.0.1, 2.1.0, 3.0, 3.1
-HPUX: 8.2, 9.4, 10.0
+HPUX: 8.2, 9.4, 10.X, 11.X
 	Note: with HP's C compiler, please try:
       configure CFLAGS=-Ae
     or
       configure CFLAGS=-Aa
     for ANSI compatibilty.
 
-SGI:  IRIX5, IRIX6
-Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997),
+SGI:  IRIX5, IRIX6, IRIX7
+	Note: use ANSII C compiler,  gcc is preferred
+Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997), RedHat 3.X (Mar 99)
+	Note: should run on Linux with no problems
 DEC:     ULTRIX, DEC Alpha
+	Note: use GCC
 AIX:     1.06
-FreeBSD: 2.0.5, 2.1.5
-AIX:  See LPRng-HOWTO for detailed instructions
+    See LPRng-HOWTO for detailed instructions
+	Note: use GCC
+FreeBSD: 2.0.5, 2.x, 3.x
 
 POSIX Compatible Systems:
    If your system is POSIX compatible,  then there should

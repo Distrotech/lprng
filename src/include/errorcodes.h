@@ -1,16 +1,16 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: errorcode.h
- * PURPOSE: filter error return codes
- * "errorcodes.h,v 3.3 1998/03/29 18:33:01 papowell Exp"
- **************************************************************************/
+ * $Id: errorcodes.h,v 5.1 1999/09/12 21:32:56 papowell Exp papowell $
+ ***************************************************************************/
 
+
+
+#ifndef _ERRORCODES_H_
+#define _ERRORCODES_H_ 1
 /*
  * filter return codes and job status codes
  * - exit status of the filter process 
@@ -30,3 +30,7 @@
 #define JNOPRINT 39    /* no printing from this queue  */
 #define JSIGNAL  40    /* killed by unrecognized signal */
 #define JFAILNORETRY  41 /* no retry on failure */
+
+/* PROTOTYPES */
+
+#endif

@@ -1,0 +1,7 @@
+This directory contains files needed to make a solaris package of LPRng.
+
+To build a package you must first configure LPRng to live in /opt with:
+	./configure --prefix=/opt/LPRng
+After that you must build it as usual. When that is done you can
+run 'make pkg' in this directory. This will generate a package which can
+be installed on solaris workstations.

@@ -1,47 +1,50 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: linksupport.h
- * PURPOSE: linksupport.c functions
- * linksupport.h,v 3.5 1998/01/08 09:51:25 papowell Exp
- **************************************************************************/
-
-#ifndef _LINKSUPPORT_H
-#define _LINKSUPPORT_H
+ * $Id: linksupport.h,v 5.2 1999/10/04 20:51:51 papowell Exp papowell $
+ ***************************************************************************/
 
 
-/*****************************************************************
- * Connection support code
- *  See extensive comments in link_support.c
- *****************************************************************/
 
+#ifndef _LINKSUPPORT_H_
+#define _LINKSUPPORT_H_ 1
+
+/* PROTOTYPES */
 int Link_setreuse( int sock );
-int Link_getreuse( int sock );
-int Link_dest_port_num( void );
-int Link_listen(void);
-int Link_open(char *host, int timeout );
-int Link_open_type(char *host, int timeout,
-	int port, int connection_type );
+int Link_setkeepalive( int sock );
+int connect_timeout( int timeout,
+	int sock, struct sockaddr *name, int namelen);
+int getconnection ( char *hostname, char *dest_port,
+	int timeout, int connection_type, struct sockaddr *bindto );
+void Set_linger( int sock, int n );
+int Link_listen( void );
+int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto );
+int Link_open_type(char *host, char *port, int timeout, int connection_type,
+	struct sockaddr *bindto );
+int Link_open_list( char *hostlist, char **result,
+	char *port, int timeout, struct sockaddr *bindto );
 void Link_close( int *sock );
-int Link_ack( char *host, int *socket, int timeout, int sendc, int *ack );
-int Link_send ( char *host, int *socket, int timeout,
-    char *send, int count, int *ack );
-int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
-    char *src, int fd, int count);
-int Link_get( char *host, int *socket, int timeout, char *dest, FILE *fp );
-int Link_line_read(char *host, int *socket, int timeout,
-      char *buf, int *count );
-int Link_read(char *host, int *socket, int timeout,
-      char *buf, int *count );
-int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
-      int fd, int *count, int *ack );
+int Link_send( char *host, int *sock, int timeout,
+	char *sendstr, int count, int *ack );
+int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
+	char *src, int fd, double pcount);
+int Link_dest_port_num( char *port );
+int Link_line_read(char *host, int *sock, int timeout,
+	  char *buf, int *count );
+int Link_read(char *host, int *sock, int timeout,
+	  char *buf, int *count );
+int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
+	  int fd, double *count, int *ack );
 const char *Link_err_str (int n);
 const char *Ack_err_str (int n);
-void Set_linger( int sock, int n );
+int AF_Protocol(void);
+int inet_pton( int family, const char *strptr, void *addr );
+const char *inet_ntop( int family, const void *addr,
+	char *str, size_t len );
+const char *inet_ntop_sockaddr( struct sockaddr *addr,
+	char *str, int len );
 
 #endif

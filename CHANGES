@@ -11,6 +11,918 @@
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
 
+Release LPRng 3.6.12 Tue Oct 26 16:59:35 PDT 1999
+  AIX does not like control files where Nxxx comes before data file lines.
+   Added a 'nline_after_file' option to cause LPRng to put Nlines after
+   data file lines.
+   (Noticed by: Nik Conwell <nik@bu.edu>)
+ configure - kerberos libraries are now specified at the start
+   of the library list (LIBS="-lkrb5 $LIBS")
+   (Suggested by: John Perkins <john@cs.wisc.edu>)
+ Typo caused LPD not to read the permissions file.
+   (Noticed by EVERYBODY,  but first by: Patrick O'Brien" <pdo@cs.umd.edu>)
+
+
+Release LPRng 3.6.11 Sun Oct 24 13:37:44 PDT 1999
+  Permissions checking: SERVICE=* was not getting handled correctly.
+   (Found by: Dejan Ilic <svedja@lysator.liu.se>)
+  Jobs with more than 26 files were quietly being mangled.
+   (Found by: Derek Masseth <dmasseth@u.arizona.edu>)
+  lp simulation now returns a 'job identifier' consistent with
+   Solaris 2.5 format.
+   (Noticed by:  Martin Mokrejs <mmokrejs@natur.cuni.cz>)
+  Added support for case sensitive key lookup in sorted lists.
+   (General cleanup and tidy: Patrick Powell <papowell@astart.com>)
+  Set_linger() (setsockopt socket linger timeout) failure is
+   now ignored,  rather than treated as failure.  This now
+   handles the case where pipes are actually second class citizens
+   and the operation fails.  Note that this probably could
+   be fixed by testing the file descriptor for type and then
+   determining the exact socket type,  but this is NOT portable.
+  Set the default paper size for the IFHP-HOWTO to letter.
+   The psutils package can be used to resize this for a4, which
+   is slightly larger.
+  Did horrible things to job reception to handle jobs with
+   spaces and more bogus entries in the name fields.  This
+   is really strange.  Note: still one quirk - if the server name
+   has a space in it AND the job is originated on the server,
+   THEN the originating host is set to 'localhost'... which is
+   correct but may be odd when forwarding to another system.
+  Compaq AKA DEC True 64 support added - configure.in now does
+   odd things to detect correct libraries to be used to get
+   gethostbyaddr() support.  Portablility.
+  configure --disable-strip will disable stripping of binaries.
+   (Requested by: Marty Leisner <leisner@sdsp.mc.xerox.com>)
+  Permissions, 'SERVICE=P', and job removal:
+   if a print job gets through the 'R' (lpr job sumission) checking,
+   and gets into the queue,  there is another check ('P' or print
+   time checking.  This was done to subdue complaints from systems
+   which could not handle a 'no permssions' error and would sit
+   there endlessly trying to send the same job to the printer
+   queue, and other users would not get their jobs through.
+
+   When a job is ready to be printed and fails the 'SERVICE=P'
+   permissions check,  it is now removed and not printed,
+   UNLESS the 'save_on_error' flag is set,  in which case it
+   is marked with a permissions error and left in the queue.
+
+   Note 1:  the lpd.perms file has been updated to reflect this
+   behavior.
+   Note 2:  the HOWTO has been updated to reflect this behavior.
+   Note 3:  if you have a DEFAULT REJECT in your lpd.perms,  this
+   means that no jobs will get printed. :0).  Enjoy.
+
+  Set the 'SO_KEEPALIVE' option on sockets to force keepalives to be
+   sent so that dead connections would be detected.
+  Updated some code in the common/lpd_remove.c file to close a small
+   timing race condition for job removal.  Sometimes a job would get
+   removed and the server process would not be killed.  Note that
+   the kill is done by sending SIGINT to the processes.
+  Changed a int to double for file length in common/lpd_rcvjob.c.
+  Modified UTILS/cheap_lpr and UTILS/LPRng.pm to handle more than
+   one file in print jobs.
+  Checked out a few problems with PGP and user specified authentication.
+   (Spotted by: Patrick O'Brien" <pdo@cs.umd.edu>)
+  LPQ - use the file name information if no 'J' (job) line in control
+   file, and finally "NULL" if no information. This prevents many scripts
+   from breaking.
+  getqueue.c:Get_datafile_info() was not getting the N,U, and format
+   values correctly under all circumstances,  i.e. - duplicates,
+   out of order N lines,  totally bogus or missing N information.
+   What a mess.
+   (Spotted and patch by: Edwin Lim <elim@research.att.com>)
+   (And lots of others, with comments, flames, and snickers as well.)
+  Fixed a problem when you used a filter to get printcap information,
+   and you did a recurive get,  and you had a tc=xxx entry.
+   (Spotted and debugged by: Simon Wilkinson <sxw@dcs.ed.ac.uk>)
+  configure --enable-priv_ports action was reversed...
+   (Spotted by: Robert Montjoy <Rob_Montjoy@ececs.uc.edu>)
+  Warning message about '@' in a printcap name was malformed.
+   (Spotted by: Andreas Kahnt <ak@m-ebert.de>)
+  Added a 'tc_only' flag to allow printcaps to be explictly
+   marked for 'tc=name' use only.  This allows people using
+   NIS, NIS++, and other database engines to put printcap
+   information in database forms.
+  Now 'checkpc -P printer' will only check specified printer.  Handy
+   for 'checkpc -f -P printer' type of operations when you add a
+   new printer to a system.
+   (Suggested by: Wilfried Gaensheimer <wilfried.gaensheimer@hl.siemens.de>)
+
+
+Release LPRng 3.6.10 Sun Sep 12 19:46:33 PDT 1999
+  lpc.1 man page moved to lpc.8 man page
+  (Suggested by: Craig Small <csmall@scooter.eye-net.com.au>)
+
+  PERMISSIONS CHECKING:
+    The USER, HOST, IP, SAMEUSER, SAMEHOST, entries will now SUCCEED
+    when checking permissions for an operation to be applied to a
+    spool queue;  when the individual jobs in the queue are checked
+    the comparisons will then be done.  This has the effect of allowing:
+       ACCEPT SERVICE=C LPC=hold,release SAMEUSER SAMEHOST
+       ACCEPT SERVICE=M SAMEUSER SAMEHOST
+    to be specified and allows a user to hold, release, or delete
+    their jobs.
+    (Need pointed out by: Jens Noelle <noelle@amica.rwth-aachen.de>)
+
+  Updated the lpd.conf file generation to put in the types of options.
+
+  NONE renamed to NONEP due to conflicts with some <sys/types.h>
+    definitions.
+
+  Added a $_ capability to filter options.
+    (Patch by: Mike Whitson <mwhitson@MIT.EDU>)
+
+  Added a configure option to set the :sh default to 1 (on).
+
+Release LPRng 3.6.9 Mon Aug 30 13:30:58 PDT 1999
+  reverse_priority_order flag - priority z-aZ-A, i.e. - A is lowest
+   (Requested by: Dennis Bush <Dennis.Bush@dowjones.com>)
+  LPD now does a chdir("/") so that it is in a well known location. 
+   (Requested by: Craig Small <csmall@scooter.eye-net.com.au>)
+  Time used to sort job is now the arrival time of the last byte
+   of the job.
+
+Release LPRng 3.6.8 Fri Aug 27 17:06:10 PDT 1999
+  *** WARNING:  configure strikes again
+  ***
+  *** printcap, lpd.conf, lpd.perms now default to:
+  ***  /usr/local/etc/{ printcap, lpd.conf, lpd.perms}
+  *** 
+     You may want to do:
+       ln -s /etc/printcap /usr/local/etc/printcap
+     OR
+       configure --with-printcap_path=/etc/printcap
+
+     Please move your lpd.conf and lpd.perms files to /usr/local/etc/
+
+  Why?  Because when trying to port this to XxxxBSD, BSDI, Solaris,
+  SunOS, HPUX, DGUX,  etc etc etc I have run into so many inconsistencies
+  that I have just given up.
+
+  You might as well assume that the following is true for a default install.
+ 
+  Updated configuration to be a little more consistent with other packages
+   default installation directories:
+	 ${prefix}  is usually /usr/local
+     ${bindir}  is usually ${prefix}/bin, (/usr/local/bin)
+     ${sbindir} is usually ${prefix}/sbin (/usr/local/sbin)
+     ${libexecdir} is usually ${prefix}/libexec (/usr/local/libexec)
+     ${sysconfdir} is usually ${prefix}/etc (/usr/local/etc)
+     ${mandir} is usually ${prefix}/man     (/usr/local/man)
+
+   We install the executables in:
+         (* indicates default SETUID Root install)
+     ${bindir}/ lpr *, lprm *, lpq *, lpstat *
+     ${sbindir}/lpc *, checkpc, lpd *
+     ${libexecdir}/filters/ lpf, banner, etc
+     ${sysconfdir}/ lpd.conf, lpd.perms, printcap
+     ${mandir}/ man pages
+
+   Suppose you wanted to put them in /usr/bin, /usr/sbin, and /etc:
+     configure --prefix=/usr --sysconfdir=/etc
+
+
+   Note the following explicit overrides:
+  --disable-setuid        disable setuid root client and server executables
+  --enable-priv_ports     require connections to be from privileged ports
+  --disable-force_localhost force_localhost default to disabled
+  --with-lpddir=DIR       lpd executable directory (default ${sbindir})
+  --with-filterdir=DIR     filter directory (default ${libexecdir}/filters)
+  --with-lpd_conf_path=PATH     path to lpd.conf (default: ${sysconfdir}/lpd.conf)
+  --with-lpd_perms_path=PATH    path to lpd.perms (default: ${sysconfdir}/lpd.perms)
+  --with-printcap_path=PATH     path to printcap (default ${sysconfdir}/printcap)
+
+  Fixed up the INSTALL and HOWTO documentation as well.
+
+  Note 1:  you can make a symbolic link from /usr/local/etc/printcap to
+   /etc/printcap and this will solve the issue as well.
+
+  ---
+  Job time is now recorded down to the millisecond a jobs sorted according to that
+    time.  This will slightly improve the situation due to multiple jobs arriving at
+    at (approximately) the same time.  Jobs are sorted accordingly.
+    (Suggested by: Abramo Bagnara <abbagnara@racine.ra.it>)
+
+Release LPRng 3.6.7
+
+  LPRng now handles files larger than 2 gigabytes on systems where the max
+    size_t is larger than 2 gigabytes.
+  configure now checks to see that there is a prototype for lseek().
+    (Both inspired by somebody trying to print a 2G file:
+       John Kimberley <jkimberly@harland.net>)
+  lpq -n linecount
+     Limits number of status lines to linecount.  Can be used when
+   you want an exact number rather than using -llll.
+  lpc now puts debug flags in () -
+     Printer    Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+    t1@h4       enabled  enabled    0    none    none          (4)
+  There is a horrible problem with load balance queues, SIGCHLD, and missing
+    SIGUSR1 signals on Solaris 2.4, 2.5, and 2.5.1.  The code in lpd_jobs.c
+    has been rewritten,  silly things have been done and it now looks awful,
+    but it works,  is portable,  and ugly.  So much for elegance.
+  Added more %U option to lpc, lprm to allow SAMBA to specify users.
+
+Release LPRng 3.6.6 Sun Aug 22 10:42:20 PDT 1999
+  LPD did not exit with non-zero success code when there was another
+    lpd active.
+    (Patch from: Stephen Fischer <fischer@cse.unsw.edu.au>)
+  LPD bounce queues changed the 'N' data in the control file.  Should not
+    do this. 
+    (Noticed by: John Rothlisberger <rthlsbrj@pprd.abbott.com>)
+
+  New timeout - exit_linger_timeout
+    When an LPD server process exits,  it needs to try to 'flush' data over
+    the various pipes, sockets, etc, that are part of the IPC.  The problem
+    is that on some OS's,  when a process exits the data in a pipe buffer
+    may be discarded if the process exits due to a signal.  Added
+    'exit_linger_timeout'  to force all pipes/sockets to be 'lingered' on
+    during cleanup.  This is a totally bogus method.  What is needed is a
+    setsockopt() function similar to 'fflush' that would not return until
+    all the data is flushed to the remote end.  It turns out that the
+    SO_LINGER with a 0 value should have done this,  but the 0 value causes
+    a 'default' value to be used.  Grr...  Needless to say this is a hack
+    of the worst type,  does not work on all systems.
+
+  LPR was failing due to connnections closing due to lack of processes.
+    When a connection is made to the LPD server,  it used to do accept()
+    and would then fork a process.  This would lead to some ... interesting...
+    denial of service attacks,  and some very odd problems when you ran out
+    of processes.  The code now does the following:
+       creates a pipe()
+       forks a process =
+         = child will now do an accept
+         = child will then close the pipe
+       parent WAITS until the child pipe is closed.
+    This has the effect of making sure that the child process has
+    done the accept,  and will BLOCK until the accept is done.
+    This makes sure that there is a process to handle the connection.
+    Wierd, I tell you.  Note that there is a way to do a DOS attack on
+    some systems that signal a connection is available BEFORE the 3 way
+    handshake completes,  and should cause endless problems.  You can
+    also launch DOS attacks on inetd, ftp, etc. etc. on these systems
+    as well.  See CERT for more nasty details.
+
+  LPQ now correctly reports all jobs, even ones from different
+    machines with the same job numbers.  Yeah, it looks confusing
+    in the output to have two job 12's,  but HEY!  what do you want
+    on 80 columns?
+
+  LPQ now confuses people trying to figure out why there are
+    duplicate jobs in the status listing.  See above.  Isn't this
+    marvellous?
+
+  lpd_jobs: when processing long queues a huge number of tempfiles
+    would be created.  Now these are removed each time the queue is scanned.
+    Sigh...
+
+  lpd_jobs: when you have a connection opened using lp=host%port,
+    then lpd now do a shutdown(port,1) on the socket.  Now we get
+    into the really odd stuff.  We first set the linger value to
+    'read_write_timeout' if nonzero otherwise the 'exit_linger_timeout'.
+	IF the 'wait_for_eof' flag (default TRUE) is set,  we try
+    READING from the socket until we get an eof.  We then close
+    (with the linger) the socket.
+
+    Here are the problems that this tries to solve.  
+
+    When you send a job to a printer over a socket connection,
+    you stuff the files into a socket and then expect the OS to
+    deliver the data.  WRONG!  The OS puts this in some buffers.
+    It returns from the WRITE call with success.  You now do a
+    close().  At this point there are some interesting possibilities:
+    a) your data is delivered,  even after waiting 6 weeks for the
+    other end to respond (BAD choice); b) the system attempts to
+    deliver your data for,  say,  120 seconds (default 'linger'
+    time on some BSD systems);  c) you can specify how long you
+    want to have the system try to deliver the data.  While this
+    is going on of course, you cannot open a connection to the
+    device,  as it is still busy with the previous connection.
+
+    You really want to treat the 'close' like a 'write' and wait
+    for a reasonable (read_write_timeout) time for this to happen.
+    When you do a write 'shutdown',  the TCP/IP connection sending
+    (write) capability is terminated, and the TCP/IP stack does a
+    handshake with the other end telling it that no more data will
+    be sent.  The receiver will get an EOF when it tries to read
+    more data, and will, in turn, close the connection.  Note that
+    this must be a 'shutdown' and not a 'close'.  All close does
+    is closes the process's copy of the file descriptor information.
+    Shutdown is brutal and will terminate with predjudice the tcp/ip
+    level communication (thank the Diety).  How do you know that
+    the receiving end has closed the connectio? You do a read from
+    the socket until you get an EOF.  Of course,  you should be
+    reading from the &*()*& socket at all times,  as the printer
+    will be sending status, error messages, etc. etc.  back to you.
+    But your filter should be doing this,  right?  Oh... you do
+    not have a filter... well, you MUST have a filter that does
+    the reading - this is what the IFHP filter was designed to do,
+    and in fact goes overboard to solve this problem.  Even when
+    you say 'status@' it STILL tries to read from the file descriptor
+    because there might just be stuff coming back.  Sigh...
+
+Release LPRng 3.6.5 Sun Aug  1 16:46:31 PDT 1999
+  The date format in the status messages has been changed so that
+    you can have a short or long format displayed.  By default, the short
+    format is displayed (short_status_date option is true).  Note that this
+    sillyness is partly forced on us by Y2K issues.
+    New flag option: short_status_date - when set, status time/date displays
+    only time.
+    (Sigh... by: Patrick Powell <papowell@astart.com>)
+  Remote logging information now contains full date and time and process id.
+    (Sigh... by: Patrick Powell <papowell@astart.com>)
+  Update LPRng HOWTO to specify that filter STDERR output is now merged with
+    the status messages.  This allows errors reported by the filter to appear
+    on the lpq status.
+  You can specify filter arguments as the form xxx 'yy yy' "zz zz" and they
+    will get passed as a block.
+    (Suggested by:  Martin Forssen <maf@crt.se>)
+  The lpstat -a code has been fixed so that it correctly searches for
+    printer names.
+    (Reported by: Martin Forssen <maf@crt.se>)
+  Removed duplicate status information lines in status file.
+    (Discovered by: Patrick Powell <papowell@astart.com>)
+  Added 'send_failure_action' information to status output to allow users
+    of this very odd feature to figure out what is happening.
+  Fixed up LPRng to handle a stupid RFC1179 idiocy.  If you have a control
+    file, then the order of N and data file lines is not defined.  So
+    you have to handle them in any order.  Also,  you can have the same
+    data file line with DIFFERENT formats - sigh... this means that you
+    can print it several times with different formats.
+  The 'generate_banner' option, which was present in 3.5.1, has been restored.
+    This is only operational when you have a 'normal' forwarding queue.
+    It uses the 'ab' (always banner), bp (banner printer), bs (banner
+    printer program for banner at start), and be (banner program for banner
+    at end), hl (header or banner last) and the user banner information.
+  The "cm" (comment) option has escapes processed.  Now you can put ":"
+    in the comment line by using "\072"
+    (Wanted by: Johan Claesson <Johan.Claesson@uab.ericsson.se>)
+
+Release LPRng 3.6.4 Sat Jul 24 14:29:09 PDT 1999
+
+  Cut and Paste-o observed in the configure.in file - LPD_CONF_PATH
+   should be LPD_PERMS_PATH.
+   (Reported and patched by: Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu)
+  Added: AC_PROG_AWK, AC_SUBST(AWK), to configure.in to find the version
+   of awk to use.
+   (A good suggestion by: Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu)
+  SAMBA Assistance.
+   The -U option has been extended to the LPRM program as well as the LPR
+   program.  This allows facilities such as SAMBA to submit jobs on behalf
+   of users.  In order to allow SAMBA and these facilities not run as root,
+   the allow_user_specification=name,name,... configuration option will allow
+   either root or the named users to forgre... I mean impersonate any user.
+   The SAMBA printing configuration file will now look like:
+    [global]
+        printing = lprng
+        print command = /usr/local/bin/lpr  -P%p -r %s
+        # alternative to allow userid to be specified as well
+        # You will have to add the samba UID to the 'allow_user_setting'
+        #   option in the /etc/lpd.conf file.
+        # print command = /usr/local/bin/lpr -U%U -P%p -r %s
+        lpq command   = /usr/local/bin/lpq  -P%p
+        # alternative
+        # print command = /usr/local/bin/lpr -U%U -P%p -r %s
+        lprm command  = /usr/local/bin/lprm -P%p -U%u %j
+        printcap name = /etc/printcap
+        load printers = no
+    [printers]
+       comment = All Printers
+       path = /tmp
+       browseable = no
+       printable = yes
+       guest ok = no
+       writable = no
+       create mode = 0700
+    man pages and HOWTO have been update to reflect these changes.
+   
+  commmon/linelist.c: Escape() had a malloc() size error.
+  man/lpd.8 man page editted and fixed up for consistency.
+   (Found by: Patrick Powell <papowell@astart.com>)
+
+  FreeBSD Support: FreeBSD.ports.sysutils has the files for a Ports Install
+  RedHat RPM: pkg has the files needed to build a RedHat RPM distribution.
+
+
+Release LPRng 3.6.3 Fri Jul 16 16:01:27 PDT 1999
+
+  CONFIGURE CHANGES
+   Please note that the configure and 'make install' have been modified in
+   order to deal with different installation locations and configuration setups.
+   Here are the options to configure that you should be aware of:
+    --with-cppopts=CPPFLAGS  select compiler preprocessor command line options
+        **** note: these flags will also be passed to CC, so set your options using
+        **** this configuration option.
+    --disable-setuid      disable setuid default
+        **** note:  use this if you want to install without setuid
+    --disable-priv_ports   set default lpd.perms to reject connections from non-privileged ports
+        **** note:  if you disable priv-ports, you MUST install setuid.
+        ****   Thus, you can have --disable-setuid, --disable-priv_ports, but not both
+    --disable-force_localhost      disable force_localhost default
+    --with-lpddir=DIR       where to install the lpd binary.
+        ***   where you want LPD to be installed.
+    --with-admindir=DIR     where to install the administrative commands, like
+                            checkpc, lpc, etc.
+        ***   where you want the other stuff installed
+    --with-filterdir=DIR     where to install filter (default ${libdir}/filters)
+                            checkpc, lpc, etc.
+        ***  where you want the filters installed
+    --with-lpd_conf_path=PATH     where to install lpd.conf (default /etc/lpd.conf,/usr/etc/lpd.conf)
+    --with-lpd_perms_path=PATH     where to install lpd.conf (default /etc/lpd.perms,/usr/etc/lpd.perms)
+    --with-printcap_path=PATH     where to install printcap (default /etc/printcap,/usr/etc/printcap)
+    --enable-nls           use Native Language Support
+    --with-included-gettext use the GNU gettext library included here
+    --with-catgets          use catgets functions if available
+ 
+  MAKE INSTALL changes
+     These tie into the changes with configure.  You should be aware of them.
+     You have been warned.
+
+     Note 1: FreeBSD
+       To put LPD in /usr/libexec/lpd,  admin in /usr/sbin, and other stuff in /usr/bin
+       configure -with-lpd_conf=/usr/libexec/lpd -with-admindir=/usr/sbin --prefix=bin
+     Note 2: RedHat Linux
+       To put LPD in /usr/sbin/lpd,  admin in /usr/sbin, and other stuff in /usr/bin
+       configure -with-lpd_conf=/usr/libexec/lpd -with-admindir=/usr/sbin --prefix=bin
+    
+  Minor fix to configure, src/Makefile to link only lpq with terminal library
+    (Supplied by: Roderich Schupp  <rsch@ExperTeam.de>)
+  Set spool_dir_perms to 0600 instead of 042600.
+    (Supplied by: Roderich Schupp  <rsch@ExperTeam.de>)
+  Typos and More Typos in HOWTO
+    (Spotted by the Eagle Eye of: Wolfgang Schludi <schludi@syscomp.de>)
+  Printcap 'oh=' was using wrong entry.
+    (Reported by: Wolfgang Schludi <schludi@syscomp.de>)
+  lpd -D= did not tell you what you did wrong.
+    (Reported by: Niklas Edmundsson <nikke@ing.umu.se>)
+  Kerberos authentication forwarding was incorrect.
+    (Fixed by: Mike Whitson <mwhitson@MIT.EDU>)
+  Printcap includes were not being processed correctly.
+    (Reported by: Don Badrak <dbadrak@census.gov>)
+
+  The spool queue control, status, and unspooler files (control.%P,
+    status.%P, and unspooler.%P) are now specified by the
+    queue_status_file and queue_control_file options.  This allows
+    you to relocate the files to another spool queue, or even use
+    the file.%D option to have a date appended to the file name.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+  When the lpd logger facility makes a connection to the receiver of the
+    log information,  it sends a dump of the system status.  The dump
+    consists of a set of lines, one line per print spool entry.
+    The end of this dump information is indicated by a single END
+    line, i.e: END\n.  This enables a database management system to
+    know that all of the queue information has arrived and can then
+    undertake to do any consistency checks.
+    (Need determined by:  Patrick Powell <papowell@astart.com>)
+
+  When a 'lpc reread' is done,  the logger process is killed and restarted.
+    This forces the logger process to use the new printcap or configuration
+    information.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+  When an unspooler process is active,  a SIGUSR1 signal is sent to it
+    to force it to rescan the spool queue.  The SIGUSR1 signal
+    handler sets the Susr1 flag,  and this flag is checked.  There
+    is a small window between the time that the flag is checked,
+    the process decides that no new jobs have been put in the queue,
+    and the process exits.  This window has now been narrowed down even
+    more by performing a final check just before the process exits.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+  On a heavily loaded system where a large number of files are being
+    created and/or destroyed,  the spool queue scanning code would
+    miss some jobs at the start or end of the queue.  This was due
+    to the fact that the scandir() routine does not lock the spool
+    directory,  and it can change as the directory is being read.
+    In order to reduce this window to the smallest possible size,
+    the directory is now scanned for files and then the files are
+    processed.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+
+  Updated HOWTO to reflect these changes.  Updated MAN pages.
+
+Release LPRng 3.6.2 Sat Jun 12 16:44:15 PDT 1999
+  LPRng-HOWTO corrections.
+   (Corrections by: Vladimir V Egorin <vladimir@math.uic.edu>)
+
+  Used the wrong process exit status variable in common/lpd_jobs.c
+   (Noted by: Olav Kolbu <olav.kolbu@usit.uio.no>)
+
+  Added STATE and LPC command execution tracing to the
+   logger messages.  This allows a remote system which is
+   monitoring LPRng operation via the logger interface to
+   monitor when a job is submitted and printed.
+
+  Updated format of message sent by logger.
+    UPDATE message now has a
+      hf_image= and (optional) lpc= encoded portion
+    QUEUE message now has a
+      queue= and (optional) lpc= encoded portion
+
+    The lpc identifies that the udpate was done by LPC operation
+    rather than by LPD as part of normal operation.
+
+  File locking had problems under SunOS 4.1.4.
+
+  You can now have single letter printer names.
+    (Sigh... noted by: Patrick Powell <papowell@astart.com>)
+
+  Accounting information now has options (correctly) quoted:
+   start '-H...' '-c' '-JThis is a job'
+   This is consistent with ifhp 3.3.2.
+
+Release LPRng 3.6.1 Mon Mar 22 09:42:07 PST 1999
+
+  This release is a major rewrite of the LPRng software and uses
+  dynamic memory allocation and as few static and global variables as possible.
+  This is intended to simplify the porting of the LPRng software
+  to a multi-threaded environment. In addition,  substantial
+  cleanup of much of the code was done.
+
+  Due to time constraints,  some functionality that is present in other
+  test versions was not put into this release.  This includes
+  setting user information by originating IP address.
+  The 4.x.x release will have support for the new IPP print protocol,
+  SNMP MIB,  and a HTTP server interface.
+
+  As far as possible, existing functionality has been preserved,
+  with the following notable exceptions.  These are divergent enough
+  to cause a new major release number to be used, i.e. - 3.6.x
+
+  License
+
+    Due to various technical legal reasons,  the License for this
+  release of LPRng has been changed from the GNU Copyleft to the slightly
+  different but similar in intent Artistic License.
+
+  Load Balance Queues and Class types
+
+    Assume: a load balance queue with several printers, say
+       master -> S1, S2;
+    You can now set the class types accepted by S1 and S2, and
+    the Master Queue will check the job types against the class
+    types before sending the job to the appropriate queue.
+
+    What is this all about? If S1 has blue paper you can set the
+  currently printing class to blue (lpc class blue).
+
+    Now do lpr -Pmaster -Cblue and your job will be routed to printers
+  which currently are printing class 'blue'.  Clearly this can be
+  extended to other things besides paper.
+
+    Note that when you use this option you should set the master
+  queues ignore_requested_user_priority flag so that the first
+  letter of the class type is not used as the priority.
+
+  *********************************
+  ******* force_localhost *********  distribution default is ON
+  *********************************
+
+    The Most Frequently Reported Problem with 3.4.X and 3.5.X was the following:
+
+      lpr is not sending jobs to my lpd server.  Why?
+
+  The reason is that other BSD based spoolers ASSUME that the
+  lpd server will be running on localhost,  and the clients
+  (lpr, lpq, etc) will connect to the server.  So the printcap
+  files are written as:
+   lp:sd=/usr/spool/whatever
+     :rm=remoteserver:rp=remoteprinter
+
+  Of course, lpr reads this as meaning 'connect to the remoteserver',
+  and never sends the job to the server running on the localhost.
+
+  The 'force_localhost' option will FORCE lpr, lpc, etc to connect to
+  the localhost UNLESS lpr -Ppr@remoteserver is used, i.e.- a command
+  line override.  In LPRng 3.5.X, the default value of 'force_localhost'
+  was OFF.  In LPRng 3.6.X, the default value is ON.
+
+  Bounce Queues, lpd_bounce,  and LPR Side Filtering
+
+    The lpd_bounce option REPLACES bq=xxx
+  Example:            ->
+    pr:lp=pr@xxx         pr:lpd_bounce
+      :bq=far@server       :lp=far@server
+
+    This makes bounce queues consistent with remote print queues.
+
+    The entire print job job is passed through the various filters,
+  and the entire output is now sent as a single file to the next
+  queue.  The format of this file is set by the bq_output=X option.
+
+    This now allows the full use of leaders, trailers,
+  banner page generation, etc., to be used.
+
+  Printcap tc=xxx:tc=yyy handling
+    printcap includes (tc) are done BEFORE setting the values
+  in the printcap entry,  and in order.  Thus:
+
+     lp:s=X:tc=.t1,.t2:tc=.t3
+     .t1:s=Y
+     .t2:z=W
+     .t3:z=P
+
+   would result (for lp) in:
+     lp:
+      :s=Y # from .t1
+      :z=W # from .t2
+      :z=P # from .t3
+      :s=X
+    and a final result of
+     lp:s=X:z=P
+
+   (Requested by and faultless arguments by: the lprng mailing list...)
+
+  Permissions List File:
+    You can now say XXX=<filename and the whitespace separated
+  contents of the file are used as the options value.
+
+  Example:
+    ACCEPT REMOTEHOST=</usr/local/etc/lpd_hosts
+   and have /usr/local/etc/lpd_hosts contain:
+
+    *.site.com
+    10.0.0.1/24  pc.*.mystuff.org
+
+  LPC Permissions Checking
+
+  You can now use:
+    ACCEPT LPC=hold,remove,topq
+  If you are doing an LPC operation, then this matches the operation.
+  This replaces the lpc_user=.... printcap abomination.
+
+  For example, to allow user X on the server to do hold operations,
+  use:
+
+    ACCEPT LPC=hold USER=x SERVER
+
+  The 'ms', 'sy' and 'ty' serial port configuration options are now
+  the single option 'stty' which makes more sense and is compatible
+  with other LPRng software.
+
+  The 'rt' and 'send_try' options were accidentally aliased - removed
+  the 'rt'.
+
+  There is now finer control for remote LPQ queries.
+   force_lpq_status=KEY=hostlist;KEY=hostlist
+     Specifies a set of hosts and the format for lpq status queries,
+     overridding the requested format.
+      KEY = l (long) or s (short)
+      hostlist = list of IPaddress/Mask or GLOB patterns for hostnames
+     Example:  force_lpq_status=s=*pc.site.com,10.0.25.0/24;l=sunsystem.site.com
+   reverse_lpq_format=hostlist
+     Reverse l and s query formats when a request arrives from these
+     hosts.
+   return_short_status=hostlist
+     Return short_status_length status lines when a request arrives from
+     these hosts
+  short_status_length=N
+     Number of status lines to return when return_short_status matched
+     
+  LPC added commands
+    active   - checks for an active server
+    local (all | printer) - show printcap and configuration information
+      for a local printer.  Debugging aid.
+
+  LPQ added option
+     -L   - equivalent to -llllll....
+
+  CHECKPC
+      checkpc -V now prints out all sorts of additional information for
+    debugging and problem solving.
+      checkpc now checks both for server AND client mode.  No fixing done
+    for client information, just displays it.
+      checkpc now checks for missing tc=xxx entries.
+
+   LPD_CONF_PATH and PRINTCAP_PATH compilation option
+     make LPD_CONF_PATH=/usr/local/etc/lpd.conf
+     make PRINTCAP_PATH=/usr/local/etc/printcap
+       - changes the /etc/lpd.conf and  /etc/printcap file
+     default locations
+
+  AUTHENTICATION
+
+     The entire authentication interface has been redone,  and PGP,
+  Kerberos 5, and MIT Kerberos 4 Print System compatibility has
+  been added.  The permissions checking method has been changed as
+  follows,  with respect to the following keys:
+    AUTH       match or TRUE  if authenticated transfer done
+    AUTHTYPE   matches the authentication type
+    AUTHUSER   client or user's authentication id
+    AUTHFROM   originating server's authentication id when forwarding job
+    AUTHSAMEUSER   match if the client id in the request and the
+               (saved) client ID used to spool a job are identical.
+    AUTHJOB    match or TRUE if a job was submitted with authentication
+
+  Options have been redone to put a bit of consistency into things
+
+    auth=xxx                   authentication type for client to server
+    auth_client_filter=/path   client to server authentication filter
+    auth_forward=xxx           authentication type for forwarding
+    auth_forward_id=xxx        authentication id for remote end when forwarding
+    auth_forward_filter=/path  server to server authentication remote server id
+    auth_recieve_filter=/path  server filter to recieve authentication
+    auth_server_id=xxx         client to server - id of server
+                               receiving server - id for reception
+                               server to server - id for origination
+    pgp_path=/path     path to pgp program for auth=pgp
+    pgp_passphrase=clientkey   file in $(PGPPATH) or $(HOME)/.pgp
+                               holding client passphrase
+    pgp_server_key=~daemon/.pgp/serverkey   file holding LPD server passphrase
+
+  SOLARIS Package Support
+    Start of generating binary distributions.
+    (Contributed by: Martin Forssen <maf@crt.se>)
+
+  LPD lock file:  now defaults to /var/run/lpd
+    (Pointed out by: Martin Forssen <maf@crt.se>)
+
+  %D expansion,  create_files flag
+    If you have %D in a printcap value,  it gets expanded to the
+  current date in YYYY-MM-DD format.  If you have the create_files flag
+  set,  then the files that normally get trimmed (max size specified)
+  are created.  This allow you to do:
+     lf=log-%D
+  Your log files now will have the pathname sd.../log-YYYY-MM-DD
+  and you can now get rolling log files on a daily basis.
+  The files that have this done are the log file, status file,
+  and accounting file.
+
+  PCLBANNER and PSBANNER - new banner printing programs using PERL produces
+   pcl or PostScript banner page.
+
+   lp:bp=/usr/local/.../pclbanner
+     :of=....
+     :if=....
+   OR
+
+   lp:bp=/usr/local/.../psbanner
+     :of=....
+     :if=....
+
+  
+  Bug fixes:
+    Gadzillions.  Many.  Some were not bugs but simply inconsistencies with
+  documentation.  Sometimes documentation changed, sometimes the code.
+
+  Default Server Print Queue:
+
+   The default_printer_when_unknown configuration option
+   allows you to specify a print queue that the server will use when
+   it cannot find one in the printcap.  This print queue should have
+   the format:
+
+   /etc/lpd.conf:
+    default_printer_when_unknown=fallback
+
+   /etc/printcap:
+   fallback:server
+    :sd=/usr/spool/lpd/%P
+    :router=/..../router_for_misdirected_jobs
+
+    The router should output the correct destination (see router documentation
+    in LPRng-HOWTO),  and exit with 0, or exit with JREMOVE to cause the job
+    to be dropped in the bit bucket.
+
+Release LPRng 3.5.4 Mon Nov  9 10:07:42 PST 1998
+  Bug fixes:
+  Bad link to site in LPRng.smgl documentation.
+   (Reported by: Anthony Thyssen <anthony@cit.gu.edu.au>)
+  LPQ status was missing a space separator when reporting
+    subserver name list.
+   (Spotted by the Eagle Eyes of: John Callaghan <callagh4@pilot.msu.edu>)
+  The xt flag has been expurgated,  totally.  As was documented.
+   (Spotted by: James P. Dugal <jpd@usl.edu>)
+  LPR_bsd option added so that -m does BSD mail option.
+   (Requested by various folks)
+
+  Testers and bug fixers:
+   (Compilation: Bernie Kirby <bernie@ecr.mu.oz.au>)
+
+
+
+
+Release LPRng 3.5.3 Mon Nov  9 10:07:42 PST 1998
+  Documentation Error:
+    LPRng-HOWTO, Section 8, indicated that the lpd.conf file
+  could be obtained using a filter.  This is not correct.
+  (Noticed by: David Stenglein <david.stenglein@citicorp.com>)
+
+  Major Modification:
+    removed the 'xu' (per spool queue permission file) after trying
+  to make the semantics work.  Now we have a single permission file
+  for all printers
+
+  Major Modification - Load Balance Queues:
+    Some users reported very slow operation of the load balance
+    queues.  This was verified,  and extensive modifications were
+    made to the functionality.
+
+    CHANGE:
+        The subserver queues are only scanned at startup
+      and when there is an explicit indication that a new
+      job has been put into or removed from the queue
+      (SIGUSR2 received)
+
+  Major Modification - LPD Does Not Ignore LPR, LPC Requests
+
+      Some users with either large numbers of spool queues or
+    spool queues with large numbers of jobs noticed VERY slow
+    LPD response.
+      This has been improved considerably.
+
+    CHANGE:
+      LPD server would run through the Spool queues, looking for
+    trash to be removed or jobs to be started.  This polling is
+    necessary due to the possibility of a race condition between
+    the time that a job is put into the queue and the time that
+    the unspooler checks the queue for entries.
+      The operation has been modified so that only a SINGLE PROCESS
+    runs down through the spool queues.  When it finds work to do,
+    it informs the LPD server,  which now will start ANOTHER process
+    to check other queues for work.  Note that while these processes
+    are working their little hearts out,  chewing up swap space
+    and reading directory entries like mad,  the LPD server can
+    accept requests for LPQ, etc.
+
+  Major Modification - LPR speedup:
+    The LPD server now accepts jobs for spooling WITHOUT extensively
+    checking the spool queue.  This eliminates problems with printing
+    to queues with a large number of entries.
+   
+  Speed Improvement:
+    A bit of time analysis showed that LPRng was spending a large
+    amount of time during queue scanning in the fcmp() routine.
+    This has been rewritten and is now a strcmp().
+
+    During queue scan, Get_controlfile() generates a 'cmp_str' value
+    that represents the information needed to do sorting.  This is
+    is then used during queue sorting as the comparison value.
+
+    The 'struct cmp_struct' in the include/sortorder.h is used to
+    make sure that sufficiently long string buffers are allocated.
+    The make_cmp_str() in common/sortorder.c can be replaced with
+    a users version if they desire.
+
+  Bug Fix:
+  safestrncpy, mystrncpy, safestrncat, mystrncat now used for string
+   copies where there is doubt on the buffer/string length.  Note that
+   these versions will always make sure the buffer is terminated with
+   a 0 value.
+
+  lpr -U xx is supposed only to work for ROOT. Check for root perms
+    was not done correctly.
+    (Patch by: Paul Szabo <psz@maths.usyd.edu.au>)
+  permissions checking:  the C=value1,value2 permissions checking
+    option wants a C (control file) line starting with character C
+    and glob matching the indicated value1, value2, etc.  For example,
+    N=patrick*,powell* should match against line Npatrickwashere or
+    Npowellwasthere.  The check was done incorrectly.
+    (Patch by: Paul Szabo <psz@maths.usyd.edu.au>)
+  LPD/lpd_rcvjob.c - removed limits on lengths of class and host names
+  When using bounce queues and the generate_banner to cause a banner to
+    be added to a job,  the 'ab' (always banner) and the lpr -h (no header)
+    flags now are used in the decision for banner generation.
+    (Noticed by: Charles Karney <karney@pppl.gov>)
+  Filters were not being passed -Knnn option.
+    (Noticed by: Charles Karney <karney@pppl.gov>)
+  Permissions:  SERVER keyword was not used for X permissions.
+    (Fix by: Patrick Powell <papowell@astart.com>)
+  File Permissions:  spool_file_perms was being ignored due to the
+    umask() not being (un)set before creating a file.
+    (Discovered by: Albert Fluegel <albert.fluegel@hl.siemens.de)
+  ConnectTimeout now times out on connect() calls.
+    (Reminded by: Heinz-Ado Arnolds <arnolds@ifns.de>)
+  Accounting filter:  when the filter returns 'JHOLD' the job
+    will be held (as documented).
+    (Patch by: Rainer Schoepf <schoepf@uni-mainz.de>)
+   LPRM incorrectly gives the "clean" usage instead of "lprm" usage.
+    (Fix by:  Edan Idzerda <edan@mtu.edu>)
+   The 'xt' and 'check_for_nonprintable' flags were in conflict.  Removed
+    the 'xt' flag.
+    (Reported by: "Dugal James P." <jpd@usl.edu>)
+   The LPD/lpd_remove.c code did not remove jobs correctly when a
+    :destination=... entry was present
+    (Patch by: john@cs.wisc.edu)
+   Log files not being truncated.  Well, they are now.
+    (Fix by: Patrick Powell <papowell@astart.com>)
+   LPR not printing multiple copies (-K option)
+    (Patch by: Keith Richardson <keithr@ms.com>)
+   LPD did not check spool queue just before exiting from printing loop.
+    This opened a BIG race window on systems with lots of jobs in the
+    spool queue.
+    (Fix by: Patrick Powell <papowell@astart.com>)
+   Expand_command did not check for Do_dollar() returning 0, indicating
+    a string overflow condition, which it then dereferenced and core dumped.
+    (Reported by:  (Walter Misar) <misar@rbg.informatik.tu-darmstadt.de>)
+   Control file filters were not being invoked correctly.
+    (Reported by: Tony Graham <Tony.Graham@uni-c.dk>)
+   Memory trashing being done by different behaviour of strncat() on some
+    systems.  Replaced by mystrncat() and took the performance hit in return
+    for reproducible behaviour and non-trashing copies.  Sigh.
+    (Fix by: Patrick Powell <papowell@astart.com>)
+   strncpy() and strcpy() does not handle overlapping strings correctly, or
+    at least that is what the man page says.  Replaced several of these
+    calls by memcopy() and friends.
+    (Fix by: Patrick Powell <papowell@astart.com>)
+
 Release LPRng 3.5.2 Fri May  1 14:39:55 PDT 1998
   Bug Fix:
    lpr -k did not pass the correct length (0) to the
@@ -57,7 +969,7 @@ Release LPRng 3.4.12 Fri May  1 14:39:55 PDT 1998
       now send requests to localhost unless explicitly overriden
     Force_fqdn will now brutally assume that the domain of the
       sender is the one reported by the FQDN of the originator
-	  of the connection.
+      of the connection.
 
 Release LPRng 3.4.11 Thu Apr 30 11:46:25 PDT 1998
 

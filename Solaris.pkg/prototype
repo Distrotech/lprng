@@ -1,0 +1,80 @@
+# This required package information file contains a list of package contents.
+# The 'pkgmk' command uses this file to identify the contents of a package
+# and their location on the development machine when building the package.
+# Can be created via a text editor or through use of the 'pkgproto' command.
+
+#!search <pathname pathname ...>        # where to find pkg objects
+#!include <filename>                    # include another 'prototype' file
+#!default <mode> <owner> <group>        # default used if not specified on entry
+#!<param>=<value>                       # puts parameter in pkg environment
+
+i pkginfo
+i prototype
+i postinstall
+e sed /etc/inet/inetd.conf=inetd.conf ? ? ?
+
+d none /opt ? ? ?
+d none /etc ? ? ?
+d none /etc/init.d ? ? ?
+d none /etc/inet ? ? ?
+f none /etc/init.d/LPRng=LPRng.init 775 root sys
+d none /etc/rc0.d ? ? ?
+s none /etc/rc0.d/K20LPRng=../init.d/LPRng
+d none /etc/rc1.d ? ? ?
+s none /etc/rc1.d/K20LPRng=../init.d/LPRng
+d none /etc/rc2.d ? ? ?
+s none /etc/rc2.d/S20LPRng=../init.d/LPRng
+e none /etc/lpd.conf=../lpd.conf 775 root sys
+e none /etc/lpd.perms=../lpd.perms 775 root sys
+#d none /opt/LPRng 2775 root bin
+d none /usr/local 2775 root bin
+#d none /opt/LPRng/bin 2775 root bin
+d none /usr/local/bin 2775 root bin
+#f none /opt/LPRng/bin/lpq=../src/lpq 0755 root bin
+f none /usr/local/bin/lpq=../src/lpq 0755 root bin
+#f none /opt/LPRng/bin/lprm=../src/lprm 0755 root bin
+f none /usr/local/bin/lprm=../src/lprm 0755 root bin
+#f none /opt/LPRng/bin/lpr=../src/lpr 0755 root bin
+f none /usr/local/bin/lpr=../src/lpr 0755 root bin
+#f none /opt/LPRng/bin/lpc=../src/lpc 0755 root bin
+f none /usr/local/bin/lpc=../src/lpc 0755 root bin
+#f none /opt/LPRng/bin/lpd=../src/lpd 0755 root bin
+f none /usr/local/bin/lpd=../src/lpd 0755 root bin
+#f none /opt/LPRng/bin/lpf=../src/lpf 0755 root bin
+f none /usr/local/bin/lpf=../src/lpf 0755 root bin
+#f none /opt/LPRng/bin/lpstat=../src/lpstat 0755 root bin
+f none /usr/local/bin/lpstat=../src/lpstat 0755 root bin
+#f none /opt/LPRng/bin/lpbanner=../src/lpbanner 0755 root bin
+f none /usr/local/bin/lpbanner=../src/lpbanner 0755 root bin
+#f none /opt/LPRng/bin/checkpc=../src/checkpc 0755 root bin
+f none /usr/local/bin/checkpc=../src/checkpc 0755 root bin
+#f none /opt/LPRng/bin/lpraccnt=../src/lpraccnt 0755 root bin
+f none /usr/local/bin/lpraccnt=../src/lpraccnt 0755 root bin
+#s none /opt/LPRng/bin/lp=lpr 0755 root bin
+s none /usr/local/bin/lp=lpr 0755 root bin
+#s none /opt/LPRng/bin/cancel=lprm 0755 root bin
+s none /usr/local/bin/cancel=lprm 0755 root bin
+#d none /opt/LPRng/man 2775 root bin
+d none /usr/local/man 2775 root bin
+#d none /opt/LPRng/man/man1 2775 root bin
+d none /usr/local/man/man1 2775 root bin
+#d none /opt/LPRng/man/man5 2775 root bin
+d none /usr/local/man/man5 2775 root bin
+#d none /opt/LPRng/man/man8 2775 root bin
+d none /usr/local/man/man8 2775 root bin
+f none /usr/local/man/man1/cancel.1=../man/cancel.1 0444 root bin
+f none /usr/local/man/man1/lp.1=../man/lp.1 0444 root bin
+f none /usr/local/man/man1/lpbanner.1=../man/lpbanner.1 0444 root bin
+f none /usr/local/man/man1/lpc.1=../man/lpc.1 0444 root bin
+f none /usr/local/man/man1/lpf.1=../man/lpf.1 0444 root bin
+f none /usr/local/man/man1/lpq.1=../man/lpq.1 0444 root bin
+f none /usr/local/man/man1/lpr.1=../man/lpr.1 0444 root bin
+f none /usr/local/man/man1/lpraccnt.1=../man/lpraccnt.1 0444 root bin
+f none /usr/local/man/man1/lprm.1=../man/lprm.1 0444 root bin
+f none /usr/local/man/man1/lpstat.1=../man/lpstat.1 0444 root bin
+f none /usr/local/man/man1/monitor.1=../man/monitor.1 0444 root bin
+f none /usr/local/man/man5/lpd.conf.5=../man/lpd.conf.5 0444 root bin
+f none /usr/local/man/man5/lpd.perms.5=../man/lpd.perms.5 0444 root bin
+f none /usr/local/man/man5/printcap.5=../man/printcap.5 0444 root bin
+f none /usr/local/man/man8/checkpc.8=../man/checkpc.8 0444 root bin
+f none /usr/local/man/man8/lpd.8=../man/lpd.8 0444 root bin

@@ -1,32 +1,15 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: stty_sgtty.c
- * PURPOSE: set terminal modes using options
- **************************************************************************/
+ ***************************************************************************/
 
-/**************************************************************************
- * Patrick Powell Sun May 21 21:48:43 PDT 1995
- * The original version of this code was derived from an ancient bit of
- * UNIX code.  The current version of this code has been cleaned up
- *
- * The idea is to use a table of flag bits to set and/or clear in a
- * data structure.  The table is scanned for the entry and then used.
- *
- * This version uses the set/get tty IOCTL calls 
- *
- * Tue Jul 11 11:02:41 PDT 1995 Patrick Powell
- *   removed the 'term.h' file definition in order to allow this
- *   file to be used elsewhere as a utility file.
- *
- **************************************************************************/
-static char *const _id =
-"stty.c,v 3.8 1998/01/12 20:29:25 papowell Exp";
+ static char *const _id =
+"$Id: stty.c,v 5.1 1999/09/12 21:32:53 papowell Exp papowell $";
+
 
 #include "lp.h"
 #include "stty.h"
@@ -47,11 +30,14 @@ static char *const _id =
 
 #if USE_STTY == TERMIOS
 # include <termios.h>
+# ifdef USE_TERMIOX
+#  if defined(_SCO_DS) && !defined(_SVID3)
+#   define _SVID3 1   /* needed to enable #defines in SCO v5 termiox.h */
+#  endif
+#  include <sys/termiox.h>
+# endif
 #endif
 
-#ifdef USE_TERMIOX
-# include <sys/termiox.h>
-#endif
 
 #if !defined(TIOCEXCL) && defined(HAVE_SYS_TTOLD_H) && !defined(IRIX)
 #  include <sys/ttold.h>
@@ -75,7 +61,7 @@ static char *const _id =
 #endif  /* !defined(EXTB) */
 #endif  /* !defined(B38400) */
 
-static struct bauds {
+ static struct bauds {
     char *string;
     int baud;
     int speed;
@@ -107,7 +93,7 @@ struct tchars termctrl;
 struct ltchars linectrl;
 struct sgttyb mode;
 
-static struct {
+ static struct {
     char *string;
     int set;
     int reset;
@@ -181,7 +167,7 @@ static struct {
 };
 
 
-static struct special {
+ static struct special {
     char *name;
     char *cp;
     char def;
@@ -194,11 +180,16 @@ static struct special {
 
 void Do_stty( int fd )
 {
-	int i;
+	int i, count;
 	int localmode;
 	int linedisc;
-	char buf[SMALLBUFFER], *bp, *ep, *arg;
+	char *arg, *option;
+	struct line_list l;
 
+	Init_line_list(&l);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Check_max(&l,1);
+	l.list[l.count] = 0;
 	DEBUG3("Do_stty: using SGTTYB, fd %d", fd );
 	if( ioctl( fd, TIOCGETP, &mode) < 0
 		|| ioctl( fd, TIOCGETC, &termctrl) < 0
@@ -208,39 +199,17 @@ void Do_stty( int fd )
 	}
 	DEBUG2("stty: before mode 0x%x, lmode 0x%x, speed 0x%x",
 			 mode.sg_flags, localmode, mode.sg_ispeed);
-	if( Baud_rate ){
-		for( i = 0; bauds[i].baud && Baud_rate != bauds[i].baud; i++);
+	if( Baud_rate_DYN ){
+		for( i = 0; bauds[i].baud && Baud_rate_DYN != bauds[i].baud; i++);
 		if( i == 0) {
-			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate );
+			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate_DYN );
 		}
 		mode.sg_ispeed = mode.sg_ospeed = bauds[i].speed;
 	}
-#if 0
-	mode.sg_flags &= ~FC;
-	mode.sg_flags |= FS;
-	localmode &= ~XC;
-	localmode |= XS;
-#endif
-	if( Set_flag_bits || Clear_flag_bits || Set_local_bits ||
-		Clear_local_bits ){
-		fatal( LOG_INFO, "fc, fs, xc, xs printcap options are not supported. Use 'sy' stty(1) compatible forms");
-	}
 
-	buf[0] = 0;
-	if( Stty_command && *Stty_command ){
-		safestrncat( buf, Stty_command );
-		ep = buf;
-	} else {
-		ep = 0;
-	}
-	while( ep && *ep) {
-		for( ; *ep && (isspace(*ep) || *ep == ','); ++ep);
-		for( arg = ep; *ep && !(isspace(*ep) || *ep == ','); ++ep );
-		if( *ep ){
-			*ep++ = 0;
-		}
-
-		for( i = 0; modes[i].string && strcasecmp( modes[i].string, arg); i++);
+	for( count = 0; count < l.count; ++count ){
+		arg = l.list[count];
+		for( i = 0; modes[i].string && safestrcasecmp( modes[i].string, arg); i++);
 		if( modes[i].string ){
 			DEBUG3("stty: modes %s, mc 0x%x ms 0x%x lc 0x%x ls 0x%x",
 					 modes[i].string, modes[i].reset, modes[i].set,
@@ -251,42 +220,39 @@ void Do_stty( int fd )
 			localmode |= modes[i].lset;
 			continue;
 		}
-		for( i = 0; special[i].name && strcasecmp( special[i].name, arg); i++);
+		for( i = 0; special[i].name && safestrcasecmp( special[i].name, arg); i++);
 		if( special[i].name) {
-			for( ; *ep && isspace( *ep); ++ep);
-			for( bp = ep; *ep && !isspace( *ep); ++ep);
-			if( *ep) {
-				*ep++ = 0;
-			}
-			if( *bp == 0) {
+			++count;
+			option = l.list[count];
+			if( option == 0) {
 				fatal( LOG_INFO, "stty: missing parameter for %s", arg);
 			}
-			if( bp[0] == '^') {
-				if( bp[1] == '?') {
+			if( option[0] == '^') {
+				if( option[1] == '?') {
 					*special[i].cp = 0177;
 				} else {
-					*special[i].cp = 037 & bp[1];
+					*special[i].cp = 037 & option[1];
 				}
 			} else {
-				*special[i].cp = bp[0];
+				*special[i].cp = option[0];
 			}
-			DEBUG3("stty: special %s %s", arg, bp);
+			DEBUG3("stty: special %s %s", arg, option);
 			continue;
 		}
-		for( i = 0; bauds[i].string && strcasecmp( bauds[i].string, arg); i++);
+		for( i = 0; bauds[i].string && safestrcasecmp( bauds[i].string, arg); i++);
 		if( bauds[i].string) {
 			DEBUG3("stty: speed %s", arg);
 			mode.sg_ispeed = mode.sg_ospeed = bauds[i].speed;
 			continue;
 		}
-		if( !strcasecmp( "new", arg)) {
+		if( !safestrcasecmp( "new", arg)) {
 			DEBUG3("stty: ldisc %s", arg);
 			linedisc = NTTYDISC;
 			if( ioctl( fd, TIOCSETD, &linedisc) < 0)
 				logerr_die( LOG_INFO, "stty: TIOCSETD ioctl failed");
 			continue;
 		}
-		if( !strcasecmp( "old", arg)) {
+		if( !safestrcasecmp( "old", arg)) {
 			DEBUG3("stty: ldisc %s", arg);
 			linedisc = 0;
 			if( ioctl( fd, TIOCSETD, &linedisc) < 0)
@@ -303,6 +269,7 @@ void Do_stty( int fd )
 		|| ioctl( fd, TIOCLSET, &localmode) < 0) {
 		logerr_die( LOG_NOTICE, "cannot set tty parameters");
 	}
+	Free_line_list(&l);
 }
 #endif
 
@@ -317,7 +284,7 @@ void Do_stty( int fd )
 #define TOSTOP _TOSTOP
 #endif
 
-static struct bauds {
+ static struct bauds {
     char *string;
     int baud;
     int speed;
@@ -339,7 +306,7 @@ static struct bauds {
 };
 
 struct termio tio;
-static struct {
+ static struct {
     char *string;
     int iset;
     int ireset;
@@ -540,8 +507,14 @@ static struct {
 
 void Do_stty( int fd )
 {
-	int i;
-	char buf[SMALLBUFFER], *ep, *arg;
+	int i, count;
+	char *arg;
+	struct line_list l;
+
+	Init_line_list(&l);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Check_max(&l,1);
+	l.list[l.count] = 0;
 
 	DEBUG3("Do_stty: using TERMIO, fd %d", fd );
 	if( ioctl( fd, TCGETA, &tio) < 0) {
@@ -550,29 +523,18 @@ void Do_stty( int fd )
 	DEBUG2("stty: before imode 0x%x, omode 0x%x, cmode 0x%x, lmode 0x%x",
 			 tio.c_iflag, tio.c_oflag, tio.c_cflag, tio.c_lflag);
 
-	if( Baud_rate ){
-		for( i = 0; bauds[i].baud && Baud_rate != bauds[i].baud; i++);
+	if( Baud_rate_DYN ){
+		for( i = 0; bauds[i].baud && Baud_rate_DYN != bauds[i].baud; i++);
 		if( i == 0) {
-			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate);
+			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate_DYN);
 		}
 		tio.c_cflag &= ~CBAUD;
 		tio.c_cflag |= bauds[i].speed;
 	}
-	/* don't support FC, FS, XC, XS */
-
-	buf[0] = 0;
-	ep = 0;
-	if( Stty_command && *Stty_command ){
-		safestrncat( buf, Stty_command );
-		ep = buf;
-	}
-	while( ep && *ep) {
-		for( ; *ep && (isspace( *ep) || *ep == ','); ++ep);
-		for( arg = ep; *ep && !isspace( *ep) && *ep != ','; ++ep);
-		if( *ep) {
-			*ep++ = 0;
-		}
-		for( i = 0; tmodes[i].string && strcasecmp( tmodes[i].string, arg); i++);
+	for( count = 0; count < l.count; ++count ){
+		arg = l.list[count];
+		for( i = 0;
+			tmodes[i].string && safestrcasecmp( tmodes[i].string, arg); i++);
 
 		if( tmodes[i].string) {
 			DEBUG3("stty: modes %s, ic 0x%x is 0x%x oc 0x%x os 0x%x cc 0x%x cs 0x%x lc 0x%x ls 0x%x",
@@ -590,7 +552,7 @@ void Do_stty( int fd )
 			tio.c_lflag |= tmodes[i].lset;
 			continue;
 		}
-		for( i = 0; bauds[i].string && strcasecmp( bauds[i].string, arg); i++);
+		for( i = 0; bauds[i].string && safestrcasecmp( bauds[i].string, arg); i++);
 		if( bauds[i].string) {
 			DEBUG3("stty: speed %s", arg);
 			tio.c_cflag &= ~CBAUD;
@@ -600,7 +562,7 @@ void Do_stty( int fd )
 		fatal( LOG_INFO, "unknown mode: %s\n", arg);
 	}
 
-	if( Read_write && (tio.c_cflag & ICANON) == 0) {
+	if( Read_write_DYN && (tio.c_cflag & ICANON) == 0) {
 		/* VMIN & VTIME: suggested by Michael Joosten
 		 * only do this if ICANON is off -- Martin Forssen
 		 */
@@ -613,6 +575,7 @@ void Do_stty( int fd )
 	if( ioctl( fd, TCSETA, &tio) < 0) {
 		logerr_die( LOG_NOTICE, "cannot set tty parameters");
 	}
+	Free_line_list(&l);
 }
 #endif
 
@@ -624,7 +587,7 @@ void Do_stty( int fd )
 					/* ignore the flags arg. */
 #endif
 
-static struct bauds {
+ static struct bauds {
 	char *string;
 	int baud;
 	int speed;
@@ -668,7 +631,7 @@ struct s_term_dat {
 
 
 /* c_iflag bits */
-static struct s_term_dat c_i_dat[] =
+ static struct s_term_dat c_i_dat[] =
 {
 	FLAGS(IGNBRK),
 	FLAGS(BRKINT),
@@ -699,7 +662,7 @@ static struct s_term_dat c_i_dat[] =
 };
 
 /* c_oflag bits */
-static struct s_term_dat c_o_dat[] =
+ static struct s_term_dat c_o_dat[] =
 {
 	FLAGS(OPOST),
 #ifdef OLCUC
@@ -761,7 +724,7 @@ static struct s_term_dat c_o_dat[] =
 };
 
 /* c_cflag bit meaning */
-static struct s_term_dat c_c_dat[] =
+ static struct s_term_dat c_c_dat[] =
 {
 	{"CS5", CS5, CSIZE},
 	{"CS6", CS6, CSIZE},
@@ -803,7 +766,7 @@ static struct s_term_dat c_c_dat[] =
 };
 
 /* c_lflag bits */
-static struct s_term_dat c_l_dat[] =
+ static struct s_term_dat c_l_dat[] =
 {
 	{"ISIG", ISIG, 0},
 	{"-ISIG", 0, ISIG},
@@ -867,7 +830,7 @@ static struct s_term_dat c_l_dat[] =
 
 #ifdef USE_TERMIOX
 /* termiox bits */
-static struct s_term_dat tx_x_dat[] =
+ static struct s_term_dat tx_x_dat[] =
 {
 	{"RTSXOFF", RTSXOFF, 0},
 	{"-RTSXOFF", 0, RTSXOFF},
@@ -880,7 +843,7 @@ struct termiox tx_dat;
 
 struct termios t_dat;
 
-static struct special {
+ static struct special {
 	char *name;
 	char *cp;
 }       special[] = {
@@ -892,11 +855,17 @@ static struct special {
 
 void Do_stty( int fd )
 {
-	int i;
 #ifdef USE_TERMIOX
 	int termiox_fail = 0;
 #endif
-	char buf[SMALLBUFFER], *bp, *ep, *arg;
+	int i,count;
+	char *arg, *option;
+	struct line_list l;
+
+	Init_line_list(&l);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Check_max(&l,1);
+	l.list[l.count] = 0;
 
 	DEBUG3("Do_stty: using TERMIOS, fd %d", fd );
 	if( tcgetattr( fd, &t_dat) < 0 ){
@@ -904,16 +873,16 @@ void Do_stty( int fd )
 	}
 #ifdef USE_TERMIOX
 	if( ioctl( fd, TCGETX, &tx_dat) < 0 ){
-		DEBUG0("stty: TCGETX failed");
+		DEBUG1("stty: TCGETX failed");
 		termiox_fail = 1;
 	}
 #endif
 	DEBUG2("stty: before iflag 0x%x, oflag 0x%x, cflag 0x%x lflag 0x%x",
 			 t_dat.c_iflag, t_dat.c_oflag, t_dat.c_cflag, t_dat.c_lflag);
-	if( Baud_rate ){
-		for( i = 0; bauds[i].baud && Baud_rate != bauds[i].baud; i++);
+	if( Baud_rate_DYN ){
+		for( i = 0; bauds[i].baud && Baud_rate_DYN != bauds[i].baud; i++);
 		if( i == 0 ){
-			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate );
+			fatal( LOG_INFO, "illegal baud rate %d", Baud_rate_DYN );
 		}
 		DEBUG2("stty: before baudrate : cflag 0x%x",t_dat.c_cflag);
 
@@ -930,31 +899,10 @@ void Do_stty( int fd )
 
 		DEBUG2("stty: after baudrate : cflag 0x%x",t_dat.c_cflag);
 	}
-#if 0
-	/* OBSOLETE */
-	t_dat.c_cflag &= ~FC;
-	t_dat.c_cflag |= FS;
-	t_dat.c_lflag &= ~XC;
-	t_dat.c_lflag |= XS;
-#endif
-	if( Set_flag_bits || Clear_flag_bits || Set_local_bits ||
-		Clear_local_bits ){
-		fatal( LOG_INFO, "fc, fs, xc, xs printcap options are not supported. Use 'sy' stty(1) compatible forms");
-	}
 
-	if( Stty_command && *Stty_command ){
-		(void) strcpy( buf, Stty_command );
-		ep = buf;
-	} else {
-		ep = 0;
-	}
-	while( ep && *ep ){
-		for( ; *ep && (isspace(*ep) || *ep == ','); ++ep);
-		for( arg = ep; *ep && !(isspace(*ep) || *ep == ','); ++ep );
-		if( *ep ){
-			*ep++ = 0;
-		}
-		for( i = 0; bauds[i].string && strcasecmp( bauds[i].string, arg); i++);
+	for( count = 0; count < l.count; ++count ){
+		arg = l.list[count];
+		for( i = 0; bauds[i].string && safestrcasecmp( bauds[i].string, arg); i++);
 
 		if( bauds[i].string ){
 #ifdef HAVE_CFSETISPEED
@@ -969,7 +917,7 @@ void Do_stty( int fd )
 #endif
 			continue;
 		}
-		for( i = 0; c_i_dat[i].name && strcasecmp( c_i_dat[i].name, arg); i++);
+		for( i = 0; c_i_dat[i].name && safestrcasecmp( c_i_dat[i].name, arg); i++);
 		if( c_i_dat[i].name ){
 			DEBUG3("stty: c_iflag %s, ms 0x%x mc 0x%x",
 					 c_i_dat[i].name, c_i_dat[i].or_dat, c_i_dat[i].and_dat);
@@ -977,7 +925,7 @@ void Do_stty( int fd )
 			t_dat.c_iflag |= c_i_dat[i].or_dat;
 			continue;
 		}
-		for( i = 0; c_o_dat[i].name && strcasecmp( c_o_dat[i].name, arg); i++);
+		for( i = 0; c_o_dat[i].name && safestrcasecmp( c_o_dat[i].name, arg); i++);
 		if( c_o_dat[i].name ){
 			DEBUG3("stty: c_oflag %s, ms 0x%x mc 0x%x",
 					 c_o_dat[i].name, c_o_dat[i].or_dat, c_o_dat[i].and_dat);
@@ -985,7 +933,7 @@ void Do_stty( int fd )
 			t_dat.c_oflag |= c_o_dat[i].or_dat;
 			continue;
 		}
-		for( i = 0; c_c_dat[i].name && strcasecmp( c_c_dat[i].name, arg); i++);
+		for( i = 0; c_c_dat[i].name && safestrcasecmp( c_c_dat[i].name, arg); i++);
 		if( c_c_dat[i].name ){
 			DEBUG3("stty: c_cflag %s, ms 0x%x mc 0x%x",
 					 c_c_dat[i].name, c_c_dat[i].or_dat, c_c_dat[i].and_dat);
@@ -993,7 +941,7 @@ void Do_stty( int fd )
 			t_dat.c_cflag |= c_c_dat[i].or_dat;
 			continue;
 		}
-		for( i = 0; c_l_dat[i].name && strcasecmp( c_l_dat[i].name, arg); i++);
+		for( i = 0; c_l_dat[i].name && safestrcasecmp( c_l_dat[i].name, arg); i++);
 		if( c_l_dat[i].name ){
 			DEBUG3("stty: c_lflag %s, ms 0x%x mc 0x%x",
 					 c_l_dat[i].name, c_l_dat[i].or_dat, c_l_dat[i].and_dat);
@@ -1001,30 +949,27 @@ void Do_stty( int fd )
 			t_dat.c_lflag |= c_l_dat[i].or_dat;
 			continue;
 		}
-		for( i = 0; special[i].name && strcasecmp( special[i].name, arg); i++);
+		for( i = 0; special[i].name && safestrcasecmp( special[i].name, arg); i++);
 		if( special[i].name ){
-			for( ; *ep && isspace( *ep); ++ep);
-			for( bp = ep; *ep && !isspace( *ep); ++ep);
-			if( *ep ){
-				*ep++ = 0;
-			}
-			if( *bp == 0 ){
+			++count;
+			option = l.list[count];
+			if( option == 0 ){
 				fatal( LOG_INFO, "stty: missing parameter for %s", arg);
 			}
-			if( bp[0] == '^' ){
-				if( bp[1] == '?' ){
+			if( option[0] == '^' ){
+				if( option[1] == '?' ){
 					*special[i].cp = 0177;
 				} else {
-					*special[i].cp = 037 & bp[1];
+					*special[i].cp = 037 & option[1];
 				}
 			} else {
-				*special[i].cp = bp[0];
+				*special[i].cp = option[0];
 			}
-			DEBUG3("stty: special %s %s", arg, bp);
+			DEBUG3("stty: special %s %s", arg, option);
 			continue;
 		}
 #ifdef USE_TERMIOX
-		for( i = 0; tx_x_dat[i].name && strcasecmp( tx_x_dat[i].name, arg); i++);
+		for( i = 0; tx_x_dat[i].name && safestrcasecmp( tx_x_dat[i].name, arg); i++);
 		if( tx_x_dat[i].name ){
 			DEBUG3("stty: tx_xflag %s, ms 0x%x mc 0x%x",
 					 tx_x_dat[i].name, tx_x_dat[i].or_dat, tx_x_dat[i].and_dat);
@@ -1036,7 +981,7 @@ void Do_stty( int fd )
 		fatal( LOG_INFO, "unknown mode: %s\n", arg);
 	}
 
-	if( Read_write && (t_dat.c_lflag & ICANON) == 0 ){
+	if( Read_write_DYN && (t_dat.c_lflag & ICANON) == 0 ){
 		/* only do this if ICANON is off -- Martin Forssen */
 		DEBUG2("setting port to read/write with unbuffered reads( MIN=1, TIME=0)");
 		t_dat.c_cc[VMIN] = 1;
@@ -1054,5 +999,6 @@ void Do_stty( int fd )
 		logerr_die( LOG_NOTICE, "cannot set tty parameters (termiox)");
 	}
 #endif
+	Free_line_list(&l);
 }
 #endif

@@ -1,4 +1,4 @@
-#!/usr/contrib/bin/perl5
+#!/usr/local/bin/perl
 
 use English;
 use IO::Socket;

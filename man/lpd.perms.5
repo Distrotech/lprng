@@ -1,4 +1,4 @@
-.ds VE LPRng-3.5.1
+.ds VE LPRng-3.6.12
 .TH LPD.PERMS 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -65,8 +65,10 @@ REJECT SERVICE=P FORWARD
 ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.sdsu.edu REMOTEUSER=root,papowell
 ACCEPT SERVICE=C,M SERVER REMOTEUSER=root,papowell
 # Allow only the user on the same host who spooled job to remove it
-ACCEPT SERVICE=M,U SAMEUSER SAMEHOST
-REJECT SERVICE=M,C,U
+ACCEPT SERVICE=M SAMEUSER SAMEHOST
+# Allow users to check status
+ACCEPT SERVICE=C LPC=status
+REJECT SERVICE=C
 .RE
 .fi
 .sp
@@ -75,15 +77,15 @@ Permission checking is done by using a set of keys (or fields)
 with associated values to check for permission.
 The SERVICE key has value P for printing (i.e.- unspooling),
 R for spooling (i.e.- LPR request),
-C, S, and U for printer control, status,
-and user allowed operation respectively (i.e.- LPC request),
+C printer control (i.e. - LPC),
 M for removal (i.e.- LPRM request),
-Q for queue information (i.e.- LPRM request),
+Q for queue information (i.e.- LPQ request),
 and so forth.
 The
 .l X
 key indicates the initial connection to the LPD spooler,
 and can be used to control connections from remote systems.
+.LP
 The
 values of the USER, HOST, and IP keys taken from the control file
 which is being received or checked for permissions.
@@ -134,6 +136,12 @@ It is recommended that the filters be placed at the end of the
 permissions lists.
 The user name is one of the parameters passed to the filter,
 and can be used to determine if a user has permissions to print a file.
+.LP
+The \f(CWLPC=operation\fP
+entry allows control over individual LPC commands.
+For example,
+you can allow all users to use the
+\f(CWlpc status\fp command,  but only a select set of users other commands.
 .sp
 .nf
 .ne 20v
@@ -157,10 +165,13 @@ FORWARD	V	-	SA	-	-	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
+SPOOLING	V	-	SV	-	SV	SV	SV
 AUTH	V	-	AU	-	AU	AU	AU
 AUTHTYPE	S	-	AU	-	AU	AU	AU
 AUTHUSER	S	-	AU	-	AU	AU	AU
-FWDUSER	S	-	AU	-	AU	AU	AU
+AUTHSAMEUSER	S	-	AU	-	AU	AU	AU
+AUTHFROM	S	-	AU	-	AU	AU	AU
+AUTHJOB	V	-	AU	-	AU	AU	AU
 
 .ta 3m +\w'RH = REMOTEHOST    'u
 KEY:
@@ -178,8 +189,13 @@ KEY:
 	SA= IP of source of request = IP of server host
 	SV= matches if from same address as server
 	AU= value determined by server authentication operation
-	    NONE - no authentication, USER - user sending authentication
-	    FWD - server forwarding authentication
+		AUTH is true if authenticated transfer,
+		TYPE is set to the type of authentication (pgp, kerberos, etc)
+		AUTHUSER is user authentication id
+		AUTHFROM is sender authentication id (can be remote server)
+		AUTHSAMEUSER matches if remote user authentication id matches original
+			user authentication id
+		AUTHJOB it true if print job has authentication
 	IFIP= matches the remote IP address of the connection
 Match: S = string with wild card, IP = IPaddress[/netmask],
 	N = low[-high] number range, V = exact value match
@@ -239,46 +255,28 @@ N = numerical range  -  low-high integer range.
 .PP
 The authentication entries
 AUTH, AUTHTYPE,
-AUTHUSER, and FWDUSER
+AUTHUSER, AUTHSAMEUSER and AUTHFROM
 can be used to check permissions for authenticated operations. 
-AUTH can have the values NONE (no authentication),
-USER (user authenticated),
-or FWD (forwarded authentication from a server).
-For example,
-to reject non-authenticated operations,
-we can use:
+AUTH is set (true) if authentication was done.
+We can use this to reject non-authenticated transfers:
 .br
-REJECT AUTH=NONE
+REJECT NOT AUTH
 .br
-To accept only authenticated jobs directly from users
-use REJECT AUTH=NONE,FWD in the permissions file.
-The AUTHTYPE can be used to match the authentication type
+The AUTHTYPE will match the authentication type
 being used or requested by the remote client or server.
-The AUTHUSER matches the authentication information
-originated by the client to user transfer;
-These may be identical to the user name,  but also may
-be different values.
-The FWDUSER matches the authentication information originated by
-the server to server forwarding operation,
-and can be used to restrict these operations. 
-.SH "SERVER=U AND ALLOW_LPC CONFIGURATION VARIABLE"
+The AUTHUSER matches the original client authentication information
+used by the client to make a request to the server,
+and the AUTHFROM matches the sender authentication information.
+The AUTHSAMEUSER will match if the remote client or user authentication
+id is the same as that used for the job generation.
+.SH "LPC=OP"
 .PP
-The allow_lpc configuration variable can be used to specify a subset
-of the standard lpc operations will be classified as U operations.
-The candidates for selection include hold, release, move, and topq.
-For example, if the allow_lpc variable had the value:
-.br
-allow_lpc=hold,release
-.PP
-Then the following permissions entry would
+The LPC=op entry is useful to allow various users to 
+perform administration operations.
+The following permissions entry would
 allows users to hold or release their own jobs:
 .br
-ACCEPT SERVICE=U SAMEUSER SAMEHOST 
-REJECT SERVICE=U
-.PP
-When checking permissions,
-if permission is explicitly granted for SERVICE=C operations,
-it must be done before the checks for U or S services.
+ACCEPT SERVICE=C SAMEUSER SAMEHOST LPC=release
 .SH "DNS, IPV6, AND MULTIHOMED HOSTS"
 .PP
 There is a subtle problem with names and IP addresses which are
@@ -346,25 +344,11 @@ The debugging information will
 help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
-.LP
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.
-In 1988 Patrick Powell released
-the PLP (Public Line Printer) software,
-which went through several evolutions.
-Justin Mason (jmason@iona.ie)
-generated PLP4.0 from several older releases of PLP.
-In 1992 Patrick Powell
-release LPRng,
-a completely redesigned and newly written version of the software.
-.LP
-The LPRng mailing list is plp@iona.ie;
-subscribe by sending mail to plp-request@iona.ie with
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
 the word subscribe in the body.
-The software is available from ftp://iona.ie/pub/LPRng.
-.LP
-LPRng is distributed under the GNU software license for non-commercial
-use,
-the Artistic License for limited commercial use. 
-Commerical support and licensing is available through
-Patrick Powell <papowell@sdsu.edu>.
+The software is available from ftp://ftp.astart.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@astart.com>.

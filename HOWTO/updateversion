@@ -1,0 +1,21 @@
+#!/usr/local/bin/perl -i
+# <date> 1 Sept 1998 (For LPRng-3.5.3)
+# VERSION
+use POSIX;
+my $v = ` cat ../VERSION `;
+chomp $v;
+#print "$v\n";
+my $s = ctime( time );
+#print "$s\n";
+my @s = split ' ', $s;
+my $w = '<date> ' ."$s[2] $s[1] $s[4] (For $v)\n";
+#print $w;
+
+while ( <> ){
+	if( /^<date>/ ){
+		print $w ;
+		print STDERR $w;
+	} else {
+		print ;
+	}
+}

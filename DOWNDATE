@@ -1,0 +1,51 @@
+#!/usr/local/bin/perl
+use Getopt::Std;
+$| = 1;
+getopts("cd");
+$no_checkin = 0;
+$no_dist = 0;
+if( $opt_c ){
+	print "no checkin\n";
+	$no_checkin = 1;
+}
+if( $opt_d ){
+	print "no distribution\n";
+	$no_dist = 1;
+}
+($newvernum, $oldvernum) = @ARGV;
+($dir) = `pwd`;
+chomp $dir;
+print "dir $dir\n";
+($path, $prog) = ($dir =~ m,(.*)/(.*),);
+($name, $ver) = ($prog =~ m,(.*)-(.*),);
+print "prog $prog, name $name, ver $ver\n";
+@subs = split( /\./, $ver );
+@new = @subs;
+@old = @subs;
+$new[$#new] ++;
+$old[$#old] --;
+$newvernum = join( '.', @new ) unless $newvernum;
+$oldvernum = join( '.', @old ) unless $oldvernum;
+$newprog = $name . "-" . $newvernum;
+$oldprog = $name . "-" . $oldvernum;
+$newdir = $path . "/" . $newprog;
+print "prog $prog, name $name, ver $ver, newprog $newprog, oldprog $oldprog, newdir $newdir\n";
+print "\nupdating directory name and links\n";
+
+@err=`mv $path/$oldprog $path/$oldprog.old`;
+print "mv $path/$prog $path/$oldprog\n";
+@err = `mv $path/$prog $path/$oldprog`;
+if( $? ){ die "mv $path/$prog $path/$oldprog failed - @err $!\n"; }
+if( -l "$path/$name" ){
+ 	print "removing link $path/$name\n";
+ 	@err = `rm $path/$name`;
+	if( $? ){ die "rm link $prog failed - @err $!\n"; }
+}
+@err = `chdir ..; ln -s $oldprog $prog`;
+if( $? ){ die "ln -s $oldprog $prog $name failed - @err $!\n"; }
+
+# make new version
+`gmake update >/dev/tty 2>&1 `;
+if( $? ){
+	die "gmake update failed - $!\n";
+}

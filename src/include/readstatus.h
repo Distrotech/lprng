@@ -1,28 +1,27 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: readstatus.h
- * PURPOSE: readstatus.c functions
- * readstatus.h,v 3.2 1997/12/17 19:34:56 papowell Exp
- **************************************************************************/
-
-#ifndef _READSTATUS_H
-#define _READSTATUS_H
-
-
-
-/***************************************************************************
- * Read_status: read status information from remote end
+ * $Id: readstatus.h,v 5.1 1999/09/12 21:33:08 papowell Exp papowell $
  ***************************************************************************/
 
-int Read_status_info( char *printer, int ack_needed, int sock,
-	char *host, int output, int timeout );
+
+
+#ifndef _READSTATUS_H_
+#define _READSTATUS_H_ 1
+
+
+
+/* PROTOTYPES */
+
+int Read_status_info( char *host, int sock,
+    int output, int timeout, int displayformat,
+    int longformat, int status_line_count, int lp_mode );
+
 
 int Pr_status_check( char *name );
+void Pr_status_clear( void );
 
 #endif

@@ -1,33 +1,21 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: errormsg.c
- *
- * error messages and logging
- * log():
- *  --message on stderr and on stdout if "Echo_on_stdout" is set
- *  --if the severity is high enough, will also log using syslog().
- *  --saves the last "non-Debug" log message
- * logerr():
- *  --formats the error message corresponding to "errno" and calls log();
- * fatal():
- *  -- log() and exit() with Errorcode
- * logerr_die:
- *  -- logerr() and exit() with Errorcode
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"errormsg.c,v 3.6 1998/03/24 02:43:22 papowell Exp";
+ static char *const _id =
+"$Id: errormsg.c,v 5.1 1999/09/12 21:32:34 papowell Exp papowell $";
+
 
 #include "lp.h"
 #include "errormsg.h"
-#include "killchild.h"
-#include "setstatus.h"
+#include "errorcodes.h"
+#include "child.h"
+#include "getopt.h"
 /**** ENDINCLUDE ****/
 
 #if defined(HAVE_SYSLOG_H)
@@ -37,7 +25,7 @@ static char *const _id =
 /****************************************************************************/
 
 
-static void use_syslog( int kind, char *msg );
+ static void use_syslog( int kind, char *msg );
 
 /****************************************************************************
  * char *Errormsg( int err )
@@ -69,7 +57,6 @@ static void use_syslog( int kind, char *msg );
 
 #endif
 
-static int in_log;
 
 const char * Errormsg ( int err )
 {
@@ -97,12 +84,12 @@ const char * Errormsg ( int err )
     return (cp);
 }
 
-struct msgkind {
+ struct msgkind {
     int var;
     char *str;
 };
 
-static struct msgkind msg_name[] = {
+ static struct msgkind msg_name[] = {
     {LOG_CRIT, " (CRIT)"},
     {LOG_ERR, " (ERR)"},
     {LOG_WARNING, " (WARN)"},
@@ -112,7 +99,7 @@ static struct msgkind msg_name[] = {
     {0}
 };
 
-static char * logmsg (int kind)
+ static char * putlogmsg(int kind)
 {
     int i;
     static char b[32];
@@ -129,9 +116,9 @@ static char * logmsg (int kind)
     return (b);
 }
 
-static int init = 0;
+ static int init = 0;
 
-static void use_syslog (int kind, char *msg)
+ static void use_syslog(int kind, char *msg)
 {
     /* testing mode indicates that this is not being used
      * in the "real world", so don't get noisy. */
@@ -144,8 +131,8 @@ static void use_syslog (int kind, char *msg)
 		Patrick Powell Tue Apr 11 08:07:47 PDT 1995
 	 */
     if (Syslog_fd > 0
-		|| ((Syslog_fd = open( Syslog_device,
-				O_WRONLY|O_APPEND|O_NOCTTY, Spool_file_perms )) > 0 ) ){
+		|| ((Syslog_fd = open( Syslog_device_DYN,
+				O_WRONLY|O_APPEND|O_NOCTTY, Spool_file_perms_DYN )) > 0 ) ){
 		int len;
 
 		len = strlen(msg);
@@ -162,37 +149,28 @@ static void use_syslog (int kind, char *msg)
         if (Name && *Name) {
 			s = Name;
 		}
-		openlog (s, LOG_PID | LOG_NOWAIT, SYSLOG_FACILITY);
+		openlog(s, LOG_PID | LOG_NOWAIT, SYSLOG_FACILITY);
         init = 1;
     }
-    (void) syslog (kind, msg);
+    (void) syslog(kind, msg);
 
 #else
-    (void) syslog (SYSLOG_FACILITY | kind, msg);
+    (void) syslog(SYSLOG_FACILITY | kind, msg);
 #endif							/* HAVE_OPENLOG */
 #endif                          /* HAVE_SYSLOG_H */
 }
 
-static char log_buf[SMALLBUFFER];
 
-static void log_backend (int kind)
+ static void log_backend (int kind, char *log_buf)
 {
     char stamp_buf[SMALLBUFFER];
 	int n;
 	char *s;
-	plp_block_mask omask;
+	/* plp_block_mask omask; / **/
 	int err = errno;
 
-    plp_block_all_signals (&omask); /**/
+    /* plp_block_all_signals (&omask); / **/
 	/* put the error message into the status file as well */
-    /*
-     * syslogd does most of the things we do after this point,
-	 *	so there's no point in filling up the logs with useless stuff;
-	 *  syslog the message here, and then do verbose stuff
-     */
-    if( kind >= 0 && Is_server ){
-        use_syslog (kind, log_buf);
-	}
     /*
      * Now build up the state info: timestamp, hostname, argv[0], pid, etc.
      * Don't worry about efficiency here -- it shouldn't happen very often
@@ -201,37 +179,48 @@ static void log_backend (int kind)
 
 	stamp_buf[0] = 0;
 
-	if( !Interactive ){
+	if( Is_server || DEBUGL1 ){
+		if( kind > LOG_INFO ){
+			use_syslog(kind, log_buf);
+		}
 		n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 		(void) plp_snprintf( s, n, "%s", Time_str(0,0) );
-		if (ShortHost && *ShortHost ) {
+		if (ShortHost_FQDN ) {
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) plp_snprintf( s, n, " %s", ShortHost );
+			(void) plp_snprintf( s, n, " %s", ShortHost_FQDN );
 		}
-		if (Name && *Name) {
+		if(Debug || DbgFlag){
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) plp_snprintf( s, n, " %s", Name );
+			(void) plp_snprintf(s, n, " [%d]", getpid());
+			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			if(Name) (void) plp_snprintf(s, n, " %s", Name);
+			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			(void) plp_snprintf(s, n, " %s", putlogmsg(kind) );
 		}
-		if(DEBUGL0){
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) plp_snprintf(s, n, " [%ld]", (long)getpid ());
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) plp_snprintf(s, n, " %s", logmsg(kind) );
-		}
+		n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+		(void) plp_snprintf(s, n, " %s", log_buf );
+		s = stamp_buf;
+	} else {
+		(void) plp_snprintf(stamp_buf, sizeof(stamp_buf), "%s", log_buf );
 	}
 
+	if( strlen(stamp_buf) > sizeof(stamp_buf) - 8 ){
+		stamp_buf[sizeof(stamp_buf)-8] = 0;
+		if((s = strrchr(stamp_buf,'\n'))){
+			*s = 0;
+		}
+		strcpy(stamp_buf+strlen(stamp_buf),"...");
+	}
 	n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-	(void) plp_snprintf(s, n, " %s\n", log_buf );
+	(void) plp_snprintf(s, n, "\n" );
+
 
     /* use writes here: on HP/UX, using f p rintf really screws up. */
 	/* if stdout or stderr is dead, you have big problems! */
 
-    if (Echo_on_fd) {
-		Write_fd_str( Echo_on_fd, stamp_buf );
-    }
 	Write_fd_str( 2, stamp_buf );
 
-    plp_unblock_all_signals ( &omask ); /**/
+    /* plp_unblock_all_signals ( &omask ); / **/
 	errno = err;
 }
 
@@ -239,19 +228,19 @@ static void log_backend (int kind)
  * Put the printer name at the start of the log buffer
  *****************************************************/
  
-static void prefix_printer( void )
+ static void prefix_printer( char *log_buf, int len )
 {
 	log_buf[0] = 0;
-    if (Printer && *Printer) {
-		plp_snprintf( log_buf, sizeof(log_buf), "%s: ", Printer );
+    if( Printer_DYN ){
+		plp_snprintf( log_buf, len, "%s: ", Printer_DYN );
 	}
 }
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
-void log (int kind, char *msg,...)
+ void logmsg(int kind, char *msg,...)
 #else
-void log (va_alist) va_dcl
+ void logmsg(va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -261,6 +250,8 @@ void log (va_alist) va_dcl
 	int n;
 	char *s;
 	int err = errno;
+	static int in_log;
+	char log_buf[SMALLBUFFER];
     VA_LOCAL_DECL
     VA_START (msg);
     VA_SHIFT (kind, int);
@@ -268,10 +259,10 @@ void log (va_alist) va_dcl
 
 	if( in_log == 0 ){
 		++in_log;
-		prefix_printer();
+		prefix_printer(log_buf, sizeof(log_buf));
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) vplp_snprintf(s, n, msg, ap);
-		log_backend (kind);
+		(void) plp_vsnprintf(s, n, msg, ap);
+		log_backend (kind,log_buf);
 		in_log = 0;
 	}
     VA_END;
@@ -280,9 +271,9 @@ void log (va_alist) va_dcl
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
-void fatal (int kind, char *msg,...)
+ void fatal (int kind, char *msg,...)
 #else
-void fatal (va_alist) va_dcl
+ void fatal (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -291,6 +282,8 @@ void fatal (va_alist) va_dcl
 #endif
 	int n;
 	char *s;
+	char log_buf[SMALLBUFFER];
+	static int in_log;
     VA_LOCAL_DECL
     VA_START (msg);
     VA_SHIFT (kind, int);
@@ -298,12 +291,12 @@ void fatal (va_alist) va_dcl
 	
 	if( in_log == 0 ){
 		++in_log;
-		prefix_printer();
+		prefix_printer(log_buf, sizeof(log_buf));
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) vplp_snprintf(s, n, msg, ap);
-		setstatus( NORMAL, "%s", log_buf );
+		(void) plp_vsnprintf(s, n, msg, ap);
+		setstatus( 0, "%s", log_buf );
 
-		log_backend (kind);
+		log_backend (kind, log_buf);
 		in_log = 0;
 	}
 
@@ -313,9 +306,9 @@ void fatal (va_alist) va_dcl
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
-void logerr (int kind, char *msg,...)
+ void logerr (int kind, char *msg,...)
 #else
-void logerr (va_alist) va_dcl
+ void logerr (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -323,6 +316,8 @@ void logerr (va_alist) va_dcl
     char *msg;
 #endif
 	int err = errno;
+	char log_buf[SMALLBUFFER];
+	static int in_log;
     VA_LOCAL_DECL
     VA_START (msg);
     VA_SHIFT (kind, int);
@@ -332,13 +327,13 @@ void logerr (va_alist) va_dcl
 		int n;
 		char *s;
 		++in_log;
-		prefix_printer();
+		prefix_printer(log_buf, sizeof(log_buf));
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) vplp_snprintf(s, n, msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		if( err ) (void) plp_snprintf (s, n, " - %s", Errormsg (err));
-		setstatus( NORMAL, "%s", log_buf );
-		log_backend (kind);
+		setstatus( 0, "%s", log_buf );
+		log_backend (kind, log_buf);
 		in_log = 0;
 	}
     VA_END;
@@ -347,9 +342,9 @@ void logerr (va_alist) va_dcl
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
-void logerr_die (int kind, char *msg,...)
+ void logerr_die (int kind, char *msg,...)
 #else
-void logerr_die (va_alist) va_dcl
+ void logerr_die (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -357,6 +352,8 @@ void logerr_die (va_alist) va_dcl
     char *msg;
 #endif
 	int err = errno;
+	char log_buf[SMALLBUFFER];
+	static int in_log;
     VA_LOCAL_DECL
 
     VA_START (msg);
@@ -367,13 +364,13 @@ void logerr_die (va_alist) va_dcl
 		int n;
 		char *s;
 		++in_log;
-		prefix_printer();
+		prefix_printer(log_buf, sizeof(log_buf));
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) vplp_snprintf (s, n, msg, ap);
+		(void) plp_vsnprintf (s, n, msg, ap);
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		if( err ) (void) plp_snprintf (s, n, " - %s", Errormsg (err));
-		setstatus( NORMAL, "%s", log_buf );
-		log_backend (kind);
+		setstatus( 0, "%s", log_buf );
+		log_backend (kind, log_buf);
 		in_log = 0;
 	}
     cleanup(0);
@@ -387,17 +384,18 @@ void logerr_die (va_alist) va_dcl
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
-void Diemsg (char *msg,...)
+ void Diemsg (char *msg,...)
 #else
-void Diemsg (va_alist) va_dcl
+ void Diemsg (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
     char *msg;
 #endif
-	char buffer[LINEBUFFER];
+	char buffer[SMALLBUFFER];
 	char *s;
 	int n;
+	static int in_log;
     VA_LOCAL_DECL
 
     VA_START (msg);
@@ -406,15 +404,10 @@ void Diemsg (va_alist) va_dcl
 		++in_log;
 		buffer[0] = 0;
 		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
-		if (Name && *Name) {
-			(void) plp_snprintf(s, n, "%s: ", Name);
-		}
-		
-		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
 		(void) plp_snprintf(s, n, "Fatal error - ");
 
 		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
-		(void) vplp_snprintf (s, n, msg, ap);
+		(void) plp_vsnprintf (s, n, msg, ap);
 		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
 		(void) plp_snprintf (s, n, "\n" );
 
@@ -434,18 +427,19 @@ void Diemsg (va_alist) va_dcl
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
-void Warnmsg (char *msg,...)
+ void Warnmsg (char *msg,...)
 #else
-void Warnmsg (va_alist) va_dcl
+ void Warnmsg (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
     char *msg;
 #endif
-	char buffer[LINEBUFFER];
+	char buffer[SMALLBUFFER];
 	char *s = buffer;
 	int n;
 	int err = errno;
+	static int in_log;
     VA_LOCAL_DECL
     VA_START (msg);
     VA_SHIFT (msg, char *);
@@ -454,13 +448,48 @@ void Warnmsg (va_alist) va_dcl
 	++in_log;
 	buffer[0] = 0;
 	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    if (Name && *Name) {
-        (void) plp_snprintf(s, n, "%s: ", Name);
-    }
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) plp_snprintf(s, n, "Warning - ");
 	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) vplp_snprintf (s, n, msg, ap);
+    (void) plp_vsnprintf (s, n, msg, ap);
+	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+    (void) plp_snprintf(s, n, "\n");
+
+	Write_fd_str( 2, buffer );
+	in_log = 0;
+	errno = err;
+    VA_END;
+}
+
+
+/***************************************************************************
+ * Warnmsg( char *m1, *m2, ...)
+ * print warning message to stderr
+ ***************************************************************************/
+
+/* VARARGS1 */
+#ifdef HAVE_STDARGS
+ void Msg (char *msg,...)
+#else
+ void Msg (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+    char *msg;
+#endif
+	char buffer[SMALLBUFFER];
+	char *s = buffer;
+	int n;
+	int err = errno;
+	static int in_log;
+    VA_LOCAL_DECL
+    VA_START (msg);
+    VA_SHIFT (msg, char *);
+
+	if( in_log ) return;
+	++in_log;
+	buffer[0] = 0;
+	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+    (void) plp_vsnprintf (s, n, msg, ap);
 	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) plp_snprintf(s, n, "\n");
 
@@ -472,15 +501,17 @@ void Warnmsg (va_alist) va_dcl
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
-void logDebug (char *msg,...)
+ void logDebug (char *msg,...)
 #else
-void logDebug (va_alist) va_dcl
+ void logDebug (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
     char *msg;
 #endif
 	int err = errno;
+	char log_buf[SMALLBUFFER];
+	static int in_log;
     VA_LOCAL_DECL
     VA_START (msg);
     VA_SHIFT (msg, char *);
@@ -490,13 +521,244 @@ void logDebug (va_alist) va_dcl
 		char *s;
 
 		++in_log;
-		prefix_printer();
+		prefix_printer(log_buf, sizeof(log_buf));
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) vplp_snprintf(s, n, msg, ap);
-		log_backend(-1);
+		(void) plp_vsnprintf(s, n, msg, ap);
+		log_backend(-1, log_buf);
 		in_log = 0;
 	}
 	errno = err;
     VA_END;
 }
 
+/***************************************************************************
+ * char *Sigstr(n)
+ * Return a printable form the the signal
+ ***************************************************************************/
+
+ struct signame {
+    char *str;
+    int value;
+};
+
+#undef PAIR
+#ifndef _UNPROTO_
+# define PAIR(X) { #X , X }
+#else
+# define __string(X) "X"
+# define PAIR(X) { __string(X) , X }
+#endif
+
+#if !defined(HAVE_SYS_SIGLIST)
+ struct signame signals[] = {
+{ "NO SIGNAL", 0 },
+#ifdef SIGHUP
+PAIR(SIGHUP),
+#endif
+#ifdef SIGINT
+PAIR(SIGINT),
+#endif
+#ifdef SIGQUIT
+PAIR(SIGQUIT),
+#endif
+#ifdef SIGILL
+PAIR(SIGILL),
+#endif
+#ifdef SIGTRAP
+PAIR(SIGTRAP),
+#endif
+#ifdef SIGIOT
+PAIR(SIGIOT),
+#endif
+#ifdef SIGABRT
+PAIR(SIGABRT),
+#endif
+#ifdef SIGEMT
+PAIR(SIGEMT),
+#endif
+#ifdef SIGFPE
+PAIR(SIGFPE),
+#endif
+#ifdef SIGKILL
+PAIR(SIGKILL),
+#endif
+#ifdef SIGBUS
+PAIR(SIGBUS),
+#endif
+#ifdef SIGSEGV
+PAIR(SIGSEGV),
+#endif
+#ifdef SIGSYS
+PAIR(SIGSYS),
+#endif
+#ifdef SIGPIPE
+PAIR(SIGPIPE),
+#endif
+#ifdef SIGALRM
+PAIR(SIGALRM),
+#endif
+#ifdef SIGTERM
+PAIR(SIGTERM),
+#endif
+#ifdef SIGURG
+PAIR(SIGURG),
+#endif
+#ifdef SIGSTOP
+PAIR(SIGSTOP),
+#endif
+#ifdef SIGTSTP
+PAIR(SIGTSTP),
+#endif
+#ifdef SIGCONT
+PAIR(SIGCONT),
+#endif
+#ifdef SIGCHLD
+PAIR(SIGCHLD),
+#endif
+#ifdef SIGCLD
+PAIR(SIGCLD),
+#endif
+#ifdef SIGTTIN
+PAIR(SIGTTIN),
+#endif
+#ifdef SIGTTOU
+PAIR(SIGTTOU),
+#endif
+#ifdef SIGIO
+PAIR(SIGIO),
+#endif
+#ifdef SIGPOLL
+PAIR(SIGPOLL),
+#endif
+#ifdef SIGXCPU
+PAIR(SIGXCPU),
+#endif
+#ifdef SIGXFSZ
+PAIR(SIGXFSZ),
+#endif
+#ifdef SIGVTALRM
+PAIR(SIGVTALRM),
+#endif
+#ifdef SIGPROF
+PAIR(SIGPROF),
+#endif
+#ifdef SIGWINCH
+PAIR(SIGWINCH),
+#endif
+#ifdef SIGLOST
+PAIR(SIGLOST),
+#endif
+#ifdef SIGUSR1
+PAIR(SIGUSR1),
+#endif
+#ifdef SIGUSR2
+PAIR(SIGUSR2),
+#endif
+{0,0}
+    /* that's all */
+};
+
+#else /* HAVE_SYS_SIGLIST */
+# ifndef HAVE_SYS_SIGLIST_DEF
+   extern const char *sys_siglist[];
+# endif
+#endif
+
+#ifndef NSIG
+# define  NSIG 32
+#endif
+
+const char *Sigstr (int n)
+{
+    static char buf[40];
+	const char *s = 0;
+
+	if( n == 0 ){
+		return( "No signal");
+	}
+#ifdef HAVE_SYS_SIGLIST
+    if (n < NSIG && n >= 0) {
+		s = sys_siglist[n];
+	}
+#else
+	{
+	int i;
+	for( i = 0; signals[i].str && signals[i].value != n; ++i );
+	s = signals[i].str;
+	}
+#endif
+	if( s == 0 ){
+		s = buf;
+		(void) plp_snprintf (buf, sizeof(buf), "signal %d", n);
+	}
+    return(s);
+}
+
+/***************************************************************************
+ * Decode_status (plp_status_t *status)
+ * returns a printable string encoding return status
+ ***************************************************************************/
+
+const char *Decode_status (plp_status_t *status)
+{
+    static char msg[LINEBUFFER];
+
+	int n;
+    *msg = 0;		/* just in case! */
+    if (WIFEXITED (*status)) {
+		n = WEXITSTATUS(*status);
+		if( n > 0 && n < 32 ) n += JFAIL-1;
+		(void) plp_snprintf (msg, sizeof(msg),
+		"exit status %d (%s)", WEXITSTATUS(*status),
+				 Server_status(n) );
+    } else if (WIFSTOPPED (*status)) {
+		(void) strcpy(msg, "stopped");
+    } else {
+		(void) plp_snprintf (msg, sizeof(msg), "died%s",
+			WCOREDUMP (*status) ? " and dumped core" : "");
+		if (WTERMSIG (*status)) {
+			(void) plp_snprintf(msg + strlen (msg), sizeof(msg)-strlen(msg),
+				 ", %s", Sigstr ((int) WTERMSIG (*status)));
+		}
+    }
+    return (msg);
+}
+
+/***************************************************************************
+ * char *Server_status( int d )
+ *  translate the server status;
+ ***************************************************************************/
+
+	static struct signame statname[] = {
+	PAIR(JSUCC),
+	PAIR(JFAIL),
+	PAIR(JABORT),
+	PAIR(JREMOVE),
+	PAIR(JACTIVE),
+	PAIR(JIGNORE),
+	PAIR(JHOLD),
+	PAIR(JNOSPOOL),
+	PAIR(JNOPRINT),
+	PAIR(JSIGNAL),
+	PAIR(JFAILNORETRY),
+	{0,0}
+	};
+
+char *Server_status( int d )
+{
+	char *s;
+	int i;
+	static char msg[LINEBUFFER];
+
+	for( i = 0; (s = statname[i].str) && statname[i].value != d; ++i );
+	if( s == 0 ){
+		s = msg;
+		if( d > 0 && d < 32 ){
+			plp_snprintf( msg, sizeof(msg), "TERMINATED SIGNAL %s",
+				Sigstr( d ) );
+		} else {
+			plp_snprintf( msg, sizeof(msg), "UNKNOWN STATUS '%d'", d );
+		}
+	}
+	return(s);
+}

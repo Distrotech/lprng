@@ -1,3 +1,15 @@
+/***************************************************************************
+ * LPRng - An Extended Print Spooler System
+ *
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
+ * See LICENSE for conditions of use.
+ *
+ ***************************************************************************/
+
+ static char *const _id =
+"$Id: sserver.c,v 5.1 1999/09/12 21:32:31 papowell Exp papowell $";
+
 /*
  * 
  * Simple authentictor test for kerberos.
@@ -7,15 +19,28 @@
 
 #include "lp.h"
 #include "krb5_auth.h"
+#include "child.h"
+#include "fileopen.h"
+
+char *msg[] = {
+	"[-D options] [-p port] [-s service] [-S keytab] file",
+	"  -D turns debugging on",
+	0
+};
 
 char *progname;
 
-void usage(void)
-{
-	fprintf(stderr,
-	"usage: %s [-D] [-p port] [-s service] [-S keytab] file\n"
-		"  -D turns debugging on\n", progname);
-}   
+void
+usage()
+{   
+	int i;
+	fprintf(stdout, "usage: %s %s\n", progname, msg[0]);
+	for( i = 1; msg[i]; ++i ){
+		fprintf(stdout, "%s\n", msg[i]);
+	}
+}  
+
+
 
 int
 main(int argc, char *argv[])
@@ -26,30 +51,34 @@ main(int argc, char *argv[])
 	short port = 1234;     /* If user specifies port */
 	extern int opterr, optind, getopt(), atoi();
 	extern char * optarg;
-	int ch;
+	int ch, fd = -1, len;
 	int on = 1;
 	int acc;
 	struct sockaddr_in sin;
 	char auth[128];
+	char *client = 0;
 	char err[128];
 	char *file;
+	char buffer[SMALLBUFFER];
+	struct stat statb;
 
 	progname = argv[0];
+	setlinebuf(stdout);
 
 	/*
 	 * Parse command line arguments
 	 *  
 	 */
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "Dp:S:s:")) != EOF)
+	while ((ch = getopt(argc, argv, "D:p:S:s:")) != EOF)
 	switch (ch) {
-	case 'D': Debug = 9; break;
+	case 'D': Parse_debug(optarg,1); break;
 	case 'p': port = atoi(optarg); break;
-	case 's': Kerberos_service  = optarg; break;
-	case 'S': Kerberos_keytab = optarg; break;
+	case 's': Set_DYN(&Kerberos_service_DYN,optarg); break;
+	case 'S': Set_DYN(&Kerberos_keytab_DYN,optarg); break;
 	default: usage(); exit(1); break;
 	}
-	Spool_file_perms = 0600;
+	Spool_file_perms_DYN = 0600;
 
 	if( argc - optind != 1 ){
 		usage();
@@ -57,10 +86,10 @@ main(int argc, char *argv[])
 	}
 	file = argv[optind++];
 
-	if( Kerberos_keytab == 0 ) Kerberos_keytab = ETCSTR "/lpd.keytab";
-	if( Kerberos_service == 0 ) Kerberos_service = "lpr";
+	if( Kerberos_keytab_DYN == 0 ) Set_DYN(&Kerberos_keytab_DYN, "/etc/lpd.keytab");
+	if( Kerberos_service_DYN == 0 ) Set_DYN(&Kerberos_service_DYN,"lpr");
 	if( port == 0 ){
-		fprintf( stderr, "bad port specified\n" );
+		fprintf( stdout, "bad port specified\n" );
 		exit(1);
 	}
 	/*
@@ -68,11 +97,11 @@ main(int argc, char *argv[])
 	 * assume we've been started out of inetd. 
 	 */
 
-	remote_principal_krb5( Kerberos_service, 0, auth, sizeof(auth));
-	fprintf(stderr, "server principal '%s'\n", auth );
+	remote_principal_krb5( Kerberos_service_DYN, 0, auth, sizeof(auth));
+	fprintf(stdout, "server principal '%s'\n", auth );
 
 	if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stderr, "socket: %s\n", Errormsg(errno));
+		fprintf(stdout, "socket: %s\n", Errormsg(errno));
 		exit(3);
 	}
 	/* Let the socket be reused right away */
@@ -84,33 +113,118 @@ main(int argc, char *argv[])
 	sin.sin_addr.s_addr = 0;
 	sin.sin_port = htons(port);
 	if (bind(sock, (struct sockaddr *) &sin, sizeof(sin))) {
-		fprintf(stderr, "bind: %s\n", Errormsg(errno));
+		fprintf(stdout, "bind: %s\n", Errormsg(errno));
 		exit(3);
 	}
 	if (listen(sock, 1) == -1) {
-		fprintf(stderr, "listen: %s", Errormsg(errno));
+		fprintf(stdout, "listen: %s", Errormsg(errno));
 		exit(3);
 	}
 	while(1){
 		if ((acc = accept(sock, (struct sockaddr *)&peername,
 				&namelen)) == -1){
-			fprintf(stderr, "accept: %s\n", Errormsg(errno));
+			fprintf(stdout, "accept: %s\n", Errormsg(errno));
 			exit(3);
 		}
 
 		err[0] = 0;
 		auth[0] = 0;
-		if( server_krb5_auth( Kerberos_keytab, Kerberos_service, acc,
-			auth, sizeof(auth), err, sizeof(err), file ) ){
-			fprintf( stderr, "error '%s'\n", err );
-		} else {
-			sprintf( err, "authorized '%s'\n", auth );
-			fprintf( stderr, "writing to %d - '%s'\n", acc, err );
-			ch = write( acc, err, strlen(err) );
-			fprintf( stderr, "write returned %d\n", ch );
-			
+		client = 0;
+		if( server_krb5_auth( Kerberos_keytab_DYN, Kerberos_service_DYN, acc,
+			&client, err, sizeof(err), file ) ){
+			fprintf( stdout, "server_krb5_auth error '%s'\n", err );
+			goto done;
 		}
+		plp_snprintf(buffer,sizeof(buffer),"client '%s'", client );
+		fprintf(stdout,"%s\n",buffer);
+		fd = Checkread( file, &statb );
+		DEBUG1( "main: opened for write '%s', fd %d, size %ld",
+			file, fd, (long)(statb.st_size) );
+		if( fd < 0 ){
+			plp_snprintf( err, sizeof(err),
+				"file open failed: %s", Errormsg(errno));
+			goto done;      
+		}
+		fprintf(stdout,"RECEVIED:\n");
+		while( (len = read(fd, buffer,sizeof(buffer)-1)) > 0 ){
+			write(1,buffer,len);
+		}
+		close(fd);
+		fd = Checkwrite( file, &statb, O_WRONLY|O_TRUNC, 1, 0 );
+		if( fd < 0 ){
+			plp_snprintf( err, sizeof(err),
+				"main: could not open for writing '%s' - '%s'", file,
+					Errormsg(errno) );
+			goto done;
+		}
+		plp_snprintf(buffer,sizeof(buffer),"credentials '%s'\n", client );
+		Write_fd_str(fd,buffer);
+		close(fd);
+		if( server_krb5_status( acc, err, sizeof(err), file ) ){
+			fprintf( stdout, "server_krb5_status error '%s'\n", err );
+			goto done;
+		}
+ done:
 		close(acc);
 	}
 	exit(0);
 }
+
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+void setstatus (struct job *job,char *fmt,...)
+#else
+void setstatus (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+    struct job *job;
+    char *fmt;
+#endif
+	char msg[LARGEBUFFER];
+    VA_LOCAL_DECL
+
+    VA_START (fmt);
+    VA_SHIFT (job, struct job * );
+    VA_SHIFT (fmt, char *);
+
+	msg[0] = 0;
+	if( Verbose ){
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		strcat( msg,"\n" );
+		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
+	}
+	VA_END;
+	return;
+}
+
+void send_to_logger (struct job *job,const char *header, char *fmt){;}
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+void setmessage (struct job *job,const char *header, char *fmt,...)
+#else
+void setmessage (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+    struct job *job;
+    char *fmt, *header;
+#endif
+	char msg[LARGEBUFFER];
+    VA_LOCAL_DECL
+
+    VA_START (fmt);
+    VA_SHIFT (job, struct job * );
+    VA_SHIFT (header, char * );
+    VA_SHIFT (fmt, char *);
+
+	msg[0] = 0;
+	if( Verbose ){
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		strcat( msg,"\n" );
+		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
+	}
+	VA_END;
+	return;
+}
+

@@ -1,59 +1,15 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: getopt.c
- * PURPOSE: parsing command line options
- **************************************************************************/
-
-/***************************************************************************
- * getopt(3) implementation;
- * modified so that the first time it is called it sets "Name" to argv[0];
- * Also allows '?' in  option string
- *
- * int Getopt ( argc, argv, optstring)
- *     int argc;
- *     char **argv, *opstring;
- * int Optind, Opterr;
- * char *Optarg; 
- * extern char *Name;
- * Returns: EOF if no more options left;
- *    '?' if option not in optstring;
- *    option character if in optstr.
- *      if option char is followed by : in opstring, an argument is required,
- *        and Optarg will point to the option argument
- *      if option char is followed by ? in opstring, an argument is optional
- *        and Optarg will point to the argument if it immediately follows
- *        the option character
- *
- * Getopt places the argv index of the next argument to be processed in
- * Optind. Because Optind is external, it is automatically set to zero
- * before the first call to Getopt.  When all the options have been
- * processed (i.e., up to the first non-option argument), Getopt returns
- * EOF.  The special option -- may be used to delimit the end of the
- * options; EOF will be returned, and -- will be skipped.
- *
- * Getopt prints an error message on stderr and returns the offending
- * character when it encounters an option letter that is not included in
- * optstring.  This error message may be disabled by setting Opterr to a
- * zero value.
- *
- * If argv is 0,  then parseing is redone.  This can be used
- * to rescan the command line.
- *
- * Side Effect:  when Getopt is called and Optind is 0, Name is set to
- * argv[0].  This allows pulling the program Name from the file.
- * Errors: if an argument is specified and none is there, then Optarg is
- * set to 0
- *
  ***************************************************************************/
 
-static char *const _id =
-"getopt.c,v 3.4 1998/03/24 02:43:22 papowell Exp";
+ static char *const _id =
+"$Id: getopt.c,v 5.1 1999/09/12 21:32:37 papowell Exp papowell $";
+
 
 #include "lp.h"
 /**** ENDINCLUDE ****/
@@ -66,8 +22,7 @@ char *Name;					/* Name of program */
 char **Argv_p;
 int Argc_p;
 
-int
-Getopt (int argc, char *argv[], char *optstring)
+int Getopt (int argc, char *argv[], char *optstring)
 {
 	int  option;               /* current option found */
 	char *match;                /* matched option in optstring */
@@ -83,12 +38,12 @@ Getopt (int argc, char *argv[], char *optstring)
 		char *basename;
 		/*
 		 * set up the Name variable for error messages
-		 * proctitle will change this, so
+		 * setproctitle will change this, so
 		 * make a copy.
 		 */
 		if( Name == 0 ){
 			if( argv[0] ){
-				if( (basename = strrchr( argv[0], '/' )) ){
+				if( (basename = safestrrchr( argv[0], '/' )) ){
 					++basename;
 				} else {
 					basename = argv[0];
@@ -118,6 +73,9 @@ Getopt (int argc, char *argv[], char *optstring)
 			return( EOF );
 		} else {
 			++next_opt;
+			if( next_opt[0] == 0 ){
+				return( EOF );
+			}
 		}
 	}
 	option = *next_opt++;
@@ -125,12 +83,18 @@ Getopt (int argc, char *argv[], char *optstring)
 	 * Case of '--',  Force end of options
 	 */
 	if (option == '-') {
+		if( *next_opt ){
+			if( Opterr ){
+				(void) fprintf (stderr, "--X option form illegal\n" );
+				return('?');
+			}
+		}
 		return ( EOF );
 	}
 	/*
 	 * See if option is in optstring
 	 */
-	if ((match = (char *) strchr (optstring, option)) == 0 ){
+	if ((match = (char *) safestrchr (optstring, option)) == 0 ){
 		if( Opterr ){
 		    (void) fprintf (stderr, "%s: Illegal option '%c'\n", Name, option);
 		}

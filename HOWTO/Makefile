@@ -22,7 +22,13 @@ SHELL =		/bin/sh
 
 DOC=LPRng-HOWTO
 
-all: $(DOC).html $(DOC).ps purge
+all: license.txt y2k.txt $(DOC).html $(DOC).ps purge LPRng.html
+
+
+license.txt: $(SRC)/../LICENSE
+	cp $^ $@
+y2k.txt: $(SRC)/../Y2KCompliance
+	cp $^ $@
 
 $(DOC).html: $(DOC).sgml Makefile
 	sgml2html $(DOC).sgml
@@ -39,7 +45,9 @@ $(DOC).ps: $(DOC).tex Makefile
 		'\nonstopmode\input{$(DOC).tex}'
 	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
 		'\nonstopmode\input{$(DOC).tex}'
-	dvips -q -t a4 -o $(DOC).ps $(DOC).dvi
+	dvips -q -t letter -o $(DOC).ps $(DOC).dvi
+LPRng.html: $(SRC)/LPRng.html.orig
+	cp $^ $@
 purge:
 	rm -f *.Bex *.aux *.log *.toc
 fixman:
@@ -51,11 +59,12 @@ $(DOC).info: $(DOC).sgml
 	sgml2info $^
 
 clean:
-	rm -f *.Bex *.aux *.dvi LPRng-*.html *.log *.ps *.tex *.toc
+	rm -f *.Bex *.aux *.dvi LPRng-HOWTO*.html *.log *.ps *.tex *.toc
 
 .PHONY: all clean install ci install.zman update purge
 
 update:
+	updateversion *.sgml
 
 # 
 #
@@ -66,8 +75,9 @@ install:
 realclean mostlyclean distclean:: clean
 	rm -f Makefile
 
-CI=
-CO=-kv
+#CI=
+#CO=-kv
+CO=-l
 cifast ci:
 	checkin() { \
 		rcs -l $$1; \
@@ -77,3 +87,6 @@ cifast ci:
 	for i in  *.sgml Makefile.in Makefile; do \
 		checkin $$i; \
 	done;
+
+correct:
+	correct -d dict *.sgml

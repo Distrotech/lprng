@@ -1,4 +1,4 @@
-.ds VE LPRng-3.5.1
+.ds VE LPRng-3.6.12
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -117,11 +117,11 @@ See lpd.conf(5) for further details.
 .SH "ENTRIES BY ALPHABETICAL ORDER"
 .sp
 .nf
-.ta \w'\0\0\0\0'u +\w'\0\0\0\0'u +\w'Type 'u +\w'Default     'u +4n +4n +4n 8i
+.ta \w'\0\0\0\0'u +\w'\0\0\0\0'u +\w'Type 'u +\w'Default     'u +4n +4n +4n +4n +4n +4n 8i
 \fBFL	Use	Type	Default	Description\fR
-Xf	D	str	NULL	output filter for format X (used by lpd)
+Xf	D	str	NULL	output filter for format X (used by lpd).
+				'filter' sets default filter
 ab	D	bool	false	always print banner, ignore lpr -h option
-ac	A	str	NULL	allowed classes to be printed (default is all classes)
 achk	D	bool false
 				If TRUE LPD will check for a 'ACCEPT' reply to the initial
 				accounting information written to a filter at the start
@@ -155,6 +155,23 @@ architecture	A	str	(compile time)
 				architecture the software was compiled for. (Obsolete.)
 as	D	str		accounting format for start of job (see also af, la, ar
 				and Accounting)
+auth	R	str	NULL
+				client to server authentication type
+auth_client_filter	A	str	NULL
+				program used by client to do authentication to server
+auth_forward	A	str	NULL
+				server to server authentication type
+auth_forward_id	A	str	NULL
+				remote server id used when doing
+				server to server authentication
+auth_forward_filter	A	str	NULL
+				program used by originating server to do server to server
+				authentication.
+auth_receive_filter	A	str	NULL
+				program used by receiving server to do authentication
+auth_server_id	A	str	NULL
+				server id used when doing
+				client to server or server to server authentication
 be	D	str		banner printing program for end (overrides bp, hl)
 bk	R	bool	false	Berkeley-compatible: be strictly RFC-compliant
 				or more exactly, BSD LPR compatible when sending jobs.
@@ -176,27 +193,20 @@ bp	D	str		banner printing program (see hl)
 bq	D	str	NULL	specifies the next destination for jobs sent to this queue.
 				Job data files are first sent through any filters listed in
 				printcap entry before transfer.  (See Bounce Queues)
+bq_format	D	str	l	format of output from bounce queue filters
 br	D	num	none	if lp is a tty, set the baud rate (see ty)
 break_classname_priority_link	A	flag	false
-				Normally, lpr sets the priority to the first letter of the
-				class specified with -C.  When non-zero, forces the class
-				and priority to be disjoint.
+				Do not set priority to first letter of class name
 bs	D	str		banner printing program for start (overrides bp, hl)
-cd	D	str	NULL	control information directory for LPD server
 cf	D	str	NULL	cifplot data filter
 check_for_nonprintable	R	bool	true
 				lpr checks f and p formats for printable files
-				Alias for xt
 check_idle	D	str	NULL
 				program to use to check for idle printer conditions before
 				processing jobs.
-class_in_status	A	bool	false
-				lpq will report full class name when flag is set.
-classname_length	A	num	31
-				overrides the RFC1179 limitations on the control file
-				CLASS entry.  Default is 31 characters.
+class_in_status	A	bool	true
+				show class name in lpq status rather than priority
 cm	A	str	NULL	comment identifying printer (LPQ)
-co	D	num	20	cost in dollars.  Obsolete.
 config_file	A	str	/etc/lpd.conf:/usr/etc/lpd.conf
 				location of LPRng configuration information.  Compile
 				time option only - see allow_getenv.
@@ -211,15 +221,8 @@ control_filter	D	str	NULL
 				spool queue.
 db	A	str	NULL	LPD debug options when serving this queue.
 				See lf (log file) entry as well.
-default_auth	R	str	NULL
-				default client to server authentication type
-				used when specificially requested by user.
 default_format	R	str	f
 				default format for printing jobs
-default_logger_port	D	str	2001
-				default remote port for logging information
-default_logger_protocol	D	str	UDP
-				default protocol for logging information.  TCP selects TCP/IP
 default_permission	D	str	A
 				default permission for operation
 default_printer	A	str	lp
@@ -235,23 +238,18 @@ destinations	D	str	NULL
 				find a job that has been processed by a router
 				script (see README.routing)
 df	D	str	NULL	tex data filter (DVI format)
-direct_read	D	bool	false
-				if true, filters are given direct access to file.
-				This means no progress indication possible.
-fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
 fd	D	bool	false	if true, no forwarded jobs accepted
 ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
+filter	D	str	NULL
+				default filter to use for printing file
 filter_ld_path	D	str	(see source)	
 				the LD_LIBARY_PATH environment variable value for filters
 filter_options	D	str	(see source code)
 				when bk flag clear, options for non OF print filters
 filter_path	D	str	(see source)	
 				the PATH environment variable value for filters
-fix_bad_job	D	bool	false	
-				fix a bad job file - usually by ignoring multiple
-				U (unlink) entries,  badly formatted file names,
-				or other common botches produced by various PC based
-				LPR clients.
+filter_poll_interval	D	num	30
+				interval to poll OF filter 
 fo	D	bool	false	print a form feed when device is opened
 force_fqdn_hostname	A	bool	FALSE
 				Force a fully qualified host name in control file
@@ -260,26 +258,29 @@ force_localhost	A	bool	FALSE
 				to send all print jobs and requests to the server running
 				on the localhost entry for action.  This flag effectively
 				forces BSD LPR behaviour.
+force_lpq_status	D	str	NULL
+				Specifies a list of LPQ formats and hosts which get status
+				returned in this format.  For example
+				force_lpq_status=s=pc*;l=mac* will cause hosts whose
+				FQDN matches pc* to get short status and those which
+				match mac* to get long format.
 force_queuename	A	str	NULL
 				When :qq: flag or use_queuename configuration is enabled,
 				specifies the queuename to be used for control file Q
 				information.
-forward_auth	A	str	NULL
-				Do server to server authentication when non-null.
-				Use this value for the remote host authentication information.
 fq	D	bool	false	print a form feed when device is closed
 full_time	D	bool detailed time format specification in log messages
-fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
-fx	A	str	``flp''	valid output filter formats
-generate_banner	D	bool	false	force banner generation
+fx	A	str	NULL	valid output filter formats
+				i.e. ``flp'' would allow f, l, and p
+				default is to allow all formats
 gf	D	str	NULL	graph data filter (plot (3X) format)
+group	D	str	daemon	LPD server group id for execution 
 hl	D	bool	false	print banner after job instead of before
+if	D	str	NULL	filter command, run on a per-file basis
 ignore_requested_user_priority	D	bool	false
 				Ignore the requested user priority when ordering jobs.
 				Prevents students... um... users from queue jumping.
-if	D	str	NULL	filter command, run on a per-file basis
-kerberos_*	D	str
-				Kerberos authentication support.  See KERBEROS.
+ipv6	A	bool	false	Use IPV6
 kerberos_keytab	D	str	/etc/lpd.keytab
 				Kerberos lpd server keytab file
 kerberos_life	D	str	NULL
@@ -294,17 +295,27 @@ la	D	bool	true	write local printer accounting (if af is set)
 ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
 lf	D	str	``log''	error and debugging log file (LPD)
 lk	D	bool	false	lock the lp device to force arbitration
-localhost	A	str	localhost	localhost named used for localhost lookup
-lockfile	D	str	/var/spool/lpd/lpd.lock.%h
-				lpd lock file (used only in lpd.conf)
-logfile	D	str	/var/spool/lpd/lpd.log.%h
-				lpd log file (used only in lpd.conf)
+lockfile	D	str	/var/spool/lpd/lpd
+				lpd lock file (used only in lpd.conf).
+                The lpd_port value is appended
+                to the lockfile value to provide a unique lockfile
+                even when different versions of LPRng are running
+                on the same system.
 logger_destination	D	str	NULL
 				destination for logging information.  Format is
-				host[%port][,(TCP|UDP)]
+				host%port
+logger_max_size	D	num	1024
+				logger file maximum size in K
+logger_path	D	str	NULL
+				logger file pathname
+logger_timeout	D	num	0
+				logger connection timeout.  0 is no timeout.
 longnumber	D	bool	false
 				use 6 digit job numbers
 lp	D	str	NULL	device name or pipe to send output to
+lpd_bounce	A	bool	FALSE
+				Forces lpd to filter jobs and then forward them.
+				(See Bounce Queues)
 lpd_force_poll	A	bool	FALSE
 				Forces lpd to periodically poll lpd queues.
 lpd_poll_time	A	num	600
@@ -316,7 +327,11 @@ lpd_printcap_path	D	str	(see source)
 				printcap path for lpd, in addition to normal one
 				(configuration value only)
 lpr_bounce	R	bool	true
-				LPR will do bounce queue filtering.
+				Forces lpr to filter jobs and then send them.
+				(See Bounce Queues)
+lpr_bsd	R	bool	false
+				when set, LPR -m will not take argument, but will use
+				$USER value for return mail address.
 mail_from	D	str	NULL
 				specifies the user part of email From: address
 mail_operator_on_error	D	str	NULL
@@ -334,23 +349,20 @@ max_servers_active	D	num	0
 max_status_line	D	num	79	maximum number of characters on an LPQ status line
 max_status_size	D	num	10	maximum size (Kbytes) of status file
 mc	R	num	1	maximum copies allowed
-mi	D	str	0	minimum space (Kb), to be left in spool filesystem
-				You can also use nnnM for nnn megabytes. Alias for minfree
 min_log_file_size	D	num	0	minimum size (Kbytes) of log file
 min_status_size	D	num	2	minimum size (Kbytes) of status file
-minfree	D	str	0	alias for mi
+minfree	D	str	0
+				minimum space (in K) for spool directory
 ml	R	num	32	minimum printable characters for printable check
-ms	D	str	NULL	alias for ty
-ms_time_resolution	D	bool	false	log time in milliseconds
-mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
+ms_time_resolution	D	bool	false
+				log time in milliseconds
+mx	R	num	0	maximum job size in K, 0 = unlimited
 nb	D	num	0	if non-zero, do a nonblocking open on lp device
 nf	D	str	NULL	DITROFF data filter
 network_connect_grace	A	num	0
 				time between attempts to send jobs to spooler
 				Useful when dealing with network printer using LPD
 				interface to allow a bit of time between jobs.
-nw	A	bool	false	spool dir is on an NFS file system
-				(take precautions when reading/writing files)
 of	D	str	NULL	output filter, run once for all output
 				(used for banner printing, form feeds between files)
 of_filter_options	D	str	(see source code)
@@ -380,10 +392,6 @@ qq	A	bool	false	LPR - puts in the queue name (Q entry)
 				LPD - when receiving or transferring a job,
 				if the queue name (Q entry) in the job control
 				file is not present,  puts in the queue name.
-remote_user	A	str	NULL
-				when doing authentication,  use this entry for the remote user
-				or remote end of the connection.  This allows you to specify
-				a key or other information.
 remote_support	A	str	NULL
 				if non-null, specifies allowed operations to remote queue.
 				R=lpr, M=lprm, Q=lpq, V = lpq -v, C=lpc.  For example,
@@ -421,10 +429,9 @@ rm	A	str	NULL	remote-queue machine (hostname) (with rp)
 router	D	str	NULL	script that dynamically re-routes a job
 				(see README.routing)
 rp	A	str	NULL	remote-queue printer name (with rm)
-rt	A	num	3	number of times to try printing (0=infinite)
-				see send_failure_action, send_job_rw_timeout, send_try
 rw	D	bool	false	open the printer for reading and writing
-safe_chars	D	str	NULL	additional safe characters for control file contents
+safe_chars	D	str	NULL
+				additional safe characters for control file contents
 save_on_error	D	bool	false
 				Save job when an error occurs to allow post-mortem
 				diagnostics or reprinting.  This should only be set on
@@ -434,7 +441,6 @@ save_when_done	D	bool	false
 				retry at a later time.  This should only be set on
 				print queues.  It is also a diagnostic aid.
 sb	D	bool	false	short banner (one line only)
-sc	R	bool	false	suppress multiple copies
 sd	A	str	NULL	spool directory (only ONE printer per directory!)
 send_block_format	A	bool	false
 				Use the LPRng extended 'block job' job transmission
@@ -460,7 +466,7 @@ send_query_rw_timeout	A	num	6000
 				timeout on read/write operations when performin a status
 				operation (0 value is no timeout)
 send_try	A	num	3
-				alias for rt - numbers of times to try sending
+				number of times to try sending
 				or printing a job. 0 is infinite.
 sendmail	D	str	/usr/sbin/sendmail -oi -t
 				sendmail command to send mail to user.  Flags must be set
@@ -475,6 +481,8 @@ server_tmp_dir	D	str	/tmp
 server_user	D	str	daemon	server user name used in authentication operations
 sf	D	bool	false	suppress form feeds separating jobs
 sh	D	bool	false	suppress headers and/or banner page
+shell	D	str	/bin/sh
+				SHELL enviornment variable value for filters
 short_status_length	D	num	1
 				If the return_short_status value is used and has a match against
 				a requesting address, this amount of status is set by the
@@ -492,9 +500,8 @@ stalled_time	D	num	120
 				Time after which to report an active job as stalled
 stop_on_abort	D	bool	true
 				Stop processing queue when print filter aborts.
+stty	D	str	NULL	stty settings for serial connected printer
 sv	D	str	NULL	names of servers for queue (with ss)
-sy	D	str	NULL	alias for ty
-sync_lpr	D	bool	false	suppress socket close until end of lpr operation
 syslog_device	D	str	/dev/console
 					name of syslog device to use if no syslog facility
 tc	A	str	NULL	reference to a printcap entry to include as part of
@@ -506,13 +513,11 @@ translate_format	D	str	NULL
 				only valid when transferring to remote spool queue.
 				Example: translate_format=pfml
 				p format changed to f, m format to l
-ty	D	str	NULL	stty commands to set output line characteristics
-				alias is sy, ms
-use_identifier	R	bool	false
+use_auth	A	str	NULL authentication to use
+use_date	A	bool	true add date line ('D') to control file
+use_identifier	R	bool	true
 				add job identifier lines ('A') in the control file
 use_info_cache	D	bool	true	cache printcap information
-use_queuename	A	str	NULL	if no Q information in control file,
-				use this value and place in control file.
 use_shorthost	R	bool	false
 				use only the hostname for job control
 				and data file names.  Host information in job file
@@ -520,15 +525,7 @@ use_shorthost	R	bool	false
 user	D	str	daemon	LPD effective user (EUID) for SUID operations
 user_auth_command	A	str	NULL
 				authentication command for user (client program)
-user_lpc	D	str	NULL
-				list of lpc subcommands allowed to be executed by user
-				A matching value enables SERVICE=U permissions checking.
 vf	D	str	NULL	(Versatek) raster image filter
-xc	D	num	0	if lp is a tty, clear local mode bits (see STTY)
-xs	D	num	0	like `xc' but set bits (see STTY)
-xt	R	bool	true	lpr checks f and p formats for printable files
-				Alias for check_for_nonprintable.
-xu	A	str	NULL	additional permissions information for this queue
 .fi
 .SH "ENTRIES BY FUNCTION"
 .LP
@@ -539,6 +536,7 @@ See the alphabetical listing for detailed information.
 .sp
 .B "Filters and Page Formats"
 Xf	D	str	NULL	output filter for format X (used by lpd)
+				'filter' sets default filter
 cf	D	str	NULL	cifplot data filter
 control_filter	D	str	NULL
 				Filter for control file. Used when sending job to remote
@@ -547,11 +545,17 @@ df	D	str	NULL	tex data filter (DVI format)
 direct_read	D	bool	false
 				if true, filters are given direct access to file.
 				This means no progress indication possible.
-fx	A	str	``flp''	valid output filter formats
+fx	A	str	NULL	valid output filter formats
+				i.e. ``flp'' would allow f, l, and p
+				default is to allow all formats
 gf	D	str	NULL	graph data filter (plot (3X) format)
 if	D	str	NULL	filter command, run on a per-file basis
+lpd_bounce	R	bool	false
+				Forces lpd to filter jobs and then forward them.
+				(See Bounce Queues)
 lpr_bounce	R	bool	false
-				LPR will do bounce queue filtering.
+				Forces lpr to filter jobs and then send them.
+				(See Bounce Queues)
 nf	D	str	NULL	DITROFF data filter
 of	D	str	NULL	output filter, run once for all output
 pl	D	num	66	page length (in lines)
@@ -567,7 +571,6 @@ translate_format	D	str	NULL
 				p format changed to f, m format to l
 tf	D	str	NULL	troff data filter (C/A/T phototypesetter)
 vf	D	str	NULL	(Versatek) raster image filter
-xt	R	bool	true	lpr checks f and p formats for printable files
 
 .B Banners
 ab	D	bool	false	always print banner, ignore lpr -h option
@@ -588,7 +591,6 @@ as	D	str		accounting format for start of job (see also af, la, ar
 la	D	bool	true	write local printer accounting (if af is set)
 
 .B "Queue control"
-ac	A	str	NULL	allowed classes to be printed (default is all classes)
 ah	D	bool	false	auto-hold - job held until explicitly released
 bk	R	bool	false	backwards-compatible: be strictly RFC-compliant
 bkf	R	bool	false	backwards-compatible filter: use Berkeley filter options
@@ -603,10 +605,10 @@ lf	D	str	``log''	error and debugging log file (LPD)
 longnumber	D	bool	false
 				use 6 digit job numbers
 mc	R	num	1	maximum copies allowed
-mi	D	str	0	minimum space (Kb) to be left in spool filesystem
-				You can also use nnnM for nnn megabytes.
 ml	R	num	32	minimum printable characters for printable check
-mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
+minfree	D	str	0	minimum space (Kb) to be left in spool filesystem
+				You can also use nnnM for nnn megabytes.
+mx	R	num	0	maximum job size (1Kb blocks, 0 = unlimited)
 ps	A	str	''status''	printer status file name
 nw	A	bool	false	spool dir is on an NFS file system
 				(take precautions when reading/writing files)
@@ -618,12 +620,13 @@ sd	A	str	NULL	spool directory (only ONE printer per directory!)
 ss	D	str	NULL	name of queue that server serves (with sv)
 sv	D	str	NULL	names of servers for queue (with ss)
 sc	R	bool	false	suppress multiple copies
-use_identifier	R	bool	false
+use_auth	A	str	NULL authentication to use
+use_date	A	bool	true add date line ('D') to control file
+use_identifier	R	bool	true
 				add job identifier lines ('A') in the control file
 use_shorthost	R	bool	false	use only the hostname for job control
 				and data file names.  Host information in job file
 				will still be fully qualified domain name.
-xu	A	str	NULL	additional permissions information for this queue
 
 .B "Connection and Interface to Printer"
 db	A	num	0	debug level when using this printer
@@ -633,11 +636,6 @@ connect_timeout	A	num	10
 				timeout value for connection or open
 				(0 is infinite number)
 ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
-fix_bad_job D   bool    false   
-                fix a bad job file - usually by ignoring multiple
-                U (unlink) entries,  badly formatted file names,
-                or other common botches produced by various PC based
-                LPR clients.
 fo	D	bool	false	print a form feed when device is opened
 fq	D	bool	false	print a form feed when device is closed
 ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
@@ -673,13 +671,8 @@ tr	D	str	NULL	trailer string to print when queue empties
 
 .B "Serial Line Setup"
 br	D	num	none	if lp is a tty, set the baud rate (see ty)
-fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
-fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
-ms	D	str	NULL	alias for ty
-sy	D	str	NULL	alias for ty
-ty	D	str	NULL	stty commands to set output line characteristics
+sttyy	D	str	NULL	stty commands to set output line characteristics
 				alias is sy, ms
-xc	D	num	OBSOLETE	if lp is a tty, clear local mode bits (see STTY)
 xs	D	num	0	like `xc' but set bits (see STTY)
 
 .B Miscellaneous
@@ -727,10 +720,9 @@ where
 .B X
 is the lower case letter corresponding to the lpr formatting option.
 The
-.B if
-and
-.B of
-filters are the standard output filters.
+.B filter
+option can specify a default filter for job files.
+.PP
 The
 .B of
 filter is started for each job and is used to print the
@@ -738,9 +730,8 @@ banner page and any FF separators between individual files of the job.
 It is sent a special stop sequence by the lpd server,
 and must suspend operations until sent a
 SIGCONT signal.
-An
-.B if
-filter is run separately for each file;
+A file or job filter
+is run separately for each file;
 at the end of the job the 
 .B of
 filter is restarted and used to print the trailing banner (if any)
@@ -787,21 +778,6 @@ The printcap information is particularly vulnerable to exploitation,
 as well as symbolic links,
 jobs which cannot be removed,
 etc.
-.LP
-In order to support systems which require NFS exported spool directories,
-the LPRng system has the following options.
-The NFS (nw) printcap flag is an indication that the spool directory is
-NFS exported and/or mounted.
-The server will not read the directory for printcap information.
-The next step up in security is to specify a separate
-control directory (cd) for the non-job control and data files.
-If this is done,
-then only job control files and job data files will be read from the
-spool directory.
-In addition,
-if there are any problems with a job,
-a special error file will be written in the control directory,
-preventing run away activity on a suspicious job.
 .SH "LOCAL PRINTERS"
 .LP
 Local printers have an
@@ -834,11 +810,11 @@ network terminal servers, some TCP/IP-capable
 printers, and just about anything you can hack up a
 communication program for. Read the PLP Manual for more
 details.
-.SH "TY (STTY) OPTIONS"
+.SH "STTY OPTIONS"
 .PP
 The
-.B ty
-(stty) printcap parameter recognises a set of
+.B stty
+printcap parameter recognises a set of
 .IR stty (1)
 options 
 that can be used to set serial line characteristics for the printer.
@@ -1012,6 +988,11 @@ rather than directly to the final destination.
 For example,
 pr:lp=pr@host:bq=destpr@desthost.
 .PP
+An alternative method is to set the
+\&:lpd_bounce
+flag.
+This should only be done in server printcap entries.
+.PP
 The filters used by the bounce queue are those that would normally be
 used by the LPD server for printing a job.
 For example,
@@ -1083,25 +1064,11 @@ The debugging information will
 help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
-.LP
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.
-In 1988 Patrick Powell released
-the PLP (Public Line Printer) software,
-which went through several evolutions.
-Justin Mason (jmason@iona.ie)
-generated PLP4.0 from several older releases of PLP.
-In 1992 Patrick Powell
-release LPRng,
-a completely redesigned and newly written version of the software.
-.LP
-The LPRng mailing list is plp@iona.ie;
-subscribe by sending mail to plp-request@iona.ie with
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
 the word subscribe in the body.
-The software is available from ftp://iona.ie/pub/LPRng.
-.LP
-LPRng is distributed under the GNU software license for non-commercial
-use,
-the Artistic License for limited commercial use. 
-Commerical support and licensing is available through
-Patrick Powell <papowell@sdsu.edu>.
+The software is available from ftp://ftp.astart.com/pub/LPRng.
+.SH "AUTHOR"
+Patrick Powell <papowell@astart.com>.

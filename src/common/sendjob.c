@@ -1,842 +1,590 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: sendjob.c
- * PURPOSE: Send a print job to the remote host
- *
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"sendjob.c,v 3.24 1998/03/29 18:32:54 papowell Exp";
+ static char *const _id =
+"$Id: sendjob.c,v 5.2 1999/10/09 20:49:00 papowell Exp papowell $";
+
 
 #include "lp.h"
-#include "printcap.h"
+
+#include "accounting.h"
 #include "errorcodes.h"
 #include "fileopen.h"
-#include "fixcontrol.h"
-#include "jobcontrol.h"
-#include "killchild.h"
+#include "getqueue.h"
 #include "linksupport.h"
-#include "malloclist.h"
-#include "pr_support.h"
-#include "printjob.h"
-#include "readstatus.h"
 #include "sendauth.h"
 #include "sendjob.h"
-#include "setstatus.h"
-#include "setup_filter.h"
+
 /**** ENDINCLUDE ****/
 
-static int Bounce_filter( struct control_file *cfp,
-	struct data_file *data_file, struct printcap_entry *printcap_entry,
-	int fd, int *size, struct stat *statb, int transfer_timeout );
 
 /***************************************************************************
-Commentary:
-The protocol used to send a job to a remote host consists of the
-following:
-
-Client                                   Server
-\2printername\n - receive a job
-                                         \0  (ack)
-\2count controlfilename\n
-<count bytes>
-\0
-                                         \0
-\3count datafilename\n
-<count bytes>
-\0
-                                         \0
-\3count datafilename\n
-<count bytes>
-\0
-                                         \0
-<close connection>
-
-1. In order to abort the job transfer,  client sends \1
-2. Anything but a 0 ACK is an error indication
-
-NB: some spoolers require that the data files be sent first.
-The same transfer protocol is followed, but the data files are
-send first,  followed by the control file.
-
-The Send_job() routine will try to transfer a control file
-to the remote host.  It does so using the following algorithm.
-
-1.  makes a connection (connection timeout)
-2.  sends the \2printer and gets ACK (transfer timeout)
-3.  sends the control file (transfer timeout)
-4.  sends the data files (transfer timeout)
-
-int Send_job(
-	char *printer,	- name of printer
-	char *host,		- remote host name
-	struct dpathname *p - pathname to spool directory
-	struct control_file *cfp,	- control file
-	int connect_timeout,	- timeout on making connection
-	int connect_interval,	- interval between retries
-	int max_connect_interval - maximum connection interval
-	int transfer_timeout )	- timeout on sending a file
-
-	RETURNS: 0 if successful, non-zero if not
+ * Commentary:
+ * The protocol used to send a job to a remote RemoteHost_DYN consists of the
+ * following:
+ * 
+ * Client                                   Server
+ * \2RemotePrinter_DYNname\n - receive a job
+ *                                          \0  (ack)
+ * \2count controlfilename\n
+ * <count bytes>
+ * \0
+ *                                          \0
+ * \3count datafilename\n
+ * <count bytes>
+ * \0
+ *                                          \0
+ * \3count datafilename\n
+ * <count bytes>
+ * \0
+ *                                          \0
+ * <close connection>
+ * 
+ * 1. In order to abort the job transfer,  client sends \1
+ * 2. Anything but a 0 ACK is an error indication
+ * 
+ * NB: some spoolers require that the data files be sent first.
+ * The same transfer protocol is followed, but the data files are
+ * send first,  followed by the control file.
+ * 
+ * The Send_job() routine will try to transfer a control file
+ * to the remote RemoteHost_DYN.  It does so using the following algorithm.
+ * 
+ * 1.  makes a connection (connection timeout)
+ * 2.  sends the \2RemotePrinter_DYN and gets ACK (transfer timeout)
+ * 3.  sends the control file (transfer timeout)
+ * 4.  sends the data files (transfer timeout)
+ * 
+ * int Send_job(
+ * 	struct jobfile *job,	- control file
+ * 	int connect_timeout_len,	- timeout on making connection
+ * 	int connect_interval,	- interval between retries
+ * 	int max_connect_interval - maximum connection interval
+ * 	int transfer_timeout )	- timeout on sending a file
+ * 
+ * 	RETURNS: 0 if successful, non-zero if not
  **************************************************************************/
-extern int Send_files( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry, int block_fd );
 
-extern int Send_block( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry );
-
-extern int Send_secure_block( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry );
-
-int Send_job( char *printer, char *host, struct control_file *cfp,
-	struct dpathname *dpath,
-	int connect_timeout, int connect_interval, int max_connect_interval,
-	int transfer_timeout, struct printcap_entry *printcap_entry )
+int Send_job( struct job *job,
+	int connect_timeout_len, int connect_interval, int max_connect_interval,
+	int transfer_timeout )
 {
 	int sock = -1;		/* socket to use */
-	int i, n, errcount = 0;	/* AJAX Integers (ACME on strike) */
-	int status = 0;	/* status of transfer */
-	char msg[LINEBUFFER];
-	char bannerpath[MAXPATHLEN];
-	int err;
-	int tempfd;
-	char *id;
-	char *s;
-	struct data_file *df, *dfp;	/* data file entry */
+	char *id = 0, *s;
+	char *real_host = 0, *save_host = 0;
+	int status = 0, err, errcount = 0, n, len;
+	char msg[SMALLBUFFER];
+	char error[SMALLBUFFER];
+	struct sockaddr src_sin, *bindto = 0;
  
-	/* make sure only temp files are removed on exit */
-	Cfp_static = cfp;
-
-	/* now we have a banner, is it at start or end? */
-	if( Generate_banner && (Is_server || Lpr_bounce ) ){
-		DEBUG2( "Send_job: Banner_start '%s', Banner_printer '%s'",
-			Banner_start, Banner_printer );
-		s = Banner_printer;
-		if( s == 0 ) s = Banner_start;
-		if( s ){
-			tempfd = Make_temp_fd( bannerpath, sizeof(bannerpath) );
-
-			DEBUG2( "Send_job: banner path '%s'", bannerpath );
-
-			/* fix up the control file */
-			if( cfp->data_file_list.count+1 >= cfp->data_file_list.max ){
-				extend_malloc_list(&cfp->data_file_list, sizeof(df[0]),
-					1,__FILE__,__LINE__);
-			}
-			dfp = (void *)cfp->data_file_list.list;
-			if( Banner_last ){
-				df = &dfp[cfp->data_file_list.count];
-			} else {
-				for(i=cfp->data_file_list.count; i > 0; --i ){
-					dfp[i] = dfp[i-1];
-				}
-				df = &dfp[0];
-			}
-			++cfp->data_file_list.count;
-			memset(df,0,sizeof(df[0]));
-
-			/* add control file line */
-			safestrncpy( df->Ninfo, "N(banner)" );
-			plp_snprintf(df->cfline, sizeof(df->cfline),
-				"fdfA%0*d%s", cfp->number_len, cfp->number, cfp->filehostname );
-			safestrncpy( df->openname, bannerpath );
-			if( Print_banner( s, cfp, 0, tempfd, 0, 0, printcap_entry ) ){
-				Errorcode = JABORT;
-				fatal( LOG_INFO, "Send_job: banner generation failed" );
-			}
-			if( fstat( tempfd, &df->statb ) < 0 ){
-				logerr_die( LOG_INFO,
-					"Send_job: fstat of temp file '%s' failed",
-					df->openname );
-			}
-			close(tempfd);
-		}
-	}
-
 	/* fix up the control file */
-	if( Fix_control( cfp, printcap_entry ) ){
-		Errorcode = JABORT;
-		if( cfp->error[0] ){
-			fatal( LOG_INFO, "Send_job: %s", cfp->error );
-		} else {
-			fatal( LOG_INFO, "Send_job: Fix_control failed" );
-		}
-	}
+	if(DEBUGL1)Dump_job("Send_job- starting",job);
+	Errorcode = 0;
 
-	/*
-	 * do accounting at start
-	 */
-	id = cfp->identifier;
-	if( id[0] == 0 ){
-		id = cfp->transfername;
-	} else {
-		++id;
-	}
-	if( Is_server && printcap_entry && Accounting_remote ){
-		Setup_accounting( cfp, printcap_entry );
-		if( Accounting_start ){
-			i = Do_accounting( 0, Accounting_start, cfp, transfer_timeout,
-				printcap_entry, 0 );
-			if( i ){
-				Errorcode = i;
-				cleanup( 0 );
-			}
-		}
-	}
+	/* determine authentication type to use */
+	bindto = Fix_auth(1,&src_sin);
+	Add_line_list(&job->info,"error@",Value_sep,1,1);
+	/* send job to the LPD server for the RemotePrinter_DYN */
 
-	DEBUG3("Send_job: '%s'->'%s@%s',connect(timeout %d,interval %d)",
-		cfp->transfername, printer, host, connect_timeout, connect_interval );
-
-	setstatus( cfp, "start job '%s' transfer to %s@%s", id, printer, host );
+	id = Find_str_value( &job->info,IDENTIFIER,Value_sep);
+	if( id == 0 ) id = Find_str_value( &job->info,TRANSFERNAME,Value_sep);
+	DEBUG3("Send_job: '%s'->%s@%s,connect(timeout %d,interval %d)",
+		id, RemotePrinter_DYN, RemoteHost_DYN,
+			connect_timeout_len, connect_interval );
 
 	/* we check if we need to do authentication */
-	Fix_auth();
 
-	setstatus( cfp,
-	"sending job '%s' to '%s@%s'", id, printer, host );
+	setstatus( job,
+	"sending job '%s' to %s@%s",
+		id, RemotePrinter_DYN, RemoteHost_DYN );
 	/* we pause on later tries */
-retry_connect:
-	setstatus( cfp, "connecting to '%s', attempt %d",
-		host, errcount+1 );
-	if( Network_connect_grace > 0 ){
-		plp_sleep( Network_connect_grace );
+
+ retry_connect:
+	Set_str_value(&job->info,ERROR,0);
+	setstatus( job, "connecting to '%s', attempt %d",
+		RemoteHost_DYN, errcount+1 );
+	if( Network_connect_grace_DYN > 0 ){
+		plp_sleep( Network_connect_grace_DYN );
 	}
 
 	errno = 0;
-	sock = Link_open( host, connect_timeout );
+	sock = Link_open_list( RemoteHost_DYN,
+		&real_host, 0, connect_timeout_len, bindto );
 	err = errno;
 	DEBUG4("Send_job: socket %d", sock );
 	if( sock < 0 ){
 		++errcount;
 		status = LINK_OPEN_FAIL;
-		plp_snprintf(msg,sizeof(msg)-2,
-			"connection to '%s' failed - %s", host, Errormsg(err) );
-		setstatus( cfp, msg );
-		if( Interactive ){
-			/* send it directly to the error output */
-			strcat(msg,"\n");
-			if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
-		} else if( Is_server && Retry_NOLINK ){
-			n = 0;
+		msg[0] = 0;
+		if( !Is_server && err ){
+			plp_snprintf( msg, sizeof(msg),
+			"\nMake sure LPD server is running on the server");
+		}
+		plp_snprintf( error, sizeof(error)-2,
+			"cannot open connection to %s - %s%s", RemoteHost_DYN,
+				err?Errormsg(err):"bad or missing hostname?", msg );
+		setstatus( job, error );
+		if( Is_server && Retry_NOLINK_DYN ){
 			if( connect_interval > 0 ){
-				int n = (connect_interval * (1 << (errcount - 1)));
+				n = (connect_interval * (1 << (errcount - 1)));
 				if( max_connect_interval && n > max_connect_interval ){
 					n = max_connect_interval;
 				}
-			}
-			if( n > 0 ){
-				setstatus( cfp, _("sleeping %d secs before retry, starting sleep"),n );
-				plp_sleep( n );
+				if( n > 0 ){
+					setstatus( job,
+					_("sleeping %d secs before retry, starting sleep"),n );
+					plp_sleep( n );
+				}
 			}
 			goto retry_connect;
 		}
-	} else {
-		/* send job to the LPD server for the printer */
-		DEBUG2("Send_job: Is_server %d, Forward_auth '%s', auth '%s'",
-			Is_server, Forward_auth, cfp->auth_id );
-		if( (Is_server && Forward_auth && cfp->auth_id[0])
-			|| ( !Is_server && ( Use_auth || Use_auth_flag) ) ){
-			status = Send_secure_block( host, printer,
-			dpath, &sock, cfp, transfer_timeout, printcap_entry );
-		} else if( Send_block_format ){
-			status = Send_block( host, printer,
-			dpath, &sock, cfp, transfer_timeout, printcap_entry );
-		} else {
-			status = Send_files( host, printer,
-			dpath, &sock, cfp, transfer_timeout, printcap_entry, 0 );
-		}
-		/* we read any other information that is sent */
-		DEBUG2("Send_job: sending status %d, sock %d", status, sock );
-		if( sock > 0 ){
-			Read_status_info( printer, 0, sock, host, 2,
-			transfer_timeout );
-		}
+		goto error;
 	}
+	save_host = safestrdup(RemoteHost_DYN,__FILE__,__LINE__);
+	Set_DYN(&RemoteHost_DYN, real_host );
+	if( real_host ) free( real_host );
+	setstatus( job, "connected to '%s'", RemoteHost_DYN );
+
+	if( (Is_server && Auth_forward_DYN
+		&& safestrcasecmp(Auth_client_id_DYN,NONEP)
+		&& safestrcasecmp(Auth_forward_DYN,NONEP))
+		|| (!Is_server && Auth_DYN && safestrcasecmp(Auth_DYN,NONEP)) ){
+		/* we send the Kerberos 4 authentication,
+		 * then use normal transfer.  This is only for client to server
+		 * otherwise we are in trouble.
+		 */
+		if( safestrcasecmp( Auth_DYN, KERBEROS4 ) ){
+			status = Send_secure_block( &sock, job, transfer_timeout );
+		} else if( !Is_server ){
+			if( (status = Send_krb4_auth( &sock, job,
+				transfer_timeout)) ){
+				close( sock ); sock = -1;
+				goto error;
+			} else {
+				status = Send_normal( &sock, job, transfer_timeout, 0 );
+			}
+		} else {
+			plp_snprintf(error,sizeof(error),
+				"kerberos 4 job transfer not available" );
+			status = JFAIL;
+			close( sock ); sock = -1;
+			goto error;
+		}
+	} else if( Send_block_format_DYN ){
+		status = Send_block( &sock, job, transfer_timeout );
+	} else {
+		status = Send_normal( &sock, job, transfer_timeout, 0 );
+	}
+	DEBUG2("Send_job: after sending, status %d", status );
+	if( status ) goto error;
+
+	setstatus( job, "done job '%s' transfer to %s@%s",
+		id, RemotePrinter_DYN, RemoteHost_DYN );
+
+ error:
 
 	if( status ){
-		plp_snprintf(msg, sizeof(msg)-2, "job '%s' transfer to %s@%s failed",
-			id, printer, host);
-		if( Interactive ){
-			strcat(msg,"\n");
-			if( Write_fd_str( 2, msg ) < 0 )cleanup(0);
-		} else {
-			setstatus( cfp, msg );
+		if( (s = Find_str_value(&job->info,ERROR,Value_sep )) ){
+			setstatus( job, "%s", s );
 		}
-	} else {
-		DEBUG4("Send_job: printcap_entry 0x%x, end %d, file %s, remote %d",
-			printcap_entry, Accounting_end, Accounting_file, Accounting_remote );
-		if( Is_server && printcap_entry && Accounting_remote ){
-			i = Do_accounting( 1, Accounting_end, cfp,
-				transfer_timeout, printcap_entry, 0 );
-			if( i ){
-				Errorcode = i;
-				cleanup( 0 );
+		plp_snprintf(error, sizeof(error)-2,
+			"job '%s' transfer to %s@%s failed",
+			id, RemotePrinter_DYN, RemoteHost_DYN);
+		setstatus( job, error );
+		DEBUG2("Send_job: sock is %d", sock);
+		if( sock >= 0 ){
+			len = 0;
+			msg[0] = 0;
+			while( len < sizeof(msg)-1
+				&& (n = read(sock,msg+len,sizeof(msg)-len-1)) > 0 ){
+				msg[len+n] = 0;
+				DEBUG2("Send_job: read %d, '%s'", n, msg);
+				while( (s = safestrchr(msg,'\n')) ){
+					*s++ = 0;
+					setstatus( job, "error msg: '%s'", msg );
+					memmove(msg,s,strlen(s)+1);
+				}
+				len = strlen(msg);
 			}
-		}
-		setstatus( cfp, "done job '%s' transfer to %s@%s",
-			id, printer, host );
-		if( Is_server == 0 && LP_mode && !Silent ){
-			id = cfp->identifier;
-			if( id[0] ){
-				plp_snprintf( msg,sizeof(msg)-1,"request id is %s\n", id+1 );
-			} else {
-				plp_snprintf( msg,sizeof(msg)-1,"request id is %d\n", cfp->number );
-			}
-			Write_fd_str(1, msg );
+			DEBUG2("Send_job: read %d, '%s'", n, msg);
+			if( len ) setstatus( job, "error msg: '%s'", msg );
 		}
 	}
-	/* remove temp files */
-	Remove_tempfiles();
+	if( sock >= 0 ) close(sock); sock = -1;
+	if( save_host ){
+		Set_DYN(&RemoteHost_DYN,save_host);
+		free(save_host); save_host = 0;
+	}
 	return( status );
 }
 
 /***************************************************************************
-int Send_files(
-	char *host,				- host name
-	char *printer,			- printer name
-	char *dpathname *dpath  - spool directory pathname
-	int *sock,					- socket to use
-	struct control_file *cfp,	- control file
-	int transfer_timeout,		- transfer timeout
-	struct printcap_entry 		- printcap entry
-	)						- acknowlegement status
-
- 1. send the \2printer\n string to the remote host, wait for an ACK
-
- 
- 2. if control file first, send the control file: 
-        send \3count cfname\n
-        get back <0> ack
-        send 'count' file bytes
-        send <0> term
-        get back <0> ack
- 3. for each data file
-        send the \4count dfname\n
-            Note: count is 0 if file is filter
-        get back <0> ack
-        send 'count' file bytes
-            Close socket and finish if filter
-        send <0> term
-        get back <0> ack
-  4. If control file last, send the control file as in step 2.
-      
-
-If the block_fd parameter is non-zero, we write out the
-various control and data functions to a file instead.
-
+ * int Send_normal(
+ * 	int sock,					- socket to use
+ * 	struct job *job,	- control file
+ * 	int transfer_timeout,		- transfer timeout
+ * 	)						- acknowlegement status
+ * 
+ *  1. send the \2RemotePrinter_DYN\n string to the remote RemoteHost_DYN, wait for an ACK
+ *  
+ *  2. if control file first, send the control file: 
+ *         send \3count cfname\n
+ *         get back <0> ack
+ *         send 'count' file bytes
+ *         send <0> term
+ *         get back <0> ack
+ *  3. for each data file
+ *         send the \4count dfname\n
+ *             Note: count is 0 if file is filter
+ *         get back <0> ack
+ *         send 'count' file bytes
+ *             Close socket and finish if filter
+ *         send <0> term
+ *         get back <0> ack
+ *   4. If control file last, send the control file as in step 2.
+ *       
+ * 
+ * If the block_fd parameter is non-zero, we write out the
+ * control and data information to a file instead.
+ * 
  ***************************************************************************/
 
-int Send_files( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry,
-	int block_fd )
+int Send_normal( int *sock, struct job *job, int transfer_timeout, int block_fd )
 {
-	int status = 0;			/* status of transfer command */
-	int size;			/* size of file */
-	char line[LINEBUFFER];	/* buffer for making up command to send */
-	int count, order;	/* ACME, the very finest in integer variables */
-	struct data_file *df;	/* data file entry */
-	struct stat statb;	/* status buffer */
-	int fd;				/* file descriptor */
-	int ack;			/* ack byte */
-	int err;			/* saved errno */
-	int sent_data = 0;		/* flag to handle sending data files first */
-	char *cf_copy;			/* control file copy being sent */
-	char *write_file;		/* file being written */
-	char *id;
+	char status = 0, *id, *transfername;
+	char line[SMALLBUFFER];
+	char error[SMALLBUFFER];
+	int ack;
 
-	DEBUG3("Send_files: send_data_first %d", Send_data_first );
-	/* ugly ugly hack to send data files first to printers that
-	 *	need it.  Also elegant way to test that you can handle data files
-	 *	first. :-)
-	 */
-	id = cfp->identifier;
-	if( id[0] == 0 ){
-		id = cfp->transfername;
-	} else {
-		++id;
-	}
-	write_file = cfp->transfername;
-	if( block_fd == 0 ){
-		setstatus( cfp, "sending job '%s' to %s@%s",
-			id, printer, host );
+	DEBUG3("Send_normal: send_data_first %d, sock %d, block_fd %d",
+		Send_data_first_DYN, *sock, block_fd );
+
+	id = Find_str_value(&job->info,"A",Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	
+	if( !block_fd ){
+		setstatus( job, "requesting printer %s@%s",
+			RemotePrinter_DYN, RemoteHost_DYN );
 		plp_snprintf( line, sizeof(line), "%c%s\n",
-			REQ_RECV, printer );
-		status = Link_send( host, sock, transfer_timeout,
-			line, strlen(line), &ack );
-		if( status ){
-			setstatus( cfp, "error '%s' sending '\\%d%s\\n' to %s@%s",
-				Link_err_str(status), REQ_RECV, printer, printer, host );
+			REQ_RECV, RemotePrinter_DYN );
+		ack = 0;
+		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
+			line, strlen(line), &ack ) )){
+			char *v;
+			if( (v = safestrchr(line,'\n')) ) *v = 0;
+			if( ack ){
+				plp_snprintf(error,sizeof(error),
+					"error '%s' with ack '%s' sending str '%s' to %s@%s",
+					Link_err_str(status), Ack_err_str(ack), line,
+					RemotePrinter_DYN, RemoteHost_DYN );
+			} else {
+				plp_snprintf(error,sizeof(error),
+					"error '%s' sending str '%s' to %s@%s",
+					Link_err_str(status), line,
+					RemotePrinter_DYN, RemoteHost_DYN );
+			}
+			Set_str_value(&job->info,ERROR,error);
 			return(status);
 		}
 	}
 
+	if( !block_fd && Send_data_first_DYN ){
+		status = Send_data_files( sock, job, transfer_timeout, block_fd );
+		if( !status ) status = Send_control(
+			sock, job, transfer_timeout, block_fd );
+	} else {
+		status = Send_control( sock, job, transfer_timeout, block_fd );
+		if( !status ) status = Send_data_files(
+			sock, job, transfer_timeout, block_fd );
+	}
+	return(status);
+}
 
-	if( block_fd == 0 &&  Send_data_first ) goto send_data;
-send_control:
+int Send_control( int *sock, struct job *job, int transfer_timeout,
+	int block_fd )
+{
+	char msg[SMALLBUFFER];
+	char error[SMALLBUFFER];
+	int status = 0, size, ack, err;
+	char *cf = 0, *transfername = 0, *s;
 	/*
 	 * get the total length of the control file
 	 */
 
-	size = 0;
-	DEBUG3("Send_files: line_count %d", cfp->control_file_lines.count );
+	cf = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep);
+	size = strlen(cf);
+	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 
-	if( block_fd == 0 ){
-		setstatus( cfp, "sending file '%s' to %s@%s",
-		cfp->transfername, printer, host );
+	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
+		transfername, size, *sock, block_fd, cf );
+	if( !block_fd ){
+		setstatus( job, "sending control file '%s' to %s@%s",
+		transfername, RemotePrinter_DYN, RemoteHost_DYN );
 	}
 
-
-	cf_copy = (char *)cfp->control_file_copy.list;
-	size = strlen( cf_copy );
-	DEBUG3( "Send_files: control file %d bytes '%s'", size, cf_copy );
-
-	/*
-	 * send the command file name line
-	 */
-	write_file = cfp->transfername;
 	ack = 0;
 	errno = 0;
-	plp_snprintf( line, sizeof(line), "%c%d %s\n",
-		CONTROL_FILE, size, write_file);
-	if( block_fd == 0 ){
-		status = Link_send( host, sock, transfer_timeout,
-			line, strlen(line), &ack );
-		if( status ){
-			if(!Interactive)logerr( LOG_INFO,
-				"Send_files: error '%s' ack %d sending '%s' to %s@%s",
-				Link_err_str(status), ack, line, printer, host );
-			switch( ack ){
-			case ACK_STOP_Q: status = JABORT; break;
-			default:         status = JFAIL; break;
+	error[0] = 0;
+	plp_snprintf( msg, sizeof(msg), "%c%d %s\n",
+		CONTROL_FILE, size, transfername);
+	if( !block_fd ){
+		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
+			msg, strlen(msg), &ack )) ){
+			if( (s = safestrchr(msg,'\n')) ) *s = 0;
+			if( ack ){
+				plp_snprintf(error,sizeof(error),
+				"error '%s' with ack '%s' sending str '%s' to %s@%s",
+				Link_err_str(status), Ack_err_str(ack), msg,
+				RemotePrinter_DYN, RemoteHost_DYN );
+			} else {
+				plp_snprintf(error,sizeof(error),
+				"error '%s' sending str '%s' to %s@%s",
+				Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 			}
-			return(status);
+			Set_str_value(&job->info,ERROR,error);
+			status = JFAIL;
+			goto error;
 		}
 	} else {
-		if( Write_fd_str( block_fd, line ) < 0 ){
+		if( Write_fd_str( block_fd, msg ) < 0 ){
 			goto write_error;
 		}
 	}
+
 	/*
 	 * send the control file
 	 */
 	errno = 0;
 	if( block_fd == 0 ){
 		/* we include the 0 at the end */
-		status = Link_send( host, sock, transfer_timeout,
-			cf_copy,strlen(cf_copy)+1,&ack );
-		if( status != 0 ){
-			if(!Interactive)logerr( LOG_INFO,
-			"Send_files: error '%s' ack %d sending control file '%s' to %s@%s",
-				Link_err_str(status), ack, cfp->transfername, printer, host );
-			switch( ack ){
-			case ACK_STOP_Q: status = JABORT; break;
-			default:         status = JFAIL; break;
+		ack = 0;
+		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
+			cf,size+1,&ack )) ){
+			if( ack ){
+				plp_snprintf(error,sizeof(error),
+				"error '%s' with ack '%s' sending file '%s' to %s@%s",
+				Link_err_str(status), Ack_err_str(ack), transfername,
+				RemotePrinter_DYN, RemoteHost_DYN );
+			} else {
+				plp_snprintf(error,sizeof(error),
+					"error '%s' sending file '%s' to %s@%s",
+					Link_err_str(status), transfername,
+					RemotePrinter_DYN, RemoteHost_DYN );
 			}
-			return( status );
+			Set_str_value(&job->info,ERROR,error);
+			status = JFAIL;
+			goto error;
 		}
-		DEBUG3( "Send_files: control file sent, ack '%d'", ack );
-		setstatus( cfp, "completed '%s' to %s@%s",
-			cfp->transfername, printer, host );
+		DEBUG3( "Send_control: control file '%s' sent", transfername );
+		setstatus( job, "completed sending '%s' to %s@%s",
+			transfername, RemotePrinter_DYN, RemoteHost_DYN );
 	} else {
-		if( Write_fd_str( block_fd, cf_copy ) < 0 ){
+		if( Write_fd_str( block_fd, cf ) < 0 ){
 			goto write_error;
 		}
 	}
+	status = 0;
+	goto error;
 
-	DEBUG3( "Send_files: data file count '%d'", cfp->data_file_list.count );
+ write_error:
+	err = errno;
+	plp_snprintf(error,sizeof(error),
+		"job '%s' write to temporary file failed '%s'",
+		transfername, Errormsg( err ) );
+	Set_str_value(&job->info,ERROR,error);
+	status = JFAIL;
+ error:
+	return(status);
+}
 
-	/*
-	 * now send the data files
-	 */
 
-send_data:
-	order = 0;
-	if( cfp->flags & LAST_DATA_FILE_FIRST ){
-		order = cfp->data_file_list.count - 1;
-	}
-	for( count = 0; sent_data == 0 && status == 0 && count < cfp->data_file_list.count;
-		++count, ++order ){
-		df = (void *)cfp->data_file_list.list;
-		if( order >= cfp->data_file_list.count ){
-			order = 0;
-		}
-		df = &df[order];
-		DEBUG3(
-	"Send_files: [%d] cfline '%s', openname '%s', fd %d, size %d, is_a_copy %d",
-		order, df->cfline, df->openname, df->fd, df->statb.st_size,
-		df->is_a_copy );
-		if( df->is_a_copy ) continue;	/* we do not send this file */
-		if( (DbgTest & 0x01) && count == 0 ){
-			DEBUG0("Send_files: DgbTest flag 0x01 set! skip first file" );
-			continue;
-		}
-		fd = df->fd;
-		if( df->d_flags & PIPE_FLAG ){
-			DEBUG3( "Send_files: file '%s' open already, fd %d",
-				df->openname, fd );
-			/* ignore the status on LSEEK - we may have a pipe or fd */
-			size = -1;
-		} else if( df->openname[0] ){
-			DEBUG3("Send_files: opening file '%s'", df->openname );
-			/*
-			 * open file as user; we should be running as user
-			 */
-			fd = Checkread( df->openname, &statb );
-			err = errno;
-			size = statb.st_size;
-			DEBUG3( "Send_files: openname '%s', fd %d, size %d",
-				df->openname, fd, size );
-			if( fd < 0 ){
-				char *s = strrchr( df->openname, '/' );
-				if( s == 0 ) s = df->openname;
-				/* we cannot open the data file! */
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"cannot open '%s' - '%s'", s, Errormsg(err) );
-				if( !Interactive ){
-					Set_job_control( cfp, (void *)0 );
-				} else {
-					/* send it directly to the error output */
-					safestrncpy(line,cfp->error);
-					strcat(line,"\n");
-					if( Write_fd_str( 2, line ) < 0 ) cleanup(0);
-				}
-				setstatus( cfp, "%s", cfp->error );
-				Link_close( sock );
-				return(JREMOVE);
-			}
-			if( statb.st_dev != df->statb.st_dev ){
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"file '%s', st_dev %d, not %d, possible security problem",
-					df->openname, statb.st_dev, df->statb.st_dev );
-				log( LOG_ERR, "Send_files: %s", cfp->error );
-				if( !Interactive ){
-					Set_job_control( cfp, (void *)0 );
-				}
-				return(JREMOVE);
-			}
-			if( statb.st_ino != df->statb.st_ino ){
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-				"file '%s', st_ino %d, not %d, possible security problem",
-					df->openname, statb.st_ino, df->statb.st_ino );
-				log( LOG_ERR, "Send_files: %s", cfp->error );
-				if( !Interactive ){
-					Set_job_control( cfp, (void *)0 );
-				}
-				return(JREMOVE);
-			}
-			if( statb.st_size != df->statb.st_size ){
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"file '%s', st_size %d, not %d, possible security problem",
-					df->openname, statb.st_size, df->statb.st_size );
-				log( LOG_ERR, "Send_files: %s", cfp->error );
-				if( !Interactive ){
-					Set_job_control( cfp, (void *)0 );
-				}
-				return(JREMOVE);
-			}
-			/* first we have to rewind the file */
-			if( lseek( fd, 0, SEEK_SET ) == (off_t)(-1) ){
-				err = errno;
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"file '%s', fd %d, lseek failed - %s",
-					df->openname, fd, Errormsg(err) );
-				log( LOG_ERR, "Send_files: %s", cfp->error );
-				if( !Interactive ){
-					Set_job_control( cfp, (void *)0 );
-				}
-				return(JREMOVE);
-			}
-		} else {
-			fatal( LOG_ERR, "Send_files: no job file name" );
-		}
+int Send_data_files( int *sock, struct job *job, int transfer_timeout,
+	int block_fd )
+{
+	int count, fd, err, status = 0, ack;
+	double size;
+	struct line_list *lp;
+	char *openname, *transfername, *id, *s;
+	char msg[SMALLBUFFER];
+	char error[SMALLBUFFER];
+	struct stat statb;
+
+	DEBUG3( "Send_files: data file count '%d'", job->datafiles.count );
+	id = Find_str_value(&job->info,"identification",Value_sep);
+	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	size = 0;
+	for( count = 0; count < job->datafiles.count; ++count ){
+		lp = (void *)job->datafiles.list[count];
+		if(DEBUGL3)Dump_line_list("Send_files - entries",lp);
+		openname = Find_str_value(lp,OPENNAME,Value_sep);
+		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+		DEBUG3("Send_files: opening file '%s'", openname );
 
 		/*
-		 * Now for the infamous 'use the filters on a bounce queue'
-		 * problem.  If we have a bounce queue,  we may want to
-		 * run the data files through the filters before sending them
-		 * to their destinations.  This is done if the :bq=destination:
-		 * is set in the printcap (Bounce_queue_dest variable)
-		 * is set.  We do filtering if:
-		 *   1. Bounce_queue_dest is set
-		 *   2. There is a filter for this format
-		 *	 3. and we are not a client (Interactive = 0);
-		 * To make filtering work,  we first create a temporary file in
-		 * the spool directory.  We redirect the filter output to the
-		 * temporary file,  and then use this as the real file.  When done,
-		 * we remove the temporary file.  To ensure that we do not
-		 * use too much space,  we will create only one temp file.
-		 *
-		 * Note: the 'p' format is supposed to be processed by the /bin/pr
-		 * program. However, it may also get reprocessed at the destination
-		 * by another filter.  We will assume that the user will provide a
-		 * 'p' format filter or not have it filtered in a bounce queue.
+		 * open file as user; we should be running as user
 		 */
-
-		if( (Is_server && Bounce_queue_dest) || (!Is_server && Lpr_bounce) ){
-			if( (status = Bounce_filter( cfp, df, printcap_entry, fd,
-					&size, &statb, transfer_timeout )) ){
-				return( status );
-			}
+		fd = Checkread( openname, &statb );
+		err = errno;
+		if( fd < 0 ){
+			status = JFAIL;
+			plp_snprintf(error,sizeof(error),
+				"cannot open '%s' - '%s'", openname, Errormsg(err) );
+			Set_str_value(&job->info,ERROR,error);
+			goto error;
 		}
+		size = statb.st_size;
 
+		DEBUG3( "Send_files: openname '%s', fd %d, size %0.0f",
+			openname, fd, size );
 		/*
 		 * send the data file name line
 		 */
-		plp_snprintf( line, sizeof(line), "%c%d %s\n",
-				DATA_FILE, size == -1? 0 : size, df->cfline+1 );
+		plp_snprintf( msg, sizeof(msg), "%c%0.0f %s\n",
+				DATA_FILE, size, transfername );
 		if( block_fd == 0 ){
-			setstatus( cfp, "sending file '%s' to %s@%s", df->cfline+1,
-				printer, host );
-			DEBUG3("Send_files: data file line '%s'", line );
+			setstatus( job, "sending data file '%s' to %s@%s", transfername,
+				RemotePrinter_DYN, RemoteHost_DYN );
+			DEBUG3("Send_files: data file msg '%s'", msg );
 			errno = 0;
-			status = Link_send( host, sock, transfer_timeout,
-				line, strlen(line), &ack );
-			if( status ){
-				logerr( LOG_INFO,
-				"Send_files: error '%s' ack %d sending '%s' to %s@%s",
-					Link_err_str( status ),ack, line, printer, host );
-				return(status);
+			if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
+				msg, strlen(msg), &ack )) ){
+				if( (s = safestrchr(msg,'\n')) ) *s = 0;
+				if( ack ){
+					plp_snprintf(error,sizeof(error),
+					"error '%s' with ack '%s' sending str '%s' to %s@%s",
+					Link_err_str(status), Ack_err_str(ack), msg,
+					RemotePrinter_DYN, RemoteHost_DYN );
+				} else {
+					plp_snprintf(error,sizeof(error),
+					"error '%s' sending str '%s' to %s@%s",
+					Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
+				}
+				Set_str_value(&job->info,ERROR,error);
+				goto error;
 			}
 
 			/*
 			 * send the data files content
 			 */
-
-			DEBUG3("Send_files: doing transfer of '%s'", df->openname );
-			if( df->d_flags & PIPE_FLAG ){
-				size = -1;
+			DEBUG3("Send_files: doing transfer of '%s'", openname );
+			ack = 0;
+			if( (status = Link_copy( RemoteHost_DYN, sock, 0, transfer_timeout,
+					openname, fd, size ))
+				|| (status = Link_send( RemoteHost_DYN,sock,
+					transfer_timeout,"",1,&ack )) ){
+				if( ack ){
+					plp_snprintf(error,sizeof(error),
+					"error '%s' with ack '%s' sending file '%s' to %s@%s",
+					Link_err_str(status), Ack_err_str(ack), transfername,
+					RemotePrinter_DYN, RemoteHost_DYN );
+				} else {
+					plp_snprintf(error,sizeof(error),
+					"error '%s' sending file '%s' to %s@%s",
+					Link_err_str(status), transfername,
+					RemotePrinter_DYN, RemoteHost_DYN );
+				}
+				Set_str_value(&job->info,ERROR,error);
+				goto error;
 			}
-			/* no timeout on reading, we may be reading from pipe */
-			errno = 0;
-			status = Link_copy( host, sock, 0, transfer_timeout,
-					df->openname, fd, size );
-
-			/*
-			 * get the ACK only if you did not have an error
-			 */
-			if( size > 0 && status == 0 ){
-				status = Link_ack( host,sock,transfer_timeout,0x100,&ack );
-			}
-			if( status ){
-				log( LOG_INFO,
-					"Send_files: error '%s' sending data file '%s' to %s@%s",
-					Link_err_str( status ), df->openname, printer, host );
-				setstatus( cfp, "error sending '%s' to %s@%s",
-					df->cfline+1, printer, host );
-			} else {
-				setstatus( cfp, "completed '%s' to %s@%s",
-					df->cfline+1, printer, host );
-			}
+			setstatus( job, "completed sending '%s' to %s@%s",
+				transfername, RemotePrinter_DYN, RemoteHost_DYN );
 		} else {
-			int total;
+			double total;
 			int len;
 
-			write_file = df->cfline+1;
-			if( Write_fd_str( block_fd, line ) < 0 ){
+			if( Write_fd_str( block_fd, msg ) < 0 ){
 				goto write_error;
 			}
 			/* now we need to read the file and transfer it */
 			total = 0;
-			while( total < size && (len = read(fd, line, sizeof(line)) ) > 0 ){
-				if( Write_fd_len( block_fd, line, len ) < 0 ){
+			while( total < size && (len = read(fd, msg, sizeof(msg)) ) > 0 ){
+				if( write( block_fd, msg, len ) < 0 ){
 					goto write_error;
 				}
 				total += len;
 			}
 			if( total != size ){
-				plp_snprintf(cfp->error, sizeof(cfp->error),
-					"job '%s' did not read all of '%s'",
-					id, write_file );
-				setstatus( cfp, "%s", cfp->error );
-				return( JFAIL );
+				plp_snprintf(error,sizeof(error),
+					"job '%s' did not copy all of '%s'",
+					id, transfername );
+				status = JFAIL;
+				Set_str_value(&job->info,ERROR,error);
+				goto error;
 			}
 		}
-		close(fd);
+		close(fd); fd = -1;
 	}
+	goto error;
 
-	/* the remaining part of the ugly hack */
-	if( block_fd == 0 ){
-		if( Send_data_first && sent_data == 0 ){
-			sent_data = 1;
-			goto send_control;
-		}
-		Link_close( sock );
-	}
-	return(status);
-
-write_error:
+ write_error:
 	err = errno;
-	plp_snprintf(cfp->error, sizeof(cfp->error),
+	plp_snprintf(error,sizeof(error),
 		"job '%s' write to temporary file failed '%s'",
-		write_file, Errormsg( err ) );
-	setstatus( cfp, "%s", cfp->error );
-	return( JFAIL );
-}
+		id, Errormsg( err ) );
+	Set_str_value(&job->info,ERROR,error);
+	status = JFAIL;
 
-/*
- * Bounce filter - 
- * 1. check to see if there is a filter for this format
- * 2. check to see if the temp file has already been created
- *    if not, create and open the temp file
- * 3. run the filter,  with its output directed to the temp file
- * 4. close the original input file,  and dup the temp file to it.
- * 5. return the temp file size
- */
-
-
-static int Bounce_filter( struct control_file *cfp,
-	struct data_file *data_file, struct printcap_entry *printcap_entry,
-	int fd, int *size, struct stat *statb, int transfer_timeout )
-{
-	int c, in, err;
-	char *filter;
-	static int tempfd;
-	char tempbuf[LARGEBUFFER];
-
-	/* get the temp file */
-	/* now find the filter - similar to the printer support code */
-	filter = 0;
-	/*
-	 * check for PR to be used
-	 */
-	c = data_file->format;
-	switch( c ){
-	case 'f': case 'l':
-		filter = IF_Filter;
-		break;
-	default:
-		filter = Find_filter( c, printcap_entry );
-	}
-	DEBUG3("Bounce_filter: filter '%s'", filter );
-
-	/* hook filter up to the device file descriptor */
-	if( filter ){
-		if( tempfd <= 0 ){
-			tempfd = Make_temp_fd( 0, 0 );
-		}
-		if( ftruncate( tempfd, 0 ) < 0 ){
-			err = errno;
-			Errorcode = JFAIL;
-			logerr_die( LOG_INFO,
-				"Bounce_filter: error 'truncating bounce queue temp fd" );
-		}
-		if( Make_filter( c, cfp, &XF_fd_info, filter,
-			0, /* no extra */
-			0,	/* RW pipe */
-			tempfd, /* dup to fd 1 */
-			printcap_entry, /* printcap information */
-			data_file, Accounting_port, Logger_destination != 0,
-				Direct_read?fd:0 ) ){
-			setstatus( cfp, "%s", cfp->error );
-			cleanup(0);
-		}
-		/* at this point you have a filter, which is taking input
-			from XF_fd_info.input; pass input file through it */
-		if( Direct_read == 0 ){
-			while( (in = read(fd, tempbuf, sizeof(tempbuf)) ) > 0 ){
-				Write_fd_len( XF_fd_info.input, tempbuf, in );
-			}
-		}
-		Errorcode = Close_filter( 0, &XF_fd_info,
-			transfer_timeout, "bounce queue" );
-		if( Errorcode ){
-			logerr_die( LOG_INFO,
-				"Bounce_filter: error closing bounce queue filter" );
-		}
-		/* now we close the input file and dup the filter output to it */
-		if( dup2( tempfd, fd ) < 0 ){
-			Errorcode = JFAIL;
-			logerr_die( LOG_INFO, "Bounce_filter: dup2 failed" );
-		}
-		if( lseek( fd, 0, SEEK_SET ) < 0 ){
-			Errorcode = JFAIL;
-			logerr_die( LOG_INFO, "Bounce_filter: lseek failed" );
-		}
-		if( fstat( fd, statb ) < 0 ){
-			Errorcode = JFAIL;
-			logerr_die( LOG_INFO, "Bounce_filter: fstat failed" );
-		}
-		*size = statb->st_size;
-		DEBUG3("Bounce_filter: fd '%d', size %d", fd, *size );
-	}
-	return( 0 );
+ error:
+	return(status);
 }
 
 /***************************************************************************
-int Send_block(
-	char *host,				- host name
-	char *printer,			- printer name
-	char *dpathname *dpath  - spool directory pathname
-	int *sock,					- socket to use
-	struct control_file *cfp,	- control file
-	int transfer_timeout,		- transfer timeout
-	)						- acknowlegement status
-
- 1. Get a temporary file
- 2. Generate the compressed data files - this has the format
-      \3count cfname\n
-      [count control file bytes]
-      \4count dfname\n
-      [count data file bytes]
-
- 3. send the \6printer user@host size\n
-    string to the remote host, wait for an ACK
- 
- 4. send the compressed data files - this has the format
-      wait for an ACK
-
+ * int Send_block(
+ * 	char *RemoteHost_DYN,				- RemoteHost_DYN name
+ * 	char *RemotePrinter_DYN,			- RemotePrinter_DYN name
+ * 	char *dpathname *dpath  - spool directory pathname
+ * 	int *sock,					- socket to use
+ * 	struct job *job,	- control file
+ * 	int transfer_timeout,		- transfer timeout
+ * 	)						- acknowlegement status
+ * 
+ *  1. Get a temporary file
+ *  2. Generate the compressed data files - this has the format
+ *       \3count cfname\n
+ *       [count control file bytes]
+ *       \4count dfname\n
+ *       [count data file bytes]
+ * 
+ *  3. send the \6RemotePrinter_DYN size\n
+ *     string to the remote RemoteHost_DYN, wait for an ACK
+ *  
+ *  4. send the compressed data files
+ *       wait for an ACK
+ * 
  ***************************************************************************/
 
-int Send_block( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry )
+int Send_block( int *sock, struct job *job, int transfer_timeout )
 {
 	int tempfd;			/* temp file for data transfer */
-	char tempbuf[SMALLBUFFER];	/* buffer */
+	char msg[SMALLBUFFER];	/* buffer */
+	char error[SMALLBUFFER];	/* buffer */
 	struct stat statb;
-	int size, err;				/* ACME! The best... */
+	double size;				/* ACME! The best... */
 	int status = 0;				/* job status */
 	int ack;
-	char *id;
+	char *id, *transfername, *tempfile;
 
-	id = cfp->identifier;
-	if( id[0] == 0 ){
-		id = cfp->transfername;
-	} else {
-		++id;
-	}
-	tempfd = Make_temp_fd( 0, 0 );
-	if( tempfd < 0 ){
-		err = errno;
-		Errorcode = JFAIL;
-		logerr_die( LOG_INFO,
-			"Send_block: error truncating temp fd" );
-	}
-	if( ftruncate( tempfd, 0 ) < 0 ){
-		err = errno;
-		Errorcode = JFAIL;
-		logerr_die( LOG_INFO,
-			"Send_block: error truncating temp fd" );
-	}
 
-	status = Send_files( host, printer, dpath, sock, cfp, transfer_timeout,
-		printcap_entry, tempfd );
+	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if( id == 0 ) id = transfername;
 
+	tempfd = Make_temp_fd( &tempfile );
+	DEBUG1("Send_block: sending '%s' to '%s'", id, tempfile );
+
+	status = Send_normal( &tempfd, job, transfer_timeout, tempfd );
+
+	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if( id == 0 ) id = transfername;
+
+	DEBUG1("Send_block: sendnormal of '%s' returned '%s'", id, Server_status(status) );
 	if( status ) return( status );
 
 	/* rewind the file */
@@ -852,108 +600,128 @@ int Send_block( char *host, char *printer,
 	size = statb.st_size;
 
 	/* now we know the size */
-	DEBUG3("Send_block: size %d", size );
-	setstatus( cfp, "sending job '%s' to %s@%s",
-		id, printer, host );
-	plp_snprintf( tempbuf, sizeof(tempbuf), "%c%s %s %d\n",
-		REQ_BLOCK, printer, cfp->transfername, size );
-	DEBUG3("Send_block: sending '%s'", tempbuf );
-	status = Link_send( host, sock, transfer_timeout,
-		tempbuf, strlen(tempbuf), &ack );
+	DEBUG3("Send_block: size %0.0f", size );
+	setstatus( job, "sending job '%s' to %s@%s, block transfer",
+		id, RemotePrinter_DYN, RemoteHost_DYN );
+	plp_snprintf( msg, sizeof(msg), "%c%s %0.0f\n",
+		REQ_BLOCK, RemotePrinter_DYN, size );
+	DEBUG3("Send_block: sending '%s'", msg );
+	status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
+		msg, strlen(msg), &ack );
 	DEBUG3("Send_block: status '%s'", Link_err_str(status) );
 	if( status ){
-		setstatus( cfp, "error '%s' sending '%s' to %s@%s",
-			Link_err_str(status), tempbuf, printer, host );
+		char *v;
+		if( (v = safestrchr(msg,'\n')) ) *v = 0;
+		if( ack ){
+			plp_snprintf(error,sizeof(error),
+			"error '%s' with ack '%s' sending str '%s' to %s@%s",
+			Link_err_str(status), Ack_err_str(ack), msg,
+			RemotePrinter_DYN, RemoteHost_DYN );
+		} else {
+			plp_snprintf(error,sizeof(error),
+			"error '%s' sending str '%s' to %s@%s",
+			Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
+		}
+		Set_str_value(&job->info,ERROR,error);
 		return(status);
 	}
 
 	/* now we send the data file, followed by a 0 */
 	DEBUG3("Send_block: sending data" );
-	status = Link_copy( host, sock, 0, transfer_timeout,
-		cfp->transfername, tempfd, size );
+	ack = 0;
+	status = Link_copy( RemoteHost_DYN, sock, 0, transfer_timeout,
+		transfername, tempfd, size );
 	DEBUG3("Send_block: status '%s'", Link_err_str(status) );
-	if( size > 0 && status == 0 ){
-		status = Link_ack( host,sock,transfer_timeout,0x100,&ack );
+	if( status == 0 ){
+		status = Link_send( RemoteHost_DYN,sock,transfer_timeout,"",1,&ack );
 		DEBUG3("Send_block: ack status '%s'", Link_err_str(status) );
 	}
 	if( status ){
-		log( LOG_INFO,
-			"Send_files: error '%s' sending data file '%s' to %s@%s",
-			Link_err_str( status ), cfp->transfername, printer, host );
-		setstatus( cfp, "error sending '%s' to %s@%s",
-			id, printer, host );
+		char *v;
+		if( (v = safestrchr(msg,'\n')) ) *v = 0;
+		if( ack ){
+			plp_snprintf(error,sizeof(error),
+				"error '%s' with ack '%s' sending file '%s' to %s@%s",
+				Link_err_str(status), Ack_err_str(ack), id,
+				RemotePrinter_DYN, RemoteHost_DYN );
+		} else {
+			plp_snprintf(error,sizeof(error),
+				"error '%s' sending file '%s' to %s@%s",
+				Link_err_str(status), id, RemotePrinter_DYN, RemoteHost_DYN );
+		}
+		Set_str_value(&job->info,ERROR,error);
+		return(status);
 	} else {
-		setstatus( cfp, "completed '%s' to %s@%s",
-			id, printer, host );
+		setstatus( job, "completed sending '%s' to %s@%s",
+			id, RemotePrinter_DYN, RemoteHost_DYN );
 	}
-	close( tempfd );
+	close( tempfd ); tempfd = -1;
 	return( status );
 }
 
 /***************************************************************************
  *int Send_secure_block(
- *	char *host,				- host name
- *	char *printer,			- printer name
+ *	char *RemoteHost_DYN,				- RemoteHost_DYN name
+ *	char *RemotePrinter_DYN,			- RemotePrinter_DYN name
  *	char *dpathname *dpath  - spool directory pathname
  *	int *sock,					- socket to use
- *	struct control_file *cfp,	- control file
+ *	struct job *job,	- control file
  *	int transfer_timeout,		- transfer timeout
  *	)						- acknowlegement status
  *
  * 1. Get a temporary file
  * 2. Generate the compressed data files - this has the format
- *      \REQ_BLOCKprinter user@host filename
+ *      \REQ_BLOCKRemotePrinter_DYN user@RemoteHost_DYN filename
  *      \3count cfname\n
  *      [count control file bytes]
  *      \4count dfname\n
  *      [count data file bytes]
  *
- * 3. send the \REQ_SECprinter user@host file size\n
- *    string to the remote host, wait for an ACK
+ * 3. send the \REQ_SECRemotePrinter_DYN user@RemoteHost_DYN file size\n
+ *    string to the remote RemoteHost_DYN, wait for an ACK
  * 
  * 4. send the compressed data files - this has the format
  *      wait for an ACK
- *
  ***************************************************************************/
 
-int Send_secure_block( char *host, char *printer,
-	struct dpathname *dpath,
-	int *sock, struct control_file *cfp, int transfer_timeout,
-	struct printcap_entry *printcap_entry )
+int Send_secure_block( int *sock, struct job *job, int transfer_timeout )
 {
 	int tempfd;			/* temp file for data transfer */
-	int err;			/* ACME! The best... */
 	int status = 0;		/* job status */
-	char tempfilename[MAXPATHLEN];
+	int n, count;			/* ACME temps */
+	char *tempfilename, *auth_id, *transfername, *s;
+	char buffer[SMALLBUFFER];
 
-	DEBUG3("Send_secure_block: printer '%s'", printer );
-	if( Is_server && cfp->auth_id[0] == 0 ){
+	DEBUG3("Send_secure_block: RemotePrinter_DYN '%s'", RemotePrinter_DYN );
+	auth_id = Find_str_value(&job->info,AUTHINFO,Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if( Is_server && auth_id == 0 ){
+		Errorcode = JABORT;
 		fatal( LOG_ERR,
 		"Send_secure_block: missing job authentication");
 	}
 
-	tempfd = Make_temp_fd( tempfilename, sizeof(tempfilename) );
-	if( tempfd <= 0 ){
-		err = errno;
-		Errorcode = JFAIL;
-		logerr_die( LOG_INFO,
-			"Send_secure_block: error opening temp fd" );
-	}
-	if( ftruncate( tempfd, 0 ) < 0 ){
-		err = errno;
-		Errorcode = JFAIL;
-		logerr_die( LOG_INFO,
-			"Send_secure_block: error truncating temp fd" );
-	}
-
-	status = Send_files( host, printer, dpath, sock, cfp,
-		transfer_timeout, printcap_entry, tempfd );
-
+	tempfd = Make_temp_fd( &tempfilename );
+	Setup_auth_info( tempfd, 0 );
 	if( status ) return( status );
-
-	status = Send_auth_transfer( 1, printer, host, sock, transfer_timeout,
-		printcap_entry, tempfd, tempfilename, 2, cfp->transfername );
-
+	status = Send_normal( &tempfd, job, transfer_timeout, tempfd);
+	if( status ) return( status );
+	close( tempfd ); tempfd = -1;
+	status = Send_auth_transfer( sock, transfer_timeout, tempfilename, 1 );
 	DEBUG3("Send_secure_block: status %d", status );
+	if( status == 0 ){
+		buffer[0] = 0;
+		while( (count = strlen(buffer)) < sizeof(buffer)-1
+			&& (n = read(*sock, buffer+count, sizeof(buffer)-count-1)) > 0 ){
+			buffer[count+n] = 0;
+			DEBUG3("Send_secure_block: read %d, '%s'", n, buffer );
+			while( (s = strchr( buffer, '\n' )) ){
+				*s++ = 0;
+				setstatus( job, "SECURE ERROR from %s@%s '%s'",
+					RemotePrinter_DYN, RemoteHost_DYN, buffer );
+				memmove( buffer, s, strlen(s)+1 );
+			}
+		}
+	}
 	return( status );
 }

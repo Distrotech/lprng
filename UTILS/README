@@ -10,7 +10,7 @@ accounting.pl - accounting script in Perl
 		:ae=|/.../accounting.pl end
 test_accounting.sh - simple test script for accounting.pl
 
-cheap_lpq, cheap_lpr - perl scripts to do really simple LPQ, LPR
+cheap_lpq, cheap_lpr - per l scripts to do really simple LPQ, LPR
    simulation.  Can also be extended  to lprm, lpc, etc.
 
 remote_active: script to do checking for a remote active printer

@@ -17,6 +17,24 @@
 
 SRC=@srcdir@
 @SET_MAKE@
+INSTALL=@INSTALL@
+
+# prefix
+prefix=@prefix@
+# exec prefix
+exec_prefix=@exec_prefix@
+# for binaries
+bindir=@bindir@
+# for admin type of binaries
+sbindir=@sbindir@
+# for the filters
+libexecdir=@libexecdir@
+# for the configuration stuff
+sysconfdir=@sysconfdir@
+
+LPD_PERMS_PATH=@LPD_PERMS_PATH@
+LPD_CONF_PATH=@LPD_CONF_PATH@
+
 
 #=============================================================================
 # List the directories you want to generate:
@@ -34,7 +52,7 @@ all: $(DIRS)
 	TAGS clean uninstall install \
 	info dvi check \
 	realclean mostlyclean distclean \
-	dist ci cifiles FRC default newmake cifast
+	dist update ci cifiles FRC default newmake cifast
 MAKETARGET=all
 
 
@@ -49,27 +67,45 @@ $(ALLDIRS): FRC
 
 FRC:
 
-#install default versions of the lpd.conf and lpd.perm files
-default:
-	cp ${SRC}/lpd.conf ${SRC}/lpd.perms /etc
 
 ###############################################################################
 
-TAGS clean uninstall install: 
+TAGS clean install::
 #GNU
 	$(MAKE) MAKETARGET=$@ $(DIRS)
 #
 #BSD 	$(MAKE) -f Makefile.bsd MAKETARGET=$@ $(DIRS)
 
+install::
+	#install default versions of the lpd.conf and lpd.perm files
+
+	f=`echo $(LPD_CONF_PATH) | sed -e 's/:.*//'` ; g=lpd.conf; \
+	if [ -z "$$f" ] ; then f=${admindir}/$$g; fi; \
+	if [ ! -d `dirname $$f` ] ; then ${SRC}/mkinstalldirs `dirname $$f` ; fi; \
+	$(INSTALL) -m 644 $(SRC)/$$g $$f.sample; \
+	if [ ! -f "$$f" ] ; then \
+		echo $(INSTALL) -m 644 $(SRC)/$$g $$f; \
+		$(INSTALL) -m 644 $(SRC)/$$g $$f; \
+	fi;
+
+	f=`echo $(LPD_PERMS_PATH) | sed -e 's/:.*//'` ; g=lpd.perms; \
+	if [ -z "$$f" ] ; then f=${admindir}/$$g; fi; \
+	if [ ! -d `dirname $$f` ] ; then ${SRC}/mkinstalldirs `dirname $$f` ; fi; \
+	$(INSTALL) -m 644 $(SRC)/$$g $$f.sample; \
+	if [ ! -f "$$f" ] ; then \
+		echo $(INSTALL) -m 644 $(SRC)/$$g $$f; \
+		$(INSTALL) -m 644 $(SRC)/$$g $$f; \
+	fi;
+
 info dvi check:
 
 realclean mostlyclean distclean: clean
-	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
-	-rm -f config.cache config.h config.log config.status Makefile Makefile.bsd
-
-
+	-rm -f config.cache config.h config.log config.status
+	-rm -f Makefile */Makefile */Makefile.bsd
 
 ###############################################################################
+uninstall:
+	echo "you must uninstall by hand"
 
 cifast ci: cifiles
 	for i in $(ALLDIRS); do \
@@ -79,8 +115,9 @@ cifast ci: cifiles
 	done; \
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
 
-CI=
-CO=-kv
+#CI=
+#CO=-kv
+CO=-l
 
 cifiles: newmake
 	if test ! -d RCS ; then mkdir RCS; fi;
@@ -103,9 +140,11 @@ cifiles: newmake
 newmake:
 	for i in Makefile.in */Makefile.in ; do \
 		d=`dirname $$i`; b=`basename $$i .in`; c=$${d}/$${b}.bsd.in; \
+		rcs -l $$c; \
 		sed -e '/^#GNU/,/^#/d' -e 's/^#BSD.//' -e 's/$$^/$$>/' \
 		 -e	's/^if/.if/' -e 's/^endif/.endif/' $$i >/tmp/Makefile.bsd.in; \
 		if test -f $$c ; then rm -f $$c; fi; cp /tmp/Makefile.bsd.in $$c;\
+		ci $(CI) -l -mUpdate -t-Initial $$c; \
 		done
 
 ###############################################################################
@@ -130,34 +169,22 @@ update:
 		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure.in >configure.in; \
 		cp configure /tmp/configure; \
 		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure >configure ;
+	sed -e 's/"/\\"/g' -e 's/.*/"&",/' ${SRC}/COPYRIGHT > ${SRC}/src/include/copyright.h
+	sed -e 's/"/\\"/g' -e 's/.*/"&",/' ${SRC}/LICENSE > ${SRC}/src/include/license.h
 
 #GNU
+	$(MAKE) -C HOWTO update
 	$(MAKE) -C man update
 #
 #BSD 	(cd man; $(MAKE) update)
-	
+#BSD 	(cd HOWTO; $(MAKE) update)
+
 
 ###############################################################################
 # Make a gnutar distribution
 #   - note that not all the source tree is sent out
 #
 ###############################################################################
-
-shar:
-	DIR=`pwd | sed 's,.*/,,' `; \
-	cd ..; \
-	ls -l $${DIR}.tgz ; \
-	if [ ! -f $${DIR}.tgz ]; then \
-		echo You must make TAR file first; \
-		exit 1; \
-	fi; \
-	tar ztf $${DIR}.tgz | sed -e '/\/$$/d' | sort >/tmp/_a.list; \
-	head /tmp/_a.list; \
-	shar -S -n $${DIR} -a -s papowell@astart.com \
-	   -c -o /tmp/$${DIR}-Part -l100 </tmp/_a.list; \
-	cat $${DIR}/README /tmp/$${DIR}-Part.01 >/tmp/_a.list; \
-	cat >/tmp/$${DIR}-Part.01 /tmp/_a.list; \
-	rm /tmp/_a.list
 
 dist_list:
 	echo RCS >/tmp/X
@@ -177,7 +204,6 @@ dist_list:
 	echo '*.bak' >>/tmp/X
 	echo '*.rej' >>/tmp/X
 	echo '*.tex' >>/tmp/X
-	echo '*.ps' >>/tmp/X
 	echo '*.dvi' >>/tmp/X
 	echo '*.log' >>/tmp/X
 	echo '?' >>/tmp/X
@@ -186,7 +212,8 @@ dist_list:
 	echo '*,v' >>/tmp/X
 	echo '*intl/po2tbl.sed' >>/tmp/X
 	echo '*po/POTFILES' >>/tmp/X
-	for i in tags \
+	echo '*/lpd.conf' >>/tmp/X
+	for i in pclbanner tags \
 		authenticate_pgp readfilecount removeoneline setupauth \
 		sserver sclient \
 		liblpr.a checkpc lpr lpd lpq lprm lpc lpbanner \
@@ -203,24 +230,16 @@ dist_list:
 		echo $${DIR}/Makefile >>/tmp/X;
 #	cat /tmp/X
 
-dist: dist_list
+tar: clean dist_list 
 	DIR=`pwd | sed 's,.*/,,' `; \
 		cd ..; \
 		tar zXcf /tmp/X $${DIR}.tgz $${DIR}; \
 		md5 $${DIR}.tgz | pgp -fast -u papowell@astart > $${DIR}.tgz.md5
 
-dist_doc: dist_list
-	echo src >>/tmp/X
-	echo LP_SIMULATION >>/tmp/X
-	echo UTILS >>/tmp/X
-	DIR=`pwd | sed 's,.*/,,' `; \
-		cd ..; \
-		tar zXcf /tmp/X $${DIR}_doc.tgz $${DIR}; \
-		md5 $${DIR}_doc.tgz > $${DIR}_doc.md5
-	
-dist_src: dist_list
-	echo man >>/tmp/X
-	DIR=`pwd | sed 's,.*/,,' `; \
-		cd ..; \
-		tar zXcf /tmp/X $${DIR}_src.tgz $${DIR}; \
-		md5 $${DIR}_src.tgz > $${DIR}_src.md5
+configure: configure.in
+	autoconf
+	autoheader
+
+dist: configure update newmake ci tar
+
+###########################################################################

@@ -26,7 +26,7 @@ all-yes:
 all-no:
 	echo "No internationalization"
 
-install installcheck uninstall check mostlyclean clean:
+install installcheck uninstall check mostlyclean clean realclean:
 
 cifast ci:
 

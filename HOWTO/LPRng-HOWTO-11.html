@@ -1,395 +1,576 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
 <HEAD>
-<TITLE> LPRng-HOWTO: Accounting</TITLE>
+ <META NAME="GENERATOR" CONTENT="SGML-Tools 1.0.9">
+ <TITLE> LPRng-HOWTO: Configuration File lpd.conf and Options</TITLE>
+ <LINK HREF="LPRng-HOWTO-12.html" REL=next>
+ <LINK HREF="LPRng-HOWTO-10.html" REL=previous>
+ <LINK HREF="LPRng-HOWTO.html#toc11" REL=contents>
 </HEAD>
 <BODY>
 <A HREF="LPRng-HOWTO-12.html">Next</A>
 <A HREF="LPRng-HOWTO-10.html">Previous</A>
 <A HREF="LPRng-HOWTO.html#toc11">Contents</A>
 <HR>
-<H2><A NAME="s11">11. Accounting</A></H2>
+<H2><A NAME="lpdconf"></A> <A NAME="configfile"></A> <A NAME="s11">11. Configuration File lpd.conf and Options</A></H2>
 
-<P>The LPRng method for doing accounting is based on experiences in a
-Academic environment,  where avoiding printing accounting procedures
-has long been practiced.  While the LPRng procedures are not bombproof,
-they do provide a wide range of facilities,  with various degrees
-of trust built into them.
-<H2><A NAME="ss11.1">11.1 Printer Accounting Reality Check</A>
+<P>The values in the LPRng configuration file
+(default: <CODE>/etc/lpd.conf</CODE>)
+override the compile time default values for printcap options.
+See the
+<A HREF="LPRng-HOWTO-21.html#index">Index To All The Configuration and Printcap Options</A>
+for an index to a complete list of configuration options.
+<H2><A NAME="ss11.1">11.1 Configuration File Format</A>
 </H2>
 
-<P>The following was written
-by Patrick Powell
-<CODE>&lt;papowell@astart.com></CODE>
-in response to the expressions of frustration
-that are periodically vented in the
-<CODE>
-<A HREF="LPRng-HOWTO-1.html#maillist">lprng@iona.ie</A></CODE>
-mailing list.
-While this addresses the use of a particular set of printer filters,
-i.e. - the
-<A HREF="LPRng-HOWTO-6.html#ifhp">CTI-ifhp</A>
-set,
-the comments are appropriate to other issues.
-<P>In Academic institutions, avoiding printing accounting has been
-regarded as a challenge,  an ongoing game of fat cat and poor starving
-mouse, between the Administration and the downtrodden, poor, overcharged
-student.  The following is a lighthearted ramble down the dark lane of
-printing accounting.
-<P>We will disregard the fact that if most students put as much effort
-into their studies as in finding ways to avoid accounting procedures
-then they would be Rhodes Scholar material,  but I digress...
-<P>The accounting procedures put into the LPRng and the hpif filters may
-appear to be extraordinarily complex,  but believe me, they are not.
-Firstly, we make the assumption that the printer has some sort of
-non-volatile page counter mechanism that is reliable and impervious to
-power on/off cycles.  Without this mechanism the enterprising student
-ummm... user will simply turn off the printer.  Software that prescans
-jobs for line counts and pages is notoriously unreliable,  given even
-the most modest efforts of users to hide these procedures.   The cost
-of running a PostScript simulator simply to do accounting has its
-flaws; without ensuring that the simulator has all of the interesting
-security loopholes closed, such as opening files, etc.,  it can become
-a trap door to hell for the system administrator.
-<P>Secondly,  we must make the assumption that the student... uhhh...
-user will not be able to tinker with the page counter mechanism, i.e.-
-they will not be able to roll back the odometer on the printer, FOR THE
-DURATION OF A SINGLE JOB.  I will digress and point out that a student
-actualy did this for a challenge;  it only took him a couple of weeks
-of study and a fully equipped micrcontroller lab, and two (2) laser
-printers which he ruined in the experiment.  HP was not amused when we
-sent them back under warranty,  claiming that this our 'normal lab usage.'
-<P>Lastly,  you should not mind a small amount of pilferage, or a few
-pages here and there being charged to the wrong account.
-<P><B>How Does It Work?</B>
-<P>The basic mechanism the CTI/LPRng filter uses is to record the page
-counter value at the start and end of each part of a print job. Each
-record has the form:
+<P>The LPRng distribution contains a template <CODE>lpd.conf</CODE> file
+which can be installed as
+<CODE>/etc/lpd.conf</CODE>.
+The configuration file has the following format:
+<BLOCKQUOTE><CODE>
 <PRE>
-start -ppagecounter -Ff -kjob -uuser -hhost -R... 
-end  -ppages -qpagecounter -Ff -kjob -uuser -hhost -R...
-</PRE>
-<P>When we use the OF filter and/or banners,  we will see the
-individual jobs bracketed by the OF filter records:
-<PRE>
-start -p100 -Fo -kcfA100taco -uuser -hhost -R...  
-start -p101 -Ff -kcfA100taco -uuser -hhost -R...  
-end  -p1 -q102 -Ff -kcfA100taco -uuser -hhost -R...  
-start -p102 -Ff -kcfA100taco -uuser -hhost -R...
-end  -p3 -q105 -Ff -kcfA100taco -uuser -hhost -R...  
-end  -p5 -q105 -Fo -kcfA100taco -uuser -hhost -R...
-</PRE>
-<P>It should be clear from the above that all we need to do is to add up
-the values for the -Fo (OF) filter lines and we are done.
-<P>Unfortunately,  this is too simplistic.  If for some reason the job is
-killed or terminates due to error conditions,  the OF filter may not
-get to finish its work.  Thus,  we may see the following:
-<PRE>
-start -p100 -Fo -kcfA100taco -uuser -hhost -R...  
-start -p101 -Ff -kcfA100taco -uuser -hhost -R...  
-start -p110 -Fo -kcfA101taco -uuser -hhost -R...
-</PRE>
-<P>This is a clear indication that the user's job has been terminated.  In
-this case we need to use the differences between pagecounters of the start
-records to do accounting.
-<P>There is a caveat to all of this;  that is the problem of the last dead
-job in the list.  If the last line in the accounting file is:
-<PRE>
-start -p110 -Fo -kcfA101taco -uuser -hhost -R...
-</PRE>
+# lpd.conf generated from  on Wed Apr  7 07:59:48 PDT 1999
 
-is the last job finished or did it abort?
-<P><B>Who Used Up 2000 Pages of Paper Today?</B>
-<P>Now we move on to the problem of real time accounting.  Due to limited
-budgets, etc., many institutions would like to strictly enforce limits
-on paper use by students. As jobs are printed their accounts should be
-docked for the amount of paper use.  One way to do this is to have an
-external accounting procedure update a shared database.  The CTI filter
-has provision for a shell script to be called at the end of print job;
-this is done by both the OF and IF filter.  Thus, we can blithely
-assume that there is a central database carefully getting updates
-from the LPRng software, probably from dozens of different printers,
-and updating the accounting information.
-<P>The first question to be asked is simple:  is this worth it?
-Perhaps doing accounting as a batch job once an hour/four times
-a day/once a day is cheaper than building an running such a database.
-If it costs $5K/year for the database software, you might just consider
-ignoring the 10,000 pages that get lost in the shuffle and use
-a simple set of awk/sed/perl scripts to update a database once
-an hour.
-<P><B>BAD JOBS - Who Do We Bill?</B>
-<P>We inevitably run into an interesting question:
-what happens if a job does not complete correctly?
-<P>If you use the completion of the OF filter as a success status, I have
-to point out that many students... ummm... users soon find ways to send
-jobs to the printer that will cause it to lock up after their output
-has been printed. These jobs require power cycling of the printer and
-restarting the filter; a bit extreme, perhaps, but it has happened.
-<P>I suggest that you simply adopt a 'bill to last user of record'
-attitude,  using the pagecount information as follows:
-<PRE>
-start OF -- starting point for THIS job
-start IF --  nice information, but not useful
-start IF --
-end   OF -- ending point for this job - can record infomation
-start OF --
-if no end OF for previous job,  then treat as end OF and
-      update accounting.
-</PRE>
-<P>Now somebody is sure to complain that they got charged for a bunch of
-pages that they did not use.  This is inevitable;  always carry a
-can of oil for the squeaky wheels.  I might make the observation that
-once is accident, twice is coincidence, but three times is malice;
-be wary of the constant complainer and check out not only him or her but
-also their co-workers.
-<P><B>How Do We Update the Database?</B>
-<P>I suggest that database update be done as follows:
-<P>You maintain a 'last page reported' counter for each printer in the
-database.  When a successful job reports in,  check to see that<BR>
-pagecount + joblength ==  newpagecount;
-<P>If this is not the case,  then you have had a some unsuccessful jobs.
-In this case I strongly recommend that you have a means to request the
-accounting reporting program to go back through the accounting file and
-find the last report for the page counter value and try to backtrack
-through the accounting files.  The accounting file is one of the first
-things to be attacked by students... Ummm...  users.  It should NOT be
-kept on an NFS exported or mounted file system.  It should be
-carefully pruned and copied, perhaps on an hourly basis.
-<P>Now some administrators have fallen in love with network based printers;
-do not believe ANYTHING that comes over a network connection without
-some form of authentication;  PGP has some very nice Public Key
-mechansims for handling this.  This is a major weakness in using a
-database for keeping track of accounting - a weak authentication
-mechanism may lead to denial of service attacks by students flooding
-the database with bogus print usage reports;  suddenly NOBODY can print
-and the administrator is driven to turning off accounting.
-<P>Good luck.  I am never surprised when I encounter yet another wrinkle in
-this area.
-<P>Patrick ("You call me a Bean Counter?  Guido,  break this kid's fingers<BR>
-&nbsp; &nbsp; &nbsp; &nbsp; with an adding machine!") Powell
-<H2><A NAME="ss11.2">11.2 How HP Printers Implement Page Counters</A>
-</H2>
+#   The values in this file are the default values.
+#   If you modify the file,  set the value to something other than the default
+#   For example, '# default force_localhost' means the 'force_localhost' option
+#    change this to 'force_localhost@' to have the opposite effect.
 
-<P>The following is from
-<A HREF="http://www.hp.com/cposupport/printers/support_doc/bpl02119.html">http://www.hp.com/cposupport/printers/support_doc/bpl02119.html</A><P><B>HP LaserJet Printer Family - Page Count</B>
-<P>Description Of The Page Count Feature On HP LaserJet 4 Family
-Printers
-<P>All HP LaserJet 4/5/6 family printers have a page count feature
-built into the firmware. However, this feature works differently
-depending on which HP LaserJet printer is being used. The following
-is a description of how the page count feature works for each
-printer within the HP LaserJet 4/5/6 printer families.
-<PRE>
-HP LaserJet 4/4M printers
-HP LaserJet 4 Plus/4M Plus printers
-HP LaserJet 4P/4MP printers
-HP LaserJet 4Si/4Si MX printers
-HP LaserJet 4ML printers
-HP LaserJet 5P/5MP printers
-HP LaserJet 6P/6MP printers
-</PRE>
-<P>All of the above printers use the same method for keeping track of
-the number of copies. There are really two different page count
-values: Primary and Secondary values. Every time a page is printed,
-whether it is an internal job (such as a self-test) or a standard
-print job, the Secondary page count increases by one. This value
-is stored in standard RAM. Once the Secondary page count value
-reaches 10, the Primary page count will increase by 10. The Primary
-page count value is stored in a type of memory called NVRAM
-(Non-Volatile RAM). This is important, since NVRAM is not cleared
-when the printer is powered off. Standard RAM, on the other hand,
-is cleared when the printer is turned off or reset. Thus, the
-Primary page count only increases in increments of 10.
-<P>Example
-<P>You have a brand new HP LaserJet 6P printer and you print a self-test
-page. When you look on the test page for the Page Count value, you
-will see that it says 1. Next, you decide to print a two page letter
-and, after that, another self-test. The page count value now says
-4. Internally, the printers Secondary page count (stored in RAM)
-has the value of 4 while the Primary page count (stored in NVRAM)
-still has the value of 0. Now, you turn the printer off, then back
-on, and print another self-test. The page count value again says
-1 since the previous value of 4, stored in RAM, was cleared when
-the printer was powered off. Finally, print a ten page document
-and then turn the printer off. Upon turning the printer back on
-and printing out another self test, you see that the page count
-value is 11.  Internally, the Secondary page count value is back
-at 1 while the Primary page count value (stored in NVRAM) is 10.
-Added together, you end up with the resulting value seen on the
-self-test page.
-<P>HP LaserJet 4L/5L/6L Printers
-<P>The reason that the page count method for the HP LaserJet 4L/5L/6L
-printers differ from that of the other printers is that the HP
-LaserJet 4L/5L/6L printers do not have any NVRAM available. Thus,
-no way exists for the printer to retain a page count value once
-the printer is powered off. The HP LaserJet 4L/5L/6L printers have
-only a single page count value that increases in increments of one
-until the printer is powered off. At that point, the page count
-value is reset and begins from 0 once again.
-<P>
-<A NAME="accountingserver"></A> <H2><A NAME="ss11.3">11.3 Accounting Printcap Options</A>
-</H2>
-
-<P>The accounting facilities are controlled and enabled by the following
-entries in the printcap file.  The default value is indicated.
-<P>
-<CENTER><TABLE BORDER><TR><TD>
-<BR>
-Tag</TD><TD>Default Value</TD><TD>Purpose</TD></TR><TR><TD>
-af</TD><TD>NULL</TD><TD>accounting file name</TD></TR><TR><TD>
-as</TD><TD>"jobstart $H $n $P $k $b $t"</TD><TD>accounting info for job start</TD></TR><TR><TD>
-ae</TD><TD>"jobend $H $n $P $k $b $t"</TD><TD>accounting info for job end</TD></TR><TR><TD>
-accounting_server</TD><TD>NULL</TD></TR><TR><TD>
-achk</TD><TD>FALSE</TD></TR><TR><TD>
-la</TD><TD>TRUE</TD><TD>do accounting for 'local' printer</TD></TR><TR><TD>
-ar</TD><TD>FALSE</TD><TD>do accounting for 'remote' transfers</TD></TR><TR><TD>
-
-</TD></TR></TABLE></CENTER>
-<P>
-<H2><A NAME="ss11.4">11.4 Accounting File</A>
-</H2>
-
-<P>The most common method of accounting is to record the start and end
-times of a job and its size to the accounting file. A typical entry
-for the printcap defaults are shown below.
-<PRE>
-jobstart -H'taco.astart.com' -n'root' -P'ps' -k'cfA938taco.astart.com' \
-    -b'1093' -t'Nov  5 19:39:59'
-start -p'12942' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
-    -c'0' -F'o' -t'Sun Nov  5 19:39:25 1995'
-start -p'12944' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
-    -c'0' -F'f' -t'Sun Nov  5 19:39:27 1995'
-end -p'12944' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
-    -b'3' -c'0' -F'f' -t'Sun Nov  5 19:39:58 1995'
-end -p'12942' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
-    -b'2' -c'0' -F'o' -t'Sun Nov  5 19:39:59 1995'
-jobend -H'taco.astart.com' -n'root' -P'ps' -k'cfA938taco.astart.com' \
-    -b'1093' -t'Nov  5 19:39:59'
-</PRE>
-<P>The <CODE>jobstart</CODE> and <CODE>jobend</CODE> lines are added by the LPD server,  as
-specified by the <CODE>as</CODE> and <CODE>ae</CODE> printcap options;
-the -b (byte count) indicates the numbers of bytes in the job.
-<P>The <CODE>start</CODE> and <CODE>end</CODE>
-lines are produced by the filters;
-the of filter has an -Fo, and the if filter a -Ff entry.
-The filters in the LPRng distribution produce the
-indicated output format by default.
-The -p value is the current value of a page counter device (if any),
-and the -b value indicates the total number of pages used.
-<P>It should be clear that a simple AWK or Perl script will be able to
-process an accounting file and update accounting information for
-accounting purposes;  the usual problems with truncation, time stamps,
-etc., are left as an exercise for the system administrator.
-<P>Note that the accounting file must exist; LPRng will not create it
-(and also will not create the log file).  This prevents accidentally
-growing log and accounting files.
-<H2><A NAME="ss11.5">11.5 Remote Server Accounting</A>
-</H2>
-
-<P>To accommodate even more aggressive and centralized accounting,
-a method to make a connection to a print server and send information
-to the server has been provided as well.
-If <CODE>achk</CODE> option is set,
-it is assumed that the <CODE>af</CODE> entry specifies a connection to
-server on a remote host.
-The <CODE>lpd</CODE> server will send the <CODE>as</CODE> string to the server,
-and then wait for a single line of text from the remote server.
-If the first word on the return line is
-<CODE>accept</CODE> or <CODE>hold</CODE>,
-the job will be either accepted for printing or held.
-Any other value will cause the job to be deleted.
-<P>At the end of the job the <CODE>ae</CODE> string will be sent to the server.
-No response is expected.  Example:
-<P>
-<PRE>
-:af=accounting.site.com%2300,tcp
-:achk
-:as=starting
-:ae=ending
-</PRE>
-<P>The port that the connection originates from will be in the range
-set by the configuration or printcap
-<CODE>
-<A HREF="LPRng-HOWTO-14.html#originateport">originate_port</A></CODE>
-option.
-<H2><A NAME="ss11.6">11.6 Using Filters For Accounting</A>
-</H2>
-
-<P>Some sites have expressed interest in using a central accounting
-mechanism to check that users have permissions.  This can be done by
-using the an alternative form of the as (accounting start) and ae
-(accounting end) printcap tags.  If the as and ae are filter
-specifications,  then a filter is invoked.  If the as (accounting
-start) filter returns a non-zero exit status,  then its value
-is used to handle the job as indicated by
-the
-<A HREF="LPRng-HOWTO-6.html#termination">Abnormal Termination</A>
-codes for filters.
-At the end of the job the :ae: filter will be invoked in a similar manner,
-but its exit status is ignored.
-<P>When using an accounting filter,
-the STDIN  is attached (read/write) to the accounting file or remote host
-specified by the <CODE>af</CODE> printcap option,
-STDOUT to the output device,
-and STDERR to the log file.
-The filter program would be invoked with the default filter options.
-<P>For example, here is a sample entry to check and update accounting
-<PRE>
-printer
-   :as=|/usr/local/lib/filters/accounting.pl start
-   :ae=|/usr/local/lib/filters/accounting.pl end
-</PRE>
-<H2><A NAME="ss11.7">11.7 Accounting Utility accounting.pl</A>
-</H2>
-
-<P>In order to provide a framework for doing using the outlined accounting
-methods,  the LPRng distribution
-<CODE>UTILS</CODE> directory has a <CODE>accounting.pl</CODE> script.
-This script does the following.
-<OL>
-<LI>It is assumed that the accounting filter is invoked with the
-following printcap entry.
-The start and end is used by the filter to determine at which point in
-the accounting process it is invoked.
-<PRE>
-printer
-   :as=|/usr/local/lib/filters/accounting.pl start
-   :ae=|/usr/local/lib/filters/accounting.pl end
-</PRE>
-</LI>
-<LI>It maintains the accounting file as a set of entries in the following format:
-<PRE>
-START [job identification]
-start -pnn ...
+# Purpose: always print banner, ignore lpr -h option
+#   default ab@
+# change ---
+ab
+# Purpose: query accounting server when connected
+#   default achk@
+# Purpose: accounting at end (see also af, la, ar, as)
+#   default ae=jobend $H $n $P $k $b $t
+# Purpose: name of accounting file (see also la, ar)
+#   default af=
 ...
-end -pnn+pagecount ...
-END -ppagecount [job identification]
 </PRE>
-</LI>
-<LI>Each time the filter is invoked with the <CODE>start</CODE>
-tags,
-it will add a <CODE>START</CODE> record to the end of the accounting file.</LI>
-<LI>When it is invoked with the <CODE>end</CODE> option,
-it will update the accounting file and add an <CODE>END</CODE> entry.</LI>
-<LI>It will handle aborted jobs by looking for jobs with have a <CODE>START</CODE>
-entry and a following <CODE>start</CODE> line and assuming that they
-progressed to the point of starting print operations,
-i.e. - the printer page counter was accessed and reported.
-It will then look for the next <CODE>START</CODE> entry with a
-following <CODE>start</CODE> line,
-and assume that the pages between the two points were used by the
-aborted job.</LI>
-</OL>
-<P>Administrators can use this script as a starting point for more advanced
-accounting.
+</CODE></BLOCKQUOTE>
+<P>The options are set exactly as for a printcap file,
+but do not require a leading colon (:).
+<P>To change the default value of an option,
+remove the comment character and edit the entry as shown in the above example.
+<P>To force the <CODE>lpd</CODE> server to use the new options,
+use the <CODE>lpc reread</CODE> command.
+<H2><A NAME="allowgetenv"></A> <A NAME="ss11.2">11.2 Configuration Information</A>
+</H2>
+
+<P>In order to protect system security,
+the
+<CODE>/etc/lpd.conf</CODE>
+and
+<CODE>/etc/printcap</CODE>
+files should be read only.
+<P>For testing purposes
+when LPRng is compiled with the <CODE>-DGET_ENV</CODE> option
+LPRng uses the value of the <CODE>LPD_CONF</CODE> environment variable
+as the path to the <CODE>lpd.conf</CODE> file.
+<B>This is a security loophole,
+and should not be used when running SETUID ROOT or as ROOT.</B>
+<H2><A NAME="ss11.3">11.3 Configuration Options</A>
+</H2>
+
+<P>The following variables are used to set default behavior
+for the LPRng software,
+or are commonly used for configuration of LPRng operations.
+<H3><A NAME="defaultformat"></A> default_format</H3>
+
+<P>Default format for printing.
+Usually,
+<CODE>default_format=f</CODE>,
+but setting it to
+<CODE>default_format=l</CODE> will cause all files spooled by lpr
+to be spooled as binary files.
+<H3><A NAME="defaultpermission"></A> default_permission=ACCEPT</H3>
+
+<P>The default permissions to use when checking for printing or other permissions.
+<H3><A NAME="defaultpriority"></A> default_priority=A</H3>
+
+<P>The default priority for a print job.
+<H3><A NAME="defaultremotehost"></A> default_remote_host=localhost</H3>
+
+<P>The default <CODE>lpd</CODE> server host.
+<H3><A NAME="defaulttmpdir"></A> default_tmp_dir=/tmp</H3>
+
+<P>The default directory for temporary files.
+<P>This option can be used to specify a default
+printer. If no value is given (default), the first printer in the
+printcap file will be used when no printer is specified.
+<H3>domain_name=domain.name</H3>
+
+<P>You will only need to set this if LPRng can't determine your
+hosts domain name itself.
+This is usually a desperation option when DNS or some other
+database system is not available.
+The value of the $USER environment variable will be used as the return address.
+<H2><A NAME="forcequeuename"></A> <A NAME="usequeuename"></A> <A NAME="qq"></A> <A NAME="ss11.4">11.4 The Record Queue Name qq and force_queuename flags</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>qq</CODE><EM>&nbsp;&nbsp;Insert queue name into control file</EM></LI>
+<LI> <CODE>use_queuename</CODE><EM>&nbsp;&nbsp;(alias for qq)</EM></LI>
+<LI> <CODE>force_queuename=</CODE><EM>&nbsp;Queuename to be used</EM></LI>
+</UL>
+<P>The printcap information consists of the printer name and aliases;
+when a job is spooled to a printer alias,
+it is actually spooled to the main printer entry.
+<P>The
+<CODE>qq</CODE>
+use queuename option or its
+alias
+<CODE>use_queuename</CODE>
+tells
+LPRng to record the queue name that a job was queued to,
+and make it available to other software for processing.
+The
+<CODE>force_queuename=...</CODE>
+entry forces this name to be used.
+This capability has some interesting possibilities,
+as shown below.
+<BLOCKQUOTE><CODE>
+<PRE>
+pr1_landscape|pr1_portrait|pr_raw:lp=pr@host:qq
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>If a job is printed using
+<CODE>lpr -Ppr1_landscape</CODE>,
+then
+<CODE>pr1_landscape</CODE>  will be recorded as the spool queue name
+by the LPRng software.
+<P>Later,
+when the job is processed by a filter,
+the filter will be invoked with a
+<CODE>-Qpr1_landscape</CODE>
+command line option.
+The filter can use the name of the queue to enable say,
+landscape,
+portrait,
+or raw
+orientations.
+<BLOCKQUOTE><CODE>
+<PRE>
+john|tom|frank:lp=pr@host:force_queuename=office
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>This printcap entry forces the queuename to be <CODE>office</CODE>;
+this information could be used by a central routing facility to
+process the information is a suitable manner.
+<H2><A NAME="xt"></A> <A NAME="ml"></A> <A NAME="checkfornonprintable"></A> <A NAME="ss11.5">11.5 The check_for_nonprintable Flag</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>check_for_nonprintable</CODE><EM>&nbsp;&nbsp;LPR checks for non-printable file </EM></LI>
+<LI> <CODE>ml=</CODE><EM>&nbsp;&nbsp;minimum number of printable characters </EM></LI>
+</UL>
+<P>Normally, <CODE>lpr</CODE>
+checks an <CODE>f</CODE> format file
+for non-printable characters (i.e., escape characters) at the start
+of the print file.
+Disabling this check allows you to print executable files,
+etc., which can cause extreme abuse of your printer.
+<P>Disabling can be done on a single printcap basis,
+or you can do this on a global basis by modifying the
+configuration information (see
+<A HREF="#lpdconf">lpd.conf</A>).
+<P>The <CODE>ml</CODE> value specifies the number of characters that
+are to be checked.
+Clearly,  if it is 0, none will be checked.
+<H2><A NAME="rg"></A> <A NAME="ss11.6">11.6 The rg Restrict Use to Group Members Option</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>rg=</CODE><EM>Restricted group list</EM></LI>
+</UL>
+<P>The <CODE>rg</CODE> value specifies a list of groups.
+If this value is present use of a printer or operation is restricted to only
+users in a particular group.
+<P>This was a wimpy attempt to do restrictions on print facilities.
+The -Ppr@host option overrides this check,
+unless the <CODE>rg</CODE> value is put in the LPRng defaults.
+<P>However,
+it does provide a simple tool to have clients do some form of permissions
+checking that only the <CODE>lpd</CODE> server could normally do.
+<H2><A NAME="fx"></A> <A NAME="ss11.7">11.7 The fx Allowed Formats Option</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>fx=</CODE><EM>supported formats for printing</EM></LI>
+</UL>
+<P>The <CODE>fx</CODE> option restricts the formats supported by
+a spool queue.
+The <CODE>lpr</CODE> program uses these to check if a requested format
+is supported.
+By default, all formats are supported.
+<H2><A NAME="safechars"></A> <A NAME="ss11.8">11.8 Fixing Bad Control Files and Metacharacters</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>safe_chars=</CODE><EM>additional safe characters for control file </EM></LI>
+</UL>
+<P>RFC1179 defines a simple protocol and standard for print jobs to be
+interchanged between print spooling systems.
+Unfortunately,
+there were some major mistakes in not specifying the exact form
+that text would take when placed in the control file.
+<P>In addition,
+there are some simple coding errors that have been made,
+but due to their wide distribution in major vendors software,
+need to be accommodated.
+See
+<A HREF="#reverselpqformat">reverse_lpq_format</A>
+for an example.
+<P>By default,
+LPRng will brutally convert a non-conforming RFC1179 control file
+into one that is acceptable to most,
+if not all,
+existing RFC1179 implementation.
+<P>In order to prevent problems with 
+LPRng ruthlessly purges all characters but
+upper and lower case letters,
+spaces, tabs, and <CODE>-_.@/:()=,+-%</CODE> from the control file,
+replacing suspicious characters with '_'.
+<P>For some installations,
+the default set of safe characters may be overly restrictive.
 For example,
-rather than just recording the information,
-at the job start the script can query either a local database
-or a remote server to see if the user has permissions to access the printer.
-At the end of the job or when an <CODE>END</CODE> line is written to the
-accounting file,
-the local database or remote accounting server can be updated.
-<A NAME="authref"></A> <HR>
+<EM>vintage</EM> software may generate files with <CODE>#</CODE> characters
+in the <CODE>J</CODE> line of the control file.
+The replacement of this character may cause other things to stop
+working.
+<P>The <CODE>safe_chars</CODE> option allows the user to specify an additional
+set of safe characters in the <CODE>lpd.conf</CODE> configuration file(s).
+For example, <CODE>safe_chars=#"</CODE> would allow the
+<CODE>#</CODE>
+and
+<CODE>"</CODE>
+characters to appear in the control file.
+<P>In addition,
+LPRng will ruthlessly regenerate control file entries and data file names
+so that they are compliant with all known RFC1179 implementations.
+<H2><A NAME="controlfilterbk"></A> <A NAME="bk"></A> <A NAME="ss11.9">11.9 Using the bk Option and Control File Filters</A>
+</H2>
+
+<P>Options:
+<UL>
+<LI> <CODE>bk</CODE><EM>&nbsp;&nbsp;Berkeley compatible control file</EM></LI>
+<LI> <CODE>control_filter=</CODE><EM>Control file filter</EM></LI>
+</UL>
+<P>One of the more serious problems is when a print spooler (LPR) program
+does not generate print jobs in a manner compatible with a remote system.
+<P>While LPRng performs checks for improper implementations of RFC1179,
+it will try to accept a job
+even under the most severe abuse of the protocol.
+However,
+other spoolers are not so forgiving.
+<P>Some spoolers require that the contents of the control file
+be in <B>exactly</B> the order that the original 1988 BSD LPR software
+generated them.
+While some entries can be missing,
+all the entries present in the file must be in an explicit order.
+<P>The <CODE>bk</CODE> (Berkeley LPD compatible control file) option
+causes LPR and LPD to reformat the control file,
+removing objectionable entries.
+The control file of a job being sent to
+a remote printer will have its control file entries restricted to
+letters in (and the same order) as  HPJCLIMWT1234.
+<P>However,
+there are some very odd commercial implementations that require
+<EM>more</EM> information than is present.
+To assist with this,
+the <CODE>control_filter</CODE> option can be used.
+This specifies a program that will process the control file
+before it is sent to a remote destination.
+See
+<A HREF="LPRng-HOWTO-13.html#secfilter">Filters</A> for details on filter
+operation,
+and
+<A HREF="LPRng-HOWTO-12.html#controlfilter">Control Filters</A> for details on the
+point during job processing when the
+<CODE>control_filter</CODE> 
+is used.
+<P>The <CODE>control_filter</CODE> program is run with the standard set of filter options.
+STDIN is attached to the control file and
+the STDOUT will be used as the control file value
+sent to the remote host.
+<P>The
+<CODE>control_filter</CODE>
+can rewrite the control file.
+The only restriction is that it cannot modify the
+<B>names</B> or delete datafiles.
+Here is a small snip of PERL code that shows how to
+rewrite the control file:
+<BLOCKQUOTE><CODE>
+<PRE>
+# you need to get PERL to do a 'dup' call on FD 0
+$status = 0;
+@cf_lines = &lt;STDIN>;
+# mess about with the control file
+foreach $line (@cf_lines) {
+   # or whatever you want
+   print STDOUT $line;
+} 
+exit $status;
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>The exit code of the
+<CODE>control_filter</CODE>
+is used to determine whether to proceed in processing.
+See
+<A HREF="LPRng-HOWTO-12.html#errorcodes">Errorcodes</A> for details.
+<H2><A NAME="mc"></A> <A NAME="ss11.10">11.10 Maximum Copies</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>mc#</CODE><EM>maximum copies </EM></LI>
+</UL>
+<P>The <CODE> mc</CODE> value specifies the maximum number of
+copies of a job that can be printed on a printer using the
+<CODE>lpr -Knn </CODE> or
+<CODE>lpr -#nn </CODE> option.
+<H2><A NAME="minfree"></A> <A NAME="ss11.11">11.11 The minfree Minimum Spool Queue Space Option</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>minfree=</CODE><EM>Size in Kbytes</EM></LI>
+</UL>
+<P>If this value is non-zero,
+then the <CODE>lpd</CODE> receiving server checks to see that there is the
+specified number of Kbytes of file space available before
+accepting a job.
+<H2><A NAME="useinfocache"></A> <A NAME="usedate"></A> <A NAME="syslogdevice"></A> <A NAME="mstimeresolution"></A> <A NAME="fulltime"></A> <A NAME="db"></A> <A NAME="ss11.12">11.12 Debugging</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>debugging=</CODE><EM>debugging options</EM></LI>
+<LI> <CODE>full_time</CODE><EM>&nbsp;&nbsp;full or extended time format</EM></LI>
+<LI> <CODE>ms_time_resolution</CODE><EM>&nbsp;&nbsp;millisecond time resolution</EM></LI>
+<LI> <CODE>syslog_device=</CODE><EM>syslog alternative device</EM></LI>
+<LI> <CODE>use_date</CODE><EM>&nbsp;&nbsp;put date information in control file</EM></LI>
+<LI> <CODE>use_info_cache</CODE><EM>&nbsp;&nbsp;cache printcap and other information</EM></LI>
+</UL>
+<P>The LPRng software has a very powerful debugging capability.
+Since most printing problems occur on remote systems where it is impossible
+to run debuggers,  and since most systems do not do core dumps of SETUID ROOT
+programs,
+the LPRng software provides a very verbose set of log file trace messages.
+<P>First,
+serious errors or other information are logged using the
+<EM>syslog()</EM> facilities.
+If these are not present on a system,
+then the messages are logged to the device specified by
+<CODE>syslog_device</CODE>.
+<P>For client programs, the debugging options are specified on the command
+line and output is directed to STDERR.
+For the <CODE>lpd</CODE> server,
+debugging commands can be specified on the command line OR as the
+<CODE>db=options</CODE> printcap value.
+Output is directed to the log file (<CODE>lf</CODE> option value, default log).
+<P>A typical debug entry has the format <CODE>2,network+1,database</CODE>.
+This sets the general
+debugging level to 2, network debugging to 1 and the database debugging level
+to the default.  The following debugging options and levels are supported.
+<UL>
+<LI>nnn - general purpose debugging level</LI>
+<LI>network - network debugging</LI>
+<LI>database - database debugging</LI>
+<LI>receive - job or command reception debugging</LI>
+<LI>print - detailed job printing debugging</LI>
+</UL>
+<P>The <CODE>full_time</CODE> flag forces the logging and other information
+which has timestamps to have a full (year, month, day, etc.) timestamp.
+The
+<CODE>ms_time_resolution</CODE> flag forces millisecond time resolution
+in the time stamp.
+The
+<CODE>use_date</CODE> flag forces a date value to be placed in a control file
+if there is none.
+<P>The <CODE>use_info_cache</CODE> (default ON) causes <CODE>lpd</CODE>
+to cache printcap and configuration information.
+This is desirable except when trying to change values in printcap files and
+test the results.
+By using <CODE>use_info_cache@</CODE> in the configuration information,
+you can get immediate responses.
+Also, see
+<A HREF="LPRng-HOWTO-18.html#lpcreread">lpc reread</A>
+for another method.
+<H2><A NAME="reportserveras"></A> <A NAME="spreadjobs"></A> <A NAME="spoolfileperms"></A> <A NAME="spooldirperms"></A> <A NAME="lockfile"></A> <A NAME="ipv6"></A> <A NAME="ss11.13">11.13 LPD Specific</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>ipv6</CODE><EM>&nbsp;&nbsp;use IPV6 Network facilities </EM></LI>
+<LI> <CODE>lockfile=</CODE><EM>lpd server lock file</EM></LI>
+<LI> <CODE>report_server_as=</CODE><EM>server name for status reports</EM></LI>
+<LI> <CODE>spool_dir_perms#</CODE><EM>spool directory permissions </EM></LI>
+<LI> <CODE>spool_file_perms#</CODE><EM>spool file permissions </EM></LI>
+<LI> <CODE>spread_jobs#</CODE><EM>job number spread</EM></LI>
+</UL>
+<P>These options are usually LPD specific.
+For example,
+the <CODE>ipv6</CODE> specifies that the IPV6 protocol,
+rather than IPV4 will be used.
+In future versions,  this may not be necessary.
+<P>The <CODE>lockfile</CODE> specifies the location of the
+lock file used by the <CODE>lpd</CODE> server.
+This file has the <CODE>lpd_port</CODE> value appended to form a unique
+lock file name.
+<P>The <CODE>spool_dir_perms</CODE> and <CODE>spool_file_perms</CODE>
+(default 0700 and 0600 respectively)
+values are the (numeric) permissions for the spool directory and
+spool files.
+<P>The <CODE>spread_jobs</CODE> option is obsolete.
+The <CODE> spread_jobs</CODE> option was a desperation fix to handle
+difficulties with the arrival of a large number of jobs with the same or
+close job number.  The LPD server would fork children,
+each of whom tried to lock the job files.  The spread value randomly
+chose a new number in the range about the original job number.
+However,
+it is still preserved for legacy systems which still have problems with
+file locking.
+<P>The <CODE>report_server_as</CODE> option allows an administrator to
+masquerade a server with another name.
+This could be useful if various load sharing activities are
+being carried out,  or if there are problems reconfiguring DNS
+to cause the correct server name to be reported.
+<H2><A NAME="ss11.14">11.14 Legacy Compatibility</A>
+</H2>
+
+<P>The following arguments have been provided for compatibility with
+legacy systems.
+<H3><A NAME="allowduplicateargs"></A> The allow_duplicate_args Option</H3>
+
+<P>Options used:
+<UL>
+<LI> <CODE>allow_duplicate_args</CODE><EM>&nbsp;&nbsp;allow lpr to have duplicate arguments </EM></LI>
+</UL>
+<P>Some users would like duplicate LPR and LPRM command line
+arguments to override earlier ones,
+i.e. -
+<CODE>lpr -a x -a y </CODE> should be equivalent to
+<CODE>lpr -a y</CODE>
+<P>The <CODE>allow_duplicate_args</CODE> option
+allows the various client programs to have duplicate arguments.
+The last specified argument on the command line will override
+previous values.
+<H3><A NAME="classinstatus"></A> The class_in_status Options</H3>
+
+<P>Options used:
+<UL>
+<LI> <CODE>class_in_status</CODE><EM>&nbsp;&nbsp;show class name in status</EM></LI>
+</UL>
+<P>Setting the <CODE>class_in_status</CODE> option causes the class name rather
+than priority to be displayed in the status information.
+<H3><A NAME="reverselpqformat"></A> The reverse_lpq_format Option</H3>
+
+<P>Options used:
+<UL>
+<LI> <CODE>reverse_lpq_format=</CODE><EM>&nbsp;reverse LPQ status format for specified remote systems</EM></LI>
+</UL>
+<P>Various Solaris and other System V implementations support an RFC1179 interface
+to remote printers.
+Unfortunately,  there is a problem in that when they send a status request,
+the status format is reversed.
+That is,
+when LONG status format is wanted,
+they send SHORT,
+and vice versa.
+<P>The <CODE>reverse_lpq_format=</CODE> specifies a list of printers or IP addresses
+for which the <CODE>lpd</CODE> server will return LONG status when SHORT is
+requested,
+and vice versa.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+reverse_lpq_format=*.eng.com,130.192.0.0/16
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>will cause hosts whose Fully Qualified Domain Name (FQDN) ends in
+<CODE>eng.com</CODE> or from subnet <CODE>130.192.0.0</CODE> to have reversed
+status returned.
+<H3><A NAME="returnshortstatus"></A> <A NAME="shortstatuslength"></A> The return_short_status and short_status_length Options</H3>
+
+<P>Options used:
+<UL>
+<LI> <CODE>return_short_status=</CODE><EM>&nbsp;return short LPQ status for specified remote systems</EM></LI>
+<LI> <CODE>short_status_length#</CODE><EM>&nbsp;short LPQ status length in lines</EM></LI>
+</UL>
+<P>In order to be compatible with non-LPRng client programs,
+some administrators would like <CODE>lpd</CODE> to return a short or brief
+status to normal status queries.
+<P>The <CODE>return_short_status=</CODE> specifies a list of printers or IP addresses
+for which the <CODE>lpd</CODE> server will return an abbreviated
+status when LONG status is requested.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+return_short_status=*.eng.com,130.192.0.0/16
+short_status_length#3
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>will cause hosts whose Fully Qualified Domain Name (FQDN) ends in
+<CODE>eng.com</CODE> or from subnet <CODE>130.192.0.0</CODE> to get only
+3 lines of detailed status returned.
+<H3><A NAME="forcelpqstatus"></A> The force_lpq_status Options</H3>
+
+<P>Options used:
+<UL>
+<LI> <CODE>force_lpq_status=</CODE><EM>&nbsp;force LPQ status format for specified remote systems</EM></LI>
+</UL>
+<P>In order to be compatible with non-LPRng client programs which
+are totally unpredictable,
+this allows the administrator to specify the format for LPQ
+status when requests arrive.
+<P>The <CODE>force_lpq_status=</CODE> specifies a list of formats
+and printers or IP addresses
+for which the <CODE>lpd</CODE> server will return status
+in the specified format.
+The entry has the format
+<CODE>KEY=list;KEY=list...</CODE> where
+<CODE>KEY</CODE> is
+<CODE>s</CODE> for short and
+<CODE>l</CODE> for long format,
+and list is a list of hosts or IP addresses.
+For example:
+<BLOCKQUOTE><CODE>
+<PRE>
+force_lpq_status=s=pc*.eng.com,130.192.12.0/24,l=sun*.eng.com
+</PRE>
+</CODE></BLOCKQUOTE>
+<P>will cause hosts whose Fully Qualified Domain Name (FQDN) matches
+<CODE>pc*eng.com</CODE> or from subnet <CODE>130.192.12.0</CODE> to get short
+status returned and hosts which match <CODE>sun*.eng.com</CODE> get
+long status.
+<H3><A NAME="forcefqdnhostname"></A> <A NAME="ignorerequesteduserpriority"></A> The ignore_requested_user_priority and force_fqdn_hostname Options</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>ignore_requested_user_priority</CODE><EM>prevent users from queue jumping</EM></LI>
+<LI><CODE>force_fqdn_hostname</CODE><EM>force FQDN hostname in control file</EM></LI>
+</UL>
+<P>Some students... um... users... will request a high priority for their job
+in order to jump the queue of waiting jobs.
+This option will cause the <CODE>lpd</CODE> server to ignore the
+requested user priority.
+However, the <CODE>topq</CODE> operation will still be effective.
+<P>Similarly,  some print spoolers do not put a FQDN host name in their control file.
+The <CODE>force_fqdn_hostname</CODE> flag will cause <CODE>lpd</CODE> to put a FQDN
+host name in the control file.
+This option will assume that the domain is where the connection originated from.
+<H3><A NAME="lprbsd"></A> The lpr_bsd Options</H3>
+
+<P>This will force the <CODE>lpr -m</CODE> (send mail to user)
+option not to take an argument, as in the BSD lpr.
+<HR>
 <A HREF="LPRng-HOWTO-12.html">Next</A>
 <A HREF="LPRng-HOWTO-10.html">Previous</A>
 <A HREF="LPRng-HOWTO.html#toc11">Contents</A>

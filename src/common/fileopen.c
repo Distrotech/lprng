@@ -1,26 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: fileopen.c
- * PURPOSE: file opening code
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"fileopen.c,v 3.12 1998/03/29 18:32:48 papowell Exp";
+ static char *const _id =
+"$Id: fileopen.c,v 5.1 1999/09/12 21:32:34 papowell Exp papowell $";
+
 
 #include "lp.h"
 #include "fileopen.h"
 #include "errorcodes.h"
-#include "lockfile.h"
-#include "pathname.h"
-#include "timeout.h"
-#include "killchild.h"
-#include "waitchild.h"
+#include "child.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -39,7 +33,7 @@ routines will be the only ones to change.
  * Returns: fd of open file, -1 if error.
  ***************************************************************************/
 
-int Checkread( char *file, struct stat *statb )
+int Checkread( const char *file, struct stat *statb )
 {
 	int fd = -1;
 	int status = 0;
@@ -48,7 +42,7 @@ int Checkread( char *file, struct stat *statb )
 	/* open the file */
 	DEBUG3("Checkread: file '%s'", file );
 
-	if( (fd = open( file, O_RDONLY|O_NOCTTY, Spool_file_perms ) )< 0 ){
+	if( (fd = open( file, O_RDONLY|O_NOCTTY, Spool_file_perms_DYN ) )< 0 ){
 		status = -1;
 		err = errno;
 		DEBUG3( "Checkread: cannot open '%s', %s", file, Errormsg(err) );
@@ -89,13 +83,13 @@ int Checkread( char *file, struct stat *statb )
  * Returns: fd of open file, -1 if error.
  *     status in *statb
  ***************************************************************************/
-int Checkwrite( char *file, struct stat *statb, int rw, int create,
+int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 	int nodelay )
 {
 	int fd = -1;
 	int status = 0;
 	int options = O_NOCTTY|O_APPEND;
-	int mask;
+	int mask, oldumask;
 	int err = errno;
 
 	/* open the file */
@@ -114,8 +108,12 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create,
 	if( create ){
 		options |= O_CREAT;
 	}
-	if( (fd = open( file, options, Spool_file_perms )) < 0 ){
-		err = errno;
+	/* turn off umask */
+	oldumask = umask( 0 ); 
+	fd = open( file, options, Spool_file_perms_DYN );
+	err = errno;
+	umask( oldumask );
+	if( fd < 0 ){
 		status = -1;
 		DEBUG3( "Checkwrite: cannot open '%s', %s", file, Errormsg(err) );
 	} else if( nodelay ){
@@ -168,202 +166,10 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create,
 		close( fd );
 		fd = -1;
 	}
-	DEBUG4("Checkwrite: file '%s' fd %d, inode 0x%x", file, fd, statb->st_ino );
+	DEBUG2("Checkwrite: file '%s' fd %d, inode 0x%x, perms 0%o",
+		file, fd, statb->st_ino, statb->st_mode );
 	errno = err;
 	return( fd );
-}
-
-/***************************************************************************
- * Make_temp_fd( char *name, int namelen )
- * 1. we can call this repeatedly,  and it will make
- *    different temporary files.
- * 2. we NEVER modify the temporary file name - up to the first '.'
- *    is the base - we keep adding suffixes as needed.
- * 3. Remove_files uses the tempfile information to find and delete temp
- *    files so be careful.
- ***************************************************************************/
-
-static int Tempcount;
-
-char *Init_tempfile( void )
-{
-	char *dir = 0;
-	int len;
-	struct stat statb;
-
-	if( Tempfile == 0 ){
-		Tempfile = malloc_or_die( sizeof( Tempfile[0] ) );
-	}
-	memset(Tempfile, 0, sizeof( Tempfile[0]) );
-
-	if( Is_server ){
-		if( CDpathname ){
-			dir = Clear_path( CDpathname );
-		}
-		if( dir == 0 && SDpathname ){
-			dir = Clear_path( SDpathname );
-		}
-		if( dir == 0 ){
-			dir = Server_tmp_dir;
-		}
-	} else {
-		dir = getenv( "LPR_TMP" );
-		if( dir == 0 || *dir == 0 ){
-			dir = Default_tmp_dir;
-		}
-	}
-	if( dir == 0 || stat( dir, &statb ) != 0
-		|| !S_ISDIR(statb.st_mode) ){
-		fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
-	}
-	Init_path( Tempfile, dir );
-	len = Tempfile->pathlen;
-	plp_snprintf( Tempfile->pathname+len, sizeof(Tempfile->pathname)-len,
-		"bfA%03d", getpid() );
-	Tempfile->pathlen = strlen( Tempfile->pathname );
-	dir = Clear_path(Tempfile);
-	Tempcount = 0;
-	DEBUG3("Init_tempfile: temp file '%s'", dir );
-	return(dir);
-}
-
-static int temp_registered;
-
-int Make_temp_fd( char *temppath, int templen )
-{
-	int tempfd = -1;
-	int len;
-	struct stat statb;
-	char pathname[MAXPATHLEN];
-
-	if( temp_registered == 0 ){
-		register_exit( (exit_ret)Remove_tempfiles, 0 );
-		temp_registered = 1;
-	}
-	if( Tempfile == 0 || Tempfile->pathname[0] == 0){
-		Init_tempfile();
-	}
-	/* put an arbitrary limit of 1000 on tempfiles */
-	while( tempfd < 0 && Tempcount < 1000 ){
-		safestrncpy( pathname, Clear_path( Tempfile ) );
-		len = strlen(pathname);
-		plp_snprintf( pathname+len, sizeof(pathname)-len, ".%d", ++Tempcount );
-		if( temppath ) strncpy( temppath, pathname, templen );
-		DEBUG0("Make_temp_fd: trying '%s'", pathname );
-		tempfd = Checkwrite( pathname, &statb, O_RDWR|O_CREAT|O_EXCL, 1, 0 );
-		DEBUG0("Make_temp_fd: tempfd %d", tempfd );
-	}
-	DEBUG0("Make_temp_fd: using '%s'", pathname );
-	if( ftruncate( tempfd, 0 ) < 0 ){
-		Errorcode = JABORT;
-		logerr_die( LOG_ERR,
-			"Make_temp_fd: cannot truncate file '%s'",pathname);
-	}
-	return( tempfd );
-}
-
-
-void Close_passthrough( struct filter *filter, int timeout )
-{
-	static int report;
-	plp_status_t status;
-	int err;
-	DEBUGF(DRECV2)("Close_passthrough: pid %d", filter->pid );
-	if( filter->pid > 0 ){
-		if( filter->input > 0 ){
-			close( filter->input );
-			filter->input = -1;
-		}
-		if( filter->output > 0 ){
-			close( filter->output );
-			filter->output = -1;
-		}
-		report = status = err = 0;
-		report = plp_waitpid_timeout( timeout, filter->pid,  &status, 0 );
-		if( report <= 0 && filter->pid > 0 ) kill( filter->pid, SIGINT );
-		filter->pid = -1;
-	}
-}
-
-/***************************************************************************
- * Remove_tempfiles()
- *  - remove the tempfiles created for this job
- ***************************************************************************/
-
-void Remove_tempfiles( void )
-{
-	/* scan for matching files with same suffix */
-	struct dirent *d;				/* directory entry */
-	DIR *dir;
-	struct dpathname dpath;
-	char pathname[MAXPATHLEN];
-	char *filename, *p;
-	int len;
-
-
-	temp_registered = 0;
-	DEBUGF(DRECV2)("Remove_tempfiles: Tempfile '%s'", Tempfile );
-	Close_passthrough( &Passthrough_send, 3 );
-	Close_passthrough( &Passthrough_receive, 3 );
-
-	if( Tempfile && Tempfile->pathname[0] ){
-		safestrncpy( pathname, Clear_path(Tempfile) );
-		if( (filename = strrchr( pathname, '/' )) ){
-			*filename++ = 0;
-			Init_path( &dpath, pathname );
-		} else {
-			return;
-		}
-		Init_path( &dpath, pathname );
-		DEBUGF(DRECV2)("Remove_tempfiles: pathname '%s', filename '%s'",
-			pathname, filename );
-		dir = opendir( pathname );
-		len = strlen( filename );
-		if( dir ) while( (d = readdir(dir)) ){
-			if( strncmp( d->d_name, filename, len ) ) continue;
-			if( strlen(d->d_name) == len ) continue;
-			/* we found a match */
-			p = Add_path( &dpath, d->d_name );
-			DEBUGF(DRECV2)("Remove_tempfiles: removing '%s'", p );
-			unlink( p );
-		}
-	}
-	if( Tempfile ){
-		Tempfile->pathname[0] = 0;
-	}
-}
-
-/***************************************************************************
- * Remove_files( void *p )
- *  Remove files created for transfer of a job
- *  Called by cleanup functions
- ***************************************************************************/
-static void unlinkf( char *s )
-{
-	if( s && s[0] ){
-		DEBUGF(DRECV3)("Remove_files: unlinking '%s'", s );
-		unlink( s );
-	}
-}
-
-void Remove_files( void *nv )
-{
-	int i;
-	struct data_file *data;	/* list of data files */
-
-	DEBUGF(DRECV3)( "Remove_files: removing job files" );
-	if( Cfp_static && Cfp_static->remove_on_exit ){
-		data = (void *)Data_files.list;
-		for( i = 0; i < Data_files.count; ++i ){
-			unlinkf( data[i].openname );
-			if( data[i].cfline[0] ){
-				unlinkf( data[i].cfline+1 );
-			}
-		}
-		unlinkf( Cfp_static->openname );
-		unlinkf( Cfp_static->transfername );
-		unlinkf( Cfp_static->hold_file );
-	}
 }
 
 /***************************************************************************
@@ -371,11 +177,11 @@ void Remove_files( void *nv )
  *  Tries to do Checkwrite() with a timeout 
  ***************************************************************************/
 int Checkwrite_timeout(int timeout,
-	char *file, struct stat *statb, int rw, int create, int nodelay )
+	const char *file, struct stat *statb, int rw, int create, int nodelay )
 {
 	int fd;
 	if( Set_timeout() ){
-		Set_timeout_alarm( timeout, 0);
+		Set_timeout_alarm( timeout );
 		fd = Checkwrite( file, statb, rw, create, nodelay );
 	} else {
 		fd = -1;

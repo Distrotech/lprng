@@ -1,23 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: lockfile.h
- * PURPOSE: lockfile.c functions
- * lockfile.h,v 3.2 1997/12/16 15:06:44 papowell Exp
- **************************************************************************/
-
-#ifndef _LOCKFILE_H
-#define _LOCKFILE_H
+ * $Id: lockfile.h,v 5.1 1999/09/12 21:33:00 papowell Exp papowell $
+ ***************************************************************************/
 
 
-int Lockf( char *filename, struct stat *statb );
-int Lock_fd( int fd, char *filename, struct stat *statb );
-int Do_lock (int fd, const char *filename, int block );
-int LockDevice(int fd, char *devname);
+
+#ifndef _LOCKFILE_H_
+#define _LOCKFILE_H_ 1
+
+/* PROTOTYPES */
+
+int Do_lock( int fd, int block );
+int LockDevice(int fd, int block);
 
 #endif

@@ -1,4 +1,4 @@
-#!/usr/contrib/bin/perl5
+#!/usr/local/bin/perl
 use Getopt::Std;
 $| = 1;
 getopts("cd");
@@ -34,20 +34,18 @@ print "prog $prog, name $name, ver $ver, newprog $newprog, oldprog $oldprog, new
 @err = `rm -f $path/$name-*gz*`;
 # check in current version
 if( !$no_checkin ){
-	print "doing gmake cifast\n";
-	`gmake cifast 2>&1`;
-	@err = `gmake cifast`;
+	print "doing gmake ci\n";
+	`gmake ci >/dev/tty 2>&1`;
 	if( $? ){
-		die "gmake cifast failed - @err $!\n";
+		die "gmake ci failed - $!\n";
 	}
 }
 # make a distribution
 if( !$no_dist ){
 	print "doing gmake dist\n";
-	`gmake dist 2>&1`;
-	@err = `gmake dist`;
+	`gmake dist >/dev/tty 2>&1`;
 	if( $? ){
-		die "gmake dist failed - @err $!\n";
+		die "gmake dist failed - $!\n";
 	}
 }
 if( ! -d "$path/OLD" ){
@@ -64,29 +62,29 @@ print "doing: cd $path/OLD; tar zxf $prog.tgz\n";
 if( $? ){ die "untar OLD failed - $!\n"; }
 $patch="$name-$oldvernum-$ver.patch";
 @err = `rm -f $path/$patch $path/$patch.gz`;
-open(PATCH,">$path/$patch") or die "cannot open $path/$patch - $!\n";
-print PATCH <<"EOF" ;
-# $patch Patch File- version $name-$oldvernum to $prog
+# open(PATCH,">$path/$patch") or die "cannot open $path/$patch - $!\n";
+# print PATCH <<"EOF" ;
+# # $patch Patch File- version $name-$oldvernum to $prog
+# # 
+# # If the $name software current distribution directory is
+# # $prog, and this patch file is $patch.gz,
+# # do the following.  NOTE - the -p flag to patch is CRITICAL,
+# # otherwise the wrong files will get patched.
+# #
+# # cd $name-$oldvernum
+# # gunzip -c $patch.gz | patch -p
+# # cd ..
+# # mv $name-$oldvernum $prog
+# # 
+# # ------ Patch starts here ----
 # 
-# If the $name software current distribution directory is
-# $prog, and this patch file is $patch.gz,
-# do the following.  NOTE - the -p flag to patch is CRITICAL,
-# otherwise the wrong files will get patched.
-#
-# cd $name-$oldvernum
-# gunzip -c $patch.gz | patch -p
-# cd ..
-# mv $name-$oldvernum $prog
-# 
-# ------ Patch starts here ----
-
-EOF
-close PATCH;
-print "cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch\n" ;
-@err = `cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch` ;
-print "doing gzip $path/$patch and md5 digest\n";
-@err = `gzip $path/$patch`;
-@err = ` md5 $path/$patch.gz | pgp -fast -u papowell\@astart > $path/$patch.gz.md5 `;
+# EOF
+# close PATCH;
+# print "cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch\n" ;
+# @err = `cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch` ;
+# print "doing gzip $path/$patch and md5 digest\n";
+# @err = `gzip $path/$patch`;
+# @err = ` md5 $path/$patch.gz | pgp -fast -u papowell\@astart > $path/$patch.gz.md5 `;
 
 print "\nupdating directory name and links\n";
 @err = `mv $dir $newdir`;
@@ -100,7 +98,7 @@ if( -l "$path/$name" ){
 if( $? ){ die "ln -s $newprog $name failed - @err $!\n"; }
 
 # make new version
-`gmake update 2>&1 `;
+`gmake update >/dev/tty 2>&1 `;
 if( $? ){
 	die "gmake update failed - $!\n";
 }

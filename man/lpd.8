@@ -1,4 +1,4 @@
-.ds VE LPRng-3.5.1
+.ds VE LPRng-3.6.12
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -751,12 +751,12 @@ The job is sent to the server running on the specified host.
 .PP
 This action can be modified by the following printcap or configuration
 tags.
-.IP 1. default_host=host
+.IP "1. default_host=host" 5
 (Configuration)
 If there is no printcap entry for the printer,
 the job is sent to the LPD server running on
 .L host .
-.IP 2. force_localhost
+.IP "2. force_localhost" 5
 (Configuration or printcap)
 If this flag is specified,  then LPR and other client programs will
 send the job to the server running on the localhost.
@@ -790,9 +790,9 @@ test:sd=/usr/spool/test
 test:sd=/usr/spool/test
   :rp=test:rm=host
 .ft R
+.fi
 .DE
 .IP 3. 5
-.PP
 The LPD server uses the same algorithm for sending jobs as the
 LPR program.
 A connection is made to the remote server and the files are copied
@@ -828,26 +828,21 @@ the connection is closed and the server waits for
 seconds before trying to reconnect.
 .SH "BOUNCE QUEUES"
 .PP
-A
+Normally job files are forwarded to a printer without
+modification.
+The
+.b lpd_bounce
+flag makes the queue a
 .I "bounce queue"
-is a special queue that allows jobs to be passed through
-various filters before being sent to an final destination.
-The
-.L lp
-entry 
-.B must
-specify the bounce queue name on the server.
-This will force all jobs to be passed to the bounce queue for
-processing.
-The
-.L bq
-field
-.B must
-specify the final destination for jobs after filtering.
-Data files are passed through the appropriate format filter
-before transfer to the destination.
-If there is no format filter,
-then no processing is done and the original file is transferred.
+and allows banners to be generated and
+data files to passed through the appropriate format filter.
+The entire output of this process is then passed to the
+destination with the format specified by 
+the
+.B bq_format
+option (default
+.B l
+or binary).
 See PRINTING OPERATIONS for details about filters.
 For example,
 the following printcap entry will filter format f files.
@@ -856,23 +851,36 @@ the following printcap entry will filter format f files.
 .ft CW
 .nf
 testbq:sd=/usr/spool/testbq:
-  :lp=testbq@host:bq=final@host
+  :lpd_bounce
+  :bq_format=l
+  :lp=final@host
   :if=/usr/lib/filter_for_f
   :mf=/usr/lib/filter_for_m
   :pf=/usr/lib/filter_for_pr
-  :translate_format=mfpf
+.fi
 .ft R
 .DE
-.fi
+.SH "CHANGING FORMAT OF DATAFILES"
 .PP
-When using a bounce queue,
-it is usually desirable to have the filters actually change the
-format types of the job as well as processing the data.
-This conversion can be forced using the printcap
-.L translate_format
-entry.
+Sometimes only the indicated format of the data files needs to be
+changed.
+This can be done using the
+.B translate_format
+option.
 This entry consists of pairs of lower case characters of the form SdSd...;
 S is the original and d is the translated format.
+.ne 1i
+.DS
+.ft CW
+.nf
+changeformat:
+  :sd=/usr/spool/changeformat:
+  :translate_format=mfpf
+  :lp=final@host
+.fi
+.ft R
+.DE
+.PP
 In the example above,
 the m format is processed by a filter, and then its format type is changed to f;
 the p format is processed similarly.
@@ -929,7 +937,8 @@ Here is a sample printcap entry:
 .DS
 .ft CW
 .nf
-t2|Test Printer 2:sd=/var/spool/LPD/t2
+t2|Test Printer 2
+    :sd=/var/spool/LPD/t2
     :lf=log
     :lp=t2@printserver
     :bq=t1@localhost
@@ -940,7 +949,6 @@ t2|Test Printer 2:sd=/var/spool/LPD/t2
 .PP
 The routing filter exit status is used as follows:
 .nf
-.ta 4n +4n +4n +4n +4n +4n
 	0  (JSUCC) - normal processing
 	37 (JHOLD) - job is held
 	any other value - job is deleted from queue
@@ -1495,52 +1503,41 @@ Rather than building authentication facilties into LPRng,
 an interface to authentication programs is defined,
 and will be used as follows.
 The printcap and configuration entries
-.I use_auth,
-.I default_auth,
-.I forward_auth,
-.I user_auth_command,
-.I server_auth_command,
-.I server_user,
+.I auth,
+.I auth_client_filter,
+.I auth_forward,
+.I auth_forward_id,
+.I auth_forward_filter,
+.I auth_receive_filter,
 and
-.I remote_user
+.I auth_server_id
 entries control authentication.
 The
-.I use_auth
+.I auth
 value specifies the type of authentication to be used
 for client to server authentication.
-The
-.I default_auth
-is the use_auth value to be used if explicitly
-requested by a user,
-i.e. - the
-.I lpr,
-.I lpc,
-.I lprm,
-and
-.I lpq
-.B -A
-(use authentication) option.
 Typical values would be
 pgp, kerberos, etc.
-The client programs use the
-.I user_auth_command
-executable to perform authentication.
+If the authentication type is not built-in,
+the client programs use the
+.I auth_client_filter
+program to perform authentication.
 When a server gets and an authentication request,
 it will use the
-.I server_auth_command
-to do authentication.
+.I auth_receive_filter
+program to perform authentication.
 The
-.I server_user
-is the remote server name used when a client
+.I auth_server_id
+is the remote server id used when a client
 is sending jobs to the server
 or when the server is originating a request.
 When a server forwards a request,
-it uses the
-.I forward_auth
+it uses
+.I auth_forward
 value to determine if authentication is to be done,
 and the
-.I remote_user
-as the destination server identification.
+.I auth_forward_id
+as the destination server id.
 .de NP
 .fi
 .in 0
@@ -1862,25 +1859,11 @@ The debugging information will
 help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
-.LP
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.
-In 1988 Patrick Powell released
-the PLP (Public Line Printer) software,
-which went through several evolutions.
-Justin Mason (jmason@iona.ie)
-generated PLP4.0 from several older releases of PLP.
-In 1992 Patrick Powell
-release LPRng,
-a completely redesigned and newly written version of the software.
-.LP
-The LPRng mailing list is plp@iona.ie;
-subscribe by sending mail to plp-request@iona.ie with
+The LPRng mailing list is lprng@lprng.com;
+subscribe by sending mail to lprng-request@lprng.com with
 the word subscribe in the body.
-The software is available from ftp://iona.ie/pub/LPRng.
-.LP
-LPRng is distributed under the GNU software license for non-commercial
-use,
-the Artistic License for limited commercial use. 
-Commerical support and licensing is available through
+The software is available from ftp://ftp.astart.com/pub/LPRng.
+.SH "AUTHOR"
 Patrick Powell <papowell@astart.com>.

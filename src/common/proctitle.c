@@ -1,18 +1,17 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: proctitle.c
- * PURPOSE: put a process title in place
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id = "proctitle.c,v 3.3 1998/03/24 02:43:22 papowell Exp";
+ static char *const _id =
+"$Id: proctitle.c,v 5.1 1999/09/12 21:32:51 papowell Exp papowell $";
 
 #include "lp.h"
+#include "proctitle.h"
 /**** ENDINCLUDE ****/
 
 /*
@@ -25,29 +24,6 @@ static char *const _id = "proctitle.c,v 3.3 1998/03/24 02:43:22 papowell Exp";
  * 		      display the title.
  */
 
-
-#if !defined(NO_SETPROCTITLE)
-void
-#ifdef HAVE_STDARGS
-proctitle (const char *fmt,...)
-#else
-proctitle (va_alist) va_dcl
-#endif
-{
-	char buf[LINEBUFFER];
-    VA_LOCAL_DECL
-    /* print the argument string */
-    VA_START (fmt);
-    VA_SHIFT (fmt, char *);
-    (void) vplp_snprintf(buf, sizeof(buf), fmt, ap);
-	setproctitle(buf);
-    VA_END;
-}
-
-#if defined(HAVE_SETPROCTITLE)
-void initsetproctitle(int argc, char *argv[], char *envp[])
-{;}
-#else
 /*
  * From the Sendmail.8.8.8 Source Distribution
  *
@@ -122,7 +98,7 @@ void initsetproctitle(int argc, char *argv[], char *envp[])
 # endif
 # if defined(__FreeBSD__)
 #  undef SPT_TYPE
-#  if __FreeBSD__ == 2
+#  if __FreeBSD__ >= 2
 #   include <osreldate.h>		/* and this works */
 #   if __FreeBSD_version >= 199512	/* 2.2-current right now */
 #    include <libutil.h>
@@ -209,7 +185,7 @@ void initsetproctitle(int argc, char *argv[], char *envp[])
 #  else
 #   ifndef NKPDE			/* FreeBSD 2.0 */
 #    define NKPDE 63
-typedef unsigned int	*pt_entry_t;
+ typedef unsigned int	*pt_entry_t;
 #   endif
 #  endif
 # endif
@@ -249,16 +225,18 @@ typedef unsigned int	*pt_entry_t;
 **  Pointers for setproctitle.
 **	This allows "ps" listings to give more useful information.
 */
+# if SPT_TYPE != SPT_BUILTIN
+ static char	**Argv = NULL;		/* pointer to argument vector */
+ static char	*LastArgv = NULL;	/* end of argv */
+#endif
 
-char		**Argv = NULL;		/* pointer to argument vector */
-char		*LastArgv = NULL;	/* end of argv */
 
-void
-initsetproctitle(argc, argv, envp)
+ void initsetproctitle(argc, argv, envp)
 	int argc;
 	char **argv;
 	char **envp;
 {
+# if SPT_TYPE != SPT_BUILTIN
 	register int i, envpsize = 0;
 	extern char **environ;
 
@@ -267,11 +245,12 @@ initsetproctitle(argc, argv, envp)
 	**  the top of memory.
 	*/
 
+	DEBUG1("initsetproctitle: doing setup");
 	for (i = 0; envp[i] != NULL; i++)
 		envpsize += strlen(envp[i]) + 1;
-	environ = (char **) malloc(sizeof (char *) * (i + 1));
+	environ = (char **) malloc_or_die(sizeof (char *) * (i + 1),__FILE__,__LINE__);
 	for (i = 0; envp[i] != NULL; i++)
-		environ[i] = safestrdup(envp[i]);
+		environ[i] = safestrdup(envp[i],__FILE__,__LINE__);
 	environ[i] = NULL;
 
 	/*
@@ -281,24 +260,38 @@ initsetproctitle(argc, argv, envp)
 	Argv = argv;
 
 	/*
-	**  Find the last environment variable within sendmail's
-	**  process memory area.
-	*/
-	while (i > 0 && (envp[i - 1] < argv[0] ||
-			 envp[i - 1] > (argv[argc - 1] +
-					strlen(argv[argc - 1]) + 1 + envpsize)))
-		i--;
-
-	if (i > 0)
-		LastArgv = envp[i - 1] + strlen(envp[i - 1]);
-	else
-		LastArgv = argv[argc - 1] + strlen(argv[argc - 1]);
+	**  Determine how much space we can use for setproctitle.  
+	**  Use all contiguous argv and envp pointers starting at argv[0]
+ 	*/
+	for (i = 0; i < argc; i++)
+	{
+		if (i==0 || LastArgv + 1 == argv[i])
+			LastArgv = argv[i] + strlen(argv[i]);
+		else
+			continue;
+	}
+	for (i=0; envp[i] != NULL; i++)
+	{
+		if (LastArgv + 1 == envp[i])
+			LastArgv = envp[i] + strlen(envp[i]);
+		else
+			continue;
+	}
+	DEBUG1("initsetproctitle: Argv 0x%lx, LastArgv 0x%lx", Argv, LastArgv);
+#else
+	DEBUG1("initsetproctitle: using builtin");
+#endif
 }
 
 #if SPT_TYPE != SPT_BUILTIN
 
+ void
+#ifdef HAVE_STDARGS
+ setproctitle (const char *fmt,...)
+#else
+ setproctitle (va_alist) va_dcl
+#endif
 
-void setproctitle(const char *fmt, ...)
 {
 # if SPT_TYPE != SPT_NONE
 	register char *p;
@@ -314,8 +307,13 @@ void setproctitle(const char *fmt, ...)
 	struct user u;
 #  endif
 
-	/* print heading for grep */
-	(void) safestrncpy(buf, fmt);
+    VA_LOCAL_DECL
+    /* print the argument string */
+    VA_START (fmt);
+    VA_SHIFT (fmt, char *);
+    (void) plp_vsnprintf(buf, sizeof(buf), fmt, ap);
+    VA_END;
+
 	i = strlen(buf);
 
 #  if SPT_TYPE == SPT_PSTAT
@@ -365,17 +363,3 @@ void setproctitle(const char *fmt, ...)
 }
 
 #endif /* SPT_TYPE != SPT_BUILTIN */
-#endif
-
-#else
-/* NO_SETPROCETITLE */
-void
-#ifdef HAVE_STDARGS
-proctitle (const char *fmt,...)
-#else
-proctitle (va_alist) va_dcl
-#endif
-{;}
-void initsetproctitle(int argc, char *argv[], char *envp[])
-{;}
-#endif

@@ -1,719 +1,632 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
- ***************************************************************************
- * MODULE: printjob.c
- * PURPOSE: print a file
- **************************************************************************/
+ ***************************************************************************/
 
-static char *const _id =
-"printjob.c,v 3.24 1998/03/29 18:32:53 papowell Exp";
+ static char *const _id =
+"$Id: printjob.c,v 5.1 1999/09/12 21:32:50 papowell Exp papowell $";
+
 
 #include "lp.h"
-#include "printcap.h"
-#include "decodestatus.h"
-#include "dump.h"
 #include "errorcodes.h"
-#include "fileopen.h"
-#include "jobcontrol.h"
-#include "killchild.h"
-#include "linksupport.h"
-#include "malloclist.h"
-#include "pr_support.h"
-#include "printcap.h"
 #include "printjob.h"
-#include "setstatus.h"
-#include "setup_filter.h"
-#include "waitchild.h"
 #include "getqueue.h"
+#include "child.h"
+#include "fileopen.h"
 /**** ENDINCLUDE ****/
+#if defined(HAVE_TCDRAIN)
+#  if defined(HAVE_TERMIOS_H)
+#    include <termios.h>
+#  endif
+#endif
 
 /***************************************************************************
-Commentary:
-Patrick Powell Sat May 13 08:24:43 PDT 1995
+ * Commentary:
+ * Patrick Powell Sat May 13 08:24:43 PDT 1995
+ * 
+ * The following algorithm is used to print a job
+ * 
+ * if( OF ){
+ * 	of_fd = open( OF filter -> dev_fd );
+ * } else {
+ *     of_fd = dev_fd;
+ * }
+ * 
+ *   now we put out the various initialization strings
+ * 
+ * Leader_on_open_DYN -> buffer;
+ * FF_on_open_DYN     -> buffer;
+ * if( ( Always_banner_DYN || !Suppress_banner) && !Banner_last_DYN ){
+ * 	banner -> buffer
+ * }
+ * 
+ *   now we suspend the of filter
+ * if( OF_FILTER ){
+ *     pipe for OF errors
+ *     fork process to read OF stderr
+ *     fork and exec OF filter
+ *     buffer -> OF Filter
+ * 	Suspend_string -> OF Filter
+ * 	wait for suspend;
+ * } else {
+ *     buffer -> output
+ * }
+ * 
+ *  print out the data files
+ * for( i = 0; i < data_files; ++i ){
+ *     if( i > 0 && FF between files && OF Filter ){
+ * 		wake up of_filter;
+ * 		FF -> of_filter;
+ * 		Suspend_string -> OF Filter
+ * 		wait for suspend;
+ * 	}
+ * 	if( IF ){
+ *         pipe for IF errors;
+ * 		fork and exec IF filter, stdin = datafile
+ *         wait for IF to exit;
+ * 	} else {
+ * 		datafile -> output;
+ *     }
+ * }
+ * 
+ * if( (Always_banner_DYN || !Suppress_banner) && Banner_last_DYN ){
+ * 	banner -> buffer;
+ * }
+ * Trailer_on_close_DYN -> buffer;
+ * FF_on_close_DYN     -> buffer;
+ * 
+ * if( OF Filter ){
+ * 	wake up of_filter;
+ * 	buffer -> OF Filter
+ * 	close OF Filter input;
+ * 	wait for OF to exit
+ * } else {
+ * 	buffer->output
+ * }
+ * 
+ ****************************************************************************/
 
-The following algorithm is used to print a job
+#define FILTER_STOP "\031\001"
 
-dev_fd - device file descriptor
-   This can be the actual device or a pipe to a device
-of_fd  - output file descriptor
-   This is the OF filter if it has been specified.
-   This is used for banners and file separators such as form feeds.
-if_fd  - 
-   This is the file format filter.
-
-dev_fd = open( device or filter );
-
-do accounting at start;
-if( OF ){
-	of_fd = open( OF filter -> dev_fd );
-} else {
-    of_fd = dev_fd;
-}
-
-  now we put out the various initialization strings
-
-Leader_on_open -> of_fd;
-FF_on_open     -> of_fd;
-if( ( Always_banner || !Suppress_bannner) && !Banner_last ){
-	banner = bp;
-	if( bs ) banner = bs;
-	bannner -> of_fd;
-	kill off banner printer;
-	wait for banner printer to exit;
-}
-
-  now we suspend the of filter
-if( of_fd != dev_fd ){
-	Suspend_string->of_fd;
-	wait for suspend;
-}
-
- print out the data files
-for( i = 0; i < data_files; ++i ){
-	if( IF ){
-		if_fd = open( IF filter -> of_fd )
-	} else {
-		if_fd = dev_fd;
-	}
-	file -> if_fd;
-	if( if_fd != dev_fd ){
-		close( if_fd );
-		wait for  if_filter to die;
-	}
-}
-
- start up the of filter
-if( of_fd != dev_fd ){
-	wait up of_filter;
-}
-
- put out the termination stuff
-if( ( Always_banner || !Suppress_bannner) && Banner_last ){
-	banner = bp;
-	if( be ) banner = be;
-	bannner -> of_fd;
-	kill off banner printer;
-	wait for banner printer to exit;
-}
-
-Trailer_on_close -> of_fd;
-FF_on_close     -> of_fd;
-close( of_fd );
-do accounting at end;
-close( dev_fd );
-if( of_fd != dev_fd ){
-	wait for of_filter;
-}
-
-****************************************************************************/
-
-static int Fix_str( char **copy, char *str );
-
-int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
-	int transfer_timeout )
+int Wait_for_pid( int of_pid, char *name, int suspend, int timeout,
+	plp_status_t *ps_status)
 {
-	char filtername[32];
-	int FF_len;				/* FF information length */
-	static char *FF_str;	/* FF information converted format */
-	int leader_len;			/* leader */
-	static char *leader_str;
-	int trailer_len;		/* trailer */
-	static char *trailer_str;
-	struct data_file *data_file;	/* current data file */
-	int fd;					/* data file file descriptor */
-	struct stat statb;		/* stat buffer for open */
-	char *filter;			/* filter to use */
-	int i, c, n = 0, err = 0;		/* ACME Integer variables */
-	char *s;				/* Sigh... */
-	int do_banner;			/* do a banner */
-	int pfd;				/* pr program output */
-	char *id;				/* id for job */
-	int attempt;			/* job attempt */
-	char file_name[LINEBUFFER];		/* use for identification */
-	struct destination *destination;
-
-	Cfp_static = cfp;
-
-	destination = Destination_cfp(cfp, Destination_index );
-	id = cfp->identifier+1;
-	if( *id == 0 ) id = cfp->transfername;
-	DEBUG1("Print_job: '%s', Use_queuename %d", id, Use_queuename );
-
-	if( (Use_queuename || Force_queuename) &&
-		(cfp->QUEUENAME == 0 || cfp->QUEUENAME[1] == 0) ){
-		char buffer[M_QUEUENAME];
-		s = Force_queuename;
-		if( s == 0 || *s == 0 ) s = Queue_name;
-		if( s == 0 || *s == 0 ) s = Printer;
-		plp_snprintf( buffer, sizeof(buffer), "Q%s", s );
-		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
-	}
-	if( Use_date && cfp->DATE == 0 ){
-		char buffer[M_DATE];
-		plp_snprintf( buffer, sizeof(buffer), "D%s",
-			Time_str( 0, cfp->statb.st_ctime ) );
-		cfp->DATE = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
-	}
-	if( Use_identifier && cfp->IDENTIFIER == 0 ){
-		if( Make_identifier( cfp ) ){
-			setstatus(cfp,"bad identifier fields '%s' - '%s'",
-				id, cfp->error );
-			Errorcode = JABORT;
-			cleanup(0);
+	int pid, n = 0, err;
+	DEBUG2("Wait_for_pid: name '%s', pid %d, suspend %d, timeout %d",
+		name, of_pid, suspend, timeout );
+	errno = 0;
+	do{
+		memset(ps_status,0,sizeof(ps_status[0]));
+		if( timeout > 0 ){
+			pid = plp_waitpid_timeout(timeout,of_pid,ps_status,WUNTRACED);
+		} else if( timeout == 0 ){
+			pid = plp_waitpid(of_pid,ps_status,WUNTRACED);
+		} else {
+			pid = plp_waitpid(of_pid,ps_status,WUNTRACED|WNOHANG);
 		}
-		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 1, 0,__FILE__,__LINE__ );
-	}
-
-	/* we will not try to do anything fancy on exit except kill filters */
-	register_exit( (exit_ret)Print_abort, 0 );
-
-	Errorcode = JABORT;
-	Device_fd_info.input = -1;
-	OF_fd_info.input = -1;
-	XF_fd_info.input = -1;
-	Pr_fd_info.input = -1;
-
-
-	/* fix the form feed string */
-	FF_len = Fix_str( &FF_str, Form_feed );
-	leader_len = Fix_str( &leader_str, Leader_on_open );
-	trailer_len = Fix_str( &trailer_str, Trailer_on_close );
-
-	if(DEBUGL3 ){
-		dump_control_file( "Print_job", cfp );
-	}
-
-	if( Local_accounting ){
-		Setup_accounting( cfp, printcap_entry );
-	}
-
-	/*
-	 * if( OF ){
-	 * 	of_fd = open( OF filter -> dev_fd );
-	 * } else {
-	 * 	of_fd = dev_fd;
-	 * }
-	 */
-
-	if(destination){
-		attempt = destination->attempt;
-	} else {
-		attempt = cfp->hold_info.attempt;
-	}
-	setstatus(cfp,"printing '%s', start, attempt %d",id,attempt+1);
-	if( Print_open( &Device_fd_info, cfp, Connect_timeout, Connect_interval,
-		Connect_grace, Max_connect_interval, printcap_entry, Accounting_port ) < 0 ){
-		/* we failed to open device */
-		Errorcode = JFAIL;
-		cleanup( 0 );
-	}
-	DEBUG3("Print_job: device fd %d, pid %d",
-		Device_fd_info.input, Device_fd_info.pid );
-	Errorcode = JABORT;
-
-	/*
-	 * do accounting at start
-	 */
-	DEBUG2("Print_job: Accounting_start '%s', Local_accounting %d'",
-		Accounting_start, Local_accounting );
-	if( Accounting_start && Local_accounting ){
-		setstatus(cfp,"accounting at start '%s'", id);
-		i = Do_accounting( 0, Accounting_start, cfp,
-			transfer_timeout, printcap_entry, Device_fd_info.input );
-		if( i ){
-			setstatus(cfp,"accounting failed at start '%s' - %s", id, Server_status(i) );
-			if( i != JFAIL && i != JABORT && i != JREMOVE ){
-				i = JFAIL;
+		err = errno;
+		DEBUG2("Wait_for_pid: pid %d exit status '%s'",
+			pid, Decode_status(ps_status));
+	} while( pid == -1 && err != ECHILD && err != EINTR );
+	if( pid > 0 ){
+		if( suspend && WIFSTOPPED(*ps_status) ){
+			n = 0;
+			DEBUG1("Wait_for_pid: %s filter suspended", name );
+		} else {
+			if( WIFEXITED(*ps_status) ){
+				n = WEXITSTATUS(*ps_status);
+				DEBUG3( "Wait_for_pid: %s filter exited with status %d",
+					name, n);
+			} else if( WIFSIGNALED(*ps_status) ){
+				n = WTERMSIG(*ps_status);
+				Errorcode = JABORT;
+				fatal(LOG_INFO,
+					"Wait_for_pid: %s filter died with signal '%s'",name,
+					Sigstr(n));
+			} else if( suspend && !WIFSTOPPED(*ps_status) ){
+				Errorcode = JABORT;
+				fatal(LOG_INFO,
+					"Wait_for_pid: %s filter did not suspend", name );
 			}
-			Errorcode = i;
-			cleanup( 0 );
+			if( n && n < 32 ){
+				n += 31;
+			}
 		}
+	} else if( pid <= 0 ){
+		/* you got an error, and it was ECHILD or EINTR
+		 * if it was EINTR, you want to know 
+		 */
+		n = -1;
+		if( err == EINTR ) n = -2;
+	}
+	DEBUG1("Wait_for_pid: returning '%s', exit status '%s'",
+		Server_status(n), Decode_status(ps_status) );
+	errno = err;
+	return( n );
+}
+
+void Print_job( int output, struct job *job, int timeout )
+{
+	char *FF_str, *leader_str, *trailer_str, *filter;
+	int i, c, of_fd[2], of_error[2], if_error[2],
+		of_pid = 0, copy, copies,
+		do_banner, n, pid, count, size, fd, tempfd,
+		elapsed, left, files_printed;
+
+	char buffer[LARGEBUFFER];
+	char msg[SMALLBUFFER];
+	char filter_name[8], filter_title[8];
+	char *id, *s, *banner_name, *transfername, *openname, *format;
+	struct line_list *datafile, files;
+	struct stat statb;
+	time_t start_time, current_time;
+	plp_status_t ps_status;
+	int exit_status;
+
+	Init_line_list(&files);
+	of_fd[0] = of_fd[1] = of_error[0] = of_error[1] = -1;
+	files_printed = 0;
+	FF_str = leader_str = trailer_str = 0;
+	/* we record the start time */
+	start_time = time((void *) 0);
+	current_time = time((void *)0);
+	elapsed = current_time - start_time;
+	left = timeout;
+	if( timeout > 0 ){
+		left = timeout - elapsed;
 	}
 
-	if( OF_Filter ){
-		/* we need to create an OF filter */
-		if( Make_filter( 'o', cfp, &OF_fd_info, OF_Filter, 0, 0,
-			Device_fd_info.input, printcap_entry, (void *)0,
-			Accounting_port, Logger_destination != 0, 0 ) ){
-			setstatus( cfp, "%s", cfp->error );
-		}
-	} else {
-		OF_fd_info.input = Device_fd_info.input;
-		OF_fd_info.pid = 0;
-	}
-	if( OF_fd_info.input == -1 ){
-		if( Errorcode == 0 ){
-			log( LOG_ERR,
-				"Print_job: OF_fd_input has bad status, JSUCC errorcode" );
-			Errorcode = JABORT;
-		}
-		cleanup(0);
-	}
-	/* Leader_on_open -> of_fd; */
-	if( leader_len ){
-		setstatus(cfp,"printing '%s', sending leader",id);
-		i = Print_string( &OF_fd_info, leader_str, leader_len,
-			transfer_timeout
-			);
-		if( i ){
-			setstatus(cfp,"printing '%s', error sending leader",id);
-			n = Close_filter( 0, &OF_fd_info,
-			transfer_timeout,
-			"printer (OF)" );
-			if( n ) i = n;
-			Errorcode = i;
-			cleanup( 0 );
+	DEBUG2( "Print_job: output fd %d", output );
+	if(DEBUGL3){
+		logDebug("Print_job: at start open fd's");
+		for( i = 0; i < 20; ++i ){
+			if( fstat(i,&statb) == 0 ){
+				logDebug("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+			}
 		}
 	}
+	if(DEBUGL2) Dump_job( "Print_job", job );
+	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 
-	/* FF_on_open     -> of_fd; */
-	if( FF_on_open && FF_len ){
-		setstatus(cfp,"printing '%s', sending FF on open",id);
-		i = Print_string( &OF_fd_info, FF_str, FF_len,
-			transfer_timeout);
-		if( i ){
-			setstatus(cfp,"printing '%s', error sending FF on open",id);
-			n = Close_filter( 0, &OF_fd_info,
-				transfer_timeout,
-				"printer (OF)" );
-			if( n ) i = n;
-			Errorcode = i;
-			cleanup( 0 );
-		}
-	}
+	/* clear output buffer */
+	Init_buf(&Outbuf, &Outmax, &Outlen );
+
+	FF_str = Fix_str( Form_feed_DYN );
+	leader_str = Fix_str( Leader_on_open_DYN );
+	trailer_str = Fix_str( Trailer_on_close_DYN );
+
+	/* Leader_on_open_DYN -> output; */
+	if( leader_str ) Put_buf_str( leader_str, &Outbuf, &Outmax, &Outlen );
+
+	/* FF_on_open_DYN -> output; */
+	if( FF_on_open_DYN ) Put_buf_str( FF_str, &Outbuf, &Outmax, &Outlen );
 
 	/*
-	 * if( ( Always_banner || !Suppress_bannner) && !Banner_last ){
+	 * if( ( Always_banner_DYN || !Suppress_banner) && !Banner_last_DYN ){
 	 *  we need to have a banner and a banner name
-	 * 	bannner -> of_fd;
+	 * 	banner -> of_fd;
 	 * 	kill off banner printer;
 	 * 	wait for banner printer to exit;
 	 * }
 	 */
 
 	/* we are always going to do a banner; get the user name */
-	if( Always_banner && cfp->BNRNAME == 0 ){
-			cfp->BNRNAME = cfp->LOGNAME;
-			if( cfp->BNRNAME == 0 ){
-				cfp->BNRNAME = "ANONYMOUS";
-			}
-	}
 
+	banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
 	/* check for the banner printing */
-	do_banner = !Suppress_header && cfp->BNRNAME;
+	do_banner = Always_banner_DYN ||
+		(!Suppress_header_DYN && banner_name);
+	if( do_banner && banner_name == 0 ){
+		banner_name = Find_str_value( &job->info,LOGNAME,Value_sep);
+		if( banner_name == 0 ) banner_name = "ANONYMOUS";
+		Set_str_value(&job->info,BNRNAME,banner_name);
+	}
 
 	/* now we have a banner, is it at start or end? */
-	if( do_banner && ( Banner_start || !Banner_last ) ){
-		setstatus(cfp,"printing '%s', printing banner on open",id);
-		s = 0;
-		DEBUG2( "Print_job: Banner_start '%s', Banner_printer '%s'",
-			Banner_start, Banner_printer );
-		if( Banner_printer && *Banner_printer ) s = Banner_printer;
-		if( Banner_start && *Banner_start ) s = Banner_start;
-		i = Print_banner( s, cfp,
-			transfer_timeout,
-			OF_fd_info.input, FF_len, FF_str, printcap_entry );
-		if( i ){
-			setstatus(cfp,"printing '%s', error printing banner on open",id);
-			Errorcode = i;
-			cleanup( 0 );
+	DEBUG2("Print_job: do_banner %d, Banner_last_DYN %d, banner_name '%s', Banner_start_DYN '%s'",
+			do_banner, Banner_last_DYN, banner_name, Banner_start_DYN );
+	if( do_banner && !Banner_last_DYN ){
+		Print_banner( banner_name, Banner_start_DYN, job );
+	}
+
+	DEBUG2("Print_job: setup %d bytes '%s'", Outlen, Outbuf ); 
+
+	DEBUG2("Print_job: OF_Filter_DYN '%s'", OF_Filter_DYN );
+	setstatus(job,"printing '%s' starting OF", id );
+	if( OF_Filter_DYN ){
+		Put_buf_str( FILTER_STOP, &Outbuf, &Outmax, &Outlen );
+		if( pipe( of_fd ) == -1 || pipe( of_error ) == -1 ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_job: pipe() failed");
 		}
-	}
+		DEBUG3("Print_job: fd of_fd[%d,%d], of_error[%d,%d]",
+			of_fd[0], of_fd[1], of_error[0], of_error[1] );
 
-	/* 
-	 *   now we suspend the of filter
-	 * if( of_fd != dev_fd ){
-	 * 	Suspend_string->of_fd;
-	 * 	wait for suspend;
-	 * }
-	 */
+		/* set format */
+		Set_str_value(&job->info,FORMAT,"o");
+		/* set up file descriptors */
 
-	if( OF_fd_info.input != Device_fd_info.input
-		&& (i = of_stop( &OF_fd_info,
-			transfer_timeout, cfp ) ) ){
-		setstatus(cfp,"printing '%s', error suspending OF filter",id);
-		n = Close_filter( 0, &OF_fd_info,
-			transfer_timeout,
-			"printer (OF)" );
-		if( n ) i = n;
-		Errorcode = i;
-		cleanup( 0 );
+		s = 0;
+		if( Backwards_compatible_filter_DYN ) s = BK_of_filter_options_DYN;
+		if( s == 0 ) s = OF_filter_options_DYN;
+		if( s == 0 ) s = Filter_options_DYN;
+
+		Check_max(&files,10);
+		files.list[files.count++] = Cast_int_to_voidstar(of_fd[0]);	/* stdin */
+		files.list[files.count++] = Cast_int_to_voidstar(output);	/* stdout */
+		files.list[files.count++] = Cast_int_to_voidstar(of_error[1]);	/* stderr */
+		if( Accounting_port > 0 ){; /* accounting */
+			files.list[files.count++] = Cast_int_to_voidstar(Accounting_port);
+		}
+        if( (of_pid = Make_passthrough( OF_Filter_DYN, s,&files, job, 0 ))<0){
+            Errorcode = JFAIL;
+            logerr_die(LOG_INFO,"Print_job: could not create OF process");
+        }
+		files.count = 0;
+		Free_line_list(&files);
+
+		DEBUG3("Print_job: OF pid %d", of_pid );
+		if( (close( of_fd[0] ) == -1 ) ){
+			logerr_die( LOG_INFO,"Print_job: close(%d) failed", of_fd[0]);
+		}
+		if( (close( of_error[1] ) == -1 ) ){
+			logerr_die( LOG_INFO,"Print_job: close(%d) failed", of_error[1]);
+		}
+		DEBUG3("Print_job: writing init to OF pid '%d', count %d", of_pid, Outlen );
+		/* we write the output buffer to the filter */
+		msg[0] = 0;
+		n = Write_outbuf_to_OF(job,"OF",of_pid,of_fd[1],of_error[0],
+			Outbuf, Outlen,
+			msg, sizeof(msg)-1, left, 1, Filter_poll_interval_DYN,
+			&exit_status, &ps_status );
+		if( n ){
+			Errorcode = JFAIL;
+			if( exit_status ) Errorcode = exit_status;
+			setstatus(job,"OF filter problems, error '%s'", Server_status(n));
+			cleanup(0);
+		}
+		setstatus(job,"OF filter suspended" );
+	} else {
+		Write_fd_len( output, Outbuf, Outlen );
 	}
+	Init_buf(&Outbuf, &Outmax, &Outlen );
+
 
 	/* 
 	 *  print out the data files
-	 * for( i = 0; i < data_files; ++i ){
-	 *  if( i > 0 ) FF separator -> of_fd;
-	 * 	if( IF ){
-	 * 		if_fd = open( IF filter -> of_fd )
-	 * 	} else {
-	 * 		if_fd = dev_fd;
-	 * 	}
-	 * 	file -> if_fd;
-	 * 	if( if_fd != dev_fd ){
-	 * 		close( if_fd );
-	 * 		wait for  if_filter to die;
-	 * 	}
-	 * }
 	 */
 
-	for( i = 0; i < cfp->data_file_list.count; ++i ){
-		data_file = (void *)cfp->data_file_list.list;
-		data_file = &data_file[i];
+	for( count = 0; count < job->datafiles.count; ++count ){
+		datafile = (void *)job->datafiles.list[count];
+		if(DEBUGL4)Dump_line_list("Print_job - datafile", datafile );
 
-		if( data_file->Ninfo[0] ){
-			safestrncpy(file_name, data_file->Ninfo+1);
-		} else {
-			safestrncpy(file_name, data_file->cfline+1);
-		}
-		if( i && !No_FF_separator && FF_len ){
-			/* FF separator -> of_fd; */
-			setstatus(cfp,"printing '%s', FF separator ",id);
-			n = 0;
-			if( OF_fd_info.input != Device_fd_info.input ){
-				n = of_start( &OF_fd_info );
-			}
-			if( !n ){
-				n = Print_string( &OF_fd_info, FF_str, FF_len,
-					transfer_timeout );
-			}
-			if( !n && OF_fd_info.input != Device_fd_info.input ){
-				n = of_stop( &OF_fd_info,
-					transfer_timeout, cfp );
-			}
-			if( n ){
-				Errorcode = n;
-				n = Close_filter( 0, &OF_fd_info, 
-					transfer_timeout,
-					"printer (OF)" );
-				if( n ) Errorcode = n;
-				cleanup( 0 );
-			}
-		}
+		transfername = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+		openname = Find_str_value(datafile,OPENNAME,Value_sep);
+		format = Find_str_value(datafile,FORMAT,Value_sep);
+		size = Find_flag_value(datafile,SIZE,Value_sep);
+		copies = Find_flag_value(datafile,COPIES,Value_sep);
+		if( copies == 0 ) copies = 1;
 
-		setstatus(cfp,"printing '%s', file %d '%s', size %d, format '%c'",
-			id, i+1, file_name,(int)(data_file->statb.st_size),
-			data_file->format );
-		fd = Checkread( data_file->openname, &statb );
-		if( fd < 0 ){
-			setstatus(cfp,"cannot open data file '%s'",data_file->openname);
-			fatal( LOG_ERR, "Print_job: job '%s', cannot open data file '%s'",
-				id, data_file->openname );
-		}
-		/*
-		 * check if PR is to be used
-		 */
-		c = data_file->format;
-		DEBUG2( "Print_job: data file format '%c', IF_Filter '%s'",
-			data_file->format, IF_Filter );
-		if( 'p' == c ){
-			char pr_filter[SMALLBUFFER];
-			char banner_temp[SMALLBUFFER];
-			if( Pr_program == 0 || *Pr_program  == 0 ){
-				setstatus(cfp,"no 'p' format filter available" );
-				Errorcode = JREMOVE;
-				fatal( LOG_ERR, "Print_job: no '-p' formatter for '%s'",
-					c, data_file->openname );
-			}
-			pr_filter[0] = 0;
-			safestrncat( pr_filter, Pr_program );
-			safestrncat( pr_filter, " $w $l" );
-			if( cfp->PRTITLE ) safestrncat( pr_filter, " -h $-T" );
-			/* we need to open a file and process the job */
-			/* make a temp file */
-			pfd = Make_temp_fd( banner_temp, sizeof(banner_temp) );
-			DEBUG3( "Print_job: pr temp file '%s', fd %d", banner_temp, pfd );
-			if( ftruncate( pfd, 0 )  < 0 ){
-				Errorcode = JABORT;
-				logerr_die( LOG_ERR, "Print_job: ftruncate of temp failed",
-					banner_temp);
-			}
-			/* make the pr program */
-			if( Make_filter( 'f', cfp, &Pr_fd_info, pr_filter, 1, 0,
-				pfd, printcap_entry, data_file, Accounting_port,
-				Logger_destination != 0, 0 ) ){
-				setstatus( cfp, "%s", cfp->error );
-				cleanup(0);
-			}
-			/* filter the data file */
-			err = Print_copy(cfp, fd, &data_file->statb, &Pr_fd_info,
-				transfer_timeout,
-				1, file_name);
-			n = Close_filter( 0, &Pr_fd_info, 
-				transfer_timeout, "pr" );
-			DEBUG3( "Print_job: pr filter status  %d", n );
-			if( n ){
-				Errorcode = n;
-				cleanup(0);
-			}
-			if( dup2( pfd, fd ) < 0 ){
-				Errorcode = JABORT;
-				logerr_die( LOG_ERR, "Print_job: dup2 failed" );
-			}
-			if( lseek( fd, 0, SEEK_SET ) == (off_t)(-1) ){
-				Errorcode = JABORT;
-				logerr_die( LOG_ERR, "Print_job: lseek failed" );
-			}
-		}
+		Set_str_value(&job->info,FORMAT,format);
+		Set_str_value(&job->info,DF_NAME,transfername);
+
+		s = Find_str_value(datafile,"N",Value_sep);
+		Set_str_value(&job->info,"N",s);
+
 		/*
 		 * now we check to see if there is an input filter
 		 */
-		filter = 0;
-		strcpy(filtername,"if");
+		plp_snprintf(filter_name,sizeof(filter_name),"%s","if");
+		c = *format;
+		filter_name[0] = c;
 		switch( c ){
 		case 'p': case 'f': case 'l':
-			filter = IF_Filter;
-			c = 'f';
+			filter = IF_Filter_DYN;
+			filter_name[0] = 'i';
+			if( c == 'p' ){
+				DEBUG3("Print_job: using 'p' formatter '%s'", Pr_program_DYN );
+				if( Pr_program_DYN == 0 ){
+					setstatus(job,"no 'p' format filter available" );
+					Errorcode = JABORT;
+					fatal( LOG_ERR, "Print_job: no '-p' formatter for '%s'",
+						c, id );
+				}
+			}
 			break;
 		default:
-			filtername[0] = c;
-			filter = Find_filter( c, printcap_entry );
+			filter = Find_str_value(&PC_entry_line_list,
+				filter_name,Value_sep);
+			if( !filter){
+				filter = Find_str_value(&Config_line_list,filter_name,
+					Value_sep);
+			}
+			if( filter == 0 ) filter = Filter_DYN;
+
 			if( filter == 0 ){
-				Errorcode = JREMOVE;
-				setstatus(cfp,"no '%c' format filter available", c );
-				fatal( LOG_ERR, "Print_job: cannot find filter '%c' for '%s'",
-					c, data_file->openname );
+				setstatus(job,"no '%s' format filter available", filter_name );
+				Errorcode = JABORT;
+				fatal( LOG_ERR, "Print_job: cannot find '%s' filter",
+					filter_name );
 			}
 		}
-		/* hook filter up to the device file descriptor */
-		if( filter ){
-			if( Make_filter( c, cfp, &XF_fd_info, filter, 0, 0,
-				Device_fd_info.input, printcap_entry, data_file,
-				Accounting_port, Logger_destination != 0,
-				Direct_read? fd : 0 ) ){
-				setstatus( cfp, "%s", cfp->error );
+		DEBUG3("Print_job: format '%s', filter '%s'", format, filter );
+
+		safestrncpy(filter_title,filter_name);
+		uppercase(filter_title);
+		for( copy = 0; copy < copies; ++copy ){
+			current_time = time((void *)0);
+			elapsed = current_time - start_time;
+			left = timeout;
+			if( timeout > 0 ){
+				left = timeout - elapsed;
+			}
+			DEBUG3(
+	"Print_job - openname '%s', format '%s', copy %d, elapsed %d, left %d",
+				openname, format, copy, elapsed, left );
+	if(DEBUGL3){
+		logDebug("Print_job: doing '%s' open fd's", openname);
+		for( i = 0; i < 20; ++i ){
+			if( fstat(i,&statb) == 0 ){
+				logDebug("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+			}
+		}
+	}
+			if( timeout > 0 && left <= 0 ){
+				setstatus(job,"excess elapsed time %d seconds", elapsed);
+				Errorcode = JFAIL;
 				cleanup(0);
 			}
-		} else {
-			XF_fd_info.input = Device_fd_info.input;
-			XF_fd_info.pid = 0;
-		}
-		/* send job to printer - we get the error status of filter if any */
-		err = 0;
-		if( Direct_read == 0 || filter == 0 ){
-			err = Print_copy(cfp, fd, &data_file->statb, &XF_fd_info,
-				transfer_timeout,
-				1,file_name);
-			if( err ){
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"IO error '%s'", Errormsg(errno) );
+			if( files_printed++ && !No_FF_separator_DYN && FF_str ){
+				/* FF separator -> of_fd; */
+				setstatus(job,"printing '%s' FF separator ",id);
+				Init_buf(&Outbuf, &Outmax, &Outlen );
+				Put_buf_str( FF_str, &Outbuf, &Outmax, &Outlen );
+				if( of_pid ){
+					Put_buf_str( FILTER_STOP, &Outbuf, &Outmax, &Outlen );
+					kill(of_pid,SIGCONT);
+					DEBUG3("Print_job: writing FF sep to OF pid '%d', count %d",
+						of_pid, Outlen );
+					msg[0] = 0;
+					n = Write_outbuf_to_OF(job,"OF",
+						of_pid,of_fd[1],of_error[0],
+						Outbuf, Outlen,
+						msg, sizeof(msg)-1, left, 1,
+						Filter_poll_interval_DYN, &exit_status, &ps_status );
+					if( n ){
+						Errorcode = JFAIL;
+						if( exit_status ) Errorcode = exit_status;
+						setstatus(job,"OF filter problems, error '%s'",
+							Server_status(n));
+						cleanup(0);
+					}
+					setstatus(job,"OF filter suspended" );
+				} else {
+					Write_fd_len( output, Outbuf, Outlen );
+				}
+				Init_buf(&Outbuf, &Outmax, &Outlen );
 			}
-		}
-		(void)close(fd);
-		fd = -1;
-		/* close Xf */
- 		if( err == 0 && filter ){
- 		    err = Close_filter( cfp, &XF_fd_info, 
-				transfer_timeout, filtername );
-			DEBUG2( "Print_job: Close_filter exit status %d", err );
- 		}
-		/* exit with either the filter status or the copy status */
-  		if( err ){
-			Set_job_control( cfp, (void *)0 );
-  			Errorcode = err;
-			cleanup(0);
+
+			if( (fd = Checkread( openname, &statb )) < 0 ){
+				Errorcode = JFAIL;
+				fatal( LOG_ERR, "Print_job: job '%s', cannot open data file '%s'",
+					id, openname );
+			}
+			setstatus(job,"printing data file '%s', size %0.0f",
+				transfername, (double)statb.st_size );
+
+			DEBUG2( "Print_job: data file format '%s', IF_Filter_DYN '%s'",
+				format, IF_Filter_DYN );
+			c = *format;
+			if( 'p' == c ){
+				tempfd = Make_temp_fd(0);
+				if( pipe( if_error ) == -1 ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: pipe() failed");
+				}
+				DEBUG3("Print_job: PR fd if_error[%d,%d]",
+					 if_error[0], if_error[1] );
+
+				Free_line_list(&files);
+				Check_max(&files,10);
+				files.list[files.count++] = Cast_int_to_voidstar(fd);		/* stdin */
+				files.list[files.count++] = Cast_int_to_voidstar(tempfd);	/* stdout */
+				files.list[files.count++] = Cast_int_to_voidstar(if_error[1]);	/* stderr */
+				if( Accounting_port > 0 ){; /* accounting */
+					files.list[files.count++] = Cast_int_to_voidstar(Accounting_port);
+				}
+				if( (pid = Make_passthrough( Pr_program_DYN, 0, &files,
+					job, 0 )) < 0 ){
+					Errorcode = JFAIL;
+					logerr_die(LOG_INFO,
+						"Print_job: could not create PR process");
+				}
+				files.count = 0;
+				Free_line_list(&files);
+
+				if( (close(if_error[1]) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed",
+						if_error[1]);
+				}
+				if( (close(fd) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed",
+						fd);
+				}
+				msg[0] = 0;
+				n = Write_outbuf_to_OF(job,"PR",pid,-1,if_error[0],
+					0, 0,
+					msg, sizeof(msg)-1, left, 0, Filter_poll_interval_DYN,
+					&exit_status, &ps_status );
+				if( n ){
+					Errorcode = JFAIL;
+					if( exit_status ) Errorcode = exit_status;
+					setstatus(job,"OF filter problems, error '%s'",
+							Server_status(n));
+					cleanup(0);
+				}
+				/* this should be closed already */
+				close(if_error[0]);
+				Init_buf(&Outbuf, &Outmax, &Outlen );
+				fd = tempfd;
+				if( lseek(fd,0,SEEK_SET) < 0 ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: fseek(%d) failed", fd);
+				}
+			}
+			if( filter ){
+				DEBUG3("Print_job: format '%s' starting filter '%s'",
+					format, filter );
+				if( pipe( if_error ) == -1 ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: pipe() failed");
+				}
+				DEBUG3("Print_job: %s fd if_error[%d,%d]", filter_title,
+					 if_error[0], if_error[1] );
+				s = 0;
+				if( Backwards_compatible_filter_DYN ) s = BK_filter_options_DYN;
+				if( s == 0 ) s = Filter_options_DYN;
+
+				Free_line_list(&files);
+				Check_max(&files, 10 );
+				files.list[files.count++] = Cast_int_to_voidstar(fd);		/* stdin */
+				files.list[files.count++] = Cast_int_to_voidstar(output);	/* stdout */
+				files.list[files.count++] = Cast_int_to_voidstar(if_error[1]);	/* stderr */
+				if( Accounting_port > 0 ){; /* accounting */
+					files.list[files.count++] = Cast_int_to_voidstar(Accounting_port);
+				}
+				if( (pid = Make_passthrough( filter, s, &files, job, 0 )) < 0 ){
+					Errorcode = JFAIL;
+					logerr_die(LOG_INFO,"Print_job:  could not make %s process",
+						filter_title );
+				}
+				files.count = 0;
+				Free_line_list(&files);
+
+				if( (close(fd) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed", fd);
+				}
+				if( (close(if_error[1]) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed",
+						if_error[1]);
+				}
+				Init_buf(&Outbuf, &Outmax, &Outlen );
+				msg[0] = 0;
+				n = Write_outbuf_to_OF(job,filter_title,pid,-1,if_error[0],
+					0, 0,
+					msg, sizeof(msg)-1, timeout, 0, Filter_poll_interval_DYN,
+					&exit_status, &ps_status );
+				if( n ){
+					Errorcode = JFAIL;
+					if( exit_status ) Errorcode = exit_status;
+					setstatus(job,"%s filter problems, error '%s'",
+						filter_title, Server_status(n));
+					cleanup(0);
+				}
+				setstatus(job, "%s filter finished", filter_title );
+				if( (close(if_error[0]) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed",
+						if_error[1]);
+				}
+			} else {
+				DEBUG3("Print_job: format '%s' no filter", format );
+				while( (n = read(fd,buffer,sizeof(buffer))) > 0 ){
+					if( Write_fd_len(output, buffer, n ) < 0 ){
+						Errorcode = JFAIL;
+						logerr_die(LOG_INFO,"Print_job: write to output failed");
+					}
+				}
+				if( (close(fd) == -1 ) ){
+					Errorcode = JFAIL;
+					logerr_die( LOG_INFO,"Print_job: close(%d) failed", fd);
+				}
+				DEBUG3("Print_job: format '%s' finished writing", format );
+			}
 		}
 	}
 
 	/* 
-	 *  start up the of filter
-	 * if( of_fd != dev_fd ){
-	 * 	wait up of_filter;
-	 * }
+	 * now we do the end
 	 */
 
-	if( OF_fd_info.input != Device_fd_info.input ){
-		DEBUG3( "Print_job: restarting OF filter" );
-		i = of_start( &OF_fd_info );
-		if( i ){
-			DEBUG3( "Print_job: restarting OF filter FAILED, result %d", i );
-			n = Close_filter( 0, &OF_fd_info, 
-				transfer_timeout,
-				"printer (OF)" );
-			if( n ) i = n;
-			Errorcode = i;
-			cleanup( 0 );
-		}
+	Init_buf(&Outbuf, &Outmax, &Outlen );
+
+	/* check for the banner at the end */
+
+	if( do_banner && Banner_last_DYN ){
+		Print_banner( banner_name, Banner_end_DYN, job );
 	}
 
 	/* 
-	 *  put out the termination stuff
-	 * if( ( Always_banner || !Suppress_bannner) && Banner_last ){
-	 * 	bannner -> of_fd;
-	 * 	kill off banner printer;
-	 * 	wait for banner printer to exit;
-	 * }
+	 * FF_on_close_DYN     -> of_fd;
 	 */ 
-
-
-	if( do_banner && ( Banner_end || Banner_last ) ){
-		if( !No_FF_separator && FF_len ){
-			/* FF befor banner     -> of_fd; */
-			setstatus(cfp,"printing '%s', FF separator ",id);
-			DEBUG3( "Print_job: printing FF separator" );
-			i = Print_string( &OF_fd_info, FF_str, FF_len,
-				transfer_timeout);
-			if( i ){
-				DEBUG3( "Print_job: printing FF separator FAILED, status 0x%x", i );
-				Errorcode = i;
-				cleanup( 0 );
-			}
-		}
-		setstatus(cfp,"printing '%s', printing banner on close",id);
-		s = 0;
-		DEBUG2( "Print_job: Banner_end '%s', Banner_printer '%s'",
-			Banner_end, Banner_printer );
-		if( Banner_printer && *Banner_printer ) s = Banner_printer;
-		if( Banner_end && *Banner_end ) s = Banner_end;
-		DEBUG3( "Print_job: printing banner" );
-		i = Print_banner( s, cfp, 
-			transfer_timeout,
-			OF_fd_info.input, FF_len, FF_str, printcap_entry );
-		if( i ){
-			DEBUG3( "Print_job: printing banner FAILED, status 0x%x", i );
-			Errorcode = i;
-			cleanup( 0 );
-		}
-	}
+	if( FF_on_close_DYN ) Put_buf_str( FF_str, &Outbuf, &Outmax, &Outlen );
 
 	/* 
-	 * FF_on_close     -> of_fd;
+	 * Trailer_on_close_DYN -> of_fd;
 	 */ 
-	if( FF_on_close && FF_len ){
-		setstatus(cfp,"printing '%s', sending FF on close",id);
-		DEBUG3( "Print_job: printing FF on close" );
-		i = Print_string( &OF_fd_info, FF_str, FF_len, 
-			transfer_timeout );
-		if( i ){
-			DEBUG3( "Print_job: printing FF on close FAILED, status 0x%x", i );
-			Errorcode = i;
-			cleanup( 0 );
-		}
-	}
-
-	/* 
-	 * Trailer_on_close -> of_fd;
-	 */ 
-	if( trailer_len ){
-		setstatus(cfp,"printing '%s', sending trailer",id);
-		DEBUG3( "Print_job: printing trailer" );
-		i = Print_string( &OF_fd_info, trailer_str,trailer_len,
-			transfer_timeout );
-		if( i ){
-			DEBUG3( "Print_job: printing trailer FAILED, status 0x%x", i );
-			Errorcode = i;
-			cleanup( 0 );
-		}
-	}
-
+	if( trailer_str ) Put_buf_str( trailer_str, &Outbuf, &Outmax, &Outlen );
 
 	/*
 	 * close the OF Filters
 	 */
-	if( OF_fd_info.pid > 0 ){
-		setstatus(cfp,"printing '%s', closing OF filter",id);
-		n = Close_filter( cfp, &OF_fd_info, 
-			transfer_timeout,
-			"printer (OF)" );
-		if( n ){
-			DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
-			Set_job_control( cfp, (void *)0 );
-			Errorcode = n;
-			cleanup( 0 );
-		}
-	}
 
-	/*
-	 * do accounting at end
-	 */
-	if( Accounting_end && Local_accounting ){
-		setstatus(cfp,"accounting at end '%s'", id);
-		DEBUG3( "Print_job: accounting at end" );
-		i = Do_accounting( 1, Accounting_end, cfp, 
-			transfer_timeout,
-			printcap_entry, Device_fd_info.input );
-		if( i ){
-			setstatus(cfp,"accounting failed at end '%s'", id);
-			DEBUG3( "Print_job: accounting at end FAILED, status 0x%x", i );
-			if( i != JFAIL && i != JABORT && i != JREMOVE ){
-				i = JFAIL;
-			}
-			Errorcode = i;
+	if( of_pid ){
+		current_time = time((void *)0);
+		elapsed = current_time - start_time;
+		left = timeout;
+		if( timeout > 0 ){
+			left = timeout - elapsed;
+		}
+		kill(of_pid,SIGCONT);
+		DEBUG3("Print_job: writing trailer to OF pid '%d', count %d",
+			of_pid, Outlen );
+		msg[0] = 0;
+		n = Write_outbuf_to_OF(job,"OF",
+			of_pid,of_fd[1],of_error[0],
+			Outbuf, Outlen,
+			msg, sizeof(msg)-1, left, 0, Filter_poll_interval_DYN,
+			&exit_status, &ps_status );
+		if( n ){
+			Errorcode = JFAIL;
+			if( exit_status ) Errorcode = exit_status;
+			setstatus(job,"OF filter problems, error '%s'",
+				Server_status(n));
 			cleanup(0);
 		}
+		close(of_error[0]);
+		setstatus(job,"OF filter finished" );
+	} else {
+		Write_fd_len( output, Outbuf, Outlen );
 	}
-	setstatus(cfp,"printing '%s', closing device",id);
-	n = Close_filter( cfp, &Device_fd_info, 
-		transfer_timeout,
-		"printer (LP device)" );
-	if( n ){
-		Set_job_control( cfp, (void *)0 );
-		DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
-		Errorcode = n;
-		cleanup( 0 );
+#ifdef HAVE_TCDRAIN
+	if( isatty( output ) && tcdrain( output ) == -1 ){
+		logerr_die( LOG_INFO,"Print_job: tcdrain failed");
 	}
-
-	/* close everything now */
-	Print_close( cfp, -1 );
-
-	Errorcode = JSUCC;
-
-	setstatus(cfp,"printing '%s', finished ",id);
-	return( Errorcode );
-}
-
-/***************************************************************************
- * int Fix_str( char **copy, *str );
- * - make a copy of the original string
- * - substitute all the escape characters
- * \f, \n, \r, \t, and \nnn
- ***************************************************************************/
-static int Fix_str( char **copy, char *str )
-{
-	int len, c;
-	char *s, *t, *end;
-
-	if( copy && *copy ){
-		free( *copy );
-		*copy = 0;
-	}
-	DEBUG3("Fix_str: '%s'", str );
-	s = str;
-	if( str && copy ){
-		*copy = s = safestrdup(str);
-	}
-	for( len = 0, t = str; t && *t && (c = (s[len] = *t++)); ++len ){
-		/* DEBUG3("Fix_str: char '%c', len %d", c, len ); */
-		if( c == '\\' && (c = *t) != '\\' ){
-			/* check for \nnn */
-			if( isdigit( c ) ){
-				end = t;
-				s[len] = strtol( t, &end, 8 );
-				if( (end - t ) != 3 ){
-					return( -1 );
-				}
-				t = end;
-			} else {
-				switch( c ){
-					default: s[len] = c; break;
-					case 'f': s[len] = '\f'; break;
-					case 'r': s[len] = '\r'; break;
-					case 'n': s[len] = '\n'; break;
-					case 't': s[len] = '\t'; break;
-					case 0: return(-1);
-				}
-				++t;
+#endif
+	if(DEBUGL3){
+		logDebug("Print_job: at end open fd's");
+		for( i = 0; i < 20; ++i ){
+			if( fstat(i,&statb) == 0 ){
+				logDebug("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
 			}
 		}
 	}
-	if( s ) s[len] = 0;
-	DEBUG3( "Fix_str: str '%s' -> '%s', len %d", str, s, len );
-	return( len );
+	Init_buf(&Outbuf, &Outmax, &Outlen );
+	if( Outbuf ) free(Outbuf); Outbuf = 0;
+	if(FF_str) free(FF_str);
+	if(leader_str) free(leader_str);
+	if(trailer_str) free(trailer_str);
+	Errorcode = JSUCC;
+	setstatus(job,"printing done '%s'",id);
 }
 
 /*
@@ -721,228 +634,311 @@ static int Fix_str( char **copy, char *str )
  * check for a small or large banner as necessary
  */
 
-int Print_banner(
-	char *banner_printer, struct control_file *cfp, int timeout, int input,
-	int ff_len, char *ff_str, struct printcap_entry *printcap_entry )
+void Print_banner( char *name, char *pgm, struct job *job )
 {
-	char bline[SMALLBUFFER];
-	char *ep;
-	int i;
-	char *id;				/* id for job */
-
-	id = cfp->identifier+1;
-	if( *id == 0 ) id = cfp->transfername;
-
+	char buffer[LARGEBUFFER];
+	int len, pid, n;
+	struct line_list l;
+	char *bl = 0, *s;
+	int i, tempfd, of_error[2], nullfd;
+	struct stat statb;
+	struct line_list files;
+	plp_status_t status;
 
 	/*
 	 * print the banner
 	 */
-	DEBUG2( "Print_banner: banner_printer '%s'", banner_printer );
-
-	/* make short banner look like BSD-style( Sun, etc.) short banner.
-	 * 
-	 * This is necessary for use with an OF that parses
-	 * the banner( as lprps does).
-	 */
-	
-	if( Banner_line == 0 ){
-		Banner_line = "";
-	}
-	DEBUG2( "Print_banner: raw banner '%s'", Banner_line );
-	ep = bline + sizeof(bline) - 2;
-	ep = Expand_command( cfp, bline, ep, Banner_line, 'f', (void *)0 );
-	if( strchr( bline, '\\' ) ){
-		Fix_str( 0, bline );
-	} else {
-		safestrncat(bline, "\n");
-	}
-	DEBUG2( "Print_banner: expanded banner '%s'", bline );
-
-
- 	if( !Short_banner && banner_printer && *banner_printer ){
-		if( Make_filter( 'f', cfp, &Pr_fd_info, banner_printer, 0, 0,
-			input, printcap_entry, (void *)0,
-			Accounting_port, Logger_destination != 0, 0 ) ){
-				setstatus( cfp, "%s", cfp->error );
-				cleanup(0);
+	Init_line_list(&l);
+	Init_line_list(&files);
+	if(DEBUGL3){
+		logDebug("Print_banner: at start open fd's");
+		for( i = 0; i < 20; ++i ){
+			if( fstat(i,&statb) == 0 ){
+				logDebug("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
 			}
-	} else {
-		Pr_fd_info.input = input;
-		Pr_fd_info.pid = 0;
-	}
-
-	DEBUG2( "Print_banner: writing short banner '%s'", bline );
-	if( Write_fd_str( Pr_fd_info.input, bline ) < 0 ){
-		logerr( LOG_INFO, "banner: write to banner printer failed");
-		Errorcode = JFAIL;
-		cleanup( 0 );
-	}
-	if( Pr_fd_info.input != input ){
-		i = Close_filter( cfp, &Pr_fd_info, timeout, "banner (IF)" );
-		if( i ){
-			Errorcode = i;
-			cleanup( 0 );
 		}
 	}
-	if( !No_FF_separator && ff_len ){
-		/* FF after banner     -> of_fd; */
-		setstatus(cfp,"printing '%s', sending FF after banner",id);
-		i = Print_string( &OF_fd_info, ff_str, ff_len, timeout);
-		if( i ){
-			Errorcode = i;
-			cleanup( 0 );
-		}
+	if( !pgm ) pgm = Banner_printer_DYN;
+
+	DEBUG2( "Print_banner: name '%s', pgm '%s', sb=%d, Banner_line_DYN '%s'",
+		name, pgm, Short_banner_DYN, Banner_line_DYN );
+
+	if( !pgm && !Short_banner_DYN ){
+		setstatus(job,"no banner");
+		return;
 	}
-	return( JSUCC );
-}
+	Split(&l,Banner_line_DYN,Whitespace,0,0,0,0,0);
+	if( l.count ){
+		Fix_dollars(&l,job);
+		s = Join_line_list(&l," ");
+		bl = safestrdup2(s,"\n",__FILE__,__LINE__);
+		Free_line_list(&l);
+		if(s) free(s); s = 0;
+	}
 
-void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap_entry )
-{
-	int oldport, i, n;
-	struct stat statb;
-	char *s;
-	char buffer[LINEBUFFER];
-	int err;
+ 	if( pgm ){
+		/* we now need to create a banner */
+		setstatus(job,"creating banner");
 
-	DEBUG2("Setup_accounting: '%s'", Accounting_file);
-	if( Is_server == 0 || Accounting_file == 0 || *Accounting_file == 0 ) return;
-	safestrncpy( buffer, Accounting_file );
-	s = buffer;
-	if( s[0] == '|' ){
-		/* first try to make the filter */
-		if( Make_filter( 'f', cfp, &Af_fd_info, s, 0, 0,
-			0, printcap_entry, (void *)0, 0, Logger_destination != 0, 0 ) ){
-			setstatus( cfp, "%s", cfp->error );
-			cleanup(0);
-		}
-		err = errno;
-		Accounting_file = 0;
-		Accounting_port = Af_fd_info.input;
-	} else if( (s = strchr( s, '%' )) ){
-		/* now try to open a connection to a server */
-		*s++ = 0;
-		i = atoi( s );
-		if( i <= 0 ){
-			logerr( LOG_ERR,
-				"Setup_accounting: bad accounting server info '%s'", Accounting_file );
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"bad accounting server '%s'", Accounting_file );
-			Set_job_control( cfp, (void *)0 );
+		tempfd = Make_temp_fd(0);
+		if( (nullfd = open("/dev/null", O_RDONLY )) < 0 ){
 			Errorcode = JFAIL;
-			cleanup(0);
+			logerr_die( LOG_INFO,"Print_banner: open /dev/null failed");
 		}
-		oldport = Destination_port;
-		DEBUG2("Setup_accounting: opening connection to %s port %d", buffer, i );
-		Destination_port = i;
-		while( (n = Link_open(buffer,Connect_timeout)) < 0
-			&& Retry_NOLINK ){
-			err = errno;
-			setstatus(cfp,"cannot open connection to accounting server '%s' - '%s', sleeping %d",
-				Accounting_file, Errormsg(err), Connect_interval );
-			if( Connect_interval > 0 ){
-				plp_sleep( Connect_interval );
+		if( pipe( of_error ) == -1 ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_banner: pipe() failed");
+		}
+		DEBUG3("Print_banner: fd of_error[%d,%d]",
+			of_error[0], of_error[1] );
+
+		Free_line_list(&files);
+		Check_max(&files, 10 );
+		files.list[files.count++] = Cast_int_to_voidstar(nullfd);		/* stdin */
+		files.list[files.count++] = Cast_int_to_voidstar(tempfd);	/* stdout */
+		files.list[files.count++] = Cast_int_to_voidstar(of_error[1]);	/* stderr */
+		if( Accounting_port > 0 ){; /* accounting */
+			files.list[files.count++] = Cast_int_to_voidstar(Accounting_port);
+		}
+		if( (pid = Make_passthrough( pgm, Filter_options_DYN, &files, job, 0 )) < 0 ){
+			Errorcode = JFAIL;
+			logerr_die(LOG_INFO,"Print_banner:  could not OF process");
+		}
+		files.count = 0;
+		Free_line_list(&files);
+
+		if( (close(of_error[1]) == -1 ) ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_banner: close(%d) failed",
+				of_error[1]);
+		}
+		if( (close(nullfd) == -1 ) ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_banner: close(%d) failed",
+				nullfd);
+		}
+		buffer[0] = 0;
+		len = 0;
+		while( len < sizeof(buffer)-1
+			&& (n = read(of_error[0],buffer+len,sizeof(buffer)-len-1)) >0 ){
+			buffer[n+len] = 0;
+			while( (s = safestrchr(buffer,'\n')) ){
+				*s++ = 0;
+				setstatus(job,"BANNER: %s", buffer );
+				memmove(buffer,s,strlen(s)+1);
+			}
+			len = strlen(buffer);
+		}
+		while( (n = plp_waitpid(pid,&status,0)) != pid );
+		DEBUG1("Print_banner: pid %d, exit status '%s'", pid,
+			Decode_status(&status) );
+		if( WIFEXITED(status) && (n = WEXITSTATUS(status)) ){
+			setstatus(job,"Print_banner: banner printer '%s' exited with status %d", pgm, n);
+		} else if( WIFSIGNALED(status) ){
+			setstatus(job,"Print_banner: banner printer '%s' died with signal %d, '%s'",
+				pgm, n, Sigstr(n));
+		}
+
+		if( lseek(tempfd,0,SEEK_SET) < 0 ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_banner: fseek(%d) failed", tempfd);
+		}
+		len = Outlen;
+		while( (n = read(tempfd, buffer, sizeof(buffer))) > 0 ){
+			Put_buf_len(buffer, n, &Outbuf, &Outmax, &Outlen );
+		}
+		if( (close(tempfd) == -1 ) ){
+			Errorcode = JFAIL;
+			logerr_die( LOG_INFO,"Print_banner: close(%d) failed",
+				tempfd);
+		}
+		DEBUG4("Print_banner: BANNER '%s'", Outbuf+len);
+	} else {
+		Put_buf_str( bl, &Outbuf, &Outmax, &Outlen );
+	}
+	if( bl ) free(bl); bl = 0;
+	if(DEBUGL3){
+		logDebug("Print_banner: at end open fd's");
+		for( i = 0; i < 20; ++i ){
+			if( fstat(i,&statb) == 0 ){
+				logDebug("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
 			}
 		}
-		err = errno;
-		if( n < 0 ){
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-			_("connection to accounting server '%s' failed '%s'"),
-				Accounting_file, Errormsg(err) );
-			setstatus( cfp, cfp->error );
-			Set_job_control( cfp, (void *)0 );
-			Errorcode= JABORT;
-			cleanup(0);
-		}
-		Destination_port = oldport;
-		DEBUG2("Setup_accounting: socket %d", n );
-		Accounting_file = 0;
-		Af_fd_info.input = Accounting_port = n;
-	} else {
-		n = Checkwrite( Accounting_file, &statb, O_RDWR, 0, 0 );
-		err = errno;
-		if( n > 0 ){
-			Af_fd_info.input = Accounting_port = n;
-		}
-		DEBUG2("Setup_accounting: fd %d", n );
 	}
-	errno = err;
 }
 
-int Do_accounting( int end, char *command, struct control_file *cfp,
-	int timeout, struct printcap_entry *printcap_entry, int filter_out )
+/*
+ * Write_outbuf_to_OF(
+ * int of_pid    - pid of filter
+ * int of_fd     - write to this
+ * char *msg, int msgmax - message storage area
+ * int of_error  - read from this
+ * int timeout   - timeout
+ *                 nnn - wait this long
+ *                 0   - wait indefinately
+ *                 -1  - do not wait
+ * int suspend
+ *	   0 - wait for exit status
+ *     1 - wait for suspend status
+ *     (if pid <= 0, do not wait)
+ * )
+ *   RETURN: exit code from process
+ *     nn - process exit code
+ *     0  if suspended or exited correctly
+ *     -1 if IO error on of_fd
+ *     -2 if timeout
+ *     -3 if IO error on of_error
+ *     -4 if eof on of_error
+ */
+
+int Write_outbuf_to_OF( struct job *job, char *title,
+	int of_pid, int of_fd, int of_error,
+	char *buffer, int outlen,
+	char *msg, int msgmax,
+	int timeout, int suspend, int max_wait, int *exit_status,
+	plp_status_t *ps_status)
 {
-	int i, err;
-	char *ep;
-	char buffer[SMALLBUFFER];
-	char *id;				/* id for job */
+	time_t start_time, current_time;
+	int msglen, n, m, count, elapsed, left;
+	char *s;
 
-	DEBUG2("Do_accounting: command '%s'", command );
-	if( command ) while( isspace( *command ) ) ++command;
-	if( Is_server == 0 || command == 0 || *command == 0 ){
-		return(0);
+	*exit_status = 0;
+	memset(ps_status, 0, sizeof(ps_status[0]));
+	start_time = time((void *)0);
+	msglen = strlen(msg);
+	DEBUG3(
+"Write_outbuf_to_OF: pid %d, of_fd %d, of_error %d, timeout %d, suspend %d",
+		of_pid, of_fd, of_error, timeout, suspend );
+
+	n = 0;
+	while( n >=0 && outlen > 0 ){
+		left = timeout;
+		if( timeout > 0 ){
+			current_time = time((void *)0);
+			elapsed = current_time - start_time;
+			left = timeout - elapsed;
+			if( left <= 0 ){
+				n = -2;
+				break;
+			}
+		}
+
+		msglen = strlen(msg);
+		DEBUG4("Write_outbuf_to_OF: writing %d", outlen );
+		DEBUG5("Write_outbuf_to_OF: writing '%s'", buffer );
+		count = -1;	/* number written */
+		n = Read_write_timeout( of_error, msg+msglen, msgmax-msglen, &count,
+			of_fd, &buffer, &outlen, left );
+		DEBUG4("Write_outbuf_to_OF: write returned %d, read %d, '%s'",
+			n, count, msg);
+		if( count > 0 ){
+			msglen += count;
+			msg[msglen] = 0;
+			s = msg;
+			while( (s = safestrchr(msg,'\n')) ){
+				*s++ = 0;
+				setstatus(job, "%s filter msg - '%s'", title, msg );
+				memmove(msg,s,strlen(s)+1);
+			}
+			msglen = strlen(msg);
+		} else if( count == 0 ){
+			DEBUG5("Write_outbuf_to_OF: no more reading");
+			of_error = -1;
+		}
 	}
+	DEBUG3("Write_outbuf_to_OF: after writing status %d", n);
+	while( n == 0 && of_pid > 0 ){
+		if( !suspend && of_fd >= 0 ){
+			DEBUG3("Write_outbuf_to_OF: closing of_fd %d", of_fd);
+			close(of_fd);
+			of_fd = -1;
+		}
+		left = timeout;
+		if( timeout > 0 ){
+			current_time = time((void *)0);
+			elapsed = current_time - start_time;
+			left = timeout - elapsed;
+			if( left <= 0 ){
+				n = -2;
+				continue;
+			}
+		}
+		DEBUG3("Write_outbuf_to_OF: waiting %d secs for pid %d, suspend %d",
+			left, of_pid, suspend );
 
-	id = cfp->identifier+1;
-	if( *id == 0 ) id = cfp->transfername;
-
-	err = JSUCC;
-	if( *command == '|' ){
-		if( As_fd_info.pid > 0 ){
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"conflict in accounting - af and as or ae both filters" );
-			err = JABORT;
-		} else if( Make_filter( 'f', cfp, &As_fd_info, command, 0,
-			1, filter_out,
-			printcap_entry, (void *)0,
-			Accounting_port, Logger_destination != 0, Accounting_port ) ){
-			err = JABORT;
+		if( !suspend ){
+			count = -1;
+			if( of_error >= 0 ){
+				/* we see if we have output */
+				count = -1;
+				/* poll for any errors */
+				m = Read_write_timeout( of_error, msg+msglen, msgmax-msglen,
+					&count, -1, 0, 0, left );
+				DEBUG4("Write_outbuf_to_OF: read status %d, read %d, '%s'",
+					m,count,msg);
+				if( count > 0 ){
+					msglen += count;
+					msg[msglen] = 0;
+					s = msg;
+					while( (s = safestrchr(msg,'\n')) ){
+						*s++ = 0;
+						setstatus(job, "%s filter msg - '%s'", title, msg );
+						memmove(msg,s,strlen(s)+1);
+					}
+					msglen = strlen(msg);
+					continue;
+				} else if( count == 0 ){
+					of_error = -1;
+					DEBUG3("Write_outbuf_to_OF: no more reading");
+					continue;
+				}
+			}
+			n = Wait_for_pid( of_pid, title, suspend, left, ps_status );
+			/* we got process exiting */
+			*exit_status = n;
+			of_pid = 0;
 		} else {
-			err = Close_filter( 0, &As_fd_info, timeout, "accounting" );
-			DEBUG2("Do_accounting: filter exit status %s", Server_status(err) );
-			if( err ){
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"accounting check at %s failed - status %s", end?"end":"start",
-					Server_status( err ) );
+			if( left == 0 || left > max_wait ){
+				left = max_wait;
 			}
-		}
-	} else if( Accounting_port > 0 ){
-		/* now we have to expand the string */
-		ep = buffer + sizeof(buffer) - 2;
-		ep = Expand_command( cfp, buffer, ep, command, 'f', (void *)0 );
-		i = strlen(buffer);
-		buffer[i++] = '\n';
-		buffer[i++] = 0;
-		DEBUG2("Do_accounting: job '%s' '%s'", id, buffer );
-		if( Write_fd_str( Accounting_port, buffer ) <  0 ){
-			err = JFAIL;
-			logerr( LOG_ERR, "Do_accounting: write failed" );
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"accounting write failed" );
-			err = JFAIL;
-		} else if( end == 0 && Accounting_check ){
-			static char accept[] = "accept";
-			i = sizeof(buffer) - 1;
-			buffer[0] = 0;
-			err = Link_line_read( "ACCOUNTING SERVER", &Accounting_port,
-				timeout, buffer, &i );
-			buffer[i] = 0;
-			if( err ){
-				plp_snprintf( cfp->error, sizeof( cfp->error ),
-					"read failed from accounting server" );
-				err = JFAIL;
-			} else if( strncasecmp( buffer, accept, sizeof(accept)-1 ) ){
-				logerr( LOG_ERR,
-					"Do_accounting: accounting check failed '%s'", buffer );
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"accounting check failed '%s'", buffer );
-				err = JFAIL;
+			/* we wait until it returns or we get a timeout */
+			n = Wait_for_pid( of_pid, title, suspend, left, ps_status );
+			*exit_status = 0;
+			DEBUG4("Write_outbuf_to_OF: wait returned %d", n);
+			if( n != -2 ){
+				/* we got process exiting */
+				of_pid = 0;
+			} else {
+				/* we timed out, try again */
+				n = 0;
 			}
+			left = -1;
+			do{
+				count = -1;
+				/* poll for any errors */
+				DEBUG4("Write_outbuf_to_OF: doing read for %d sec", left);
+				m = Read_write_timeout( of_error, msg+msglen, msgmax-msglen,
+					&count,
+					-1, 0, 0, left );
+				DEBUG4("Write_outbuf_to_OF: read status %d, read %d, '%s'",
+					m,count,msg);
+				left = -1;
+				if( count > 0 ){
+					msglen += count;
+					msg[msglen] = 0;
+					s = msg;
+					while( (s = safestrchr(msg,'\n')) ){
+						*s++ = 0;
+						setstatus(job, "%s filter msg - '%s'", title, msg );
+						memmove(msg,s,strlen(s)+1);
+					}
+					msglen = strlen(msg);
+					left = 1;
+				} else if( count == 0 ){
+					of_error = -1;
+				}
+			}while( left > 0 );
 		}
 	}
-	if( err ){
-		Errorcode = err;
-		setstatus( cfp,  cfp->error );
-		Set_job_control( cfp, (void *)0 );
-	}
-	return( err );
+	return(n);
 }
