@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.42 2002/12/07 00:30:39 papowell Exp $";
+"$Id: utilities.c,v 1.46 2003/01/17 23:01:26 papowell Exp $";
 
 #include "lp.h"
 
@@ -482,6 +482,21 @@ char *safestrpbrk( const char *s1, const char *s2 )
 	return( 0 );
 }
 
+/* perform string concatentaton with malloc */
+char *safestrappend4( char *s1, const char *s2, const char *s3, const char *s4 )
+{
+	int m, len;
+	m = safestrlen(s1);
+	len = m + safestrlen(s2) + safestrlen(s3) + safestrlen(s4);
+	s1 = realloc(s1,len+1);
+	len = m;
+	if( s2 ) strcpy( s1+len, s2 ); len += strlen(s1+len);
+	if( s3 ) strcpy( s1+len, s3 ); len += strlen(s1+len);
+	if( s4 ) strcpy( s1+len, s4 ); len += strlen(s1+len);
+	s1[ len ] = 0;
+	return(s1);
+}
+
 /***************************************************************************
  * plp_usleep() with select - simple minded way to avoid problems
  ***************************************************************************/
@@ -559,19 +574,18 @@ int Get_max_servers( void )
 		n = CHILD_MAX;
 		DEBUG1("Get_max_servers: CHILD_MAX %d", n );
 #  else
-		n = 20;
+		n = 0;
 		DEBUG1("Get_max_servers: default %d", n );
 #  endif
 # endif
 #endif
-	if( n <= 0 ){
+	n = n/4;
+	if(( n > 0 && n > Max_servers_active_DYN)
+		|| (n <= 0 && Max_servers_active_DYN) ){
 		n = Max_servers_active_DYN;
-	} else {
-		n = n/2;
 	}
-	if( n <= 0 ) n = 64;
+	if( n <= 0 ) n = 32;
 
-	if( Max_servers_active_DYN && n > Max_servers_active_DYN ) n = Max_servers_active_DYN;
 	DEBUG1("Get_max_servers: returning %d", n );
 	return( n );
 }

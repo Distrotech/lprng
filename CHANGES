@@ -1,3 +1,137 @@
+Version LPRng-3.8.20 - Tue Jan 7 09:18:15 PST 2003
+
+  The lpd.conf now has (EMPTY STRING) for defaults which are
+  empty strings... My Bad.  Patrick
+
+  At the request of Karl Kopper <karl@unfiw.com> I reviewed the issues
+  of queue starting,  polling the queues for done jobs, and other
+  issues.  A small side effect of this is that the LPD server process
+  now starts printing processes.  This is actually beneficial as it can
+  now limit the total number of printing processes and allow some
+  LPQ/LPC/LPR etc actions. Here is a summary of the current operation
+  and the options that control it:
+   Options:
+      lpd_force_poll - forces a check of the spool queues, even when there
+        is most likely no reason to.  Used when you have some REALLY odd
+        programs running that will directly manipulate the LPD spool queues
+        and you do not want to have to connect to the server.
+        (default is OFF).
+     lpd_poll_time - interval in secs between checking queues for work.
+        Done if there is some reason to suspect that some spool queue
+        had problems and might need to be restarted.  This also handles a
+        race condition where a job arrives just as the process servicing
+        the spool queue exits.
+        (default is 5 minutes or 600 seconds)
+     lpd_poll_start_interval - if there are spool queues which need service,
+        fork up to 'lpd_poll_servers_started' processes at a time and then
+        wait for lpd_poll_start_interval seconds before forking more.
+        This prevents the deadly situation where the LPD server is started
+        and in turn  starts a gizillion process; the rc starupt scripts
+        may fail because there are no free processes (I kid you not on this
+        one, it drove me nuts trying to find out why the system would crash
+        ONLY when LPD ran with NO debugging - the IO caused it to slow down
+        enough so that the other scripts could run).
+        (default now 1 second)
+     lpd_poll_servers_started - maximum number of processs to fork to be
+        spool queue servers at a time.  this prevents the massive forking a huge
+        number of processes at once.
+        (default now 3)
+     max_servers_active - the maximum number of children of LPD that are handling
+        spool queues.  Since each spool queue process may have up to 5 children,
+        and these in turn make fork other ones,  you should make sure that the
+        limits for the LPD server are set as high as possible, or use this
+        value to throttle activity.  The actual limit used by LDP value
+        is the minimum of max_servers_active value and
+           maximum children processes per process/2
+        as determined by the getrlimit(), sysconf(), or other appropriate system
+        calls.  Most problems reported by systems with heavy load are caused by
+        restrictive process limits.  Run 'lpd -F -D1 | grep Get_max_servers'
+        (as an ordinary user) and see the limits for processes and file
+        descriptors.
+
+    Summary:
+     lpd_force_poll=0
+     lpd_poll_time=600   (5 minutes)
+     lpd_poll_start_interval=1  (1 second)
+     lpd_poll_servers_started=3  (3 per start interval)
+     max_servers_active=1024
+
+    Experiments with heavily loaded systems (FreeBSD 4.7, Solaris
+    2.8, Linux RedHat 7.3, and Mandrake 8) indicate that these
+    values should not cause system trauma.  Your milage may vary;
+    if the load average goes up very high, then set lpd_poll_start_interval
+    to a larger value and/or decrease the lpd_poll_servers_started
+    value.  Both is best.  The amount of free memory seems to be
+    the limiting factor on the system loading.
+
+    When you send a job via LPR, the LPD server forks a 'service socket'
+    process to handle job reception;  in previous versions after receiving
+    the job the process would then call Do_queue_jobs() to take on the
+    duties of the 'handle the jobs in the spool queue' process.  In
+    this version the 'service socket' process sends a 'start queue'
+    request to the LPD server and then exits.  The LPD service will
+    then fork a process to become the 'handle the jobs' process.
+    Similarly, when an lpc operation needs to start a 'handle the jobs'
+    process,  a message is sent to the LPD server to start the process.
+
+    While there is no real difference in performance on lightly loaded
+    systems,  there is a big difference on heavily loaded systems.  Now
+    the LPD server can control the total number of active spool queues
+    much easier,  and the system does not get overloaded as easily.
+
+    Also, the LPRng server does not clobber the system at startup
+    time as badly now.
+
+    By the way,  queues which are started or have jobs put in them
+    by LPC or LPR have priority over queues that are started by the
+    LPD process looking for work,  and the LPD server will brutally
+    try to start as many as possible.  Thus, if you do an 'lpc start all'
+    you can bring the system to its knees for a short time until
+    all of the forking and file reading activity is completed.
+    Since only the administrator can do an 'lpc start' command,
+    this should not be an issue...
+
+  Keith ("HP Printer Dies Horrible Death") Rinaldo
+  <rinaldok@egr.unlv.edu> has reported that some HP printers lock
+  up and do not report status, etc., and display a nasty low level
+  error message on the printer console such as 7900FE.  The IFHP
+  filter or LPD would sit there waiting for a response.  The 'keepalive'
+  TCP/IP facility does not solve this problem,  as sometimes the
+  TCP/IP stack is OK but the job handling code (i.e. - print engine)
+  is non-functional.  You need to try to get a response from the
+  printer,  which is what the IFHP filter does.
+
+  NOTE: send_job_rw_timeout default value is now 0 (no timeout).
+  In order to not surprise new users,  the default value for
+  send_job_rw_timeout is now 0, i.e.- no timeout.  Details below.
+
+    The send_job_rw_timeout is now used to set a maximum time that
+    the printer (network, parallel port or serial port) connection
+    will be 'inactive', i.e. - no data input and not available for
+    data output, OR, starting with this release, that the various
+    filter processes do not update the status file (by default,
+    ${spooldir}/status.printer).  When the timeout expires the job
+    will terminate with a JTIMEOUT status, which will be treated
+    as a JFAIL status.
+
+       /* LPRng internal        process exit status */
+       #define JTIMEOUT 43      /* 12 timeout */
+    
+    The IFHP filter (ifhp-3.5.11) now has a similar 'send_job_rw_timeout'
+    option that has the same effect as the LPD 'send_job_rw_timeout'.
+    If the file descriptor used to communicate with the printer is
+    inactive for this period of time,  then the IFHP filter will
+    exit with a JTIMEOUT error code, which will be treated as a
+    JFAIL status.
+
+    This will only work if the printer goes totally catatonic and
+    does not reply with status, or the print filter goes catatonic
+    and does not update the status file.  This situation, unfortunately,
+    can happen when the printer is taken offline in the middle of
+    a job in order to put paper in the paper tray.  You can't win
+    them all...  but if the time taken to put the paper in the tray
+    is less than the send_job_rw_timeout then you should be OK.
+
 Version LPRng-3.8.19 - Thu Dec 5 12:34:45 PST 2002
   Check_for_missing_files was not writing control file.
   (Spotted by Keith ("Wanna bet on that?") Rinaldo <rinaldok@egr.unlv.edu>

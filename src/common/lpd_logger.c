@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_logger.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -91,7 +91,7 @@ int Dump_queue_status(int outfd)
 		DEBUGF(DLOG2)("Dump_queue_status: checking '%s'", pr );
 		if( Setup_printer( pr, buffer, sizeof(buffer), 0 ) ) continue;
 		Free_line_list( &Sort_order );
-		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0 ) ){
+		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0,0,0,0,0,0 ) ){
 			continue;
 		}
 		Free_line_list(&info);

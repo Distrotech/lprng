@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.11 2002/12/07 00:30:38 papowell Exp $
+ * $Id: user_auth.c,v 1.15 2003/01/17 23:01:26 papowell Exp $
  ***************************************************************************/
 
 /*

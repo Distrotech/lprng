@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_status.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -510,10 +510,10 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	/* get the spool entries */
 	Free_line_list( &outbuf );
-	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 0 );
+	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move,0,0,0,0,0 );
 	/* check for done jobs, remove any if there are some */
 	if( Remove_done_jobs() ){
-		Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 0 );
+		Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move,0,0,0,0,0 );
 	}
 
 	DEBUGF(DLPQ3)("Get_queue_status: total files %d", Sort_order.count );

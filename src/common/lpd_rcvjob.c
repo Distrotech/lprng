@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -199,16 +199,17 @@ int Receive_job( int *sock, char *input )
 	/* fifo order enforcement */
 	if( Fifo_DYN ){
 		char * path = Make_pathname( Spool_dir_DYN, Fifo_lock_file_DYN );
+		path = safestrappend4( path,"." , RemoteHost_IP.fqdn, 0  );
 		DEBUG1( "Receive_job: checking fifo_lock file '%s'", path );
 		fifo_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( fifo_fd < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("Do_queue_jobs: cannot open lockfile '%s'"),
+			LOGERR_DIE(LOG_ERR) _("Receive_job: cannot open lockfile '%s'"),
 				path ); 
 		}
 		if( Do_lock( fifo_fd, 1 ) < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("Do_queue_jobs: cannot lock lockfile '%s'"),
+			LOGERR_DIE(LOG_ERR) _("Receive_job: cannot lock lockfile '%s'"),
 				path ); 
 		}
 		if(path) free(path); path = 0;
@@ -422,8 +423,8 @@ int Receive_job( int *sock, char *input )
 		s = Server_queue_name_DYN;
 		if( !s ) s = Printer_DYN;
 
-		SNPRINTF( line, sizeof(line)) "\n" );
-		DEBUGF(DRECV1)("Receive_jobs: starting '%s'", s );
+		SNPRINTF( line, sizeof(line)) "%s\n", s );
+		DEBUGF(DRECV1)("Receive_jobs: Lpd_request fd %d, starting '%s'", Lpd_request, line );
 		if( Write_fd_str( Lpd_request, line ) < 0 ){
 			LOGERR_DIE(LOG_ERR) _("Receive_jobs: write to fd '%d' failed"),
 				Lpd_request );
@@ -433,7 +434,7 @@ int Receive_job( int *sock, char *input )
 		Free_job(&job);
 		Free_line_list(&l);
 
-		Do_queue_jobs( s, 0 );
+		/* Do_queue_jobs( s, 0 ); */
 	}
 	Free_line_list(&info);
 	Free_line_list(&files);
@@ -625,10 +626,15 @@ int Receive_block_job( int *sock, char *input )
 	} else {
 		Link_close( sock );
 		Remove_tempfiles();
-		if( Server_queue_name_DYN ){
-			Do_queue_jobs( Server_queue_name_DYN, 0);
-		} else {
-			Do_queue_jobs( Printer_DYN, 0);
+
+		s = Server_queue_name_DYN;
+		if( !s ) s = Printer_DYN;
+
+		SNPRINTF( buffer, sizeof(buffer)) "%s\n", s );
+		DEBUGF(DRECV1)("Receive_block_jobs: Lpd_request fd %d, starting '%s'", Lpd_request, buffer );
+		if( Write_fd_str( Lpd_request, buffer ) < 0 ){
+			LOGERR_DIE(LOG_ERR) _("Receive_block_jobs: write to fd '%d' failed"),
+				Lpd_request );
 		}
 	}
 	return( error[0] != 0 );

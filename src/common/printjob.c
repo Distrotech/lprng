@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: printjob.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -84,8 +84,9 @@
  * the problem of the device and its status return.  If we have a 'real'
  * device,  then it is usually opened RW, so we can get status back.
  * In this case, output == status_device.  If we have a 'filter' as an
- * output device,  then we arrange to have the filter device bidirectional.
- * This means that the filter can/must also read the output from the device.
+ * output device,  then we arrange to have the filter pipe file descriptor
+ * bidirectional.  This means that the filter can/must also read the
+ * output from the device.
  *
  * This implies that output filters used as devices must handle their status
  * and error reporting themselves,  and provide as little status back on their
@@ -103,16 +104,18 @@
  *     filter.  The filter will then need to decide if it can read from
  *     the device.  After the filter has run and you have 'poll_for_status'
  *     you should check for status from the device.
+ *  d) timeouts are handled by waiting for IO from either the file descriptor
+ *     OR checking to see if the status file exists and it has been updated.
  ****************************************************************************/
 
 int Print_job( int output, int status_device, struct job *job,
-	int timeout, int poll_for_status, char *user_filter )
+	int send_job_rw_timeout, int poll_for_status, char *user_filter )
 {
 	char *FF_str, *leader_str, *trailer_str, *filter;
 	int i, of_stdin, of_stderr, if_error[2],
 		of_pid, copy, copies,
 		do_banner, n, pid, count, fd, tempfd,
-		files_printed;
+		files_printed, time_left;
 
 	char msg[SMALLBUFFER];
 	char filter_name[8], filter_title[64], msgbuffer[SMALLBUFFER],
@@ -188,17 +191,17 @@ int Print_job( int output, int status_device, struct job *job,
 	/* do we need an OF filter? */
 	Set_block_io( output );
 	if( OF_Filter_DYN ){
-		if( Run_OF_filter( timeout, &of_pid, &of_stdin, &of_stderr,
+		if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
 			job, id, 0,
-			msgbuffer, sizeof(msgbuffer)-1 ) ){
+			msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
 			goto exit;
 		}
 	} else if( Outlen ){
 		/* no filter - direct to device */
 		n = Write_outbuf_to_OF(job,"LP",output, Outbuf, Outlen,
 			status_device, msgbuffer, sizeof(msgbuffer)-1,
-			timeout, poll_for_status );
+			send_job_rw_timeout, poll_for_status, Status_file_DYN );
 		if( n ){
 			Errorcode = JFAIL;
 			SETSTATUS(job)"LP device write error '%s'", Server_status(n));
@@ -327,7 +330,7 @@ int Print_job( int output, int status_device, struct job *job,
 					 LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
 			}
 			Init_buf(&Outbuf, &Outmax, &Outlen );
-			if( files_printed++ && !No_FF_separator_DYN && FF_str ){
+			if( files_printed++ && (!No_FF_separator_DYN || FF_separator_DYN) && FF_str ){
 				/* FF separator -> of_fd; */
 				SETSTATUS(job)"printing '%s' FF separator ",id);
 				Put_buf_str( FF_str, &Outbuf, &Outmax, &Outlen );
@@ -338,17 +341,17 @@ int Print_job( int output, int status_device, struct job *job,
 				/* yes */
 				if( OF_Filter_DYN ){
 					/* send it to the OF filter */
-					if( Run_OF_filter( timeout, &of_pid, &of_stdin, &of_stderr,
+					if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 						output, &Outbuf, &Outmax, &Outlen,
 						job, id, 0,
-						msgbuffer, sizeof(msgbuffer)-1 ) ){
+						msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
 						goto exit;
 					}
 				} else {
 					/* send it to the OF device */
 					n = Write_outbuf_to_OF(job,"LP",output, Outbuf, Outlen,
 						status_device, msgbuffer, sizeof(msgbuffer)-1,
-						timeout, poll_for_status );
+						send_job_rw_timeout, poll_for_status, Status_file_DYN );
 					if( n ){
 						Errorcode = n;
 						SETSTATUS(job)"error writing to device '%s'",
@@ -406,7 +409,7 @@ int Print_job( int output, int status_device, struct job *job,
 				if( if_error[0] != -1 ){
 					n = Get_status_from_OF(job,filter_title,pid,
 						if_error[0], filtermsgbuffer, sizeof(filtermsgbuffer)-1,
-						timeout, 0, 0 );
+						send_job_rw_timeout, 0, 0, Status_file_DYN );
 					if( filtermsgbuffer[0] ){
 						SETSTATUS(job) "%s filter msg - '%s'", filter_title, filtermsgbuffer );
 					}
@@ -419,15 +422,33 @@ int Print_job( int output, int status_device, struct job *job,
 					close(if_error[0]);
 					if_error[0] = -1;
 				}
-				/* now we get the exit status for the filter */
-				n = Wait_for_pid( pid, filter_title, 0, timeout );
-				if( n ){
-					Errorcode = n;
-					SETSTATUS(job)"%s filter exit status '%s'",
-						filter_title, Server_status(n));
-					goto end_of_job;
+				time_left = send_job_rw_timeout;
+				while(1){
+					/* now we get the exit status for the filter */
+					n = Wait_for_pid( pid, filter_title, 0, time_left );
+					switch(n){
+						case JSUCC: break;
+						case JTIMEOUT:
+							/* get the timeout value */
+							if( send_job_rw_timeout > 0
+								&& Status_file_DYN
+								&& !stat(Status_file_DYN, &statb) ){
+								int delta = time(0) - statb.st_mtime;
+								/* OK, we need to wait a bit longer */
+								if( delta < send_job_rw_timeout ){
+									time_left = send_job_rw_timeout - delta;
+									continue;
+								}
+							}
+						default:
+							Errorcode = n;
+							SETSTATUS(job)"%s filter exit status '%s'",
+								filter_title, Server_status(n));
+							goto end_of_job;
+					}
+					SETSTATUS(job) "%s filter finished", filter_title );
+					break;
 				}
-				SETSTATUS(job) "%s filter finished", filter_title );
 			} else {
 				/* we write to the output device, and then get status */
 				DEBUG3("Print_job: format '%s' no filter, reading from %d",
@@ -437,15 +458,17 @@ int Print_job( int output, int status_device, struct job *job,
 					Outbuf[Outlen] = 0;
 					n = Write_outbuf_to_OF(job,"LP",output, Outbuf, Outlen,
 						status_device, msgbuffer, sizeof(msgbuffer)-1,
-						timeout, poll_for_status );
+						send_job_rw_timeout, poll_for_status, Status_file_DYN );
 					if( n ){
 						Errorcode = JFAIL;
 						SETSTATUS(job)"error '%s'", Server_status(n));
+						goto end_of_job;
 					}
 				}
 				if( Outlen < 0 ){
 					Errorcode = JFAIL;
 					SETSTATUS(job)"error reading file '%s'", Errormsg(errno));
+					goto end_of_job;
 				}
 				Outlen = 0;
 			}
@@ -484,17 +507,17 @@ int Print_job( int output, int status_device, struct job *job,
 
 	Set_block_io( output );
 	if( OF_Filter_DYN ){
-		if( Run_OF_filter( timeout, &of_pid, &of_stdin, &of_stderr,
+		if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
 			job, id, 1,
-			msgbuffer, sizeof(msgbuffer)-1 ) ){
+			msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
 			goto exit;
 		}
 	} else {
 		if( Outlen ){
 			n = Write_outbuf_to_OF(job,"LP",output, Outbuf, Outlen,
 				status_device, msgbuffer, sizeof(msgbuffer)-1,
-				timeout, poll_for_status );
+				send_job_rw_timeout, poll_for_status, Status_file_DYN );
 			if( n && Errorcode == 0 ){
 				Errorcode = JFAIL;
 				SETSTATUS(job)"LP device write error '%s'", Errormsg(errno));
@@ -545,14 +568,14 @@ int Print_job( int output, int status_device, struct job *job,
 
  static const char *Filter_stop = "\031\001";
 
-int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
+int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, int *of_stderr,
 	int output, char **outbuf, int *outmax, int *outlen,
 	struct job *job, char *id, int terminate_of,
 	char *msgbuffer, int msglen )
 {
 	char msg[SMALLBUFFER];
 	char *s;
-	int of_error[2], of_fd[2], n;
+	int of_error[2], of_fd[2], n, time_left;
 	struct stat statb;
 	struct line_list files;
 
@@ -635,11 +658,11 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		n = Write_outbuf_to_OF(job,"OF",*of_stdin,
 			*outbuf, *outlen,
 			*of_stderr, msgbuffer, msglen,
-			timeout, 0 );
+			send_job_rw_timeout, 0, Status_file_DYN );
 		if( n == 0 ){
 			n = Get_status_from_OF(job,"OF",*of_pid,
 				*of_stderr, msgbuffer, msglen,
-				timeout, 1, Filter_poll_interval_DYN );
+				send_job_rw_timeout, 1, Filter_poll_interval_DYN, Status_file_DYN );
 		}
 		if( n != JSUSP ){
 			Errorcode = n;
@@ -652,7 +675,7 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		n = Write_outbuf_to_OF(job,"OF",*of_stdin,
 			*outbuf, *outlen,
 			*of_stderr, msgbuffer, msglen,
-			timeout, 0 );
+			send_job_rw_timeout, 0, Status_file_DYN );
 		if( n ){
 			Errorcode = n;
 			SETSTATUS(job)"OF filter problems, error '%s'", Server_status(n));
@@ -662,7 +685,7 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		*of_stdin = -1;
 		n = Get_status_from_OF(job,"OF",*of_pid,
 			*of_stderr, msgbuffer, msglen,
-			timeout, 0, 0 );
+			send_job_rw_timeout, 0, 0, Status_file_DYN );
 		if( n ){
 			Errorcode = n;
 			SETSTATUS(job)"OF filter problems, error '%s'", Server_status(n));
@@ -671,15 +694,34 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		close( *of_stderr );
 		*of_stderr = -1;
 		/* now we get the exit status for the filter */
-		n = Wait_for_pid( *of_pid, "OF", 0, timeout );
-		if( n ){
-			Errorcode = n;
-			SETSTATUS(job)"%s filter exit status '%s'",
-				"OF", Server_status(n));
-			goto exit;
+		time_left = send_job_rw_timeout;
+		while(1){
+			/* now we get the exit status for the filter */
+			n = Wait_for_pid( *of_pid, "OF", 0, time_left );
+			switch(n){
+				case JSUCC: break;
+				case JTIMEOUT:
+					/* get the timeout value */
+					if( send_job_rw_timeout > 0
+						&& Status_file_DYN
+						&& !stat(Status_file_DYN, &statb) ){
+						int delta = time(0) - statb.st_mtime;
+						/* OK, we need to wait a bit longer */
+						if( delta < send_job_rw_timeout ){
+							time_left = send_job_rw_timeout - delta;
+							continue;
+						}
+					}
+				default:
+					Errorcode = n;
+					SETSTATUS(job)"%s filter exit status '%s'",
+						"OF", Server_status(n));
+					goto exit;
+			}
+			SETSTATUS(job) "%s filter finished", "OF" );
+			break;
 		}
 		*of_pid = -1;
-		SETSTATUS(job)"OF filter finished" );
 	}
 	return( 0 );
  exit:
@@ -791,7 +833,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
 int Write_outbuf_to_OF( struct job *job, char *title,
 	int of_fd, char *buffer, int outlen,
 	int of_error, char *msg, int msgmax,
-	int timeout, int poll_for_status )
+	int timeout, int poll_for_status, char *status_file )
 {
 	time_t start_time, current_time;
 	int msglen, return_status, count, elapsed, left;
@@ -850,8 +892,20 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 			elapsed = current_time - start_time;
 			left = timeout - elapsed;
 			if( left <= 0 ){
-				return_status = JTIMEOUT;
-				break;
+				if( status_file && !stat(status_file, &statb) ){
+					int interval = current_time - statb.st_mtime;
+					if( interval < timeout ){
+						start_time = statb.st_mtime;
+						elapsed = current_time - start_time;
+						left = timeout - elapsed;
+					} else {
+						return_status = JTIMEOUT;
+						break;
+					}
+				} else {
+					return_status = JTIMEOUT;
+					break;
+				}
 			}
 		}
 		msglen = safestrlen(msg);
@@ -899,7 +953,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 
 int Get_status_from_OF( struct job *job, char *title, int of_pid,
 	int of_error, char *msg, int msgmax,
-	int timeout, int suspend, int max_wait )
+	int timeout, int suspend, int max_wait, char *status_file )
 {
 	time_t start_time, current_time;
 	int m, msglen, return_status, count, elapsed, left, done;
@@ -919,15 +973,27 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 	}
 
 	done = 0;
+	left = timeout;
 	while( !done ){
-		left = timeout;
 		if( timeout > 0 ){
 			current_time = time((void *)0);
 			elapsed = current_time - start_time;
 			left = timeout - elapsed;
 			if( left <= 0 ){
-				return_status = JTIMEOUT;
-				break;
+				if( status_file && !stat(status_file, &statb) ){
+					int interval = current_time - statb.st_mtime;
+					if( interval < timeout ){
+						start_time = statb.st_mtime;
+						elapsed = current_time - start_time;
+						left = timeout - elapsed;
+					} else {
+						return_status = JTIMEOUT;
+						break;
+					}
+				} else {
+					return_status = JTIMEOUT;
+					break;
+				}
 			}
 		}
 		DEBUG3("Get_status_from_OF: waiting for '%s', left %d secs for pid %d",
@@ -945,11 +1011,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 			 * pipe is full.  We may need to read the pipe to clear out the buffer
 			 * so it can exit.  This is really an unusual condition,  but it can happen.
 			 */
-			left = -1;
-			if( return_status == JTIMEOUT ){
-				/* had a timeout */
-				return_status = 0;
-			} else {
+			if( return_status != JTIMEOUT ){
 				done = 1;
 			}
 			DEBUG4("Get_status_from_OF: now reading, after suspend" );
@@ -994,9 +1056,6 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 					memmove(msg,s,safestrlen(s)+1);
 				}
 			} else if( count == 0 ){
-				done = 1;
-			} else {
-				return_status = JTIMEOUT;
 				done = 1;
 			}
 		} while( count > 0 );

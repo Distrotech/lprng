@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpr.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -279,7 +279,7 @@ int main(int argc, char *argv[], char *envp[])
 			/* we wait for eof on status_fd */
 			buffer[0] = 0;
 			Get_status_from_OF(&prjob,"LP",pid,
-				status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0 );
+				status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0, 0 );
 		}
 		if( fd > 0 ) close( fd ); fd = -1;
 		if( status_fd > 0 ) close( status_fd ); status_fd = -1;

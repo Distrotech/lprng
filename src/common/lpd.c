@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -67,25 +67,22 @@ int main(int argc, char *argv[], char *envp[])
 	int sock = 0;		/* socket for listen */
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
-	struct timeval timeval, *timeout;
 	int max_socks;		/* maximum number of sockets */
-	int n, m;	/* ACME?  Hmmm... well, ok */
 	int lockfd;	/* the lock file descriptor */
 	int err, newsock;
  	time_t last_time;	/* time that last Start_all was done */
- 	time_t this_time;	/* current time */
-	time_t servers_started_time;	/* time servers were started */
+	time_t server_started_time;	/* time servers were started */
 	plp_status_t status;
-	int max_servers = 0;
-	int start_fd = 0;
-	int status_pid = 0;
+	int max_servers;
+	int start_fd = 0, start_pid = 0;
+	int logger_process_pid = 0;
 	int request_pipe[2], status_pipe[2];
 	int last_fork_pid_value;
 	struct line_list args;
 	struct sockaddr sinaddr;
-	char *s;
 	int first_scan = 1;
 	int unix_sock = 0;
+	int fd_available;
 
 	Init_line_list( &args );
 	Is_server = 1;	/* we are the LPD server */
@@ -95,6 +92,7 @@ int main(int argc, char *argv[], char *envp[])
 	Debug = 0;
 #endif
 	if(DEBUGL3){
+		int n;
 		LOGDEBUG("lpd: argc %d", argc );
 		for( n = 0; n < argc; ++n ){
 			LOGDEBUG(" [%d] '%s'", n, argv[n] );
@@ -164,9 +162,11 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* get the maximum number of servers allowed */
 	max_servers = Get_max_servers();
-	n = Get_max_fd();
-	DEBUG1( "lpd: maximum servers %d, maximum file descriptors %d ",
-		max_servers, n );
+	if(DEBUGL1){
+		int max_file_descriptors = Get_max_fd();
+		DEBUG1( "lpd: maximum servers %d, maximum file descriptors %d ",
+			max_servers, max_file_descriptors );
+	}
 
 	if( Lockfile_DYN == 0 ){
 		LOGERR_DIE(LOG_INFO) _("No LPD lockfile specified!") );
@@ -199,26 +199,29 @@ int main(int argc, char *argv[], char *envp[])
 	Set_lpd_pid( lockfd );
 #endif
 
-	s = Lpd_listen_port_arg;
-	if( ISNULL(s) ) s = Lpd_listen_port_DYN;
-	if( ISNULL(s) ) s = Lpd_port_DYN;
-	if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
-		sock = Link_listen(s);
-		DEBUG1("lpd: listening socket fd %d",sock);
-		if( sock < 0 ){
-			Errorcode = 1;
-			DIEMSG("Cannot bind to lpd port '%s'", s);
+	{
+		char *s;
+		s = Lpd_listen_port_arg;
+		if( ISNULL(s) ) s = Lpd_listen_port_DYN;
+		if( ISNULL(s) ) s = Lpd_port_DYN;
+		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
+			sock = Link_listen(s);
+			DEBUG1("lpd: listening socket fd %d",sock);
+			if( sock < 0 ){
+				Errorcode = 1;
+				DIEMSG("Cannot bind to lpd port '%s'", s);
+			}
 		}
-	}
 
-	s = Lpd_socket_arg;
-	if( ISNULL(s) ) s = Unix_socket_path_DYN;
-	if( !ISNULL(s) && safestrcasecmp( s,"off") ){
-		unix_sock = Unix_link_listen(s);
-		DEBUG1("lpd: unix listening socket fd %d, path '%s'",unix_sock, s);
-		if( unix_sock < 0 ){
-			Errorcode = 1;
-			DIEMSG("Cannot bind to UNIX socket '%s'", s );
+		s = Lpd_socket_arg;
+		if( ISNULL(s) ) s = Unix_socket_path_DYN;
+		if( !ISNULL(s) && safestrcasecmp( s,"off") ){
+			unix_sock = Unix_link_listen(s);
+			DEBUG1("lpd: unix listening socket fd %d, path '%s'",unix_sock, s);
+			if( unix_sock < 0 ){
+				Errorcode = 1;
+				DIEMSG("Cannot bind to UNIX socket '%s'", s );
+			}
 		}
 	}
 
@@ -292,7 +295,7 @@ int main(int argc, char *argv[], char *envp[])
 	Set_nonblock_io( Lpd_request );
 
 	Logger_fd = -1;
-	status_pid = -1;
+	logger_process_pid = -1;
 	if( Logger_destination_DYN ){
 		if( pipe( status_pipe ) == -1 ){
 			LOGERR_DIE(LOG_ERR) _("lpd: pipe call failed") );
@@ -300,18 +303,14 @@ int main(int argc, char *argv[], char *envp[])
 		Max_open(status_pipe[0]); Max_open(status_pipe[1]);
 		Logger_fd = status_pipe[1];
 		DEBUG2( "lpd: fd status_pipe(%d,%d)",status_pipe[0],status_pipe[1]);
-		status_pid = Start_logger( status_pipe[0] );
-		if( status_pid < 0 ){
+		logger_process_pid = Start_logger( status_pipe[0] );
+		if( logger_process_pid < 0 ){
 			LOGERR_DIE(LOG_ERR) _("lpd: cannot start initial logger process") );
 		}
 	}
 
 	/* open a connection to logger */
 	setmessage(0,LPD,"Starting");
-
-	/* get the maximum number of servers allowed */
-	max_servers = Get_max_servers();
-	DEBUG1( "lpd: maximum servers %d", max_servers );
 
 	/*
 	 * set up the select parameters
@@ -327,110 +326,210 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	last_time = time( (void *)0 );
- 	servers_started_time = 0;
+ 	server_started_time = 0;
 
-	last_fork_pid_value = start_fd = Start_all(first_scan);
+	start_pid = last_fork_pid_value = Start_all(first_scan, &start_fd );
 	Fork_error( last_fork_pid_value );
-	if( start_fd > 0 ){
+	if( start_pid > 0 ){
 		first_scan = 0;
 	}
 
 	do{
+		struct timeval timeval, *timeout;
+		time_t this_time = time( (void *)0 );
+		int elapsed_time;
+
+		/* set up the timeout values */
+
+		timeout = 0;
+		memset(&timeval, 0, sizeof(timeval));
+
 		DEBUG1("lpd: LOOP START");
 		if(DEBUGL3){ int fd; fd = dup(0); LOGDEBUG("lpd: next fd %d",fd); close(fd); };
 
-		timeout = 0;
-		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_fd %d, Started_server %d",
-			Poll_time_DYN, Force_poll_DYN, start_fd, Started_server );
+		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_pid %d, start_fd %d, Started_server %d",
+			Poll_time_DYN, Force_poll_DYN, start_pid, start_fd, Started_server );
+
 		if(DEBUGL2)Dump_line_list("lpd - Servers_line_list",&Servers_line_list );
 
 		/*
-		 * collect zombies 
+		 * collect zombies.  If one exits, you can set last_fork_pid_value
+		 * to 0, as you may now be able to start a process
 		 */
 
 		while( (pid = plp_waitpid( -1, &status, WNOHANG)) > 0 ){
 			DEBUG1( "lpd: process %d, status '%s'",
 				pid, Decode_status(&status));
-			if( pid == status_pid ){
-				status_pid = -1;
+			if( pid == logger_process_pid ){
+				/* ARGH! the logger process died */
+				logger_process_pid = -1;
 			}
-			last_fork_pid_value = 1;
+			if( pid == start_pid ){
+				start_pid = -1;
+			}
+			last_fork_pid_value = 0;
 		}
-		if( last_fork_pid_value > 0 && Logger_fd > 0 && status_pid < 0 ){
+
+		/*
+		 * if the Logger process dies, then you have real problems,
+		 * so you need to start it up.
+		 */
+		if( last_fork_pid_value >= 0 && Logger_fd > 0 && logger_process_pid <= 0 ){
 			DEBUG1( "lpd: restarting logger process");
-			last_fork_pid_value = status_pid = Start_logger( status_pipe[0] );
+			last_fork_pid_value = logger_process_pid = Start_logger( status_pipe[0] );
 			Fork_error( last_fork_pid_value );
-			DEBUG1("lpd: status_pid %d", status_pid );
+			DEBUG1("lpd: logger_process_pid %d", logger_process_pid );
 		}
+
+		/* you really do not want to start up more proceses until you can
+		 */
 		if( last_fork_pid_value < 0 ){
-			/* wait for 10 seconds then go in a loop */
-			memset(&timeval, 0, sizeof(timeval));
-			timeval.tv_sec = 10;
-			timeout = &timeval;
-		} else if( Poll_time_DYN > 0
-			&& start_fd <= 0 && Servers_line_list.count == 0 ){
-			memset(&timeval, 0, sizeof(timeval));
-			this_time = time( (void *)0 );
-			m = (this_time - last_time);
-			timeval.tv_sec = Poll_time_DYN - m;
-			timeout = &timeval;
-			DEBUG1("lpd: Poll_time_DYN %d, from last poll %d, to next poll %d",
-				Poll_time_DYN, m, (int)timeval.tv_sec );
-			if( m >= Poll_time_DYN ){
-				if( Started_server || Force_poll_DYN ){
-					last_fork_pid_value = start_fd = Start_all(first_scan);
+			goto waitloop;
+		}
+
+		/*
+		 * Check to see if you need to rescan the spool queues
+		 *  - you have done all of the work in the Servers_line_list
+		 *    started by the last scan
+		 *  - it is time to do a new scan
+		 */
+
+		elapsed_time = (this_time - last_time);
+		if( Poll_time_DYN > 0 && start_pid <= 0 ){
+			int doit, scanned_queue_count;
+			DEBUG1("lpd: checking for scan, start_pid %d, start_fd %d, Poll_time_DYN %d, elapsed_time %d, Started_server %d, Force_poll %d",
+				start_fd, start_pid, Poll_time_DYN, elapsed_time, Started_server, Force_poll_DYN );
+			if( elapsed_time >= Poll_time_DYN ){
+				for( scanned_queue_count = doit = 0;
+					scanned_queue_count == 0 && doit < Servers_line_list.count; ++doit ){
+					char *s = Servers_line_list.list[doit];
+					if( s && cval(s) == '.' ) ++scanned_queue_count;
+				}
+				DEBUG1( "lpd: timeout checking for scan,  scanned_queue_count %d", scanned_queue_count);
+				if( scanned_queue_count == 0
+					&& ( Started_server || Force_poll_DYN ) ){
+					last_fork_pid_value = start_pid = Start_all(first_scan, &start_fd );
 					Fork_error( last_fork_pid_value );
-					DEBUG1( "lpd: restarting poll, start_fd %d", start_fd);
+					DEBUG1( "lpd: restarting poll, start_pid %d, start_fd %d", start_pid, start_fd);
 					if( start_fd > 0 ){
-						if( first_scan ) first_scan = 0;
+						first_scan = 0;
+						Started_server = 0;
 						last_time = this_time;
-						timeval.tv_sec = Poll_time_DYN;
+					} else {
+						/* argh! process exhaustion */
+						goto waitloop;
+					}
+				}
+			} else {
+				/* oops... need to wait longer */
+				timeout = &timeval;
+				timeval.tv_sec = Poll_time_DYN - elapsed_time;
+			}
+		}
+
+		/*
+		 * check to see if there are any spool queues that require
+		 * service. This is the case when
+		 *  - time since last startup was non-zero
+		 *  - Servers_line_list has an entry
+		 *  OR you have had a forced startup request
+		 */
+		if( Servers_line_list.count ){
+			int number_of_servers = Countpid();
+			int server_processes_started = 0;
+			int doit;
+			char *server_to_start = 0;
+			int forced_start = 0;
+			elapsed_time = this_time - server_started_time;
+			/* find the first entry WITHOUT a '.' as first character */
+			for( forced_start = doit = 0; !forced_start && doit < Servers_line_list.count; ++doit ){
+				server_to_start = Servers_line_list.list[doit];
+				if( server_to_start && cval(server_to_start) != '.' ){
+					forced_start = 1;
+					break;
+				}
+				server_to_start = 0;
+			}
+			while( (elapsed_time > Poll_start_interval_DYN || forced_start )
+				&& Servers_line_list.count > 0 && server_processes_started < Poll_servers_started_DYN
+				&& number_of_servers + server_processes_started < max_servers-4 ){
+				DEBUG1("lpd: elapsed time %d, server_started_time %d, max_servers %d, number_of_servers %d, started %d",
+					elapsed_time, server_started_time, max_servers, number_of_servers, server_processes_started );
+
+				/* find the first entry WITHOUT a '.' as first character */
+				for( forced_start = doit = 0; doit < Servers_line_list.count; ++doit ){
+					server_to_start = Servers_line_list.list[doit];
+					if( server_to_start && cval(server_to_start) != '.' ){
+						forced_start = 1;
+						break;
+					}
+					server_to_start = 0;
+				}
+				/* Ok, then settle for the first entry */
+				if( !server_to_start ){
+					doit = 0;
+					server_to_start = Servers_line_list.list[doit];
+					if( cval(server_to_start) == '.' ) ++server_to_start;
+				}
+				if( !ISNULL(server_to_start) ){
+					server_started_time = this_time;
+					DEBUG1("lpd: starting server '%s'", server_to_start );
+					Free_line_list(&args);
+					Set_str_value(&args,PRINTER,server_to_start);
+					last_fork_pid_value = pid = Start_worker( "queue",&args, 0 );
+					Fork_error( last_fork_pid_value );
+					Free_line_list(&args);
+					if( pid > 0 ){
+						Remove_line_list( &Servers_line_list, doit );
+						Started_server = 1;
+						server_started_time = this_time;
+						if( forced_start ){
+							++number_of_servers;
+						} else {
+							++server_processes_started;
+						}
+					} else {
+						/* argh! process exhaustion */
+						goto waitloop;
 					}
 				} else {
-					DEBUG1( "lpd: no poll" );
-					timeout = 0;
+					/* empty line... */
+					Remove_line_list( &Servers_line_list, doit );
 				}
 			}
 		}
-
-		n = Countpid();
-		max_servers = Get_max_servers();
-		DEBUG1("lpd: max_servers %d, active %d", max_servers, n );
-		m = 0;
-
-		/* allow a little space for people to send commands */
-		this_time = time( (void *)0 );
-		while( this_time - servers_started_time > Poll_start_interval_DYN
-			&& last_fork_pid_value > 0 && Servers_line_list.count > 0
-			&& m < Poll_servers_started_DYN
-			&& n + m < max_servers-4 ){ 
-			servers_started_time = this_time;
-			s = Servers_line_list.list[0];
-			DEBUG1("lpd: starting server '%s'", s );
-			Set_str_value(&args,PRINTER,s);
-			last_fork_pid_value = pid = Start_worker( "queue",&args, 0 );
-			Fork_error( last_fork_pid_value );
-			Free_line_list(&args);
-			if( pid > 0 ){
-				Remove_line_list( &Servers_line_list, 0 );
-				Started_server = 1;
-				++m;
+		/* we see if we have any work to do
+		 * and then schedule a timeout if necessary to start a process
+		 * NOTE: if the Poll_start_interval value is 0,
+		 * then we will wait until a process exits
+		 */
+		if( Servers_line_list.count > 0 && Poll_start_interval_DYN ){
+			int time_left;
+			elapsed_time = this_time - server_started_time;
+			time_left = Poll_start_interval_DYN - elapsed_time;
+			if( time_left < 0 ) time_left = 0;
+			timeout = &timeval;
+			if( timeval.tv_sec == 0 || timeval.tv_sec > time_left  ){
+				timeval.tv_sec = time_left;
 			}
 		}
-		if( Servers_line_list.count > 0 && timeout == 0 ){
-			memset(&timeval, 0, sizeof(timeval));
-			timeval.tv_sec = Poll_start_interval_DYN;
-			timeout = &timeval;
-		}
 
-		DEBUG1("lpd: started_server %d, last_fork_pid_value %d, processes %d active, max %d",
-			Started_server, last_fork_pid_value, n, max_servers );
+ waitloop:
+		/*
+		 * the place where we actually do some waiting
+		 */
+
+
+		DEBUG1("lpd: Started_server %d, last_fork_pid_value %d, active servers %d, max %d",
+			Started_server, last_fork_pid_value, Countpid(), max_servers );
 		/* do not accept incoming call if no worker available */
 		readfds = defreadfds;
-		if( n >= max_servers || last_fork_pid_value < 0 ){
+		if( Countpid() >= max_servers || last_fork_pid_value < 0 ){
 			DEBUG1( "lpd: not accepting requests" );
 			if( sock > 0 ) FD_CLR( sock, &readfds );
 			if( unix_sock > 0 ) FD_CLR( unix_sock, &readfds );
+			timeval.tv_sec = 10;
+			timeout = &timeval;
 		}
 
 		max_socks = sock+1;
@@ -456,7 +555,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		Setup_waitpid_break();
 		errno = 0;
-		m = select( max_socks,
+		fd_available = select( max_socks,
 			FD_SET_FIX((fd_set *))&readfds,
 			FD_SET_FIX((fd_set *))0,
 			FD_SET_FIX((fd_set *))0, timeout );
@@ -465,7 +564,7 @@ int main(int argc, char *argv[], char *envp[])
 		if(DEBUGL1){
 			int i;
 			LOGDEBUG( "lpd: select returned %d, error '%s'",
-				m, Errormsg(err) );
+				fd_available, Errormsg(err) );
 			for(i=0; i < max_socks; ++i ){
 				if( FD_ISSET( i, &readfds ) ){
 					LOGDEBUG( "lpd: fd %d readable", i );
@@ -477,21 +576,21 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1( "lpd: rereading configuration" );
 			/* we need to force the LPD logger to use new printcap information */
 			if( Reread_config ){
-				if( status_pid > 0 ) kill( status_pid, SIGINT );
+				if( logger_process_pid > 0 ) kill( logger_process_pid, SIGINT );
 				setmessage(0,LPD,"Restart");
 				Reread_config = 0;
 			}
 			Setup_configuration();
 		}
 		/* mark this as a timeout */
-		if( m < 0 ){
+		if( fd_available < 0 ){
 			if( err != EINTR ){
 				errno = err;
 				LOGERR_DIE(LOG_ERR) _("lpd: select error!"));
 				break;
 			}
 			continue;
-		} else if( m == 0 ){
+		} else if( fd_available == 0 ){
 			DEBUG1( "lpd: signal or time out, last_fork_pid_value %d", last_fork_pid_value );
 			/* we try to fork now */
 			if( last_fork_pid_value < 0 ) last_fork_pid_value = 1;
@@ -755,10 +854,9 @@ int Read_server_status( int fd )
 		DEBUG1( "Read_server_status: read status %d", status );
 		if( status <= 0 ){
 			close(fd);
-			fd = 0;
+			fd = -1;
 			break;
 		}
-		Started_server = 1;
 		buffer[status] = 0;
 		/* we split up read line and record information */
 		Split(&l,buffer,Whitespace,0,0,0,0,0,0);
@@ -772,6 +870,7 @@ int Read_server_status( int fd )
 			if( !found ){
 				Add_line_list(&Servers_line_list,name,0,0,0);
 			}
+			Started_server = 1;
 		}
 	}
 	if(DEBUGL2)Dump_line_list("Read_server_status - waiting for start",
@@ -843,7 +942,11 @@ void Get_parms(int argc, char *argv[] )
 	}
 }
 
-int Start_all( int first_scan )
+/*
+ * returns the pid of the process doing the scanning
+ */
+ 
+int Start_all( int first_scan, int *start_fd )
 {
 	struct line_list args, passfd;
 	int pid, p[2];
@@ -851,13 +954,12 @@ int Start_all( int first_scan )
 	Init_line_list(&passfd);
 	Init_line_list(&args);
 
-	DEBUG1( "Start_all: begin" );
-	Started_server = 0;
+	DEBUG1( "Start_all: first_scan %d", first_scan );
 	if( pipe(p) == -1 ){
 		LOGERR_DIE(LOG_INFO) _("Start_all: pipe failed!") );
 	}
 	Max_open(p[0]); Max_open(p[1]);
-	DEBUG1( "Start_all: fd p(%d,%d)",p[0],p[1]);
+	DEBUG1( "Start_all: fd pipe(%d,%d)",p[0],p[1]);
 
 	Setup_lpd_call( &passfd, &args );
 	Set_str_value(&args,CALL,"all");
@@ -878,7 +980,8 @@ int Start_all( int first_scan )
 		p[0] = -1;
 	}
 	DEBUG1("Start_all: pid %d, fd %d", pid, p[0] );
-	return(p[0]);
+	if( start_fd ) *start_fd = p[0];
+	return(pid);
 }
 
 plp_signal_t sigchld_handler (int signo)

@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.42 2002/12/07 00:30:39 papowell Exp $
+ * $Id: lp.h,v 1.46 2003/01/17 23:01:26 papowell Exp $
  ***************************************************************************/
 
 
@@ -372,7 +372,8 @@ EXTERN int Ms_time_resolution_DYN;
 EXTERN int Network_connect_grace_DYN; /* grace period for reconnections */
 EXTERN char* New_debug_DYN; /* debug level set for queue handler */
 EXTERN int Nline_after_file_DYN;	/* Put Nxxx after fcfA... line in control file */
-EXTERN int No_FF_separator_DYN; /* string to send for a form feed */
+EXTERN int No_FF_separator_DYN; /* no interfile FF separator */ 
+EXTERN int FF_separator_DYN; /* no interfile FF separator */ 
 EXTERN int Nonblocking_open_DYN; /* nonblocking open on io device */
 EXTERN char* OF_Filter_DYN; /* output filter, run once for all output */
 EXTERN char* OF_filter_options_DYN;

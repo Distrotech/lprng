@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -224,7 +224,7 @@ void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done
 	Update_spool_info( subserver_info );
 
 	DEBUG1("Get_subserver_pc: scanning '%s'", Spool_dir_DYN );
-	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, &err, &done);
+	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, &err, &done, 0, 0);
 	Set_flag_value(subserver_info,PRINTABLE,printable);
 	Set_flag_value(subserver_info,HELD,held);
 	Set_flag_value(subserver_info,MOVE,move);
@@ -561,7 +561,7 @@ int Do_queue_jobs( char *name, int subserver )
 		LOGDEBUG("Do_queue_jobs: after subservers next fd %d",fdx);close(fdx);};
 	/* get new job values */
 	if( Scan_queue( &Spool_control, &Sort_order,
-			&printable, &held, &move, 1, &error, &done ) ){
+			&printable, &held, &move, 1, &error, &done, 0, 0 ) ){
 		LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 			Spool_dir_DYN );
 	}
@@ -633,7 +633,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 			Get_spool_control( Queue_control_file_DYN, &Spool_control);
 			if( Scan_queue( &Spool_control, &Sort_order,
-					&printable, &held, &move, 1, &error, &done ) ){
+					&printable, &held, &move, 1, &error, &done, 0, 0 ) ){
 				LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 					Spool_dir_DYN );
 			}
@@ -1232,7 +1232,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	if( Accounting_remote_DYN && Accounting_file_DYN ){
 		if( Accounting_start_DYN ){
 			status = Do_accounting( 0,
-				Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
+				Accounting_start_DYN, job, Connect_interval_DYN );
 		}
 		DEBUG1("Remote_job: accounting status %s", Server_status(status) );
 		if( status ){
@@ -1390,7 +1390,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	if( Accounting_remote_DYN && Accounting_file_DYN  ){
 		if( Accounting_end_DYN ){
 			Do_accounting( 1, Accounting_end_DYN, job,
-				Send_job_rw_timeout_DYN );
+				Connect_interval_DYN );
 		}
 	}
  exit:
@@ -1425,7 +1425,7 @@ int Local_job( struct job *job, char *id )
 		SETSTATUS(job)"accounting at start");
 		if( Accounting_start_DYN ){
 			status = Do_accounting( 0,
-				Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
+				Accounting_start_DYN, job, Connect_interval_DYN );
 		}
 
 		DEBUG1("Local_job: accounting status %s", Server_status(status) );
@@ -1480,7 +1480,8 @@ int Local_job( struct job *job, char *id )
 		buffer[0] = 0;
 		if( status_fd > 0 ){
 			Get_status_from_OF(job,"LP",pid,
-				status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0 );
+				status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN,
+				0, 0, Status_file_DYN );
 		}
 	}
 	if( fd > 0 ) close( fd ); fd = -1;
@@ -1496,7 +1497,7 @@ int Local_job( struct job *job, char *id )
 		SETSTATUS(job)"accounting at end");
 		if( Accounting_end_DYN ){
 			Do_accounting( 1, Accounting_end_DYN, job,
-				Send_job_rw_timeout_DYN );
+				Connect_interval_DYN );
 		}
 	}
 	SETSTATUS(job)"finished '%s', status '%s'", id, Server_status(status));
@@ -1906,7 +1907,9 @@ void Update_status( struct job *job, int status )
 		}
 		break;
 
+	case JTIMEOUT:
 	case JFAIL:	/* failed, retry ?*/
+		status = JFAIL;
 		if( destination ){
 			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
 			++attempt;
@@ -2816,7 +2819,7 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 			if( if_error[0] != -1 ){
 				n = Get_status_from_OF(job,filter_title,pid,
 					if_error[0], filtermsgbuffer, sizeof(filtermsgbuffer)-1,
-					0, 0, 0 );
+					0, 0, 0, Status_file_DYN );
 				if( filtermsgbuffer[0] ){
 					SETSTATUS(job) "%s filter msg - '%s'", filter_title, filtermsgbuffer );
 				}

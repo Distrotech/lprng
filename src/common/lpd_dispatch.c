@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -75,6 +75,7 @@ void Service_all( struct line_list *args )
 	char buffer[SMALLBUFFER], *pr, *forwarding;
 	struct stat statb;
 	int first_scan;
+	char *remove_prefix = 0;
 	
 	/* we start up servers while we can */
 	Name = "SERVICEALL";
@@ -95,6 +96,10 @@ void Service_all( struct line_list *args )
 		if( Setup_printer( pr, buffer, sizeof(buffer), 0) ) continue;
 		/* now check to see if there is a server and unspooler process active */
 		server_pid = 0;
+		remove_prefix = 0;
+		if( first_scan ){
+			remove_prefix = Fifo_lock_file_DYN;
+		}
 		if( (fd = Checkread( Printer_DYN, &statb ) ) > 0 ){
 			server_pid = Read_pid( fd, (char *)0, 0 );
 			close( fd );
@@ -109,7 +114,7 @@ void Service_all( struct line_list *args )
 
 		Free_line_list( &Sort_order );
 		if( Scan_queue( &Spool_control, &Sort_order,
-				&printable,&held,&move, 1, &error, &done  ) ){
+				&printable,&held,&move, 1, &error, &done, 0, 0  ) ){
 			continue;
 		}
 		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
@@ -126,7 +131,7 @@ void Service_all( struct line_list *args )
 				pr = Printer_DYN;;
 			}
 			DEBUG1("Service_all: starting '%s'", pr );
-			SNPRINTF(buffer,sizeof(buffer))"%s\n",pr );
+			SNPRINTF(buffer,sizeof(buffer))".%s\n",pr );
 			if( Write_fd_str(reportfd,buffer) < 0 ) cleanup(0);
 		}
 	}

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.42 2002/12/07 00:30:38 papowell Exp $";
+"$Id: lpd_control.c,v 1.46 2003/01/17 23:01:25 papowell Exp $";
 
 
 #include "lp.h"
@@ -594,7 +594,7 @@ int Do_control_file( int action, int *sock,
 	Init_job(&job);
 	Free_line_list(&Sort_order);
 	if( Scan_queue( &Spool_control, &Sort_order,
-			0,0,0,0,0,0) ){
+			0,0,0,0,0,0,0,0) ){
 		err = errno;
 		SNPRINTF(error, errorlen)
 			"Do_control_file: cannot read '%s' - '%s'",
@@ -806,7 +806,7 @@ int Do_control_status( int *sock,
 	Free_line_list(&Spool_control);
 	Get_spool_control( Queue_control_file_DYN, &Spool_control );
 	if( Scan_queue( &Spool_control, &Sort_order, &printable,
-			&held, &move,1,&err,&done) ){
+			&held, &move,1,&err,&done,0,0) ){
 		SNPRINTF( error, errorlen)
 			"Do_control_status: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(errno) );

@@ -86,7 +86,9 @@ ${AWK} '
 			}
 			name = name "=" value "  (INTEGER)";
 		} else {
-			name = name "=" value "  (STRING)";
+			v = "";
+			if( value == "0"){ value = ""; v = "EMPTY " ; }
+			name = name "=" value "  (" v "STRING)";
 		}
 		print "#   default " name ;
 	} else {

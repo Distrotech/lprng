@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.42 2002/12/07 00:30:37 papowell Exp $";
+"$Id: getqueue.c,v 1.46 2003/01/17 23:01:24 papowell Exp $";
 
 
 /***************************************************************************
@@ -58,13 +58,16 @@
 
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
-		int only_queue_process, int *perr, int *pdone )
+		int only_queue_process, int *perr, int *pdone,
+		const char *remove_prefix, const char *remove_suffix )
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
 	struct line_list directory_files;
 	char *hf_name;
 	int c, printable, held, move, error, done, p, h, m, e, dn;
+	int remove_prefix_len = safestrlen( remove_prefix );
+	int remove_suffix_len = safestrlen( remove_suffix );
 	struct job job;
 
 	c = printable = held = move = error = done = 0;
@@ -84,22 +87,27 @@ int Scan_queue( struct line_list *spool_control,
 
 	hf_name = 0;
 	while(1){
-		hf_name = 0;
-		while( hf_name == 0 && (d = readdir(dir)) ){
+		while( (d = readdir(dir)) ){
 			hf_name = d->d_name;
 			DEBUG5("Scan_queue: found file '%s'", hf_name );
-			if(    (cval(hf_name+0) == 'h')
+			if(
+				(remove_prefix_len && !strncmp( hf_name, remove_prefix, remove_prefix_len ) )
+				|| (remove_suffix_len 
+					&& !strcmp( hf_name+strlen(hf_name)-remove_suffix_len, remove_suffix ))
+			){
+				DEBUG1("Scan_queue: removing file '%s'", hf_name );
+				unlink( hf_name );
+				continue;
+			} else if(    (cval(hf_name+0) == 'h')
 				&& (cval(hf_name+1) == 'f')
 				&& isalpha(cval(hf_name+2))
 				&& isdigit(cval(hf_name+3))
 				){
 				break;
-			} else {
-				hf_name = 0;
 			}
 		}
 		/* found them all */
-		if( hf_name == 0 ){
+		if( d == 0 ){
 			break;
 		}
 

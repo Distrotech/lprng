@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: user_objs.c,v 1.42 2002/12/07 00:30:39 papowell Exp $";
+"$Id: user_objs.c,v 1.46 2003/01/17 23:01:26 papowell Exp $";
 
 #include "lp.h"
 #include "getqueue.h"

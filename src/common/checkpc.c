@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.42 2002/12/07 00:30:37 papowell Exp $";
+"$Id: checkpc.c,v 1.46 2003/01/17 23:01:24 papowell Exp $";
 
 
 
@@ -292,12 +292,13 @@ void Scan_printer(struct line_list *spooldirs)
 	int jobfile;
 	struct stat statb;
 	int fd = 0;				/* device file descriptor */
-	int i, n;
+	int i, n, fifo_header_len;
 	char error[SMALLBUFFER];
 	int errorlen = sizeof(error);
 	struct job job;
 	time_t delta;
 
+	fifo_header_len = safestrlen( Fifo_lock_file_DYN );
 	Init_job(&job);
 	error[0] = 0;
 
@@ -340,7 +341,7 @@ void Scan_printer(struct line_list *spooldirs)
 	}
 	if( !Find_first_key(&PC_entry_line_list,"sf",Value_sep,&n)
 		|| !Find_first_key(&Config_line_list,"sf",Value_sep,&n ) ){
-		WARNMSG( "%s: sf (suppress form feeds) is ignored. Use 'ff_separator' if you want FF between job files", Printer_DYN);
+		WARNMSG( "%s: sf (suppress form feeds) is deprecated.  Use 'ff_separator' if you want FF between job files", Printer_DYN);
 	}
 	if( strchr(Printer_DYN, '*') ){
 		WARNMSG(
@@ -389,6 +390,12 @@ void Scan_printer(struct line_list *spooldirs)
 		if( safestrcmp( cf_name, "." ) == 0
 			|| safestrcmp( cf_name, ".." ) == 0 ) continue;
 		DEBUG2("Scan_printer: file '%s'", cf_name );
+		if( fifo_header_len &&
+			!safestrncmp( cf_name,Fifo_lock_file_DYN, fifo_header_len) ){
+			DEBUG2("Scan_printer: fifo file '%s'", cf_name );
+			unlink( cf_name );
+			continue;
+		}
 		if( stat(cf_name,&statb) == -1 ){
 			WARNMSG( "  stat of file '%s' failed '%s'",
 				cf_name, Errormsg(errno) );
@@ -463,7 +470,7 @@ void Scan_printer(struct line_list *spooldirs)
 	}
 	Free_line_list( &Sort_order );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue before maxfd %d", fdx); close(fdx); }
-	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 0, 0 );
+	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 0, 0,0,0 );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue after maxfd %d", fdx); close(fdx); }
 
 	/*
