@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: printjob.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -143,8 +143,8 @@ int Print_job( int output, int status_device, struct job *job,
 		}
 	}
 	if(DEBUGL2) Dump_job( "Print_job", job );
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME);
 
 	DEBUG2("Print_job: OF_Filter_DYN '%s'", OF_Filter_DYN );
 
@@ -167,11 +167,11 @@ int Print_job( int output, int status_device, struct job *job,
 	 */
 
 
-	banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
+	banner_name = Find_str_value(&job->info, BNRNAME );
 	if( Always_banner_DYN && banner_name == 0 ){
 		/* we are always going to do a banner; get the user name */
 		/* need a name to use */
-		banner_name = Find_str_value( &job->info,LOGNAME,Value_sep);
+		banner_name = Find_str_value( &job->info,LOGNAME);
 		if( banner_name == 0 ) banner_name = "ANONYMOUS";
 		Set_str_value(&job->info,BNRNAME,banner_name);
 	}
@@ -219,16 +219,16 @@ int Print_job( int output, int status_device, struct job *job,
 		if(DEBUGL4)Dump_line_list("Print_job - datafile", datafile );
 
 		Set_block_io( output );
-		transfername = Find_str_value(datafile,TRANSFERNAME,Value_sep);
-		openname = Find_str_value(datafile,OPENNAME,Value_sep);
-		format = Find_str_value(datafile,FORMAT,Value_sep);
-		copies = Find_flag_value(datafile,COPIES,Value_sep);
+		transfername = Find_str_value(datafile,TRANSFERNAME);
+		openname = Find_str_value(datafile,OPENNAME);
+		format = Find_str_value(datafile,FORMAT);
+		copies = Find_flag_value(datafile,COPIES);
 		if( copies == 0 ) copies = 1;
 
 		Set_str_value(&job->info,FORMAT,format);
 		Set_str_value(&job->info,DF_NAME,transfername);
 
-		s = Find_str_value(datafile,"N",Value_sep);
+		s = Find_str_value(datafile,"N");
 		Set_str_value(&job->info,"N",s);
 
 		/*
@@ -250,12 +250,10 @@ int Print_job( int output, int status_device, struct job *job,
 				break;
 		}
 		if( !filter ){
-			filter = Find_str_value(&PC_entry_line_list,
-				filter_name,Value_sep);
+			filter = Find_str_value(&PC_entry_line_list, filter_name );
 		}
 		if( !filter){
-			filter = Find_str_value(&Config_line_list,filter_name,
-				Value_sep);
+			filter = Find_str_value(&Config_line_list,filter_name );
 		}
 		if( filter == 0 ) filter = Filter_DYN;
 		DEBUG3("Print_job: format '%s', filter '%s'", format, filter );
@@ -299,7 +297,7 @@ int Print_job( int output, int status_device, struct job *job,
 				goto end_of_job;
 			}
 			tempfd = Make_temp_fd(0);
-			n = Filter_file( fd, tempfd, "PR_PROGRAM",
+			n = Filter_file( send_job_rw_timeout, fd, tempfd, "PR_PROGRAM",
 				Pr_program_DYN, 0, job, 0, 1 );
 			if( n ){
 				Errorcode = JABORT;
@@ -454,7 +452,7 @@ int Print_job( int output, int status_device, struct job *job,
 				DEBUG3("Print_job: format '%s' no filter, reading from %d",
 					format, fd );
 				Init_buf(&Outbuf, &Outmax, &Outlen );
-				while( (Outlen = read(fd,Outbuf,Outmax)) > 0 ){
+				while( (Outlen = Read_fd_len_timeout(send_job_rw_timeout,fd,Outbuf,Outmax)) > 0 ){
 					Outbuf[Outlen] = 0;
 					n = Write_outbuf_to_OF(job,"LP",output, Outbuf, Outlen,
 						status_device, msgbuffer, sizeof(msgbuffer)-1,
@@ -766,7 +764,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
 		SETSTATUS(job)"creating banner");
 
 		tempfd = Make_temp_fd(0);
-		n = Filter_file( -1, tempfd, "BANNER",
+		n = Filter_file( Send_job_rw_timeout_DYN, -1, tempfd, "BANNER",
 			pgm, Filter_options_DYN, job, 0, 1 );
 		if( n ){
 			Errorcode = JFAIL;
@@ -780,7 +778,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
 			LOGERR_DIE(LOG_INFO)"Print_banner: fseek(%d) failed", tempfd);
 		}
 		len = Outlen;
-		while( (n = read(tempfd, buffer, sizeof(buffer))) > 0 ){
+		while( (n = ok_read(tempfd, buffer, sizeof(buffer))) > 0 ){
 			Put_buf_len(buffer, n, &Outbuf, &Outmax, &Outlen );
 		}
 		if( (close(tempfd) == -1 ) ){
@@ -1024,7 +1022,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 				}
 				count = -1;
 				Set_nonblock_io( of_error );
-				count = read( of_error, msg+msglen, msgmax-msglen );
+				count = ok_read( of_error, msg+msglen, msgmax-msglen );
 				Set_block_io( of_error );
 				if( count > 0 ){
 					while( (s = safestrchr(msg,'\n')) ){

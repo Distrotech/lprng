@@ -548,6 +548,9 @@
 /* in_addr6 defined */
 #undef IN_ADDR6
 
+/* ipV6 */
+#undef IPV6
+
 /* IRIX version */
 #undef IRIX
 

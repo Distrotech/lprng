@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -29,12 +29,12 @@
 #include "krb5_auth.h"
 #include "lpd_dispatch.h"
 
-void Dispatch_input(int *talk, char *input )
+void Dispatch_input(int *talk, char *input, const char *from_addr )
 {
 	switch( input[0] ){
 		default:
 			FATAL(LOG_INFO)
-				_("Dispatch_input: bad request line '%s'"), input );
+				_("Dispatch_input: bad request line '%s' from %s"), input, from_addr );
 			break;
 		case REQ_START:
 			/* simply send a 0 ACK and close connection - NOOP */
@@ -81,8 +81,8 @@ void Service_all( struct line_list *args )
 	Name = "SERVICEALL";
 	setproctitle( "lpd %s", Name );
 
-	first_scan = Find_flag_value(args,FIRST_SCAN,Value_sep);
-	reportfd = Find_flag_value(args,INPUT,Value_sep);
+	first_scan = Find_flag_value(args,FIRST_SCAN);
+	reportfd = Find_flag_value(args,INPUT);
 	Free_line_list(args);
 
 	if(All_line_list.count == 0 ){
@@ -109,7 +109,7 @@ void Service_all( struct line_list *args )
 			DEBUG3("Get_queue_status: server %d active", server_pid );
 			continue;
 		}
-		change = Find_flag_value(&Spool_control,CHANGE,Value_sep);
+		change = Find_flag_value(&Spool_control,CHANGE);
 		printing_enabled = !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
 
 		Free_line_list( &Sort_order );
@@ -117,7 +117,7 @@ void Service_all( struct line_list *args )
 				&printable,&held,&move, 1, &error, &done, 0, 0  ) ){
 			continue;
 		}
-		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
+		forwarding = Find_str_value(&Spool_control,FORWARDING);
 		do_service = 0;
 		if( !(Save_when_done_DYN || Save_on_error_DYN )
 			&& (Done_jobs_DYN || Done_jobs_max_age_DYN)
@@ -152,9 +152,8 @@ void Service_all( struct line_list *args )
 
 void Service_connection( struct line_list *args )
 {
-	char input[SMALLBUFFER];
-	char buffer[LINEBUFFER];	/* for messages */
-	int len, talk;
+	char input[16], from_addr[128];
+	int talk;
 	int status;		/* status of operation */
 	int permission;
 	int port = 0;
@@ -165,7 +164,7 @@ void Service_connection( struct line_list *args )
 	setproctitle( "lpd %s", Name );
 	(void) plp_signal (SIGHUP, cleanup );
 
-	if( !(talk = Find_flag_value(args,INPUT,Value_sep)) ){
+	if( !(talk = Find_flag_value(args,INPUT)) ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Service_connection: no talk fd"); 
 	}
@@ -228,7 +227,7 @@ void Service_connection( struct line_list *args )
 		if( sinaddr.sa_family == AF_INET ){
 			addr = &(((struct sockaddr_in *)&sinaddr)->sin_addr);
 #if defined(IPV6)
-		} else if( sinaddr->sa_family == AF_INET6 ){
+		} else if( sinaddr.sa_family == AF_INET6 ){
 			addr = &(((struct sockaddr_in6 *)&sinaddr)->sin6_addr);
 #endif
 		} else {
@@ -240,9 +239,13 @@ void Service_connection( struct line_list *args )
 	} else {
 		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
 	}
+	inet_ntop_sockaddr( &sinaddr, from_addr, sizeof(from_addr) );
+	{
+		int len = strlen(from_addr);
+		SNPRINTF(from_addr+len,sizeof(from_addr)-len)" port %d", ntohs(port));
+	}
 
-	DEBUG2("Service_connection: socket %d, ip '%s' port %d", talk,
-		inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ), ntohs( port ) );
+	DEBUG2("Service_connection: socket %d, from %s", talk, from_addr );
 
 	/* get the remote name and set up the various checks */
 
@@ -251,26 +254,6 @@ void Service_connection( struct line_list *args )
 	Perm_check.host = &RemoteHost_IP;
 	Perm_check.port =  ntohs(port);
 
-	len = sizeof( input ) - 1;
-	memset(input,0,sizeof(input));
-	DEBUG1( "Service_connection: starting read on fd %d", talk );
-
-	status = Link_line_read(ShortRemote_FQDN,&talk,
-		Send_job_rw_timeout_DYN,input,&len);
-	if( len >= 0 ) input[len] = 0;
-	DEBUG1( "Service_connection: read status %d, len %d, '%s'",
-		status, len, input );
-	if( len == 0 ){
-		DEBUG3( "Service_connection: zero length read" );
-		cleanup(0);
-	}
-	if( status ){
-		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request") );
-	}
-	if( len < 2 ){
-		FATAL(LOG_INFO) _("Service_connection: bad request line '%s', from '%s'"),
-			input, inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ) );
-	}
 
 	/* read the permissions information */
 
@@ -284,10 +267,77 @@ void Service_connection( struct line_list *args )
 
 	permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
 	if( permission == P_REJECT ){
-		DEBUG1("Service_connection: talk socket '%d' no connect perms", talk );
+		DEBUG1("Service_connection: no perms on talk socket '%d' from %s", talk, from_addr );
 		Write_fd_str( talk, _("\001no connect permissions\n") );
 		cleanup(0);
 	}
-	Dispatch_input(&talk,input);
+
+	memset(input,0,sizeof(input));
+	
+	do {
+		int my_len = sizeof( input ) - 1;
+		static int timeout;
+		timeout = (Send_job_rw_timeout_DYN>0)?Send_job_rw_timeout_DYN:
+					((Connect_timeout_DYN>0)?Connect_timeout_DYN:10);
+		DEBUG1( "Service_connection: doing peek for %d on fd %d, timeout %d",
+			my_len, talk, timeout );
+		if( Set_timeout() ){
+			Set_timeout_alarm( timeout );
+			status = recv( talk, input, my_len, MSG_PEEK );
+		} else {
+			status = -1;
+		}
+		Clear_timeout();
+
+		if( status <= 0 ){
+			LOGERR_DIE(LOG_DEBUG) _("Service_connection: peek of length %d failed"), my_len );
+		}
+		DEBUG1("Service_connection: status %d 0x%02x%02x%02x%02x (%c%c%c%c)", status,
+			cval(input+0), cval(input+1), cval(input+2), cval(input+3),
+			cval(input+0), cval(input+1), cval(input+2), cval(input+3));
+	} while( status < 2 );
+
+	if( isalpha(cval(input+0)) &&
+		isalpha(cval(input+1)) && isalpha(cval(input+2)) ){
+		/* 
+			Service_ipp( talk, from_addr );
+		*/
+	} else if( cval(input+0) == 0x80 ) {
+		/*
+			Service_ssh_ipp( talk, from_addr );
+		*/
+	}
+	Service_lpd( talk, from_addr );
+}
+
+void Service_lpd( int talk, const char *from_addr )
+{
+	char input[LINEBUFFER];
+	int status;
+	int len = sizeof( input ) - 1;
+	int timeout = (Send_job_rw_timeout_DYN>0)?Send_job_rw_timeout_DYN:
+					((Connect_timeout_DYN>0)?Connect_timeout_DYN:10);
+
+	memset(input,0,sizeof(input));
+	DEBUG1( "Service_connection: starting read on fd %d, timeout %d", talk, timeout );
+
+	status = Link_line_read(ShortRemote_FQDN,&talk,
+		timeout,input,&len);
+	if( len >= 0 ) input[len] = 0;
+	DEBUG1( "Service_connection: read status %d, len %d, '%s'",
+		status, len, input );
+	if( len == 0 ){
+		DEBUG3( "Service_connection: zero length read" );
+		cleanup(0);
+	}
+	if( status ){
+		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request from %s in %d seconds"),
+			from_addr, timeout );
+	}
+	if( len < 2 ){
+		FATAL(LOG_INFO) _("Service_connection: short request line '%s', from '%s'"),
+			input, from_addr );
+	}
+	Dispatch_input(&talk,input,from_addr);
 	cleanup(0);
 }

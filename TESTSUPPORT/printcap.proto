@@ -31,7 +31,7 @@ t1
 	:ld=leader\n
 	:tr=trailer\n
 	:of=_TMP_LPD/lpf -D10
-	:if=_TMP_LPD/filter -D10 -delay5
+	:filter=_TMP_LPD/filter -D10 -delay5
 	:ff=formfeed\n
 #end t1
 #example of remote printer

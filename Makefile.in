@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 1.58 2003/09/05 20:07:13 papowell Exp $
+# $Id: Makefile.in,v 1.61 2003/11/14 02:32:48 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -44,6 +44,7 @@ PRINTCAP_PATH=\"@PRINTCAP_PATH@\"
 LPD_PATH=\"@LPD_DIR@/lpd\"
 SHELL="@SHELL@"
 LOCKFILE=\"@LOCKFILE@\"
+CONFIG_SUBDIR="@CONFIG_SUBDIR@"
 PSHOWALL="@PSHOWALL@"
 FILTER_DIR=@FILTER_DIR@
 LOCALEDIR=@LOCALEDIR@
@@ -84,6 +85,7 @@ header: Makefile
 	@echo SBINDIR=$(sbindir) >>$@
 	@echo FILTER_DIR=$(FILTER_DIR) >>$@
 	@echo LOCKFILE=$(LOCKFILE) >>$@
+	@echo CONFIG_SUBDIR=$(CONFIG_SUBDIR) >>$@
 	@echo PSHOWALL=\"$(PSHOWALL)\"  >>$@
 	@echo "VERSION=$(VERSION)" >>$@
 	@echo "INIT=$(INIT)" >>$@
@@ -116,6 +118,16 @@ MAKETARGET=all
 
 ###############################################################################
 $(ALLDIRS):
+	if [ "$@" = po ] ; then \
+	    for i in po/Makefile* ; do \
+		if [ -f "$$i" ] ; then \
+		    if grep '^mkinstalldirs.*=.*case' $$i ; then \
+			echo "fixing broken $$i which causes wrong path to mkinstalldirs to be used"; \
+			perl -spi -e 's:^mkinstalldirs\s*=\s*.*:mkinstalldirs = \$$(SHELL) \$$(MKINSTALLDIRS):' $$i; \
+		    fi \
+		fi \
+	    done \
+	fi
 	if [ "$@" != po -o "$(USE_NLS)" != "no" ] ; then \
 		cd $@; $(MAKE) localedir=${LOCALEDIR} \
 			DESTDIR=$(DESTDIR) $(MAKETARGET) ; \
@@ -146,7 +158,7 @@ src/lpd.conf:
 	cd src; $(MAKE) MAKETARGET=lpd.conf
 
 realclean mostlyclean distclean: clean
-	rm -rf DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/*.tgz ;
+	rm -rf DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/LPRng*z ;
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(ALLDIRS)
 	rm -f `find . -type f -name '*.old' -print` \
 	 `find . -type f -name '*.bak' -print` \

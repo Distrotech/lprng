@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: linelist.h,v 1.61 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -123,7 +123,8 @@ EXTERN struct line_list *Allocs[]
 /*
  * Constants
  */
-EXTERN char *Value_sep DEFINE( = " \t=#@" );
+EXTERN char *Option_value_sep DEFINE( = " \t=#@" );
+EXTERN char *Hash_value_sep DEFINE( = "=#" );
 EXTERN char *Whitespace DEFINE( = " \t\n\f" );
 EXTERN char *List_sep DEFINE( = "[] \t\n\f," );
 EXTERN char *Linespace DEFINE( = " \t" );
@@ -187,10 +188,10 @@ int Find_last_key( struct line_list *l, const char *key, const char *sep, int *m
 int Find_last_casekey( struct line_list *l, const char *key, const char *sep, int *m );
 int Find_first_key( struct line_list *l, const char *key, const char *sep, int *m );
 int Find_first_casekey( struct line_list *l, const char *key, const char *sep, int *m );
-const char *Find_value( struct line_list *l, const char *key, const char *sep );
+const char *Find_value( struct line_list *l, const char *key );
 char *Find_first_letter( struct line_list *l, const char letter, int *mid );
 const char *Find_exists_value( struct line_list *l, const char *key, const char *sep );
-char *Find_str_value( struct line_list *l, const char *key, const char *sep );
+char *Find_str_value( struct line_list *l, const char *key );
 char *Find_casekey_str_value( struct line_list *l, const char *key, const char *sep );
 void Set_str_value( struct line_list *l, const char *key, const char *value );
 void Set_expanded_str_value( struct line_list *l, const char *key, const char *orig );
@@ -201,9 +202,9 @@ void Set_double_value( struct line_list *l, const char *key, double value );
 void Set_decimal_value( struct line_list *l, const char *key, long value );
 void Remove_line_list( struct line_list *l, int mid );
 void Remove_duplicates_line_list( struct line_list *l );
-int Find_flag_value( struct line_list *l, const char *key, const char *sep );
-int Find_decimal_value( struct line_list *l, const char *key, const char *sep );
-double Find_double_value( struct line_list *l, const char *key, const char *sep );
+int Find_flag_value( struct line_list *l, const char *key );
+int Find_decimal_value( struct line_list *l, const char *key );
+double Find_double_value( struct line_list *l, const char *key );
 const char *Fix_val( const char *s );
 void Find_tags( struct line_list *dest, struct line_list *l, char *key );
 void Find_default_tags( struct line_list *dest,
@@ -267,7 +268,7 @@ void Remove_tempfiles(void);
 void Split_cmd_line( struct line_list *l, char *line );
 int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 	struct job *job, struct line_list *env_init );
-int Filter_file( int input_fd, int output_fd, char *error_header,
+int Filter_file( int timeout, int input_fd, int output_fd, char *error_header,
 	char *pgm, char * filter_options, struct job *job,
 	struct line_list *env, int verbose );
 char *Is_clean_name( char *s );

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: getqueue.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 /***************************************************************************
@@ -117,7 +117,7 @@ int Scan_queue( struct line_list *spool_control,
 
 		/* read the hf file and get the information */
 		Get_file_image_and_split( hf_name, 0, 0,
-			&job.info, Line_ends, 1, Value_sep,1,1,1,0);
+			&job.info, Line_ends, 1, Hash_value_sep,1,1,1,0);
 		if(DEBUGL5)Dump_line_list("Scan_queue: hf", &job.info );
 		if( job.info.count == 0 ){
 			continue;
@@ -188,7 +188,7 @@ char *Get_fd_image( int fd, off_t maxsize )
 	}
 	
 	len = 0;
-	while( (n = read(fd,buffer,sizeof(buffer))) > 0 ){
+	while( (n = ok_read(fd,buffer,sizeof(buffer))) > 0 ){
 		s = realloc_or_die(s,len+n+1,__FILE__,__LINE__);
 		memcpy(s+len,buffer,n);
 		len += n;
@@ -291,15 +291,15 @@ void Check_for_hold( struct job *job, struct line_list *spool_control )
 	Set_flag_value(&job->info,HOLD_CLASS,held);
 
 	/* see if we need to hold this job by time */
-	if( !Find_exists_value(&job->info,HOLD_TIME,Value_sep) ){
-		if( Find_flag_value(spool_control,HOLD_TIME,Value_sep) ){
+	if( !Find_exists_value(&job->info,HOLD_TIME,Hash_value_sep) ){
+		if( Find_flag_value(spool_control,HOLD_TIME) ){
 			i = time((void *)0);
 		} else {
 			i = 0;
 		}
 		Set_flag_value( &job->info, HOLD_TIME, i );
 	}
-	held = Find_flag_value(&job->info,HOLD_TIME,Value_sep);
+	held = Find_flag_value(&job->info,HOLD_TIME);
 	Set_flag_value(&job->info,HELD,held);
 }
 
@@ -321,19 +321,19 @@ void Setup_job( struct job *job, struct line_list *spool_control,
 	if( cf_name ){
 		Set_str_value(&job->info,TRANSFERNAME, cf_name);
 	}
-	cf_name = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	cf_name = Find_str_value(&job->info,TRANSFERNAME);
 
 	if( hf_name ){
 		Set_str_value(&job->info,HF_NAME,hf_name);
 	}
-	hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
+	hf_name = Find_str_value(&job->info,HF_NAME);
 
-	if( cf_name && !Find_str_value(&job->info,NUMBER,Value_sep) ){
+	if( cf_name && !Find_str_value(&job->info,NUMBER) ){
 		Check_format( CONTROL_FILE, cf_name, job );
 	}
 
-	if( !Find_str_value(&job->info,JOB_TIME,Value_sep)
-		&& (path = Find_str_value(&job->info,OPENNAME,Value_sep)) ){
+	if( !Find_str_value(&job->info,JOB_TIME)
+		&& (path = Find_str_value(&job->info,OPENNAME)) ){
 		j = 0;
 		if( stat(path,&statb) ){
 			i = time((void *)0);
@@ -354,16 +354,16 @@ void Setup_job( struct job *job, struct line_list *spool_control,
 	Setup_cf_info( job, check_for_existence );
 
 	/* set the class of the job */
-	if( !Find_str_value(&job->info,CLASS,Value_sep)
-		&& (s = Find_str_value(&job->info,PRIORITY,Value_sep)) ){
+	if( !Find_str_value(&job->info,CLASS)
+		&& (s = Find_str_value(&job->info,PRIORITY)) ){
 		Set_str_value(&job->info,CLASS,s);
 	}
 	/* set the size of the job */
-	if( !Find_flag_value(&job->info,SIZE,Value_sep) ){
+	if( !Find_flag_value(&job->info,SIZE) ){
 		size = 0;
 		for( i = 0; i < job->datafiles.count; ++i ){
 			lp = (void *)job->datafiles.list[i];
-			size +=  Find_flag_value(lp,SIZE,Value_sep);
+			size +=  Find_flag_value(lp,SIZE);
 		}
 		Set_decimal_value(&job->info,SIZE,size);
 	}
@@ -389,7 +389,7 @@ int Get_hold_class( struct line_list *info, struct line_list *sq )
 	Init_line_list(&l);
 	held = 0;
 	if( (s = Clsses(sq))
-		&& (t = Find_str_value(info,CLASS,Value_sep)) ){
+		&& (t = Find_str_value(info,CLASS)) ){
 		held = 1;
 		Free_line_list(&l);
 		Split(&l,s,File_sep,0,0,0,0,0,0);
@@ -475,7 +475,7 @@ void Append_Z_value( struct job *job, char *s )
 
 	/* check for empty string */
 	if( !s || !*s ) return;
-	t = Find_str_value(&job->info,"Z",Value_sep);
+	t = Find_str_value(&job->info,"Z");
 	if( t && *t ){
 		t = safestrdup3(t,",",s,__FILE__,__LINE__);
 		Set_str_value(&job->info,"Z",t);
@@ -501,12 +501,12 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 	Init_line_list(&cf_line_list);
 	names = 0;
 
-	hpformat = Find_flag_value(&job->info,HPFORMAT,Value_sep);
-	if( (s = Find_str_value(&job->info,DATAFILES,Value_sep)) ){
+	hpformat = Find_flag_value(&job->info,HPFORMAT);
+	if( (s = Find_str_value(&job->info,DATAFILES)) ){
 		Split(&cf_line_list,s,"\001",0,0,0,0,0,0);
 	} else {
-		s = Find_str_value(&job->info,OPENNAME,Value_sep);
-		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+		s = Find_str_value(&job->info,OPENNAME);
+		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
 		DEBUG3("Setup_cf_info: control file '%s', hpformat '%d'", s, hpformat );
 		if( Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0)
 			 && check_for_existence ){
@@ -552,7 +552,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 
 			Set_str_value(datafile,TRANSFERNAME,s+1);
 			Set_str_value(datafile,OPENNAME,s+1);
-			file_found = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+			file_found = Find_str_value(datafile,TRANSFERNAME);
 			DEBUG4("Setup_cf_info: doing file '%s', format '%c', copies %d",
 				file_found, last_format, copies );
 
@@ -592,7 +592,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 				continue;
 			}
 			/* if we have a file name AND an 'N' for it, then set up a new file */
-			if( file_found && (t = Find_str_value(datafile,"N",Value_sep))
+			if( file_found && (t = Find_str_value(datafile,"N"))
 				/* && safestrcmp(t,s+1) */ ){
 				Check_max(&job->datafiles,1);
 				job->datafiles.list[job->datafiles.count++] = (void *)datafile;
@@ -679,7 +679,7 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 
 	if(DEBUGL4)Dump_job("Set_hold_file",job);
 	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
-	if( !(hf_name = Find_str_value(&job->info,HF_NAME,Value_sep)) ){
+	if( !(hf_name = Find_str_value(&job->info,HF_NAME)) ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Set_hold_file: LOGIC ERROR- no HF_NAME in job information");
 	}
@@ -745,8 +745,8 @@ void Get_hold_file( struct job *job, char *hf_name )
 	DEBUG1("Get_hold_file: checking on '%s'", hf_name );
 
 	Get_file_image_and_split( hf_name, 0, 0,
-		&job->info, Line_ends, 1, Value_sep,1,1,1,0);
-	if( !Find_str_value(&job->info,HF_NAME,Value_sep) ){
+		&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
+	if( !Find_str_value(&job->info,HF_NAME) ){
 		Set_str_value(&job->info,HF_NAME,hf_name);
 	}
 }
@@ -761,7 +761,7 @@ void Get_spool_control( const char *file, struct line_list *info )
 	Free_line_list(info);
 	DEBUG2("Get_spool_control:  file '%s'", file );
 	Get_file_image_and_split( file, 0, 0,
-			info,Line_ends,1,Value_sep,1,1,1,0);
+			info,Line_ends,1,Option_value_sep,1,1,1,0);
 	if(DEBUGL4)Dump_line_list("Get_spool_control- info", info );
 }
 
@@ -828,7 +828,7 @@ void Set_spool_control( struct line_list *perm_check, const char *file,
 
 void intval( const char *key, struct line_list *list, struct job *job )
 {
-	int i = Find_flag_value(list,key,Value_sep);
+	int i = Find_flag_value(list,key);
 	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
     "|%s.0x%08x",key,i&0xffffffff);
@@ -837,7 +837,7 @@ void intval( const char *key, struct line_list *list, struct job *job )
 
 void revintval( const char *key, struct line_list *list, struct job *job )
 {
-	int i = Find_flag_value(list,key,Value_sep);
+	int i = Find_flag_value(list,key);
 	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.0x%08x",key,(~i)&0xffffffff);
@@ -846,7 +846,7 @@ void revintval( const char *key, struct line_list *list, struct job *job )
 
 void strzval( const char *key, struct line_list *list, struct job *job )
 {
-	char *s = Find_str_value(list,key,Value_sep);
+	char *s = Find_str_value(list,key);
 	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.%d",key,s!=0);
@@ -855,7 +855,7 @@ void strzval( const char *key, struct line_list *list, struct job *job )
 
 void strnzval( const char *key, struct line_list *list, struct job *job )
 {
-	char *s = Find_str_value(list,key,Value_sep);
+	char *s = Find_str_value(list,key);
 	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.%d",key,(s==0 || *s == 0));
@@ -865,7 +865,7 @@ void strnzval( const char *key, struct line_list *list, struct job *job )
 void strval( const char *key, struct line_list *list, struct job *job,
 	int reverse )
 {
-	char *s = Find_str_value(list,key,Value_sep);
+	char *s = Find_str_value(list,key);
 	int len = safestrlen(job->sort_key);
 	int c = 0;
 
@@ -1020,7 +1020,7 @@ int Read_pid( int fd, char *str, int len )
 		len = sizeof( line );
 	}
 	str[0] = 0;
-	if( (n = read( fd, str, len-1 ) ) < 0 ){
+	if( (n = ok_read( fd, str, len-1 ) ) < 0 ){
 		LOGERR_DIE(LOG_ERR) "Read_pid: read failed" );
 	}
 	str[n] = 0;
@@ -1089,18 +1089,18 @@ int Patselect( struct line_list *token, struct line_list *cf, int starting )
 		end = key;
 		val = strtol( key, &end, 10 );
 		if( *end == 0 ){
-			n = Find_decimal_value(cf,NUMBER,Value_sep);
+			n = Find_decimal_value(cf,NUMBER);
 			/* we check job number */
 			DEBUG3("Patselect: job number check '%d' to job %d",
 				val, n );
 			match = (val != n);
 		} else {
 			/* now we check to see if we have a name match */
-			if( (s = Find_str_value(cf,LOGNAME,Value_sep))
+			if( (s = Find_str_value(cf,LOGNAME))
 				&& !(match = Globmatch(key,s)) ){
 				break;
 			}
-			if( (s = Find_str_value(cf,IDENTIFIER,Value_sep))
+			if( (s = Find_str_value(cf,IDENTIFIER))
 				&& !(match = Globmatch(key,s)) ){
 				break;
 			}
@@ -1237,8 +1237,8 @@ int Check_format( int type, const char *name, struct job *job )
     }
 
 	DEBUG1("Check_format: name '%s', number %d, file '%s'", name, n, t ); 
-	if( Find_str_value( &job->info,NUMBER,Value_sep) ){
-		c = Find_decimal_value( &job->info,NUMBER,Value_sep);
+	if( Find_str_value( &job->info,NUMBER) ){
+		c = Find_decimal_value( &job->info,NUMBER);
 		if( c != n ){
 			SNPRINTF(msg, sizeof(msg))
 				"job numbers differ '%s', old %d and new %d",
@@ -1249,7 +1249,7 @@ int Check_format( int type, const char *name, struct job *job )
 		Fix_job_number( job, n );
 	}
 	Clean_name(t);
-	if( (s = Find_str_value( &job->info,FILE_HOSTNAME,Value_sep)) ){
+	if( (s = Find_str_value( &job->info,FILE_HOSTNAME)) ){
 		if( safestrcasecmp(s,t) ){
 			SNPRINTF(msg, sizeof(msg))
 				"bad hostname '%s' - '%s' ", t, name );
@@ -1282,35 +1282,35 @@ char *Find_start(char *str, const char *key )
 
 char *Frwarding(struct line_list *l)
 {
-	return( Find_str_value(l,FORWARDING,Value_sep) );
+	return( Find_str_value(l,FORWARDING) );
 }
 int Pr_disabled(struct line_list *l)
 {
-	return( Find_flag_value(l,PRINTING_DISABLED,Value_sep) );
+	return( Find_flag_value(l,PRINTING_DISABLED) );
 }
 int Sp_disabled(struct line_list *l)
 {
-	return( Find_flag_value(l,SPOOLING_DISABLED,Value_sep) );
+	return( Find_flag_value(l,SPOOLING_DISABLED) );
 }
 int Pr_aborted(struct line_list *l)
 {
-	return( Find_flag_value(l,PRINTING_ABORTED,Value_sep) );
+	return( Find_flag_value(l,PRINTING_ABORTED) );
 }
 int Hld_all(struct line_list *l)
 {
-	return( Find_flag_value(l,HOLD_ALL,Value_sep) );
+	return( Find_flag_value(l,HOLD_ALL) );
 }
 char *Clsses(struct line_list *l)
 {
-	return( Find_str_value(l,CLASS,Value_sep) );
+	return( Find_str_value(l,CLASS) );
 }
 char *Cntrol_debug(struct line_list *l)
 {
-	return( Find_str_value(l,DEBUG,Value_sep) );
+	return( Find_str_value(l,DEBUG) );
 }
 char *Srver_order(struct line_list *l)
 {
-	return( Find_str_value(l,SERVER_ORDER,Value_sep) );
+	return( Find_str_value(l,SERVER_ORDER) );
 }
 
 /*
@@ -1347,7 +1347,7 @@ char *Fix_job_number( struct job *job, int n )
 	int len = 3, max = 1000;
 
 	if( n == 0 ){
-		n = Find_decimal_value( &job->info, NUMBER, Value_sep );
+		n = Find_decimal_value( &job->info, NUMBER );
 	}
 	if( Long_number_DYN && !Backwards_compatible_DYN ){
 		len = 6;
@@ -1355,7 +1355,7 @@ char *Fix_job_number( struct job *job, int n )
 	}
 	SNPRINTF(buffer,sizeof(buffer))"%0*d",len, n % max );
 	Set_str_value(&job->info,NUMBER,buffer);
-	return( Find_str_value(&job->info,NUMBER,Value_sep) );
+	return( Find_str_value(&job->info,NUMBER) );
 }
 
 /************************************************************************
@@ -1371,21 +1371,21 @@ char *Make_identifier( struct job *job )
 	char number[32];
 	int n;
 
-	if( !(s = Find_str_value( &job->info,IDENTIFIER,Value_sep )) ){
-		if( !(user = Find_str_value( &job->info,"P",Value_sep ))){
+	if( !(s = Find_str_value( &job->info,IDENTIFIER )) ){
+		if( !(user = Find_str_value( &job->info,"P" ))){
 			user = "nobody";
 		}
-		if( !(host= Find_str_value( &job->info,"H",Value_sep ))){
+		if( !(host= Find_str_value( &job->info,"H" ))){
 			host = "unknown";
 		}
-		n = Find_decimal_value( &job->info,NUMBER,Value_sep );
+		n = Find_decimal_value( &job->info,NUMBER );
 		SNPRINTF(number,sizeof(number))"%d",n);
 		if( (s = safestrchr( host, '.' )) ) *s = 0;
 		id = safestrdup5(user,"@",host,"+",number,__FILE__,__LINE__);
 		if( s ) *s = '.';
 		Set_str_value(&job->info,IDENTIFIER,id);
 		if( id ) free(id); id = 0;
-		s = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+		s = Find_str_value(&job->info,IDENTIFIER);
 	}
 	return(s);
 }
@@ -1423,20 +1423,20 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	buffer[0] = 0;
 	if( job->info.count == 0 ){
 		SNPRINTF(buffer,sizeof(buffer)) "removed" );
-	} else if( Find_flag_value(&job->info,INCOMING_TIME,Value_sep) ){
+	} else if( Find_flag_value(&job->info,INCOMING_TIME) ){
 		SNPRINTF(buffer,sizeof(buffer)) "incoming" );
-	} else if( (error = Find_flag_value(&job->info,ERROR_TIME,Value_sep)) ){
+	} else if( (error = Find_flag_value(&job->info,ERROR_TIME)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "error" );
-	} else if( Find_flag_value(&job->info,HOLD_TIME,Value_sep) ){
+	} else if( Find_flag_value(&job->info,HOLD_TIME) ){
 		SNPRINTF(buffer,sizeof(buffer)) "hold" );
 		held = 1;
-	} else if( (done = Find_flag_value(&job->info,DONE_TIME,Value_sep)) ){
+	} else if( (done = Find_flag_value(&job->info,DONE_TIME)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "done" );
-	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))
+	} else if( (n = Find_flag_value(&job->info,SERVER))
 		&& kill( n, 0 ) == 0 ){
 		int delta;
 		time_t now = time((void *)0);
-		time_t last_change = Find_flag_value(&job->info,START_TIME,Value_sep);
+		time_t last_change = Find_flag_value(&job->info,START_TIME);
 		if( !ISNULL(Status_file_DYN) && !stat( Status_file_DYN, &statb )
 			&& last_change < statb.st_mtime ){
 			last_change = statb.st_mtime;
@@ -1450,7 +1450,7 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 			SNPRINTF( buffer, sizeof(buffer))
 				"stalled(%dsec)", delta );
 		} else {
-			n = Find_flag_value(&job->info,ATTEMPT,Value_sep);
+			n = Find_flag_value(&job->info,ATTEMPT);
 			SNPRINTF(buffer,sizeof(buffer)) "active" );
 			if( n > 0 ){
 				SNPRINTF( buffer, sizeof(buffer))
@@ -1458,7 +1458,7 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 			}
 		}
 		printable = 1;
-	} else if((s = Find_str_value(&job->info,MOVE,Value_sep)) ){
+	} else if((s = Find_str_value(&job->info,MOVE)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "moved->%s", s );
 		move = 1;
 	} else if( Get_hold_class(&job->info, spool_control ) ){
@@ -1467,29 +1467,29 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	} else {
 		printable = 1;
 	}
-	if( (destinations = Find_flag_value(&job->info,DESTINATIONS,Value_sep)) ){
+	if( (destinations = Find_flag_value(&job->info,DESTINATIONS)) ){
 		printable = 0;
 		for( destination = 0; destination < destinations; ++destination ){
 			Get_destination(job,destination);
 			if(DEBUGL4)Dump_job("Job_destination_printable - job",job);
 			destbuffer[0] = 0;
-			if( Find_flag_value(&job->destination,ERROR_TIME,Value_sep) ){
+			if( Find_flag_value(&job->destination,ERROR_TIME) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "error" );
-			} else if( Find_flag_value(&job->destination,HOLD_TIME,Value_sep) ){
+			} else if( Find_flag_value(&job->destination,HOLD_TIME) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "hold" );
 				held += 1;
-			} else if( Find_flag_value(&job->destination,DONE_TIME,Value_sep) ){
+			} else if( Find_flag_value(&job->destination,DONE_TIME) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "done" );
-			} else if( (n = Find_flag_value(&job->destination,SERVER,Value_sep))
+			} else if( (n = Find_flag_value(&job->destination,SERVER))
 				&& kill( n, 0 ) == 0 ){
 				int delta;
-				n = Find_flag_value(&job->destination,START_TIME,Value_sep);
+				n = Find_flag_value(&job->destination,START_TIME);
 				delta = time((void *)0) - n;
 				if( Stalled_time_DYN && delta > Stalled_time_DYN ){
 					SNPRINTF( destbuffer, sizeof(destbuffer))
 						"stalled(%dsec)", delta );
 				} else {
-					n = Find_flag_value(&job->destination,ATTEMPT,Value_sep);
+					n = Find_flag_value(&job->destination,ATTEMPT);
 					SNPRINTF(destbuffer,sizeof(destbuffer)) "active" );
 					if( n > 0 ){
 						SNPRINTF( destbuffer, sizeof(destbuffer))
@@ -1497,7 +1497,7 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 					}
 				}
 				printable += 1;
-			} else if((s = Find_str_value(&job->destination,MOVE,Value_sep)) ){
+			} else if((s = Find_str_value(&job->destination,MOVE)) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "moved->%s", s );
 				move += 1;
 			} else if( Get_hold_class(&job->destination, spool_control ) ){
@@ -1560,7 +1560,7 @@ void Update_destination( struct job *job )
 {
 	char *s, *t, buffer[SMALLBUFFER];
 	int id;
-	id = Find_flag_value(&job->destination,DESTINATION,Value_sep);
+	id = Find_flag_value(&job->destination,DESTINATION);
 	SNPRINTF(buffer,sizeof(buffer))"DEST%d",id);
 	s = Join_line_list(&job->destination,"\n");
 	t = Escape(s,1);
@@ -1585,10 +1585,10 @@ int Get_destination( struct job *job, int n )
 	SNPRINTF(buffer,sizeof(buffer)) "DEST%d", n );
 
 	Free_line_list(&job->destination);
-	if( (s = Find_str_value(&job->info,buffer,Value_sep)) ){
+	if( (s = Find_str_value(&job->info,buffer)) ){
 		s = safestrdup(s,__FILE__,__LINE__);
 		Unescape(s);
-		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1,0);
+		Split(&job->destination,s,Line_ends,1,Option_value_sep,1,1,1,0);
 		if(s) free( s ); s = 0;
 		result = 0;
 	}
@@ -1607,10 +1607,10 @@ int Get_destination_by_name( struct job *job, char *name )
 	char *s;
 
 	Free_line_list(&job->destination);
-	if( name && (s = Find_str_value(&job->info,name,Value_sep)) ){
+	if( name && (s = Find_str_value(&job->info,name)) ){
 		s = safestrdup(s,__FILE__,__LINE__);
 		Unescape(s);
-		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1,0);
+		Split(&job->destination,s,Line_ends,1,Option_value_sep,1,1,1,0);
 		if(s) free( s ); s = 0;
 		result = 0;
 	}
@@ -1648,7 +1648,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 			DEBUG1("Trim_status_file: trimming to %d K", min);
 			lseek( status, 0, SEEK_SET );
 			lseek( status, -min*1024, SEEK_END );
-			while( (count = read( status, buffer, sizeof(buffer) - 1 ) ) > 0 ){
+			while( (count = ok_read( status, buffer, sizeof(buffer) - 1 ) ) > 0 ){
 				buffer[count] = 0;
 				if( (s = safestrchr(buffer,'\n')) ){
 					*s++ = 0;
@@ -1656,7 +1656,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 					break;
 				}
 			}
-			while( (count = read( status, buffer, sizeof(buffer) ) ) > 0 ){
+			while( (count = ok_read( status, buffer, sizeof(buffer) ) ) > 0 ){
 				if( write( tempfd, buffer, count) < 0 ){
 					Errorcode = JABORT;
 					LOGERR_DIE(LOG_ERR) "Trim_status_file: cannot write tempfile" );
@@ -1665,7 +1665,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 			lseek( tempfd, 0, SEEK_SET );
 			lseek( status, 0, SEEK_SET );
 			ftruncate( status, 0 );
-			while( (count = read( tempfd, buffer, sizeof(buffer) ) ) > 0 ){
+			while( (count = ok_read( tempfd, buffer, sizeof(buffer) ) ) > 0 ){
 				if( write( status, buffer, count) < 0 ){
 					Errorcode = JABORT;
 					LOGERR_DIE(LOG_ERR) "Trim_status_file: cannot write tempfile" );
@@ -1734,9 +1734,9 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	 */
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
 		lp = (void *)job->datafiles.list[linecount];
-		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+		transfername = Find_str_value(lp,TRANSFERNAME);
 		Set_str_value(lp,OTRANSFERNAME,transfername);
-		if( !(s = Find_casekey_str_value(&outfiles,transfername,Value_sep)) ){
+		if( !(s = Find_casekey_str_value(&outfiles,transfername,Hash_value_sep)) ){
 			/* we add the entry */
 			offset = count % 52;
 			group = count / 52;
@@ -1760,7 +1760,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 
 	if(DEBUGL4)Dump_job("Fix_datafile_info - after finding duplicates", job );
 
-	jobcopies = Find_flag_value(&job->info,COPIES,Value_sep);
+	jobcopies = Find_flag_value(&job->info,COPIES);
 	if( !jobcopies ) jobcopies = 1;
 	fmt[0] = 'f'; fmt[1] = 0;
 	DEBUG4("Fix_datafile_info: jobcopies %d", jobcopies );
@@ -1769,10 +1769,10 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 			jobline = 0;
 			lp = (void *)job->datafiles.list[linecount];
 			if(DEBUGL5)Dump_line_list("Fix_datafile_info - info", lp  );
-			transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
-			Nline = Find_str_value(lp,"N",Value_sep);
+			transfername = Find_str_value(lp,TRANSFERNAME);
+			Nline = Find_str_value(lp,"N");
 			fmt[0] = 'f';
-			if( (s = Find_str_value(lp,FORMAT,Value_sep)) ){
+			if( (s = Find_str_value(lp,FORMAT)) ){
 				fmt[0] = *s;
 			}
 			if( xlate_format ){
@@ -1785,7 +1785,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 					}
 				}
 			}
-			copies = Find_flag_value(lp,COPIES,Value_sep);
+			copies = Find_flag_value(lp,COPIES);
 			if( copies == 0 ) copies = 1;
 			for(i = 0; i < copies; ++i ){
 				if( Nline && !Nline_after_file_DYN ){
@@ -1807,8 +1807,8 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 		jobline = 0;
 		lp = (void *)job->datafiles.list[linecount];
 		if(DEBUGL4)Dump_line_list("Fix_datafile_info - info", lp );
-		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
-		if( !Find_casekey_str_value(&outfiles,transfername,Value_sep) ){
+		transfername = Find_str_value(lp,TRANSFERNAME);
+		if( !Find_casekey_str_value(&outfiles,transfername,Hash_value_sep) ){
 			jobline = safeextend4(jobline,"U",transfername,"\n",__FILE__,__LINE__);
 			Set_casekey_str_value(&outfiles,transfername,"YES");
 		}
@@ -1819,7 +1819,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	}
 	Free_line_list(&outfiles);
 	Set_str_value(&job->info,DATAFILES,dataline);
-	s = Find_str_value(&job->info,DATAFILES,Value_sep);
+	s = Find_str_value(&job->info,DATAFILES);
 	while( (s = safestrchr(s,'\n')) ) *s++ = '\001';
 	return(dataline);
 }
@@ -1897,7 +1897,6 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 			/* remove banner from control file */
 			if( c == 'L' && Suppress_header_DYN && !Always_banner_DYN ) continue;
 			s[1] = 0;
-			Add_line_list( &controlfile, s, Value_sep, 1, 1 );
 			Set_str_value(&controlfile,s,s+2);
 			s[1] = '=';
 		}
@@ -1906,28 +1905,28 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	if(DEBUGL3) Dump_line_list( "Fix_control: control file", &controlfile );
 
 	n = j = 0;
-	n = Find_decimal_value( &job->info,NUMBER,Value_sep);
-	j = Find_decimal_value( &job->info,SEQUENCE,Value_sep);
+	n = Find_decimal_value( &job->info,NUMBER);
+	j = Find_decimal_value( &job->info,SEQUENCE);
 
 	number = Fix_job_number(job, n+j);
 	
-	if( !(priority = Find_str_value( &job->destination,PRIORITY,Value_sep))
-		&& !(priority = Find_str_value( &job->info,PRIORITY,Value_sep))
+	if( !(priority = Find_str_value( &job->destination,PRIORITY))
+		&& !(priority = Find_str_value( &job->info,PRIORITY))
 		&& !(priority = Default_priority_DYN) ){
 		priority = "A";
 	}
 	pr[0] = *priority;
 	pr[1] = 0;
 
-	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME,Value_sep);
+	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 
 	if( !file_hostname ){
-		file_hostname = Find_str_value(&job->info,FROMHOST,Value_sep);
+		file_hostname = Find_str_value(&job->info,FROMHOST);
 		if( file_hostname == 0 || *file_hostname == 0 ){
 			file_hostname = FQDNHost_FQDN;
 		}
 		Set_str_value(&job->info,FILE_HOSTNAME,file_hostname);
-		file_hostname = Find_str_value(&job->info,FILE_HOSTNAME,Value_sep);
+		file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 	}
 
 	if( (Backwards_compatible_DYN || Use_shorthost_DYN)
@@ -1950,9 +1949,9 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	if( job->destination.count == 0 ){
 		Set_str_value(&controlfile,IDENTIFIER,s);
 	} else {
-		s = Find_str_value(&job->destination,IDENTIFIER,Value_sep);
-		cccc = Find_flag_value(&job->destination,COPIES,Value_sep);
-		n = Find_flag_value(&job->destination,COPY_DONE,Value_sep);
+		s = Find_str_value(&job->destination,IDENTIFIER);
+		cccc = Find_flag_value(&job->destination,COPIES);
+		n = Find_flag_value(&job->destination,COPY_DONE);
 		if( cccc > 1 ){
 			SNPRINTF(buffer,sizeof(buffer))"C%d",n+1);
 			s = safestrdup2(s,buffer,__FILE__,__LINE__);
@@ -1962,11 +1961,11 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 			Set_str_value(&controlfile,IDENTIFIER,s);
 		}
 	}
-	if( !Find_str_value(&controlfile,DATE,Value_sep) ){
+	if( !Find_str_value(&controlfile,DATE) ){
 		Set_str_value(&controlfile,DATE, Time_str( 0, 0 ) );
 	}
 	if( (Use_queuename_DYN || Force_queuename_DYN) &&
-		!Find_str_value(&controlfile,QUEUENAME,Value_sep) ){
+		!Find_str_value(&controlfile,QUEUENAME) ){
 		s = Force_queuename_DYN;
 		if( s == 0 ) s = Queue_name_DYN;
 		if( s == 0 ) s = Printer_DYN;
@@ -1979,7 +1978,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		s = job->destination.list[i];
 		cccc = cval(s);
 		buffer[0] = cccc;
-		if( isupper(cccc) && Find_str_value(&controlfile,buffer,Value_sep) ){
+		if( isupper(cccc) && Find_str_value(&controlfile,buffer) ){
 			Set_str_value( &controlfile,buffer,s+1);
 		}
 	}
@@ -2054,7 +2053,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 
 		tempfd = Make_temp_fd( 0 );
 		tempfc = Make_temp_fd( 0 );
-		s = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep );
+		s = Find_str_value(&job->info,CF_OUT_IMAGE );
 		if( Write_fd_str( tempfc, s ) < 0 ){
 			Errorcode = JFAIL;
 			LOGERR_DIE(LOG_INFO) "Fix_control: write to tempfile failed" );
@@ -2063,7 +2062,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 			Errorcode = JFAIL;
 			LOGERR_DIE(LOG_INFO) "Fix_control: lseek failed" );
 		}
-		if( (n = Filter_file( tempfc, tempfd, "CONTROL_FILTER",
+		if( (n = Filter_file( Send_query_rw_timeout_DYN, tempfc, tempfd, "CONTROL_FILTER",
 			filter, Filter_options_DYN, job, 0, 1 )) ){
 			Errorcode = n;
 			LOGERR_DIE(LOG_ERR) "Fix_control: control filter failed with status '%s'",
@@ -2107,9 +2106,9 @@ int Create_control( struct job *job, char *error, int errlen,
 
 	Make_identifier( job );
 
-	if( !(fromhost = Find_str_value(&job->info,FROMHOST,Value_sep)) || Is_clean_name(fromhost) ){
+	if( !(fromhost = Find_str_value(&job->info,FROMHOST)) || Is_clean_name(fromhost) ){
 		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
-		fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
+		fromhost = Find_str_value(&job->info,FROMHOST);
 	}
 	/*
 	 * accounting name fixup
@@ -2140,7 +2139,7 @@ int Create_control( struct job *job, char *error, int errlen,
 			Free_line_list(&l);
 			DEBUG1("Create_control: hostlist '%s'", s );
 			Split(&l,s,",",0,0,0,0,0,0);
-			if( Match_ipaddr_value(&l,&RemoteHost_IP) ){
+			if( Match_ipaddr_value(&l,&RemoteHost_IP) == 0 ){
 				Free_line_list(&l);
 				DEBUG1("Create_control: match, using users '%s'", t );
 				Split(&l,t,",",0,0,0,0,0,0);
@@ -2174,7 +2173,7 @@ int Create_control( struct job *job, char *error, int errlen,
 			buffer, sizeof(buffer) );
 		DEBUG1("Create_control: remotehost '%s'", const_s );
 		Set_str_value(&job->info,FROMHOST,const_s);
-		fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
+		fromhost = Find_str_value(&job->info,FROMHOST);
 	}
 	{
 		char *s, *t;
@@ -2183,17 +2182,17 @@ int Create_control( struct job *job, char *error, int errlen,
 			s = safestrdup2(fromhost, t, __FILE__,__LINE__ );
 			Set_str_value(&job->info,FROMHOST,s);
 			if( s ) free(s); s = 0;
-			fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
+			fromhost = Find_str_value(&job->info,FROMHOST);
 		}
 	}
 
 
-	if( !Find_str_value(&job->info,DATE,Value_sep) ){
+	if( !Find_str_value(&job->info,DATE) ){
 		char *s = Time_str(0,0);
 		Set_str_value(&job->info,DATE,s);
 	}
 	if( (Use_queuename_DYN || Force_queuename_DYN)
-		&& !Find_str_value(&job->info,QUEUENAME,Value_sep) ){
+		&& !Find_str_value(&job->info,QUEUENAME) ){
 		char *s = Force_queuename_DYN;
 		if( s == 0 ) s = Queue_name_DYN;
 		if( s == 0 ) s = Printer_DYN;
@@ -2206,17 +2205,17 @@ int Create_control( struct job *job, char *error, int errlen,
 		Set_flag_value( &job->info,HOLD_TIME,0);
 	}
 
-	number = Find_str_value( &job->info,NUMBER,Value_sep);
+	number = Find_str_value( &job->info,NUMBER);
 
-	priority = Find_str_value( &job->info,PRIORITY,Value_sep);
+	priority = Find_str_value( &job->info,PRIORITY);
 	if( !priority ){
 		priority = Default_priority_DYN;
 		if( !priority ) priority = "A";
 		Set_str_value(&job->info,PRIORITY,priority);
-		priority = Find_str_value(&job->info,PRIORITY,Value_sep);
+		priority = Find_str_value(&job->info,PRIORITY);
 	}
 
-	file_hostname = Find_str_value(&job->info,FROMHOST,Value_sep);
+	file_hostname = Find_str_value(&job->info,FROMHOST);
 	if( ISNULL(file_hostname) ) file_hostname = FQDNRemote_FQDN;
 	if( ISNULL(file_hostname) ) file_hostname = FQDNHost_FQDN;
 
@@ -2227,7 +2226,7 @@ int Create_control( struct job *job, char *error, int errlen,
 	} else {
 		Set_str_value(&job->info,FILE_HOSTNAME,file_hostname);
 	}
-	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME,Value_sep);
+	file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 
 	/* fix Z options */
 	Fix_Z_opts( job );
@@ -2263,8 +2262,8 @@ int Create_control( struct job *job, char *error, int errlen,
 		DEBUG4("Create_control: joined '%s'", cf );
 		if( datalines ) free(datalines); datalines = 0;
 
-		openname = Find_str_value(&job->info,OPENNAME,Value_sep); 
-		if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep); 
+		openname = Find_str_value(&job->info,OPENNAME); 
+		if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME); 
 		DEBUG4("Create_control: writing to '%s'", openname );
 		if( (fd = Checkwrite(openname,&statb,0,1,0)) < 0
 			|| ftruncate(fd,0) || Write_fd_str(fd,cf) < 0 ){

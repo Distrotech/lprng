@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: utilities.c,v 1.61 2003/11/14 02:32:56 papowell Exp $";
 
 #include "lp.h"
 
@@ -222,13 +222,14 @@ int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
 	if( timeout > 0 ){
 		if( Set_timeout() ){
 			Set_timeout_alarm( timeout  );
-			i = read( fd, msg, len );
+			i = ok_read( fd, msg, len );
 		} else {
 			i = -1;
+			errno = EINTR;
 		}
 		Clear_timeout();
 	} else {
-		i = read( fd, msg, len );
+		i = ok_read( fd, msg, len );
 	}
 	return( i );
 }
@@ -830,7 +831,7 @@ int Read_write_timeout(
 		} else {
 			if( FD_ISSET( readfd, &readfds ) ){
 				DEBUG4("Read_write_timeout: read possible on fd %d", readfd );
-				m = read( readfd, inbuffer, maxinlen );
+				m = ok_read( readfd, inbuffer, maxinlen );
 				DEBUG4("Read_write_timeout: read() returned %d", m );
 				if( readlen ) *readlen = m;
 				/* caller leaves space for this */

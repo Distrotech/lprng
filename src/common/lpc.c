@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpc.c,v 1.61 2003/11/14 02:32:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -369,11 +369,15 @@ void doaction( struct line_list *args )
 		DEBUG1("lpc: system pid %d, exit status %s",
 			result, Decode_status( &status ) );
 	} else {
-		Add_line_list(&l, Logname_DYN, Value_sep, 0, 0 );
-		Add_line_list(&l, args->list[0], Value_sep, 0, 0);
+		/*
+		 * rearrange the options so that you have
+		 * the user name and other elements first
+		 */
+		Add_line_list(&l, Logname_DYN, 0, 0, 0 );
+		Add_line_list(&l, args->list[0], 0, 0, 0);
 		Remove_line_list(args, 0);
 		if( args->count > 0 ) {
-			Add_line_list(&l, RemotePrinter_DYN, Value_sep, 0, 0 );
+			Add_line_list(&l, RemotePrinter_DYN, 0, 0, 0 );
 			Remove_line_list(args, 0);
 		}
 		Merge_line_list(&l, args, 0, 0, 0 );
@@ -383,7 +387,7 @@ void doaction( struct line_list *args )
 			Send_query_rw_timeout_DYN, 1 );
 		if( fd > 0 ){
 			shutdown( fd, 1 );
-			while( (n = read(fd, msg, sizeof(msg))) > 0 ){
+			while( (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN,fd, msg, sizeof(msg))) > 0 ){
 				if( (write(1,msg,n)) < 0 ) cleanup(0);
 			}
 		}

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: krb5_auth.h,v 1.57 2003/09/05 20:07:20 papowell Exp $
+ * $Id: krb5_auth.h,v 1.61 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -25,12 +25,15 @@ int Send_krb4_auth( struct job *job, int *sock,
 	struct security *security, struct line_list *info );
 int Receive_k4auth( int *sock, char *input );
 int Krb5_receive( int *sock,
+	int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
 	struct security *security, char *tempfile );
-int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
+int Krb5_send( int *sock,
+	int transfer_timeout,
+	char *tempfile,
 	char *error, int errlen,
 	struct security *security, struct line_list *info );
 

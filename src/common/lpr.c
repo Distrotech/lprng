@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpr.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -177,7 +177,7 @@ int main(int argc, char *argv[], char *envp[])
 	/* we do not do any translation of formats */
 	s = 0;
 
-	n = Find_flag_value( &prjob.info,DATAFILE_COUNT,Value_sep);
+	n = Find_flag_value( &prjob.info,DATAFILE_COUNT);
 	if( Max_datafiles_DYN > 0 && n > Max_datafiles_DYN ){
 		Errorcode = 1;
 		FATAL(LOG_INFO) _("%d data files and maximum allowed %d"),
@@ -210,7 +210,7 @@ int main(int argc, char *argv[], char *envp[])
 		if(DEBUGL2) Dump_job( "lpr - before filtering", &prjob );
 		tempfd = Make_temp_fd(&tempfile);
 
-		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep ),
+		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp"),
 			__FILE__,__LINE__);
 		Set_str_value( &PC_entry_line_list, LP, tempfile );
 		/* Print_job( output_device, status_device, job, timeout, poll_for_status ) */
@@ -263,7 +263,7 @@ int main(int argc, char *argv[], char *envp[])
 			Errorcode = JFAIL;
 			goto exit;
 		}
-		id = Find_str_value(&prjob.info,IDENTIFIER,Value_sep);
+		id = Find_str_value(&prjob.info,IDENTIFIER);
 		SETSTATUS(&prjob)"transferring job '%s'", id );
 		/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
 		Set_str_value( &PC_entry_line_list, LP, s );
@@ -350,11 +350,11 @@ int main(int argc, char *argv[], char *envp[])
 		char *id;
 		int n;
 		char msg[SMALLBUFFER];
-		id = Find_str_value(&prjob.info,IDENTIFIER,Value_sep);
+		id = Find_str_value(&prjob.info,IDENTIFIER);
 		if( id ){
 			SNPRINTF(msg,sizeof(msg)-1)_("request id is %s\n"), id );
 		} else {
-			n = Find_decimal_value(&prjob.info,NUMBER,Value_sep);
+			n = Find_decimal_value(&prjob.info,NUMBER);
 			SNPRINTF(msg,sizeof(msg)-1)_("request id is %d\n"), n );
 		}
 		Write_fd_str(1, msg );
@@ -991,7 +991,7 @@ int Make_job( struct job *job )
 			then we set it
 		*/
 		if( keys->keyword ){
-			s = Find_str_value(&job->info,*keys->keyword,Value_sep);
+			s = Find_str_value(&job->info,*keys->keyword);
 		}
 		p = keys->variable;
 		nstr[0] = 0;
@@ -1126,7 +1126,7 @@ double Copy_STDIN( struct job *job )
 	}
 	DEBUG1("Temporary file '%s', fd %d", tempfile, fd );
 	size = 0;
-	while( (count = read( 0, buffer, sizeof(buffer))) > 0 ){
+	while( (count = ok_read( 0, buffer, sizeof(buffer))) > 0 ){
 		if( write( fd, buffer, count ) < 0 ){
 			Errorcode = JABORT;
 			LOGERR_DIE(LOG_INFO) _("Copy_STDIN: write to temp file failed"));
@@ -1245,7 +1245,7 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
     } else if(statb->st_size == 0) {
 		/* empty file */
 		printable = -1;
-    } else if ((n = read (fd, buf, sizeof(buf))) <= 0) {
+    } else if ((n = ok_read (fd, buf, sizeof(buf))) <= 0) {
         DIEMSG (err, file,_("cannot read it"));
     } else if (format != 'p' && format != 'f' ){
         printable = 1;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: permission.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -272,7 +272,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					if( !(t = args.list[j]) ) continue;
 					c = cval(t);
 					buffer[1] = 0; buffer[0] = c;
-					if( isupper(c) && (s = Find_str_value(&job->info,buffer,0))){
+					if( isupper(c) && (s = Find_str_value(&job->info,buffer))){
 						/* we do a glob match against line */
 						m = Globmatch( t+1, s );
 					}
@@ -341,7 +341,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				default: break;
 				case 'Q': case 'M': case 'C':
 					/* check succeeds if remoteuser == user */
-					t = Find_str_value(&job->info,AUTHUSER,Value_sep);
+					t = Find_str_value(&job->info,AUTHUSER);
 					m = (safestrcmp( check->authuser, t ) != 0);
 					if( invert ) m = !m;
 					DEBUGF(DDB3)(
@@ -357,7 +357,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				default: break;
 				case 'Q': case 'M': case 'C':
 					/* check succeeds if authinfo present */
-					t = Find_str_value(&job->info,AUTHUSER,Value_sep);
+					t = Find_str_value(&job->info,AUTHUSER);
 					m = !t;
 					if( invert ) m = !m;
 					DEBUGF(DDB3)(

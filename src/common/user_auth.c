@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.26 2003/09/05 20:07:20 papowell Exp $
+ * $Id: user_auth.c,v 1.30 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -40,6 +40,8 @@
 #include "permission.h"
 
 #ifdef SSL_ENABLE
+/* The Kerberos 5 support is MIT-specific. */
+#define OPENSSL_NO_KRB5
 # include "ssl_auth.h"
 #endif
 
@@ -131,7 +133,7 @@ int Test_connect( struct job *job, int *sock,
 	return( status );
 }
 
-int Test_accept( int *sock,
+int Test_accept( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	char *errmsg, int errlen,
 	struct line_list *info, struct line_list *header_info,
@@ -146,7 +148,7 @@ int Test_accept( int *sock,
 
 	len = sizeof(input)-1;
 	status = Link_line_read(ShortRemote_FQDN,sock,
-		Send_job_rw_timeout_DYN,input,&len);
+		transfer_timeout,input,&len);
 	if( len >= 0 ) input[len] = 0;
 	if( status ){
 		SNPRINTF(errmsg,errlen)
@@ -156,7 +158,7 @@ int Test_accept( int *sock,
 	}
 	DEBUG1( "Test_accept: read status %d, len %d, '%s'",
 		status, len, input );
-	if( (status = Link_send( RemoteHost_DYN, sock, Send_query_rw_timeout_DYN,
+	if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		"", 1, 0 )) ){
 		SNPRINTF(errmsg,errlen)
 			"error '%s' ACK to %s@%s",
@@ -205,7 +207,7 @@ int Test_send( int *sock,
 		goto error;
 	}
 	DEBUG1("Test_send: starting read");
-	while( (len = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+	while( (len = Read_fd_len_timeout( transfer_timeout, tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("Test_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
@@ -236,7 +238,7 @@ int Test_send( int *sock,
 	}
 	DEBUG1("Test_send: starting read");
 
-	while( (len = read(*sock,buffer,sizeof(buffer)-1)) > 0 ){
+	while( (len = Read_fd_len_timeout(transfer_timeout, *sock,buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("Test_send: socket information '%s'", buffer);
 		if( write(tempfd,buffer,len) != len ){
@@ -252,7 +254,7 @@ int Test_send( int *sock,
 	return(status);
 }
 
-int Test_receive( int *sock,
+int Test_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -293,7 +295,7 @@ int Test_receive( int *sock,
 	}
 
 	DEBUGF(DRECV1)("Test_receive: starting read from socket %d", *sock );
-	while( (n = read(*sock, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, *sock, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("Test_receive: remote read '%d' '%s'", n, buffer );
 		if( write( tempfd,buffer,n ) != n ){
@@ -328,7 +330,7 @@ int Test_receive( int *sock,
 			tempfile );
 	}
 
-	while( (n = read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, tempfd, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("Test_receive: sending '%d' '%s'", n, buffer );
 		if( write( *sock,buffer,n ) != n ){
@@ -425,7 +427,7 @@ int Test_receive( int *sock,
 	int n;
 
 	MD5Init (&mdContext);
-	while( (n = read( fd, buffer, sizeof(buffer))) > 0 ){
+	while( (n = ok_read( fd, buffer, sizeof(buffer))) > 0 ){
 		MD5Update(&mdContext, buffer, n);
 	}
 	MD5Final(&mdContext);
@@ -457,10 +459,10 @@ int Test_receive( int *sock,
 			int marker, int doinclude, int nocomment, int depth, int maxdepth )
 	*/
 	Read_file_list( /*required*/0, /*model*/&keys, /*str*/(char *)keyfile,
-		/*linesep*/Line_ends,/*sort*/1, /*keysep*/Value_sep,/*uniq*/1, /*trim*/1,
+		/*linesep*/Line_ends,/*sort*/1, /*keysep*/Option_value_sep,/*uniq*/1, /*trim*/1,
 		/*marker*/0, /*doinclude*/0, /*nocomment*/1,/*depth*/0,/*maxdepth*/4 );
 	/* read in the key from the key file */
-	keyvalue = Find_exists_value( &keys, name, Value_sep );
+	keyvalue = Find_exists_value( &keys, name,Hash_value_sep );
 	if( keyvalue == 0 ){
 		SNPRINTF(errmsg, errlen)
 		"md5key: no key for '%s' in '%s'", name, keyfile );
@@ -530,7 +532,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 			goto error;
 		}
 	} else {
-		keyfile = Find_exists_value( info, "server_keyfile", Value_sep );
+		keyfile = Find_exists_value( info, "server_keyfile",Hash_value_sep );
 		if( keyfile == 0 ){
 			SNPRINTF(errmsg, errlen)
 				"md5_send: no md5_server_keyfile entry" );
@@ -538,7 +540,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		}
 	}
 
-	dest = Find_str_value( info, DESTINATION, Value_sep );
+	dest = Find_str_value( info, DESTINATION );
 	if( dest == 0 ){
 		SNPRINTF(errmsg, errlen)
 			"md5_send: no '%s' value in info", DESTINATION );
@@ -559,7 +561,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		dest = keybuffer;
 	} else {
 		s = keybuffer;
-		dest = Find_str_value( info, FROM, Value_sep );
+		dest = Find_str_value( info, FROM );
 		if( !dest ){
 			SNPRINTF(errmsg,errlen)
 				"md5_send: no '%s' value in info", FROM );
@@ -574,7 +576,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	/* Read the challenge dest server */
 	len = sizeof(buffer);
 	if( (n = Link_line_read(ShortRemote_FQDN,sock,
-		Send_query_rw_timeout_DYN,buffer,&len)) ){
+		transfer_timeout,buffer,&len)) ){
 		SNPRINTF(errmsg, errlen)
 		"md5_send: error reading challenge - '%s'", Link_err_str(n) );
 		goto error;
@@ -662,7 +664,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	DEBUG1("md5_send: sending response '%s'", smallbuffer );
 	safestrncat(smallbuffer,"\n");
 	ack = 0;
-	if( (n =  Link_send( RemoteHost_DYN, sock, Send_query_rw_timeout_DYN,
+	if( (n =  Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		smallbuffer, safestrlen(smallbuffer), &ack )) || ack ){
 		/* keep the other end dest trying to read */
 		if( (s = strchr(smallbuffer,'\n')) ) *s = 0;
@@ -680,7 +682,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	}
 
 	DEBUG1("md5_send: starting transfer of file");
-	while( (len = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+	while( (len = Read_fd_len_timeout( transfer_timeout, tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("md5_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
@@ -711,7 +713,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	}
 	DEBUG1("md5_send: starting read of response");
 
-	if( (len = read(*sock,buffer,1)) > 0 ){
+	if( (len = Read_fd_len_timeout(transfer_timeout, *sock,buffer,1)) > 0 ){
 		n = cval(buffer);
 		DEBUG4("md5_send: response byte '%d'", n);
 		status = n;
@@ -722,7 +724,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 			goto error;
 		}
 	}
-	while( (len = read(*sock,buffer,sizeof(buffer)-1)) > 0 ){
+	while( (len = Read_fd_len_timeout(transfer_timeout, *sock,buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("md5_send: socket information '%s'", buffer);
 		if( write(tempfd,buffer,len) != len ){
@@ -740,7 +742,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 }
 
 
-int md5_receive( int *sock,
+int md5_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -771,7 +773,7 @@ int md5_receive( int *sock,
 			"md5_receive: not server" );
 		goto error;
 	} else {
-		keyfile = Find_exists_value( info, "server_keyfile", Value_sep );
+		keyfile = Find_exists_value( info, "server_keyfile",Hash_value_sep );
 		if( keyfile == 0 ){
 			SNPRINTF(errmsg, errlen)
 				"md5_receive: no md5_server_keyfile entry" );
@@ -780,7 +782,7 @@ int md5_receive( int *sock,
 	}
 
 	DEBUGF(DRECV1)("md5_receive: sending ACK" );
-	if( (n = Link_send( RemoteHost_DYN, sock, Send_query_rw_timeout_DYN,
+	if( (n = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		"", 1, 0 )) ){
 		SNPRINTF(errmsg,errlen)
 			"error '%s' ACK to %s@%s",
@@ -800,7 +802,7 @@ int md5_receive( int *sock,
 
 	/* Send the challenge to the client */
 
-	if( (n = Link_send( RemoteHost_DYN, sock, Send_query_rw_timeout_DYN,
+	if( (n = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		buffer, safestrlen(buffer), 0 )) ){
 		/* keep the other end dest trying to read */
 		if( (s = strchr(buffer,'\n')) ) *s = 0;
@@ -815,7 +817,7 @@ int md5_receive( int *sock,
 	DEBUGF(DRECV1)("md5_receive: reading response");
 	len = sizeof(input)-1;
 	if( (n = Link_line_read(ShortRemote_FQDN,sock,
-		Send_query_rw_timeout_DYN,input,&len) )){
+		transfer_timeout,input,&len) )){
 		SNPRINTF(errmsg, errlen)
 		"md5_receive: error reading challenge - '%s'", Link_err_str(n) );
 		goto error;
@@ -870,7 +872,7 @@ int md5_receive( int *sock,
 	
 	DEBUGF(DRECV1)("md5_receive: success, sending ACK" );
 
-	if((n = Link_send( RemoteHost_DYN, sock, Send_query_rw_timeout_DYN, "", 1, 0 )) ){
+	if((n = Link_send( RemoteHost_DYN, sock, transfer_timeout, "", 1, 0 )) ){
 		/* keep the other end dest trying to read */
 		SNPRINTF(errmsg,errlen)
 			"error '%s' sending ACK to %s@%s",
@@ -889,7 +891,7 @@ int md5_receive( int *sock,
 	}
 
 	DEBUGF(DRECV1)("md5_receive: starting read dest socket %d", *sock );
-	while( (n = read(*sock, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, *sock, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("md5_receive: remote read '%d' '%s'", n, buffer );
 		if( write( tempfd,buffer,n ) != n ){
@@ -996,7 +998,7 @@ int md5_receive( int *sock,
 	if( size || status_error ){
 		buffer[0] = ACK_FAIL;
 		write( *sock,buffer,1 );
-		while( (n = read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
+		while( (n = Read_fd_len_timeout(transfer_timeout, tempfd, buffer,sizeof(buffer)-1)) > 0 ){
 			buffer[n] = 0;
 			DEBUGF(DRECV4)("md5_receive: sending '%d' '%s'", n, buffer );
 			if( write( *sock,buffer,n ) != n ){
@@ -1027,32 +1029,49 @@ int md5_receive( int *sock,
  * Pgp encode and decode a file
  ***************************************************************************/
 
-int Pgp_get_pgppassfd( struct line_list *info, char *error, int errlen )
+int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen )
 {
-	char *s;
+	char *s, *t;
 	int pgppassfd = -1;
 	struct stat statb;
 
 	/* get the user authentication */
 	error[0] = 0;
 	if( !Is_server ){
-		char *passphrasefile = Find_str_value(info,"passphrasefile",Value_sep);
+		char *passphrasefile = Find_str_value(info,"passphrasefile");
 		if( (s = getenv( "PGPPASS" )) ){
 			DEBUG1("Pgp_get_pgppassfd: PGPPASS '%s'", s );
+			*pgppass = s;
 		} else if( (s = getenv( "PGPPASSFD" )) ){
-			pgppassfd = atoi(s);
-			if( pgppassfd <= 0 || fstat(pgppassfd, &statb ) ){
+			t = 0;
+			char buffer[128];
+			pgppassfd = strtol(s,&t,10);
+			if( pgppassfd <= 0 || !t || *t || fstat(pgppassfd, &statb)  ){
 				Errorcode = JABORT;
-				DIEMSG("PGPASSFD '%s' not file", s);
+				DIEMSG("PGPASSFD '%s' not active file descriptor", s);
 			}
+			/* we read the password and put into a file */
 		} else if( (s = getenv( "PGPPASSFILE" ) ) ){
 			if( (pgppassfd = Checkread( s, &statb )) < 0 ){
 				Errorcode = JABORT;
 				DIEMSG("PGP phrasefile '%s' not opened - %s\n",
 					s, Errormsg(errno) );
 			}
-			DEBUG1("Pgp_get_pgppassfd: PGPPASSFD file '%s', size %0.0f, fd %d",
+			DEBUG1("Pgp_get_pgppassfd: PGPPASSFILE file '%s', size %0.0f, fd %d",
 				s, (double)statb.st_size, pgppassfd );
+		} else if( (s = getenv("PGPPATH")) && passphrasefile ){
+			char *path;
+			s = safestrdup2(s,"/",__FILE__,__LINE__);
+			path = Make_pathname( s, passphrasefile);
+			if( s ) free(s); s = 0;
+			if( (pgppassfd = Checkread( path, &statb )) < 0 ){
+				Errorcode = JABORT;
+				DIEMSG("passphrase file %s not readable - %s",
+					path, Errormsg(errno));
+			}
+			DEBUG1("Pgp_get_pgppassfd: PGPPASSFD file '%s', size %0.0f, fd %d",
+				path, (double)statb.st_size, pgppassfd );
+			if( path ) free(path); path = 0;
 		} else if( (s = getenv("HOME")) && passphrasefile ){
 			char *path;
 			s = safestrdup2(s,"/.pgp",__FILE__,__LINE__);
@@ -1061,29 +1080,30 @@ int Pgp_get_pgppassfd( struct line_list *info, char *error, int errlen )
 			if( (pgppassfd = Checkread( path, &statb )) < 0 ){
 				Errorcode = JABORT;
 				DIEMSG("passphrase file %s not readable - %s",
-					passphrasefile, Errormsg(errno));
+					path, Errormsg(errno));
 			}
 			DEBUG1("Pgp_get_pgppassfd: PGPPASSFD file '%s', size %0.0f, fd %d",
 				path, (double)statb.st_size, pgppassfd );
 			if( path ) free(path); path = 0;
 		}
 	} else {
-		char *server_passphrasefile = Find_str_value(info,"server_passphrasefile",Value_sep);
-		if(DEBUGL1)Dump_line_list("Pgp_get_pgppassfd: info", info);
+		char *server_passphrasefile = Find_str_value(info,"server_passphrasefile");
+		if(DEBUGL1)Dump_line_list("Pgp_get_pgppassfd: info - need server_passphrasefile", info);
 		if( !server_passphrasefile ){
 			SNPRINTF(error,errlen)
-				"Pgp_get_pgppassfd: no 'pgp_server_passphrasefile' value\n" );
+				"Pgp_get_pgppassfd: on server, no 'pgp_server_passphrasefile' value\n" );
 		} else if( (pgppassfd =
 			Checkread(server_passphrasefile,&statb)) < 0 ){
 				SNPRINTF(error,errlen)
-					"Pgp_get_pgppassfd: cannot open '%s' - '%s'\n",
+					"Pgp_get_pgppassfd: on server, cannot open '%s' - '%s'\n",
 					server_passphrasefile, Errormsg(errno) );
 		}
 	}
+	DEBUG1("Pgp_get_pgppassfd: pgppassfd %d", pgppassfd );
 	return(pgppassfd);
 }
 
-int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
+int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_to_id, struct line_list *from_info,
 	int *pgp_exit_code, int *not_a_ciphertext )
@@ -1103,7 +1123,9 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 	status = 0;
 	if( ISNULL(Pgp_path_DYN) ){
 		SNPRINTF( error, errlen)
-		"Pgp_decode: missing pgp_path info"); 
+		"Pgp_decode: on %s, missing pgp_path info",
+			Is_server?"server":"client"
+			); 
 		status = JFAIL;
 		goto error;
 	}
@@ -1112,16 +1134,40 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 	error_fd[0] = error_fd[1] = -1;
 
 	error[0] = 0;
-	pgppassfd = Pgp_get_pgppassfd( info, error, errlen );
+	s = 0;
+	pgppassfd = Pgp_get_pgppassfd( &s, info, error, errlen );
 	if( error[0] ){
 		status = JFAIL;
 		goto error;
+	}
+	Set_str_value(&env,"PGPPASSFILE",0);
+	Set_str_value(&env,"PGPPASSFD",0);
+	if( Is_server ){
+		if( pgppassfd <= 0 ){
+			SNPRINTF(error, errlen) "Pgp_decode: on %s, no server key file!",
+				Is_server?"server":"client"
+				);
+			status = JFAIL;
+			goto error;
+		}
+		Set_str_value(&env,"PGPPASS",0);
+		if( (s= Find_str_value(info,"server_pgppath")) ){
+			DEBUG1("Pgp_decode: server_pgppath - %s", s );
+			Set_str_value(&env,"PGPPATH",s);
+		}
+	} else {
+		if( s ) Set_str_value(&env,"PGPPASS",s);
+		if( (s= getenv("PGPPATH")) ){
+			Set_str_value(&env,"PGPPATH",s);
+		}
 	}
 
 	/* run the PGP decoder */
 	if( pipe(error_fd) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Pgp_decode: pipe() failed" );
+		LOGERR_DIE(LOG_INFO) "Pgp_decode: on %s, pipe() failed",
+			Is_server?"server":"client"
+			 );
 	}
 	Max_open(error_fd[0]); Max_open(error_fd[1]);
 	Check_max(&files,10);
@@ -1155,7 +1201,7 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 
 	n = 0;
 	while( n < bufflen-1
-		&& (cnt = read( error_fd[0], buffer+n, bufflen-1-n )) > 0 ){
+		&& (cnt = Read_fd_len_timeout( transfer_timeout, error_fd[0], buffer+n, bufflen-1-n )) > 0 ){
 		buffer[n+cnt] = 0;
 		while( (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
@@ -1187,12 +1233,16 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 			pid, n, Errormsg(err) );
 		if( err == EINTR ) continue; 
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Pgp_decode: waitpid(%d) failed", pid);
+		LOGERR_DIE(LOG_ERR) "Pgp_decode: on %s, waitpid(%d) failed",
+			Is_server?"server":"client",
+			pid);
 	} 
 	DEBUG1("Pgp_decode: pgp pid %d exit status '%s'",
 		pid, Decode_status(&procstatus) );
 	if( WIFEXITED(procstatus) && (n = WEXITSTATUS(procstatus)) ){
-		SNPRINTF(error,errlen)"Pgp_decode: exit status %d",n);
+		SNPRINTF(error,errlen)"Pgp_decode: on %s, exit status %d",
+			Is_server?"server":"client",
+			n);
 		DEBUG1("Pgp_decode: pgp exited with status %d on host %s", n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
 		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
@@ -1235,7 +1285,7 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 	return( status );
 }
 
-int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
+int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_from_id, char *esc_to_id,
 	int *pgp_exit_code )
@@ -1262,10 +1312,31 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 	pgppassfd = error_fd[0] = error_fd[1] = -1;
 
 	error[0] = 0;
-	pgppassfd = Pgp_get_pgppassfd( info, error, errlen );
+	s = 0;
+	pgppassfd = Pgp_get_pgppassfd( &s, info, error, errlen );
 	if( error[0] ){
 		status = JFAIL;
 		goto error;
+	}
+	Set_decimal_value(&env,"PGPPASSFD",files.count);
+	Set_str_value(&env,"PGPPASSFILE",0);
+	Set_str_value(&env,"PGPPASSFD",0);
+	if( Is_server ){
+		if( pgppassfd <= 0 ){
+			SNPRINTF(error, errlen) "Pgp_encode: no server key file!");
+			status = JFAIL;
+			goto error;
+		}
+		Set_str_value(&env,"PGPPASS",0);
+		if( (s= Find_str_value(info,"server_pgppath")) ){
+			DEBUG1("Pgp_decode: server_pgppath - %s", s );
+			Set_str_value(&env,"PGPPATH",s);
+		}
+	} else if( s ){
+		Set_str_value(&env,"PGPPASS",s);
+		if( (s= getenv("PGPPATH")) ){
+			Set_str_value(&env,"PGPPATH",s);
+		}
 	}
 
 	pgpfile = safestrdup2(tempfile,".pgp",__FILE__,__LINE__);
@@ -1310,7 +1381,7 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 
 	n = 0;
 	while( n < bufflen-1
-		&& (cnt = read( error_fd[0], buffer+n, bufflen-1-n )) > 0 ){
+		&& (cnt = Read_fd_len_timeout( transfer_timeout, error_fd[0], buffer+n, bufflen-1-n )) > 0 ){
 		buffer[n+cnt] = 0;
 		while( (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
@@ -1349,7 +1420,9 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 	if(DEBUGL1)Dump_line_list("Pgp_encode: pgp_info", pgp_info);
 	if( WIFEXITED(procstatus) && (n = WEXITSTATUS(procstatus)) ){
 		SNPRINTF(error,errlen)
-			"Pgp_encode: pgp exited with status %d on host %s", n, FQDNHost_FQDN );
+			"Pgp_encode: on %s, pgp exited with status %d on host %s",
+			Is_server?"server":"client",
+			n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
 		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
 			s = pgp_info->list[i];
@@ -1360,7 +1433,8 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 	} else if( WIFSIGNALED(procstatus) ){
 		n = WTERMSIG(procstatus);
 		SNPRINTF(error,errlen)
-		"Pgp_encode: pgp died with signal %d, '%s'",
+		Is_server?"server":"client",
+		"Pgp_encode: on %s, pgp died with signal %d, '%s'",
 			n, Sigstr(n));
 		status = JFAIL;
 		goto error;
@@ -1432,8 +1506,8 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 
 	len = 0;
 	error[0] = 0;
-	from = Find_str_value( info, FROM, Value_sep);
-	destination = Find_str_value( info, ID, Value_sep );
+	from = Find_str_value( info, FROM);
+	destination = Find_str_value( info, ID );
 
 	tempfd = -1;
 
@@ -1442,7 +1516,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
     Check_max(&Tempfiles,1);
     Tempfiles.list[Tempfiles.count++] = pgpfile;
 
-	status = Pgp_encode( info, tempfile, pgpfile, &pgp_info,
+	status = Pgp_encode( transfer_timeout, info, tempfile, pgpfile, &pgp_info,
 		buffer, sizeof(buffer), error, errlen, 
         from, destination, &pgp_exit_code );
 
@@ -1467,7 +1541,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	SNPRINTF(buffer,sizeof(buffer))"%0.0f\n",(double)(statb.st_size) );
 	Write_fd_str(*sock,buffer);
 
-	while( (len = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+	while( (len = Read_fd_len_timeout( transfer_timeout, tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("Pgp_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
@@ -1488,7 +1562,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	}
 	DEBUG2("Pgp_send: starting read");
 	len = 0;
-	while( (n = read(*sock,buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, *sock,buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUG4("Pgp_send: read '%s'", buffer);
 		if( write(tempfd,buffer,n) != n ){
@@ -1506,7 +1580,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 
 	/* decode the PGP file into the tempfile */
 	if( len ){
-		status = Pgp_decode( info, tempfile, pgpfile, &pgp_info,
+		status = Pgp_decode( transfer_timeout, info, tempfile, pgpfile, &pgp_info,
 			buffer, sizeof(buffer), error, errlen, from, info,
 			&pgp_exit_code, &not_a_ciphertext );
 		if( not_a_ciphertext ){
@@ -1527,7 +1601,9 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 			}
 			error[0] = 0;
 			len = 0;
-			while( (n = read(fd, buffer+len, sizeof(buffer)-len-1)) > 0 ){
+			buffer[0] = 0;
+			while( (n = Read_fd_len_timeout(transfer_timeout, fd, buffer+len, sizeof(buffer)-len-1)) > 0 ){
+				buffer[n] = 0;
 				DEBUG2("Pgp_send: read '%s'", buffer );
 				while( (s = strchr( buffer, '\n')) ){
 					*s++ = 0;
@@ -1571,7 +1647,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	return(status);
 }
 
-int Pgp_receive( int *sock,
+int Pgp_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -1584,7 +1660,7 @@ int Pgp_receive( int *sock,
 	struct stat statb;
 	struct line_list pgp_info;
 	double len;
-	char *id = Find_str_value( info, ID, Value_sep );
+	char *id = Find_str_value( info, ID );
 	char *from = 0;
 	int pgp_exit_code = 0;
 	int not_a_ciphertext = 0;
@@ -1599,7 +1675,8 @@ int Pgp_receive( int *sock,
 
 	if( id == 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Pgp_receive: no pgp_id or auth_id value");
+		SNPRINTF( errmsg, errlen) "Pgp_receive: %s has no pgp_id or auth_id value",
+			Is_server?"server":"client");
 		goto error;
 	}
 
@@ -1619,7 +1696,7 @@ int Pgp_receive( int *sock,
 		goto error;
 	}
 	DEBUGF(DRECV4)("Pgp_receive: starting read from %d", *sock );
-	while( (n = read(*sock, buffer,1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, *sock, buffer,1)) > 0 ){
 		/* handle old and new format of file */
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("Pgp_receive: remote read '%d' '%s'", n, buffer );
@@ -1634,7 +1711,7 @@ int Pgp_receive( int *sock,
 		}
 		break;
 	}
-	while( (n = read(*sock, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, *sock, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("Pgp_receive: remote read '%d' '%s'", n, buffer );
 		if( write( tempfd,buffer,n ) != n ){
@@ -1655,14 +1732,14 @@ int Pgp_receive( int *sock,
 	close(tempfd); tempfd = -1;
 	DEBUGF(DRECV4)("Pgp_receive: end read" );
 
-	status = Pgp_decode(info, tempfile, pgpfile, &pgp_info,
+	status = Pgp_decode(transfer_timeout, info, tempfile, pgpfile, &pgp_info,
 		buffer, sizeof(buffer), errmsg, errlen, id, header_info,
 		&pgp_exit_code, &not_a_ciphertext );
 	if( status ) goto error;
 
 	DEBUGFC(DRECV1)Dump_line_list("Pgp_receive: header_info", header_info );
 
-	from = Find_str_value(header_info,FROM,Value_sep);
+	from = Find_str_value(header_info,FROM);
 	if( from == 0 ){
 		status = JFAIL;
 		SNPRINTF( errmsg, errlen)
@@ -1673,7 +1750,7 @@ int Pgp_receive( int *sock,
 	status = Do_secure_work( jobsize, from_server, tempfile, header_info );
 
 	Free_line_list( &pgp_info);
- 	status = Pgp_encode(info, tempfile, pgpfile, &pgp_info,
+ 	status = Pgp_encode(transfer_timeout, info, tempfile, pgpfile, &pgp_info,
 		buffer, sizeof(buffer), errmsg, errlen,
 		id, from, &pgp_exit_code );
 	if( status ) goto error;
@@ -1689,7 +1766,7 @@ int Pgp_receive( int *sock,
 	len = statb.st_size;
 	DEBUGF(DRECV1)( "Pgp_receive: return status encoded size %0.0f",
 		len);
-	while( (n = read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = Read_fd_len_timeout(transfer_timeout, tempfd, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("Pgp_receive: sending '%d' '%s'", n, buffer );
 		if( write( *sock,buffer,n ) != n ){
@@ -1725,15 +1802,14 @@ int Pgp_receive( int *sock,
 # if defined(MIT_KERBEROS4)
 	{ "kerberos4", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
 # endif
-	{ "kerberos*", "kerberos", IP_SOCKET_ONLY, 0, Krb5_send, 0, Krb5_receive },
+	{ "kerberos*", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
 #endif
 
-	/* { "test", "test", 0, Test_connect,0, Test_accept,0 }, */
-	{ "test", "test", 0, 0, Test_send, 0, Test_receive },
-	{ "md5", "md5",   0, 0, md5_send, 0, md5_receive },
-	{ "pgp", "pgp",   0, 0, Pgp_send, 0, Pgp_receive },
+	{ "test",      "test",     0,              0,           Test_send, 0, Test_receive },
+	{ "md5",       "md5",      0,              0,           md5_send, 0, md5_receive },
+	{ "pgp",       "pgp",      0,              0,           Pgp_send, 0, Pgp_receive },
 #ifdef SSL_ENABLE
-	{ "ssl", "ssl",   0, 0, Ssl_send, 0, Ssl_receive },
+	{ "ssl",      "ssl",       0,              0,           Ssl_send, 0, Ssl_receive },
 #endif
 
 	{0,0,0,

@@ -1,6 +1,6 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 1.58 2003/09/05 20:07:14 papowell Exp $
+dnl $Id: configure.in,v 1.61 2003/11/14 02:32:48 papowell Exp $
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.22
+VERSION=3.8.23
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -68,12 +68,21 @@ dnl ----------- XXXXXX START OF OPTIONS ----------------------------------------
 dnl Unix socket pathname
 AC_MSG_CHECKING(unix socket pathname)
 AC_ARG_WITH(unix_socket_path,
-[  --with-unix_socket_path=DIR         unix socket path (default /var/run/lprng)],
+[  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)],
 UNIXSOCKETPATH=$withval,
 UNIXSOCKETPATH=/var/run/lprng
 )
 AC_MSG_RESULT($UNIXSOCKETPATH)
 AC_SUBST(UNIXSOCKETPATH)
+
+CONFIG_SUBDIR=lpd
+AC_MSG_CHECKING(configuration information subdirectory)
+AC_ARG_WITH(config_subdir,
+[  --with-config_subdir=CONFIG_SUBDIR configuration subdirectory (default 'lpd')],
+CONFIG_SUBDIR=$withval,
+)
+AC_MSG_RESULT($CONFIG_SUBDIR)
+AC_SUBST(CONFIG_SUBDIR)
 
 
 dnl check to see if setuid is suppressed
@@ -200,8 +209,6 @@ fi
 ]
 )
 AC_MSG_RESULT($v (KERBEROS_CHECKS $KERBEROS_CHECKS));dnl
-lpd_dir=/lpd
-export lpd_dir
 
 dnl Specify install dir for lpd
 AC_MSG_CHECKING(where to install the lpd binary)
@@ -216,9 +223,9 @@ AC_SUBST(LPD_DIR)
 dnl  lpd.conf location
 AC_MSG_CHECKING(lpd.conf location)
 AC_ARG_WITH(lpd_conf_path,
-[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/lpd/lpd.conf)],
+[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf)],
 LPD_CONF_PATH=$withval,
-LPD_CONF_PATH=\${sysconfdir}/lpd/lpd.conf,
+LPD_CONF_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf,
 )
 AC_MSG_RESULT($LPD_CONF_PATH)
 AC_SUBST(LPD_CONF_PATH)
@@ -227,9 +234,9 @@ dnl  lpd.perms location
 dnl
 AC_MSG_CHECKING(lpd.perms location)
 AC_ARG_WITH(lpd_perms_path,
-[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/lpd/lpd.perms)],
+[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd/lpd.perms)],
 LPD_PERMS_PATH=$withval,
-LPD_PERMS_PATH=\${sysconfdir}/lpd/lpd.perms,
+LPD_PERMS_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.perms,
 )
 AC_MSG_RESULT($LPD_PERMS_PATH)
 AC_SUBST(LPD_PERMS_PATH)
@@ -249,9 +256,9 @@ dnl  lpd_printcap location
 dnl
 AC_MSG_CHECKING(lpd_printcap location)
 AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd/lpd_printcap)],
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap)],
 LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=\${sysconfdir}/lpd/lpd_printcap,
+LPD_PRINTCAP_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap,
 )
 AC_MSG_RESULT($LPD_PRINTCAP_PATH)
 AC_SUBST(LPD_PRINTCAP_PATH)
@@ -277,6 +284,16 @@ LOCKFILE="$withval", LOCKFILE="/var/run/lpd",
 AC_MSG_RESULT("$LOCKFILE")
 AC_SUBST(LOCKFILE)
 
+
+dnl  default SPOOL directory value (:sd)
+dnl
+AC_MSG_CHECKING(default spool directory, :sd=SPOOLDIR/%P)
+AC_ARG_WITH(spooldir,
+[  --with-spooldir=PATH              default spool directory, default /var/spool/lpd ],
+SD_DEFAULT="$withval", SD_DEFAULT="/var/spool/lpd",
+)
+AC_MSG_RESULT("$SD_DEFAULT")
+AC_SUBST(SD_DEFAULT)
 
 dnl  LD_LIBRARY_PATH value
 dnl
@@ -1280,6 +1297,7 @@ ac_cv_decl_in6_addr_def=yes, ac_cv_decl_in6_addr_def=no)
 ])
 if test "$ac_cv_decl_in6_addr_def" = yes; then
     AC_DEFINE(IN6_ADDR,1,[in6_addr defined])
+    AC_DEFINE(IPV6,1,[ipV6])
 fi
 
 
@@ -1296,6 +1314,7 @@ ac_cv_decl_in_addr6_def=yes, ac_cv_decl_in_addr6_def=no)
 ])
 if test "$ac_cv_decl_in_addr6_def" = yes; then
     AC_DEFINE(IN_ADDR6,1,[in_addr6 defined])
+    AC_DEFINE(IPV6,1,[ipV6])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1586,9 +1605,9 @@ dnl  ssl certificate authority CERT file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority CERT file)
 AC_ARG_WITH(ssl_ca_file,
-[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/lpd/ssl.ca/ca.crt)],
+[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt)],
 SSL_CA_FILE=$withval,
-SSL_CA_FILE=\${sysconfdir}/lpd/ssl.ca/ca.crt,
+SSL_CA_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt,
 )
 AC_MSG_RESULT($SSL_CA_FILE)
 AC_SUBST(SSL_CA_FILE)
@@ -1597,9 +1616,9 @@ dnl  ssl certificate authority private key file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority private key file)
 AC_ARG_WITH(ssl_ca_key,
-[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/lpd/ssl.ca/ca.key)],
+[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key)],
 SSL_CA_KEY=$withval,
-SSL_CA_KEY=\${sysconfdir}/lpd/ssl.ca/ca.key,
+SSL_CA_KEY=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key,
 )
 AC_MSG_RESULT($SSL_CA_KEY)
 AC_SUBST(SSL_CA_KEY)
@@ -1608,9 +1627,9 @@ dnl  ssl certificate authority certs working directory
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority certs working directory)
 AC_ARG_WITH(ssl_certs_dir,
-[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/lpd/ssl.certs/)],
+[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs/)],
 SSL_CERTS_DIR=$withval,
-SSL_CERTS_DIR=\${sysconfdir}/lpd/ssl.certs,
+SSL_CERTS_DIR=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs,
 )
 AC_MSG_RESULT($SSL_CERTS_DIR)
 AC_SUBST(SSL_CERTS_DIR)
@@ -1619,9 +1638,9 @@ dnl  ssl certificate revocation list
 dnl
 AC_MSG_CHECKING(ssl Certificate Revocation List (CRL) file)
 AC_ARG_WITH(ssl_crl_file,
-[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/lpd/ssl.crl/ssl.crl)],
+[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl)],
 SSL_CRL_FILE=$withval,
-SSL_CRL_FILE=\${sysconfdir}/lpd/ssl.crl/ssl.crl,
+SSL_CRL_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl,
 )
 AC_MSG_RESULT($SSL_CRL_FILE)
 AC_SUBST(SSL_CRL_FILE)
@@ -1630,9 +1649,9 @@ dnl  ssl server certificate file
 dnl
 AC_MSG_CHECKING(ssl server certificate file)
 AC_ARG_WITH(ssl_server_cert,
-[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/lpd/ssl.server/server.crt)],
+[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt)],
 SSL_SERVER_CERT=$withval,
-SSL_SERVER_CERT=\${sysconfdir}/lpd/ssl.server/server.crt,
+SSL_SERVER_CERT=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt,
 )
 AC_MSG_RESULT($SSL_SERVER_CERT)
 AC_SUBST(SSL_SERVER_CERT)
@@ -1641,9 +1660,9 @@ dnl  ssl server password file for private key file
 dnl
 AC_MSG_CHECKING(ssl server password file for private key file)
 AC_ARG_WITH(ssl_server_password_file,
-[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/lpd/ssl.server/server.pwd)],
+[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd)],
 SSL_SERVER_PASSWORD_FILE=$withval,
-SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/lpd/ssl.server/server.pwd,
+SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd,
 )
 AC_MSG_RESULT($SSL_SERVER_PASSWORD_FILE)
 AC_SUBST(SSL_SERVER_PASSWORD_FILE)

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: lpd.h,v 1.61 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -49,6 +49,7 @@ int Lock_lpd_pid(void);
 int Read_server_status( int fd );
 void usage(void);
 void Get_parms(int argc, char *argv[] );
+void Accept_connection( int sock, int lpd_socket, int unix_socket );
 int Start_all( int first_scan, int *start_fd );
 plp_signal_t sigchld_handler (int signo);
 void Setup_waitpid (void);

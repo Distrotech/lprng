@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: getprinter.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -277,6 +277,65 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
  done:
 
 	Expand_vars();
+	/*
+	 * make sure that these entries are in the printcap file
+	 */
+	if( Pc_entries_required_DYN){
+		struct line_list list;
+		struct keywords *var_list = Pc_var_list;
+		int i;
+		Init_line_list( &list );
+		Split(&list,Pc_entries_required_DYN,File_sep,0,0,0,0,0,0);
+		for( i = 0; i < list.count; ++i ){
+			const char *t;
+			int mid;
+			char *s = list.list[i];
+			if( ISNULL(s) ) continue;
+			DEBUG3( "Fix_Rm_Rp_info: checking '%s'", s );
+			if( !Find_first_key( &PC_entry_line_list, s, Hash_value_sep, &mid ) ){
+				t = safestrpbrk(PC_entry_line_list.list[mid], Option_value_sep );
+				DEBUG1( "Fix_Rm_Rp_info: FOUND %s VALUE %s", s, t );
+				continue;
+			}
+			if( !Find_first_key( &Config_line_list, s, Hash_value_sep, &mid ) ){
+				t = safestrpbrk(Config_line_list.list[mid], Hash_value_sep );
+				DEBUG1( "Fix_Rm_Rp_info: CONFIG %s VALUE %s", s, t );
+				Set_str_value(&PC_entry_line_list, s, t);
+				continue;
+			}
+			for( var_list = Pc_var_list; var_list->keyword; ++var_list ){
+				if( !strcmp(var_list->keyword, s) ){
+					int type = var_list->type;				/* type of entry */
+					int v;
+					void *p = var_list->variable;	/* address of variable */
+					if( !(p) ) break;
+					switch(type){
+					case FLAG_K:
+						v =	*(int *)(p);
+						DEBUG1( "Fix_Rm_Rp_info: VAR %s FLAG %d", var_list->keyword, v);
+						Set_flag_value(&PC_entry_line_list, var_list->keyword, v);
+						break;
+					case INTEGER_K:
+						v =	*(int *)(p);
+						DEBUG1( "Fix_Rm_Rp_info: VAR %s INT %d", var_list->keyword, v);
+						Set_decimal_value(&PC_entry_line_list, var_list->keyword, v);
+						break;
+					case STRING_K:
+						t = *(char **)(p);
+						DEBUG1( "Fix_Rm_Rp_info: VAR %s= '%s'", var_list->keyword, t );
+						if( t ){
+							Set_str_value(&PC_entry_line_list, var_list->keyword, t);
+						}
+						break;
+					default:
+						break;
+					}
+					break;
+				}
+			}
+		}
+		Free_line_list( &list );
+	}
 	DEBUG1("Fix_Rm_Rp_info: Printer '%s', Queue '%s', Lp '%s', Rp '%s', Rh '%s'",
 		Printer_DYN, Queue_name_DYN, Lp_device_DYN,
 		RemotePrinter_DYN, RemoteHost_DYN );
@@ -308,7 +367,7 @@ void Get_all_printcap_entries(void)
 			&PC_alias_line_list,
 			&PC_names_line_list, &PC_order_line_list,
 			&PC_info_line_list, 0, 0 )) ){
-		if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
+		if( !(t = Find_str_value( &PC_entry_line_list, ALL )) ){
 			t = "all";
 		}
 		DEBUG1("Get_all_printcap_entries: '%s' has '%s'",s,t);

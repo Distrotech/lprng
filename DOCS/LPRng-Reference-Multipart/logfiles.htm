@@ -21,8 +21,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng Reference Manual: 5
-          Sep 2003 (For LPRng-3.8.22)</th>
+          <th colspan="3" align="center">LPRng Reference Manual: 13
+          Nov 2003 (For LPRng-3.8.23)</th>
         </tr>
 
         <tr>
@@ -65,6 +65,20 @@
         <li>
           <p><var class="LITERAL">min_log_file_size#</var><span
           class="emphasis"><i class="EMPHASIS">minimum log file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class=
+          "LITERAL">max_accounting_file_size#</var><span class=
+          "emphasis"><i class="EMPHASIS">maximum accounting file
+          size (Kbytes)</i></span></p>
+        </li>
+
+        <li>
+          <p><var class=
+          "LITERAL">min_accounting_file_size#</var><span class=
+          "emphasis"><i class="EMPHASIS">minimum accounting file
           size (Kbytes)</i></span></p>
         </li>
 
@@ -124,17 +138,33 @@
       "LITERAL">min_status_size</var> bytes or 25% of the maximum
       size (default if not specified) will be preserved.</p>
 
-      <p>Similarly, the server logs its operations in the log file
-      specified by the <var class="LITERAL">lf</var> (log file)
-      option (default is <var class="LITERAL">lf=log</var>). The
-      <var class="LITERAL">max_log_file_size</var> value (default
-      0) specifies the maximum length of the log file in Kbytes. If
+      <p>The server logs its operations in the log file specified
+      by the <var class="LITERAL">lf</var> (log file) option
+      (default is <var class="LITERAL">lf=log</var>). The <var
+      class="LITERAL">max_log_file_size</var> value (default 0)
+      specifies the maximum length of the log file in Kbytes. If
       this value is non-zero, then the log file is truncated to
       <var class="LITERAL">min_log_file_size</var> bytes or 25% of
       the maximum file size. Again, the last portion of the log
       file is preserved. If the <var class=
       "LITERAL">max_log_file_size</var> value is 0, then the log
       file grows without limit.</p>
+
+      <p>The server records accounting information in the log file
+      specified by the accounting file <var class=
+      "LITERAL">af</var> (accounting file) option (default is <var
+      class="LITERAL">af=acct</var>). The <var class=
+      "LITERAL">max_accounting_file_size</var> value (default 0)
+      specifies the maximum length of the log file in Kbytes. If
+      this value is non-zero, then the log file is truncated to
+      <var class="LITERAL">min_accounting_file_size</var> bytes or
+      25% of the maximum file size. Again, the last portion of the
+      log file is preserved. If the <var class=
+      "LITERAL">max_accounting_file_size</var> value is 0, then the
+      log file grows without limit. See <a href=
+      "opendevice.htm">Open The Output Device</a> and <a href=
+      "accountingref.htm#ACCOUNTINGSERVER">Accounting Printcap
+      Options</a> for more details.</p>
 
       <p>Some filters require an additional filter status file that
       they use for recording additional filter status or other

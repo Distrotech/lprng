@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_secure.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -132,7 +132,7 @@ int Receive_secure( int *sock, char *input )
 
 		db = Debug;
 		dbf = DbgFlag;
-		s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+		s = Find_str_value(&Spool_control,DEBUG);
 		if(!s) s = New_debug_DYN;
 		Parse_debug( s, 0 );
 
@@ -213,7 +213,7 @@ int Receive_secure( int *sock, char *input )
 	DEBUGF(DRECV1)("Receive_secure: sock %d, user '%s', jobsize '%s'",  
 		*sock, user, jobsize );
 
-	status = security->server_receive( sock,
+	status = security->server_receive( sock, Send_job_rw_timeout_DYN,
 		user, jobsize, from_server, authtype,
 		&info,
 		error+1, sizeof(error)-1,
@@ -277,7 +277,7 @@ int Do_secure_work( char *jobsize, int from_server,
 	linecount = 0;
 
 	while( !done && n < (int)sizeof(buffer)-1
-		&& (len = read( fd, buffer+n, sizeof(buffer)-1-n )) > 0 ){
+		&& (len = Read_fd_len_timeout( Send_query_rw_timeout_DYN, fd, buffer+n, sizeof(buffer)-1-n )) > 0 ){
 		buffer[n+len] = 0;
 		DEBUGF(DRECV1)("Do_secure_work: read %d - '%s'", len, buffer );
 		while( !done && (s = safestrchr(buffer,'\n')) ){
@@ -349,8 +349,8 @@ int Do_secure_work( char *jobsize, int from_server,
 					tempfile, Errormsg(errno));
 			goto error;
 		}
-		if( (s = Find_str_value(header_info,INPUT,Value_sep)) ){
-			Dispatch_input( &fd, s );
+		if( (s = Find_str_value(header_info,INPUT)) ){
+			Dispatch_input( &fd, s, "from secure link" );
 		}
 	}
 
@@ -419,24 +419,24 @@ int Check_secure_perms( struct line_list *options, int from_server,
 	 * line 3 - INPUT=\00x  - command line
 	 */
 	char *authfrom, *authuser;
-	authfrom = Find_str_value(options,AUTHFROM,Value_sep);
-	if( !authfrom ) authfrom = Find_str_value(options,FROM,Value_sep);
-	authuser = Find_str_value(options,AUTHUSER,Value_sep);
+	authfrom = Find_str_value(options,AUTHFROM);
+	if( !authfrom ) authfrom = Find_str_value(options,FROM);
+	authuser = Find_str_value(options,AUTHUSER);
 	if( !from_server ){
 		if( !authuser && authfrom ) authuser = authfrom;
 	}
-	if( !authuser ) authuser = Find_str_value(options,CLIENT,Value_sep);
+	if( !authuser ) authuser = Find_str_value(options,CLIENT);
 	Set_str_value(options, AUTHTYPE, Perm_check.authtype );
 	Set_str_value(options, AUTHFROM, authfrom );
 	Set_str_value(options, AUTHUSER, authuser );
-	Perm_check.authfrom = Find_str_value(options,AUTHFROM,Value_sep);
-	Perm_check.authuser = authuser = Find_str_value(options,AUTHUSER,Value_sep);
+	Perm_check.authfrom = Find_str_value(options,AUTHFROM);
+	Perm_check.authuser = authuser = Find_str_value(options,AUTHUSER);
 	if( !authuser ){
 		SNPRINTF( error, errlen) "Printer %s@%s: missing authentication client id",
 			Printer_DYN,Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 		return( JABORT );
 	}
-	Perm_check.authca = Find_str_value(options,AUTHCA,Value_sep);
+	Perm_check.authca = Find_str_value(options,AUTHCA);
 	DEBUGFC(DRECV1)Dump_line_list("Check_secure_perms - after",options);
 	DEBUGFC(DRECV1)Dump_perm_check( "Check_secure_perms - checking", &Perm_check );
 	return(0);

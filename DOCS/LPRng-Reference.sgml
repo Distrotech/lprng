@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng Reference Manual</title>
-<subtitle> 5 Sep 2003 (For LPRng-3.8.22)</subtitle>
+<subtitle> 13 Nov 2003 (For LPRng-3.8.23)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-751-2435</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-Reference.sgml,v 1.8 2003/09/05 20:07:23 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-Reference.sgml,v 1.11 2003/11/14 02:32:59 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -7584,6 +7584,7 @@ If the
 does not specify a queue,
 then the job is skipped and another job is chosen.</para>
 
+
 <para>One side effect of the using a chooser program is that while there are jobs
 that can be processed in the queue the <application>lpd</application> server needs to periodically
 check to see if a server queue has become available.
@@ -7592,6 +7593,19 @@ Instead,
 the <literal>chooser_interval</literal> option specifies a maximum time in seconds (default 10 seconds)
 between the times that the <application>lpd</application> server checks to see if there is an
 available server.</para>
+
+<para>
+Normally,
+the <literal/chooser/ is applied to the first job in the queue.
+If the job cannot be printed then <application/lpd/ will wait
+for the <literal>chooser_interval</literal> time.
+However,
+the chooser can also be used to direct jobs by their characteristics,
+or other criteria.  This means that the entire spool spool queue has to be scanned
+for work.
+If the <literal/:chooser_scan_queue/ flag is set to 1,
+then all of the jobs are tested to see if they can be sent to an appropriate destination.
+</para>
 
 <para>Edit the printcap file so it have the contents indicated below,
 create the <filename>/tmp/lp2</filename> and <filename>/tmp/lp3</filename>
@@ -14369,6 +14383,16 @@ This facility is for diagnostic purposes only.</para>
 
 <listitem>
 <para>
+<literal>max_accounting_file_size#</literal><emphasis>maximum accounting file size (Kbytes)</emphasis></para>
+</listitem>
+
+<listitem>
+<para>
+<literal>min_accounting_file_size#</literal><emphasis>minimum accounting file size (Kbytes)</emphasis></para>
+</listitem>
+
+<listitem>
+<para>
 <literal>max_status_line#</literal><emphasis>maximum status line length (characters) </emphasis></para>
 </listitem>
 
@@ -14417,8 +14441,8 @@ if the file exceeds this,  only the last
 or 25% of the maximum size (default if not specified)
 will be preserved.</para>
 
-<para>Similarly,
-the server logs its operations in the log file specified by the
+<para>
+The server logs its operations in the log file specified by the
 <literal>lf</literal>
 (log file) option (default is <literal>lf=log</literal>).
 The <literal>max_log_file_size</literal>
@@ -14433,6 +14457,30 @@ or 25% of the maximum file size.
 Again, the last portion of the log file is preserved.
 If the <literal>max_log_file_size</literal> value is 0,
 then the log file grows without limit.</para>
+
+<para>
+The server records accounting information in the log file specified by the
+accounting file
+<literal>af</literal>
+(accounting file) option (default is <literal>af=acct</literal>).
+The <literal>max_accounting_file_size</literal>
+value
+(default 0)
+specifies the maximum length
+of the log file in Kbytes.
+If this value is non-zero,
+then the log file is truncated to
+<literal>min_accounting_file_size</literal> bytes
+or 25% of the maximum file size.
+Again, the last portion of the log file is preserved.
+If the <literal>max_accounting_file_size</literal> value is 0,
+then the log file grows without limit.
+See
+<link linkend="opendevice">Open The Output Device</link>
+and
+<link linkend="accountingserver">Accounting Printcap Options</link>
+for more details.
+</para>
 
 <para>Some filters require an additional filter status file
 that they use for recording additional filter status or
@@ -18842,7 +18890,7 @@ ACCEPT SERVICE=M SERVER REMOTEUSER=root</screen>
 
 </sect1>
 
-<sect1 id="authref"><title>Authentication </title>
+<sect1 id="authref"><title>Authentication and Encryption </title>
 
 <para>One of the major problems in a print spooler system is providing
 privacy and authentication services for users.  One method is to
@@ -18895,6 +18943,79 @@ remote user and host must be determined.</para>
 </listitem>
 
 </orderedlist>
+</para>
+
+<para>
+
+To accomplish these goals,
+the following printcap entries are used:
+
+<itemizedlist>
+<listitem id="authtype"> <para> <literal>
+auth=
+</literal><emphasis>
+AUTHTYPE
+</emphasis>
+- pgp, kerberos, etc
+</para>
+</listitem>
+
+<listitem id="authtypepath"> <para> <literal>
+AUTHTYPE_path=
+</literal><emphasis>
+pathname
+</emphasis>
+- the pathname of a program to be used to support
+this authentication type
+</para>
+</listitem>
+
+<listitem id="authtypeid"> <para> <literal>
+AUTHTYPE_id=
+</literal><emphasis>
+identification
+</emphasis>
+- the identification of the server for the
+authentication method.  For example, the
+kerberos principal for the server, the PGP
+key id for the server, and so forth.
+</para>
+</listitem>
+
+<listitem id="authtypeserverkey"> <para> <literal>
+AUTHTYPE_server_key=
+</literal><emphasis>
+identification
+</emphasis>
+- location of a file on the server where a key
+used to unlock or encrypt a message is kept.
+</para>
+</listitem>
+
+<listitem id="authtypeforwardid"> <para> <literal>
+AUTHTYPE_forward_id=
+</literal><emphasis>
+identification
+</emphasis>
+- the identification of the remote destination,
+This is used by the server when forwarding a
+job to a remote destination.  By default, the
+AUTHTYPE_id value is used by the server as its
+identification.
+</para>
+</listitem>
+
+<listitem id="authtypedefaultclient"> <para> <literal>
+AUTHTYPE_default_client=
+</literal><emphasis>
+identification
+</emphasis>
+- when forwarding a job and the job arrived
+via an unauthenticated method,  use this as the
+default client identification.
+</para>
+</listitem>
+</itemizedlist>
 </para>
 
 </sect1>
@@ -19018,6 +19139,18 @@ The status information is encrypted and/or signed by the server
 and sent to the client,
 where the client decrypts and/or checked for correct signature.</para>
 
+<para>
+The <literal>auth</literal> authentication type is used as a prefix to look
+up authentication specific information in the printcap or configuration information.
+For example,
+if <literal>auth=kerberos</literal>,
+then
+<literal>kerberos_id</literal>,
+<literal>kerberos_forward_id</literal>,
+and other information would be extracted from the printcap or configuration
+information.
+</para>
+
 <para>A <application>lpd</application> server to <application>lpd</application> server authenticated transfer
 proceeds as follows.
 If an authenticated transfer is specified by the
@@ -19057,6 +19190,40 @@ The special form <literal>auth@</literal> specifies no authentication.</para>
 </listitem>
 
 <listitem>
+<para>The <literal>AUTHTYPE_id</literal> option specifies
+the identification to be used for the destination in client to
+server transfers.
+For example,
+<literal>kerberos_id</literal> would specify the principal name of the
+<literal/lpd/ server to be used by the client for the client to server
+kerberos authentication.
+</listitem>
+
+<listitem>
+<para>When forwarding a job to a remote server,
+the <literal>AUTHTYPE_forward_id</literal> option specifies
+the identification to be used for the destination in server to
+server transfers.
+For example,
+<literal>kerberos_id</literal> would specify the principal name of the
+originating
+<literal/lpd/ server and
+the <literal>kerberos_forward_id</literal> option specifies
+the destination server kerberos id.
+</listitem>
+
+<listitem>
+<para>When forwarding a job to a remote server,
+if the original job does not have an authenticated user name or
+identification,
+then the
+<literal>AUTHTYPE_default_client_id</literal> option specifies the
+name to be used to identify the job.
+As discussed in later sections,
+this will be the <literal/A/ record value of the transferred control file.
+</listitem>
+
+<listitem>
 <para>The authenticated transfer request sent to a server has one of the
 following forms, depending on the originator:
 <informalexample>
@@ -19065,7 +19232,6 @@ following forms, depending on the originator:
 \008printer F server_id authtype \n - forwarded commands (lpq, lpc, etc.)
 \008printer F server_id authtype size\n - forwarded print jobs (lpr)</screen>
 </informalexample>
-
 </para>
 
 <para>The single character with the
@@ -19258,22 +19424,47 @@ the PGP program expects the public and secret key rings to be in the
 to be readable only by the user.
 In order to set up PGP authentication,
 make sure that the <literal>daemon</literal> account has a home directory.
-Then use the
-<literal>su daemon</literal>
-command to change effective UID to daemon
-and run the
-<command>pgp -kg</command>
-(generate key)
-command as daemon.
-The <literal>daemon</literal> user should not have a password.</para>
+The <literal>daemon</literal> user should not allow logins or have its login password disabled.</para>
 </listitem>
+
 
 <listitem>
 <para>Each PGP key has an associated identifier.
 It is recommended that the <application>lpd</application> key be <literal>lpr@hostname</literal>,
 where hostname is the fully qualified domain name of the server.
-A public and a private key file will be created.</para>
+</para>
 </listitem>
+
+<listitem>
+<para>
+Create the public and private keys for the server.
+For security reasons the <literal/daemon/ account should not have login capabilities.
+<informalexample>
+<screen>
+#> su /bin/sh      # start root shell
+%> HOME=/tmp
+%> export HOME
+%> mkdir /tmp/.pgp
+%> pgp -kg
+      # select 1024 or longer keys
+      # set the user id to be lpr@hostname as discussed above
+      # set the pass phrase
+%> ls /tmp/.pgp
+pubring.bak   pubring.pgp  randseed.bin  secring.pgp
+%> cd /tmp/.pgp
+%> pgp -kxa lpr@hostname serverkey pubring.pgp  # creates serverkey.asc
+      # you will want to give serverkey.asc to users to add to their
+      # public key ring
+%> mkdir ~daemon/.pgp
+%> cp * ~daemon/.pgp
+%> chown daemon ~daemon/.pgp ~daemon/.pgp/*
+%> chmod 700 ~daemon/.pgp
+%> chmod 644 ~daemon/.pgp/*
+</screen>
+</informalexample>
+</para>
+</listitem>
+
 
 <listitem>
 <para>Next,
@@ -19289,40 +19480,28 @@ If other users can read this file then security will be severely compromised.</p
 </listitem>
 
 <listitem>
-<para>Next, distribute the <literal>lpr@hostname</literal> public key to all users of the
+<para>Next, distribute the <literal>servername.asc</literal>
+file to users.
 &LPRng; server.
-This is usually done by placing the public key in a well known file location
+This is usually done by placing the key file in a well known file location
 or making it available to users by some form of Public Key Distribution system
 (PKD).
-The key can be extracted and put into a text file using the following commands:
+</listitem>
+
+<listitem>
+<para>Users add the <literal>serverkey.asc</literal> key to
+their public key using:
 <informalexample>
-<screen>pgp -kxa userid destfile keyfile
-
-Example:
-&gt; pgp -kxa lpr@astart /tmp/lprkey ~daemon/.pgp/pubring.pgp
-Key for user ID: lpr@astart
-512-bit key, key ID BB261B89, created 1999/01/01
-
-Transport armor file: /tmp/lprkey.asc
-Key extracted to file '/tmp/lprkey.asc'.</screen>
+<screen>pgp -ka serverkey.asc</screen>
 </informalexample>
 </para>
 </listitem>
 
 <listitem>
-<para>To allow a user to send files to the server,
-their public key must be put into the <literal>daemon</literal> public key ring.
-This can be done using:
-<informalexample>
-<screen>pgp -ka /tmp/lprkey.asc</screen>
-</informalexample>
-</para>
-</listitem>
-
-<listitem>
-<para>Finally,  the administrator will need to add users public keys to the
-<literal>daemon</literal> users public key ring.  This can most easily be done by
-copying all the keys (in ASCII text form) to a single file
+<para>Finally,  the administrator will need to add the users public keys to the
+<literal>daemon</literal>public key ring file <literal>pubkey.pgp</literal>.
+This can most easily be done by
+copying all of the users public keys (in ASCII text format) to a single file
 (<filename>/tmp/keyfile</filename>)and using:
 <informalexample>
 <screen>su daemon
@@ -20589,6 +20768,8 @@ entries in the printcap file.
 </thead>
 <tbody>
 <row><entry>af</entry><entry>NULL</entry><entry>accounting file name</entry></row>
+<row><entry>max_accounting_file_size</entry><entry>100</entry><entry>max accounting file size (in Kbytes)</entry></row>
+<row><entry>min_accounting_file_size</entry><entry>10</entry><entry>min accounting file size (in Kbytes)</entry></row>
 <row><entry>as</entry><entry>"jobstart $H $n $P $k $b $t"</entry><entry>accounting info for job start</entry></row>
 <row><entry>ae</entry><entry>"jobend $H $n $P $k $b $t"</entry><entry>accounting info for job end</entry></row>
 <row><entry>achk</entry><entry>FALSE</entry></row>
@@ -20736,6 +20917,19 @@ The <literal/:of/ filter is then suspended and the job is processed
 by the various format dependent filters.
 The the <literal/filestart/ and <literal/fileend/
 lines are produced by the other filters.
+</para>
+
+<para id="maxaccount">
+The
+<literal/max_accounting_file_size/ and
+<literal/min_accounting_file_size/
+are used by LPRng to control the accounting file size.
+When the accounting file size exceeds the
+<literal/max_accounting_file_size/ (in Kbytes),
+it is truncated to 
+<literal/min_accounting_file_size/ (in Kbytes).
+If <literal/max_accounting_file_size/ is 0 (zero), then the file is allowed
+to grow without limit.
 </para>
 
 </sect1>
@@ -23132,6 +23326,7 @@ lpr does filtering as in bounce queue <!-- <br> -->
 mail user from user name <!-- <br> -->
 </entry></row><row><entry><link linkend="abnormalterm">mail_operator_on_error</link></entry><entry>
 mail to this operator on error <!-- <br> -->
+</entry></row><row><entry><link linkend="maxaccount">max_accounting_file_size</link></entry><entry> maximum size (in K) of accounting file <!-- <br> -->
 </entry></row><row><entry><link linkend="abnormalterm">max_connect_interval</link></entry><entry>
 maximum time between connection attempts <!-- <br> -->
 </entry></row><row><entry><link linkend="logfiles">max_log_file_size</link></entry><entry>
@@ -23140,10 +23335,10 @@ maximum size (in K) of spool queue log file <!-- <br> -->
 maximum number of lpd queue servers that can be active <!-- <br> -->
 </entry></row><row><entry><link linkend="logfiles">max_status_line</link></entry><entry>
 maximum length of status line <!-- <br> -->
-</entry></row><row><entry><link linkend="logfiles">max_status_size</link></entry><entry>
-maximum size (in K) of status file <!-- <br> -->
+</entry></row><row><entry><link linkend="logfiles">max_status_size</link></entry><entry> maximum size (in K) of status file <!-- <br> -->
 </entry></row><row><entry><link linkend="jobcopies">mc</link></entry><entry>
 maximum copies allowed <!-- <br> -->
+</entry></row><row><entry><link linkend="maxaccount">min_accounting_file_size</link></entry><entry> minimum size (in K) of accounting file <!-- <br> -->
 </entry></row><row><entry><link linkend="logfiles">min_log_file_size</link></entry><entry>
 minimum size (in K) of spool queue log file <!-- <br> -->
 </entry></row><row><entry><link linkend="logfiles">min_status_size</link></entry><entry>

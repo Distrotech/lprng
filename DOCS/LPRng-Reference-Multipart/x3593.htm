@@ -13,7 +13,7 @@
     <link rel="PREVIOUS" title="Holding and Releasing Jobs" href=
     "x3515.htm">
     <link rel="NEXT" title="Routing Jobs To Print Queues" href=
-    "x3694.htm">
+    "x3699.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -22,8 +22,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng Reference Manual: 5
-          Sep 2003 (For LPRng-3.8.22)</th>
+          <th colspan="3" align="center">LPRng Reference Manual: 13
+          Nov 2003 (For LPRng-3.8.23)</th>
         </tr>
 
         <tr>
@@ -34,7 +34,7 @@
           Print Spooling Tutorial</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x3694.htm" accesskey="N">Next</a></td>
+          "x3699.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -224,6 +224,17 @@
       the <b class="APPLICATION">lpd</b> server checks to see if
       there is an available server.</p>
 
+      <p>Normally, the <var class="LITERAL">chooser</var> is
+      applied to the first job in the queue. If the job cannot be
+      printed then <b class="APPLICATION">lpd</b> will wait for the
+      <var class="LITERAL">chooser_interval</var> time. However,
+      the chooser can also be used to direct jobs by their
+      characteristics, or other criteria. This means that the
+      entire spool spool queue has to be scanned for work. If the
+      <var class="LITERAL">:chooser_scan_queue</var> flag is set to
+      1, then all of the jobs are tested to see if they can be sent
+      to an appropriate destination.</p>
+
       <p>Edit the printcap file so it have the contents indicated
       below, create the <tt class="FILENAME">/tmp/lp2</tt> and <tt
       class="FILENAME">/tmp/lp3</tt> files with <var class=
@@ -238,7 +249,7 @@
       "APPLICATION">lpd</b> server.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN3664"></a>
+        <a name="AEN3669"></a>
 <pre class="SCREEN">
     # printcap
     lp:force_localhost
@@ -272,7 +283,7 @@
       <p>Now run the following commands:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN3667"></a>
+        <a name="AEN3672"></a>
 <pre class="SCREEN">
     <samp class="PROMPT">h4: {280} %</samp> <kbd class=
 "USERINPUT">lpr /tmp/hi</kbd>
@@ -319,7 +330,7 @@
       "FILENAME">chooser.script</tt> program was run:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN3678"></a>
+        <a name="AEN3683"></a>
 <pre class="SCREEN">
     CHOOSER -Apapowell@h4+113 -CA -D2000-06-01-14:02:13.313 -Hh4.private \
        -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
@@ -395,7 +406,7 @@
       the following API or interface:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN3685"></a>
+        <a name="AEN3690"></a>
 <pre class="SCREEN">
     Printcap Option: chooser_routine
        chooser_routine@  - default - do not use chooser routine
@@ -446,7 +457,7 @@
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x3694.htm" accesskey="N">Next</a></td>
+          "x3699.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_logger.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -112,7 +112,7 @@ int Dump_queue_status(int outfd)
 
 		if( Write_fd_str( outfd, "QUEUE%3d" ) < 0 ){ return(1); }
 		if( (fd = Checkread( Queue_control_file_DYN, &statb )) > 0 ){
-			while( (count = read(fd, buffer, sizeof(buffer)-1)) > 0 ){
+			while( (count = ok_read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 				buffer[count] = 0;
 				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
@@ -124,7 +124,7 @@ int Dump_queue_status(int outfd)
 
 		if( Write_fd_str( outfd, "PRSTATUS%3d" ) < 0 ){ return(1); }
 		if( (fd = Checkread( Queue_status_file_DYN, &statb )) > 0 ){
-			while( (count = read(fd, buffer, sizeof(buffer)-1)) > 0 ){
+			while( (count = ok_read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 				buffer[count] = 0;
 				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
@@ -197,7 +197,7 @@ void Logger( struct line_list *args )
 		SNPRINTF(host+len, sizeof(host)-len) "%2001" );
 	}
 
-	readfd = Find_flag_value(args,INPUT,Value_sep);
+	readfd = Find_flag_value(args,INPUT);
 	Free_line_list(args);
 
 	writefd = -2;
@@ -216,7 +216,7 @@ void Logger( struct line_list *args )
 		left = 0;
 		/* try to see if more output is left */
 		if( outlen == 0 && input_read ){
-			if( (m = read( input_fd, inbuffer, sizeof(inbuffer)-1 )) > 0 ){
+			if( (m = ok_read( input_fd, inbuffer, sizeof(inbuffer)-1 )) > 0 ){
 				inbuffer[m] = 0;
 				memcpy( outbuffer, inbuffer, m+1 );
 				outlen = m;
@@ -341,7 +341,7 @@ void Logger( struct line_list *args )
 			if( readfd >=0 && FD_ISSET( readfd, &readfds ) ){
 				DEBUGF(DLOG2)("Logger: read possible on fd %d", readfd );
 				inbuffer[0] = 0;
-				m = read( readfd, inbuffer, sizeof(inbuffer)-1 );
+				m = ok_read( readfd, inbuffer, sizeof(inbuffer)-1 );
 				if( m >= 0) inbuffer[m] = 0;
 				DEBUGF(DLOG2)("Logger: read count %d '%s'", m, inbuffer );
 				if( m > 0 && writefd >= 0 ){

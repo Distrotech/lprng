@@ -1,0 +1,17 @@
+***************
+*** 658,664 ****
+  	Clear_timeout();
+  	switch( SSL_get_error( ssl, ret ) ){
+  		case SSL_ERROR_NONE:
+- 			*len = n;
+  			break;
+  		case SSL_ERROR_ZERO_RETURN:
+  			status = 1;
+--- 658,664 ----
+  	Clear_timeout();
+  	switch( SSL_get_error( ssl, ret ) ){
+  		case SSL_ERROR_NONE:
++ 			*len = ret;
+  			break;
+  		case SSL_ERROR_ZERO_RETURN:
+  			status = 1;

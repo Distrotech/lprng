@@ -1000,8 +1000,8 @@ Optional Features:
   --enable-static=PKGS  build static libraries default=yes
   --enable-fast-install=PKGS  optimize for fast installation default=yes
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --disable-rpath         do not hardcode runtime library paths
   --enable-nls           use Native Language Support
+  --disable-rpath         do not hardcode runtime library paths
   --enable-tcpwrappers             use tcp wrappers (-lwrap)
   --disable-ssl                 disable ssl support
 
@@ -1012,15 +1012,17 @@ Optional Packages:
   --with-copts     OBSOLETE - use CFLAGS=..., see configure --help
   --with-ccopts    OBSOLETE - use CPPFLAGS=..., see configure --help
   --with-ldopts    OBSOLETE - use LDFLAGS=..., see configure --help
-  --with-unix_socket_path=DIR         unix socket path (default /var/run/lprng)
+  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)
+  --with-config_subdir=CONFIG_SUBDIR configuration subdirectory (default 'lpd')
   --with-lpddir=DIR                 lpd executable directory (default \${sbindir})
-  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/lpd/lpd.conf)
-  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/lpd/lpd.perms)
+  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf)
+  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd/lpd.perms)
   --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)
-  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd/lpd_printcap)
+  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap)
   --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
                                        use 'no' to disable installation and lpd startup
   --with-lockfile=PATH              lockfile PATH, default /var/run/lpd 
+  --with-spooldir=PATH              default spool directory, default /var/spool/lpd 
   --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib 
   --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin 
   --with-userid=NAME                run LPRng software as this userid, default daemon 
@@ -1034,19 +1036,19 @@ Optional Packages:
   --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-pic              try to use only PIC/non-PIC objects default=use both
-  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
+  --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
-  --with-libintl-prefix=DIR  search for libintl in DIR/include and DIR/lib
+  --with-libintl-prefix[=DIR]  search for libintl in DIR/include and DIR/lib
   --without-libintl-prefix     don't search for libintl in includedir and libdir
   --with-openssl=DIR          root location for OpenSSL
   --with-openssl-inc        OpenSSL include files
   --with-openssl-lib        OpenSSL library files
-  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/lpd/ssl.ca/ca.crt)
-  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/lpd/ssl.ca/ca.key)
-  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/lpd/ssl.certs/)
-  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/lpd/ssl.crl/ssl.crl)
-  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/lpd/ssl.server/server.crt)
-  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/lpd/ssl.server/server.pwd)
+  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt)
+  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key)
+  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs/)
+  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl)
+  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt)
+  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd)
 
 Some influential environment variables:
   CC          C compiler command
@@ -1408,7 +1410,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=LPRng
-VERSION=3.8.22
+VERSION=3.8.23
 
 
 ac_aux_dir=
@@ -1922,6 +1924,19 @@ echo "$as_me:$LINENO: result: $UNIXSOCKETPATH" >&5
 echo "${ECHO_T}$UNIXSOCKETPATH" >&6
 
 
+CONFIG_SUBDIR=lpd
+echo "$as_me:$LINENO: checking configuration information subdirectory" >&5
+echo $ECHO_N "checking configuration information subdirectory... $ECHO_C" >&6
+
+# Check whether --with-config_subdir or --without-config_subdir was given.
+if test "${with_config_subdir+set}" = set; then
+  withval="$with_config_subdir"
+  CONFIG_SUBDIR=$withval
+fi; 
+echo "$as_me:$LINENO: result: $CONFIG_SUBDIR" >&5
+echo "${ECHO_T}$CONFIG_SUBDIR" >&6
+
+
 
 echo "$as_me:$LINENO: checking if installing clients setuid" >&5
 echo $ECHO_N "checking if installing clients setuid... $ECHO_C" >&6
@@ -2082,9 +2097,7 @@ else
 
 fi; 
 echo "$as_me:$LINENO: result: $v (KERBEROS_CHECKS $KERBEROS_CHECKS)" >&5
-echo "${ECHO_T}$v (KERBEROS_CHECKS $KERBEROS_CHECKS)" >&6;lpd_dir=/lpd
-export lpd_dir
-
+echo "${ECHO_T}$v (KERBEROS_CHECKS $KERBEROS_CHECKS)" >&6;
 echo "$as_me:$LINENO: checking where to install the lpd binary" >&5
 echo $ECHO_N "checking where to install the lpd binary... $ECHO_C" >&6
 
@@ -2108,7 +2121,7 @@ if test "${with_lpd_conf_path+set}" = set; then
   withval="$with_lpd_conf_path"
   LPD_CONF_PATH=$withval
 else
-  LPD_CONF_PATH=\${sysconfdir}/lpd/lpd.conf
+  LPD_CONF_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf
 fi; 
 echo "$as_me:$LINENO: result: $LPD_CONF_PATH" >&5
 echo "${ECHO_T}$LPD_CONF_PATH" >&6
@@ -2122,7 +2135,7 @@ if test "${with_lpd_perms_path+set}" = set; then
   withval="$with_lpd_perms_path"
   LPD_PERMS_PATH=$withval
 else
-  LPD_PERMS_PATH=\${sysconfdir}/lpd/lpd.perms
+  LPD_PERMS_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.perms
 fi; 
 echo "$as_me:$LINENO: result: $LPD_PERMS_PATH" >&5
 echo "${ECHO_T}$LPD_PERMS_PATH" >&6
@@ -2150,7 +2163,7 @@ if test "${with_lpd_printcap_path+set}" = set; then
   withval="$with_lpd_printcap_path"
   LPD_PRINTCAP_PATH=$withval
 else
-  LPD_PRINTCAP_PATH=\${sysconfdir}/lpd/lpd_printcap
+  LPD_PRINTCAP_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap
 fi; 
 echo "$as_me:$LINENO: result: $LPD_PRINTCAP_PATH" >&5
 echo "${ECHO_T}$LPD_PRINTCAP_PATH" >&6
@@ -2182,6 +2195,20 @@ fi;
 echo "$as_me:$LINENO: result: \"$LOCKFILE\"" >&5
 echo "${ECHO_T}\"$LOCKFILE\"" >&6
 
+
+
+echo "$as_me:$LINENO: checking default spool directory" >&5
+echo $ECHO_N "checking default spool directory... $ECHO_C" >&6
+
+# Check whether --with-spooldir or --without-spooldir was given.
+if test "${with_spooldir+set}" = set; then
+  withval="$with_spooldir"
+  SD_DEFAULT="$withval"
+else
+  SD_DEFAULT="/var/spool/lpd"
+fi; 
+echo "$as_me:$LINENO: result: \"$SD_DEFAULT\"" >&5
+echo "${ECHO_T}\"$SD_DEFAULT\"" >&6
 
 
 echo "$as_me:$LINENO: checking LD_LIBRARY_PATH value" >&5
@@ -15594,6 +15621,11 @@ cat >>confdefs.h <<\_ACEOF
 @%:@define IN6_ADDR 1
 _ACEOF
 
+    
+cat >>confdefs.h <<\_ACEOF
+@%:@define IPV6 1
+_ACEOF
+
 fi
 
 
@@ -15653,6 +15685,11 @@ if test "$ac_cv_decl_in_addr6_def" = yes; then
     
 cat >>confdefs.h <<\_ACEOF
 @%:@define IN_ADDR6 1
+_ACEOF
+
+    
+cat >>confdefs.h <<\_ACEOF
+@%:@define IPV6 1
 _ACEOF
 
 fi
@@ -16073,7 +16110,10 @@ echo "${ECHO_T}using $SHELL (FORCED)" >&6
 
         MKINSTALLDIRS=
   if test -n "$ac_aux_dir"; then
-    MKINSTALLDIRS="$ac_aux_dir/mkinstalldirs"
+    case "$ac_aux_dir" in
+      /*) MKINSTALLDIRS="$ac_aux_dir/mkinstalldirs" ;;
+      *) MKINSTALLDIRS="\$(top_builddir)/$ac_aux_dir/mkinstalldirs" ;;
+    esac
   fi
   if test -z "$MKINSTALLDIRS"; then
     MKINSTALLDIRS="\$(top_srcdir)/mkinstalldirs"
@@ -16081,9 +16121,52 @@ echo "${ECHO_T}using $SHELL (FORCED)" >&6
   
 
 
-      
+  echo "$as_me:$LINENO: checking whether NLS is requested" >&5
+echo $ECHO_N "checking whether NLS is requested... $ECHO_C" >&6
+    # Check whether --enable-nls or --disable-nls was given.
+if test "${enable_nls+set}" = set; then
+  enableval="$enable_nls"
+  USE_NLS=$enableval
+else
+  USE_NLS=no
+fi; 
+  echo "$as_me:$LINENO: result: $USE_NLS" >&5
+echo "${ECHO_T}$USE_NLS" >&6
+  
+
+
+        
     
-        # Extract the first word of "msgfmt", so it can be a program name with args.
+        
+# Prepare PATH_SEPARATOR.
+# The user is always right.
+if test "${PATH_SEPARATOR+set}" != set; then
+  echo "#! /bin/sh" >conf$$.sh
+  echo  "exit 0"   >>conf$$.sh
+  chmod +x conf$$.sh
+  if (PATH="/nonexistent;."; conf$$.sh) >/dev/null 2>&1; then
+    PATH_SEPARATOR=';'
+  else
+    PATH_SEPARATOR=:
+  fi
+  rm -f conf$$.sh
+fi
+
+# Find out how to test for executable files. Don't use a zero-byte file,
+# as systems may use methods other than mode bits to determine executability.
+cat >conf$$.file <<_ASEOF
+#! /bin/sh
+exit 0
+_ASEOF
+chmod +x conf$$.file
+if test -x conf$$.file >/dev/null 2>&1; then
+  ac_executable_p="test -x"
+else
+  ac_executable_p="test -f"
+fi
+rm -f conf$$.file
+
+# Extract the first word of "msgfmt", so it can be a program name with args.
 set dummy msgfmt; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -16091,24 +16174,27 @@ if test "${ac_cv_path_MSGFMT+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   case "$MSGFMT" in
-  /*)
-  ac_cv_path_MSGFMT="$MSGFMT" # Let the user override the test with a path.
-  ;;
+  [\\/]* | ?:[\\/]*)
+    ac_cv_path_MSGFMT="$MSGFMT" # Let the user override the test with a path.
+    ;;
   *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      if $ac_dir/$ac_word --statistics /dev/null >/dev/null 2>&1 &&
+    ac_save_IFS="$IFS"; IFS=$PATH_SEPARATOR
+    for ac_dir in $PATH; do
+      IFS="$ac_save_IFS"
+      test -z "$ac_dir" && ac_dir=.
+      for ac_exec_ext in '' $ac_executable_extensions; do
+        if $ac_executable_p "$ac_dir/$ac_word$ac_exec_ext"; then
+          if $ac_dir/$ac_word --statistics /dev/null >/dev/null 2>&1 &&
      (if $ac_dir/$ac_word --statistics /dev/null 2>&1 >/dev/null | grep usage >/dev/null; then exit 1; else exit 0; fi); then
-	ac_cv_path_MSGFMT="$ac_dir/$ac_word"
-	break
-      fi
-    fi
-  done
-  IFS="$ac_save_ifs"
+            ac_cv_path_MSGFMT="$ac_dir/$ac_word$ac_exec_ext"
+            break 2
+          fi
+        fi
+      done
+    done
+    IFS="$ac_save_IFS"
   test -z "$ac_cv_path_MSGFMT" && ac_cv_path_MSGFMT=":"
-  ;;
+    ;;
 esac
 fi
 MSGFMT="$ac_cv_path_MSGFMT"
@@ -16161,7 +16247,36 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-        # Extract the first word of "xgettext", so it can be a program name with args.
+        
+# Prepare PATH_SEPARATOR.
+# The user is always right.
+if test "${PATH_SEPARATOR+set}" != set; then
+  echo "#! /bin/sh" >conf$$.sh
+  echo  "exit 0"   >>conf$$.sh
+  chmod +x conf$$.sh
+  if (PATH="/nonexistent;."; conf$$.sh) >/dev/null 2>&1; then
+    PATH_SEPARATOR=';'
+  else
+    PATH_SEPARATOR=:
+  fi
+  rm -f conf$$.sh
+fi
+
+# Find out how to test for executable files. Don't use a zero-byte file,
+# as systems may use methods other than mode bits to determine executability.
+cat >conf$$.file <<_ASEOF
+#! /bin/sh
+exit 0
+_ASEOF
+chmod +x conf$$.file
+if test -x conf$$.file >/dev/null 2>&1; then
+  ac_executable_p="test -x"
+else
+  ac_executable_p="test -f"
+fi
+rm -f conf$$.file
+
+# Extract the first word of "xgettext", so it can be a program name with args.
 set dummy xgettext; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -16169,24 +16284,27 @@ if test "${ac_cv_path_XGETTEXT+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   case "$XGETTEXT" in
-  /*)
-  ac_cv_path_XGETTEXT="$XGETTEXT" # Let the user override the test with a path.
-  ;;
+  [\\/]* | ?:[\\/]*)
+    ac_cv_path_XGETTEXT="$XGETTEXT" # Let the user override the test with a path.
+    ;;
   *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      if $ac_dir/$ac_word --omit-header --copyright-holder= /dev/null >/dev/null 2>&1 &&
-     (if $ac_dir/$ac_word --omit-header --copyright-holder= /dev/null 2>&1 >/dev/null | grep usage >/dev/null; then exit 1; else exit 0; fi); then
-	ac_cv_path_XGETTEXT="$ac_dir/$ac_word"
-	break
-      fi
-    fi
-  done
-  IFS="$ac_save_ifs"
+    ac_save_IFS="$IFS"; IFS=$PATH_SEPARATOR
+    for ac_dir in $PATH; do
+      IFS="$ac_save_IFS"
+      test -z "$ac_dir" && ac_dir=.
+      for ac_exec_ext in '' $ac_executable_extensions; do
+        if $ac_executable_p "$ac_dir/$ac_word$ac_exec_ext"; then
+          if $ac_dir/$ac_word --omit-header --copyright-holder= --msgid-bugs-address= /dev/null >/dev/null 2>&1 &&
+     (if $ac_dir/$ac_word --omit-header --copyright-holder= --msgid-bugs-address= /dev/null 2>&1 >/dev/null | grep usage >/dev/null; then exit 1; else exit 0; fi); then
+            ac_cv_path_XGETTEXT="$ac_dir/$ac_word$ac_exec_ext"
+            break 2
+          fi
+        fi
+      done
+    done
+    IFS="$ac_save_IFS"
   test -z "$ac_cv_path_XGETTEXT" && ac_cv_path_XGETTEXT=":"
-  ;;
+    ;;
 esac
 fi
 XGETTEXT="$ac_cv_path_XGETTEXT"
@@ -16200,7 +16318,36 @@ fi
 
     rm -f messages.po
 
-    # Extract the first word of "msgmerge", so it can be a program name with args.
+    
+# Prepare PATH_SEPARATOR.
+# The user is always right.
+if test "${PATH_SEPARATOR+set}" != set; then
+  echo "#! /bin/sh" >conf$$.sh
+  echo  "exit 0"   >>conf$$.sh
+  chmod +x conf$$.sh
+  if (PATH="/nonexistent;."; conf$$.sh) >/dev/null 2>&1; then
+    PATH_SEPARATOR=';'
+  else
+    PATH_SEPARATOR=:
+  fi
+  rm -f conf$$.sh
+fi
+
+# Find out how to test for executable files. Don't use a zero-byte file,
+# as systems may use methods other than mode bits to determine executability.
+cat >conf$$.file <<_ASEOF
+#! /bin/sh
+exit 0
+_ASEOF
+chmod +x conf$$.file
+if test -x conf$$.file >/dev/null 2>&1; then
+  ac_executable_p="test -x"
+else
+  ac_executable_p="test -f"
+fi
+rm -f conf$$.file
+
+# Extract the first word of "msgmerge", so it can be a program name with args.
 set dummy msgmerge; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -16208,23 +16355,26 @@ if test "${ac_cv_path_MSGMERGE+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   case "$MSGMERGE" in
-  /*)
-  ac_cv_path_MSGMERGE="$MSGMERGE" # Let the user override the test with a path.
-  ;;
+  [\\/]* | ?:[\\/]*)
+    ac_cv_path_MSGMERGE="$MSGMERGE" # Let the user override the test with a path.
+    ;;
   *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      if $ac_dir/$ac_word --update -q /dev/null /dev/null >/dev/null 2>&1; then
-	ac_cv_path_MSGMERGE="$ac_dir/$ac_word"
-	break
-      fi
-    fi
-  done
-  IFS="$ac_save_ifs"
+    ac_save_IFS="$IFS"; IFS=$PATH_SEPARATOR
+    for ac_dir in $PATH; do
+      IFS="$ac_save_IFS"
+      test -z "$ac_dir" && ac_dir=.
+      for ac_exec_ext in '' $ac_executable_extensions; do
+        if $ac_executable_p "$ac_dir/$ac_word$ac_exec_ext"; then
+          if $ac_dir/$ac_word --update -q /dev/null /dev/null >/dev/null 2>&1; then
+            ac_cv_path_MSGMERGE="$ac_dir/$ac_word$ac_exec_ext"
+            break 2
+          fi
+        fi
+      done
+    done
+    IFS="$ac_save_IFS"
   test -z "$ac_cv_path_MSGMERGE" && ac_cv_path_MSGMERGE=":"
-  ;;
+    ;;
 esac
 fi
 MSGMERGE="$ac_cv_path_MSGMERGE"
@@ -16250,8 +16400,8 @@ echo "${ECHO_T}found $GMSGFMT program is not GNU msgfmt; ignore it" >&6
   fi
 
       if test "$XGETTEXT" != ":"; then
-            if $XGETTEXT --omit-header --copyright-holder= /dev/null >/dev/null 2>&1 &&
-       (if $XGETTEXT --omit-header --copyright-holder= /dev/null 2>&1 >/dev/null | grep usage >/dev/null; then exit 1; else exit 0; fi); then
+            if $XGETTEXT --omit-header --copyright-holder= --msgid-bugs-address= /dev/null >/dev/null 2>&1 &&
+       (if $XGETTEXT --omit-header --copyright-holder= --msgid-bugs-address= /dev/null 2>&1 >/dev/null | grep usage >/dev/null; then exit 1; else exit 0; fi); then
       : ;
     else
       echo "$as_me:$LINENO: result: found xgettext program is not GNU xgettext; ignore it" >&5
@@ -16288,6 +16438,19 @@ if test "${with_gnu_ld+set}" = set; then
 else
   with_gnu_ld=no
 fi; 
+# Prepare PATH_SEPARATOR.
+# The user is always right.
+if test "${PATH_SEPARATOR+set}" != set; then
+  echo "#! /bin/sh" >conf$$.sh
+  echo  "exit 0"   >>conf$$.sh
+  chmod +x conf$$.sh
+  if (PATH="/nonexistent;."; conf$$.sh) >/dev/null 2>&1; then
+    PATH_SEPARATOR=';'
+  else
+    PATH_SEPARATOR=:
+  fi
+  rm -f conf$$.sh
+fi
 ac_prog=ld
 if test "$GCC" = yes; then
   # Check if gcc -print-prog-name=ld gives a path.
@@ -16403,8 +16566,6 @@ echo "${ECHO_T}$acl_cv_rpath" >&6
   hardcode_libdir_separator="$acl_cv_hardcode_libdir_separator"
   hardcode_direct="$acl_cv_hardcode_direct"
   hardcode_minus_L="$acl_cv_hardcode_minus_L"
-  sys_lib_search_path_spec="$acl_cv_sys_lib_search_path_spec"
-  sys_lib_dlsearch_path_spec="$acl_cv_sys_lib_dlsearch_path_spec"
     # Check whether --enable-rpath or --disable-rpath was given.
 if test "${enable_rpath+set}" = set; then
   enableval="$enable_rpath"
@@ -16811,6 +16972,7 @@ fi;
     
   
 
+    
   echo "$as_me:$LINENO: checking whether NLS is requested" >&5
 echo $ECHO_N "checking whether NLS is requested... $ECHO_C" >&6
     # Check whether --enable-nls or --disable-nls was given.
@@ -16823,6 +16985,7 @@ fi;
   echo "$as_me:$LINENO: result: $USE_NLS" >&5
 echo "${ECHO_T}$USE_NLS" >&6
   
+
 
   
   LIBINTL=
@@ -17523,7 +17686,8 @@ echo "${ECHO_T}$gt_cv_func_gnugettext1_libintl" >&6
 
                                         if test "$gt_cv_func_gnugettext1_libc" = "yes" \
            || { test "$gt_cv_func_gnugettext1_libintl" = "yes" \
-                && test "$PACKAGE" != gettext; }; then
+                && test "$PACKAGE" != gettext-runtime \
+                && test "$PACKAGE" != gettext-tools; }; then
           gt_use_preinstalled_gnugettext=yes
         else
                     LIBINTL=
@@ -17543,6 +17707,26 @@ _ACEOF
     else
       USE_NLS=no
     fi
+  fi
+
+  echo "$as_me:$LINENO: checking whether to use NLS" >&5
+echo $ECHO_N "checking whether to use NLS... $ECHO_C" >&6
+  echo "$as_me:$LINENO: result: $USE_NLS" >&5
+echo "${ECHO_T}$USE_NLS" >&6
+  if test "$USE_NLS" = "yes"; then
+    echo "$as_me:$LINENO: checking where the gettext function comes from" >&5
+echo $ECHO_N "checking where the gettext function comes from... $ECHO_C" >&6
+    if test "$gt_use_preinstalled_gnugettext" = "yes"; then
+      if test "$gt_cv_func_gnugettext1_libintl" = "yes"; then
+        gt_source="external libintl"
+      else
+        gt_source="libc"
+      fi
+    else
+      gt_source="included intl directory"
+    fi
+    echo "$as_me:$LINENO: result: $gt_source" >&5
+echo "${ECHO_T}$gt_source" >&6
   fi
 
   if test "$USE_NLS" = "yes"; then
@@ -18051,7 +18235,7 @@ if test "${with_ssl_ca_file+set}" = set; then
   withval="$with_ssl_ca_file"
   SSL_CA_FILE=$withval
 else
-  SSL_CA_FILE=\${sysconfdir}/lpd/ssl.ca/ca.crt
+  SSL_CA_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt
 fi; 
 echo "$as_me:$LINENO: result: $SSL_CA_FILE" >&5
 echo "${ECHO_T}$SSL_CA_FILE" >&6
@@ -18065,7 +18249,7 @@ if test "${with_ssl_ca_key+set}" = set; then
   withval="$with_ssl_ca_key"
   SSL_CA_KEY=$withval
 else
-  SSL_CA_KEY=\${sysconfdir}/lpd/ssl.ca/ca.key
+  SSL_CA_KEY=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key
 fi; 
 echo "$as_me:$LINENO: result: $SSL_CA_KEY" >&5
 echo "${ECHO_T}$SSL_CA_KEY" >&6
@@ -18079,7 +18263,7 @@ if test "${with_ssl_certs_dir+set}" = set; then
   withval="$with_ssl_certs_dir"
   SSL_CERTS_DIR=$withval
 else
-  SSL_CERTS_DIR=\${sysconfdir}/lpd/ssl.certs
+  SSL_CERTS_DIR=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs
 fi; 
 echo "$as_me:$LINENO: result: $SSL_CERTS_DIR" >&5
 echo "${ECHO_T}$SSL_CERTS_DIR" >&6
@@ -18093,7 +18277,7 @@ if test "${with_ssl_crl_file+set}" = set; then
   withval="$with_ssl_crl_file"
   SSL_CRL_FILE=$withval
 else
-  SSL_CRL_FILE=\${sysconfdir}/lpd/ssl.crl/ssl.crl
+  SSL_CRL_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl
 fi; 
 echo "$as_me:$LINENO: result: $SSL_CRL_FILE" >&5
 echo "${ECHO_T}$SSL_CRL_FILE" >&6
@@ -18107,7 +18291,7 @@ if test "${with_ssl_server_cert+set}" = set; then
   withval="$with_ssl_server_cert"
   SSL_SERVER_CERT=$withval
 else
-  SSL_SERVER_CERT=\${sysconfdir}/lpd/ssl.server/server.crt
+  SSL_SERVER_CERT=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt
 fi; 
 echo "$as_me:$LINENO: result: $SSL_SERVER_CERT" >&5
 echo "${ECHO_T}$SSL_SERVER_CERT" >&6
@@ -18121,7 +18305,7 @@ if test "${with_ssl_server_password_file+set}" = set; then
   withval="$with_ssl_server_password_file"
   SSL_SERVER_PASSWORD_FILE=$withval
 else
-  SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/lpd/ssl.server/server.pwd
+  SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd
 fi; 
 echo "$as_me:$LINENO: result: $SSL_SERVER_PASSWORD_FILE" >&5
 echo "${ECHO_T}$SSL_SERVER_PASSWORD_FILE" >&6
@@ -19614,7 +19798,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
 # Capture the value of obsolete ALL_LINGUAS because we need it to compute
     # POFILES, GMOFILES, UPDATEPOFILES, DUMMYPOFILES, CATALOGS. But hide it
     # from automake.
-    eval 'ALL_LINGUAS''="$ALL_LINGUAS"'
+    eval 'OBSOLETE_ALL_LINGUAS''="$ALL_LINGUAS"'
     # Capture the value of LINGUAS because we need it to compute CATALOGS.
     LINGUAS="${LINGUAS-%UNSET%}"
    
@@ -19772,6 +19956,7 @@ s,@PRUTIL@,$PRUTIL,;t t
 s,@OPENSSL@,$OPENSSL,;t t
 s,@PGP_PATH@,$PGP_PATH,;t t
 s,@UNIXSOCKETPATH@,$UNIXSOCKETPATH,;t t
+s,@CONFIG_SUBDIR@,$CONFIG_SUBDIR,;t t
 s,@PERMS@,$PERMS,;t t
 s,@PRIV_PORTS@,$PRIV_PORTS,;t t
 s,@REQUIRE_CONFIGFILES@,$REQUIRE_CONFIGFILES,;t t
@@ -19784,6 +19969,7 @@ s,@PRINTCAP_PATH@,$PRINTCAP_PATH,;t t
 s,@LPD_PRINTCAP_PATH@,$LPD_PRINTCAP_PATH,;t t
 s,@INIT@,$INIT,;t t
 s,@LOCKFILE@,$LOCKFILE,;t t
+s,@SD_DEFAULT@,$SD_DEFAULT,;t t
 s,@LD_LIBRARY_PATH@,$LD_LIBRARY_PATH,;t t
 s,@FILTER_PATH@,$FILTER_PATH,;t t
 s,@USERID@,$USERID,;t t
@@ -19813,11 +19999,11 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@SET_MAKE@,$SET_MAKE,;t t
 s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
+s,@USE_NLS@,$USE_NLS,;t t
 s,@MSGFMT@,$MSGFMT,;t t
 s,@GMSGFMT@,$GMSGFMT,;t t
 s,@XGETTEXT@,$XGETTEXT,;t t
 s,@MSGMERGE@,$MSGMERGE,;t t
-s,@USE_NLS@,$USE_NLS,;t t
 s,@LIBICONV@,$LIBICONV,;t t
 s,@LTLIBICONV@,$LTLIBICONV,;t t
 s,@INTLLIBS@,$INTLLIBS,;t t
@@ -20327,17 +20513,22 @@ echo "$as_me: executing $ac_dest commands" >&6;}
           rm -f "$ac_dir/POTFILES"
           test -n "$as_me" && echo "$as_me: creating $ac_dir/POTFILES" || echo "creating $ac_dir/POTFILES"
           cat "$ac_given_srcdir/$ac_dir/POTFILES.in" | sed -e "/^#/d" -e "/^[ 	]*\$/d" -e "s,.*,     $top_srcdir/& \\\\," | sed -e "\$s/\(.*\) \\\\/\1/" > "$ac_dir/POTFILES"
+          POMAKEFILEDEPS="POTFILES.in"
           # ALL_LINGUAS, POFILES, GMOFILES, UPDATEPOFILES, DUMMYPOFILES depend
           # on $ac_dir but don't depend on user-specified configuration
           # parameters.
           if test -f "$ac_given_srcdir/$ac_dir/LINGUAS"; then
             # The LINGUAS file contains the set of available languages.
-            if test -n "$ALL_LINGUAS"; then
+            if test -n "$OBSOLETE_ALL_LINGUAS"; then
               test -n "$as_me" && echo "$as_me: setting ALL_LINGUAS in configure.in is obsolete" || echo "setting ALL_LINGUAS in configure.in is obsolete"
             fi
             ALL_LINGUAS_=`sed -e "/^#/d" "$ac_given_srcdir/$ac_dir/LINGUAS"`
             # Hide the ALL_LINGUAS assigment from automake.
             eval 'ALL_LINGUAS''=$ALL_LINGUAS_'
+            POMAKEFILEDEPS="$POMAKEFILEDEPS LINGUAS"
+          else
+            # The set of available languages was given in configure.in.
+            eval 'ALL_LINGUAS''=$OBSOLETE_ALL_LINGUAS'
           fi
           case "$ac_given_srcdir" in
             .) srcdirpre= ;;
@@ -20386,7 +20577,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
             done
           fi
           test -n "$as_me" && echo "$as_me: creating $ac_dir/Makefile" || echo "creating $ac_dir/Makefile"
-          sed -e "/^POTFILES =/r $ac_dir/POTFILES" -e "/^# Makevars/r $ac_given_srcdir/$ac_dir/Makevars" -e "s|@POFILES@|$POFILES|g" -e "s|@GMOFILES@|$GMOFILES|g" -e "s|@UPDATEPOFILES@|$UPDATEPOFILES|g" -e "s|@DUMMYPOFILES@|$DUMMYPOFILES|g" -e "s|@CATALOGS@|$CATALOGS|g" "$ac_dir/Makefile.in" > "$ac_dir/Makefile"
+          sed -e "/^POTFILES =/r $ac_dir/POTFILES" -e "/^# Makevars/r $ac_given_srcdir/$ac_dir/Makevars" -e "s|@POFILES@|$POFILES|g" -e "s|@GMOFILES@|$GMOFILES|g" -e "s|@UPDATEPOFILES@|$UPDATEPOFILES|g" -e "s|@DUMMYPOFILES@|$DUMMYPOFILES|g" -e "s|@CATALOGS@|$CATALOGS|g" -e "s|@POMAKEFILEDEPS@|$POMAKEFILEDEPS|g" "$ac_dir/Makefile.in" > "$ac_dir/Makefile"
           for f in "$ac_given_srcdir/$ac_dir"/Rules-*; do
             if test -f "$f"; then
               case "$f" in

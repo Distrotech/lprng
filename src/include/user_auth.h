@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.h,v 1.26 2003/09/05 20:07:21 papowell Exp $
+ * $Id: user_auth.h,v 1.30 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -39,14 +39,14 @@ typedef int (*SEND_DONE_PROC)( struct job *job, int *sock,
 	struct security *security, struct line_list *info );
 
 typedef int (*ACCEPT_PROC)(
-	int *sock,
+	int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	char *error, int errlen,
 	struct line_list *info, struct line_list *header_info,
 	struct security *security );
 
 typedef int (*RECEIVE_PROC)(
-	int *sock,
+	int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *error, int errlen,
@@ -81,7 +81,7 @@ int Test_connect( struct job *job, int *sock,
 	int transfer_timeout,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info );
-int Test_accept( int *sock,
+int Test_accept( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	char *errmsg, int errlen,
 	struct line_list *info, struct line_list *header_info,
@@ -91,7 +91,7 @@ int Test_send( int *sock,
 	char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info );
-int Test_receive( int *sock,
+int Test_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -100,25 +100,25 @@ int Test_receive( int *sock,
 int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info );
-int md5_receive( int *sock,
+int md5_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
 	struct security *security, char *tempfile );
-int Pgp_get_pgppassfd( struct line_list *info, char *error, int errlen );
-int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
+int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen );
+int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_to_id, struct line_list *from_info,
 	int *pgp_exit_code, int *not_a_ciphertext );
-int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
+int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_from_id, char *esc_to_id,
 	int *pgp_exit_code );
 int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
 	struct security *security, struct line_list *info );
-int Pgp_receive( int *sock,
+int Pgp_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,

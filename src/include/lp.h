@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: lp.h,v 1.61 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -267,6 +267,7 @@ EXTERN int Check_for_nonprintable_DYN;	/* lpr check for nonprintable file */
 EXTERN int Check_for_protocol_violations_DYN;	/* check for RFC1179 protocol violations */
 EXTERN char* Chooser_DYN;	/* choose the destination for a load balance queue */
 EXTERN int Chooser_interval_DYN;	/* interval between tests for load balance destination */
+EXTERN int Chooser_scan_queue_DYN;	/* scan the queue */
 EXTERN char* Chooser_routine_DYN;	/* choose the destination for a load balance queue */
 EXTERN int Class_in_status_DYN;	/* Show class in status information */
 EXTERN char* Comment_tag_DYN; /* comment identifying printer (LPQ) */
@@ -341,6 +342,8 @@ EXTERN int Long_number_DYN; /* long job number (6 digits) */
 EXTERN char* Lp_device_DYN; /* device name or lp-pipe command to send output to */
 EXTERN int Lpd_bounce_DYN; /* force LPD to do bounce queue filtering */
 EXTERN char* Lpd_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
+EXTERN char* Ipp_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
+EXTERN char* Ipp_port_DYN; /* ipp protocol port */
 EXTERN char* Lpd_path_DYN; /* LPD path for server use */
 EXTERN char* Lpd_port_DYN;	/* client/lpd connect to remote (non-local) lpd servers on this port */
 EXTERN char* Lpd_printcap_path_DYN;
@@ -383,11 +386,13 @@ EXTERN int Page_length_DYN; /* page length (in lines) */
 EXTERN int Page_width_DYN; /* page width (in characters) */
 EXTERN int Page_x_DYN; /* page width in pixels (horizontal) */
 EXTERN int Page_y_DYN; /* page length in pixels (vertical) */
+EXTERN char* Pc_entries_required_DYN;	/* make sure these entries are in PRINTCAP_ENTRY */
 EXTERN char* Pass_env_DYN;	/* pass these environment variables */
 EXTERN char* Pgp_path_DYN;	/* pgp path */
 EXTERN int Poll_time_DYN; /* force polling job queues */
 EXTERN int Poll_start_interval_DYN; /* interval between trying to start servers */
 EXTERN int Poll_servers_started_DYN; /* maximum servers to start at one time */
+EXTERN char* Ppd_file_DYN;	/* ppd file */
 EXTERN char* Pr_program_DYN; /* pr program for p format */
 EXTERN char* Prefix_Z_DYN; /* prefix -Z options on outgoing or filter*/
 EXTERN char* Prefix_option_to_option_DYN; /* prefix option to option, ie, "z,o" */
@@ -465,5 +470,7 @@ EXTERN char* Xlate_format_DYN;	/* translate format ids on outgoing jobs */
 #  include <dmalloc.h>
 extern int dmalloc_outfile;
 #endif
+
+#define ok_read read
 
 #endif

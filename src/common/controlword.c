@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: controlword.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: controlword.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -49,6 +49,7 @@
 { "DEFAULTS", N_("DEFAULTS"), OP_DEFAULTS, 0, 0, 0, 0},
 { "FLUSH", N_("FLUSH"), OP_FLUSH, 0, 0, 0, 0},
 { "LANG", N_("LANG"), OP_LANG, 0, 0, 0, 0},
+{ "PPD", N_("PPD"), OP_PPD, 0, 0, 0, 0},
 
 {0,0,0,0,0,0,0}
 };

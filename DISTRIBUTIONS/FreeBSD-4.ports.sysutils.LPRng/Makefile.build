@@ -85,7 +85,6 @@ plist:
 	${MAKE} FORCE_PKG_REGISTER=YES VERBOSE_INSTALL="set -x" reinstall MAKEPACKAGE=YES  2>&1 |tee /tmp/install.log
 	sed -n -e "/\/man\//d" -e "/^\/usr\/bin\/install/s,.* ${PREFIX}/,,p" /tmp/install.log |sort >pkg-plist
 	sed -n -e "/\/usr\/bin\/install.*sample/s,.* ${PREFIX}/,,p" /tmp/install.log >>pkg-plist
-	sed -n -e "/\/usr\/bin\/install.*.sh/s,.* ${PREFIX}/,,p" /tmp/install.log >>pkg-plist
 	find ${DOCSDIR} -type f | sed -e 's,${DOCSDIR}/,%%PORTDOCS%%%%DOCSDIR%%/,' >>pkg-plist
 	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/Reference' >>pkg-plist
 	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/PrintingCookbook' >>pkg-plist

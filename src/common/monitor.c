@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: monitor.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: monitor.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -244,7 +244,7 @@ int main(int argc, char *argv[] )
 					if( i >= max_port ) max_port = i+1;
 					FD_SET(i, &readfds);
 				} else {
-					c = read( i, buffer, sizeof(buffer)-1 );
+					c = ok_read( i, buffer, sizeof(buffer)-1 );
 					if( c == 0 ){
 						/* closed connection */
 						FPRINTF(STDOUT, "closed connection %d\n", i );
@@ -287,18 +287,18 @@ void Decode( char *in )
 
 	FPRINTF(STDOUT,"****\n");
 	if( debug )FPRINTF(STDOUT, "Decode: %s\n", in );
-	if((s = safestrpbrk(in,Value_sep)) ){
+	if((s = safestrpbrk(in,Hash_value_sep)) ){
 		*s++ = 0;
 		Unescape(s);
 		Free_line_list(&l);
-		Split(&l,s,Line_ends,1,Value_sep,1,1,1,0);
+		Split(&l,s,Line_ends,1,Hash_value_sep,1,1,1,0);
 		for( i = 0; i < l.count; ++i ){
 			t = l.list[i];
 			if( debug || safestrncasecmp(t,VALUE,5) ){
 				FPRINTF(STDOUT,"%s\n", t );
 			}
 		}
-		s = Find_str_value(&l,VALUE,Value_sep);
+		s = Find_str_value(&l,VALUE);
 		if( s ) Unescape(s);
 		if( !safestrcasecmp(in,TRACE) ){
 			FPRINTF(STDOUT,"TRACE: '%s'\n", s );

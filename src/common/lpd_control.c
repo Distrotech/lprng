@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_control.c,v 1.61 2003/11/14 02:32:54 papowell Exp $";
 
 
 #include "lp.h"
@@ -268,7 +268,7 @@ void Do_queue_control( char *user, int action, int *sock,
 
 	c = Debug;
 	i = DbgFlag;
-	end = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	end = Find_str_value(&Spool_control,DEBUG);
 	if( !end ) end = New_debug_DYN;
 	Parse_debug( end, 0 );
 
@@ -320,6 +320,9 @@ void Do_queue_control( char *user, int action, int *sock,
 		goto done;
 	case OP_PRINTCAP:
 		Do_control_printcap( sock );
+		goto done;
+	case OP_PPD:
+		Do_control_ppd( sock );
 		goto done;
 	case OP_STATUS:
 		if( Do_control_status( sock,
@@ -615,14 +618,14 @@ int Do_control_file( int action, int *sock,
 		Free_job(&job);
 		Get_hold_file( &job, Sort_order.list[i] );
 		DEBUGFC(DCTRL2)Dump_job("Do_control_file - getting info",&job);
-		identifier = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-		if( identifier == 0 ) identifier = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+		identifier = Find_str_value(&job.info,IDENTIFIER);
+		if( identifier == 0 ) identifier = Find_str_value(&job.info,TRANSFERNAME);
 		if( identifier == 0 ) continue;
 		DEBUGF(DCTRL4)("Do_control_file: checking id '%s'", identifier );
 
-		Perm_check.user = Find_str_value(&job.info,LOGNAME,Value_sep);
+		Perm_check.user = Find_str_value(&job.info,LOGNAME);
 		Perm_check.host = 0;
-		s = Find_str_value(&job.info,FROMHOST,Value_sep);
+		s = Find_str_value(&job.info,FROMHOST);
 		if( s && Find_fqdn( &PermHost_IP, s ) ){
 			Perm_check.host = &PermHost_IP;
 		}
@@ -637,7 +640,7 @@ int Do_control_file( int action, int *sock,
 			continue;
 		}
 
-		destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep);
+		destinations = Find_flag_value(&job.info,DESTINATIONS);
 
 		update_dest = 0;
 
@@ -658,7 +661,7 @@ int Do_control_file( int action, int *sock,
 
 		DEBUGFC(DCTRL4){
 			LOGDEBUG("Do_control_file: selected id '%s'", identifier );
-			s = Find_str_value(&job.destination,IDENTIFIER,Value_sep);
+			s = Find_str_value(&job.destination,IDENTIFIER);
 			LOGDEBUG("Do_control_file: update_dest %d, id '%s'", update_dest, s );
 		}
 		
@@ -968,7 +971,7 @@ int Do_control_class( int *sock,
 		goto error;
 	}
 
-	s = Find_str_value(&Spool_control,CLASS,Value_sep);
+	s = Find_str_value(&Spool_control,CLASS);
 
 	if( s ){
 		SNPRINTF( forward, sizeof(forward)) _("classes printed '%s'\n"),
@@ -1067,6 +1070,42 @@ int Do_control_printcap( int *sock )
 	if( s ) free(s); s = 0;
 	if( t ) free(t); t = 0;
 	if( printcap ) free(printcap); printcap = 0;
+	return(0);
+}
+
+
+/***************************************************************************
+ * Do_control_ppd:
+ *  get the PPD file
+ * 1. get the ppd file name
+ * 2. if no ppdfile, write nothint
+ ***************************************************************************/
+
+int Do_control_ppd( int *sock )
+{
+	char *file = Ppd_file_DYN;
+	char buffer[LARGEBUFFER];
+	int fd, count;
+	struct stat statb;			/* status of file */
+
+	/* get the spool entries */
+
+	if( !ISNULL(file) ){
+		if( (fd = Checkread( file, &statb )) < 0 ){
+			SNPRINTF(buffer, sizeof(buffer)) "%s: cannot open '%s' - '%s'\n",
+				Printer_DYN, file, Errormsg(errno) );
+			Write_fd_str( *sock, buffer );
+		} else {
+			while( (count = ok_read(fd, buffer, sizeof(buffer)-1)) > 0 ){
+				if( Write_fd_len( *sock, buffer, count ) < 0 ) cleanup(0);
+			}
+			if( count < 0 ){
+				SNPRINTF(buffer, sizeof(buffer)) "%s: error reading '%s' - '%s'\n",
+					Printer_DYN, file, Errormsg(errno) );
+				if( Write_fd_str( *sock, buffer ) < 0 ) cleanup(0);
+			}
+		}
+	}
 	return(0);
 }
 

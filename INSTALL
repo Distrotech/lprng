@@ -6,17 +6,38 @@ SUPER EXPRESS INSTALLATION FOR TERMINALLY IMPATIENT SYSADMINS
 
 The "STANDARD configuration" is the most common configuration for UNIX/LINUX
   systems:
-  - /etc/printcap, /etc/lpd.conf, /etc/lpd.perms configuration files
+  - /etc/printcap, /etc/lpd/lpd.conf, /etc/lpd/lpd.perms configuration files.
+    (Note: the new suggested file system hierarchy puts configuration files
+    in a subdirectory such as /etc/lpd.  However, if /etc/printcap is put
+    in /etc/lpd/printcap,  this breaks a huge number of legacy systems.)
   - executables in /usr/bin, /usr/sbin
   - you do not need any include files from /usr/local/include
     or libraries from /usr/local/lib
   - no Kerberos support
 
-  ./configure --prefix=/usr --sysconfdir=/etc
-  make clean all
-  (as root):
-     make install
-     checkpc -f
+   Here is the contents of the STANDARD_configuration file:
+    #!/bin/sh
+	set -x
+	if [ -d /usr/share/man ] ; then
+		mandir="--mandir=/usr/share/man"
+	fi
+	sh ./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared \
+	 --disable-kerberos --enable-ssl --enable-force_localhost \
+
+  You can simply do:
+     sh STANDARD_configuration
+     make clean all
+     (as root):
+       make install
+       checkpc -f
+
+  If you want to install LPRng in parallel with your existing printing system,
+  do:
+     configure;
+     make clean all
+     (as root):
+       make install
+       checkpc -f
 
 CAVEATS and WARNINGS:
 
@@ -183,11 +204,14 @@ CONFIGURATION
 
   STANDARD OR HISTORICALLY COMPATIBLE FILE LOCATIONS:
      ./configure --prefix=/usr --sysconfdir=/etc
-     i.e. - /etc/printcap, /etc/lpd.conf, /etc/lpd.perms
-            /usr/local/bin/{lpr, lprm, ... }
-            /usr/local/sbin/{lpd, checkpc, lpc ... }
-            /usr/local/lib/{liblpr.so, liblpr.a, ... }
-            /usr/local/libexec/filters/{lpf, banner, etc }
+     i.e. - /etc/printcap, /etc/lpd/lpd.conf, /etc/lpd/lpd.perms
+            /usr/bin/{lpr, lprm, ... }
+            /usr/sbin/{lpd, checkpc, lpc ... }
+            /usr/lib/{liblpr.so, liblpr.a, ... }
+            /usr/libexec/filters/{lpf, banner, etc }
+     NOTE: see the STANDARD_configuration file in the LPRng distribution.
+     WARNING: the classic location of lpd.conf and lpd.perms was in
+     /etc; this is now /etc/lpd/.
 
 CONFIGURATION OPTIONS
 
@@ -195,62 +219,89 @@ CONFIGURATION OPTIONS
     more you can use:
 
      COMPILATION:
+  Environment variables (also can be on command line):
+  CC=          C compiler command
+  CFLAGS=      C compiler flags
+  LDFLAGS=     linker flags, e.g. -L<lib dir> if you have libraries in a
+              nonstandard directory <lib dir>
+  CPPFLAGS=    C/C++ preprocessor flags, e.g. -I<include dir> if you have
+              headers in a nonstandard directory <include dir>
+  CPP=         C preprocessor
 
-  --with-cc=COMPILER      select compiler to use
-  --with-linker=LINKER    select linker to use
-  --with-ldopts=LDFLAGS   linker command line options
-  --with-cppopts=CPPFLAGS compiler preprocessor command line options
-  --with-ccopts=CFLAGS    compiler command line options
-                          (use cppopts unless strictly for compiler)
-  --disable-strip         do not strip binaries
-  --enable-shared[=PKGS]  build shared libraries [default=yes]
-  --enable-static[=PKGS]  build static libraries [default=yes]
-  --enable-fast-install[=PKGS]  optimize for fast installation [default=yes]
-  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
-  --disable-libtool-lock  avoid locking (might break parallel builds)
-  --with-pic              try to use only PIC/non-PIC objects [default=use both]
-  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
 
-     FILE LOCATIONS:
+	Fine tuning of the installation directories:
+	  --bindir=DIR           user executables [EPREFIX/bin]
+	  --sbindir=DIR          system admin executables [EPREFIX/sbin]
+	  --libexecdir=DIR       program executables [EPREFIX/libexec]
+	  --datadir=DIR          read-only architecture-independent data [PREFIX/share]
+	  --sysconfdir=DIR       read-only single-machine data [PREFIX/etc]
+	  --sharedstatedir=DIR   modifiable architecture-independent data [PREFIX/com]
+	  --localstatedir=DIR    modifiable single-machine data [PREFIX/var]
+	  --libdir=DIR           object code libraries [EPREFIX/lib]
+	  --includedir=DIR       C header files [PREFIX/include]
+	  --oldincludedir=DIR    C header files for non-gcc [/usr/include]
+	  --infodir=DIR          info documentation [PREFIX/info]
+	  --mandir=DIR           man documentation [PREFIX/man]
+	  --with-config_subdir=CONFIG_SUBDIR configuration subdirectory (default 'lpd')
+	  --with-lpddir=DIR                 lpd executable directory (default \${sbindir})
+	  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf)
+	  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd/lpd.perms)
+	  --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)
+	  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap)
+	  --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
+										   use 'no' to disable installation and lpd startup
+	  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd
+	  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib
+	  --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin
+	  --with-localedir=PATH   specify locale information directory
 
-  --with-lpddir=DIR           lpd executable directory (default ${sbindir})
-  --with-lpd_conf_path=PATH   lpd.conf location (default: ${sysconfdir}/lpd.conf)
-  --with-lpd_perms_path=PATH  lpd.perms location (default: ${sysconfdir}/lpd.perms)
-  --with-printcap_path=PATH   printcap location (default ${sysconfdir}/printcap)
-  --with-lpd_printcap_path=PATH lpd_printcap location (default- not used )
-  --with-lockfile=PATH        lockfile PATH, default /var/run/lpd
-  --with-ld_library_path=PATH  subprocess LD_LIBRARY_PATH environment variable
-                              (default: /usr/lib:/usr/local/lib)
-  --with-filter_path=PATH     subprocess PATH environment variable
-                              (default: /usr/bin:/usr/local/bin)
-  --with-filterdir=DIR        filter directory (default ${libexecdir}/filters)
-  --with-unix_socket_path=DIR         unix socket path (default /dev/lprng)
+  OPERATIONAL 
 
-     OPERATION:
+	  --disable-setuid                  do not install client executables setuid root
+	  --enable-priv_ports               require connections from privileged ports
+	  --disable-force_localhost         disable force_localhost default
+	  --disable-require_configfiles     client programs require lpd.conf, printcap
+	  --enable-kerberos                 enable kerberos support
+	  --enable-mit_kerberos4            enable MIT Kerberos 4 support
+	  --disable-kerberos_checks         disable kerberos library location and checking for support
+	  --disable-werror                  disable -Werror compile flag
+	  --disable-strip                   disable stripping binaries by default
+	  --enable-shared=PKGS  build shared libraries default=no
+	  --enable-static=PKGS  build static libraries default=yes
+	  --enable-fast-install=PKGS  optimize for fast installation default=yes
+	  --disable-libtool-lock  avoid locking (might break parallel builds)
+	  --disable-rpath         do not hardcode runtime library paths
+	  --enable-nls           use Native Language Support
+	  --enable-tcpwrappers             use tcp wrappers (-lwrap)
+	  --disable-ssl                 disable ssl support
 
-  --disable-setuid        disable setuid root client and server executables
-  --disable-unix_socket       use unix socket for localhost connections
-  --enable-priv_ports         require connections to be from privileged ports
-  --disable-force_localhost   disable force_localhost default
-  --disable-require_configfiles  client programs will not require lpd.conf
-  --enable-kerberos            enable kerberos support
-  --enable-mit_kerberos4       enable MIT Kerberos 4 support
-  --disable-kerberos_checks    disable kerberos library location and checking for support
-  --with-userid=NAME          lpd runs as this userid, default daemon
-  --with-groupid=NAME         lpd runs as this userid, default daemon
-  --with-chooser_routine=NAME load balance queue chooser routine name in user object file
-  --with-order_routine=NAME   queue order routine name in user object file
-  --with-user_objs=NAME       user specified object file
-  --with-user_include=NAME    include file with function prototypes for user object file
+	  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)
+	  --with-userid=NAME                run LPRng software as this userid, default daemon
+	  --with-groupid=NAME               run LPRng software as this groupid, default daemon
+	  --with-done_jobs=N                retain last N job status, default 1
+	  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry
+	  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file
+	  --with-order_routine=NAME         queue order routine name in user object file
+	  --with-user_objs=NAME             user specified object file
+	  --with-user_include=NAME          include file with function prototypes for user object file
+	  --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)
+	  --with-gnu-ld           assume the C compiler uses GNU ld default=no
+	  --with-pic              try to use only PIC/non-PIC objects default=use both
+	  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
+	  --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+	  --with-libintl-prefix=DIR  search for libintl in DIR/include and DIR/lib
+	  --without-libintl-prefix     don't search for libintl in includedir and libdir
+	  --with-openssl=DIR          root location for OpenSSL
+	  --with-openssl-inc        OpenSSL include files
+	  --with-openssl-lib        OpenSSL library files
+	  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt)
+	  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key)
+	  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs/)
+	  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl)
+	  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt)
+	  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd)
 
-  CREATE AND INSTALL EXECUTABLES AND LIBRARIES
-    ./configure [ configuration options ]
-    make clean all;
-    su   # you must do the following commands as root
-    make install
-    ./src/checkpc -f
-
-  STARTING LPD SERVER AND CHECKING CONFIGURATION
+STARTING LPD SERVER AND CHECKING CONFIGURATION
 
     Use the following command to check to see that
     the LPD server is running on the localhost:
@@ -299,7 +350,7 @@ PRINTCAP FILES:
 
 Read the comments in the /etc/printcap.sample for details on
 how to set up a simple set of printcap entries.  You may also
-want to read the LPRng Reference Manual and the Printing Cookbook
+want to read the Printing Cookbook and the LPRng Reference Manual
 documentation.
 
 SECURITY WARNINGS:
@@ -334,7 +385,7 @@ SECURITY WARNINGS:
        (configure --disable-setuid)
     2. All clients communicate directly to the server on the localhost.
        (i.e. - force_localhost is used)
-    3. The server is started are system initialization time by root
+    3. The server is started at system initialization time by root
        and it is the only program that opens a connection to a
        remote print spooler.  This now reduces the problem
        to a much more manageable level.

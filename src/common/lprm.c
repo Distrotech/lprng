@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lprm.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 /***************************************************************************
@@ -264,7 +264,8 @@ void Do_removal(char **argv)
 		argv, Connect_timeout_DYN, Send_query_rw_timeout_DYN, 1 );
 	if( fd > 0 ){
 		shutdown( fd, 1 );
-		while( (n = read(fd, msg, sizeof(msg)) ) > 0 ){
+		while( (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN,
+			fd, msg, sizeof(msg)) ) > 0 ){
 			if( write(1,msg,n) < 0 ) cleanup(0);
 		}
 		close(fd);
@@ -310,7 +311,7 @@ void Get_parms(int argc, char *argv[] )
 			name = argv[argc-1];
 			Get_all_printcap_entries();
 			if( safestrcasecmp(name,ALL) ){
-				if( Find_exists_value( &All_line_list, name, Value_sep ) ){
+				if( Find_exists_value( &All_line_list, name, Hash_value_sep ) ){
 					Set_DYN(&Printer_DYN,name);
 					argv[argc-1] = 0;
 				}

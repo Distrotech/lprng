@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_status.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -127,9 +127,9 @@ int Job_status( int *sock, char *input )
 		Split(&listv,Force_lpq_status_DYN,";",0,0,0,0,0,0);
 		for(i = 0; i < listv.count; ++i ){
 			s = listv.list[i];
-			if( (t = safestrpbrk(s,File_sep)) ) *t++ = 0;
+			if( (t = safestrpbrk(s,Hash_value_sep)) ) *t++ = 0;
 			Free_line_list(&l);
-			Split(&l,t,Value_sep,0,0,0,0,0,0);
+			Split(&l,t,File_sep,0,0,0,0,0,0);
 			DEBUGF(DLPQ1)("Job_status: Force_lpq_status '%s'='%s'", s,t);
 			if( Match_ipaddr_value( &l, &RemoteHost_IP ) == 0 ){
 				DEBUGF(DLPQ1)("Job_status: forcing status '%s'", s);
@@ -198,10 +198,10 @@ int Job_status( int *sock, char *input )
 	if( l.count && (s = l.list[0]) && s[0] == '-' ){
 		DEBUGF(DLPQ1)("Job_status: arg '%s'", s );
 		Free_line_list(&listv);
-		Split(&listv,s+1,Arg_sep,1,Value_sep,1,1,0,0);
+		Split(&listv,s+1,Arg_sep,1,Hash_value_sep,1,1,0,0);
 		Remove_line_list( &l, 0 );
 		DEBUGFC(DLPQ1)Dump_line_list( "Job_status: args", &listv );
-		if( (n = Find_flag_value(&listv,"lines",Value_sep)) ) status_lines = n;
+		if( (n = Find_flag_value(&listv,"lines")) ) status_lines = n;
 		DEBUGF(DLPQ1)("Job_status: status_lines '%d'", status_lines );
 		Free_line_list(&listv);
 	}
@@ -314,7 +314,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	db = Debug;
 	dbflag = DbgFlag;
-	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	s = Find_str_value(&Spool_control,DEBUG);
 	if( !s ) s = New_debug_DYN;
 	Parse_debug( s, 0 );
 	if( !(DLPQMASK & DbgFlag) ){
@@ -341,10 +341,10 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	DEBUGF(DLPQ3)("Get_queue_status: sock fd %d, Setup_printer status %d '%s'", *sock, status, error );
 	/* set up status */
-	if( Find_exists_value(done_list,Printer_DYN,Value_sep ) ){
+	if( Find_exists_value(done_list,Printer_DYN,Hash_value_sep ) ){
 		return;
 	}
-	Add_line_list(done_list,Printer_DYN,Value_sep,1,1);
+	Add_line_list(done_list,Printer_DYN,Hash_value_sep,1,1);
 
 	/* check for permissions */
 
@@ -406,8 +406,8 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		DEBUGF(DLPQ3)("Get_queue_status: found in cache '%s'", file );
 		fd = -1;
 		if( file ){
-			Split(&cache_info,file,Arg_sep,1,Value_sep,1,1,0,0);
-			file = Find_str_value(&cache_info,FILENAMES,Value_sep);
+			Split(&cache_info,file,Arg_sep,1,Hash_value_sep,1,1,0,0);
+			file = Find_str_value(&cache_info,FILENAMES);
 		}
 		DEBUGFC(DLPQ3)Dump_line_list("Get_queue_status: cache_info", &cache_info );
 		if( file && (fd = Checkread( file, &statb )) > 0 ){
@@ -423,7 +423,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			if( Queue_status_file_DYN && stat(Queue_status_file_DYN,&statb) == 0 ){
 				modified = statb.st_mtime;
 			}
-			timestamp = Find_flag_value(&cache_info,QUEUE_STATUS_FILE,Value_sep);
+			timestamp = Find_flag_value(&cache_info,QUEUE_STATUS_FILE);
 			delta = modified - timestamp;
 			DEBUGF(DLPQ3)("Get_queue_status: queue status '%s', modified %lx, timestamp %lx, delta %d",
 				Queue_status_file_DYN, (long)(modified), (long)(timestamp), delta );
@@ -437,7 +437,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			if( Status_file_DYN && stat(Status_file_DYN,&statb) == 0 ){
 				modified = statb.st_mtime;
 			}
-			timestamp = Find_flag_value(&cache_info,PRSTATUS,Value_sep);
+			timestamp = Find_flag_value(&cache_info,PRSTATUS);
 			delta = modified - timestamp;
 			DEBUGF(DLPQ3)("Get_queue_status: pr status '%s', modified %lx, timestamp %lx, delta %d",
 				Status_file_DYN, (long)(modified), (long)(timestamp), delta );
@@ -450,7 +450,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		if( fd > 0 ){
 			DEBUGF(DLPQ3)("Get_queue_status: reading cached status from fd '%d'", fd );
 			/* We can read the status from the cached data */
-			while( (ix = read( fd, buffer, sizeof(buffer)-1 )) > 0 ){
+			while( (ix = ok_read( fd, buffer, sizeof(buffer)-1 )) > 0 ){
 				if( write( *sock, buffer, ix ) < 0 ){
 					cleanup(0);
 				}
@@ -554,38 +554,38 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		error[0] = 0;
 		msg[0] = 0;
 		nodest = 0;
-		s = Find_str_value(&job.info,PRSTATUS,Value_sep);
+		s = Find_str_value(&job.info,PRSTATUS);
 		if( s == 0 ){
 			SNPRINTF(number,sizeof(number))"%d",count+1);
 		} else {
 			SNPRINTF(number,sizeof(number))"%s",s);
 		}
-		identifier = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+		identifier = Find_str_value(&job.info,IDENTIFIER);
 		if( identifier == 0 ){
-			identifier = Find_str_value(&job.info,LOGNAME,Value_sep);
+			identifier = Find_str_value(&job.info,LOGNAME);
 		}
 		if( identifier == 0 ){
 			identifier = "???";
 		}
-		priority = Find_str_value(&job.info,PRIORITY,Value_sep);
-		class = Find_str_value(&job.info,CLASS,Value_sep);
-		jobname = Find_str_value(&job.info,JOBNAME,Value_sep);
-		filenames = Find_str_value(&job.info,FILENAMES,Value_sep);
-		jobnumber = Find_decimal_value(&job.info,NUMBER,Value_sep);
-		joberror = Find_str_value(&job.info,ERROR,Value_sep);
-		jobsize = Find_double_value(&job.info,SIZE,Value_sep);
-		job_time = Find_str_value(&job.info,JOB_TIME,Value_sep );
-		destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep);
+		priority = Find_str_value(&job.info,PRIORITY);
+		class = Find_str_value(&job.info,CLASS);
+		jobname = Find_str_value(&job.info,JOBNAME);
+		filenames = Find_str_value(&job.info,FILENAMES);
+		jobnumber = Find_decimal_value(&job.info,NUMBER);
+		joberror = Find_str_value(&job.info,ERROR);
+		jobsize = Find_double_value(&job.info,SIZE);
+		job_time = Find_str_value(&job.info,JOB_TIME );
+		destinations = Find_flag_value(&job.info,DESTINATIONS);
 
-		openname = Find_str_value(&job.info,OPENNAME,Value_sep);
+		openname = Find_str_value(&job.info,OPENNAME);
 		if( !openname ){
-			openname = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+			openname = Find_str_value(&job.info,TRANSFERNAME);
 		}
 		if( !openname ){
 			DEBUGF(DLPQ4)("Get_queue_status: no openname or transfername");
 			continue;
 		}
-		hf_name = Find_str_value(&job.info,HF_NAME,Value_sep);
+		hf_name = Find_str_value(&job.info,HF_NAME);
 		if( !hf_name ){
 			DEBUGF(DLPQ4)("Get_queue_status: no hf_name");
 			continue;
@@ -652,8 +652,9 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 				len = safestrlen(msg);
 				SNPRINTF(msg+len,sizeof(msg)-len)"%-s",jobname?jobname:filenames);
 
-				DEBUGF(DLPQ3)("Get_queue_status: jobtime '%s'", job_time );
 				job_time = Time_str(1, Convert_to_time_t(job_time));
+				DEBUGF(DLPQ3)("Get_queue_status: jobtime '%s', full_time %d",
+					job_time,Full_time_DYN );
 				if( !Full_time_DYN && (s = safestrchr(job_time,'.')) ) *s = 0;
 
 				{
@@ -705,16 +706,16 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 					DEBUGFC(DLPQ3)Dump_line_list("Get_queue_status: destination",
 						&job.destination);
 					d_error =
-						Find_str_value(&job.destination,ERROR,Value_sep);
+						Find_str_value(&job.destination,ERROR);
 					d_dest =
-						Find_str_value(&job.destination,DEST,Value_sep);
+						Find_str_value(&job.destination,DEST);
 					d_copies = 
-						Find_flag_value(&job.destination,COPIES,Value_sep);
+						Find_flag_value(&job.destination,COPIES);
 					d_copy_done = 
-						Find_flag_value(&job.destination,COPY_DONE,Value_sep);
+						Find_flag_value(&job.destination,COPY_DONE);
 					d_identifier =
-						Find_str_value(&job.destination,IDENTIFIER,Value_sep);
-					s = Find_str_value(&job.destination, PRSTATUS,Value_sep);
+						Find_str_value(&job.destination,IDENTIFIER);
+					s = Find_str_value(&job.destination, PRSTATUS);
 					if( !s ) s = "";
 					SNPRINTF(number, sizeof(number))" - %-8s", s );
 					SNPRINTF( msg, sizeof(msg))
@@ -945,7 +946,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		}
 	}
 
-	if( (s = Find_str_value( &Spool_control,MSG,Value_sep )) ){
+	if( (s = Find_str_value( &Spool_control,MSG )) ){
 		len = safestrlen( header );
 		if( displayformat == REQ_VERBOSE ){
 			SNPRINTF( header+len, sizeof(header)-len)
@@ -1064,7 +1065,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			LOGERR_DIE(LOG_INFO)"Get_queue_status: lseek of '%s' failed",
 				tempfile );
 		}
-		while( (ix = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+		while( (ix = ok_read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 			if( write( *sock, buffer, ix ) < 0 ){
 				break;
 			}
@@ -1081,8 +1082,8 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			DEBUGF(DLPQ3)("Get_queue_status: [%d] '%s'", ix, s );
 			Free_line_list(&cache_info);
 			if( s && (t = strchr(s,'=')) ){
-				Split(&cache_info,t+1,Arg_sep,1,Value_sep,1,1,0,0);
-				if( (file = Find_str_value(&cache_info,FILENAMES,Value_sep)) ){
+				Split(&cache_info,t+1,Arg_sep,1,Hash_value_sep,1,1,0,0);
+				if( (file = Find_str_value(&cache_info,FILENAMES)) ){
 					/* we need to get the age of the file */
 					if( stat( file,&statb ) ){
 						/* the file is not there */
@@ -1228,7 +1229,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 					char *tempfile;
 					/* shutdown( fd, 1 ); */
 					tempfd = Make_temp_fd( &tempfile );
-					while( (nx = read(fd,msg,sizeof(msg))) > 0 ){
+					while( (nx = Read_fd_len_timeout(Send_query_rw_timeout_DYN, fd,msg,sizeof(msg))) > 0 ){
 						if( Write_fd_len(tempfd,msg,nx) < 0 ) cleanup(0);
 					}
 					close(fd); fd = -1;
@@ -1399,7 +1400,7 @@ void Get_local_or_remote_status( struct line_list *tokens, int *sock,
 		if( fd >= 0 ){
 			/* shutdown( fd, 1 ); */
 			tempfd = Make_temp_fd( 0 );
-			while( (n = read(fd,msg,sizeof(msg))) > 0 ){
+			while( (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN, fd,msg,sizeof(msg))) > 0 ){
 				if( Write_fd_len(tempfd,msg,n) < 0 ) cleanup(0);
 			}
 			close(fd); fd = -1;

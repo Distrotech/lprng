@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendmail.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: sendmail.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -35,9 +35,9 @@ void Sendmail_to_user( int retval, struct job *job )
 	 * check to see if the user really wanted
 	 * "your file was printed ok" message
 	 */
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
-	mailname = Find_str_value(&job->info,MAILNAME,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	if(!id) id = Find_str_value(&job->info,TRANSFERNAME);
+	mailname = Find_str_value(&job->info,MAILNAME);
 	opname = Mail_operator_on_error_DYN;
 	DEBUG2("Sendmail_to_user: user '%s', operator '%s', sendmail '%s'",
 		mailname, opname, Sendmail_DYN );
@@ -128,7 +128,7 @@ void Sendmail_to_user( int retval, struct job *job )
 		Errorcode = JABORT;
 		LOGERR_DIE(LOG_ERR) "Sendmail_to_user: seek failed");
 	}
-	n = Filter_file( tempfd, -1, "MAIL", Sendmail_DYN, 0, job, 0, 0 );
+	n = Filter_file( Send_job_rw_timeout_DYN, tempfd, -1, "MAIL", Sendmail_DYN, 0, job, 0, 0 );
 	if( n ){
 		Errorcode = JABORT;
 		LOGERR(LOG_ERR) "Sendmail_to_user: '%s' failed '%s'", Sendmail_DYN, Server_status(n) );

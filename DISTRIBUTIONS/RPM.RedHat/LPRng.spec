@@ -1,6 +1,6 @@
 Summary: The LPRng print spooler.
 Name: LPRng
-Version: 3.7.6
+Version: 3.8.23
 Release: 1
 License: GPL and Artistic
 Group: System Environment/Daemons
@@ -65,48 +65,28 @@ make MAKEPACKAGE=YES
 rm -rf %{buildroot}
 
 # Installation of locales is broken... Work around it!
-#perl -pi -e "s,prefix =.*,prefix = ${RPM_BUILD_ROOT}%{_prefix},g" po/Makefile
-#perl -pi -e "s,datadir =.*,datadir = ${RPM_BUILD_ROOT}%{_prefix}/share,g" po/Makefile
-#perl -pi -e "s,localedir =.*,localedir = ${RPM_BUILD_ROOT}%{_prefix}/share/locale,g" po/Makefile
-#perl -pi -e "s,gettextsrcdir =.*,gettextsrcdir = ${RPM_BUILD_ROOT}%{_prefix}/share/gettext/po,g" po/Makefile
 
 make SUID_ROOT_PERMS=" 04755" DESTDIR=${RPM_BUILD_ROOT} MAKEPACKAGE=YES mandir=%{_mandir} install
-%__cp src/monitor ${RPM_BUILD_ROOT}%{_prefix}/sbin/monitor
 
 # install init script
-#mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
-#install -m755 %{SOURCE1} %{buildroot}%{_sysconfdir}/rc.d/init.d/lpd
 mkdir -p ${RPM_BUILD_ROOT}%{_sysconfdir}/rc.d/init.d
-install -m755 %{SOURCE1} ${RPM_BUILD_ROOT}%{_sysconfdir}/rc.d/init.d/lpd
+# install -m755 %{_sysconfdir}/lpd/lpd.init ${RPM_BUILD_ROOT}%{_sysconfdir}/rc.d/init.d/lpd
 
 %clean
 rm -rf %{buildroot}
 
 %post
 /sbin/chkconfig --add lpd
-if [ -w /etc/printcap ] ; then
-  TMP1=`mktemp /etc/printcap.XXXXXX`
-  gawk '
-    BEGIN { first = 1; cont = 0; last = "" }
-    /^[:space:]*#/      { if(cont) sub("\\\\$", "", last)}
-    { if(first == 0) print last }
-    { first = 0 }
-    { last = $0 }
-    { cont = 0 }
-    /\\$/ { cont = 1 }
-    END {sub("\\\\$", "", last); print last}
-  ' /etc/printcap > ${TMP1} && cat ${TMP1} > /etc/printcap && rm -f ${TMP1}
-fi
 
 %preun
 if [ "$1" = 0 ]; then
-  %{_sysconfdir}/rc.d/init.d/lpd stop >/dev/null 2>&1
+  /sbin/service lpd stop
   /sbin/chkconfig --del lpd
 fi
 
 %postun
 if [ "$1" -ge "1" ]; then
-  %{_sysconfdir}/rc.d/init.d/lpd condrestart >/dev/null 2>&1
+  /sbin/service lpd start >/dev/null 2>&1
 fi
 
 %files
@@ -116,6 +96,8 @@ fi
 %config %{_sysconfdir}/printcap
 %attr(644,root,root) %{_sysconfdir}/lpd/lpd.conf.sample
 %attr(644,root,root) %{_sysconfdir}/lpd/lpd.perms.sample
+%attr(644,root,root) %{_sysconfdir}/lpd/lpd
+%attr(644,root,root) %{_sysconfdir}/lpd/lpd.sample
 %attr(644,root,root) %{_sysconfdir}/printcap.sample
 %attr(755,root,root) %{_libdir}/*
 %config %{_sysconfdir}/rc.d/init.d/lpd
@@ -130,16 +112,20 @@ fi
 %attr(755,root,root)  %{_sbindir}/lprng_certs
 %attr(755,root,root)  %{_sbindir}/lprng_index_certs
 %attr(755,root,root)  %{_sbindir}/checkpc
-%attr(755,root,root)  %{_sbindir}/monitor
 %attr(755,root,root)  /usr/libexec/filters/*
 %dir /usr/libexec/filters
 %{_mandir}/*/*
 %attr(755,root,root) %{_prefix}/share/locale/*
 %doc CHANGES CONTRIBUTORS COPYRIGHT INSTALL LICENSE 
 %doc README* VERSION Y2KCompliance
-%doc DOCS/*.html DOCS/*.jpg DOCS/*.pdf PrintingCookbook/HTML/* PrintingCookbook/PDF/*
+%doc DOCS
 
 %changelog
+* Thu Nov  13 2003 Patrick Powell <papowell@astart.com> 3.8.23-1
+- updated everything to fit the new sysconfdir standards
+- the startup script is copied to sysconfdir/lpd/lpd.init as part of the
+- normal install now
+
 * Tue Aug 21 2001 Patrick Powell <papowell@astart.com> 3.7.5-1
 - new release for 3.7.5
 - Note the aclocal, autoconf, etc. stuff added to make the various

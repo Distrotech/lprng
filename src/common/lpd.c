@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd.c,v 1.61 2003/11/14 02:32:54 papowell Exp $";
 
 
 #include "lp.h"
@@ -34,7 +34,8 @@
 
 #include "lpd.h"
 
- char* Lpd_listen_port_arg;	/* command line listent port value */
+ char* Lpd_listen_port_arg;	/* command line listen port value */
+ char* Ipp_listen_port_arg;	/* command line listen port value */
  char* Lpd_port_arg;	/* command line port value */
  char* Lpd_socket_arg; /* command line unix socket value */
 
@@ -67,7 +68,7 @@ int main(int argc, char *argv[], char *envp[])
 	int sock = 0;		/* socket for listen */
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
-	int max_socks;		/* maximum number of sockets */
+	int max_socks = 0;		/* maximum number of sockets */
 	int lockfd;	/* the lock file descriptor */
 	int err, newsock;
  	time_t last_time;	/* time that last Start_all was done */
@@ -82,6 +83,7 @@ int main(int argc, char *argv[], char *envp[])
 	struct sockaddr sinaddr;
 	int first_scan = 1;
 	int unix_sock = 0;
+	int ipp_sock = 0;
 	int fd_available;
 
 	Init_line_list( &args );
@@ -211,6 +213,20 @@ int main(int argc, char *argv[], char *envp[])
 				Errorcode = 1;
 				DIEMSG("Cannot bind to lpd port '%s'", s);
 			}
+			if( sock >= max_socks ) max_socks = sock;
+		}
+
+		s = Ipp_listen_port_arg;
+		if( ISNULL(s) ) s = Ipp_listen_port_DYN;
+		if( ISNULL(s) ) s = Ipp_port_DYN;
+		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
+			ipp_sock = Link_listen(s);
+			DEBUG1("lpd: listening socket fd %d",ipp_sock);
+			if( ipp_sock < 0 ){
+				Errorcode = 1;
+				DIEMSG("Cannot bind to lpd port '%s'", s);
+			}
+			if( ipp_sock >= max_socks ) max_socks = ipp_sock;
 		}
 
 		s = Lpd_socket_arg;
@@ -222,6 +238,7 @@ int main(int argc, char *argv[], char *envp[])
 				Errorcode = 1;
 				DIEMSG("Cannot bind to UNIX socket '%s'", s );
 			}
+			if( unix_sock >= max_socks ) max_socks = unix_sock;
 		}
 	}
 
@@ -319,6 +336,7 @@ int main(int argc, char *argv[], char *envp[])
 	FD_ZERO( &defreadfds );
 	if( sock > 0 ) FD_SET( sock, &defreadfds );
 	if( unix_sock > 0 ) FD_SET( unix_sock, &defreadfds );
+	if( ipp_sock > 0 ) FD_SET( ipp_sock, &defreadfds );
 	FD_SET( request_pipe[0], &defreadfds );
 
 	/*
@@ -528,11 +546,11 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1( "lpd: not accepting requests" );
 			if( sock > 0 ) FD_CLR( sock, &readfds );
 			if( unix_sock > 0 ) FD_CLR( unix_sock, &readfds );
+			if( ipp_sock > 0 ) FD_CLR( ipp_sock, &readfds );
 			timeval.tv_sec = 10;
 			timeout = &timeval;
 		}
 
-		max_socks = sock+1;
 		if( request_pipe[0] >= max_socks ){
 			max_socks = request_pipe[0]+1;
 		}
@@ -597,103 +615,16 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		}
 		if( sock > 0 && FD_ISSET( sock, &readfds ) ){
-#if defined(HAVE_SOCKLEN_T)
-			socklen_t len;
-#else
-			int len;
-#endif
-			len = sizeof( sinaddr );
-			newsock = accept( sock, &sinaddr, &len );
-			err = errno;
-			DEBUG1("lpd: connection fd %d", newsock );
-			if( newsock > 0 ){
-#if defined(TCPWRAPPERS)
-/*
- * libwrap/tcp_wrappers:
- * draht@suse.de, Mon Jan 28 2002
- */
-
-			    struct request_info wrap_req;
-
-			    request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
-			    fromhost(&wrap_req);
-			    openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
-			    if (hosts_access(&wrap_req)) {
-				/* We accept. */
-				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
-#endif
-
-				pid = Start_worker( "server", &args, newsock );
-				if( pid < 0 ){
-					LOGERR(LOG_INFO) _("lpd: fork() failed") );
-					Write_fd_str( newsock, "\002Server load too high\n");
-				} else {
-					DEBUG1( "lpd: listener pid %d running", pid );
-				}
-#if defined(TCPWRAPPERS)
-			    } else { /* we do not accept the connection: */
-				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
-			    }
-/* 
- * end libwrap
- */
-#endif
-				close( newsock );
-				Free_line_list(&args);
-			} else {
-				errno = err;
-				LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
-			}
+			DEBUG1("lpd: accept on LPD socket");
+			Accept_connection( sock, 0, 0 );
 		}
 		if( unix_sock > 0 && FD_ISSET( unix_sock, &readfds ) ){
-#if defined(HAVE_SOCKLEN_T)
-			socklen_t len;
-#else
-			int len;
-#endif
-			len = sizeof( sinaddr );
-			newsock = accept( unix_sock, &sinaddr, &len );
-			err = errno;
-			DEBUG1("lpd: unix socket connection fd %d", newsock );
-			if( newsock > 0 ){
-#if defined(TCPWRAPPERS)
-/*
- * libwrap/tcp_wrappers:
- * draht@suse.de, Mon Jan 28 2002
- */
-
-			    struct request_info wrap_req;
-
-			    request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
-			    fromhost(&wrap_req);
-			    openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
-			    if (hosts_access(&wrap_req)) {
-				/* We accept. */
-				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
-#endif
-
-				pid = Start_worker( "server", &args, newsock );
-				if( pid < 0 ){
-					LOGERR(LOG_INFO) _("lpd: fork() failed") );
-					Write_fd_str( newsock, "\002Server load too high\n");
-				} else {
-					DEBUG1( "lpd: listener pid %d running", pid );
-				}
-#if defined(TCPWRAPPERS)
-			    } else { /* we do not accept the connection: */
-				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
-			    }
-/* 
- * end libwrap
- */
-#endif
-
-				close( newsock );
-				Free_line_list(&args);
-			} else {
-				errno = err;
-				LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
-			}
+			DEBUG1("lpd: accept on UNIX socket");
+			Accept_connection( unix_sock, 0, 1 );
+		}
+		if( ipp_sock > 0 && FD_ISSET( ipp_sock, &readfds ) ){
+			DEBUG1("lpd: accept on IPP socket");
+			Accept_connection( ipp_sock, 0, 0 );
 		}
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
@@ -850,7 +781,7 @@ int Read_server_status( int fd )
 			fd = 0;
 			break;
 		}
-		status = read(fd,buffer,sizeof(buffer)-1);
+		status = ok_read(fd,buffer,sizeof(buffer)-1);
 		DEBUG1( "Read_server_status: read status %d", status );
 		if( status <= 0 ){
 			close(fd);
@@ -942,7 +873,68 @@ void Get_parms(int argc, char *argv[] )
 	}
 }
 
+
 /*
+ * Accept_connection
+ *   - accept the connection and fork the child to handle it
+ */
+void Accept_connection( int sock, int lpd_socket, int unix_socket )
+{ 
+	struct line_list args;
+	struct sockaddr sinaddr;
+	int newsock, err, pid;
+#if defined(HAVE_SOCKLEN_T)
+	socklen_t len;
+#else
+	int len;
+#endif
+	Init_line_list(&args);
+	len = sizeof( sinaddr );
+	newsock = accept( sock, &sinaddr, &len );
+	err = errno;
+	DEBUG1("Accept_connection: connection fd %d", newsock );
+	if( newsock > 0 ){
+#if defined(TCPWRAPPERS)
+/*
+* libwrap/tcp_wrappers:
+* draht@suse.de, Mon Jan 28 2002
+*/
+		if( !unix_socket ){
+			struct request_info wrap_req;
+
+			request_init(&wrap_req, RQ_DAEMON, "lpd" , RQ_FILE, newsock, NULL);
+			fromhost(&wrap_req);
+			openlog("lpd", LOG_PID, LOG_LPR); /* we syslog(3) initialized, no closelog(). */
+			if (hosts_access(&wrap_req)) {
+				/* We accept. */
+				syslog(LOG_INFO, "connection from %s", eval_client(&wrap_req));
+			} else {
+				syslog(LOG_WARNING, "connection refused from %s", eval_client(&wrap_req));
+				close( newsock );
+				return;
+			}
+		}
+#endif
+
+		pid = Start_worker( "server", &args, newsock );
+		if( pid < 0 ){
+			LOGERR(LOG_INFO) _("lpd: fork() failed") );
+			if( lpd_socket ){
+				Write_fd_str( newsock, "\002Server load too high\n");
+			}
+		} else {
+			DEBUG1( "lpd: listener pid %d running", pid );
+		}
+		close( newsock );
+		Free_line_list(&args);
+	} else {
+		errno = err;
+		LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
+	}
+}
+
+/*
+ * int Start_all( int first_scan, int *start_fd )
  * returns the pid of the process doing the scanning
  */
  

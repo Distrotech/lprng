@@ -1,3 +1,157 @@
+Version LPRng-3.8.23 - Wed Nov 12 13:32:02 PST 2003
+
+   I did not document that the default locations of the lpd.conf and lpd.perms
+   file are now /etc/lpd/lpd.conf and /etc/lpd/lpd.perms
+   This change puts all of the lpd files, except /etc/printcap,  whose location
+   is hardwired into too many places, in the /etc/lpd directory.  You can
+   change this:
+       configure --help
+  --with-config_subdir=CONFIG_SUBDIR configuration subdirectory (default 'lpd')
+  --with-lpddir=DIR                 lpd executable directory (default \${sbindir})
+  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf)
+  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd/lpd.perms)
+  --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)
+  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap)
+  --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
+    
+  Also, the postinstall will now copy the old files to the new locations and
+  issue a warning message.
+
+   Fixed up a very subtle problem with 'chooser' functionality.
+
+     we now have to find out if we really need to call the chooser
+        if we are working and have a single queue, then we do not need to call the chooser
+        if :sv= p1,p2  but none are available then we do not need to call the chooser
+        if :sv == ""   - then we do need to call the chooser
+        if :sv == p1,p2 and at least one is available - then we do need to call the chooser
+
+     Added the 'chooser_scan_queue' flag.   If the flag is 1, then we
+      check all the jobs in the spool queue to see if any can be sent to
+      any destination.  If the flag is 0 (default), then only the first printable
+      job in the queue is checked.  This causes only the first job in the queue
+      to be tested, which is probably the appropriate behaviour for the majority
+      of situations.
+
+  Determined that it was possible to do a denial of service attack on the LPRng system.
+   Added a zillion timeouts for reads/writes to socket/pipe connections.
+    - for 'non-printing' actions, used Send_query_rw_timeout
+    - for 'printing' actions, used Send_job_rw_timeout
+    - on initial connections, use Send_job_rw_timeout, then Connect_timeout,
+       and finally fall back to 10 seconds.
+   While this does not totally eliminate the attack,  it does try to make the LPD
+   server responsive after the timeout periods.  This is better than nothing.
+   Note that there is a problem when you use these timeouts AND you are connecting
+   to a slow printer.
+ 
+   This solves the mystery of the 'hanging lpr processes' on some systems where a
+   connection is made to the lpd server and then nothing is sent so there is no
+   way to timeout things.
+
+  Added a further fallback for missing filters:
+   job format X - filter is :Xf=/filter if present, else
+   filter is :filter=/filter if present, else
+   filter is :if=/filter if present.
+
+  Added --with-config_subdir (=lpd) to allow the $sysconfig/$subdir
+   to be the directory for lpd.conf and lpd.perms files, also SSL
+   files.
+
+  The :ppd=file option now specifies the location of a PPD file.  This
+  is used by foomatic-rip (http://www.linuxprinting.org) to specify
+  options and by ifhp.
+     - checkpc -f checks to see if the file is present and readable
+     - lpc ppd will return the PPD  file contents 
+   We can now integrate lrpng into KDE in a straight forward
+   manner, as the ppd file should be standard.  Also, you can specify
+   a default PPD file in /etc/lpd.conf.  This will be added to the
+   printcap entries shown by lpc printcap and passed to the filters.
+
+  Added a 'pc_entries_required' option that will force the specified
+  printcap entries to be put into the PRINTCAP_ENTRY information if they
+  have a defined value and are not in the printcap entry.  The
+  current (only) value is ppd, but I suspect others might be nice.
+
+  Fixed a bug in the way that the PGP security was implemented.
+   - removed the PGP* environment variables from the default pass
+     list for clients
+   - did sanity checks for PGPPASS, PGPPASSFILE, and PGPPASSFD,
+     and passed only the correct ones.  Also opened the PGPPASSFILE
+     and passed the file descriptor.
+   - made sure that the file descriptor specified in PGPPASSFD was
+     actually connected to the open file.
+   - only passed PGPPASS if running as a client.
+   - on clients, passing the PGPPATH environment value, on server
+     using printcap :pgp_server_pgppath value (if specified).
+   - updated the Reference (AKA LPRng-HOWTO) manual to reflect these
+     changes.
+   In summary, we now use:
+    lp:
+    :pgp_path   - path of the PGP program
+    :pgp_id     - id for clients to use when sending to server
+                - id used by server for decoding client requests
+    :pgp_server_pgppath   - PGPPATH environment variable for server
+    :pgp_server_passphrasefile   - file containing passphrase
+                     (must be absolute path name or is relative
+                      to the spool directory)
+    :pgp_forward_id  - for server to server communications
+                  id of the remote server
+    :pgp_passphrasefile - default client passphrase file
+   For clients, the following environment variables are used:
+    PGPPATH     - location of PGP configuration and key files
+    PGPPASS     - password
+    PGPPASSFD   - file descriptor to file with password
+    PGPPASSFILE   - file with password
+    If PGPASSFD and PGPPASSFILE not defined, then
+      - if PGPPATH defined, look for $PGPPATH/$passphrasefile
+      - if $HOME defined, look in $HOME/.pgp/$passphrasefile
+
+
+   Error in SSL Support discovered by Geoff Greene and patch
+    supplied.
+    (Patch and hard work by: Geoff Greene <ggreene@alum.wpi.edu>)
+
+   Amazing speed of some systems is so fast that jobs complete
+    in less than the resolution of the system clock.  This,
+    needless to say,  has some interesting problems with job
+    order.  Added some sequence numbers as well as time to
+    various places.
+
+   Screwed up the patch sent by Henrik Edlund <henrik@edlund.org>.  It should
+    have been:
+    >     for(i = 0; i < listv.count; ++i ){
+    >         s = listv.list[i];
+    > -       if( (t = safestrpbrk(s,File_sep)) ) *t++ = 0;
+    > +       if( (t = safestrpbrk(s,Value_sep)) ) *t++ = 0;
+    >         Free_line_list(&l);
+    > -       Split(&l,t,Value_sep,0,0,0,0,0,0);
+    > +       Split(&l,t,File_sep,0,0,0,0,0,0);
+    >         DEBUGF(DLPQ1)("Job_status: Force_lpq_status '%s'='%s'", s,t);
+  (Correction by: Henrik Edlund <henrik@edlund.org>)
+
+   Misimplemented Hendriks accounting fixes.
+    -    if( Match_ipaddr_value(&l,&RemoteHost_IP) ){
+    +    if( Match_ipaddr_value(&l,&RemoteHost_IP) == 0 ){
+   Oooops.
+  (Correction by: Henrik Edlund <henrik@edlund.org>)
+
+   utiltities.c:  modified the 'Find_{str,flag,decimal}_value
+   routines so that they did not take a separator option.  This
+   appears to be an oversite due to the importation from another
+   set of code. Apparently I wanted to used non-printable characters
+   as separators,  but this turned out to be too hard to debug,
+   so I used '=', '#', and '@' instead.
+
+   Modified the init.freebsd.sh, postinstall.freebsd.sh, and preremove.freebsd.sh
+   files to be a bit more 'ports' friendly.  Updated the STANDARD_install
+   to be more in line with FreeBSD/NetBSD.
+
+   Documented the max_accounting_file_size and min_accounting_file_size option
+   and changed the lpd.conf comment to indicate a 0 value disables truncation.
+    (Lack of documentation pointed out by: Jim Trocki <trockij@transmeta.com>)
+
+   Fixed typos in INSTALL document.
+    (Pointed out by: Daniel E Singer <des@cs.duke.edu>)
+
 Version LPRng-3.8.22 - Fri Sep  5 08:45:33 PDT 2003
 
    Updated the LPRng, IFHP, and LPRngTool LICENSE with the new
@@ -13,14 +167,14 @@ Version LPRng-3.8.22 - Fri Sep  5 08:45:33 PDT 2003
     (Suggested by: Torsten Rohlfing <rohlfing@IGL.Stanford.EDU>)
   Filter command line options now allows ${X} to reference a control file
     option.  You can now use:
-	$X   with -X<value>      (if present)
-	$0X  with -X <value>     (adds space)
-	$'X  with -X'<value>'    (adds quotes)
-	$-X  with  <value>       (drops key)
-	$0-X with  <value>       (same as $-X)
-	$'-X  with  '<value>'    (adds quotes)
-	${ss}  with value of printcap option ss
-	$'{ss} with quoted value of printcap option ss or job control file option
+    $X   with -X<value>      (if present)
+    $0X  with -X <value>     (adds space)
+    $'X  with -X'<value>'    (adds quotes)
+    $-X  with  <value>       (drops key)
+    $0-X with  <value>       (same as $-X)
+    $'-X  with  '<value>'    (adds quotes)
+    ${ss}  with value of printcap option ss
+    $'{ss} with quoted value of printcap option ss or job control file option
 
     Example:  filter=ifhp -Z '${S},${O}'
     This will get the O and S options from the job control file.  Note that

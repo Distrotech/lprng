@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_control.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: lpd_control.h,v 1.61 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -31,6 +31,7 @@ int Do_control_class( int *sock,
 int Do_control_debug( int *sock,
 	struct line_list *tokens, char *error, int errorlen );
 int Do_control_printcap( int *sock );
+int Do_control_ppd( int *sock );
 int Do_control_defaultq( int *sock );
 
 #endif

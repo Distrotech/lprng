@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: ssl_auth.c,v 1.26 2003/09/05 20:07:20 papowell Exp $";
+"$Id: ssl_auth.c,v 1.30 2003/11/14 02:32:56 papowell Exp $";
 
 
 #include "lp.h"
@@ -16,6 +16,8 @@
 #include "errorcodes.h"
 #include "getqueue.h"
 #ifdef SSL_ENABLE
+/* The Kerberos 5 support is MIT-specific. */
+#define OPENSSL_NO_KRB5
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "user_auth.h"
@@ -210,7 +212,7 @@ int SSL_Initialize_ctx(
 				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot open server_password_file '%s'",
 					file );
 			}
-			if( (n = read(fd, password_value, sizeof(password_value)-1)) < 0 ){
+			if( (n = ok_read(fd, password_value, sizeof(password_value)-1)) < 0 ){
 				Errorcode = JABORT;
 				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot read server_password_file '%s'",
 					file );
@@ -236,7 +238,7 @@ int SSL_Initialize_ctx(
 		file = getuservals("LPR_SSL_PASSWORD",homedir, ".lpr/client.pwd", pwbuf, sizeof(pwbuf));
 		if( file ) fd = Checkread( file, &statb );
 		if( fd > 0 ){
-			if( (n = read(fd, password_value, sizeof(password_value)-1)) < 0 ){
+			if( (n = ok_read(fd, password_value, sizeof(password_value)-1)) < 0 ){
 				Errorcode = JABORT;
 				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot read server_password_file '%s'",
 					file );
@@ -658,7 +660,7 @@ int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
 	Clear_timeout();
 	switch( SSL_get_error( ssl, ret ) ){
 		case SSL_ERROR_NONE:
-			*len = n;
+			*len = ret;
 			break;
 		case SSL_ERROR_ZERO_RETURN:
 			status = 1;
@@ -759,16 +761,16 @@ int Ssl_send( int *sock,
 	size = statb.st_size;
 	SNPRINTF(buffer,sizeof(buffer)) "%0.0f\n", size );
 	DEBUG1("Ssl_send: writing '%s'", buffer );
-	if( Write_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, strlen(buffer), errmsg, errlen) ){
+	if( Write_SSL_connection( transfer_timeout, ssl, buffer, strlen(buffer), errmsg, errlen) ){
 		status = JFAIL;
 		goto t_error;
 	}
 
 	DEBUG1("Ssl_send: starting send");
-	while( (len = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+	while( (len = ok_read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("Ssl_send: file information '%s'", buffer );
-		if( Write_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, len, errmsg, errlen) ){
+		if( Write_SSL_connection( transfer_timeout, ssl, buffer, len, errmsg, errlen) ){
 			status = JFAIL;
 			goto t_error;
 		}
@@ -791,7 +793,7 @@ int Ssl_send( int *sock,
 	DEBUG1("Ssl_send: sent file" );
 
 	DEBUG1("Ssl_send: getting read size");
-	if( Gets_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, sizeof(buffer), errmsg, errlen) ){
+	if( Gets_SSL_connection( transfer_timeout, ssl, buffer, sizeof(buffer), errmsg, errlen) ){
 		status = JFAIL;
 		goto error;
 	}
@@ -802,7 +804,7 @@ int Ssl_send( int *sock,
 	while( size > 0 ){
 		len = sizeof(buffer)-1;
 		if( len > size ) len = size;
-		if( Read_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, &len, errmsg, errlen) ){
+		if( Read_SSL_connection( transfer_timeout, ssl, buffer, &len, errmsg, errlen) ){
 			status = JFAIL;
 			goto error;
 		}
@@ -846,7 +848,7 @@ int Ssl_send( int *sock,
 	return(status);
 }
 
-int Ssl_receive( int *sock,
+int Ssl_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -875,7 +877,7 @@ int Ssl_receive( int *sock,
 		status = JFAIL;
 		goto error;
 	}
-	if( Accept_SSL_connection( *sock, Send_job_rw_timeout_DYN, ctx, &ssl, header_info, errmsg, errlen ) ){
+	if( Accept_SSL_connection( *sock, transfer_timeout, ctx, &ssl, header_info, errmsg, errlen ) ){
 		status = JFAIL;
 		goto error;
 	}
@@ -889,7 +891,7 @@ int Ssl_receive( int *sock,
 	}
 
 	DEBUGF(DRECV1)("Ssl_receive: getting read size");
-	if( Gets_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, sizeof(buffer), errmsg, errlen) ){
+	if( Gets_SSL_connection( transfer_timeout, ssl, buffer, sizeof(buffer), errmsg, errlen) ){
 		status = JFAIL;
 		goto error;
 	}
@@ -899,7 +901,7 @@ int Ssl_receive( int *sock,
 	while( size > 0 ){
 		len = sizeof(buffer);
 		if( len > size ) len = size;
-		if( Read_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, &len, errmsg, errlen) ){
+		if( Read_SSL_connection( transfer_timeout, ssl, buffer, &len, errmsg, errlen) ){
 			status = JFAIL;
 			goto error;
 		}
@@ -934,15 +936,15 @@ int Ssl_receive( int *sock,
 	size = statb.st_size;
 	SNPRINTF(buffer,sizeof(buffer)) "%0.0f\n", size );
 	DEBUG1("Ssl_receive: writing '%s'", buffer );
-	if( Write_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, strlen(buffer), errmsg, errlen) ){
+	if( Write_SSL_connection( transfer_timeout, ssl, buffer, strlen(buffer), errmsg, errlen) ){
 		status = JFAIL;
 		goto error;
 	}
 
-	while( (n = read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
+	while( (n = ok_read(tempfd, buffer,sizeof(buffer)-1)) > 0 ){
 		buffer[n] = 0;
 		DEBUGF(DRECV1)("Ssl_receive: sending '%d' '%s'", n, buffer );
-		if( Write_SSL_connection( Send_job_rw_timeout_DYN, ssl, buffer, n, errmsg, errlen) ){
+		if( Write_SSL_connection( transfer_timeout, ssl, buffer, n, errmsg, errlen) ){
 			status = JFAIL;
 			goto error;
 		}

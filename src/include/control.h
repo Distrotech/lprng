@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: control.h,v 1.57 2003/09/05 20:07:20 papowell Exp $
+ * $Id: control.h,v 1.61 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -43,6 +43,7 @@
 #define  OP_DEFAULTS	31
 #define  OP_FLUSH		32
 #define  OP_LANG		33
+#define  OP_PPD			34
 
 /* PROTOTYPES */
 

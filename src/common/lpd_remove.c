@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_remove.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -160,7 +160,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 	c = Debug;
 	i = DbgFlag;
-	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	s = Find_str_value(&Spool_control,DEBUG);
 	if( !s ) s = New_debug_DYN;
 	Parse_debug( s, 0 );
 
@@ -182,10 +182,10 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	}
 
 	/* set up status */
-	if( Find_exists_value(done_list,Printer_DYN,Value_sep ) ){
+	if( Find_exists_value(done_list,Printer_DYN,Hash_value_sep ) ){
 		return;
 	}
-	Add_line_list(done_list,Printer_DYN,Value_sep,1,1);
+	Add_line_list(done_list,Printer_DYN,Hash_value_sep,1,1);
 
 	/* check for permissions */
 
@@ -221,9 +221,9 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 		/* get everything for the job now */
 		Setup_cf_info( &job, 0 );
-		identifier = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+		identifier = Find_str_value(&job.info,IDENTIFIER);
 		if( !identifier ) identifier
-			= Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+			= Find_str_value(&job.info,TRANSFERNAME);
 
 		DEBUGF(DLPRM3)("Get_queue_remove: matched '%s'", identifier );
 		SNPRINTF( msg, sizeof(msg)) _("  checking perms '%s'\n"),
@@ -234,9 +234,9 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		/* we check to see if we can remove this one if we are the user */
 		if( control_perm == 0 ){
 			/* now we get the user name and IP address */
-			Perm_check.user = Find_str_value(&job.info,LOGNAME,Value_sep);
+			Perm_check.user = Find_str_value(&job.info,LOGNAME);
 			Perm_check.host = 0;
-			if( (s = Find_str_value(&job.info,FROMHOST,Value_sep)) 
+			if( (s = Find_str_value(&job.info,FROMHOST)) 
 				&& Find_fqdn( &PermHost_IP, s ) ){
 				Perm_check.host = &PermHost_IP;
 			}
@@ -264,7 +264,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			goto error;
 		}
 		setmessage( &job, "LPRM", "success" );
-		if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) ){
+		if( (pid = Find_flag_value(&job.info,SERVER)) ){
 			DEBUGF(DLPRM4)("Get_queue_remove: active_pid %d", pid );
 			if( kill( pid, 0 ) == 0 ){
 				Check_max(&active_pid,1);
@@ -353,7 +353,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 				Send_query_rw_timeout_DYN, *sock );
 			if( fd >= 0 ){
 				shutdown( fd, 1 );
-				while( (c = read(fd,msg,sizeof(msg))) > 0 ){
+				while( (c = Read_fd_len_timeout(Send_query_rw_timeout_DYN, fd,msg,sizeof(msg))) > 0 ){
 					Write_fd_len(*sock,msg,c);
 				}
 				close(fd); fd = -1;
@@ -415,7 +415,7 @@ void Get_local_or_remote_remove( char *user, int *sock,
 		Send_query_rw_timeout_DYN, *sock );
 	if( fd >= 0 ){
 		shutdown( fd, 1 );
-		while( (n = read(fd,msg,sizeof(msg))) > 0 ){
+		while( (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN, fd,msg,sizeof(msg))) > 0 ){
 			Write_fd_len(*sock,msg,n);
 		}
 		close(fd); fd = -1;
@@ -451,26 +451,26 @@ int Remove_job( struct job *job )
 
 	DEBUGFC(DLPRM1)Dump_job("Remove_job",job);
 	setmessage(job,STATE,"REMOVE");
-	identifier = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	identifier = Find_str_value(&job->info,IDENTIFIER);
 	setmessage( job, TRACE, "remove START" );
 	if( !identifier ){
-		identifier = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+		identifier = Find_str_value(&job->info,TRANSFERNAME);
 	}
 
 	DEBUGF(DLPRM1)("Remove_job: identifier '%s'",identifier);
 	fail = 0;
 	for( i = 0; i < job->datafiles.count; ++i ){
 		datafile = (void *)job->datafiles.list[i];
-		openname = Find_str_value(datafile,OPENNAME,Value_sep);
+		openname = Find_str_value(datafile,OPENNAME);
 		fail |= Remove_file( openname );
-		openname = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+		openname = Find_str_value(datafile,TRANSFERNAME);
 		fail |= Remove_file( openname );
 	}
-	openname = Find_str_value(&job->info,OPENNAME,Value_sep);
+	openname = Find_str_value(&job->info,OPENNAME);
 	fail |= Remove_file( openname );
-	openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	openname = Find_str_value(&job->info,TRANSFERNAME);
 	fail |= Remove_file( openname );
-	openname = Find_str_value(&job->info,HF_NAME,Value_sep);
+	openname = Find_str_value(&job->info,HF_NAME);
 	fail |= Remove_file( openname );
 
 	if( fail == 0 ){

@@ -15,7 +15,7 @@ sbin/lprng_index_certs
 etc/lpd/lpd.perms.sample
 etc/lpd/lpd.conf.sample
 etc/lpd/printcap.sample
-etc/lpd/lprng.sh
+etc/lpd/lprng.sh.sample
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng-Reference.html
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng-Reference.pdf
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LISA98.ppt
@@ -25,6 +25,9 @@ etc/lpd/lprng.sh
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng.jpg
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRngT-L.jpg
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRngT-S.jpg
+%%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng.png
+%%PORTDOCS%%%%DOCSDIR%%/Reference/LPRngT-L.png
+%%PORTDOCS%%%%DOCSDIR%%/Reference/LPRngT-S.png
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/index.html
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/LPRng.jpg
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/LPRngT-L.jpg

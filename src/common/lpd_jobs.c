@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -167,21 +167,21 @@ void Update_spool_info( struct line_list *sp )
 
 	Init_line_list(&info);
 
-	Set_str_value(&info,SPOOLDIR, Find_str_value(sp,SPOOLDIR,Value_sep) );
-	Set_str_value(&info,PRINTER, Find_str_value(sp,PRINTER,Value_sep) );
-	Set_str_value(&info,QUEUE_CONTROL_FILE, Find_str_value(sp,QUEUE_CONTROL_FILE,Value_sep) );
-	Set_str_value(&info,HF_NAME, Find_str_value(sp,HF_NAME,Value_sep) );
-	Set_str_value(&info,IDENTIFIER, Find_str_value(sp,IDENTIFIER,Value_sep) );
-	Set_str_value(&info,SERVER, Find_str_value(sp,SERVER,Value_sep) );
-	Set_str_value(&info,DONE_TIME, Find_str_value(sp,DONE_TIME,Value_sep) );
+	Set_str_value(&info,SPOOLDIR, Find_str_value(sp,SPOOLDIR) );
+	Set_str_value(&info,PRINTER, Find_str_value(sp,PRINTER) );
+	Set_str_value(&info,QUEUE_CONTROL_FILE, Find_str_value(sp,QUEUE_CONTROL_FILE) );
+	Set_str_value(&info,HF_NAME, Find_str_value(sp,HF_NAME) );
+	Set_str_value(&info,IDENTIFIER, Find_str_value(sp,IDENTIFIER) );
+	Set_str_value(&info,SERVER, Find_str_value(sp,SERVER) );
+	Set_str_value(&info,DONE_TIME, Find_str_value(sp,DONE_TIME) );
 
-	sc = Find_str_value(&info,QUEUE_CONTROL_FILE,Value_sep);
+	sc = Find_str_value(&info,QUEUE_CONTROL_FILE);
 
 	DEBUG1("Update_spool_info: file '%s'", sc );
 
 	Free_line_list(sp);
 	Get_spool_control(sc,sp);
-	Merge_line_list(sp,&info,Value_sep,1,1);
+	Merge_line_list(sp,&info,Hash_value_sep,1,1);
 	Free_line_list(&info);
 }
 
@@ -191,8 +191,8 @@ int cmp_server( const void *left, const void *right, const void *p )
 	int tr, tl;
 	l = ((struct line_list **)left)[0];
 	r = ((struct line_list **)right)[0];
-	tl = Find_flag_value(l,DONE_TIME,Value_sep);
-	tr = Find_flag_value(r,DONE_TIME,Value_sep);
+	tl = Find_flag_value(l,DONE_TIME);
+	tr = Find_flag_value(r,DONE_TIME);
 	if(DEBUGL5)Dump_line_list("cmp_server - l",l);
 	if(DEBUGL5)Dump_line_list("cmp_server - r",r);
 	DEBUG5("cmp_server: tl %d, tr %d, cmp %d, p %d",
@@ -238,8 +238,8 @@ void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done
 
 	DEBUG1("Get_subserver_pc: printable %d, held %d, move %d, done_remove %d, fowarding '%s'",
 		printable, held, move,
-		Find_flag_value(subserver_info,DONE_REMOVE,Value_sep),
-		Find_str_value(subserver_info,FORWARDING,Value_sep) );
+		Find_flag_value(subserver_info,DONE_REMOVE),
+		Find_str_value(subserver_info,FORWARDING) );
 }
 
 /***************************************************************************
@@ -284,7 +284,7 @@ void Get_subserver_info( struct line_list *order,
 	for( i = 0; i < server_order.count; ++i ){
 		s = server_order.list[i];
 		DEBUG1("Get_subserver_info: doing '%s'",s);
-		if( Find_str_value(&server,s,Value_sep) ){
+		if( Find_str_value(&server,s) ){
 			DEBUG1("Get_subserver_info: already done '%s'",s);
 			continue;
 		}
@@ -329,7 +329,7 @@ char *Make_temp_copy( char *srcfile, char *destdir )
 			fail = 1;
 			goto error;
 		}
-		while( (n = read(srcfd,buffer,sizeof(buffer))) > 0 ){
+		while( (n = ok_read(srcfd,buffer,sizeof(buffer))) > 0 ){
 			for( count = len = 0; len < n
 				&& (count = write(destfd, buffer+len,n-len)) > 0;
 				len += count );
@@ -477,7 +477,7 @@ int Do_queue_jobs( char *name, int subserver )
 		opened_logfile = 1;
 	}
 
-	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	s = Find_str_value(&Spool_control,DEBUG);
 	if(!s) s = New_debug_DYN;
 	Parse_debug( s, 0);
 
@@ -500,7 +500,7 @@ int Do_queue_jobs( char *name, int subserver )
 	servers.list[servers.count++] = (char *)sp;
 	Update_spool_info(sp);
 
-	change = Find_flag_value(&Spool_control,CHANGE,Value_sep);
+	change = Find_flag_value(&Spool_control,CHANGE);
 	if( change ){
 		Set_flag_value(sp,CHANGE,0);
 		Set_flag_value(&Spool_control,CHANGE,0);
@@ -532,20 +532,20 @@ int Do_queue_jobs( char *name, int subserver )
 		/* start the queues that need it */
 		for( i = 1; i < servers.count; ++i ){
 			sp = (void *)servers.list[i];
-			pr = Find_str_value(sp,PRINTER,Value_sep);
+			pr = Find_str_value(sp,PRINTER);
 			DEBUG1("Do_queue_jobs: subserver '%s' checking for independent action", pr );
-			if( (s = Find_str_value(sp,SERVER,Value_sep)) ){
+			if( (s = Find_str_value(sp,SERVER)) ){
 				DEBUG1("Do_queue_jobs: subserver '%s' active server '%s'", pr,s );
 			}
 			printable = !Pr_disabled(sp) && !Pr_aborted(sp)
-				&& Find_flag_value(sp,PRINTABLE,Value_sep);
-			move = Find_flag_value(sp,MOVE,Value_sep);
-			forwarding = Find_str_value(sp,FORWARDING,Value_sep);
-			change = Find_flag_value(sp,CHANGE,Value_sep);
+				&& Find_flag_value(sp,PRINTABLE);
+			move = Find_flag_value(sp,MOVE);
+			forwarding = Find_str_value(sp,FORWARDING);
+			change = Find_flag_value(sp,CHANGE);
 			DEBUG1("Do_queue_jobs: subserver '%s', printable %d, move %d, forwarding '%s'",
 				pr, printable, move, forwarding );
 			/* now see if we need to clean up the old jobs */
-			done_remove = Find_flag_value(sp,DONE_REMOVE,Value_sep);
+			done_remove = Find_flag_value(sp,DONE_REMOVE);
 
 			if( printable || move || change || forwarding || done_remove ){
 				pid = Fork_subserver( &servers, i, 0 );
@@ -582,18 +582,18 @@ int Do_queue_jobs( char *name, int subserver )
 
 		/* debug output */
 		mod = 0;
-		if( Find_flag_value(&job.info,SERVER,Value_sep ) ){
+		if( Find_flag_value(&job.info,SERVER ) ){
 			Set_decimal_value(&job.info,SERVER,0);
 			mod = 1;
 		}
-		if((destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep))){
-			if( Find_str_value(&job.info,DESTINATION,Value_sep ) ){
+		if((destinations = Find_flag_value(&job.info,DESTINATIONS))){
+			if( Find_str_value(&job.info,DESTINATION ) ){
 				Set_str_value(&job.info,DESTINATION,0);
 				mod = 1;
 			}
 			for( j = 0; j < destinations; ++j ){
 				Get_destination(&job,j);
-				if( Find_flag_value(&job.destination,SERVER,Value_sep) ){
+				if( Find_flag_value(&job.destination,SERVER) ){
 					mod = 1;
 					Set_decimal_value(&job.destination,SERVER,0);
 					Update_destination(&job);
@@ -644,8 +644,8 @@ int Do_queue_jobs( char *name, int subserver )
 			for( i = 0; i < servers.count; ++i ){
 				sp = (void *)servers.list[i];
 				Update_spool_info( sp );
-				change = Find_flag_value(sp,CHANGE,Value_sep);
-				pid = Find_flag_value(sp,SERVER,Value_sep);
+				change = Find_flag_value(sp,CHANGE);
+				pid = Find_flag_value(sp,SERVER);
 				if( i > 0 && change && pid == 0 ){
 					pid = Fork_subserver( &servers, i, 0 );
 					jobs_printed = 1;
@@ -676,7 +676,7 @@ int Do_queue_jobs( char *name, int subserver )
 		/* make sure you can print */
 		printing_enabled
 			= !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
-		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
+		forwarding = Find_str_value(&Spool_control,FORWARDING);
 		DEBUG3("Do_queue_jobs: printing_enabled '%d', forwarding '%s'",
 			printing_enabled, forwarding );
 
@@ -688,8 +688,8 @@ int Do_queue_jobs( char *name, int subserver )
 			&servers );
 		for( j = 0; j < servers.count; ++j ){
 			sp = (void *)servers.list[j];
-			pid = Find_flag_value(sp,SERVER,Value_sep);
-			pr = Find_str_value(sp,PRINTER,Value_sep);
+			pid = Find_flag_value(sp,SERVER);
+			pr = Find_str_value(sp,PRINTER);
 			DEBUG2("Do_queue_jobs: printer '%s', server %d", pr, pid );
 			if( pid ){
 				++working;
@@ -699,6 +699,20 @@ int Do_queue_jobs( char *name, int subserver )
 		for( job_index = 0; job_to_do < 0 && job_index < Sort_order.count;
 			++job_index ){
 
+			/*
+			 * This is a very special case:
+			 *  if we have a Chooser AND we have :sv=xx,xx,xx AND
+			 *  none of the destinations are available to the first job
+			 *   then the chooser_did_not_find_server flag will be set
+			 *  If the 'chooser_scan_queue' flag is set, then we will keep
+			 *   scanning the queue to see if any job can be sent
+			 */
+
+			DEBUG1("Do_queue_jobs: chooser_did_not_find_server %d, Chooser_scan_queue_DYN %d",
+				chooser_did_not_find_server, Chooser_scan_queue_DYN ); 
+			if( chooser_did_not_find_server && !Chooser_scan_queue_DYN ){
+				 break;
+			}
 			Free_job(&job);
 			id = move_dest = new_dest = 0;
 			destination = use_subserver = job_to_do = -1;
@@ -713,7 +727,7 @@ int Do_queue_jobs( char *name, int subserver )
 			if( job.info.count == 0 ) continue;
 
 			/* check to see if active */
-			if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) ){
+			if( (pid = Find_flag_value(&job.info,SERVER)) ){
 				DEBUG3("Do_queue_jobs: [%d] active %d", job_index, pid );
 				continue;
 			}
@@ -746,34 +760,32 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 
 			/* get destination information */
-			destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep);
+			destinations = Find_flag_value(&job.info,DESTINATIONS);
 			if( !destinations ){
-				move_dest = new_dest = Find_str_value(&job.info,MOVE,Value_sep);
+				move_dest = new_dest = Find_str_value(&job.info,MOVE);
 				if( !new_dest ) new_dest = Frwarding(&Spool_control);
 			} else {
 				all_done = 0;
 				for( j = 0; !new_dest && j < destinations; ++j ){
 					Get_destination(&job,j);
-					if( Find_flag_value(&job.destination,SERVER,Value_sep) ){
+					if( Find_flag_value(&job.destination,SERVER) ){
 						break;
 					}
-					if( Find_flag_value(&job.destination,DONE_TIME,Value_sep ) ){
+					if( Find_flag_value(&job.destination,DONE_TIME ) ){
 						++all_done;
 						continue;
 					}
-					if( Find_flag_value(&job.destination,ERROR_TIME,Value_sep)
-						|| Find_flag_value(&job.destination,HOLD_TIME,Value_sep) ){
+					if( Find_flag_value(&job.destination,ERROR_TIME)
+						|| Find_flag_value(&job.destination,HOLD_TIME) ){
 						continue;
 					}
-					if( (move_dest = new_dest = Find_str_value( &job.destination,
-						MOVE,Value_sep)) ){
+					if( (move_dest = new_dest = Find_str_value( &job.destination, MOVE)) ){
 						destination = j;
 						break;
 					}
-					if( Find_flag_value(&job.destination, PRINTABLE, Value_sep )
+					if( Find_flag_value(&job.destination, PRINTABLE )
 						&& printing_enabled ){
-						new_dest = Find_str_value( &job.destination,
-							DEST,Value_sep );
+						new_dest = Find_str_value( &job.destination,DEST);
 						destination = j;
 						break;
 					}
@@ -793,7 +805,7 @@ int Do_queue_jobs( char *name, int subserver )
 				new_dest, printable, master, destinations, destination );
 			if( new_dest ){
 				sp = (void *)servers.list[0];
-				if( Find_flag_value(sp,SERVER,Value_sep) ){
+				if( Find_flag_value(sp,SERVER) ){
 					continue;
 				}
 				use_subserver = 0;
@@ -803,18 +815,19 @@ int Do_queue_jobs( char *name, int subserver )
 				 * find the subserver with a class that will print this job
 				 * if master = 1, then we start with 1
 				 */
+				int printers_available = 0;
 				Free_line_list( &chooser_list );
 				Free_line_list( &chooser_env );
 				DEBUG1("Do_queue_jobs: chooser '%s', chooser_routine %lx",
 					Chooser_DYN, Cast_ptr_to_long(Chooser_routine_DYN) );
 				for( j = master; use_subserver < 0 && j < servers.count; ++j ){
 					sp = (void *)servers.list[j];
-					s = Find_str_value(sp,PRINTER,Value_sep);
+					s = Find_str_value(sp,PRINTER);
 					DEBUG1("Do_queue_jobs: checking '%s'", s );
 					if( Pr_disabled(sp)
 						|| Pr_aborted(sp)
 						|| Sp_disabled(sp)
-						|| Find_flag_value(sp,SERVER,Value_sep)){
+						|| Find_flag_value(sp,SERVER)){
 						DEBUG1("Do_queue_jobs: cannot use [%d] '%s'",
 							j, s );
 						continue;
@@ -831,13 +844,14 @@ int Do_queue_jobs( char *name, int subserver )
 					} else {
 						char *t;
 						/* add to the list of possible servers */
+						++printers_available;
 						Set_flag_value(&chooser_list,s,j);
 						if( !Chooser_routine_DYN ){
 							/* get the environment values for the possible server */
 							t = Join_line_list_with_sep(sp,"\n");
 							Set_str_value(&chooser_env,s,t);
 							if( t ) free(t); t = 0;
-							t = Find_str_value( &chooser_env,"PRINTERS",Value_sep );
+							t = Find_str_value( &chooser_env,"PRINTERS" );
 							if( t ){
 								t = safestrdup3(t,",",s,__FILE__,__LINE__);
 								Set_str_value( &chooser_env,"PRINTERS",t );
@@ -849,11 +863,16 @@ int Do_queue_jobs( char *name, int subserver )
 					}
 				}
 				/* we now have to find out if we really need to call the chooser
-				 * if we are working and a single queue, then we do not
-				 *   :sv == ""   - then we do
+				 * if we are working and a single queue, then we do not need to call the chooser
+				 * if :sv= p1,p2  but none are available then we do not need to call the chooser
+				 * if :sv == ""   - then we do need to call the chooser
+				 * if :sv == p1,p2 and at least one is available - then we do need to call the chooser
 				 */
-				DEBUG1("Do_queue_jobs: Chooser %s, working %d, master %d", Chooser_DYN, working, master);
+				DEBUG1("Do_queue_jobs: Chooser %s, working %d, master %d, servers %d, printers_available %d",
+					Chooser_DYN, working, master);
 				if( (Chooser_routine_DYN || Chooser_DYN) && working && master == 0 ){
+					chooser_did_not_find_server = 1;
+				} else if( servers.count > 1 && printers_available == 0 ){
 					chooser_did_not_find_server = 1;
 				} else if( Chooser_routine_DYN ){
 #if defined(CHOOSER_ROUTINE)
@@ -888,7 +907,7 @@ int Do_queue_jobs( char *name, int subserver )
 					if( out_tempfd > 0 ) close( out_tempfd ); out_tempfd = -1;
 					in_tempfd = Make_temp_fd(0);
 					out_tempfd = Make_temp_fd(0);
-					s = Find_str_value( &chooser_env,"PRINTERS",Value_sep );
+					s = Find_str_value( &chooser_env,"PRINTERS" );
 					if( s && (Write_fd_str( in_tempfd, s ) < 0 
 						|| Write_fd_str( in_tempfd, "\n" ) < 0) ){
 						Errorcode = JABORT;
@@ -902,7 +921,7 @@ int Do_queue_jobs( char *name, int subserver )
 						LOGERR_DIE(LOG_INFO)"Do_queue_jobs: fseek(%d) failed",
 							out_tempfd);
 					}
-					j = Filter_file( in_tempfd, out_tempfd, "CHOOSER",
+					j = Filter_file( Send_query_rw_timeout_DYN, in_tempfd, out_tempfd, "CHOOSER",
 						Chooser_DYN, Filter_options_DYN, &job, &chooser_env, 1 );
 					if( j ){
 						SETSTATUS(&job)"CHOOSER exit status %s", Server_status(j));
@@ -920,7 +939,7 @@ int Do_queue_jobs( char *name, int subserver )
 							LOGERR_DIE(LOG_INFO)"Do_queue_jobs: fseek(%d) failed",
 								out_tempfd);
 						}
-						len = read( out_tempfd, buffer,sizeof(buffer)-1 );
+						len = Read_fd_len_timeout( Send_query_rw_timeout_DYN, out_tempfd, buffer,sizeof(buffer)-1 );
 						if( len >= 0 ){
 							buffer[len] = 0;
 						} else {
@@ -937,15 +956,15 @@ int Do_queue_jobs( char *name, int subserver )
 						if( buffer[0] ){
 							/* we found a server queue */
 							SETSTATUS(&job)"CHOOSER selected '%s'", buffer);
-							if( Find_str_value( &chooser_list,buffer,Value_sep ) ){
-								use_subserver = Find_flag_value(&chooser_list,buffer,Value_sep);
+							if( Find_str_value( &chooser_list,buffer ) ){
+								use_subserver = Find_flag_value(&chooser_list,buffer);
 								job_to_do = job_index;
 							} else if( strchr( buffer,'@') ){
 								/* we are routing to a remote queue not in list */
 								use_subserver = 0;
 								job_to_do = job_index;
 								Set_str_value( &job.info,NEW_DEST,buffer);
-								new_dest = Find_str_value( &job.info,NEW_DEST,Value_sep);
+								new_dest = Find_str_value( &job.info,NEW_DEST);
 							} else {
 								LOGMSG(LOG_ERR)"Do_queue_jobs: CHOOSER selection '%s' not a subserver",
 									buffer );
@@ -992,8 +1011,8 @@ int Do_queue_jobs( char *name, int subserver )
 		/*
 		 * get the job information
 		 */
-		hf_name = Find_str_value(&job.info,HF_NAME,Value_sep);
-		id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+		hf_name = Find_str_value(&job.info,HF_NAME);
+		id = Find_str_value(&job.info,IDENTIFIER);
 		if( !id ){
 			Errorcode = JABORT;
 			FATAL(LOG_ERR)
@@ -1016,7 +1035,7 @@ int Do_queue_jobs( char *name, int subserver )
 		Set_str_value(sp,HF_NAME,0);
 		Set_str_value(sp,IDENTIFIER,0);
 
-		pr = Find_str_value(sp,PRINTER,Value_sep);
+		pr = Find_str_value(sp,PRINTER);
 		DEBUG1("Do_queue_jobs: starting job '%s' on '%s'", id, pr );
 
 		if( Set_hold_file( &job, 0, 0 ) ){
@@ -1042,8 +1061,8 @@ int Do_queue_jobs( char *name, int subserver )
 			Init_job(&jcopy);
 			Copy_job(&jcopy,&job);
 
-			sd = Find_str_value(sp,SPOOLDIR,Value_sep);
-			pr = Find_str_value(sp,PRINTER,Value_sep);
+			sd = Find_str_value(sp,SPOOLDIR);
+			pr = Find_str_value(sp,PRINTER);
 
 			DEBUG1("Do_queue_jobs: subserver '%s', spool dir '%s' for job '%s'",
 			   pr, sd, id );
@@ -1062,7 +1081,7 @@ int Do_queue_jobs( char *name, int subserver )
 				datafile = (void *)jcopy.datafiles.list[i];
 				if(DEBUGL3)Dump_line_list("Do_queue_jobs - copying datafiles",
 					datafile);
-				from = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+				from = Find_str_value(datafile,TRANSFERNAME);
 				path = Make_temp_copy( from, sd );
 				DEBUG3("Do_queue_jobs: sd '%s', from '%s', path '%s'",
 					sd, from, path );
@@ -1074,7 +1093,7 @@ int Do_queue_jobs( char *name, int subserver )
 				}
 			}
 			if( !fail ){
-				from = Find_str_value(&jcopy.info,TRANSFERNAME,Value_sep);
+				from = Find_str_value(&jcopy.info,TRANSFERNAME);
 				path = Make_temp_copy(from,sd);
 				DEBUG3("Do_queue_jobs: sd '%s', from '%s', path '%s'",
 					sd, from, path );
@@ -1091,11 +1110,11 @@ int Do_queue_jobs( char *name, int subserver )
 				Set_str_value(&job.info,ERROR,buffer);
 				Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 				setstatus(&job, "%s", buffer);
-				path = Find_str_value(&jcopy.info,OPENNAME,Value_sep);
+				path = Find_str_value(&jcopy.info,OPENNAME);
 				if( path ) unlink(path);
 				for( i = 0; i < jcopy.datafiles.count; ++i ){
 					datafile = (void *)jcopy.datafiles.list[i];
-					path = Find_str_value(datafile,OPENNAME,Value_sep);
+					path = Find_str_value(datafile,OPENNAME);
 					if( path ) unlink(path);
 				}
 				Update_status(&job, JFAIL);
@@ -1172,7 +1191,7 @@ int Do_queue_jobs( char *name, int subserver )
 		jobs_printed = 0;
 		for( i = 1; i < servers.count; ++i ){
 			sp = (void *)servers.list[i];
-			s = Find_str_value(sp,PRINTER,Value_sep);
+			s = Find_str_value(sp,PRINTER);
 			Add_line_list(&tinfo,s,0,0,0);
 		}
 		s = Join_line_list_with_sep(&tinfo,",");
@@ -1262,7 +1281,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		if(DEBUGL2) Dump_job( "Remote_job - before filtering", &jcopy );
 		tempfd = Make_temp_fd(&tempfile);
 
-		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep),
+		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp" ),
 			__FILE__,__LINE__ );
 		Set_str_value( &PC_entry_line_list, LP, tempfile );
 		Print_job( tempfd, -1, &jcopy, 0, 0, 0 );
@@ -1293,7 +1312,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		Set_str_value(lp,TRANSFERNAME,tempfile);
 		s = 0;
 		if( (firstfile = (void *)(job->datafiles.list[0])) ){
-			s = Find_str_value( firstfile, "N", Value_sep );
+			s = Find_str_value( firstfile, "N" );
 		}
 		Set_str_value(lp,"N",s?s:"(lpd_filter)");
 		Set_flag_value(lp,COPIES,1);
@@ -1315,12 +1334,12 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 
 	/* fix up the control file */
 	Fix_control( &jcopy, Control_filter_DYN, Xlate_format_DYN );
-	oldid = Find_str_value(&job->info,IDENTIFIER,Value_sep );
-	newid = Find_str_value(&jcopy.destination,IDENTIFIER,Value_sep );
+	oldid = Find_str_value(&job->info,IDENTIFIER );
+	newid = Find_str_value(&jcopy.destination,IDENTIFIER );
 	if( newid == 0 ){
-		newid = Find_str_value(&jcopy.info,IDENTIFIER,Value_sep );
+		newid = Find_str_value(&jcopy.info,IDENTIFIER );
 	}
-	n = Find_flag_value( &jcopy.info, DATAFILE_COUNT, Value_sep );
+	n = Find_flag_value( &jcopy.info, DATAFILE_COUNT );
 	if( Max_datafiles_DYN > 0 && n > Max_datafiles_DYN ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)
@@ -1339,7 +1358,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
  done:
 	s = 0;
 	if( status ){
-		s = Find_str_value(&jcopy.info,ERROR,Value_sep);
+		s = Find_str_value(&jcopy.info,ERROR);
 		if( !s ){
 			s = "Mystery error from Send_job";
 		}
@@ -1376,10 +1395,10 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		break;
 	}
 	if( s ){
-		if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+		if( !Find_str_value(&job->info,ERROR) ){
 			Set_str_value(&job->info,ERROR,s);
 		}
-		if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+		if( !Find_flag_value(&job->info,ERROR_TIME) ){
 			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 		}
 	}
@@ -1463,7 +1482,7 @@ int Local_job( struct job *job, char *id )
 	}
 	SETSTATUS(job)"printing job '%s'", id );
 	/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
-	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, LP, Value_sep),
+	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, LP ),
 		__FILE__,__LINE__ );
 	Set_str_value( &PC_entry_line_list, LP, Lp_device_DYN );
 	status = Print_job( fd, status_fd, job, Send_job_rw_timeout_DYN, poll_for_status, 0 );
@@ -1523,7 +1542,7 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 	Set_str_value(sp,PRSTATUS,0);
 	Set_decimal_value(sp,SERVER,0);
 
-	pr = Find_str_value(sp,PRINTER,Value_sep);
+	pr = Find_str_value(sp,PRINTER);
 	Set_str_value(parms,PRINTER,pr);
 	Set_flag_value(parms,SUBSERVER,use_subserver);
 	DEBUG1( "Fork_subserver: starting '%s'", pr );
@@ -1614,7 +1633,7 @@ void Wait_for_subserver( int timeout, struct line_list *servers
 
 		for( found = i = 0; !found && i < servers->count; ++i ){
 			sp = (void *)servers->list[i];
-			if( pid == Find_flag_value(sp,SERVER,Value_sep) ){
+			if( pid == Find_flag_value(sp,SERVER) ){
 				DEBUG3("Wait_for_subserver: found %d", pid );
 				found = 1;
 				++done;
@@ -1624,12 +1643,12 @@ void Wait_for_subserver( int timeout, struct line_list *servers
 				Set_flag_value(sp,DONE_TIME,time((void *)0));
 
 				/* we get the hold file information */
-				hf_name = Find_str_value(sp,HF_NAME,Value_sep);
+				hf_name = Find_str_value(sp,HF_NAME);
 				Get_hold_file( &job, hf_name );
 				Setup_cf_info( &job, 0 );
 
-				pr = Find_str_value(sp,PRINTER,Value_sep);
-				id = Find_str_value(sp,IDENTIFIER,Value_sep);
+				pr = Find_str_value(sp,PRINTER);
+				id = Find_str_value(sp,IDENTIFIER);
 				DEBUG1( "Wait_for_subserver: server pid %d for '%s' for '%s' '%s' finished",
 					pid, pr, hf_name, id );
 
@@ -1719,7 +1738,7 @@ int Decode_transfer_failure( int attempt, struct job *job )
 			LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: fseek(%d) failed",
 				in_tempfd);
 		}
-		n = Filter_file( in_tempfd, out_tempfd, "TRANSFER_FAILURE",
+		n = Filter_file( Send_query_rw_timeout_DYN, in_tempfd, out_tempfd, "TRANSFER_FAILURE",
 			Send_failure_action_DYN, Filter_options_DYN, job, 0, 1 );
 		DEBUG1("Decode_transfer_failure: exit status %s", Server_status(n));
 		if( n ){
@@ -1732,7 +1751,7 @@ int Decode_transfer_failure( int attempt, struct job *job )
 				LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: fseek(%d) failed",
 					out_tempfd);
 			}
-			len = read( out_tempfd, line,sizeof(line)-1 );
+			len = ok_read( out_tempfd, line,sizeof(line)-1 );
 			if( len >= 0 ){
 				line[len] = 0;
 			} else {
@@ -1781,18 +1800,18 @@ void Update_status( struct job *job, int status )
 	destination = 0;
 	Set_decimal_value(&job->info,SERVER,0);
 
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
 	if( !id ){
 		if(DEBUGL1)Dump_job("Update_status - no ID", job );
 		return;
 	}
 
-	if( (destinations = Find_flag_value(&job->info,DESTINATIONS,Value_sep)) ){
-		did = Find_str_value(&job->info,DESTINATION,Value_sep );
+	if( (destinations = Find_flag_value(&job->info,DESTINATIONS)) ){
+		did = Find_str_value(&job->info,DESTINATION );
 		if( !Get_destination_by_name( job, did ) ){
 			destination = &job->destination;
-			did = Find_str_value(destination,IDENTIFIER,Value_sep);
-			if(!did) did = Find_str_value(destination,TRANSFERNAME,Value_sep);
+			did = Find_str_value(destination,IDENTIFIER);
+			if(!did) did = Find_str_value(destination,TRANSFERNAME);
 			Set_decimal_value(destination,SERVER,0);
 		}
 	}
@@ -1820,12 +1839,12 @@ void Update_status( struct job *job, int status )
 		if(DEBUGL3)Dump_job("Update_status - JSUCC start", job );
 		if( destination ){
 			done = 0;
-			copies = Find_flag_value(&job->info,SEQUENCE,Value_sep);
+			copies = Find_flag_value(&job->info,SEQUENCE);
 			Set_flag_value(&job->info,SEQUENCE,copies+1);
-			copies = Find_flag_value(destination,COPIES,Value_sep);
-			copy = Find_flag_value(destination,COPY_DONE,Value_sep);
-			n = Find_flag_value(destination,DESTINATION,Value_sep);
-			if( Find_str_value(destination,MOVE,Value_sep) ){
+			copies = Find_flag_value(destination,COPIES);
+			copy = Find_flag_value(destination,COPY_DONE);
+			n = Find_flag_value(destination,DESTINATION);
+			if( Find_str_value(destination,MOVE) ){
 				Set_flag_value(destination,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: route job '%s' moved",
 					Printer_DYN, FQDNHost_FQDN, did );
@@ -1845,7 +1864,7 @@ void Update_status( struct job *job, int status )
 				}
 			}
 			Update_destination(job);
-			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+			id = Find_str_value(&job->info,IDENTIFIER);
 			if( done && n >= destinations ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: job '%s' printed",
@@ -1855,17 +1874,17 @@ void Update_status( struct job *job, int status )
 			Set_hold_file( job, 0, 0 );
 			break;
 		} else {
-			copies = Find_flag_value(&job->info,COPIES,Value_sep);
-			copy = Find_flag_value(&job->info,COPY_DONE,Value_sep);
-			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+			copies = Find_flag_value(&job->info,COPIES);
+			copy = Find_flag_value(&job->info,COPY_DONE);
+			id = Find_str_value(&job->info,IDENTIFIER);
 			if( !id ){
 				Errorcode = JABORT;
 				FATAL(LOG_ERR)
 					_("Update_status: no identifier for '%s'"),
-					Find_str_value(&job->info,HF_NAME,Value_sep) );
+					Find_str_value(&job->info,HF_NAME) );
 			}
 
-			if( Find_str_value(&job->info,MOVE,Value_sep) ){
+			if( Find_str_value(&job->info,MOVE) ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: job '%s' moved",
 					Printer_DYN, FQDNHost_FQDN, id );
@@ -1887,7 +1906,7 @@ void Update_status( struct job *job, int status )
 				}
 			}
 		done_job:
-			hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
+			hf_name = Find_str_value(&job->info,HF_NAME);
 			DEBUG3("Update_status: done_job, id '%s', hf '%s'", id, hf_name );
 			if( hf_name ){
 				Set_flag_value(&job->info,REMOVE_TIME,time((void *)0));
@@ -1912,12 +1931,12 @@ void Update_status( struct job *job, int status )
 	case JFAIL:	/* failed, retry ?*/
 		status = JFAIL;
 		if( destination ){
-			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
+			attempt = Find_flag_value(destination,ATTEMPT);
 			++attempt;
 			Set_flag_value(destination,ATTEMPT,attempt);
 			Update_destination(job);
 		} else {
-			attempt = Find_flag_value(&job->info,ATTEMPT,Value_sep);
+			attempt = Find_flag_value(&job->info,ATTEMPT);
 			++attempt;
 			Set_flag_value(&job->info,ATTEMPT,attempt);
 		}
@@ -1976,25 +1995,25 @@ void Update_status( struct job *job, int status )
 	case JFAILNORETRY:	/* do not try again */
 		SNPRINTF( buffer, sizeof(buffer)) _("failed, no retry") );
 		if( destination ){
-			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
+			attempt = Find_flag_value(destination,ATTEMPT);
 			++attempt;
-			if( !Find_str_value(destination,ERROR,Value_sep) ){
+			if( !Find_str_value(destination,ERROR) ){
 				Set_str_value(destination,ERROR,buffer);
 			}
-			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(destination,ERROR_TIME) ){
 				Set_nz_flag_value(destination,ERROR_TIME,time(0));
 			}
 			Set_flag_value(destination,ATTEMPT,attempt);
 			Update_destination(job);
 			Set_hold_file( job, 0, 0 );
 		} else {
-			attempt = Find_flag_value(&job->info,ATTEMPT,Value_sep);
+			attempt = Find_flag_value(&job->info,ATTEMPT);
 			++attempt;
 			Set_flag_value(&job->info,ATTEMPT,attempt);
-			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+			if( !Find_str_value(&job->info,ERROR) ){
 				Set_str_value(&job->info,ERROR,buffer);
 			}
-			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(&job->info,ERROR_TIME) ){
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 			}
 			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
@@ -2020,24 +2039,24 @@ void Update_status( struct job *job, int status )
 		SNPRINTF(buffer,sizeof(buffer)) _("aborting operations") );
 		Set_flag_value(&job->info,PRIORITY_TIME,0);
 		if( destination ){
-			if( !Find_str_value(destination,ERROR,Value_sep) ){
+			if( !Find_str_value(destination,ERROR) ){
 				Set_str_value(destination,ERROR,buffer);
 			}
-			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(destination,ERROR_TIME) ){
 				Set_nz_flag_value(destination,ERROR_TIME,time(0));
 			}
-			strv = Find_str_value(destination,ERROR,Value_sep);
+			strv = Find_str_value(destination,ERROR);
 			Update_destination(job);
 			setstatus( job, "job '%s', destination '%s', error '%s'",
 				id,did,strv );
 		} else {
-			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+			if( !Find_str_value(&job->info,ERROR) ){
 				Set_str_value(&job->info,ERROR,buffer);
 			}
-			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(&job->info,ERROR_TIME) ){
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 			}
-			strv = Find_str_value(&job->info,ERROR,Value_sep);
+			strv = Find_str_value(&job->info,ERROR);
 			setstatus( job, "job '%s' error '%s'",id, strv);
 			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
 			Set_hold_file( job, 0, 0 );
@@ -2064,23 +2083,23 @@ void Update_status( struct job *job, int status )
 
 	case JREMOVE:	/* failed, remove job */
 		if( destination ){
-			if( !Find_str_value(destination,ERROR,Value_sep) ){
+			if( !Find_str_value(destination,ERROR) ){
 				SNPRINTF( buffer, sizeof(buffer))
 					_("removing destination due to errors") );
 				Set_str_value(destination,ERROR,buffer);
 			}
-			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(destination,ERROR_TIME) ){
 				Set_nz_flag_value(destination,ERROR_TIME,time(0));
 			}
 			Update_destination(job);
 			Set_hold_file( job, 0, 0 );
 		} else {
-			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+			if( !Find_str_value(&job->info,ERROR) ){
 				SNPRINTF( buffer, sizeof(buffer))
 					_("too many errors") );
 				Set_str_value(&job->info,ERROR,buffer);
 			}
-			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+			if( !Find_flag_value(&job->info,ERROR_TIME) ){
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 			}
 			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
@@ -2117,24 +2136,24 @@ int Check_print_perms( struct job *job )
 	memset( &Perm_check, 0, sizeof(Perm_check) );
 	Perm_check.service = 'P';
 	Perm_check.printer = Printer_DYN;
-	Perm_check.user = Find_str_value(&job->info,LOGNAME,Value_sep);
+	Perm_check.user = Find_str_value(&job->info,LOGNAME);
 	Perm_check.remoteuser = Perm_check.user;
-	Perm_check.authuser = Find_str_value(&job->info,AUTHUSER,Value_sep);
-	Perm_check.authfrom = Find_str_value(&job->info,AUTHFROM,Value_sep);
-	Perm_check.authtype = Find_str_value(&job->info,AUTHTYPE,Value_sep);
-	Perm_check.authca = Find_str_value(&job->info,AUTHCA,Value_sep);
-	s = Find_str_value(&job->info,FROMHOST,Value_sep);
+	Perm_check.authuser = Find_str_value(&job->info,AUTHUSER);
+	Perm_check.authfrom = Find_str_value(&job->info,AUTHFROM);
+	Perm_check.authtype = Find_str_value(&job->info,AUTHTYPE);
+	Perm_check.authca = Find_str_value(&job->info,AUTHCA);
+	s = Find_str_value(&job->info,FROMHOST);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
 		Perm_check.host = &PermHost_IP;
 	}
-	s = Find_str_value(&job->info,REMOTEHOST,Value_sep);
+	s = Find_str_value(&job->info,REMOTEHOST);
 	if( s && Find_fqdn( &RemoteHost_IP, s ) ){
 		Perm_check.remotehost = &RemoteHost_IP;
 	} else {
 		Perm_check.remotehost = Perm_check.host;
 	}
-	Perm_check.unix_socket = Find_flag_value(&job->info,UNIXSOCKET,Value_sep);
-	Perm_check.port = Find_flag_value(&job->info,REMOTEPORT,Value_sep);
+	Perm_check.unix_socket = Find_flag_value(&job->info,UNIXSOCKET);
+	Perm_check.port = Find_flag_value(&job->info,REMOTEPORT);
 	permission = Perms_check( &Perm_line_list,&Perm_check, job, 1 );
 	DEBUG3("Check_print_perms: permission '%s'", perm_str(permission) );
 	return( permission );
@@ -2143,7 +2162,7 @@ int Check_print_perms( struct job *job )
 
 void Setup_user_reporting( struct job *job )
 {
-	char *host = Find_str_value(&job->info,MAILNAME,Value_sep);
+	char *host = Find_str_value(&job->info,MAILNAME);
 	char *port = 0, *protocol = "UDP", *s;
 	int prot_num = SOCK_DGRAM;
 
@@ -2196,7 +2215,7 @@ void Service_worker( struct line_list *args )
 
 	Init_job(&job);
 
-	Set_DYN(&Printer_DYN, Find_str_value(args,PRINTER,Value_sep));
+	Set_DYN(&Printer_DYN, Find_str_value(args,PRINTER));
 	setproctitle( "lpd %s '%s'", Name, Printer_DYN );
 
 	DEBUG1("Service_worker: begin");
@@ -2225,7 +2244,7 @@ void Service_worker( struct line_list *args )
 
 	DEBUG3("Service_worker: checking path '%s'", path );
 
-	hf_name = Find_str_value(args,HF_NAME,Value_sep);
+	hf_name = Find_str_value(args,HF_NAME);
 	Get_hold_file( &job, hf_name );
 
 	if( Setup_cf_info( &job, 1 ) ){
@@ -2234,8 +2253,8 @@ void Service_worker( struct line_list *args )
 		cleanup(0);
 	}
 
-	Set_str_value(&job.info,NEW_DEST, Find_str_value(args,NEW_DEST,Value_sep));
-	Set_str_value(&job.info,MOVE_DEST, Find_str_value(args,MOVE_DEST,Value_sep));
+	Set_str_value(&job.info,NEW_DEST, Find_str_value(args,NEW_DEST));
+	Set_str_value(&job.info,MOVE_DEST, Find_str_value(args,MOVE_DEST));
 	Set_decimal_value(&job.info,SERVER,getpid());
 
 	Free_line_list(args);
@@ -2250,25 +2269,25 @@ void Service_worker( struct line_list *args )
 			hf_name );
 	}
 
-	id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+	id = Find_str_value(&job.info,IDENTIFIER);
 	if( !id ){
 		FATAL(LOG_ERR)
 			_("Service_worker: no identifier for '%s'"),
-			Find_str_value(&job.info,HF_NAME,Value_sep) );
+			Find_str_value(&job.info,HF_NAME) );
 	}
 
-	if( (destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep)) ){
-		did = Find_str_value(&job.info,DESTINATION,Value_sep );
+	if( (destinations = Find_flag_value(&job.info,DESTINATIONS)) ){
+		did = Find_str_value(&job.info,DESTINATION );
 		if( !Get_destination_by_name( &job, did ) ){
 			destination = &job.destination;
-			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
+			attempt = Find_flag_value(destination,ATTEMPT);
 		}
 	} else {
-		attempt = Find_flag_value(&job.info,ATTEMPT,Value_sep);
+		attempt = Find_flag_value(&job.info,ATTEMPT);
 	}
 	DEBUG3("Service_worker: attempt %d", attempt );
-	new_dest = Find_str_value(&job.info,NEW_DEST,Value_sep);
-	move_dest = Find_str_value(&job.info,MOVE_DEST,Value_sep);
+	new_dest = Find_str_value(&job.info,NEW_DEST);
+	move_dest = Find_str_value(&job.info,MOVE_DEST);
 	lpd_bounce = Lpd_bounce_DYN;
 	if( move_dest ){
 		lpd_bounce = 0;
@@ -2542,13 +2561,13 @@ void Add_banner_to_job( struct job *job )
 	int tempfd;
 
 	Errorcode = 0;
-    banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
+    banner_name = Find_str_value(&job->info, BNRNAME );
     if( banner_name == 0 ){
-        banner_name = Find_str_value( &job->info,LOGNAME,Value_sep);
+        banner_name = Find_str_value( &job->info,LOGNAME);
 	}
 	if( banner_name == 0 ) banner_name = "ANONYMOUS";
 	Set_str_value(&job->info,BNRNAME,banner_name);
-    banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
+    banner_name = Find_str_value(&job->info, BNRNAME );
 	DEBUG1("Add_banner_to_job: banner name '%s'", banner_name );
 	if( !Banner_last_DYN ){
 		DEBUG1("Add_banner_to_job: banner at start");
@@ -2654,22 +2673,22 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
         }
     }
 	Errorcode = 0;
-	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep ),
+	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp" ),
 		__FILE__,__LINE__ );
 
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
 	tempfd = -1;
 	for( count = 0; count < job->datafiles.count; ++count ){
 		datafile = (void *)job->datafiles.list[count];
 		if(DEBUGL4)Dump_line_list("Filter_files_in_job - datafile", datafile );
 
-		openname = Find_str_value(datafile,OPENNAME,Value_sep);
-		if( !openname ) openname = Find_str_value(datafile,TRANSFERNAME,Value_sep);
-		format = Find_str_value(datafile,FORMAT,Value_sep);
+		openname = Find_str_value(datafile,OPENNAME);
+		if( !openname ) openname = Find_str_value(datafile,TRANSFERNAME);
+		format = Find_str_value(datafile,FORMAT);
 
 		Set_str_value(&job->info,FORMAT,format);
 		Set_str_value(&job->info,DF_NAME,openname);
-		Set_str_value(&job->info,"N", Find_str_value(datafile,"N",Value_sep) );
+		Set_str_value(&job->info,"N", Find_str_value(datafile,"N") );
 
 		/*
 		 * now we check to see if there is an input filter
@@ -2690,14 +2709,13 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 				break;
 		}
 		if( !filter ){
-			filter = Find_str_value(&PC_entry_line_list,
-				filter_name,Value_sep);
+			filter = Find_str_value(&PC_entry_line_list, filter_name);
 		}
 		if( !filter){
-			filter = Find_str_value(&Config_line_list,filter_name,
-				Value_sep);
+			filter = Find_str_value(&Config_line_list,filter_name );
 		}
 		if( filter == 0 ) filter = Filter_DYN;
+		if( filter == 0 ) filter = IF_Filter_DYN;
 		DEBUG3("Filter_files_in_job: format '%s', filter '%s'", format, filter );
 
 		if( filter == 0 ){
@@ -2738,7 +2756,7 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 			}
 			tempfd = Make_temp_fd(&tempfile);
 			Set_str_value(datafile,OPENNAME,tempfile);
-			n = Filter_file( fd, tempfd, "PR_PROGRAM",
+			n = Filter_file( Send_job_rw_timeout_DYN, fd, tempfd, "PR_PROGRAM",
 				Pr_program_DYN, 0, job, 0, 1 );
 			if( n ){
 				Errorcode = JABORT;
@@ -2858,8 +2876,8 @@ void Service_queue( struct line_list *args )
 {
 	int subserver;
 
-	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER,Value_sep) );
-	subserver = Find_flag_value( args, SUBSERVER, Value_sep );
+	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER) );
+	subserver = Find_flag_value( args, SUBSERVER );
 
 	Free_line_list(args);
 	Do_queue_jobs( Printer_DYN, subserver );
@@ -2871,7 +2889,7 @@ int Remove_done_jobs( void )
 {
 	struct job job;
 	char *id;
-	int removed = 0;
+	int removed = 0, last_remove = 0, remove_count = 0;
 	time_t tm;
 	int job_index, info_index, pid, remove, error, done, incoming;
 	struct line_list info;
@@ -2898,15 +2916,20 @@ int Remove_done_jobs( void )
 		if(DEBUGL4)Dump_job("Remove_done_jobs: done_jobs - job ",&job);
 		if( job.info.count == 0 ) continue;
 		/* get status from hold file */
-		id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-		done = Find_flag_value(&job.info,DONE_TIME,Value_sep);
-		error = Find_flag_value(&job.info,ERROR_TIME,Value_sep);
-		incoming = Find_flag_value(&job.info,INCOMING_TIME,Value_sep);
-		remove = Find_flag_value(&job.info,REMOVE_TIME,Value_sep);
+		id = Find_str_value(&job.info,IDENTIFIER);
+		done = Find_flag_value(&job.info,DONE_TIME);
+		error = Find_flag_value(&job.info,ERROR_TIME);
+		incoming = Find_flag_value(&job.info,INCOMING_TIME);
+		remove = Find_flag_value(&job.info,REMOVE_TIME);
 		DEBUG3("Remove_done_jobs: remove 0x%x, done 0x%x, error 0x%x, incoming 0x%x",
 			remove, done, error, incoming );
 		if( !remove ) continue;
-		if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) && kill( pid, 0 ) == 0 ){
+		if( last_remove != remove ){
+			remove_count = 0;
+		}
+		last_remove = remove;
+		++remove_count;
+		if( (pid = Find_flag_value(&job.info,SERVER)) && kill( pid, 0 ) == 0 ){
 			DEBUG3("Remove_done_jobs: '%s' active %d", hold_file, pid );
 			continue;
 		}
@@ -2917,7 +2940,7 @@ int Remove_done_jobs( void )
 			/* Setup_cf_info( &job, 0 ); */
 			Remove_job( &job );
 		} else if( Done_jobs_DYN > 0 ){
-			SNPRINTF(tval,sizeof(tval)) "0x%08x", remove );
+			SNPRINTF(tval,sizeof(tval)) "0x%06x.%03d", remove, remove_count );
 			Set_str_value(&info, tval, hold_file );
 		}
 	}

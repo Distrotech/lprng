@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: checkpc.h,v 1.57 2003/09/05 20:07:20 papowell Exp $
+ * $Id: checkpc.h,v 1.61 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -22,6 +22,7 @@ void usage(void);
 int getage( char *age );
 int getk( char *age );
 int Check_file( char  *path, int fix, int age, int rmflag );
+int Check_read_file( char  *path, int fix, int perms, int owner );
 int Fix_create_dir( char  *path, struct stat *statb );
 int Fix_owner( char *path );
 int Fix_perms( char *path, int perms );

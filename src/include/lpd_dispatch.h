@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_dispatch.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: lpd_dispatch.h,v 1.61 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -13,8 +13,9 @@
 #define _LPD_DISPATCH_H_ 1
 
 /* PROTOTYPES */
-void Dispatch_input(int *talk, char *input );
+void Dispatch_input(int *talk, char *input, const char *from_addr );
 void Service_all( struct line_list *args );
 void Service_connection( struct line_list *args );
+void Service_lpd( int talk, const char *from_addr );
 
 #endif

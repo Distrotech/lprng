@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: linksupport.c,v 1.61 2003/11/14 02:32:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -29,7 +29,7 @@
  *  2. set the REUSE option on socket
  *  3. does a bind to port determined by Link_dest_port_num();
  *
- * void Link_close( int socket )
+ * void Link_close( int timeout, int socket )
  *    closes the link to the remote host
  *
  * int Link_send( char *host, int *socket,int timeout,
@@ -847,18 +847,18 @@ int Link_open_list( char *hostlist, char **result,
 }
 
 /***************************************************************************
- * void Link_close( int socket )
+ * void Link_close( int timeout, int socket )
  *    closes the link to the remote host
  *  We first do a shutdown(*sock,1) and THEN do a close
  ***************************************************************************/
 
-void Link_close( int *sock )
+void Link_close( int timeout, int *sock )
 {
 	char buf[SMALLBUFFER];
 	DEBUGF(DNW4) ("Link_close: closing socket %d", *sock );
 	if( *sock >= 0 ){
 		shutdown(*sock,1);
-		while( read(*sock,buf,sizeof(buf)) > 0 );
+		while( Read_fd_len_timeout(timeout, *sock,buf,sizeof(buf)) > 0 );
 		(void)close(*sock);
 	}
 	*sock = -1;

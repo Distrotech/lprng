@@ -9,5 +9,12 @@ if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 if [ "X$2" = "XDEINSTALL" ] ; then
 	echo "Stopping LPD"
 	killall -INT lpd
+	if [ -f /etc/rc.conf ] ; then
+		perl -spi.bak -e '$_ = "" if( /lprng_enable/ );' ${DESTDIR}/etc/rc.conf 
+	fi
+	init=/usr/local/etc/rc.d/lprng.sh
+	if [ -f $init ] ; then
+		rm -f $init
+	fi
 fi
 exit 0

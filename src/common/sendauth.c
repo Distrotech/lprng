@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: sendauth.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 #include "lp.h"
 #include "user_auth.h"
@@ -97,9 +97,9 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 
 	if(DEBUGL1)Dump_line_list("Send_auth_transfer: info ", info );
 
-	destination = Find_str_value(info, DESTINATION, Value_sep );
-	from = Find_str_value(info, FROM, Value_sep );
-	client = Find_str_value(info, CLIENT, Value_sep );
+	destination = Find_str_value(info, DESTINATION );
+	from = Find_str_value(info, FROM );
+	client = Find_str_value(info, CLIENT );
 
 	if( safestrcmp(security->config_tag, "kerberos") ){
 		Put_in_auth(fd,DESTINATION,destination);
@@ -127,7 +127,7 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 		goto error;
 	}
 
-	s = Find_str_value(info, CMD, Value_sep );
+	s = Find_str_value(info, CMD );
 	if( job ){
         status = Send_normal( &fd, job, logjob, transfer_timeout, fd, 0);
         if( status ) return( status );
@@ -166,7 +166,7 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 		error[0] = 0;
 		DEBUG2("Send_auth_transfer: starting read");
 		len = 0;
-		while( (n = read(*sock,buffer+len,sizeof(buffer)-1-len)) > 0 ){
+		while( (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN, *sock,buffer+len,sizeof(buffer)-1-len)) > 0 ){
 			buffer[n+len] = 0;
 			DEBUG4("Send_auth_transfer: read '%s'", buffer);
 			while( (s = strchr(buffer,'\n')) ){
@@ -277,7 +277,7 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 		if( security->name == 0 ){
 			security = 0;
 			SNPRINTF(error, errlen)
-				"Send_auth_transfer: '%s' security not supported", name );
+				"Fix_send_auth: '%s' security not supported", name );
 			goto error;
 		}
 	} else {
@@ -302,34 +302,34 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	if( Is_server ){
 		/* forwarding */
 		key = "F";
-		from = Find_str_value(info,ID,Value_sep);
-		if(!from)from = Find_str_value(info,"server_principal",Value_sep);
+		from = Find_str_value(info,ID);
+		if(!from)from = Find_str_value(info,"server_principal");
 		if( from == 0 && safestrcmp(tag,"kerberos") && safestrcmp(tag,"none") ){
 			SNPRINTF(error, errlen)
-			"Send_auth_transfer: '%s' security missing '%s_id' info", tag, tag );
+			"Fix_send_auth: '%s' security missing '%s_id' info", tag, tag );
 			goto error;
 		}
 		Set_str_value(info,FROM,from);
 		if( job ){
-			client = Find_str_value(&job->info,AUTHUSER,Value_sep);
+			client = Find_str_value(&job->info,AUTHUSER);
 			Set_str_value(info,CLIENT,client);
 		} else {
 			client = (char *)Perm_check.authuser;
 		}
 		if( client == 0 
-			&& !(client = Find_str_value(info,"default_client_name",Value_sep))
+			&& !(client = Find_str_value(info,"default_client_name"))
 			&& safestrcmp(tag,"none") ){
 			SNPRINTF(error, errlen)
-			"Send_auth_transfer: security '%s' missing authenticated client", tag );
+			"Fix_send_auth: security '%s' missing authenticated client", tag );
 			goto error;
 		}
 		Set_str_value(info,CLIENT,client);
-		destination = Find_str_value(info,FORWARD_ID,Value_sep);
-		if(!destination)destination = Find_str_value(info,"forward_principal",Value_sep);
+		destination = Find_str_value(info,FORWARD_ID);
+		if(!destination)destination = Find_str_value(info,"forward_principal");
 		if( destination == 0 && safestrcmp(tag, "kerberos")
 			&& safestrcmp(tag, "none")){
 			SNPRINTF(error, errlen)
-			"Send_auth_transfer: '%s' security missing '%s_forward_id' info", tag, tag );
+			"Fix_send_auth: '%s' security missing '%s_forward_id' info", tag, tag );
 			goto error;
 		}
 	} else {
@@ -339,26 +339,26 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 		Set_str_value(info,FROM,from);
 		client = Logname_DYN;
 		Set_str_value(info,CLIENT,client);
-		destination = Find_str_value(info,ID,Value_sep);
-		if(!destination)destination = Find_str_value(info,"server_principal",Value_sep);
+		destination = Find_str_value(info,ID);
+		if(!destination)destination = Find_str_value(info,"server_principal");
 		if( destination == 0 && safestrcmp(tag, "kerberos")
 			&& safestrcmp(tag, "none") ){
 			SNPRINTF(error, errlen)
-			"Send_auth_transfer: '%s' security missing '%s_id' info", tag, tag );
+			"Fix_send_auth: '%s' security missing destination '%s_id' info", tag, tag );
 			goto error;
 		}
 	}
 
 	Set_str_value(info,DESTINATION,destination);
 
-	DEBUG1("Send_auth_transfer: pr '%s', key '%s', from '%s',"
+	DEBUG1("Fix_send_auth: pr '%s', key '%s', from '%s',"
 		" destination '%s'",
 		RemotePrinter_DYN,key, from, tag);
 	SNPRINTF( buffer, sizeof(buffer))
 		"%c%s %s %s %s",
 		REQ_SECURE,RemotePrinter_DYN,key, from, tag );
 	Set_str_value(info,CMD,buffer);
-	DEBUG1("Send_auth_transfer: sending '%s'", buffer );
+	DEBUG1("Fix_send_auth: sending '%s'", buffer );
 
  error:
 	if( error[0] ) security = 0;

@@ -9,8 +9,9 @@ SYSCONFDIR=/usr/local/etc
 SBINDIR=/usr/local/sbin
 FILTER_DIR=/usr/local/libexec/filters
 LOCKFILE="/var/run/lpd"
+CONFIG_SUBDIR=lpd
 PSHOWALL="-ax"
-VERSION=3.8.22
+VERSION=3.8.23
 INIT=
 MANDIR=/usr/local/man
 #
@@ -24,5 +25,9 @@ if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 if [ "X$2" = "XDEINSTALL" ] ; then
 	echo "Stopping LPD"
 	killall -INT lpd
+	init=/usr/local/etc/rc.d/lprng.sh
+	if [ -f $init ] ; then
+		rm -f $init
+	fi
 fi
 exit 0

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: vars.c,v 1.61 2003/11/14 02:32:56 papowell Exp $";
 
 
 /* force local definitions */
@@ -89,6 +89,9 @@ Put all of the variables in a separate file.
 #if !defined(PRUTIL)
 #error Missing PRUTIL definition
 #endif
+#if !defined(SD_DEFAULT)
+#error Missing SD_DEFAULT definition
+#endif
 
 /*
  * printcap variables used by LPD for printing
@@ -164,6 +167,8 @@ struct keywords Pc_var_list[] = {
 { "chooser_interval", 0, INTEGER_K, &Chooser_interval_DYN,0,0,"=10"},
    /* user provided routine selects the destination for a load balance queue */
 { "chooser_routine", 0, FLAG_K, &Chooser_routine_DYN,0,0,0},
+   /* chooser filter scans entire queue */
+{ "chooser_scan_queue", 0, FLAG_K, &Chooser_scan_queue_DYN,0,0,0},
    /* show classname in status display */
 { "class_in_status", 0, FLAG_K, &Class_in_status_DYN,0,0,0},
    /*  comment identifying printer (LPQ) */
@@ -215,7 +220,7 @@ struct keywords Pc_var_list[] = {
    /*  send a form feed (value set by ff) between files of a job */
 { "ff_separator", 0,  FLAG_K,  &FF_separator_DYN,0,0,0},
    /* enforce FIFO (first in, first out) sequential job printing order */
-{ "fifo", 0, FLAG_K, &Fifo_DYN,0,0,0},
+{ "fifo", 0, FLAG_K, &Fifo_DYN,0,0,"=1"},
    /* FIFO lock file */
 { "fifo_lock_file", 0, STRING_K, &Fifo_lock_file_DYN,0,0,"=fifo.lock"},
    /* default filter */
@@ -262,6 +267,10 @@ struct keywords Pc_var_list[] = {
 { "ignore_requested_user_priority", 0,  FLAG_K,  &Ignore_requested_user_priority_DYN,0,0,0},
    /*  incoming job control file filter */
 { "incoming_control_filter", 0,  STRING_K,  &Incoming_control_filter_DYN,0,0,0},
+   /* ipp server listen port port, "off" does not open port */
+{ "ipp_listen_port", 0, STRING_K, &Ipp_listen_port_DYN,0,0,0},
+   /* ipp destination port */
+{ "ipp_port", 0, STRING_K, &Ipp_port_DYN,0,0,"=631"},
    /*  Running IPV6 */
 { "ipv6", 0,  FLAG_K,  &IPV6Protocol_DYN,0,0,0},
 	/* TCP keepalive enabled */
@@ -338,19 +347,19 @@ struct keywords Pc_var_list[] = {
 { "mail_from", 0, STRING_K, &Mail_from_DYN,0,0,0},
    /* mail to this operator on error */
 { "mail_operator_on_error", 0, STRING_K, &Mail_operator_on_error_DYN,0,0,0},
-   /* maximum accounting file size in Kbytes */
+   /* maximum accounting file size in Kbytes; 0 means no limit on size */
 { "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=1000"},
    /* maximum interval between connection attempts */
 { "max_connect_interval", 0, INTEGER_K, &Max_connect_interval_DYN,0,0,"=60"},
    /* maximum number of datafiles */
 { "max_datafiles", 0, INTEGER_K, &Max_datafiles_DYN,0,0,"=52"},
-   /* maximum log file size in Kbytes */
+   /* maximum log file size in Kbytes; 0 means no limit on size */
 { "max_log_file_size", 0, INTEGER_K, &Max_log_file_size_DYN,0,0,"=1000"},
    /* maximum number of servers that can be active */
 { "max_servers_active", 0, INTEGER_K, &Max_servers_active_DYN,1,0,"=1024"},
    /* maximum length of status line */
 { "max_status_line", 0, INTEGER_K, &Max_status_line_DYN,0,0,"=79"},
-   /* maximum size (in K) of status file */
+   /* maximum size (in K) of status file; 0 means no limit on size */
 { "max_status_size", 0, INTEGER_K, &Max_status_size_DYN,0,0,"=10"},
    /*  maximum copies allowed */
 { "mc", 0,  INTEGER_K,  &Max_copies_DYN,0,0,"=1"},
@@ -383,13 +392,17 @@ struct keywords Pc_var_list[] = {
    /* orginate connections from these ports */
 { "originate_port", 0, STRING_K, &Originate_port_DYN,0,0,"=512 1023"},
    /* pass these environment variables to filters (clients and lpd)*/
-{ "pass_env", 0,  STRING_K,  &Pass_env_DYN,0,0,"=PGPPASS,PGPPATH,PGPPASSFD,LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL" },
-   /* lpd.perms files */
+{ "pass_env", 0,  STRING_K,  &Pass_env_DYN,0,0,"=LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL" },
+   /* make sure these printcap entries are in PRINTCAP_ENTRY filter environment variable */
+{ "pc_entries_required", 0,  STRING_K,  &Pc_entries_required_DYN,0,0,"=ppd" },
+   /* lpd.perms file */
 { "perms_path", 0, STRING_K, &Printer_perms_path_DYN,1,0,"=" LPD_PERMS_PATH },
    /*  pgp path */
 { "pgp_path", 0,  STRING_K,  &Pgp_path_DYN,0,0,"=" PGP_PATH },
    /*  page length (in lines) */
 { "pl", 0,  INTEGER_K,  &Page_length_DYN,0,0,"=66"},
+   /* ppd files */
+{ "ppd", 0,  STRING_K,  &Ppd_file_DYN,0,0,0 },
    /*  pr program for p format */
 { "pr", 0,  STRING_K,  &Pr_program_DYN,0,0,PRUTIL},
    /* prefix control file line to line, "Z O" -> Z to O, "OS Z" does O and S to Z */
@@ -457,7 +470,7 @@ struct keywords Pc_var_list[] = {
    /*  short banner (one line only) */
 { "sb", 0,  FLAG_K,  &Short_banner_DYN,0,0,0},
    /*  spool directory (only ONE printer per directory!) */
-{ "sd", 0,  STRING_K,  &Spool_dir_DYN,0,0,0},
+{ "sd", 0,  STRING_K,  &Spool_dir_DYN,0,0,SD_DEFAULT "%P"},
    /* send block of data, rather than individual files */
 { "send_block_format", 0, FLAG_K, &Send_block_format_DYN,0,0,0},
    /* send data files first, then control file */

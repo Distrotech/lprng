@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: checkpc.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 
@@ -218,7 +218,7 @@ int main( int argc, char *argv[], char *envp[] )
 	if(Verbose)MESSAGE("Checking printcap info");
 	if( User_specified_printer ){
 		if( DEBUGL1 ) Dump_line_list("checkpc: names", &PC_names_line_list );
-		s = Find_str_value( &PC_names_line_list, User_specified_printer, Value_sep );
+		s = Find_str_value( &PC_names_line_list, User_specified_printer );
 		DEBUG1("checkpc: for SERVER %s is really %s", User_specified_printer, s );
 		if( s ){
 			Set_DYN(&Printer_DYN,s);
@@ -331,16 +331,16 @@ void Scan_printer(struct line_list *spooldirs)
 		}
 		goto test_filters;
 	}
-	if( !Find_first_key(&PC_entry_line_list,"bq",Value_sep,&n)
-		|| !Find_first_key(&Config_line_list,"bq",Value_sep,&n ) ){
+	if( !Find_first_key(&PC_entry_line_list,"bq",Option_value_sep,&n)
+		|| !Find_first_key(&Config_line_list,"bq",Option_value_sep,&n ) ){
 		WARNMSG( "%s: bq option is no longer supported, use 'lpd_bounce' option", Printer_DYN);
 	}
-	if( !Find_first_key(&PC_entry_line_list,"check_idle",Value_sep,&n)
-		|| !Find_first_key(&Config_line_list,"check_idle",Value_sep,&n ) ){
+	if( !Find_first_key(&PC_entry_line_list,"check_idle",Option_value_sep,&n)
+		|| !Find_first_key(&Config_line_list,"check_idle",Option_value_sep,&n ) ){
 		WARNMSG( "%s: check_idle option is no longer supported, use 'chooser' option", Printer_DYN);
 	}
-	if( !Find_first_key(&PC_entry_line_list,"sf",Value_sep,&n)
-		|| !Find_first_key(&Config_line_list,"sf",Value_sep,&n ) ){
+	if( !Find_first_key(&PC_entry_line_list,"sf",Option_value_sep,&n)
+		|| !Find_first_key(&Config_line_list,"sf",Option_value_sep,&n ) ){
 		WARNMSG( "%s: sf (suppress form feeds) is deprecated.  Use 'ff_separator' if you want FF between job files", Printer_DYN);
 	}
 	if( strchr(Printer_DYN, '*') ){
@@ -360,7 +360,7 @@ void Scan_printer(struct line_list *spooldirs)
 			Printer_DYN);
 		return;
 	}
-	if( (s =  Find_str_value(spooldirs,Spool_dir_DYN,Value_sep)) ){
+	if( (s =  Find_str_value(spooldirs,Spool_dir_DYN)) ){
 		WARNMSG("%s: CATASTROPHIC ERROR! queue '%s' also has spool directory '%s'",
 			Printer_DYN, s, Spool_dir_DYN);
 		return;
@@ -461,7 +461,9 @@ void Scan_printer(struct line_list *spooldirs)
 	Fix_clean(Status_file_DYN,Nostatus);
 	Fix_clean(Log_file_DYN,Nolog);
 	Fix_clean(Accounting_file_DYN,Noaccount);
-
+	if( (s = Ppd_file_DYN) ){
+		Check_read_file( s, Fix, 0644, 0 );
+	}
 	/*
 	 * get the jobs in the queue
 	 */
@@ -534,8 +536,8 @@ void Check_executable_filter( char *id, char *filter_str )
 	
 	Init_line_list(&files);
 	if( !filter_str ){
-		filter_str = Find_str_value(&PC_entry_line_list,id,Value_sep);
-		if(!filter_str) filter_str = Find_str_value(&Config_line_list,id,Value_sep);
+		filter_str = Find_str_value(&PC_entry_line_list,id);
+		if(!filter_str) filter_str = Find_str_value(&Config_line_list,id);
 	}
 	Split(&files,filter_str,Whitespace,0,0,0,0,0,0);
 	if( files.count ){
@@ -718,15 +720,15 @@ int Check_file( char  *path, int fix, int age, int rmflag )
 		path, fix, (long)Current_time, age );
 
 	if( stat( path, &statb ) ){
-		if(Verbose)MESSAGE( "cannot stat file '%s', %s", path, Errormsg(errno) );
+		WARNMSG( "  %s: cannot stat file '%s', %s", Printer_DYN?Printer_DYN:"", path, Errormsg(errno) );
 		err = 1;
 		return( err );
 	}
 	if( S_ISDIR( statb.st_mode ) ){
-		WARNMSG("'%s' is a directory, not a file", path );
+		WARNMSG("  %s: '%s' is a directory, not a file", Printer_DYN?Printer_DYN:"",path );
 		return(2);
 	} else if( !S_ISREG( statb.st_mode ) ){
-		WARNMSG( "'%s' not a regular file - unusual", path );
+		WARNMSG( " %s: '%s' not a regular file - unusual", Printer_DYN?Printer_DYN:"",path );
 		return(2) ;
 	}
 
@@ -759,6 +761,47 @@ int Check_file( char  *path, int fix, int age, int rmflag )
 			}
 		}
 	}
+	return( err );
+}
+
+
+/***************************************************************************
+ * Check_read_file( char  *dpath   - pathname of directory/files
+ *    int fix  - fix or check
+ ***************************************************************************/
+
+int Check_read_file( char  *path, int fix, int perms, int owner )
+{
+	struct stat statb;
+	int err = 0;
+	int fd;
+
+	DEBUG4("Check_read_file: '%s', fix %d", path, fix );
+
+	if( stat( path, &statb ) ){
+		WARNMSG( "  %s: cannot stat file '%s', %s", Printer_DYN?Printer_DYN:"",
+			path, Errormsg(errno) );
+		err = 1;
+		return( err );
+	}
+	if( S_ISDIR( statb.st_mode ) ){
+		WARNMSG("  %s: '%s' is a directory, not a file", Printer_DYN?Printer_DYN:"",path );
+		return(2);
+	} else if( !S_ISREG( statb.st_mode ) ){
+		WARNMSG( " %s: '%s' not a regular file - unusual", Printer_DYN?Printer_DYN:"",path );
+		return(2) ;
+	}
+	if( (fd = Checkread( path, &statb )) < 0 ){
+		if( fix ){
+			if( owner ) Fix_owner( path );
+			Fix_perms( path, perms );
+		} else {
+			WARNMSG( " %s: cannot open %s - %s", Printer_DYN?Printer_DYN:"",
+				path, Errormsg(errno) );
+		}
+	}
+	if( fd >= 0 ) close(fd);
+
 	return( err );
 }
 

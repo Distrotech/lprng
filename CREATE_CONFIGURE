@@ -12,7 +12,7 @@ autoconf
 gettextize --force --copy </dev/null
 rm -f po/Makevars
 mv po/Makevars.template po/Makevars
-libtoolize14 --force --copy
+echo "" >/dev/tty; libtoolize14 --force --copy
 grep 'SED=' ltmain.sh || {
  (	head -1 ltmain.sh ; echo "SED=sed"; cat ltmain.sh ) >ltmain
 	rm -f ltmain.sh

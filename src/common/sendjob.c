@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
+"$Id: sendjob.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -96,8 +96,8 @@ int Send_job( struct job *job, struct job *logjob,
 	Set_flag_value(&job->info,ERROR_TIME,0);
 	/* send job to the LPD server for the RemotePrinter_DYN */
 
-	id = Find_str_value( &job->info,IDENTIFIER,Value_sep);
-	if( id == 0 ) id = Find_str_value( &job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value( &job->info,IDENTIFIER);
+	if( id == 0 ) id = Find_str_value( &job->info,TRANSFERNAME);
 	DEBUG3("Send_job: '%s'->%s@%s,connect(timeout %d,interval %d)",
 		id, RemotePrinter_DYN, RemoteHost_DYN,
 			connect_timeout_len, connect_interval );
@@ -204,7 +204,7 @@ int Send_job( struct job *job, struct job *logjob,
 
 	if( sock >= 0 ) sock = Shutdown_or_close(sock);
 	if( status ){
-		if( (s = Find_str_value(&job->info,ERROR,Value_sep )) ){
+		if( (s = Find_str_value(&job->info,ERROR )) ){
 			SETSTATUS(logjob) "job '%s' transfer to %s@%s failed\n  %s",
 				id, RemotePrinter_DYN, RemoteHost_DYN, s );
 			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
@@ -215,7 +215,8 @@ int Send_job( struct job *job, struct job *logjob,
 			msg[0] = 0;
 			n = 0;
 			while( len < (int)sizeof(msg)-1
-				&& (n = read(sock,msg+len,sizeof(msg)-len-1)) > 0 ){
+				&& (n = Read_fd_len_timeout(Send_job_rw_timeout_DYN,
+					sock,msg+len,sizeof(msg)-len-1)) > 0 ){
 				msg[len+n] = 0;
 				DEBUG2("Send_job: read %d, '%s'", n, msg);
 				while( (s = safestrchr(msg,'\n')) ){
@@ -280,8 +281,8 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 	DEBUG3("Send_normal: send_data_first %d, sock %d, block_fd %d",
 		Send_data_first_DYN, *sock, block_fd );
 
-	id = Find_str_value(&job->info,"A",Value_sep);
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value(&job->info,"A");
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 	
 	if( !block_fd ){
 		SETSTATUS(logjob) "requesting printer %s@%s",
@@ -333,16 +334,16 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 	 * get the total length of the control file
 	 */
 
-	if( !(cf = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep)) ){
-		s = Find_str_value(&job->info,OPENNAME,Value_sep);
-		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if( !(cf = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
+		s = Find_str_value(&job->info,OPENNAME);
+		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
 		s = Get_file_image( s, 0 );
 		Set_str_value(&job->info, CF_OUT_IMAGE, s );
 		if( s ) free(s); s = 0;
-		cf = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep);
+		cf = Find_str_value(&job->info,CF_OUT_IMAGE);
 	}
 	size = safestrlen(cf);
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 
 	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
 		transfername, size, *sock, block_fd, cf );
@@ -442,13 +443,13 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 	struct stat statb;
 
 	DEBUG3( "Send_data_files: data file count '%d'", job->datafiles.count );
-	id = Find_str_value(&job->info,"identification",Value_sep);
-	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value(&job->info,"identification");
+	if( id == 0 ) id = Find_str_value(&job->info,TRANSFERNAME);
 	for( count = 0; count < job->datafiles.count; ++count ){
 		lp = (void *)job->datafiles.list[count];
 		if(DEBUGL3)Dump_line_list("Send_data_files - entries",lp);
-		openname = Find_str_value(lp,OPENNAME,Value_sep);
-		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+		openname = Find_str_value(lp,OPENNAME);
+		transfername = Find_str_value(lp,TRANSFERNAME);
 		DEBUG3("Send_data_files: opening file '%s'", openname );
 
 		/*
@@ -522,7 +523,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 			DEBUG3("Send_data_files: transfering '%s', fd %d", openname, fd );
 			ack = 0;
 			if( count == job->datafiles.count-1 && final_filter ){
-				status = Filter_file( fd, *sock, "UserFilter",
+				status = Filter_file( transfer_timeout, fd, *sock, "UserFilter",
 					final_filter, Filter_options_DYN, job, 0, 1 );
 				DEBUG3("Send_data_files: final_filter '%s' status %d", final_filter, status );
 				close(fd); fd = 0;
@@ -564,7 +565,8 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 			}
 			/* now we need to read the file and transfer it */
 			total = 0;
-			while( total < size && (len = read(fd, msg, sizeof(msg)) ) > 0 ){
+			while( total < size && (len = Read_fd_len_timeout(Send_job_rw_timeout_DYN,
+					fd, msg, sizeof(msg))) > 0 ){
 				if( write( block_fd, msg, len ) < 0 ){
 					goto write_error;
 				}
@@ -634,8 +636,8 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 	char *id, *transfername, *tempfile;
 
 	error[0] = 0;
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 	if( id == 0 ) id = transfername;
 
 	tempfd = Make_temp_fd( &tempfile );
@@ -643,8 +645,8 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 
 	status = Send_normal( &tempfd, job, logjob, transfer_timeout, tempfd, 0 );
 
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 	if( id == 0 ) id = transfername;
 
 	DEBUG1("Send_block: sendnormal of '%s' returned '%s'", id, Server_status(status) );

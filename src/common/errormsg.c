@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: errormsg.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: errormsg.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -878,9 +878,9 @@ char *Server_status( int d )
 	num = 0;
 	if( job ){
 		Set_str_value(&l,IDENTIFIER,
-			(id = Find_str_value(&job->info,IDENTIFIER,Value_sep)) );
+			(id = Find_str_value(&job->info,IDENTIFIER)) );
 		Set_decimal_value(&l,NUMBER,
-			(num = Find_decimal_value(&job->info,NUMBER,Value_sep)) );
+			(num = Find_decimal_value(&job->info,NUMBER)) );
 	}
 	Set_str_value(&l,UPDATE_TIME,(tstr=Time_str(0,0)));
 	Set_decimal_value(&l,PROCESS,(pid=getpid()));

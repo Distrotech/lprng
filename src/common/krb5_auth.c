@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: krb5_auth.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -74,7 +74,7 @@
  *   should not be done in the main or non-exiting process
  */
  extern int des_read( krb5_context context, krb5_encrypt_block *eblock,
-	int fd, char *buf, int len, char *err, int errlen );
+	int fd, int transfer_timeout, char *buf, int len, char *err, int errlen );
  extern int des_write( krb5_context context, krb5_encrypt_block *eblock,
 	int fd, char *buf, int len, char *err, int errlen );
 
@@ -292,7 +292,7 @@ int server_krb5_status( int sock, char *err, int errlen, char *file )
 	}
 	DEBUG1( "server_krb5_status: sock '%d', file size %0.0f", sock, (double)(statb.st_size));
 
-	while( (retval = read( fd,buffer,sizeof(buffer)-1)) > 0 ){
+	while( (retval = ok_read( fd,buffer,sizeof(buffer)-1)) > 0 ){
 		inbuf.length = retval;
 		inbuf.data = buffer;
 		buffer[retval] = 0;
@@ -689,7 +689,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 		goto done;
 	}
 	DEBUG1( "client_krb5_auth: opened for read %s, fd %d, size %0.0f", file, fd, (double)statb.st_size );
-	while( (len = read( fd, buffer, sizeof(buffer)-1 )) > 0 ){
+	while( (len = ok_read( fd, buffer, sizeof(buffer)-1 )) > 0 ){
 		/* status = Write_fd_len( sock, buffer, len ); */
 		inbuf.data = buffer;
 		inbuf.length = len;
@@ -895,7 +895,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 
  int des_read( krb5_context context,
 	krb5_encrypt_block *eblock,
-	int fd, char *buf, int len,
+	int fd, int transfer_timeout, char *buf, int len,
 	char *err, int errlen )
 {
 	int nreturned = 0;
@@ -922,7 +922,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 		nstored = 0;
 	}
 	
-	if ((cc = read(fd, len_buf, 4)) != 4) {
+	if ((cc = Read_fd_len_timeout(transfer_timeout, fd, len_buf, 4)) != 4) {
 		/* XXX can't read enough, pipe must have closed */
 		return(0);
 	}
@@ -936,7 +936,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 			"read size problem");
 		return(-1);
 	}
-	if ((cc = read( fd, desinbuf.data, net_len)) != net_len) {
+	if ((cc = Read_fd_len_timeout( transfer_timeout, fd, desinbuf.data, net_len)) != net_len) {
 		/* pipe must have closed, return 0 */
 		SNPRINTF( err, errlen) "des_read: "
 		"Read error: length received %d != expected %d.",
@@ -1351,7 +1351,7 @@ int Receive_k4auth( int *sock, char *input )
         FATAL(LOG_INFO) "Service_connection: bad request line '%s'", cmd );
     }
 	Free_line_list(&values);
-    Dispatch_input(sock,cmd);
+    Dispatch_input(sock,cmd,ShortRemote_FQDN);
 
 	status = ack = 0;
 
@@ -1379,6 +1379,7 @@ int Receive_k4auth( int *sock, char *input )
 
 
 int Krb5_receive( int *sock,
+	int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -1392,10 +1393,10 @@ int Krb5_receive( int *sock,
 	char *principal = 0;
 
 	errmsg[0] = 0;
-	keytab = Find_str_value(info,"keytab",Value_sep);
-	service = Find_str_value(info,"service",Value_sep);
-	if( !(principal = Find_str_value(info,"server_principal",Value_sep)) ){
-		principal = Find_str_value(info,"id",Value_sep);
+	keytab = Find_str_value(info,"keytab");
+	service = Find_str_value(info,"service");
+	if( !(principal = Find_str_value(info,"server_principal")) ){
+		principal = Find_str_value(info,"id");
 	}
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
@@ -1440,7 +1441,9 @@ int Krb5_receive( int *sock,
  * 
  */
 
-int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
+int Krb5_send( int *sock,
+	int transfer_timeout,
+	char *tempfile,
 	char *error, int errlen,
 	struct security *security, struct line_list *info )
 {
@@ -1454,7 +1457,7 @@ int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 	DEBUG1("Krb5_send: tempfile '%s'", tempfile );
 	life = renew = 0;
 	if( Is_server ){
-		if( !(keyfile = Find_str_value(info,"keytab",Value_sep)) ){
+		if( !(keyfile = Find_str_value(info,"keytab")) ){
 			SNPRINTF( error, errlen) "no server keytab file" );
 			status = JFAIL;
 			goto error;
@@ -1468,15 +1471,15 @@ int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 			goto error;
 		}
 		close(fd);
-		principal = Find_str_value(info,"forward_principal",Value_sep);
+		principal = Find_str_value(info,"forward_principal");
 	} else {
-		if( !(principal = Find_str_value(info,"server_principal",Value_sep)) ){
-			principal = Find_str_value(info,"id",Value_sep);
+		if( !(principal = Find_str_value(info,"server_principal")) ){
+			principal = Find_str_value(info,"id");
 		}
 	}
-	service = Find_str_value(info, "service", Value_sep );
-	life = Find_str_value(info, "life", Value_sep );
-	renew = Find_str_value(info, "renew", Value_sep );
+	service = Find_str_value(info, "service" );
+	life = Find_str_value(info, "life");
+	renew = Find_str_value(info, "renew" );
 	status= client_krb5_auth( keyfile, service,
 		RemoteHost_DYN, /* remote host */
 		principal,	/* principle name of the remote server */

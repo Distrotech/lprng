@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: linelist.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -885,7 +885,7 @@ int Find_first_casekey( struct line_list *l, const char *key, const char *sep, i
 }
 
 /*
- * char *Find_value( struct line_list *l, char *key, char *sep )
+ * char *Find_value( struct line_list *l, char *key )
  *  Search the list for a corresponding key value
  *          value
  *   key    "1"
@@ -896,20 +896,17 @@ int Find_first_casekey( struct line_list *l, const char *key, const char *sep, i
  *  If key does not exist, we return "0"
  */
 
-const char *Find_value( struct line_list *l, const char *key, const char *sep )
+const char *Find_value( struct line_list *l, const char *key )
 {
 	const char *s = "0";
 	int mid, cmp = -1;
+	char *sep = Option_value_sep;
 
 	DEBUG5("Find_value: key '%s', sep '%s'", key, sep );
 	if( l ) cmp = Find_first_key( l, key, sep, &mid );
 	DEBUG5("Find_value: key '%s', cmp %d, mid %d", key, cmp, mid );
 	if( cmp==0 ){
-		if( sep ){
-			s = Fix_val( safestrpbrk(l->list[mid], sep ) );
-		} else {
-			s = l->list[mid];
-		}
+		s = Fix_val( safestrpbrk(l->list[mid], sep ) );
 	}
 	DEBUG4( "Find_value: key '%s', value '%s'", key, s );
 	return(s);
@@ -942,7 +939,7 @@ char *Find_first_letter( struct line_list *l, const char letter, int *mid )
  *   key@   "0"
  *   key#v  v
  *   key=v  v
- *   If value exists we return 0 (null)
+ *   If key does not exist we return 0 (null)
  */
 
 const char *Find_exists_value( struct line_list *l, const char *key, const char *sep )
@@ -964,7 +961,7 @@ const char *Find_exists_value( struct line_list *l, const char *key, const char 
 
 
 /*
- * char *Find_str_value( struct line_list *l, char *key, char *sep )
+ * char *Find_str_value( struct line_list *l, char *key )
  *  Search the list for a corresponding key value
  *          value
  *   key    0
@@ -973,10 +970,11 @@ const char *Find_exists_value( struct line_list *l, const char *key, const char 
  *   key=v  v
  */
 
-char *Find_str_value( struct line_list *l, const char *key, const char *sep )
+char *Find_str_value( struct line_list *l, const char *key )
 {
 	char *s = 0;
 	int mid, cmp = -1;
+	char *sep = Option_value_sep;
 
 	if( l ) cmp = Find_first_key( l, key, sep, &mid );
 	if( cmp==0 ){
@@ -984,15 +982,11 @@ char *Find_str_value( struct line_list *l, const char *key, const char *sep )
 		 *  value: NULL, "", "@", "=xx", "#xx".
 		 *  returns: "0", "1","0",  "xx",  "xx"
 		 */
-		if( sep ){
-			s = safestrpbrk(l->list[mid], sep );
-			if( s && *s == '=' ){
-				++s;
-			} else {
-				s = 0;
-			}
+		s = safestrpbrk(l->list[mid], sep );
+		if( s && *s == '=' ){
+			++s;
 		} else {
-			s = l->list[mid];
+			s = 0;
 		}
 	}
 	DEBUG4( "Find_str_value: key '%s', value '%s'", key, s );
@@ -1056,9 +1050,9 @@ void Set_str_value( struct line_list *l, const char *key, const char *value )
 	}
 	if( value && *value ){
 		s = safestrdup3(key,"=",value,__FILE__,__LINE__);
-		Add_line_list(l,s,Value_sep,1,1);
+		Add_line_list(l,s,Hash_value_sep,1,1);
 		if(s) free(s); s = 0;
-	} else if( !Find_first_key(l, key, Value_sep, &mid ) ){
+	} else if( !Find_first_key(l, key, Hash_value_sep, &mid ) ){
 		Remove_line_list(l,mid);
 	}
 }
@@ -1084,9 +1078,9 @@ void Set_expanded_str_value( struct line_list *l, const char *key, const char *o
 	}
 	if( value && *value ){
 		s = safestrdup3(key,"=",value,__FILE__,__LINE__);
-		Add_line_list(l,s,Value_sep,1,1);
+		Add_line_list(l,s,Hash_value_sep,1,1);
 		if(s) free(s); s = 0;
-	} else if( !Find_first_key(l, key, Value_sep, &mid ) ){
+	} else if( !Find_first_key(l, key, Hash_value_sep, &mid ) ){
 		Remove_line_list(l,mid);
 	}
 	if( value ) free(value); value = 0;
@@ -1111,9 +1105,9 @@ void Set_casekey_str_value( struct line_list *l, const char *key, const char *va
 	}
 	if( value && *value ){
 		s = safestrdup3(key,"=",value,__FILE__,__LINE__);
-		Add_casekey_line_list(l,s,Value_sep,1,1);
+		Add_casekey_line_list(l,s,Hash_value_sep,1,1);
 		if(s) free(s); s = 0;
-	} else if( !Find_first_casekey(l, key, Value_sep, &mid ) ){
+	} else if( !Find_first_casekey(l, key, Hash_value_sep, &mid ) ){
 		Remove_line_list(l,mid);
 	}
 }
@@ -1128,7 +1122,7 @@ void Set_flag_value( struct line_list *l, const char *key, long value )
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
 	SNPRINTF(buffer,sizeof(buffer))"%s=0x%lx",key,value);
-	Add_line_list(l,buffer,Value_sep,1,1);
+	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 
  
@@ -1138,7 +1132,7 @@ void Set_flag_value( struct line_list *l, const char *key, long value )
  */
 void Set_nz_flag_value( struct line_list *l, const char *key, long value )
 {
-	if( !Find_flag_value( l, key, Value_sep ) ){
+	if( !Find_flag_value( l, key ) ){
 		Set_flag_value( l, key, value );
 	}
 }
@@ -1153,7 +1147,7 @@ void Set_double_value( struct line_list *l, const char *key, double value )
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
 	SNPRINTF(buffer,sizeof(buffer))"%s=%0.0f",key,value);
-	Add_line_list(l,buffer,Value_sep,1,1);
+	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 
  
@@ -1166,7 +1160,7 @@ void Set_decimal_value( struct line_list *l, const char *key, long value )
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
 	SNPRINTF(buffer,sizeof(buffer))"%s=%ld",key,value);
-	Add_line_list(l,buffer,Value_sep,1,1);
+	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 /*
  * Remove_line_list( struct line_list *l, int mid ) 
@@ -1213,7 +1207,7 @@ void Remove_duplicates_line_list( struct line_list *l )
 
 
 /*
- * char *Find_flag_value( struct line_list *l, char *key, char *sep )
+ * char *Find_flag_value( struct line_list *l, char *key )
  *  Search the list for a corresponding key value
  *          value
  *   key    1
@@ -1222,13 +1216,13 @@ void Remove_duplicates_line_list( struct line_list *l )
  *   key=v  v  if v is integer, 0 otherwise
  */
 
-int Find_flag_value( struct line_list *l, const char *key, const char *sep )
+int Find_flag_value( struct line_list *l, const char *key )
 {
 	const char *s;
 	char *e;
 	int n = 0;
 
-	if( l && (s = Find_value( l, key, sep )) ){
+	if( l && (s = Find_value( l, key )) ){
 		e = 0;
 		n = strtol(s,&e,0);
 		if( !e || *e ) n = 0;
@@ -1239,7 +1233,7 @@ int Find_flag_value( struct line_list *l, const char *key, const char *sep )
  
 
 /*
- * char *Find_decimal_value( struct line_list *l, char *key, char *sep )
+ * char *Find_decimal_value( struct line_list *l, char *key )
  *  Search the list for a corresponding key value
  *          value
  *   key    1
@@ -1248,13 +1242,13 @@ int Find_flag_value( struct line_list *l, const char *key, const char *sep )
  *   key=v  v  if v is decimal, 0 otherwise
  */
 
-int Find_decimal_value( struct line_list *l, const char *key, const char *sep )
+int Find_decimal_value( struct line_list *l, const char *key )
 {
 	const char *s = 0;
 	char *e;
 	int n = 0;
 
-	if( l && (s = Find_value( l, key, sep )) ){
+	if( l && (s = Find_value( l, key )) ){
 		e = 0;
 		n = strtol(s,&e,10);
 		if( !e || *e ){
@@ -1269,7 +1263,7 @@ int Find_decimal_value( struct line_list *l, const char *key, const char *sep )
  
 
 /*
- * double Find_double_value( struct line_list *l, char *key, char *sep )
+ * double Find_double_value( struct line_list *l, char *key )
  *  Search the list for a corresponding key value
  *          value
  *   key    1
@@ -1278,13 +1272,13 @@ int Find_decimal_value( struct line_list *l, const char *key, const char *sep )
  *   key=v  v  if v is decimal, 0 otherwise
  */
 
-double Find_double_value( struct line_list *l, const char *key, const char *sep )
+double Find_double_value( struct line_list *l, const char *key )
 {
 	const char *s = 0;
 	char *e;
 	double n = 0;
 
-	if( l && (s = Find_value( l, key, sep )) ){
+	if( l && (s = Find_value( l, key )) ){
 		e = 0;
 		n = strtod(s,&e);
 	}
@@ -1355,7 +1349,7 @@ void Find_tags( struct line_list *dest, struct line_list *l, char *key )
 		s = l->list[mid];
 		do{
 			DEBUG5("Find_tags: adding '%s'", s+len );
-			Add_line_list(dest,s+len,Value_sep,1,1);
+			Add_line_list(dest,s+len,Hash_value_sep,1,1);
 			++mid;
 		} while( mid < l->count
 			&& (s = l->list[mid])
@@ -1409,8 +1403,8 @@ void Read_file_list( int required, struct line_list *model, char *str,
 	struct stat statb;
 
 	Init_line_list(&l);
-	DEBUG3("Read_file_list: '%s', doinclude %d, depth %d, maxdepth %d",
-		str, doinclude, depth, maxdepth );
+	DEBUG3("Read_file_list: '%s', doinclude %d, depth %d, maxdepth %d, keysep '%s'",
+		str, doinclude, depth, maxdepth, keysep );
 	if( depth > maxdepth ){
 		Errorcode = JABORT;
 		LOGERR_DIE(LOG_ERR)
@@ -1498,7 +1492,7 @@ void Read_fd_and_split( struct line_list *list, int fd,
 	char buffer[LARGEBUFFER];
 
 	sv = 0;
-	while( (count = read(fd, buffer, sizeof(buffer)-1)) > 0 ){
+	while( (count = ok_read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 		buffer[count] = 0;
 		len = size+count+1;
 		if( (sv = realloc_or_die( sv, len,__FILE__,__LINE__)) == 0 ){
@@ -1559,19 +1553,10 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 	Init_line_list(&opts);
 	Init_line_list(&oh);
 
-	DEBUG4("Build_pc_names: '%s'", str);
+	DEBUG4("Build_pc_names: start '%s'", str);
 	if( (s = safestrpbrk(str, ":")) ){
 		c = *s; *s = 0;
-		Split(&opts,s+1,":",1,Value_sep,0,1,0,":");
-#if 0
-		for( i = 0; i < opts.count; ++i ){
-			t = opts.list[i];  
-			while( t && (t = strstr(t,"\\:")) ){
-				memmove(t, t+1, safestrlen(t+1)+1 );
-				++t;
-			}
-		}
-#endif
+		Split(&opts,s+1,":",1,Option_value_sep,0,1,0,":");
 	}
 	Split(&l,str,"|",0,0,0,1,0,0);
 	if( s ) *s = c;
@@ -1587,14 +1572,14 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 		}
 	} else {
 		ok = 1;
-		if( Find_flag_value( &opts,SERVER,Value_sep) && !Is_server ){
+		if( Find_flag_value( &opts,SERVER ) && !Is_server ){
 			DEBUG4("Build_pc_names: not server" );
 			ok = 0;
-		} else if( Find_flag_value( &opts,CLIENT,Value_sep) && Is_server ){
+		} else if( Find_flag_value( &opts,CLIENT ) && Is_server ){
 			DEBUG4("Build_pc_names: not client" );
 			ok = 0;
-		} else if( !Find_first_key(&opts,"oh",Value_sep,&start_oh)
-			&& !Find_last_key(&opts,"oh",Value_sep,&end_oh) ){
+		} else if( !Find_first_key(&opts,"oh",Hash_value_sep,&start_oh)
+			&& !Find_last_key(&opts,"oh",Hash_value_sep,&end_oh) ){
 			ok = 0;
 			DEBUG4("Build_pc_names: start_oh %d, end_oh %d",
 				start_oh, end_oh );
@@ -1609,8 +1594,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 				}
 			}
 		}
-		if( ok && ((s = safestrpbrk( l.list[0], Value_sep))
-			|| (s = safestrpbrk( l.list[0], "@")) ) ){
+		if( ok && (s = safestrpbrk( l.list[0], Option_value_sep)) ){
 			ok = 0;
 			if(Warnings){
 				WARNMSG(
@@ -1621,15 +1605,16 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 				"bad printcap name '%s', has '%c' character",
 				l.list[0], *s );
 			}
-		} else if( ok ){
+		}
+		if( ok ){
 			if(DEBUGL4)Dump_line_list("Build_pc_names: adding ", &l);
 			if(DEBUGL4)Dump_line_list("Build_pc_names- before names", names );
 			if(DEBUGL4)Dump_line_list("Build_pc_names- before order", order );
-			if( !Find_exists_value( names, l.list[0], Value_sep ) ){
+			if( !Find_exists_value( names, l.list[0], Hash_value_sep ) ){
 				Add_line_list(order,l.list[0],0,0,0);
 			}
 			for( i = 0; i < l.count; ++i ){
-				if( safestrpbrk( l.list[i], Value_sep ) ){
+				if( safestrpbrk( l.list[i], Option_value_sep ) ){
 					continue;
 				}
 				Set_str_value(names,l.list[i],l.list[0]);
@@ -1652,7 +1637,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 				Errorcode = JABORT;
 				FATAL(LOG_ERR) "Build_pc_names: LINE GREW! fatal error");
 			}
-			DEBUG4("Build_pc_names: after '%s'", str );
+			DEBUG4("Build_pc_names: end '%s'", str );
 		}
 	}
 	
@@ -1761,7 +1746,7 @@ char *Select_pc_info( const char *id,
 	if(DEBUGL4)Dump_line_list("Select_pc_info- order", order );
 	if(DEBUGL4)Dump_line_list("Select_pc_info- input", input );
 	start = 0; end = 0;
-	found = Find_str_value( names, id, Value_sep );
+	found = Find_str_value( names, id );
 	if( !found && PC_filters_line_list.count ){
 		Filterprintcap( &l, &PC_filters_line_list, id);
 		Build_printcap_info( names, order, input, &l, &Host_IP );
@@ -1770,13 +1755,13 @@ char *Select_pc_info( const char *id,
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter info", info );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter names", names );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter input", input );
-		found = Find_str_value( names, id, Value_sep );
+		found = Find_str_value( names, id );
 	}
 	/* do partial glob match  */
 	c = 0;
 	for( i = 0; !found && i < names->count; ++i ){
 		s = names->list[i];
-		if( (t = safestrpbrk(s, Value_sep)) ){
+		if( (t = safestrpbrk(s, Hash_value_sep)) ){
 			c = *t; *t = 0;
 			DEBUG1("Select_pc_info: wildcard trying '%s'", s );
 			if( !safestrcmp(s, id ) ){
@@ -1789,7 +1774,7 @@ char *Select_pc_info( const char *id,
 		c = 0;
 		for( i = 0; !found && i < names->count; ++i ){
 			s = names->list[i];
-			if( (t = safestrpbrk(s, Value_sep)) ){
+			if( (t = safestrpbrk(s, Hash_value_sep)) ){
 				c = *t; *t = 0;
 				DEBUG1("Select_pc_info: wildcard trying '%s'", s );
 				if( !strcmp(s,"*") ){ 
@@ -1851,7 +1836,7 @@ void Find_pc_info( char *name,
 		u = pc.list[start];
 		c = 0;
 		if( (t = safestrpbrk(u,":")) ){
-			Split(&l, t+1, ":", 1, Value_sep, 0, 1, 0,":");
+			Split(&l, t+1, ":", 1, Option_value_sep, 0, 1, 0,":");
 		}
 		if( aliases ){
 			if( t ){
@@ -1866,8 +1851,8 @@ void Find_pc_info( char *name,
 		}
 		/* get the tc entries */
 		if(DEBUGL4)Dump_line_list("Find_pc_info- pc entry", &l );
-		if( !Find_first_key(&l,"tc",Value_sep,&start_tc)
-			&& !Find_last_key(&l,"tc",Value_sep,&end_tc) ){
+		if( !Find_first_key(&l,"tc",Hash_value_sep,&start_tc)
+			&& !Find_last_key(&l,"tc",Hash_value_sep,&end_tc) ){
 			for( ; start_tc <= end_tc; ++start_tc ){
 				if( (s = l.list[start_tc]) ){
 					lowercase(s);
@@ -1893,7 +1878,7 @@ void Find_pc_info( char *name,
 		if(DEBUGL4)Dump_line_list("Find_pc_info - adding", &l );
 		for( i = 0; i < l.count; ++i ){
 			if( (t = l.list[i]) ){
-				Add_line_list( info, t, Value_sep, 1, 1 );
+				Add_line_list( info, t, Option_value_sep, 1, 1 );
 			}
 		}
 		Free_line_list(&l);
@@ -1945,7 +1930,7 @@ void Set_var_list( struct keywords *keys, struct line_list *values )
 	const char *s;
 
 	for( vars = keys; vars->keyword; ++vars ){
-		if( (s = Find_exists_value( values, vars->keyword, Value_sep )) ){
+		if( (s = Find_exists_value( values, vars->keyword, Option_value_sep )) ){
 			Config_value_conversion( vars, s );
 		}
 	}
@@ -2005,7 +1990,7 @@ void Config_value_conversion( struct keywords *key, const char *s )
 				i = 0;
 			} else {
 				/* get rid of leading junk */
-				while( safestrchr(Value_sep,c) ){
+				while( safestrchr(Option_value_sep,c) ){
 					++s;
 					c = cval(s);
 				}
@@ -2028,7 +2013,7 @@ void Config_value_conversion( struct keywords *key, const char *s )
 		DEBUG5("Config_value_conversion:  current value '%s'", end );
 		if( end ) free( end );
 		((char **)p)[0] = 0;
-		while(s && (c=cval(s)) && safestrchr(Value_sep,c) ) ++s;
+		while(s && (c=cval(s)) && safestrchr(Option_value_sep,c) ) ++s;
 		end = 0;
 		if( s && *s ){
 			end = safestrdup(s,__FILE__,__LINE__);
@@ -2190,6 +2175,7 @@ char *Find_default_var_value( void *v )
 
 void Get_config( int required, char *path )
 {
+	int i;
 	DEBUG1("Get_config: required '%d', '%s'", required, path );
 	/* void Read_file_list( int required, struct line_list *model, char *str,
 	 *  const char *linesep, int sort, const char *keysep, int uniq, int trim,
@@ -2197,9 +2183,27 @@ void Get_config( int required, char *path )
 	 */
 	Read_file_list( /*required*/required,
 		/*model*/ &Config_line_list,/*str*/ path,
-		/*linesep*/Line_ends, /*sort*/1, /*keysep*/Value_sep,/*uniq*/1,
+		/*linesep*/Line_ends, /*sort*/1, /*keysep*/Option_value_sep,/*uniq*/1,
 		/*trim*/':',/*marker*/0,/*doinclude*/1,/*nocomment*/1,
 		/*depth*/0,/*maxdepth*/4 ); 
+	if(DEBUGL4)Dump_line_list("Get_config - before", &Config_line_list );
+	/*
+	 * fix up the information by removing blanks between the key and values
+	 */
+	for( i = 0; i < Config_line_list.count; ++i ){
+		char *s = Config_line_list.list[i];
+		char *t = safestrpbrk( s, Option_value_sep );
+		int c;
+		if( t && (c = cval(t)) && isspace(c) ){
+			char *e = t+1;
+			while( isspace(cval(e)) ) ++e;
+			if( e != t+1 ){
+				memmove(t+1,e,strlen(e)+1);
+			}
+			if( isspace(c) ) *t = '=';
+		}
+	}
+	if(DEBUGL3)Dump_line_list("Get_config - after", &Config_line_list );
 
 	Set_var_list( Pc_var_list, &Config_line_list);
 	Get_local_host();
@@ -2262,20 +2266,20 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 		if(u) free(u); u = 0;
 	}
 	if( job ){
-		if( !(s = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep)) ){
-			s = Find_str_value(&job->info,OPENNAME,Value_sep);
-			if( !s ) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+		if( !(s = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
+			s = Find_str_value(&job->info,OPENNAME);
+			if( !s ) s = Find_str_value(&job->info,TRANSFERNAME);
 			s = Get_file_image( s, 0 );
 			Set_str_value(&job->info, CF_OUT_IMAGE, s );
 			if( s ) free(s); s = 0;
-			s = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep);
+			s = Find_str_value(&job->info,CF_OUT_IMAGE);
 		}
 		Set_str_value(env, "CONTROL", s );
 	}
 
 	if( Pass_env_DYN ){
 		Free_line_list(&env_names);
-		Split(&env_names,Pass_env_DYN,File_sep,1,Value_sep,1,1,0,0);
+		Split(&env_names,Pass_env_DYN,File_sep,1,Hash_value_sep,1,1,0,0);
 		for( i = 0; i < env_names.count; ++i ){
 			name = env_names.list[i];
 			if( (s = getenv( name )) ){
@@ -2370,7 +2374,7 @@ void Filterprintcap( struct line_list *raw, struct line_list *filters,
 				Errorcode = JABORT;
 				LOGERR_DIE(LOG_ERR) "Filterprintcap: lseek intempfd failed");
 			}
-			n = Filter_file(intempfd, outtempfd, "PC_FILTER",
+			n = Filter_file(Send_query_rw_timeout_DYN, intempfd, outtempfd, "PC_FILTER",
 				filter, Filter_options_DYN, 0,
 				0, 0 );
 			if( n ){
@@ -2646,14 +2650,14 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 
 	DEBUG1("Make_passthrough: cmd '%s', flags '%s'", line, flags );
 	if( job ){
-		s = Find_str_value( &job->info,QUEUENAME, Value_sep );
+		s = Find_str_value( &job->info,QUEUENAME );
 		if( !ISNULL(s) ){
 			Set_DYN(&Queue_name_DYN,s );
 		}
 	}
 	Init_line_list(&env);
 	if( env_init ){
-		Merge_line_list(&env,env_init,Value_sep,1,1);
+		Merge_line_list(&env,env_init,Hash_value_sep,1,1);
 	}
 	Init_line_list(&cmd);
 
@@ -2789,7 +2793,7 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
  *   if it exits with error status, we get JSIGNAL
  */
 
-int Filter_file( int input_fd, int output_fd, char *error_header,
+int Filter_file( int timeout, int input_fd, int output_fd, char *error_header,
 	char *pgm, char * filter_options, struct job *job,
 	struct line_list *env, int verbose )
 {
@@ -2847,7 +2851,7 @@ int Filter_file( int input_fd, int output_fd, char *error_header,
 	buffer[0] = 0;
 	len = 0;
 	while( len < (int)sizeof(buffer)-1
-		&& (n = read(of_error[0],buffer+len,sizeof(buffer)-len-1)) >0 ){
+		&& (n = Read_fd_len_timeout(timeout, of_error[0],buffer+len,sizeof(buffer)-len-1)) >0 ){
 		buffer[n+len] = 0;
 		while( (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
@@ -3082,7 +3086,7 @@ void Fix_Z_opts( struct job *job )
 	int i, c, n;
 
 	Init_line_list(&l);
-	str = Find_str_value( &job->info,"Z", Value_sep );
+	str = Find_str_value( &job->info,"Z" );
 	DEBUG4("Fix_Z_opts: initially '%s', remove '%s', append '%s', prefix '%s'",
 		str, Remove_Z_DYN, Append_Z_DYN, Prefix_Z_DYN );
 	DEBUG4("Fix_Z_opts: prefix_options '%s'", Prefix_option_to_option_DYN );
@@ -3107,7 +3111,7 @@ void Fix_Z_opts( struct job *job )
 		buffer[1] = 0;
 		for( i = 0; i < n-1; ++i ){
 			buffer[0] = s[i];
-			if( (start = Find_str_value(&job->info,buffer,Value_sep)) ){
+			if( (start = Find_str_value(&job->info,buffer)) ){
 				str= safeextend2(str,start, __FILE__,__LINE__);
 				Set_str_value(&job->info,buffer,0);
 			}
@@ -3115,7 +3119,7 @@ void Fix_Z_opts( struct job *job )
 		/* do we need to prefix it? */
 		if( str ){
 			buffer[0] = s[i];
-			start = Find_str_value(&job->info,buffer,Value_sep);
+			start = Find_str_value(&job->info,buffer);
 				/* put at start */
 			start= safestrdup3(str,(start?",":""),start,
 				__FILE__,__LINE__);
@@ -3124,7 +3128,7 @@ void Fix_Z_opts( struct job *job )
 		}
 		if( str ) free(str); str = 0;
 	}
-	str = Find_str_value( &job->info,"Z", Value_sep );
+	str = Find_str_value( &job->info,"Z" );
 	DEBUG4("Fix_Z_opts: after Prefix_option_to_option '%s'", str );
 	if( Remove_Z_DYN && str ){
 		/* remove the various options - split on commas */
@@ -3161,14 +3165,14 @@ void Fix_Z_opts( struct job *job )
 	if( Append_Z_DYN && *Append_Z_DYN ){
 		s = safestrdup3(str,",",Append_Z_DYN,__FILE__,__LINE__);
 		Set_str_value(&job->info,"Z",s);
-		str = Find_str_value(&job->info,"Z",Value_sep);
+		str = Find_str_value(&job->info,"Z");
 		if(s) free(s); s = 0;
 	}
 	DEBUG4("Fix_Z_opts: after append '%s'", str );
 	if( Prefix_Z_DYN && *Prefix_Z_DYN ){
 		s = safestrdup3(Prefix_Z_DYN,",",str,__FILE__,__LINE__);
 		Set_str_value(&job->info,"Z",s);
-		str = Find_str_value(&job->info,"Z",Value_sep);
+		str = Find_str_value(&job->info,"Z");
 		if(s) free(s); s = 0;
 	}
 	DEBUG4("Fix_Z_opts: after Prefix_Z '%s'", str );
@@ -3275,9 +3279,9 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 				}
 				*rest++ = 0;
 				if( !cval(s+1) && isupper(cval(s)) ){
-					str = job?Find_str_value( &job->info,s,Value_sep):0;
+					str = job?Find_str_value( &job->info,s):0;
 				} else {
-					str = Find_value( &PC_entry_line_list, s, Value_sep );
+					str = Find_value( &PC_entry_line_list, s );
 				}
 				notag = 1;
 				space = 0;
@@ -3288,38 +3292,37 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 					str = Accounting_file_DYN;
 					if( str && cval(str) == '|' ) str = 0;
 					break;
-				case 'b': str = job?Find_str_value(&job->info,SIZE,Value_sep):0; break;
+				case 'b': str = job?Find_str_value(&job->info,SIZE):0; break;
 				case 'c':
 					notag = 1; space=0;
-					t = job?Find_str_value(&job->info,FORMAT,Value_sep):0;
+					t = job?Find_str_value(&job->info,FORMAT):0;
 					if( t && *t == 'l'){
 						str="-c";
 					}
 					break;
 				case 'd': str = Spool_dir_DYN; break;
 				case 'e':
-					str = job?Find_str_value(&job->info,
-						DF_NAME,Value_sep):0;
+					str = job?Find_str_value(&job->info, DF_NAME):0;
 					break;
 				case 'f':
-					str = job?Find_str_value(&job->info,"N",Value_sep):0;
+					str = job?Find_str_value(&job->info,"N"):0;
 					break;
 				case 'h':
-					str = job?Find_str_value(&job->info,FROMHOST,Value_sep):0;
+					str = job?Find_str_value(&job->info,FROMHOST):0;
 					break;
 				case 'i':
-					str = job?Find_str_value(&job->info,"I",Value_sep):0;
+					str = job?Find_str_value(&job->info,"I"):0;
 					break;
 				case 'j':
-					str = job?Find_str_value(&job->info,NUMBER,Value_sep):0;
+					str = job?Find_str_value(&job->info,NUMBER):0;
 					break;
 				case 'k':
-					str = job?Find_str_value(&job->info,TRANSFERNAME,Value_sep):0;
+					str = job?Find_str_value(&job->info,TRANSFERNAME):0;
 					break;
 				case 'l':
 					kind = INTEGER_K; n = Page_length_DYN; break;
 				case 'n':
-					str = job?Find_str_value(&job->info,LOGNAME,Value_sep):0;
+					str = job?Find_str_value(&job->info,LOGNAME):0;
 					break;
 				case 'p': str = RemotePrinter_DYN; break;
 				case 'r': str = RemoteHost_DYN; break;
@@ -3330,7 +3333,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 				case 'x': kind = INTEGER_K; n = Page_x_DYN; break;
 				case 'y': kind = INTEGER_K; n = Page_y_DYN; break;
 				case 'F':
-					str = job?Find_str_value(&job->info,FORMAT,Value_sep):0;
+					str = job?Find_str_value(&job->info,FORMAT):0;
 					break;
 				case 'P': str = Printer_DYN; break;
 				case 'S': str = Comment_tag_DYN; break;
@@ -3338,7 +3341,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 				default:
 					if( isupper(c) ){
 						buffer[1] = 0; buffer[0] = c;
-						str = job?Find_str_value( &job->info,buffer,Value_sep):0;
+						str = job?Find_str_value( &job->info,buffer):0;
 					}
 					break;
 				}
@@ -3560,6 +3563,7 @@ void Unescape( char *str )
 	DEBUG5("Unescape '%s'", s );
 }
 
+#if 0
 char *Find_str_in_str( char *str, const char *key, const char *sep )
 {
 	char *s = 0, *end;
@@ -3567,11 +3571,11 @@ char *Find_str_in_str( char *str, const char *key, const char *sep )
 
 	if(str) for( s = str; (s = strstr(s,key)); ++s ){
 		c = cval(s+len);
-		if( !(safestrchr(Value_sep, c) || safestrchr(sep, c)) ) continue;
+		if( !(safestrchr(Hash_value_sep, c) || safestrchr(sep, c)) ) continue;
 		if( s > str && !safestrchr(sep,cval(s-1)) ) continue;
 		s += len;
 		if( (end = safestrpbrk(s,sep)) ){ c = *end; *end = 0; }
-		/* skip over Value_sep character
+		/* skip over sep character
 		 * x@;  -> x@\000  - get null str
 		 * x;   -> x\000  - get null str
 		 * x=v;  -> x=v  - get v
@@ -3587,6 +3591,7 @@ char *Find_str_in_str( char *str, const char *key, const char *sep )
 	}
 	return(s);
 }
+#endif
 
 /*
  * int Find_key_in_list( struct line_list *l, char *key, char *sep, int *mid )
@@ -3768,7 +3773,7 @@ int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args 
 	Name = "LPD_CALL";
 
 	if(DEBUGL2){
-		LOGDEBUG("Make_lpd_call: lpd path '%s'", Lpd_path_DYN );
+		LOGDEBUG("Make_lpd_call: name '%s', lpd path '%s'", name, Lpd_path_DYN );
 		LOGDEBUG("Make_lpd_call: passfd count %d", passfd->count );
 		for( i = 0; i < passfd->count; ++i ){
 			LOGDEBUG(" [%d] %d", i, Cast_ptr_to_int(passfd->list[i]));
@@ -3822,18 +3827,18 @@ int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args 
 void Do_work( char *name, struct line_list *args )
 {
 	void  (*proc)() = 0;
-	Logger_fd = Find_flag_value(args, LOGGER,Value_sep);
-	Status_fd = Find_flag_value(args, STATUS_FD,Value_sep);
-	Mail_fd = Find_flag_value(args, MAIL_FD,Value_sep);
-	Lpd_request = Find_flag_value(args, LPD_REQUEST,Value_sep);
+	Logger_fd = Find_flag_value(args, LOGGER);
+	Status_fd = Find_flag_value(args, STATUS_FD);
+	Mail_fd = Find_flag_value(args, MAIL_FD);
+	Lpd_request = Find_flag_value(args, LPD_REQUEST);
 	/* undo the non-blocking IO */
 	if( Lpd_request > 0 ) Set_block_io( Lpd_request );
-	Debug= Find_flag_value( args, DEBUG, Value_sep);
-	DbgFlag= Find_flag_value( args, DEBUGFV, Value_sep);
+	Debug= Find_flag_value( args, DEBUG );
+	DbgFlag= Find_flag_value( args, DEBUGFV );
 #ifdef DMALLOC
 	{
 		extern int _dmalloc_outfile_fd;
-		_dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE,Value_sep);
+		_dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE);
 	}
 #endif
 	if( !safestrcasecmp(name,"logger") ) proc = Logger;
@@ -3859,11 +3864,11 @@ int Start_worker( char *name, struct line_list *parms, int fd )
 	Init_line_list(&passfd);
 	Init_line_list(&args);
 	if(DEBUGL1){
-		DEBUG1("Start_worker: fd %d", fd );
+		DEBUG1("Start_worker: '%s' fd %d", name, fd );
 		Dump_line_list("Start_worker - parms", parms );
 	}
 	Setup_lpd_call( &passfd, &args );
-	Merge_line_list( &args, parms, Value_sep,1,1);
+	Merge_line_list( &args, parms, Hash_value_sep,1,1);
 	Free_line_list( parms );
 	if( fd ){
 		Check_max(&passfd,2);

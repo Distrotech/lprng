@@ -124,7 +124,7 @@ cifast ci: clean
 		(set +e; rcs -l $$1; exit 0); \
 		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
-	for i in  *.sgml Makefile.in Makefile; do \
+	for i in  *.sgml Makefile; do \
 		checkin $$i; \
 	done;
 

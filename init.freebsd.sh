@@ -13,6 +13,17 @@
 #
 
 
+lprng_enable="YES"
+if [ -f /usr/local/etc/rc.subr ] ; then
+	. /usr/local/etc/rc.subr
+	load_rc_config lprng
+	name=lprng
+	rcvar=`set_rcvar`
+	lprng_enable=`eval echo \\$\$rcvar`;
+elif [ -f /etc/rc.conf ] ; then
+	. /etc/rc.conf
+fi
+
 # ignore INT signal
 trap '' 2
 
@@ -26,7 +37,9 @@ case "$1" in
 		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
             ;;
     start )
+		if [ "$lprng_enable" != NO ] ; then
             echo -n ' printer';
             ${LPD_PATH}
+		fi
             ;;
 esac

@@ -3,15 +3,15 @@
 <html>
   <head>
     <meta name="generator" content="HTML Tidy, see www.w3.org">
-    <title>Authentication</title>
+    <title>Authentication and Encryption</title>
     <meta name="GENERATOR" content=
     "Modular DocBook HTML Stylesheet Version 1.7">
     <link rel="HOME" title=" LPRng Reference Manual" href=
     "index.htm">
     <link rel="UP" title="Permissions and Authentication " href=
     "permsref.htm">
-    <link rel="PREVIOUS" title="More Examples" href="x8947.htm">
-    <link rel="NEXT" title="User Identification" href="x8974.htm">
+    <link rel="PREVIOUS" title="More Examples" href="x8968.htm">
+    <link rel="NEXT" title="User Identification" href="x9021.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -20,27 +20,27 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng Reference Manual: 5
-          Sep 2003 (For LPRng-3.8.22)</th>
+          <th colspan="3" align="center">LPRng Reference Manual: 13
+          Nov 2003 (For LPRng-3.8.23)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x8947.htm" accesskey="P">Prev</a></td>
+          "x8968.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           17. Permissions and Authentication</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x8974.htm" accesskey="N">Next</a></td>
+          "x9021.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
     </div>
 
     <div class="SECT1">
-      <h1 class="SECT1"><a name="AUTHREF">17.7.
-      Authentication</a></h1>
+      <h1 class="SECT1"><a name="AUTHREF">17.7. Authentication and
+      Encryption</a></h1>
 
       <p>One of the major problems in a print spooler system is
       providing privacy and authentication services for users. One
@@ -98,6 +98,73 @@
       </ol>
       <br>
       <br>
+
+      <p>&#13;To accomplish these goals, the following printcap
+      entries are used:</p>
+
+      <ul>
+        <li>
+          <a name="AUTHTYPE"></a>
+
+          <p><var class="LITERAL">auth=</var><span class=
+          "emphasis"><i class="EMPHASIS">AUTHTYPE</i></span> - pgp,
+          kerberos, etc</p>
+        </li>
+
+        <li>
+          <a name="AUTHTYPEPATH"></a>
+
+          <p><var class="LITERAL">AUTHTYPE_path=</var><span class=
+          "emphasis"><i class="EMPHASIS">pathname</i></span> - the
+          pathname of a program to be used to support this
+          authentication type</p>
+        </li>
+
+        <li>
+          <a name="AUTHTYPEID"></a>
+
+          <p><var class="LITERAL">AUTHTYPE_id=</var><span class=
+          "emphasis"><i class="EMPHASIS">identification</i></span>
+          - the identification of the server for the authentication
+          method. For example, the kerberos principal for the
+          server, the PGP key id for the server, and so forth.</p>
+        </li>
+
+        <li>
+          <a name="AUTHTYPESERVERKEY"></a>
+
+          <p><var class="LITERAL">AUTHTYPE_server_key=</var><span
+          class="emphasis"><i class=
+          "EMPHASIS">identification</i></span> - location of a file
+          on the server where a key used to unlock or encrypt a
+          message is kept.</p>
+        </li>
+
+        <li>
+          <a name="AUTHTYPEFORWARDID"></a>
+
+          <p><var class="LITERAL">AUTHTYPE_forward_id=</var><span
+          class="emphasis"><i class=
+          "EMPHASIS">identification</i></span> - the identification
+          of the remote destination, This is used by the server
+          when forwarding a job to a remote destination. By
+          default, the AUTHTYPE_id value is used by the server as
+          its identification.</p>
+        </li>
+
+        <li>
+          <a name="AUTHTYPEDEFAULTCLIENT"></a>
+
+          <p><var class=
+          "LITERAL">AUTHTYPE_default_client=</var><span class=
+          "emphasis"><i class="EMPHASIS">identification</i></span>
+          - when forwarding a job and the job arrived via an
+          unauthenticated method, use this as the default client
+          identification.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
     </div>
 
     <div class="NAVFOOTER">
@@ -107,13 +174,13 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x8947.htm" accesskey="P">Prev</a></td>
+          "x8968.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x8974.htm" accesskey="N">Next</a></td>
+          "x9021.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

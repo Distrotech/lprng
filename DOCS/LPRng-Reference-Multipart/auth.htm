@@ -11,8 +11,8 @@
     <link rel="UP" title="Permissions and Authentication " href=
     "permsref.htm">
     <link rel="PREVIOUS" title="RFC1179 Protocol Extensions" href=
-    "x8980.htm">
-    <link rel="NEXT" title="Permission Checking" href="x9083.htm">
+    "x9027.htm">
+    <link rel="NEXT" title="Permission Checking" href="x9150.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -21,19 +21,19 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng Reference Manual: 5
-          Sep 2003 (For LPRng-3.8.22)</th>
+          <th colspan="3" align="center">LPRng Reference Manual: 13
+          Nov 2003 (For LPRng-3.8.23)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x8980.htm" accesskey="P">Prev</a></td>
+          "x9027.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           17. Permissions and Authentication</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x9083.htm" accesskey="N">Next</a></td>
+          "x9150.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -105,6 +105,15 @@
       signed by the server and sent to the client, where the client
       decrypts and/or checked for correct signature.</p>
 
+      <p>The <var class="LITERAL">auth</var> authentication type is
+      used as a prefix to look up authentication specific
+      information in the printcap or configuration information. For
+      example, if <var class="LITERAL">auth=kerberos</var>, then
+      <var class="LITERAL">kerberos_id</var>, <var class=
+      "LITERAL">kerberos_forward_id</var>, and other information
+      would be extracted from the printcap or configuration
+      information.</p>
+
       <p>A <b class="APPLICATION">lpd</b> server to <b class=
       "APPLICATION">lpd</b> server authenticated transfer proceeds
       as follows. If an authenticated transfer is specified by the
@@ -144,12 +153,45 @@
         </li>
 
         <li>
+          <p>The <var class="LITERAL">AUTHTYPE_id</var> option
+          specifies the identification to be used for the
+          destination in client to server transfers. For example,
+          <var class="LITERAL">kerberos_id</var> would specify the
+          principal name of the <var class="LITERAL">lpd</var>
+          server to be used by the client for the client to server
+          kerberos authentication.</p>
+        </li>
+
+        <li>
+          <p>When forwarding a job to a remote server, the <var
+          class="LITERAL">AUTHTYPE_forward_id</var> option
+          specifies the identification to be used for the
+          destination in server to server transfers. For example,
+          <var class="LITERAL">kerberos_id</var> would specify the
+          principal name of the originating <var class=
+          "LITERAL">lpd</var> server and the <var class=
+          "LITERAL">kerberos_forward_id</var> option specifies the
+          destination server kerberos id.</p>
+        </li>
+
+        <li>
+          <p>When forwarding a job to a remote server, if the
+          original job does not have an authenticated user name or
+          identification, then the <var class=
+          "LITERAL">AUTHTYPE_default_client_id</var> option
+          specifies the name to be used to identify the job. As
+          discussed in later sections, this will be the <var class=
+          "LITERAL">A</var> record value of the transferred control
+          file.</p>
+        </li>
+
+        <li>
           <p>The authenticated transfer request sent to a server
           has one of the following forms, depending on the
           originator:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN9050"></a>
+            <a name="AEN9117"></a>
 <pre class="SCREEN">
     \008printer C user_id authtype \n  - for commands (lpq, lpc, etc.)
     \008printer C user_id authtype size\n - for print jobs (lpr)
@@ -157,7 +199,7 @@
     \008printer F server_id authtype size\n - forwarded print jobs (lpr)
 </pre>
           </div>
-          &#13;<br>
+          <br>
           <br>
 
           <p>The single character with the <var class=
@@ -241,13 +283,13 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x8980.htm" accesskey="P">Prev</a></td>
+          "x9027.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x9083.htm" accesskey="N">Next</a></td>
+          "x9150.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

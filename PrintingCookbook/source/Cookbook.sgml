@@ -19,7 +19,7 @@
 
 <book>
 <bookinfo><title>The Printing Cookbook</title>
-<!-- <subtitle></subtitle> -->
+<subtitle>Updated 5 Sept 2003</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,11 +37,11 @@ Fax <fax>858-751-2435</fax>
 </affiliation>
 </author>
 <copyright>
-<year>2001</year>
+<year>2001-2003</year>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: Cookbook.sgml,v 1.1 2001/10/17 17:14:20 papowell Exp papowell $</releaseinfo>
+<releaseinfo>$Id: Cookbook.sgml,v 1.3 2003/09/06 02:07:15 papowell Exp $</releaseinfo>
 
 
 <abstract>
@@ -2866,7 +2866,7 @@ This is equivalent to using the &printcap; <literal/ifhp/ option.
 <para>
 There are several printers that have network interfaces but
 which require very special treatment.
-Among these printers are the Tektronics <literal/Phaser/ printers,
+Among these printers are the Tektronixs <literal/Phaser/ printers,
 some legacy Xerox printers,
 and some plotters.
 These devices require that the network connection be opened and closed
@@ -2887,7 +2887,7 @@ lp:
 Offline Test:
 
 IP=10.0.0.14
-ifhp -Tdev=trace,debug=1,appsocket,status,pagecount,waitend,dev=10.0.0.14%9100
+ifhp -Ttrace,debug=1,appsocket,status,pagecount,waitend,dev=10.0.0.14%9100
   &lt;/tmp/one.ps 2>&1 | tee /tmp/log
 </screen>
       </figure>
@@ -3417,6 +3417,19 @@ If no printer is available then  nothing is printed on <literal/STDOUT/,
 and the &lpd; process will wait until either a printer becomes available
 or for a timeout specified by the <literal/:chooser_interval/
 value (default 10 seconds) in the printcap entry or &conf; file.
+</para>
+
+<para>
+Normally,
+only the first job in the spool queue is checked to see if it can be printed.
+However,
+by setting the
+<literal/:chooser_scan_queue/ flag to 1,
+all of the jobs waiting in the spool queue will be tested.
+This is useful when you need to check both a job type and a printer to see
+they are compatible.
+However, this has the effect of scanning the entire queue, which may be
+quite costly in compuation time.
 </para>
 
 </sect1>

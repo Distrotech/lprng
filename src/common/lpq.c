@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpq.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 /***************************************************************************
@@ -298,7 +298,8 @@ int Read_status_info( char *host, int sock,
 	 */
 	if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT || Show_all ){
 		do{ 
-			if( (n = read( sock, buffer, sizeof(buffer)-1)) ){
+			if( (n = Read_fd_len_timeout( Send_query_rw_timeout_DYN,
+				sock, buffer, sizeof(buffer)-1)) ){
 				buffer[n] = 0;
 				if( Write_fd_str( output, buffer ) < 0 ) return(1);
 			}

@@ -146,38 +146,11 @@ $(PERMS_DB): lpd.perms.proto
 
 
 
-bin: ${TMP}LPD/lpbanner \
-	${TMP}LPD/lpf ${TMP}LPD/lpd ${TMP}LPD/lpc ${TMP}LPD/lpr \
-	${TMP}LPD/lpq ${TMP}LPD/lprm ${TMP}LPD/checkpc \
-	${TMP}LPD/filter ${TMP}LPD/dbserver ${TMP}LPD/clearlog \
-	${TMP}LPD/bqfilter ${TMP}LPD/router
-
-${TMP}LPD/lpbanner: $(BIN)/lpbanner
-	$(INSTALLCMD) -m 755 $(BIN)/lpbanner ${TMP}LPD
-
-${TMP}LPD/lpd: $(BIN)/lpd
-	$(INSTALLCMD) -m 755 $(BIN)/lpd $@
-
-${TMP}LPD/lpc: $(BIN)/lpc
-	$(INSTALLCMD) -m 755 $(BIN)/lpc $@
-
-${TMP}LPD/lpr: $(BIN)/lpr
-	$(INSTALLCMD) -m 755 $(BIN)/lpr $@
-
-${TMP}LPD/lpq: $(BIN)/lpq
-	$(INSTALLCMD) -m 755 $(BIN)/lpq $@
-
-${TMP}LPD/lprm: $(BIN)/lprm
-	$(INSTALLCMD) -m 755 $(BIN)/lprm $@
-
-${TMP}LPD/lpf: $(BIN)/lpf
-	$(INSTALLCMD) -m 755 $(BIN)/lpf $@
-
-${TMP}LPD/checkpc: $(BIN)/checkpc
-	$(INSTALLCMD) -m 755 $(BIN)/checkpc $@
-
-${TMP}LPD/filter: ${SRC}/filter.sh
-	$(INSTALLCMD) -m 755 ${SRC}/filter.sh $@
+bin:
+	for i in ${SRC}/*.sh ; do \
+		b=`basename $$i .sh`; \
+		if [ ! -f ${TMP}LPD/$$b ] ; then $(INSTALLCMD) -m 755 $$i ${TMP}LPD/$$b ; fi ; \
+	done
 
 ${TMP}LPD/bqfilter: ${SRC}/bqfilter.sh
 	$(INSTALLCMD) -m 755 ${SRC}/bqfilter.sh $@

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: ssl_auth.h,v 1.26 2003/09/05 20:07:21 papowell Exp $
+ * $Id: ssl_auth.h,v 1.30 2003/11/14 02:32:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -22,6 +22,7 @@ int SSL_Initialize_ctx(
 	SSL_CTX **ctx_ret,
 	char *errmsg, int errlen );
 void Destroy_ctx(SSL_CTX *ctx);
+void Get_cert_info( SSL *ssl, struct line_list *info );
 int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 	struct line_list *info, char *errmsg, int errlen );
 int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
@@ -39,7 +40,7 @@ int Ssl_send( int *sock,
 	char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info );
-int Ssl_receive( int *sock,
+int Ssl_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -153,7 +153,7 @@ int Receive_job( int *sock, char *input )
 
 	db  = Debug;
 	dbf = DbgFlag;
-	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	s = Find_str_value(&Spool_control,DEBUG);
 	if(!s) s = New_debug_DYN;
 	Parse_debug( s, 0 );
 
@@ -400,7 +400,7 @@ int Receive_job( int *sock, char *input )
 	if( error[0] ){
 		DEBUGF(DRECV1)("Receive_job: error, removing job" );
 		DEBUGFC(DRECV4)Dump_job("Receive_job - error", &job );
-		s = Find_str_value(&job.info,HF_NAME,Value_sep);
+		s = Find_str_value(&job.info,HF_NAME);
 		if( !ISNULL(s) ) unlink(s);
 		if( ack == 0 ) ack = ACK_FAIL;
 		buffer[0] = ack;
@@ -409,12 +409,12 @@ int Receive_job( int *sock, char *input )
 		DEBUGF(DRECV1)("Receive_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
-		Link_close( sock );
+		Link_close( Send_query_rw_timeout_DYN, sock );
 		if( hold_fd >= 0 ){
 			close(hold_fd); hold_fd = -1;
 		}
 	} else {
-		Link_close( sock );
+		Link_close( Send_query_rw_timeout_DYN, sock );
 		/* update the spool queue */
 		Get_spool_control( Queue_control_file_DYN, &Spool_control );
 		Set_flag_value(&Spool_control,CHANGE,1);
@@ -507,7 +507,7 @@ int Receive_block_job( int *sock, char *input )
 
 	db = Debug;
 	dbf =DbgFlag;
-	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
+	s = Find_str_value(&Spool_control,DEBUG);
 	if(!s) s = New_debug_DYN;
 	Parse_debug( s, 0 );
 
@@ -624,9 +624,9 @@ int Receive_block_job( int *sock, char *input )
 		DEBUGF(DRECV1)("Receive_block_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
-		Link_close( sock );
+		Link_close( Send_query_rw_timeout_DYN, sock );
 	} else {
-		Link_close( sock );
+		Link_close( Send_query_rw_timeout_DYN, sock );
 		Remove_tempfiles();
 
 		s = Server_queue_name_DYN;
@@ -690,7 +690,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 	
 	startpos = lseek( fd, 0, SEEK_CUR );
 	DEBUGF(DRECV2)("Scan_block_file: starting at %d", startpos );
-	while( (status = Read_one_line( fd, line, sizeof(line) )) > 0 ){
+	while( (status = Read_one_line( Send_job_rw_timeout_DYN, fd, line, sizeof(line) )) > 0 ){
 		/* the next position is the start of data */
 		Free_line_list(&l);
 		Free_line_list(&info);
@@ -724,7 +724,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		for( len = read_len; len > 0; len -= count ){
 			n = sizeof(buffer);
 			if( n > len ) n = len;
-			count = read(fd,buffer,n);
+			count = Read_fd_len_timeout(Send_job_rw_timeout_DYN,fd,buffer,n);
 			DEBUGF(DRECV2)("Scan_block_file: len %d, reading %d, got count %d",
 				len, n, count );
 			if( count < 0 ){
@@ -811,12 +811,12 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
  *          n = # chars read
  *          Note: buffer terminated by 0
  ***************************************************************************/
-int Read_one_line( int fd, char *buffer, int maxlen )
+int Read_one_line( int timeout, int fd, char *buffer, int maxlen )
 {
 	int len, status;
 	len = status = 0;
 
-	while( len < maxlen-1 && (status = read( fd, &buffer[len], 1)) > 0 ){
+	while( len < maxlen-1 && (status = Read_fd_len_timeout( timeout, fd, &buffer[len], 1)) > 0 ){
 		if( buffer[len] == '\n' ){
 			break;
 		}
@@ -848,11 +848,11 @@ int Do_perm_check( struct job *job, char *error, int errlen )
 	DEBUGFC(DRECV1)Dump_job("Do_perm_check", job );
 	Perm_check.service = 'R';
 	Perm_check.printer = Printer_DYN;
-	s = Find_str_value(&job->info,LOGNAME,Value_sep);
+	s = Find_str_value(&job->info,LOGNAME);
 	Perm_check.user = s;
 	Perm_check.remoteuser = s;
 	Perm_check.host = 0;
-	s = Find_str_value(&job->info,FROMHOST,Value_sep);
+	s = Find_str_value(&job->info,FROMHOST);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
 		Perm_check.host = &PermHost_IP;
 	}
@@ -924,7 +924,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	/* we can get this as a new job or as a copy.
 	 * if we get a copy,  we do not need to check this stuff
 	 */
-	if( !Find_str_value(&job->info,REMOTEHOST,Value_sep) ){
+	if( !Find_str_value(&job->info,REMOTEHOST) ){
 		Set_str_value(&job->info,REMOTEHOST,RemoteHost_IP.fqdn);
 		Set_flag_value(&job->info,UNIXSOCKET,Perm_check.unix_socket);
 		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
@@ -959,10 +959,10 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		}
 		for( count = 0; count < job->datafiles.count; ++count ){
 			lp = (void *)job->datafiles.list[count];
-			transfername = Find_str_value(lp,OTRANSFERNAME,Value_sep);
-			if( ISNULL(transfername) ) transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+			transfername = Find_str_value(lp,OTRANSFERNAME);
+			if( ISNULL(transfername) ) transfername = Find_str_value(lp,TRANSFERNAME);
 			/* find the open name and replace it in the information */
-			if( (openname = Find_casekey_str_value(files,transfername,Value_sep)) ){
+			if( (openname = Find_casekey_str_value(files,transfername,Hash_value_sep)) ){
 				Set_str_value(lp,OPENNAME,openname);
 				Set_casekey_str_value(&datafiles,transfername,openname);
 			} else {
@@ -975,7 +975,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 					openname, Errormsg(errno) );
 				goto error;
 			}
-			copies = Find_flag_value(lp,COPIES,Value_sep);
+			copies = Find_flag_value(lp,COPIES);
 			if( copies == 0 ) copies = 1;
 			jobsize += copies * statb.st_size;
 		}
@@ -1000,7 +1000,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	DEBUG1("Check_for_missing_files: holdfile_fd  now '%d'", *holdfile_fd );
 
 	if( header_info && User_is_authuser_DYN ){
-		char *s = Find_str_value(header_info,AUTHUSER,Value_sep);
+		char *s = Find_str_value(header_info,AUTHUSER);
 		if( !ISNULL(s) ){
 			Set_str_value( &job->info,LOGNAME,s);
 			DEBUG1("Check_for_missing_files: setting user to authuser '%s'", s );
@@ -1017,10 +1017,10 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 	if( header_info ){
 		char *authfrom, *authuser, *authtype, *authca;
-		authfrom = Find_str_value(header_info,AUTHFROM,Value_sep);
-		authuser = Find_str_value(header_info,AUTHUSER,Value_sep);
-		authtype = Find_str_value(header_info,AUTHTYPE,Value_sep);
-		authca = Find_str_value(header_info,AUTHCA,Value_sep);
+		authfrom = Find_str_value(header_info,AUTHFROM);
+		authuser = Find_str_value(header_info,AUTHUSER);
+		authtype = Find_str_value(header_info,AUTHTYPE);
+		authca = Find_str_value(header_info,AUTHCA);
 		if( ISNULL(authuser) ) authuser = authfrom;
 		Set_str_value(&job->info,AUTHUSER,authuser);
 		Set_str_value(&job->info,AUTHFROM,authfrom);
@@ -1031,9 +1031,9 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	status = 0;
 	for( count = 0; status == 0 && count < job->datafiles.count; ++count ){
 		lp = (void *)job->datafiles.list[count];
-		openname = Find_str_value(lp,OPENNAME,Value_sep);
+		openname = Find_str_value(lp,OPENNAME);
 		if( stat(openname,&statb) ) continue;
-		transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
+		transfername = Find_str_value(lp,TRANSFERNAME);
 		DEBUG1("Check_for_missing_files: renaming '%s' to '%s'",
 			openname, transfername );
 		if( (status = rename(openname,transfername)) ){
@@ -1047,8 +1047,8 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		DEBUG1("Check_for_missing_files: Routing_filter error '%s'", error );
 		goto error;
 	}
-	openname = Find_str_value(&job->info,OPENNAME,Value_sep);
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	openname = Find_str_value(&job->info,OPENNAME);
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 	DEBUG1("Check_for_missing_files: renaming '%s' to '%s'",
 		openname, transfername );
 	if( (status = rename(openname,transfername)) ){
@@ -1066,22 +1066,22 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	if(DEBUGL1)Dump_job("Check_for_missing_files - ending", job );
 
  error:
-	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	transfername = Find_str_value(&job->info,TRANSFERNAME);
 	if( status ){
 		LOGMSG(LOG_INFO) "Check_for_missing_files: FAIL '%s' %s", transfername, error);
 		/* we need to unlink the data files */
-		openname = Find_str_value(&job->info,OPENNAME,Value_sep);
-		transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+		openname = Find_str_value(&job->info,OPENNAME);
+		transfername = Find_str_value(&job->info,TRANSFERNAME);
 		if( openname ) unlink( openname );
 		if( transfername) unlink( transfername );
 		for( count = 0; count < job->datafiles.count; ++count ){
 			lp = (void *)job->datafiles.list[count];
-			transfername = Find_str_value(lp,TRANSFERNAME,Value_sep);
-			openname = Find_str_value(lp,OPENNAME,Value_sep);
+			transfername = Find_str_value(lp,TRANSFERNAME);
+			openname = Find_str_value(lp,OPENNAME);
 			unlink(openname);
 			unlink(transfername);
 		}
-		openname = Find_str_value(&job->info,HF_NAME,Value_sep);
+		openname = Find_str_value(&job->info,HF_NAME);
 		if( openname ) unlink(openname);
 	} else {
 		/*
@@ -1202,15 +1202,15 @@ int Get_route( struct job *job, char *error, int errlen )
 
 	for( i = 0; i < job->datafiles.count; ++i ){
 		lp = (void *)job->datafiles.list[i];
-		openname = Find_str_value(lp,TRANSFERNAME,Value_sep);
-		Add_line_list(&env,openname,Value_sep,1,1);
+		openname = Find_str_value(lp,TRANSFERNAME);
+		Add_line_list(&env,openname,Hash_value_sep,1,1);
 	}
 	s = Join_line_list_with_sep(&env," ");
 	Free_line_list( &env );
 	Set_str_value(&env,DATAFILES,s);
 	free(s); s = 0;
 
-	openname = Find_str_value(&job->info,OPENNAME,Value_sep);
+	openname = Find_str_value(&job->info,OPENNAME);
 	if( (fd = open(openname,O_RDONLY,0)) < 0 ){
 		SNPRINTF(error,errlen)"Get_route: open '%s' failed '%s'",
 			openname, Errormsg(errno) );
@@ -1224,7 +1224,7 @@ int Get_route( struct job *job, char *error, int errlen )
 	if( Incoming_control_filter_DYN ){
 		DEBUG1("Get_route: running '%s'",
 			Incoming_control_filter_DYN );
-		errorcode = Filter_file( fd, tempfd, "INCOMING_CONTROL_FILTER",
+		errorcode = Filter_file( Send_job_rw_timeout_DYN, fd, tempfd, "INCOMING_CONTROL_FILTER",
 			Incoming_control_filter_DYN, Filter_options_DYN, job, &env, 0);
 		switch(errorcode){
 			case 0: break;
@@ -1279,7 +1279,7 @@ int Get_route( struct job *job, char *error, int errlen )
 
 	if( Routing_filter_DYN == 0 ) goto error;
 
-	errorcode = Filter_file( fd, tempfd, "ROUTING_FILTER",
+	errorcode = Filter_file( Send_query_rw_timeout_DYN, fd, tempfd, "ROUTING_FILTER",
 		Routing_filter_DYN, Filter_options_DYN, job, &env, 0);
 	if(errorcode)switch(errorcode){
 		case 0: break;
@@ -1300,27 +1300,27 @@ int Get_route( struct job *job, char *error, int errlen )
 	Get_file_image_and_split(tempfile,0,1,&env,Line_ends,0,0,0,1,0,0);
 	Free_line_list(&job->destination);
 
-	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	id = Find_str_value(&job->info,IDENTIFIER);
 	if(!id){
 		FATAL(LOG_ERR)
 			_("Get_route: no identifier for '%s'"),
-			Find_str_value(&job->info,HF_NAME,Value_sep) );
+			Find_str_value(&job->info,HF_NAME) );
 	}
 	count = 0;
 	for(i = 0; i < env.count; ++i ){
 		s = env.list[i];
 		if( safestrcasecmp(END,s) ){
 			if( !isupper(cval(s))
-				&& (t = safestrpbrk(s,Value_sep)) ){
+				&& (t = safestrpbrk(s,Hash_value_sep)) ){
 				*t = '=';
 			}
-			Add_line_list(&job->destination,s,Value_sep,1,1);
+			Add_line_list(&job->destination,s,Hash_value_sep,1,1);
 		} else {
-			if( (s = Find_str_value(&job->destination, DEST,Value_sep)) ){
+			if( (s = Find_str_value(&job->destination, DEST)) ){
 				int n;
 				DEBUG1("Get_route: destination '%s'", s );
 				Set_flag_value(&job->destination,DESTINATION,count);
-				n = Find_flag_value(&job->destination,COPIES,Value_sep);
+				n = Find_flag_value(&job->destination,COPIES);
 				if( n < 0 ){
 					Set_flag_value(&job->destination,COPIES,0);
 				}
@@ -1334,11 +1334,11 @@ int Get_route( struct job *job, char *error, int errlen )
 			Free_line_list(&job->destination);
 		}
 	}
-	if( (s = Find_str_value(&job->destination, DEST,Value_sep)) ){
+	if( (s = Find_str_value(&job->destination, DEST)) ){
 		int n;
 		DEBUG1("Get_route: destination '%s'", s );
 		Set_flag_value(&job->destination,DESTINATION,count);
-		n = Find_flag_value(&job->destination,COPIES,Value_sep);
+		n = Find_flag_value(&job->destination,COPIES);
 		if( n < 0 ){
 			Set_flag_value(&job->destination,COPIES,0);
 		}

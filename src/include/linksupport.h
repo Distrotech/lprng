@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
+ * $Id: linksupport.h,v 1.61 2003/11/14 02:32:56 papowell Exp $
  ***************************************************************************/
 
 
@@ -38,7 +38,7 @@ int Link_open_type(char *host, int timeout, int connection_type,
 	struct sockaddr *bindto, char * unix_socket_path );
 int Link_open_list( char *hostlist, char **result,
 	int timeout, struct sockaddr *bindto, char *unix_socket_path );
-void Link_close( int *sock );
+void Link_close( int timeout, int *sock );
 int Link_send( char *host, int *sock, int timeout,
 	char *sendstr, int count, int *ack );
 int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,

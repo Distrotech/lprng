@@ -19,6 +19,12 @@ fix () {
 		echo "Directory $d does not exist!"
 		mkdir -p $d;
 	fi
+	old_version=` echo $p | sed -e "s,/$CONFIG_SUBDIR/,/,"`
+	if [ ! -f "$p" -a "$old_version" != "$p" -a -f "$old_version" ] ; then
+		echo "WARNING: Location of $p changed from $old_version"
+		echo "   Copying $old_version to $p"
+		cp "$old_version" "$p" || echo "cannot copy $old_version to $p"
+	fi
 	if [ -f $v.sample ] ; then
 		if [ $v.sample != $p.sample ] ; then ${INSTALL} -m 644 $v.sample $p.sample; fi
 	elif [ -f $v ] ; then
@@ -37,9 +43,13 @@ init=${DESTDIR}/etc/init.d/lprng
 if [ -f lpd.perms ] ; then fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"; fi;
 if [ -f lpd.conf ] ; then fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}"; fi;
 if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}"; fi;
+if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}"; fi;
 fix "${DESTDIR}${LPD_PERMS_PATH}" "${DESTDIR}${LPD_PERMS_PATH}"
 fix "${DESTDIR}${LPD_CONF_PATH}" "${DESTDIR}${LPD_CONF_PATH}"
 fix "${DESTDIR}${PRINTCAP_PATH}" "${DESTDIR}${PRINTCAP_PATH}"
+if [ -f init.solaris ] ; then
+	${INSTALL} -m 755 init.solaris `dirname ${DESTDIR}${LPD_CONF_PATH}`/lprng
+fi
 #
 # Now we reconfigure the printer 
 #

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
+"$Id: accounting.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -94,7 +94,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 		if( end == 0 && Accounting_check_DYN ){
 			tempfd = Make_temp_fd( 0 );
 		}
-		err = Filter_file( -1, tempfd, "ACCOUNTING_FILTER",
+		err = Filter_file( Send_query_rw_timeout_DYN,-1, tempfd, "ACCOUNTING_FILTER",
 			command, Filter_options_DYN, job, 0, 1 );
 		if( tempfd > 0 && lseek(tempfd,0,SEEK_SET) == -1 ){
 			Errorcode = JABORT;
@@ -114,7 +114,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			if( end == 0 && Accounting_check_DYN ){
 				tempfd = Make_temp_fd( 0 );
 			}
-			err = Filter_file( fd, tempfd, "ACCOUNTING_FILTER",
+			err = Filter_file( Send_query_rw_timeout_DYN,fd, tempfd, "ACCOUNTING_FILTER",
 				Accounting_file_DYN, Filter_options_DYN, job, 0, 1 );
 			if( tempfd > 0 && lseek(tempfd,0,SEEK_SET) == -1 ){
 				Errorcode= JFAIL;
@@ -162,7 +162,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 		msg[0] = 0;
 		len = 0;
 		while( len < (int)(sizeof(msg)-1)
-			&& (n = read(tempfd,msg+len,sizeof(msg)-1-len)) > 0 ){
+			&& (n = Read_fd_len_timeout(Send_query_rw_timeout_DYN,tempfd,msg+len,sizeof(msg)-1-len)) > 0 ){
 			msg[len+n] = 0;
 			DEBUG1("Do_accounting: read %d, '%s'", n, msg );
 		}
