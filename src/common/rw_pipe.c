@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,10 +10,11 @@
  * PURPOSE: create a set of read/write pipe descriptors
  **************************************************************************/
 
-static char *const _id = "$Id: rw_pipe.c,v 3.0 1996/05/19 04:06:09 papowell Exp $";
+static char *const _id = "$Id: rw_pipe.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
 
 #include "lp.h"
 #include "rw_pipe.h"
+/**** ENDINCLUDE ****/
 
 /*
  * socketpair is not supported on some OSes, including SVR4 (according
@@ -35,10 +36,10 @@ int rw_pipe( int fds[] )
 #if !defined(USE_RWSOCKETS) 
 	int status;
 #ifdef HAVE_SOCKETPAIR
-	DEBUG7("rw_pipe: using socketpair" );
+	DEBUG4("rw_pipe: using socketpair" );
 	status =  socketpair( AF_UNIX, SOCK_STREAM, 0, fds);
 #else
-	DEBUG7("rw_pipe: using pipe" );
+	DEBUG4("rw_pipe: using pipe" );
 	status = pipe( fds );
 #endif
 	if( status >= 0 ) status = 0;
@@ -47,26 +48,16 @@ int rw_pipe( int fds[] )
 	int p1, p2;	/* read/write fds */
 	struct sockaddr_in sin;     /* inet socket address */
 	struct hostent *hostent;
+	char *s;
 	int i;
 
-	hostent = gethostbyname( "loopback" );
-	if( hostent == 0 ){
-		hostent = gethostbyname( "localhost" );
-	}
-	if( hostent == 0 ){
-		logerr( LOG_ERR, "rw_pipe: 'loopback' and 'localhost' missing" );
-		return(-1);
-	}
-	if( hostent->h_addrtype != AF_INET ){
-		logerr( LOG_ERR, "rw_pipe: bad 'loopback' name entry" );
-		return(-1);
-	}
 	memset(&sin, 0, sizeof (sin));
-	sin.sin_family = AF_INET;
-	memcpy( &sin.sin_addr, hostent->h_addr, hostent->h_length );
+	sin.sin_family = LocalHostIP.host_addrtype;
+	memcpy( &sin.sin_addr, (void *)LocalHostIP.host_addr_list.list,
+		LocalHostIP.host_addrlength );
 
-	p1 = socket(AF_INET, SOCK_DGRAM, 0);
-	p2 = socket(AF_INET, SOCK_DGRAM, 0);
+	p1 = socket(LocalHostIP.host_addrtype, SOCK_DGRAM, 0);
+	p2 = socket(LocalHostIP.host_addrtype, SOCK_DGRAM, 0);
 	if( bind(p1, (struct sockaddr *)&sin, sizeof(sin)) < 0 ){
 		logerr( LOG_ERR, "rw_pipe: bind failed" );
 		return(-1);
@@ -80,7 +71,7 @@ int rw_pipe( int fds[] )
 		errno = i;
 		return(-1);
 	}
-	DEBUG4( "rw_pipe: sock %d, orig port %d, ip %s", p1,
+	DEBUG3( "rw_pipe: sock %d, orig port %d, ip %s", p1,
 		ntohs( sin.sin_port ), inet_ntoa( sin.sin_addr ) );
 
 	if( connect( p2, (struct sockaddr *)&sin, sizeof(struct sockaddr) ) < 0 ){
@@ -101,7 +92,7 @@ int rw_pipe( int fds[] )
 		errno = i;
 		return(-1);
 	}
-	DEBUG4( "rw_pipe: sock %d, dest port %d, ip %s", p2,
+	DEBUG3( "rw_pipe: sock %d, dest port %d, ip %s", p2,
 		ntohs( sin.sin_port ), inet_ntoa( sin.sin_addr ) );
 
 	if( getsockname( p2, (struct sockaddr *)&sin, &i ) < 0 ){
@@ -129,7 +120,7 @@ int rw_pipe( int fds[] )
 		errno = i;
 		return(-1);
 	}
-	DEBUG4( "rw_pipe: sock %d, dest port %d, ip %s", p1,
+	DEBUG3( "rw_pipe: sock %d, dest port %d, ip %s", p1,
 		ntohs( sin.sin_port ), inet_ntoa( sin.sin_addr ) );
 
 	fds[0] = p1;
@@ -137,4 +128,3 @@ int rw_pipe( int fds[] )
 	return(0);
 #endif
 }
-

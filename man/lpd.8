@@ -1,14 +1,32 @@
-.ds VE LPRng-2.3.12
+.ds VE LPRng-3.1.2
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
+.de NP
+.IP \\n(nP
+.nr nP \\n(nP+1
+..
+.de np
+.nr nP 1
+..
+.de L
+.ie !"\\$1"" \{\
+.ft CW
+\&\\s-2\\$1\\s+2\\fP\\$2
+.ft R
+.\}
+.el \{\
+.ft CW
+.ps -2
+.\}
+..
 .ig
-$Id: lpd.8,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+$Id: lpd.8,v 3.8 1997/01/31 22:42:36 papowell Exp $
 ..
 .SH NAME
 lpd \- line printer daemon
 .SH SYNOPSIS
 .B /usr/local/bin/lpd
-[\-Llogfile] [\-F] [\-V] [\-i] [\-Ddebugopt] 
+[\-Llogfile] [\-F] [\-V] [\-Ddebugopt] 
 .SH DESCRIPTION
 .PP
 The lpd program is the printer server program of the LPRng software
@@ -27,8 +45,6 @@ Under normal operation, the LPD server will run in
 background mode.
 The -F flag forces it to run in forground mode,
 where it is more easily debugged.
-.IP "\fB\-i" 5
-Started by INETD. See OPERATION for details.
 .IP "\fB\-V" 5
 Print program version information.
 .IP "\fB\-D\fI debugopt" 5
@@ -49,9 +65,7 @@ is the line printer daemon (spool queue handler) and is normally invoked
 at boot time from the
 .IR rc (8)
 file;
-as an option it can also be started from the INETD to print
-files on a per job basis,
-but this operation is not recommended.
+it can also be started by a user.
 Note that the lpd server needs only run on systems where actual printing
 or spooling is taking place.
 .IR lpr (1)
@@ -65,9 +79,9 @@ and then reads the
 .IR printcap (5)
 database information to determine the which printers have spool queues
 and to start spool queue server processes.
-If running as a server,
-it will disconnect from its control terminal and run in the background,
-using the system calls
+If running as a background server,
+it will disconnect from its control terminal and run in the background.
+It uses the system calls
 .IR listen (2)
 and
 .IR accept (2)
@@ -117,7 +131,7 @@ the entries in the permissions file and/or filter response.
 The following is a typical permissions file:
 .RS
 .nf
-.ft CW
+.L
 # Set default permissions
 DEFAULT ACCEPT
 # Reject any connections from outside our subnet
@@ -172,10 +186,10 @@ GROUP=student*,staff*
 would check to see if any of the group name matching
 student* or staff* have the specified user name in them.
 If a system has the
-I netgroups
+.I netgroups
 capability,
 a group name starting with a
-\f(CW@\P
+\f(CW@\fP
 will be treated as a netgroup name,
 and current user name from the job file will bechecked to see if
 it is in the group.
@@ -186,6 +200,10 @@ The
 PORT
 entry can be used to ensure that a connection to the server
 orignates from a specified range of ports.
+For more details,
+see the
+.BR lpd.perm (5)
+man page.
 .LP
 The permissions database is scanned in order of the fixed file entries
 and then by invoking the specified filters for each
@@ -216,6 +234,11 @@ FORWARD	V	-	-	SA	-	SA	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
+AUTH	V	-	AU	-	AU	AU	AU
+AUTHTYPE	S	-	AU	-	AU	AU	AU
+AUTHUSER	S	-	AU	-	AU	AU	AU
+FWDUSER	S	-	AU	-	AU	AU	AU
+
 
 .ta 3m +\w'RH = REMOTEHOST    'u
 KEY:
@@ -231,6 +254,9 @@ KEY:
 	SA= IP of source of request = IP of host in control file
 	SU= user from request = user in control file
 	SA= IP of source of request = IP of server host
+	SV= matches if remote host is the server
+	AU= authentication information
+	IFIP= IP address of remote end of connection
 	
 Match: S = string with wild card, IP = IPaddress[/netmask],
 	N = low[-high] number range, V = exact value match
@@ -251,6 +277,41 @@ For example,
 C=A*,B*
 would check that the class information (i.e.- line in the control file
 starting with C) had a value starting with A or B.
+.SH "PERMISSIONS, MULTIHOMED HOSTS, IPV6"
+.PP
+There is a subtle problem with names and IP addresses which are
+obtained for 'multi-homed hosts', i.e. - those with multiple
+ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
+can have multiple addresses,  and for the normal host which can have
+both a short name and a fully qualified domain name.
+In addition,
+a host can have multiple IP addresses,
+depending on the complexity of its configuration.
+.PP
+The IFIP (interface IP) field can be used to check the IP address
+of the origination of the request,  as reported by the information
+returned by the accept() system call.  Note that this information may
+be IPV4 or IPV6 information,  depending on the origination of the
+system.  This information is used by gethostbyaddr() to obtain the
+orginating host fully qualified domain name (FQDN) and set of IP addresses.
+Note that this FQDN will be for the originating interface,  and may
+not be the cannonical host name.  Some systems which use the Domain Name Server
+(DNS) system may add the cannonical system name as an alias.
+.PP
+When performing an IP address match,  the entire list of IP addresses
+for a system will now be checked.  If one of these matches, then success
+is reported.  Similarly,  the entire list of host names and aliases will
+be checked.  If one of these matches,  then success will be reported.
+.PP
+In addition,  when checking for printing, if the name lookup for the
+host reported in the control file fails,  then we assume that the host
+is unknown and all match checks for names or IP addresses will fail.
+You can determine if a host has an entry by using the following check,
+which will reject all requests from a remotehost which does not have
+a DNS entry.
+.br
+  REJECT NOT REMOTEHOST=*
+.br
 .SH "PRINTCAP DATABASE"
 .PP
 Individual printer operations are controlled by values in the
@@ -386,15 +447,15 @@ The following files are used for printer operations.
 Per job entries are marked with an asterisk (*).
 .sp
 .nf
-.ta \w'UNSPOOLER.PRINTER 'u +\w'Dir  'u +\w'Purpose           'u
+.ta 20n +8n +4n
 File Name	Dir	Purpose
 printer	CD	lock file and server process PID
 unspooler.printer	CD	subserver process PID
 control.printer	CD	queue control information
-*sfAnnnHOST	SD	job hold file
+*hfAnnnHOST	SD	job hold file
 *cfAnnnHOST	SD	job control file
 *dfAnnnHOST	SD	job data file
-*filternnnn	SD	bounce queue filter temp file
+*bfAnnnHOST.*	SD	tempory files
 .sp
 .fi
 .PP
@@ -421,7 +482,7 @@ The following is an example of a typical control file.
 .RS
 spooling_disabled 0
 printing_disabled 1
-autohold 0
+holdall 0
 redirect p1@host2
 debug 10,log=/tmp/log
 class A
@@ -442,7 +503,7 @@ and
 .I stop
 command alter these values.
 The
-.I autohold
+.I holdall
 entry will prevent jobs from being processed until released
 with the lpc
 .I hold
@@ -450,9 +511,9 @@ or
 .I release
 comands;
 the lpc
-.I autohold
+.I holdall
 and
-.I noautohold
+.I noholdall
 commands alter these values.
 .PP
 The
@@ -717,7 +778,9 @@ then no processing is done and the original file is transferred.
 See PRINTING OPERATIONS for details about filters.
 For example,
 the following printcap entry will filter format f files.
+.ne 1i
 .DS
+.nf
 testbq:sd=/usr/spool/testbq:
   :lp=testbq@host:bq=final@host
   :if=/usr/lib/filter_for_f
@@ -725,6 +788,7 @@ testbq:sd=/usr/spool/testbq:
   :pf=/usr/lib/filter_for_pr
   :translate_format=mfpf
 .DE
+.fi
 .PP
 When using a bounce queue,
 it is sometimes desirable to have the filters actually change the
@@ -740,6 +804,26 @@ the p format is processed similarly.
 Note that the lpr -p option specifies that the job will be processed by the
 .L /bin/pr
 command - the filter must do both the pr processing and any necessary format conversions.
+.PP
+The
+.L :lpr_bounce:
+printcap flag will cause LPR to do bounce queue filtering before sending the
+job to the remote queue.
+This can have unexpected effects if the filters are not
+available on the local host.
+.SH "REFORMATTING CONTROL FILES"
+.PP
+Sometimes it is desirable to reformat a control file before
+sending to a remote destination.
+If the
+.L control_filter
+printcap entry is present,
+then the control file is passed through the filter.
+If the filter exits with status JSUCC,
+then the job is process normally;
+status JABORT causes the job processing to be aborted,
+status JREMOVE causes the job processing to be removed,
+and any other status is treated as JFAIL.
 .SH "SPOOL QUEUE NAME OPTION"
 .PP
 The
@@ -772,15 +856,16 @@ at initiation;
 if the spool control file is modified,
 usually by using the lpc command,
 the spool queue is rescanned.
-.PP
-controlling job printing.
 The overall algorithm for job printing is:
-open the print device,
-send some initialization strings,
-send a banner to the device,
-send the job data files to the device,
-send some termination strings,
-and close the print device.
+.nf
+open the print device;
+send some initialization strings;
+send a banner to the device;
+send the job data files to the device;
+send some termination strings;
+close the print device;
+.fi
+.PP
 In order to handle the various device requirements,
 the subserver process in turn uses 'filter' programs specified
 in the printcap entry to carry out the individual steps.
@@ -821,7 +906,9 @@ The '??' values stand for entries from the printcap file.
 .nf
 .ft CW
 .ta 4n +4n +4n +4n +4n +4n +4n +4n +4n
-LP = open( 'lp' );	// open device or filter
+.ps -2
+.vs -2
+LP = open( 'lp' );	// open device, filter, or network connection
 OF = IF = LP;		// set defaults
 set up accounting according to 'af' entry;
 if( 'of' ) OF = filter( 'of' ) -> LP;	// make OF filter
@@ -834,16 +921,16 @@ if( FF on open 'fo' ) `fo` -> OF	// send leader
 // first check to see if required
 //   and then to see if not suppressed by printcap
 //   or by user
-do banner = 
+do_banner = 
 	(always banner 'ab'
 		|| (!suppress banner 'sb' && job has banner ));
-if( ! header last 'hl' && do banner ){
-	BP = OF;
+if( ! header last 'hl' && do_banner ){
 	if( banner program 'bp' ){
-		BP = filter( 'bp' ) -> OF;
+		fork and exec bp to generate banner, but into temp file.
+		cat temp file -> OF;
+	} else {
+		short banner info -> OF;
 	}
-	short banner info -> BP;
-	if( BP != OF ) close( BP );
 }
 
 // now we suspend the OF filter, use other filters
@@ -869,22 +956,26 @@ for each data file df in job do
 	}
 
 	data file -> ?F;
+	// note: if :direct_read: flag set, filter input
+	// is directly from the file,  otherwise the 
+	// file contents are written to the filter input.
+
 	if( ?F != LP ) close( ?F )
 endfor
 
 // finish printing
 
 if( OF != LP ) wake up OF filter;
-if( header last 'hl' && do banner ){
+if( header last 'hl' && do_banner ){
 	if( ! no FF separator 'sf' ){
 		'ff' -> OF;
 	}
-	BP = OF;
 	if( banner program 'bp' ){
-		BP = filter( 'bp' ) -> OF;
+		fork and exec bp to generate banner, but into temp file.
+		cat temp file -> OF;
+	} else {
+		short banner info -> OF;
 	}
-	short banner info -> BP;
-	if( BP != OF ) close( BP );
 }
 
 if( ff on close 'fq' ){
@@ -899,8 +990,71 @@ if 'ae' then record end of job accounting information.
 
 if( OF != LP ) close( OF );
 close( LP );
+.ps +2
+.vs +2
 .sp
 .fi
+.PP
+When printing or transferring a job to a spool queue fails,
+it is retried the number of times specified by the
+.I rt
+(or
+.I send_try )
+printcap variable.
+A 0 value specifies an infinite number or retries.
+When the retry count is exceeded,
+then the
+.I send_failure_action
+printcap variable determines the action to be taken.
+The variable can be the values
+.I succ ,
+.I fail ,
+.I abort ,
+.I remove ,
+.I ignore ,
+or
+.I hold ,
+which will cause the job to be treated as normally completed,
+retried,
+aborted,
+removed,
+or ignored and retried at a later time respectively.
+These names correspond to the
+.I JSUCC ,
+.I JFAIL ,
+etc. error codes returned by filters.
+If the variable has the form
+.I |/filter ,
+then the filter is run and passed the number of attempts
+on the standard input.
+The filter must exits with a
+.I JSUCC,
+.I JFAIL,
+etc.,
+error code and the server will take the appropriate
+action as listed above.
+.PP
+The print filters normally have their input provided by
+a process via a pipe.
+However,
+if the
+.I direct_read
+printcap flag is set,
+then the filter input is taken directly from the job file.
+This is compatible with the vintage BSD method,
+but loses the ability to track the job progress.
+.PP
+After the job print or transfer attempt,
+if the job is to be removed and the printcap variable
+.I "save_on_error"
+is true,
+the job will not be removed from the spool queue but only flagged with an error.
+The job can then be retried at a later time.
+If the job is successfully printed it is usually removed from the spool queue.
+However,
+if the printcap variable
+.I "save_when_done"
+is true the job will merely be marked as completed and not removed from the queue.
 .SH "FILTERS"
 .PP
 As described in the previous section,
@@ -910,16 +1064,18 @@ The command line to invoke a filter is generated in the following manner.
 The printcap entry or configuration value defining the filter command
 is obtained.
 .IP 2. 5
-STDIN  (file descriptor 0) of the filter will be sent the file to be printed
-or in the case of OF filters
-a banner line;
-STDOUT  (file descriptor 3) of the filter will be either an output device
-or /dev/null;
-STDERR will be set to an error logging file.
+The file to be printed or the banner line/file
+generated by the banner printer
+will be written to STDIN  (file descriptor 0) of the filter.
+The output device
+(or /dev/null if this is not a printing filter)
+will be be STDOUT  (file descriptor 1) and
+STDERR (file descriptor 2) will be connected to the error logging file.
+If this is a printing filter,
+the error log will be determined by the :af: printcap field.
 If accounting is enabled,
-file descriptor 3 will be set to be the accounting file or filter as
-indicated by the printcap
-af entry.
+file descriptor 3 will be connected to be the accounting file or filter as
+specified by the printcap :af: entry.
 .IP 3. 5
 If the
 ROOT_PERMS_TO_FILTER_SECURITY_LOOPHOLE compile time option is enabled,
@@ -928,7 +1084,9 @@ run as root (EUID = 0).
 This can be a serious security loophole,
 and should only be used as a last resort for specific problems.
 .IP 4. 5
-Options have the form $[0| ][-][']X.
+The options for the filter command line will be replaced by appropriate
+values.
+Option specifications have the form $[0| ][-][']X.
 The default option expansion has the form $X -> -X'value';
 the form $0X or $(space)X adds a space after the -X, i.e.- $0X -> -X 'value';
 the form $-X suppresses the -X, i.e. - $-X -> 'value';
@@ -948,11 +1106,13 @@ e	job data file
 f	original print file name 
 h	Control file hostname
 i	Control file indent (I) field
+j	job number from control file name
 k	Control file name
 l	printcap Page length (pl) value
 m	printcap Cost factor (co) value
 n	Control file user name (P) field
-p	Printer name
+p	Remote Printer name for forwarded jobs
+r	Remote Host name for forwarded jobs
 s	printer Status file (ps) value
 t	current time in simple format
 w	printcap Page width (pw) value
@@ -961,14 +1121,15 @@ y	printcap y dimension (py) value
 F	data file format character
 P	Printer name
 S	printcap Comment tag (cm) value
-Other	control file line starting with key letter or number
+Upper Case	control file line starting with letter
+Digit control file line starting with digit
 .sp
 .RE
 .fi
 .IP 5. 5
-If the command line does not have any entries of the above form,
-then the options specified by the filter_options configuration value will
-be added.
+The options specified by the filter_options (for none OF filters)
+or of_filter_options (for the OF filter) will
+be appended to the command line and expanded.
 To suppress adding options,
 you can use the form '-$ filter',
 i.e. - of=-$/bin/cat.
@@ -989,6 +1150,27 @@ filter_options	$C $F $H $J $L $P $Q $R $Z $a $c $d $e $f $h $i \e
 bk_filter_options $P $w $l $x $y $F $c $L $i $J $C $0n $0h $-a
 bk_of_filter_options $w $l $x $y
 .RE
+.IP 6. 5
+A printing filter which executes correctly and completely should
+exit with a 0 error status.
+A nonzero error status will be interpreted as follows:
+.RS
+.nf
+.ta 9n +4n +4n
+JFAIL	32	 failed - retry later
+JABORT	33	 aborted - do not try again, but keep job
+JREMOVE	34	 failed - remove job
+.RE
+.fi
+.PP
+The JFAIL will cause the job to be retried at a later time.
+A limit can be placed on the number of retries using the
+:rt: or :send_try: printcap entry.
+A retry value of 0 will cause infinite retries.
+The JABORT indicates serious problems and will cause printing operations
+on the job to stop until restarted by operator intervention.
+The JREMOVE status indicates problems,
+and the job should be removed from the spool queue.
 .SH ACCOUNTING
 .PP
 The LPRng software provides several methods of performing accounting.
@@ -1054,10 +1236,14 @@ af field.
 .PP
 As a convenience, all format filters for printing will be
 started with file descriptor 3 set to the destination
-specified by the af field.
+(file or filter)
+specified by the printcap af field.
 This allows special filters which can query devices for
 page counts to pass their information directly to an accounting
 program.
+The descriptor will READ/WRITE,
+allowing filters to query the accounting program and/or update
+the information directly.
 .SH "LOGGING INFORMATION"
 .PP
 In order to provide a centrallized method to track job status and information,
@@ -1065,15 +1251,15 @@ the printcap/configurtion variable
 logger_destination enable the send of status and other information to a remote
 destination.
 The logger_destination value has the form
-.br
+.RS
 .nf
-host[%port][,protocol]
-
-.R
+.L host[%port][,protocol]
+.ti -4n
 Examples:
-
-taco%451,UDP
-dickory%2001,TCP
+.L taco%451,UDP
+.L dickory%2001,TCP
+.RE
+.fi
 .br
 where host is the host name or IP address,
 port is an optional port number,
@@ -1084,17 +1270,356 @@ default_logger_protocol can be used to override
 the default port number (2001) and protocol (UDP)
 to be used if none is specified.
 Logging information has the format below.
-.DS
-IDENTIFIER jobid [PRINTER name] at timestamp
-STATUS | TRACE | FILTER_STATUS PID nnn
- ( status information)
-.
-.DE
+.RS
+.nf
+IDENTIFIER jobid [PRINTER name] at \fItimestamp\fP \e
+   STATUS | TRACE | FILTER_STATUS PID nnn
+[ status information]
+.RE
+.fi
 .PP
 The status information format consists of an identifier line,
 followed by a specifier of the status type.
-The logging information entry is terminated by a line with a single period on it.
+The logging information entry is terminated by a
+line with a single period on it.
 Lines with a starting period have the period duplicated.
+.SH AUTHENTICATION
+.PP
+Rather than building authentication facilties into LPRng,
+an interface to authentication programs is defined,
+and will be used as follows.
+The printcap and configuration entries
+.I use_auth,
+.I default_auth,
+.I forward_auth,
+.I user_auth_command,
+.I server_auth_command,
+.I server_user,
+and
+.I remote_user
+entries control authentication.
+The
+.I use_auth
+value specifies the type of authentication to be used
+for client to server authentication.
+The
+.I default_auth
+is the use_auth value to be used if explicitly
+requested by a user,
+i.e. - the
+.I lpr,
+.I lpc,
+.I lprm,
+and
+.I lpq
+.B -A
+(use authentication) option.
+Typical values would be
+pgp, kerberos, etc.
+The client programs use the
+.I user_auth_command
+executable to perform authentication.
+When a server gets and an authentication request,
+it will use the
+.I server_auth_command
+to do authentication.
+The
+.I server_user
+is the remote server name used when a client
+is sending jobs to the server
+or when the server is originating a request.
+When a server forwards a request,
+it uses the
+.I forward_auth
+value to determine if authentication is to be done,
+and the
+.I remote_user
+as the destination server identification.
+.de NP
+.fi
+.in 0
+.PP
+.br
+.in +4n
+.ti -4n
+\\n(nP.\ \ \c
+.nr nP \\n(nP+1
+..
+.de sP
+.fi
+.PP
+.br
+.in +4n
+..
+.de np
+.nr nP 1
+..
+.SH "Client To Server Authentication"
+.np
+.NP
+The client will open a connection to the server
+and sends a command with the following format.
+The REQ_SECURE field in the command corresponds to the one-byte
+command type used by the LPR protocol.
+.RS
+.nf
+Commands:
+.ta 4n +4n
+	\eREQ_SECUREprinter C user\en
+Print job transfers:
+	\eREQ_SECUREprinter C user controfilename\en
+.RE
+.fi
+.NP
+On reception of this command,  the server will send a one byte
+success code as below.  An error code may be followed by additional
+error information.  The values used by LPRng include:
+.RS
+.nf
+.ta 16n +4n +4n
+ACK_SUCCESS	0	success, no error
+ACK_STOP_Q	1	failed; no spooling to the remote queue
+ACK_RETRY	2	failed; retry later
+ACK_FAIL	3	failed; job rejected, no retry
+.RE
+.fi
+.NP
+If there is an error the connection will be terminated.
+The server will then start an authentication process, and provide
+the following open file descriptors for it.  The authenticator
+process will run as the UID of the server (i.e.- usually daemon).
+.RS
+.nf
+.ta 6n +8n +4n
+FD	Options	Purpose
+0	R/W	socket connection to remote host (R/W)
+1	W	pipe or file descriptor
+		for information for server
+2	W	error log
+3	R	pipe or file descriptor
+		for responses to client
+.RE
+.sP
+The command line arguments will have the form:
+.RS
+.nf
+program -S -Pprinter -nuser -Rserver_user -Ttempfile
+.RE
+.sP
+The printer and user information will be obtained from the
+command line sent to the server.
+The authenticator can create additional temporary or working
+files with the pathnames tempfile.ext;  these should be deleted
+after the authentication process has been completed.
+.NP
+After receiving \eACK_SUCCESS, the client starts an authenticator
+process, and provides the following open file descriptors for
+it.  The authenticator process will run UID user.
+.RS
+.nf
+.ta 6n +8n +4n
+FD	Options	Purpose
+0	R/W	socket connection to remote host (R/W)
+1	W	pipe or file descriptor
+		for responses to client
+2	W	error log
+.RE
+.sP
+The command line arguments will have the form:
+.RS
+.nf
+program -C -Pprinter -nuser -Rserver_user -Ttempfile
+.RE
+.fi
+.NP
+The authenticator can create additional temporary or working
+files with the pathnames tempfile.ext;  these will be deleted
+after the authentication process has been completed.
+The client authenticator will be running as the client user.
+.NP
+After exchanging authentication information,
+the client authenticator will transfer the contents of the
+temporary file to the server authenticator, using FD 0.  It will
+then wait for reply status on FD 0.   If the transfer step fails,
+or there is no reply status of the correct format,  the client
+authenticator will print any recieved information on FD 1,
+error information on FD 2, and then exit with error code JFAIL.
+.NP
+After receiving the files on FD 0,  the server authenticator
+will perform the required authentication procedures and leave
+the results in tempfile.  The server authentictor will write
+the following to FD 1,  for use by the server:
+.RS
+.nf
+authentication_info\en
+.RE
+.sP
+If the transfer step or authentication fails,  then the server
+will write an error message to FD 2 and exit with error code
+JFAIL.
+The server will use this authentication information to
+determine if the remote user has permission to access the system.
+.NP
+The server authentication process will read input from FD 3
+until and end of file,
+and then proceed to transfer the input to the client authenticator.
+If the data transfer fails,  then the process will exit with
+error code JFAIL, otherwise it will exit with error code JSUCC.
+.NP
+The client authenticator will read the status information from
+FD 0,  and after performing authentication will write it to FD 1.
+If data transfer or authentication fails,  the authenticator
+will write an error message to FD 2 and exit with error code
+JFAIL, otherwise it will exit with error code JSUCC.
+.SH "Server to Server Authentication"
+.np
+.PP
+The Server to Server authentication procedure is used by one server
+to forward jobs or commands to another server.  It should be noted
+that this forwarding operation puts an implicit trust in the security
+of the client to server to server chain.  In the description below,
+src and dst are the userid of the source and destination servers
+respectively.
+.NP
+The originating host takes the part of the client, and will
+transfer a job acting like the client.  The initial information
+transfer from the originating (src) server will have the format:
+.RS
+.nf
+.ta 4n +4n
+Commands:
+	\eREQ_SECUREprinter F user\en
+Print job transfers:
+	\eREQ_SECUREprinter F user controfilename\en
+.RE
+.sP
+After receiving a 0 acknowlegement byte,
+the src server will invoke its authenticator with the arguments
+below.
+The forward_user value will default to the
+server_user value if not explicitly provided.
+.RS
+.nf
+.ta 4n +4n
+.L
+program -C -Pprinter -nserver_user \e
+	-Rforward_user -Ttempfile
+.RE
+.NP
+On the destintation server the authenticator is invoked with the arguments:
+.RS
+.nf
+.ta 4n +4n
+.L
+program -S -Pprinter -nserver_user \e
+	-Rforward_user -Ttempfile
+.RE
+.sP
+The authentication is performed to determine that the transfer was
+between the two servers,  rather than the user to server.
+.SH "KERBEROS AUTHENTICATION"
+.PP
+As a convenience,
+Kerberos 5 authentication has been built into the LPD clients and
+servers.
+If you are not familiar with Kerberos,
+then you should obtain other documentation and/or assistance
+before attempting to use this.
+The following facilities/configuration values are used to
+support Kerberos.
+.PP
+A Kerberos principal is the name used for authentication purposes
+by Kerberos.
+For example,
+user principals have the form user@REALM;
+for example,
+papowell@SDSU.EDU.
+Services and/or servers have the form service/host@REALM;
+for example,
+the lpd server on dickory would have the form:
+.ti +5n
+lpr/dickory.sdsu.edu@SDSU.EDU
+.PP
+User to server authenticaiton process will use the user's principal
+name,
+and generate a service name for the server.
+The name generation is controlled by the following configuration
+and/or printcap values.
+.IP service
+The name of the service to be used to identify the service.
+This is usually "lpr".
+.IP kerberos_keytab
+The location of the server keytab file.
+The keytab file corresponds to the user password,
+and must be considered a security risk.
+It should be owned by the LPD server user,
+and readable/writable only by the server.
+.IP kerberos_life
+The lifetime of the authentication ticket used by the server.
+This usually defaults to 10 hours.
+.IP kerberos_renew
+The renewal time of the ticket.
+.PP
+In addition to the default values,
+an explicit server principal can be specified in the printcap
+file using the kerberos_server_principal
+This allows cross domain authentication to be done.
+.PP
+When setting up Kerberos authentication,
+you will need to establish principals for each server,
+and to distribute and install the keytab files on each server.
+.SH "AUTHENTICATION PERMISSIONS"
+.PP
+The following permissions tags are available to check on authentication
+procedures.
+.RS
+.nf
+.ta 4n +12n +4n +4n +4n +4n
+AUTH=[NONE,USER,FWD]	- authentication
+	AUTH=NONE	- no authentication
+	AUTH=USER	- authentication from a client
+	AUTH=FWD	- forwarded authentication from a lpd server
+AUTHTYPE=globmatch
+AUTHUSER=globmatch
+FWDUSER=globmatch
+.RE
+.fi
+.np
+.NP
+The AUTH tag can be used to determine the type of authentication
+being done.
+The AUTHTYPE tag can be used to match the authentication type
+being used or requested by the client or remote server.
+The authentication process returns an authentication identifier
+for the user;
+this information can be matched by the AUTHUSER tag.
+.NP
+For a command sent from a client or forwarded from a server,
+AUTHUSER matches the auth_user_id provided for the user when
+sent to a server.
+(This information will be forwared by a remote server).
+For a forwarded command,
+FWDUSER refers to the authentication information
+for the server doing the forwarding.
+.NP
+For example,  to reject non-authenticated operations, the following
+line could be put in the permissions file.
+.RS
+.nf
+REJECT AUTH=NONE
+.RE
+.NP
+To reject server forwarded authentication as well, we use REJECT AUTH=NONE,FWD.
+If a remote server with name
+.I serverhost
+has id information FFEDBEEFDEAF,  then the
+following will accept only forwarded jobs from this server.
+.RS
+.nf
+ACCEPT FWDUSER=FFEDBEEFDEAF REMOTEHOST=serverhost
+REJECT AUTH=FWD
+.RE
+.fi
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -1132,22 +1657,24 @@ help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
 .LP
-LPRng is a enhanced printer spooler system,
-with functionality similar to the Berkeley LPR software,
-and is derived from the PLP (Public Line Printer) software,
-version 4.0.
-LPRng has many advanced features, which are described in
-.I "LPRng - An Enhanced Line Printer Spooler"
-by Patrick Powell, San Diego State University (papowell@sdsu.edu),
-et al.
-It is available from
-dickory.sdsu.edu:/pub/LPRng.
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
 .LP
-The LPRng software is based on PLP4.0,
-supported and extended by Justin Mason (jmason@iona.ie),
-which is available from ftp://ftp.iona.ie/pub/PLP4.0.
-Justin greatly aided in the design and development of many of the
-software features,
-as well as contributing a large number of bug fixes,
-design reviews,
-and other suggestions.
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

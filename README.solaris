@@ -1,3 +1,18 @@
+         Installing LPRng on Solaris and System V
+           Updated: Fri Dec 27 06:08:26 PST 1996
+              Patrick Powell
+
+The LPRng system now simulates the Solaris/SystemV lp, lpstat,
+and cancel commands.  It does a good enough job that you can
+probably replace them by these versions.
+Read the directions below on how to modify the rc startup
+scripts.  You should remove the Solaris/System V printer
+startup script - i.e. -
+        rm /etc/rc2.d/S80lp
+and replace it with the lpd startup script below.  You might
+also want to rename the lp, lpstat, etc., scripts as well
+and create symbolic links to lpr and lpq.
+
 Subject: Re: How to installed LPRng-2.3.0 into Solaris 2.5
 To: plp@iona.com
 Date: Mon, 27 May 1996 00:05:17 -0400 (EDT)
@@ -22,8 +37,6 @@ I hope this helps someone, somewhat.
 
 - edan
 
-
-
 -- README.solaris
 
 When Solaris 2 changes init levels, it runs scripts in the /etc/rc?.d
@@ -38,6 +51,10 @@ Then hard link your lpd script in the rc?.d directories like so:
     # ln /etc/init.d/lpd /etc/rc0.d/K20lpd
     # ln /etc/init.d/lpd /etc/rc2.d/K20lpd
     # ln /etc/init.d/lpd /etc/rc2.d/S80lpd
+
+* Note: I really recommend rebooting at this point,  as there
+*  are some strange things that Solaris does with printing that
+*  may cause problems - Patrick Powell
 
 If you don't want to reboot, you may need to use the nlsadmin(1M)
 command to remove the network listeners on your printer port.  Even
@@ -66,6 +83,7 @@ You can then start lpd by typing
 # LPD control script
 # 
 # hacked by edan idzerda (edan@mtu.edu) 24 Apr 96
+# Update by Patrick Powell Fri Dec 27 06:18:31 PST 1996
 #
 
 #HOSTNAME=`/usr/bin/hostname`
@@ -78,10 +96,11 @@ You can then start lpd by typing
 #fi
 
 LPD=/usr/local/bin/lpd
+LPC=/usr/local/bin/lpc
 
-PID=`/usr/bin/ps -e | awk '{ if (\$4 == "lpd") print \$1 }' `
+PID=`${LPC} lpd | awk '{ pid = ($3+0); if( pid ) print pid;  }' `
 
-echo $PID
+echo PID "$PID"
 state=$1
 
 case $state in

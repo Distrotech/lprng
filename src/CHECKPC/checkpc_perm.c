@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,13 +10,14 @@
  * PURPOSE: check printcap for problems
  **************************************************************************/
 
-#include "checkpc.h"
-#include "lp_config.h"
-#include "setuid.h"
+#include "lp.h"
 #include "checkpc_perm.h"
+#include "pathname.h"
+#include "setuid.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc_perm.c,v 3.0 1996/05/19 04:05:33 papowell Exp $";
+"$Id: checkpc_perm.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
 
 /***************************************************************************
  Commentary
@@ -38,15 +39,14 @@ int Check_perms( struct dpathname *dpath, int fix, int age, int remove )
 	DIR *dir;
 	time_t t;
 	char *s;
+	int err = 0;
 
 	/* get the required group and user ids */
 	t = time( (void *)0 );
-	if( gid == 0 ){
-		gid = Getdaemon_group();
-		uid = Getdaemon();
-	}
+	gid = Getdaemon_group();
+	uid = Getdaemon();
 
-	DEBUG7("Check_perms: '%s'", dpath->pathname );
+	DEBUG4("Check_perms: '%s'", dpath->pathname );
 
 	/* now we check on files in the directory */
 	s = Clear_path( dpath );
@@ -61,18 +61,17 @@ int Check_perms( struct dpathname *dpath, int fix, int age, int remove )
 
 
 	while( (d = readdir(dir)) ){
-		DEBUG4("Check_perms: entry '%s'", d->d_name );
+		DEBUG3("Check_perms: entry '%s'", d->d_name );
 		if( strcmp( d->d_name, "." ) == 0
 			|| strcmp( d->d_name, ".." ) == 0 ) continue;
 
 		s = Add_path( dpath, d->d_name );
 		if( check_file( dpath, fix, t, age, remove ) ){
-			closedir(dir);
-			return( 1 );
+			err = 1;
 		}
 	}
 	closedir(dir);
-	return( 0 );
+	return( err );
 }
 
 /* check to see that the file name is for a job */
@@ -106,7 +105,7 @@ int check_file( struct dpathname *dpath,
 
 	path = dpath->pathname;
 
-	DEBUG8("check_file: '%s', fix %d, time 0x%x, age %d",
+	DEBUG4("check_file: '%s', fix %d, time 0x%x, age %d",
 		path, fix, t, age );
 
 	if( stat( path, &statb ) ){
@@ -171,24 +170,25 @@ int check_file( struct dpathname *dpath,
 
 int fix_create_dir( struct dpathname *dpath, struct stat *statb )
 {
-	char *s, *end, *path;
-	int mask, err, status;
+	char *s, *end, path[MAXPATHLEN];
+	int err, status;
 	struct dpathname p;
 
 	p = *dpath;
-	path = p.pathname;
+	safestrncpy(path,p.pathname);
+	if( (s = strrchr(path, '/')) && s[1] == 0 ) *s = 0;
 	Warnmsg( "creating '%s'", path );
 	end = 0;
-	for( end = 0, s = path;s && *s; s = end+1 ){
+	for( end = 0, s = path;s && *s; s = (end?(end+1):end) ){
 		if( end ) *end = '/';
-		end = strchr( s, '/' );
+		end = strchr( s+1, '/' );
 		if( end ){
 			*end = 0;
 		}
 		if( strlen( s ) == 0 ){
 			continue;
 		}
-		DEBUG7("fix_create_dir: creating %s", path );
+		DEBUG4("fix_create_dir: creating %s", path );
 		if( stat( path, statb ) == 0 ){
 			if( S_ISDIR( statb->st_mode ) ){
 				continue;
@@ -204,13 +204,8 @@ int fix_create_dir( struct dpathname *dpath, struct stat *statb )
 			}
 		}
 		/* we don't have a directory */
-		mask = umask( 0 );
-		To_root();
 		status = mkdir( path, Spool_dir_perms );
 		err = errno;
-		To_daemon();
-		(void)umask( mask );
-		errno = err;
 		if( status ){
 			Warnmsg( "mkdir '%s' failed, %s", path, Errormsg(err) );
 			return( 1 );
@@ -227,11 +222,9 @@ int fix_owner( char *path )
 
 	Warnmsg( "changing ownership '%s'", path );
 
-	DEBUG7("change ownership: '%s' to %d/%d", path, uid, gid );
-	To_root();
+	DEBUG4("change ownership: '%s' to %d/%d", path, uid, gid );
 	status =  chown( path, uid, gid );
 	err = errno;
-	To_daemon();
 	if( status ){
 		Warnmsg( "chown '%s' failed, %s", path, Errormsg(err) );
 	}
@@ -244,10 +237,8 @@ int fix_perms( char *path, int perms )
 	int status;
 	int err;
 
-	To_root();
 	status = chmod( path, perms );
 	err = errno;
-	To_daemon();
 
 	if( status ){
 		Warnmsg( "chmod '%s' to 0%o failed, %s", path, perms,
@@ -266,28 +257,33 @@ int fix_perms( char *path, int perms )
 int Check_spool_dir( struct dpathname *dpath, int fix )
 {
 	struct stat statb;
-	char *pathname;
-	int err;
+	char pathname[MAXPATHLEN], *s;
+	int err = 0;
 
 	/* get the required group and user ids */
-	if( gid == 0 ){
-		gid = Getdaemon_group();
-		uid = Getdaemon();
-	}
+	gid = Getdaemon_group();
+	uid = Getdaemon();
 
 	
-	pathname = Clear_path( dpath );
-	DEBUG7("Check_spool_dir: '%s'", pathname );
+	safestrncpy( pathname, Clear_path( dpath ));
+	s = strrchr(pathname, '/' );
+	if( s && s[1] == 0 ){
+		*s = 0;
+	}
 
-	if( stat( pathname, &statb ) < 0 ){
+	logDebug(" Checking directory: '%s'", pathname );
+
+	if( stat( pathname, &statb ) ){
 		if( fix ){
 			if( fix_create_dir( dpath, &statb ) )return(2);
 		} else {
+			logDebug(" directory stat '%s' failed - %s",
+				pathname, Errormsg(errno) );
 			return( 2 );
 		}
 	}
 	if( !S_ISDIR( statb.st_mode ) ){
-		DEBUG7("Check_spool_dir: not directory '%s'", pathname );
+		DEBUG4("Check_spool_dir: not directory '%s'", pathname );
 		if( fix ){
 			if( fix_create_dir( dpath, &statb ) ) return( 1 );
 		} else {
@@ -298,29 +294,27 @@ int Check_spool_dir( struct dpathname *dpath, int fix )
 		if( fix ){
 			if( fix_owner( pathname ) ) return( 1 );
 			if( stat( pathname, &statb ) ){
-				err = errno;
-				Warnmsg( "cannot stat '%s', %s", pathname, Errormsg(err) );
-				errno = err;
-				return( 1 );
+				Warnmsg( "cannot stat '%s', %s", pathname, Errormsg(errno) );
+				err = 1;
 			}
 		} else {
 			Warnmsg( "owner/group of '%s' are %d/%d, not %d/%d", pathname,
 				statb.st_uid, statb.st_gid, uid, gid );
+			err = 1;
 		}
 	}
 	if( 077777 & (statb.st_mode ^ Spool_dir_perms) ){
 		if( fix ){
 			if( fix_perms( pathname, Spool_dir_perms ) ) return(1);
 			if( stat( pathname, &statb ) ){
-				err = errno;
-				Warnmsg( "cannot stat '%s', %s", pathname, Errormsg(err) );
-				errno = err;
-				return( 1 );
+				Warnmsg( "cannot stat '%s', %s", pathname, Errormsg(errno) );
+				err = 1;
 			}
 		} else {
 			Warnmsg( "permissions of '%s' are 0%o, not 0%o", pathname,
 				statb.st_mode & 077777, Spool_dir_perms );
+			err = 1;
 		}
 	}
-	return(0);
+	return(err);
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -24,10 +24,15 @@
  ***************************************************************************/
 
 static char *const _id =
-"$Id: waitchild.c,v 3.1 1996/09/09 14:24:41 papowell Exp papowell $";
+"$Id: waitchild.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
 
 #include "lp.h"
 #include "decodestatus.h"
+#include "waitchild.h"
+#include "killchild.h"
+#include "timeout.h"
+/**** ENDINCLUDE ****/
+
 /*
  *
  * Patrick Powell Sun Aug 13 18:53:14 PDT 1995
@@ -75,7 +80,9 @@ static WaitInfo *Freelist;       /* First in list of all free */
 
 static int catching_SIGCHLD = 0;  /* flag */
 
-static void alloc_blocks()
+static int Child_break;
+
+static void alloc_blocks(void)
 {
 	int size, i;
 	size = sizeof(Freelist[0]) * ALLOC_BLK;
@@ -100,7 +107,7 @@ static void waitpid_add_to_list (plp_status_t status, pid_t result)
 	for (w = DeadHead; w != 0; w = w->nextPtr) {
 		if (w->pid == result) {
 			w->status = status;
-			DEBUG6 ("waitpid_add_to_list: overwriting %d (%s)",
+			DEBUG3 ("waitpid_add_to_list: overwriting %d (%s)",
 						result, Decode_status (&status));
 			return;
 		}
@@ -122,7 +129,7 @@ again:
 		DeadHead = w;
 	}
 	DeadTail = w;
-	DEBUG6 ("waitpid_add_to_list: saving %d (%s)",
+	DEBUG3 ("waitpid_add_to_list: saving %d (%s)",
 		result, Decode_status (&status));
 }
 
@@ -141,10 +148,10 @@ static pid_t waitpid_check_list (pid_t pid,plp_status_t *statusPtr,int options)
 	WaitInfo *waitPtr, *prevPtr;
 	pid_t result;
 
-	DEBUG6 ("waitpid_check_list: checking savelist for %d", pid);
+	DEBUG3 ("waitpid_check_list: checking savelist for %d", pid);
 	for (waitPtr = DeadHead, prevPtr = 0; waitPtr != 0;
 			prevPtr = waitPtr, waitPtr = waitPtr->nextPtr){
-		DEBUG8 ("waitpid_check_list: list entry %d, status 0x%x",
+		DEBUG4 ("waitpid_check_list: list entry %d, status 0x%x",
 			waitPtr->pid, waitPtr->status);
 		if ((pid != waitPtr->pid) && (pid != -1)){
 			continue;
@@ -163,11 +170,11 @@ static pid_t waitpid_check_list (pid_t pid,plp_status_t *statusPtr,int options)
 		}
 		waitPtr->nextPtr = Freelist;
 		Freelist = waitPtr;
-		DEBUG6 ("waitpid_check_list: returning '%d'", result);
+		DEBUG3 ("waitpid_check_list: returning '%d'", result);
 		return result;
 	}
 	result = -1;
-	DEBUG6 ("waitpid_check_list: returning '%d'", result);
+	DEBUG3 ("waitpid_check_list: returning '%d'", result);
 	return(result);
 }
 
@@ -188,6 +195,10 @@ static pid_t waitpid_check_list (pid_t pid,plp_status_t *statusPtr,int options)
  *      returned and *statusPtr is set to the status value of the
  *      process.
  *
+ *      pid == -1 -> wildcard wait
+ *        return: pid > 0  - pid of child process
+ *        return: pid == 0 - no child process exit status available
+ *        return: pid < 0  - no child process 
  * Side effects:
  *      None.
  *
@@ -200,17 +211,17 @@ static pid_t
 waitpid_wrapper (pid_t pid, plp_status_t *statusPtr, int options)
 {
 	int result;
-	plp_status_t status;
+	plp_status_t status = 0;
 	int err;
 
 retry_waitpid:
 
 #ifdef HAVE_WAITPID
-	DEBUG6 ("waitpid_wrapper: calling waitpid");
+	DEBUG3 ("waitpid_wrapper: calling waitpid");
 	result = waitpid (pid, &status, options);
 #else
 #ifdef HAVE_WAIT3
-	DEBUG6 ("waitpid_wrapper: calling wait3");
+	DEBUG3 ("waitpid_wrapper: calling wait3");
 	result = wait3 (&status, options, 0);
 #else
 #error	wait not supported!!;
@@ -218,17 +229,17 @@ retry_waitpid:
 #endif /* HAVE_WAITPID */
 
 	err = errno;
-	DEBUG6 ("waitpid_wrapper: waitpid %d returned pid %d, status 0x%x",
+	DEBUG3 ("waitpid_wrapper: waitpid for pid %d,returned pid %d, status 0x%x",
 		pid, result, status );
 	/* interpret the result for debugging purposes */
 	if (result == 0) {
-		DEBUG6 ("waitpid_wrapper: kid is still alive");
+		DEBUG3 ("waitpid_wrapper: kid is still alive");
 
 	} else if (result == -1 && err == ECHILD) {
-		DEBUG6 ("waitpid_wrapper: no kids left alive");
+		DEBUG3 ("waitpid_wrapper: no kids left alive");
 
 	} else if (result < 0) {
-		DEBUG6 ("waitpid_wrapper: returning error");
+		DEBUG3 ("waitpid_wrapper: returning error");
 
 	} else if ((pid != result) && (pid != -1)) {
 		/* this is not the correct process */
@@ -242,7 +253,7 @@ retry_waitpid:
 
 	} else {
 		*statusPtr = *((plp_status_t *) &status);
-		DEBUG6 ("waitpid_wrapper: returning %d (%s)",
+		DEBUG3 ("waitpid_wrapper: returning %d (%s)",
 					result, Decode_status (statusPtr));
 	}
 	return result;
@@ -256,86 +267,73 @@ sigchld_handler (int signo)
 	int err;
 
 	err = errno;
-	assert (signo == SIGCHLD);
-	DEBUG6 ("sigchld_handler: caught SIGCHLD");
+
+	DEBUG3 ("sigchld_handler: caught SIGCHLD");
+	++Child_exit;
 
 	while ((pid = waitpid_wrapper (-1, &status, WNOHANG)) > 0) {
 		waitpid_add_to_list (status, pid);
 	}
 
 	/* reestablish signal handler */
-	plp_signal(SIGCHLD, sigchld_handler);
-	errno = err;
-}
-
-#ifdef HAVE_SIGPROCMASK
-	sigset_t zeromask, newmask, oldmask;
-#endif
-
-static void block_sigchld (void)
-{
-	int err;
-
-	err = errno;
-#ifdef HAVE_SIGPROCMASK
-	sigemptyset (&zeromask);
-	sigemptyset (&newmask); sigaddset (&newmask, SIGCHLD);
-	if (sigprocmask (SIG_BLOCK, &newmask, &oldmask) < 0)
-		logerr_die (LOG_INFO, "block_sigchld: sigprocmask() failed");
-#else
-	/* argh -- setting SIGCHLD with signal() can be really unportable.
-	 * We just assume the BSD behaviour, as later systems have
-	 * sigprocmask implementations (which are much more portable).
-	 */
-	plp_signal (SIGCHLD, SIG_IGN);
-#endif
-	errno = err;
-}
-
-static void unblock_sigchld (void)
-{
-	int err;
-
-	err = errno;
-#ifdef HAVE_SIGPROCMASK
-	if( sigprocmask (SIG_SETMASK, &oldmask, 0) < 0 )
-		logerr_die (LOG_INFO, "unblock_sigchld: sigprocmask() failed");
-#else
-	plp_signal (SIGCHLD, sigchld_handler);
-#endif
+	if( Child_break == 0 ){
+		plp_signal(SIGCHLD, sigchld_handler);
+	} else {
+		plp_signal_break(SIGCHLD, sigchld_handler);
+	}
 	errno = err;
 }
 
 pid_t plp_waitpid (pid_t pid, plp_status_t *statusPtr, int options)
 {
 	pid_t result;
+	plp_block_mask oblock;
 
-	if( catching_SIGCHLD == 0 ){
-		(void) plp_signal(SIGCHLD, sigchld_handler);
-		catching_SIGCHLD = 1;
-	}
 	/* we will block for the child process */
-
-	block_sigchld();       /* race condition otherwise */
-
+	if( !catching_SIGCHLD ) Setup_waitpid();
+	plp_block_one_signal( SIGCHLD, &oblock ); /* race condition otherwise */
 	result = waitpid_check_list( pid, statusPtr, options );
 	if (result == -1) {
 		/* now we perform the actual wait if necessary */
 		result = waitpid_wrapper (pid, statusPtr, options );
 	}
-
-	unblock_sigchld ();
-
+	Removepid( result );
+	plp_unblock_all_signals( &oblock );  /* race condition otherwise */
 	return result;
+}
+
+pid_t plp_waitpid_timeout(int timeout,
+	pid_t pid, plp_status_t *status, int options)
+{
+	int report = -1;
+	int err;
+	if( Set_timeout() ){
+		Set_timeout_alarm( timeout, 0 );
+		report = plp_waitpid( pid, status, options );
+		err = errno;
+	} else {
+		report = -1;
+		err = EINTR;
+	}
+	Clear_timeout();
+	errno = err;
+	return( report );
 }
 
 void Setup_waitpid (void)
 {
+	Child_break = 0;
 	/* the portable waitpid() emulation function needs this SIGCHLD handler. */
-	if( catching_SIGCHLD == 0 ){
-		if( Freelist == 0 ) alloc_blocks();
-		/* we suppress getting signals except at well controlled places */
-		/*(void) plp_signal(SIGCHLD, sigchld_handler);*/
-		catching_SIGCHLD = 1;
-	}
+	if( Freelist == 0 ) alloc_blocks();
+	(void) plp_signal(SIGCHLD, sigchld_handler);
+}
+
+
+
+void Setup_waitpid_break (void)
+{
+	Child_break = 1;
+	/* the portable waitpid() emulation function needs this SIGCHLD handler. */
+	if( Freelist == 0 ) alloc_blocks();
+	(void) plp_signal_break(SIGCHLD, sigchld_handler);
 }

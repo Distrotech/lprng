@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -23,22 +23,32 @@ We are going to simulate the LPD daemon using the basic facilities.
 
 */
 static char *const _id =
-"$Id: lpd.c,v 3.3 1996/08/31 21:11:58 papowell Exp papowell $";
+"$Id: lpd.c,v 3.8 1997/01/31 22:13:07 papowell Exp $";
 
-#include "lpd.h"
+#include "lp.h"
 #include "printcap.h"
-#include "lp_config.h"
-#include "pr_support.h"
+#include "fileopen.h"
+#include "gethostinfo.h"
+#include "initialize.h"
+#include "killchild.h"
+#include "linksupport.h"
 #include "permission.h"
-#include "setuid.h"
+#include "serverpid.h"
+#include "setstatus.h"
+#include "waitchild.h"
+#include "krb5_auth.h"
+/**** ENDINCLUDE ****/
 
-static void Get_remote_hostbyaddr( struct sockaddr_in *sin );
-static void Service_connection( struct sockaddr_in *sin, int listen, int talk );
-static void Read_pc();
-static void Set_lpd_pid();
-static int Get_lpd_pid();
+static void Service_connection( struct sockaddr *sin, int listen, int talk );
+static void Read_pc(void);
+static void Set_lpd_pid(void);
+static int Get_lpd_pid(void);
 int Setuplog(char *logfile, int sock);
 void Service_printer( int listen, int talk );
+
+
+char LPD_optstr[] 	/* LPD options */
+ = "D:FL:P:Vic" ;
 
 /***************************************************************************
  * main()
@@ -63,12 +73,13 @@ int main(int argc, char *argv[], char *envp[])
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
 	int max_socks;		/* maximum number of sockets */
-	char *s;			/* ACME, for the latest fashions in pointers */
-	struct sockaddr_in sin;	/* the connection remote IP address */
-	struct timeval delay;	/* timeout if needed */
+	struct sockaddr sin;	/* the connection remote IP address */
 	pid_t result;		/* process termination information */
 	int l;				/* ACME?  Hmmm... well, ok */
 	int err;
+	int max_servers;	/* maximum number of servers allowed */
+
+	Is_server = 1;	/* we are the LPD server */
 
 	/*
 	 * This will make things safe even
@@ -79,45 +90,12 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 	Initialize();
 
-	/*
-		open /dev/null on fd 0, 1, 2 if neccessary
-		This must be done before using any other database access
-		functions,  as they may open a socket and leave it open.
-	*/
-	if( (DevNullFD = open( "/dev/null", O_RDWR, Spool_file_perms )) < 0 ){
-		logerr_die( LOG_CRIT, "lpd: main cannot open '/dev/null'" );
-	}
-	while( DevNullFD < 3 ){
-		if( (DevNullFD = dup(DevNullFD)) < 0 ){
-			logerr_die( LOG_CRIT, "lpd: main cannot dup '/dev/null'" );
-		}
-	}
 
 	/* scan the argument list for a 'Debug' value */
-	Opterr = 0;
 	Get_debug_parm( argc, argv, LPD_optstr, debug_vars );
 	/* scan the input arguments, setting up values */
-	Opterr = 1;
+
 	Get_parms(argc, argv);      /* scan input args */
-
-	/* fix up things if Inetd started the LPD server */
-	if( Inetd_started ){
-		sock = dup(0);
-		if( sock < 3 ){
-			logerr_die( LOG_CRIT, "lpd: main - dup result bad value '%d'",
-				sock );
-		}
-		dup2(DevNullFD,0); dup2(DevNullFD,1); dup2(DevNullFD,2);
-		Link_setreuse( sock );
-
-#ifdef INETD_DEBUG
-		/* set up debugging for INETD startup */
-		close(2);
-		if( open( "/tmp/logfile", O_WRONLY|O_APPEND|O_CREAT, Spool_file_perms ) != 2 ){
-			dup2( DevNullFD,2);
-		}
-#endif
-	}
 
 	/* set signal handlers */
 	(void) plp_signal (SIGPIPE, (plp_sigfunc_t)SIG_IGN);
@@ -125,105 +103,57 @@ int main(int argc, char *argv[], char *envp[])
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
 	(void) plp_signal (SIGTERM, cleanup);
+	(void) plp_signal (SIGUSR1, (plp_sigfunc_t)SIG_IGN);
+	(void) plp_signal (SIGUSR2, (plp_sigfunc_t)SIG_IGN);
 
-
-	/* Get configuration file information */
-	Parsebuffer( "default configuration",Default_configuration,
-		lpd_all_config, &Config_buffers );
-
-	/* get the configuration file information if there is any */
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV\n", Name );
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			if( UID_root ){
-				log( LOG_ERR, "lpd: ROOT and using LPD_CONF file '%s'", s );
-			}
-			Server_config_file = s;
-		}
-    }
-
-	DEBUG0("main: Configuration file '%s'",
-		Server_config_file?Server_config_file:"NULL" );
-
-	Getconfig( Server_config_file, lpd_all_config, &Config_buffers );
-
-	if( Debug > 5 ) dump_config_list( "LPD Configuration", lpd_all_config );
-
-	/* 
-	 * Testing magic:
-	 * if we are running SUID
-	 *   We have set our RUID to root and EUID daemon
-	 * However,  we may want to run as another UID for testing.
-	 * The config file allows us to do this, but we set the SUID values
-	 * from the hardwired defaults before we read the configuration file.
-	 * After reading the configuration file,  we check the current
-	 * DaemonUID and the requested Daemon UID.  If the requested
-	 * Daemon UID == 0, then we run as the user which started LPD.
+	/*
+	 * set up the configuration
 	 */
+	Setup_configuration();
 
-	Reset_daemonuid();
-	Setdaemon_group();
-	DEBUG4( "DaemonUID %d", DaemonUID );
-	
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-	Get_local_host();
-
-	/* expand the information in the configuration file */
-	Expandconfig( lpd_all_config, &Config_buffers );
-
-	if( Debug > 4 ) dump_config_list( "LPD Configuration After Expansion",
-		lpd_all_config );
-	if( Debug > 4 ) dump_config_list("LPD Vars", lpd_vars );
+#if defined(HAVE_KRB5_H)
+	if(DEBUGL0){
+		char buffer[LINEBUFFER];
+		remote_principal_krb5( Kerberos_service, 0, buffer, sizeof(buffer) );
+		logDebug("lpd: kerberos principle '%s'", buffer );
+	}
+#endif
 
 	/*
 	 * now get the connection
 	 */
+
 	if( Lockfile == 0 ){
 		logerr_die( LOG_INFO, "No LPD lockfile specified!" );
 	}
 
-	if( !Inetd_started ){
+	/*
+	 * This is the one of the two places where we need to be
+	 * root in order to open a socket
+	 */
+	sock = Link_listen();
+	if( sock < 0 ){
 		/*
-		 * This is the one of the two places where we need to be
-		 * root in order to open a socket
+		 * try reading the lockfile
 		 */
-		sock = Link_listen();
-		if( sock < 0 ){
-			/*
-			 * try reading the lockfile
-			 */
-			pid = Get_lpd_pid();
-			if( pid > 0 ){
-				Diemsg( "Another print spooler is using TCP printer port, possibly lpd process '%d'",
-					pid );
-			} else {
-				Diemsg( "Another print spooler is using TCP printer port" );
-			}
+		pid = Get_lpd_pid();
+		if( pid > 0 ){
+			Diemsg( "Another print spooler is using TCP printer port, possibly lpd process '%d'",
+				pid );
+		} else {
+			Diemsg( "Another print spooler is using TCP printer port" );
 		}
 	}
 
 	/*
 	 * At this point you are the server for the LPD port
-	 * If not started from Inet_d and not in Forground
 	 * you need to fork to allow the regular user to continue
 	 * you put the child in its separate process group as well
 	 */
 
-	if( !Inetd_started && !Foreground ){
+	if( !Foreground ){
 		if( (pid = dofork()) < 0 ){
-			logerr_die( LOG_ERR, "lpd: main() fork failed" );
+			logerr_die( LOG_ERR, "lpd: main() dofork failed" );
 		} else if( pid ){
 			exit(0);
 		}
@@ -245,51 +175,32 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* read the printcap file */
 	Read_pc();
-	if( Debug > 4 ) dump_printcapfile("Printcap_file", &Printcapfile );
 
 	/* establish the pipes for low level processes to use */
 	if( pipe( Lpd_pipe ) ){
 		logerr_die( LOG_ERR, "lpd: pipe call failed" );
 	}
 
-	/*
-	 * If you were asked to start and run a single queue, then
-	 * start it up.  This allows you to test a filter by placing
-	 * a short job in the queue and then printing it.
-	 */
-	if( Printer ){
-		char b[LINEBUFFER];
-		b[0] = '!';
-		strncpy(b+1, Printer, sizeof(b)-2);
-		Process_jobs( 0, b, sizeof(b) );
-		exit(0);
-	}
 	/* open a connection to logger */
 	send_to_logger( 0 );
+
+	/* get the maximum number of servers allowed */
+	max_servers = Get_max_servers();
+	DEBUG0( "lpd: maximum servers %d", max_servers );
 
 	/*
 	 * clean out the current queues
 	 */
-	if( !Inetd_started ){
-		pid = fork();
-		if( pid < 0 ){
-			logerr_die( LOG_INFO, "Lpd: fork in main failed" );
-		} else if( pid == 0 ){
-			static char start[] = "!all\n";
+	Start_all();
 
-			(void) plp_signal (SIGHUP, cleanup );
-			Process_jobs( 0, start, sizeof(start) );
-			exit(Errorcode);
-		}
-	}
-
+	Printer = 0;
+	Name = "LPD";
+	setproctitle( "LPD" );
 
 	/* set up the wait activity */
 
 	FD_ZERO( &defreadfds );
-	if( !Inetd_started ){
-		FD_SET( sock, &defreadfds );
-	}
+	FD_SET( sock, &defreadfds );
 	FD_SET( Lpd_pipe[0], &defreadfds );
 	max_socks = sock+1;
 	if( Lpd_pipe[0] >= sock ){
@@ -300,96 +211,67 @@ int main(int argc, char *argv[], char *envp[])
 	 * start waiting for connections from processes
 	 */
 
-	if( Inetd_started ){
-
-		if( getpeername( sock, (struct sockaddr *)&sin, &l ) ){
-			logerr_die( LOG_ERR, "lpd: getpeername failed" );
-		}
-		/* service the connection */
-		Service_connection( &sin, -1, sock );
-
-		/* close the connection, wait for process to finish */
-		close( sock );
-		close( Lpd_pipe[1] );
-		while(1){
-			delay.tv_sec = 10;	/* 10 seconds wait */
-			delay.tv_usec = 0;
-			readfds = defreadfds;
-			l = select( max_socks, (fd_set *)&readfds,
-				(fd_set *)0, (fd_set *)0, &delay );
-			err = errno;
-			if( l < 0 ){
-				if( err != EINTR ){
-					logerr_die( LOG_ERR, "lpd: select error!");
-				}
-			} else if( l == 0 ){
-				DEBUG0( "lpd: time out" );
-				while( (result = plp_waitpid( -1, &status, WNOHANG )) > 0 ){
-					err = errno;
-					DEBUG8( "lpd: timeout waitpid %d, '%s'",
-						result, Errormsg(err) );
-					removepid( result );
-				}
-				err = errno;
-				DEBUG8( "lpd: timeout waitpid %d, '%s'",
-					result, Errormsg(err) );
-				if( result == -1 && err == ECHILD ){
-					DEBUG0( "lpd: exiting" );
-					cleanup(0);
-					exit(0);
-				}
-			} else {
-				Service_printer( -1, Lpd_pipe[0] );
-			}
-		}
-	}
-
-	/* now the regular server */
-
 	do{
-		while( (result = plp_waitpid( -1, &status, WNOHANG )) > 0 ){
+		/* we better see if we have enough servers left */
+		{
+			int block, n;
+
+			n = Countpid();
+			block = WNOHANG;
+			if( n > max_servers ){
+				block = 0;
+			}
+			DEBUG0( "lpd: %d servers active, %s",
+				n, block?"WNOHANG":"not blocking" );
+			while( (result = plp_waitpid( -1, &status, block )) > 0 ){
+				err = errno;
+				DEBUG0( "lpd: server process pid %d exited", result );
+			}
 			err = errno;
-			DEBUG8( "lpd: server process pid %d exited", result );
-			removepid( result );
+			n = Countpid();
+			DEBUG0( "lpd: now %d servers active", n );
+			if( n > max_servers ) continue;
 		}
-		err = errno;
-		DEBUG8( "lpd: waitpid returns %d, '%s'", result,
-			result>0? Errormsg(err) : "no error" );
 		readfds = defreadfds;
 
-		DEBUG2( "lpd: starting select" );
-		l = select( max_socks, (fd_set *)&readfds,
-				(fd_set *)0, (fd_set *)0, (void *)0 );
+		DEBUG1( "lpd: starting select" );
+		l = select( max_socks,
+			FD_SET_FIX((fd_set *))&readfds,
+			FD_SET_FIX((fd_set *))0,
+			FD_SET_FIX((fd_set *))0, (void *)0 );
 		err = errno;
+		DEBUG1( "lpd: select returned %d, error '%s'", l, Errormsg(err) );
 		if( l < 0 ){
 			if( err != EINTR ){
 				errno = err;
 				logerr_die( LOG_ERR, "lpd: select error!");
+				break;
 			}
+			continue;
 		} else if( l == 0 ){
 			DEBUG0( "lpd: signal or time out" );
-		} else {
-			if( FD_ISSET( sock, &readfds ) ){
-				l = sizeof( sin );
-				DEBUG4("accepting connection on %d", sock );
-				newsock = accept( sock, (struct sockaddr *)&sin, &l );
-				err = errno;
-				DEBUG4("connection on %d", newsock );
+			continue;
+		}
+		if( FD_ISSET( sock, &readfds ) ){
+			l = sizeof( sin );
+			DEBUG3("accepting connection on %d", sock );
+			newsock = accept( sock, &sin, &l );
+			err = errno;
+			DEBUG3("connection on %d", newsock );
 
-				if( newsock >= 0 ){
-					Service_connection( &sin, sock, newsock );
-				} else {
-					errno = err;
-					logerr(LOG_INFO, "lpd: accept on listening socket failed" );
-				}
-			}
-			if( FD_ISSET( Lpd_pipe[0], &readfds ) ){
-				Service_printer( sock, Lpd_pipe[0] );
+			if( newsock >= 0 ){
+				Service_connection( &sin, sock, newsock );
+			} else {
+				errno = err;
+				logerr(LOG_INFO, "lpd: accept on listening socket failed" );
 			}
 		}
+		if( FD_ISSET( Lpd_pipe[0], &readfds ) ){
+			Service_printer( sock, Lpd_pipe[0] );
+		}
 	}while( 1 );
-	cleanup(0);
 	exit(0);
+	return(0);
 }
 
 /***************************************************************************
@@ -407,7 +289,7 @@ int Setuplog(char *logfile, int sock)
 	struct stat statb;
 	int err;
 
-	DEBUG8("Setuplog: logfile '%s', sock %d", logfile, sock );
+	DEBUG4("Setuplog: logfile '%s', sock %d", logfile, sock );
 	while( sock < 2 ){
 		sock = dup(sock);
 	}
@@ -425,23 +307,23 @@ int Setuplog(char *logfile, int sock)
 		logerr_die (LOG_CRIT, "Setuplog: dup2 failed");
 	}
 	close(fd);
-	DEBUG4 ("Setuplog: log file '%s'", logfile?logfile:"<NULL>");
+	DEBUG3 ("Setuplog: log file '%s'", logfile?logfile:"<NULL>");
     /*
      * open logfile; if it is "-", use stderr; if Foreground is set, use stderr
      */
     if(logfile && *logfile && strcmp(logfile, "-")
 		&& !Foreground) {
-		DEBUG2 ("Setuplog: opening log file '%s'", logfile);
+		DEBUG1 ("Setuplog: opening log file '%s'", logfile);
 		if ((fd = Checkwrite(logfile, &statb, O_WRONLY|O_APPEND, 0, 0)) < 0) {
 			err = errno;
 			DEBUG0 ("cannot open logfile %s - %s", logfile, Errormsg(err));
-			if( Debug ) {
+			if(DEBUGL0) {
 				fd = 2;
 			} else {
 				fd = 1;
 			}
 		}
-		DEBUG4 ("Setuplog: log file '%s' fd '%d'", logfile, fd);
+		DEBUG3 ("Setuplog: log file '%s' fd '%d'", logfile, fd);
 		if (fd != 2 ){
 			if( dup2 (fd, 2) < 0) {
 				logerr_die (LOG_CRIT, "Setuplog: dup2 of %d failed", fd );
@@ -462,17 +344,19 @@ int Setuplog(char *logfile, int sock)
  *
  ***************************************************************************/
 
-static void Service_connection( struct sockaddr_in *sin, int listen, int talk )
+static void Service_connection( struct sockaddr *sin, int listen, int talk )
 {
 	int pid;		/* PID of the server process */
 	char input[LINEBUFFER];
+	char buffer[LINEBUFFER];	/* for messages */
 	int len;
 	int status;		/* status of operation */
-	char *s;
+	int permission;
+	int port = 0;
 
-	pid = fork();
+	pid = dofork();
 	if( pid < 0 ){
-		logerr( LOG_INFO, "Service_connection: fork failed" );
+		logerr( LOG_INFO, "Service_connection: dofork failed" );
 	}
 	if( pid ){
 		/*
@@ -488,71 +372,63 @@ static void Service_connection( struct sockaddr_in *sin, int listen, int talk )
 	(void) plp_signal (SIGHUP, cleanup );
 	close( listen ); listen = -1;
 
-	/* run an initial screening permissions check */
-	DEBUG3("Service Connection: socket %d, ip '%s' port %d", talk,
-		inet_ntoa( sin->sin_addr ), ntohs( sin->sin_port ) );
+	/* get the remote name and set up the various checks */
+	Perm_check.addr = sin;
+	Perm_check.port =  ntohs(port);
+	Get_remote_hostbyaddr( &RemoteHostIP, sin );
+	Perm_check.remotehost  =  &RemoteHostIP;
+	Perm_check.host = &RemoteHostIP;
+
+	len = sizeof( input ) - 1;
+	memset(input,0,sizeof(input));
+	DEBUG0( "Starting Read" );
+	status = Link_line_read(ShortRemote,&talk,Send_timeout,input,&len);
+	DEBUG0( "Request '%s'", input );
+	if( status ){
+		logerr_die( LOG_INFO, "Service_connection: cannot read request" );
+	}
+	if( len < 3 ){
+		fatal( LOG_INFO, "Service_connection: bad request line '%s'", input );
+	}
+
+	if( sin->sa_family == AF_INET ){
+		port = ((struct sockaddr_in *)sin)->sin_port;
+#if defined(IN6_ADDR)
+	} else if( sin->sa_family == AF_INET6 ){
+		port = ((struct sockaddr_in6 *)sin)->sin6_port;
+#endif
+	} else {
+		fatal( LOG_INFO, "Service_connection: bad protocol family '%d'", sin->sa_family );
+	}
+	DEBUG2("Service_connection: socket %d, ip '%s' port %d", talk,
+		inet_ntop_sockaddr( sin, buffer, sizeof(buffer) ), ntohs( port ) );
 
 	/* see if you need to reread the printcap and permissions information */
 	if( !Use_info_cache ){
 		Read_pc();
 	}
 
-	Get_remote_hostbyaddr( sin );
-	Perm_check.port =  ntohs(sin->sin_port);
-	Perm_check.remoteip  =  Perm_check.ip  =  ntohl(sin->sin_addr.s_addr);
-	Perm_check.host = FQDNRemote;
-	Perm_check.remotehost = FQDNRemote;
 	Perm_check.service = 'X';
 	Init_perms_check();
-	if( Perms_check( &Perm_file, &Perm_check,
-			(struct control_file *)0 ) == REJECT
-		|| Last_default_perm == REJECT ){
-		char msg[128];
-		msg[sizeof(msg)-1] = 0;
-		plp_snprintf( msg, sizeof(msg)-1,
-			" no connect permissions for IP/port %s/%d\n",
-			inet_ntoa( sin->sin_addr ), ntohs( sin->sin_port ) );
-		Write_fd_str( talk, msg );
+	if( (permission = Perms_check( &Perm_file, &Perm_check,
+			Cfp_static )) == REJECT
+		|| (permission == 0 && Last_default_perm == REJECT) ){
+		DEBUG2("Service_connection: talk socket '%d' no connect perms", talk );
+		Write_fd_str( talk, "no connect permissions\n" );
 		cleanup(0);
-		exit( Errorcode );
 	}
-
-	len = sizeof( input ) - 1;
-	input[len] = 0;
-	DEBUG3( "Starting Read" );
-	status = Link_line_read(ShortRemote,&talk,Send_timeout,input,&len);
-	if( status ){
-		logerr_die( LOG_INFO, "Service_connection: cannot read request" );
-	}
-	if( len < 3 ){
-		fatal( LOG_INFO, "Service_connection: bad request line '\\%d'%s'",
-			input[0], input+1 );
-	}
-	DEBUG1( "Request '\\%d'%s'", input[0], input+1 );
 	switch( input[0] ){
+		case REQ_START:
 		default:
 			fatal( LOG_INFO, "Service_connection: bad request line '\\%d'%s'",
 				input[0], input+1 );
-			break;
-		case REQ_START:
-			Perm_check.service = 'P';
-			Perm_check.printer = input+1;
-			if( (s = strchr( input+1, '\n' )) ) *s = 0;
-			Init_perms_check();
-			if( Perms_check( &Perm_file, &Perm_check,
-					(struct control_file *)0 ) == REJECT
-				|| Last_default_perm == REJECT ){
-				fatal( LOG_ERR,
-					"Service_connection: no permission to start printer %s",
-					input+1 );
-			}
-			Process_jobs( &talk, input, sizeof(input) );
 			break;
 		case REQ_RECV:
 			Receive_job( &talk, input, sizeof(input) );
 			break;
 		case REQ_DSHORT:
 		case REQ_DLONG:
+		case REQ_VERBOSE:
 			Job_status( &talk, input, sizeof(input) );
 			break;
 		case REQ_REMOVE:
@@ -561,43 +437,15 @@ static void Service_connection( struct sockaddr_in *sin, int listen, int talk )
 		case REQ_CONTROL:
 			Job_control( &talk, input, sizeof(input) );
 			break;
+		case REQ_BLOCK:
+			Receive_block_job( &talk, input, sizeof(input) );
+			break;
+		case REQ_SECURE:
+			Receive_secure( &talk, input, sizeof(input) );
+			break;
 	}
-	exit(0);
+	cleanup(0);
 }
-
-/***************************************************************************
- * void Get_remote_hostbyaddr( struct sockaddr_in *sin );
- * 1. Get the remote host IP address using getpeername()
- * 2. look up the address using gethostbyaddr()
- * 3. if not found, use the IP address as the host name
- * 4. set ShortRemote and FQDNRemote
- ***************************************************************************/
- 
-static void Get_remote_hostbyaddr( struct sockaddr_in *sin )
-{
-	struct hostent *host_ent;
-	char *name, *ip;
-
-	ip = inet_ntoa( sin->sin_addr );
-	IPRemote = safestrdup( ip );
-
-	host_ent = gethostbyaddr( (char *)&sin->sin_addr,
-		sizeof( sin->sin_addr ), sin->sin_family );
-
-	if( host_ent ){
-		name = safestrdup( host_ent->h_name );
-		FQDNRemote = Find_fqdn( name, Domain_name );
-		FQDNRemote = safestrdup( FQDNRemote );
-		ShortRemote = safestrdup( FQDNRemote );
-		if( (name = strchr( ShortRemote, '.' )) ) *name = 0;
-	} else {
-		FQDNRemote = IPRemote;
-		ShortRemote = IPRemote;
-	}
-	DEBUG6( "Get_remote_hostbyaddr: IP address '%s', FQDNRemote '%s', ShortRemote '%s'",
-		IPRemote, FQDNRemote, ShortRemote );
-}
-
 
 /***************************************************************************
  * Read_pc()
@@ -608,19 +456,12 @@ static void Get_remote_hostbyaddr( struct sockaddr_in *sin )
  *    Note: be careful with the 'all' entry, you may need to update it.
  ***************************************************************************/
 
-static void Read_pc()
+static void Read_pc(void)
 {
-	char error[LINEBUFFER];
-	Free_pcf( &Printcapfile );
-	if( Printcap_path && *Printcap_path ){
-		Getprintcap( &Printcapfile, Printcap_path, 0 );
-	}
-	if( Lpd_printcap_path && *Lpd_printcap_path ){
-		Getprintcap( &Printcapfile, Lpd_printcap_path, 0 );
-	}
-	Get_printer_vars( "all", error, sizeof(error),
-		&Printcapfile, &Pc_var_list, Default_printcap_var,
-		(void *)0 );
+	/* you might as well reset all the logging information as well */
+	reset_logging();
+	Free_printcap_information();
+	Get_all_printcap_entries();
 	if( Printer_perms_path && *Printer_perms_path ){
 		Free_perms( &Perm_file );
 		Get_perms( "all", &Perm_file, Printer_perms_path );
@@ -649,15 +490,15 @@ void Service_printer( int listen, int talk )
 	line[0] = 0;
 	len = read( talk, line, sizeof( line )-1 );
 	if( len >= 0 ) line[len] = 0;
-	DEBUG4("Service_printer: line len %d, read '%s'", len, line );
-	if( len < 0 ){
+	DEBUG3("Service_printer: line len %d, read '%s'", len, line );
+	if( len <= 0 ){
 		return;
 	}
-	/* NOW we fork */
 
-	pid = fork();
+	/* NOW we fork - this cuts down on processes created */
+	pid = dofork();
 	if( pid < 0 ){
-		logerr( LOG_INFO, "Service_printer: fork failed" );
+		logerr( LOG_INFO, "Service_printer: dofork failed" );
 	}
 	if( pid < 0 || pid > 0 ){
 		return;
@@ -682,7 +523,7 @@ void Service_printer( int listen, int talk )
  * Get and set the LPD pid into the LPD status file
  ***************************************************************************/
 
-static int Get_lpd_pid()
+static int Get_lpd_pid(void)
 {
 	int pid;
 	int lockfd;
@@ -698,7 +539,7 @@ static int Get_lpd_pid()
 	return(pid);
 }
 
-static void Set_lpd_pid()
+static void Set_lpd_pid(void)
 {
 	int lockfd;
 	char path[MAXPATHLEN];
@@ -711,7 +552,7 @@ static void Set_lpd_pid()
 	} else {
 		/* we write our PID */
 		Server_pid = getpid();
-		DEBUG2( "lpd: writing lockfile '%s' with pid '%d'",path,Server_pid );
+		DEBUG1( "lpd: writing lockfile '%s' with pid '%d'",path,Server_pid );
 		Write_pid( lockfd, Server_pid, (char *)0 );
 	}
 	close( lockfd );

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,9 +10,11 @@
  * PURPOSE: put a process title in place
  **************************************************************************/
 
-static char *const _id = "$Id: proctitle.c,v 3.0 1996/05/19 04:06:08 papowell Exp $";
+static char *const _id = "$Id: proctitle.c,v 3.1 1996/12/28 21:40:18 papowell Exp $";
 
 #include "lp.h"
+/**** ENDINCLUDE ****/
+
 /*
  *  SETPROCTITLE -- set process title for ps
  *  proctitle( char *str );

@@ -2,6 +2,9 @@
               Patrick Powell
           Original:Sat Mar  9 10:06:17 PST 1996
           Updated: Sun Sep  8 10:16:09 PDT 1996
+          Updated: Wed Nov 13 16:53:57 PST 1996
+          Updated: Tue Nov 26 20:37:41 PST 1996
+          Updated: Sun Dec 15 07:57:44 PST 1996
 
 The LPRng software uses a greatly simplified set of printcap
 conventions.  This document shows the format as well as some examples
@@ -20,11 +23,13 @@ and the host is not specified,  a default host value is provided.
 
 If a printcap database is desired, then it is obtained as follows.
 First, the printcap_path and lpd_printcap_path configuration
-information (see lpd.conf(5)) specifies how client and server programs
+information (see lpd.conf(5)) specifies where client and server programs
 locate printcap information.  The client programs use printcap_path;
 lpd uses both printcap_path and lpd_printcap_path.  All files are read
 and the printcap entries are extracted in order from the files.  Later
 printcap information overrides previous information in the files.
+
+The common defaults for the printcap locations are:
 
 printcap_path      /etc/printcap:/usr/etc/printcap:\
                        /var/spool/lpd/printcap.HOSTNAME
@@ -44,9 +49,37 @@ as shown below.
         :lp=pr2@taco.sdsu.edu
     pr3|laserjet
         :lp=pr3@taco.sdsu.edu
+	@common|common code for printers
+		:if=/bin/filter
+		:of=/bin/filter
+	@morecommon|show the configuration expansion
+		:sd=/var/spool/lpd/%P
+		
+	realpr:tc=@common:tc=@morecommon
+
+A careful study of the above example will discover the following
+features of the LPRng printcap structure.
+
+@name - these entries are 'placeholders' for use with the 'tc='
+	function.  Any printer name starting with a punctuation character
+    is treated as a placeholder for information.
+tc=f1:tc=f2:...
+    The tc entries are treated as though they were located at the end
+    of the printcap entry.  The printcap entries they reference are
+    logically appended to the end of the current printcap.  Note that
+    you can have multiple :tc: entries.
+key=value.%X
+    the %X is expanded when the printcap entry is used by the 
+	client or server program.  This allows common information to
+    be placed in a dummy printcap entry.  The following keys
+    are currently defined; check the Keyletter array in the
+    src/vars.c for a complete set for the current release.
+    The same keys are used by the configuration file and printcap file.
+    Note that this means that a % cannot occur in a printcap value.
 
 The client programs use the lp entry to locate the LPD server host 
 and send the appropriate messages to it.
+
 The lpd server needs additional information such as spool directory
 location, printer device, etc.  This can be provided in several ways:
 
@@ -111,6 +144,12 @@ following conventions.
     - name starts with an alphabetic character
     - alias starts with a | followed by the alias
     - data entry starts with : followed by the entry
+5. Printcap names starting with punctuation are treated like dummy
+	entries.  They can be referenced with :tc=entry:,  but will
+	be ignored otherwise.
+6. The :tc=name: entry acts like an inclusion facility,
+    and performs its action at the END of the current printcap entry.
+    You may have multiple :tc=name: entries.
 
 The following printcap entries show the formats,  and have
 some additional comments about fields in the printcap file.
@@ -149,6 +188,13 @@ pr1b|dumb- banner
     :if=/usr/local/bin/lpf
     :vf=/usr/local/bin/lpf -c
 
+# common printer information:
+# we define a @common entry
+@filter|printcap filter information
+    :of=/usr/local/bin/lpf
+    :if=/usr/local/bin/lpf
+    :vf=/usr/local/bin/lpf -c
+
 # dumb with user banner - bp specifies banner printer
 #  If we wanted the banner at the END of the job, we would use
 #  :hl: (header last) flag.
@@ -161,9 +207,7 @@ pr1b|dumb- user supplied banner
     :fx=flpv
     :af=acct:lf=log
     :bp=/usr/local/lib/my_banner_printer
-    :of=/usr/local/bin/lpf
-    :if=/usr/local/bin/lpf
-    :vf=/usr/local/bin/lpf -c
+    :tc=@filter
 
 #serial attached PostScript printer
 # Note that fields can have terminating colons (:)
@@ -176,9 +220,7 @@ pr2|postscript - no banner
     # only allow the following formats
     :fx=flpv
     # filters
-    :if=/usr/local/lib/psfilter/psif
-    :of=/usr/local/lib/psfilter/psof
-    :vf=/usr/local/lib/psfilter/psif -c
+    :tc=@filter
 
 #serial attached PostScript printer with psof created banner
 pr2|postscript - psof will expand short banner
@@ -191,9 +233,7 @@ pr2|postscript - psof will expand short banner
     # only allow the following formats
     :fx=flpv
     # filters
-    :if=/usr/local/lib/psfilter/psif
-    :of=/usr/local/lib/psfilter/psof
-    :vf=/usr/local/lib/psfilter/psif -c
+	:tc=@filter
 
 #serial attached PostScript printer with user created banner
 pr2|postscript - psof will expand short banner
@@ -206,9 +246,7 @@ pr2|postscript - psof will expand short banner
     # only allow the following formats
     :fx=flpv
     # filters
-    :if=/usr/local/lib/psfilter/psif
-    :of=/usr/local/lib/psfilter/psof
-    :vf=/usr/local/lib/psfilter/psif -c
+    :tc=@filter
 
 # parallel attched Laser Jet
 # Note that fields do not need terminating colons

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,10 +11,15 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: removejob.c,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $";
+"$Id: removejob.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
 
 #include "lp.h"
+#include "removejob.h"
+#include "dump.h"
 #include "jobcontrol.h"
+#include "fileopen.h"
+#include "setstatus.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
 Commentary:
@@ -22,59 +27,62 @@ Patrick Powell Sat May 13 08:24:43 PDT 1995
 
  ***************************************************************************/
 
+int Remove_file( char *path )
+{
+	struct stat statb;
+
+	DEBUG4("Remove_file: removing file '%s'", path );
+	if( path[0] && stat( path, &statb ) == 0 && unlink( path ) == -1 ){
+		log( LOG_ERR, "Remove_file: unlink did not remove '%s'", path);
+		return( 1 );
+	}
+	return(0);
+}
+
 int Remove_job( struct control_file *cfp )
 {
 	int i;
 	struct data_file *df;
-	char *path;
 	int fail = 0;
+	int fd = -1;
+	struct control_file *old_cfp;
 	struct stat statb;
 
 
-	DEBUG4("Remove_job: '%s', spooldir '%s'",cfp->name,Clear_path(SDpathname));
+	DEBUG3("Remove_job: '%s'",cfp->transfername);
 	if( Interactive ){
-		logDebug( "Removing job '%s'", cfp->name );
+		logDebug( "Removing job '%s'", cfp->transfername );
 	}
-	if( Debug > 3 ){
+	if(DEBUGL3 ){
 		dump_control_file( "Remove_job", cfp );
 	}
-	cfp->remove_time = time( (void *) 0 );
-	if( Set_job_control( cfp ) ){
-		DEBUG4( "Cannot update hold file for '%s'", cfp->name );
-		fail = 1;
+
+
+	if( cfp->hold_file[0] &&
+		stat( cfp->hold_file, &statb ) == 0 ){
+		cfp->hold_info.remove_time = time( (void *) 0 );
+		Set_job_control( cfp, (void *) 0, 0 );
 	}
-		
 	/* remove all of the data files listed in the control file */
 
-	df = (void *)cfp->data_file.list;
-	for( i = 0; i < cfp->data_file.count; ++i ){
-		path = Add_path( SDpathname, df[i].openname );
-		DEBUG4("Remove_job: removing file '%s'", path );
-		unlink( path );
-		if( stat( path, &statb ) == 0 ){
-			log( LOG_ERR, "Remove_job: unlink did not remove '%s'",
-				path);
-			fail = 1;
-		}
+	df = (void *)cfp->data_file_list.list;
+	for( i = 0; i < cfp->data_file_list.count; ++i ){
+		fail |= Remove_file( df->openname );
 	}
-	path = Add_path( SDpathname, cfp->name );
-	DEBUG8("Remove_job: removing file '%s'", path );
-	unlink( path );
-	if( stat( path, &statb ) == 0 ){
-		logerr( LOG_ERR, "Remove_job: unlink '%s' failed", path );
-		fail = 1;
-	}
-	SDpathname->pathname[SDpathname->pathlen] = 'b';
-	if( stat( path, &statb ) == 0 ){
-		unlink( path );
-		if( stat( path, &statb ) == 0 ){
-			logerr( LOG_ERR, "Remove_job: unlink '%s' failed", path );
-			fail = 1;
-		}
-	}
-	fail = Remove_job_control( cfp );
+	fail |= Remove_file( cfp->openname );
+	fail |= Remove_file( cfp->hold_file );
+
+	/* remove temp files, if any */
+	old_cfp = Cfp_static;
+	Cfp_static = cfp;
+	Remove_tempfiles();
+	Cfp_static = old_cfp;
+	close(fd);
+
 	if( fail == 0 ){
 		setmessage( cfp, "TRACE", "%s@%s: job removed", Printer, FQDNHost );
+	} else {
+		setmessage( cfp, "TRACE", "%s@%s: job removal FAILED", Printer, FQDNHost );
 	}
 	return( fail );
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,23 +10,29 @@
  * PURPOSE: check LPD system for problems
  **************************************************************************/
 
-#include "checkpc.h"
-#include "patchlevel.h"
+#include "lp.h"
 #include "printcap.h"
-#include "lp_config.h"
+#include "patchlevel.h"
+#include "getcnfginfo.h"
+#include "initialize.h"
+#include "dump.h"
 #include "permission.h"
-#include "setuid.h"
+#include "pathname.h"
 #include "checkpc_perm.h"
-#include "decodestatus.h"
-#include "getprinter.h"
+#include "setupprinter.h"
+#include "getqueue.h"
+#include "removejob.h"
 #include "timeout.h"
+#include "fileopen.h"
+#include "setuid.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc.c,v 3.3 1996/09/09 14:24:41 papowell Exp papowell $";
+"$Id: checkpc.c,v 3.4 1997/01/25 17:54:49 papowell Exp $";
 
 char checkpc_optstr[] = "ac:flp:rst:A:CD:PT:V";
 
-void usage();
+void usage(void);
 int getage( char *age );
 int getk( char *age );
 
@@ -42,15 +48,14 @@ int Remove;
 int Test;			/* carry out portability tests */
 char *name;
 
+void Test_port(int ruid, int euid, char *serial_line );
+
 void Make_files( struct dpathname *dpathname, char *printer );
 void Scan_printer( char *name, char *error, int errorlen );
-void Scan_worker( char *name, char *error, int errorlen );
 int Check_perms( struct dpathname *dpath, int fix, int age, int remove );
 void Clean_log( int trunc, char *type, struct dpathname *dpath, char *logfile );
 void Make_write_file( struct dpathname *dpathname,
 	int flag, char *name, char *printer );
-
-struct pc_used pc_used;
 
 /* pathnames of the spool directory (sd) and control directory (cd) */
 
@@ -59,8 +64,7 @@ int main( int argc, char *argv[] )
 	int i, c;
 	char line[LINEBUFFER];
 	char error[LINEBUFFER];
-	char *s, *end;			/* end of string */
-	struct printcap *pc;
+	char *s;			/* end of string */
 	int ruid, euid, rgid, egid;
 	char *serial_line = 0;
 
@@ -70,9 +74,18 @@ int main( int argc, char *argv[] )
 
 	Verbose = 1;
 	Interactive = 1;
+	Is_server = 1;
 
 	Initialize();
 
+	To_root();
+	umask( 0 );
+	/* set up the uid state */
+	ruid = getuid();
+	euid = geteuid();
+	if( euid != 0 ){
+		Warnmsg("Not running as root - you may not be able to check permissions");
+	}
 
     /* scan the argument list for a 'Debug' value */
     Get_debug_parm( argc, argv, checkpc_optstr, debug_vars );
@@ -118,56 +131,13 @@ int main( int argc, char *argv[] )
 	/* print errors and everything on stdout */
 	dup2(1,2);
 
-    /* Get default configuration file information */
-    Parsebuffer( "default configuration", Default_configuration,
-		lpd_all_config, &Config_buffers );
-    /* get the configuration file information if there is any */
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV or do not run clients as ROOT\n",
-			Name );
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			Server_config_file = s;
-		}
-    }
-
-    DEBUG0("main: Configuration file '%s'", Server_config_file?Server_config_file:"NULL" );
-
-    Getconfig( Server_config_file, lpd_all_config, &Config_buffers );
-
-    if( Debug > 5 ) dump_config_list( "LPD Configuration", lpd_all_config );
-
-	/* 
-	 * Testing magic:
-	 * if we are running SUID
-	 *   We have set our RUID to root and EUID daemon
-	 * However,  we may want to run as another UID for testing.
-	 * The config file allows us to do this, but we set the SUID values
-	 * from the hardwired defaults before we read the configuration file.
-	 * After reading the configuration file,  we check the current
-	 * DaemonUID and the requested Daemon UID.  If the requested
-	 * Daemon UID == 0, then we run as the user which started LPD.
+	/*
+	 * set up the local host information and other
+	 * things as well
+	 * - common to all LPRng stuff
 	 */
+	Setup_configuration();
 
-	Reset_daemonuid();
-	Setdaemon_group();
-	DEBUG4( "DaemonUID %d", DaemonUID );
-	
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-    Get_local_host();
-	DEBUG0("Host's Fully Qualified Domain Name: '%s', Short Host '%s'",
-		FQDNHost, ShortHost );
 	euid = geteuid();
 	ruid = getuid();
 	egid = getegid();
@@ -177,39 +147,24 @@ int main( int argc, char *argv[] )
 		euid, ruid, egid, rgid );
 		
 
-    /* expand the information in the configuration file */
-    Expandconfig( lpd_all_config, &Config_buffers );
-
-    if( Debug > 1 || Config ){
+    if(DEBUGL1 || Config ){
 		plp_snprintf( line, sizeof(line), "Configuration file %s", Server_config_file );
-		dump_config_list( line, lpd_all_config );
+		dump_parms( line, Pc_var_list );
+		dump_parms( "Variables", Lpd_parms );
 	}
 
 
 	/* check to see that all values are in order */
-	Check_lpd_config();
 	Check_pc_table();
+
 	if( Printer_perms_path ){
 		Free_perms( &Perm_file );
 		Get_perms( "all", &Perm_file, Printer_perms_path );
-	} else if( Verbose || Debug > 0  ){
+	} else if( Verbose || DEBUGL0  ){
 		logDebug( "No permissions file" );
 	}
-	i = 0;
-	if( Printcap_path && *Printcap_path ){
-		++i;
-		Getprintcap( &Printcapfile, Printcap_path, 0 );
-	}
-	if( Lpd_printcap_path && *Lpd_printcap_path ){
-		++i;
-		Getprintcap( &Printcapfile, Lpd_printcap_path, 0 );
-	}
-	if( i == 0 && (Verbose || Debug > 0) ){
-		logDebug( "No printcap file" );
-	}
-	Get_printer_vars( "all", error, sizeof(error),
-		&Printcapfile, &Pc_var_list, Default_printcap_var,
-		(void *)0 );
+
+	Get_all_printcap_entries();
 
 	if( Lockfile == 0 ){
 		logDebug( "Warning: no LPD lockfile" );
@@ -225,70 +180,44 @@ int main( int argc, char *argv[] )
 		}
 	}
 
-	if( All_list ){
-		static char *all_dup;
-
-		DEBUG8("checkpc: using the All_list '%s'", All_list );
-		if( all_dup ){
-			free( all_dup );
-			all_dup = 0;
-		}
-		all_dup = safestrdup( All_list );
-		for( s = all_dup; s && *s; s = end ){
-			end = strpbrk( s, ", \t" );
-			if( end ){
-				*end++ = 0;
+	if( All_list.count ){
+		char **line_list;
+		DEBUG4("checkpc: using the All_list" );
+		line_list = All_list.list;
+		c = All_list.count;
+		for( i = 0; i < c; ++i ){
+			Printer = line_list[i];
+			DEBUG4("checkpc: printcap entry [%d of %d] '%s'",
+				i, c,  Printer );
+			if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
+				continue;
 			}
-			while( (c = *s) && isspace(c) ) ++s;
-			if( c == 0 ) continue;
-			Scan_worker( s, error, sizeof(error) );
+			To_root();
+			Scan_printer( Printer, error, sizeof(error) );
 		}
-	} else if( Printcapfile.pcs.count ){
-		DEBUG8("checkpc: using the printcap list" );
-		for( i = 0; i < Printcapfile.pcs.count; ++i ){
-			pc = &((struct printcap *)(Printcapfile.pcs.list))[i];
-			Printer = s = pc->pcf->lines.list[pc->name];
-			DEBUG8("checkpc: printcap entry [%d of %d] '%s'",
-				i, Printcapfile.pcs.count, s );
-			if( Debug > 8 ){
-				dump_printcap( "PRINTCAP", pc );
+	} else if( Expanded_printcap_entries.count > 0 ){
+		struct printcap_entry *entries;
+		DEBUG4("checkpc: using the printcap list" );
+		entries = (void *)Expanded_printcap_entries.list;
+		c = Expanded_printcap_entries.count;
+		for( i = 0; i < c; ++i ){
+			Printer = entries[i].names[0];
+			DEBUG4("checkpc: printcap entry [%d of %d] '%s'",
+				i, c,  Printer );
+			if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
+				continue;
 			}
-			Scan_worker( s, error, sizeof(error) );
+			To_root();
+			Scan_printer( Printer, error, sizeof(error) );
 		}
 	} else {
 		logDebug( "No printcap information!!!" );
 	}
 
 	exit(0);
+	return(0);
 }
 
-
-
-/***************************************************************************
- * Scan_worker()
- * create a child for the scanning information
- * and call Scan_printer()
- ***************************************************************************/
-
-void Scan_worker( char *name, char *error, int errorlen )
-{
-	pid_t pid, result;
-	plp_status_t status;
-
-	if( (pid = fork()) < 0 ){
-		logerr_die( LOG_ERR, "Scan_worker: fork failed" );
-	} else if( pid ){
-		do{
-			result = plp_waitpid( pid, &status, 0 );
-			DEBUG8( "Scan_worker: result %d, '%s'",
-				result, Decode_status( &status ) );
-			removepid( result );
-		} while( result != pid );
-		return;
-	}
-	Scan_printer( name, error, errorlen );
-	exit(0);
-}
 
 /***************************************************************************
  * Scan_printer()
@@ -297,34 +226,32 @@ void Scan_worker( char *name, char *error, int errorlen )
  * 2. check to see if there is a spool dir
  * 3. perform checks for various files existence and permissions
  ***************************************************************************/
+
 void Scan_printer( char *name, char *error, int errorlen )
 {
-	static char *s;				/* ACME pointers */
-	int i;					/* You know, sometimes C++ does have advantages */
+	char *s;				/* ACME pointers */
+	int i;
 	struct control_file *cfp, **cfpp;
 	struct stat statb;
-	static int fd = 0;				/* device file descriptor */
+	int fd = 0;				/* device file descriptor */
+	struct printcap_entry *pc_entry = 0;
 
-	if( Verbose || Debug > 0 ){
-		logDebug( "Checking printcap entry '%s'", name );
-	}
 	/* do the full search */
+	logDebug( "Checking printer '%s'", name );
 	error[0] = 0;
-	Spool_dir = 0;
 	/* get printer information */
 	Setup_printer( name, error, errorlen,
-		&pc_used, debug_vars, 1, (void *)0 );
-	DEBUG4(
+		debug_vars, 1, (void *)0, &pc_entry );
+	DEBUG3(
 	"Scan_printer: Printer '%s', RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
 		Printer, RemoteHost, RemotePrinter, Lp_device );
 	/* check to see if printer defined in database */
 	if( Printer == 0 ) return;
-	if( Debug > 1 || Printcap ){
+	if(DEBUGL0 ){
 		logDebug( "Printcap variable values for '%s'", Printer );
-		dump_parms( 0, Pc_var_list.names );
-		s = Linearize_pc_list( &pc_used, (char *)0 );
-		logDebug( "Linearized list:" );
-		logDebug( "%s", s );
+		dump_parms( 0, Pc_var_list );
+		s = Linearize_pc_list( pc_entry, "PRINTCAP=" );
+		logDebug( "Linearized List %s", s );
 	}
 
 	if( Spool_dir ){
@@ -332,31 +259,42 @@ void Scan_printer( char *name, char *error, int errorlen )
 		 * check the permissions of files and directories
 		 * Also remove old job or control files
 		 */
+		To_root();
 		s = Clear_path( SDpathname );
-		if( Check_spool_dir( SDpathname, Fix ) > 1 ){
-			logDebug( "Printer '%s' spool dir '%s' does not exist",
+		if( Check_spool_dir( SDpathname, 0 ) ){
+			logDebug( "Printer '%s' spool dir '%s' needs fixing",
 				Printer, s );
-			return;
+			if( Fix ){
+				To_root();
+				Check_spool_dir( SDpathname, Fix );
+			}
 		}
+		To_root();
 		s = Clear_path( CDpathname );
 		if( SDpathname != CDpathname
-				&& Check_spool_dir( CDpathname, Fix ) > 1 ){
+				&& Check_spool_dir( CDpathname, 0 ) ){
 			logDebug( "Printer '%s' control dir '%s' does not exist",
 				Printer, s );
-			return;
+			if( Fix ){
+				To_root();
+				Check_spool_dir( CDpathname, Fix );
+			}
 		}
 
 
 		/*
 		 * create the various files needed for printing
 		 */
+		To_root();
 		Make_files( CDpathname, Printer );
 
 		s = Clear_path( CDpathname );
-		if( Check_perms( CDpathname, Fix, Age, Remove ) > 1 ){
-			logDebug( "Cannot check '%s' files, control dir '%s'",
+		if( Check_perms( CDpathname, 0, Age, Remove ) ){
+			logDebug( " Need to fix '%s' files, control dir '%s'",
 				Printer, s);
-			return;
+			if( Fix ){
+				Check_perms( CDpathname, Fix, Age, Remove );
+			}
 		}
 		s = Clear_path( SDpathname );
 		if( SDpathname != CDpathname &&
@@ -370,18 +308,19 @@ void Scan_printer( char *name, char *error, int errorlen )
 		 * get the jobs in the queue
 		 */
 
-		Scan_queue( 1 );
+		To_root();
+		Scan_queue( 1, 1 );
 		cfpp = (void *)(C_files_list.list);
 		for( i = 0; Fix && i < C_files_list.count; ++i ){
 			cfp = cfpp[ i ];
-			DEBUG3("Scan_printer: printer '%s' job '%s'",Printer,cfp->name );
+			DEBUG2("Scan_printer: printer '%s' job '%s'",Printer,cfp->transfername );
 
 			/*
 			 * check for jobs with an error indication
 			 */
 			if( cfp->error[0] ){
 				logDebug("printer '%s' job '%s' has error '%s'",
-				Printer, cfp->name, cfp->error );
+				Printer, cfp->transfername, cfp->error );
 				if( Fix ){
 					Remove_job( cfp );
 				}
@@ -410,10 +349,8 @@ void Scan_printer( char *name, char *error, int errorlen )
 				if( stat( s, &statb ) < 0 ){
 					logDebug( "Cannot stat device '%s'", s );
 				} else {
-					if( Set_timeout( 2, 0 ) ){
-						fd = Checkwrite( s,&statb,Read_write?(O_RDWR):0,0,0 );
-					}
-					Clear_timeout();
+				 	fd = Checkwrite_timeout(
+							2,s,&statb,Read_write?(O_RDWR):0,0,0 );
 					if( Alarm_timed_out ||  fd < 0 ){
 						logDebug( "Cannot open device '%s' error '%s'",
 							s, Errormsg(errno) );
@@ -440,6 +377,7 @@ void Make_write_file( struct dpathname *dpathname,
 	struct stat statb;
 	char *s;
 
+	Clear_path( dpathname );
 	if( flag || name == 0 || *name == 0 ){
 		return;
 	}
@@ -449,8 +387,8 @@ void Make_write_file( struct dpathname *dpathname,
 		s = Add2_path( dpathname, name, printer );
 	}
 
-	DEBUG1("Make_write_file '%s'", s );
-	if( Verbose || Debug > 0 ){
+	DEBUG0("Make_write_file '%s'", s );
+	if( Verbose || DEBUGL0 ){
 		logDebug( "  checking file '%s'", s );
 	}
 
@@ -494,7 +432,7 @@ char *msg[] = {
 	" -p printcapfile  use this file for printcap information",
 	" -r             remove job files older than -A age seconds",
 	" -s             do not create filter status (:ps:) info file",
-	" -t size        truncate log files to this size (in bytes)",
+	" -t size[kM]    truncate log files to this size (k=Kbyte, M=Mbytes)",
 	" -A age[DHMS]   remove files of form ?f[A-Z][0-9][0-9][0-9] older than",
 	"                age, D days (default), H hours, M minutes, S seconds",
 	" -C             toggle verbose configuration information",
@@ -505,7 +443,7 @@ char *msg[] = {
 	0
 };
 
-void usage()
+void usage(void)
 {
 	char **s;
 	for( s = msg; *s; ++s ){
@@ -580,9 +518,11 @@ void Clean_log( int trunc, char *type, struct dpathname *dpath, char *logfile )
 			Warnmsg( "cannot open '%s'", s );
 			return;
 		}
-		k = trunc >= 0 && statb.st_size > trunc;
-		logDebug( "   %s file %d bytes long: %s truncation",
-			type, statb.st_size, k?"needs":"no");
+		len = statb.st_size;
+		k = (trunc >= 0 && len > trunc);
+		s = (k)?"needs":"no";
+		logDebug( "   '%s' file %d bytes long: %s truncation",
+			type, len, s );
 		if( trunc == 0 && statb.st_size ){
 			logDebug( "   truncating to 0 bytes long" );
 			if( ftruncate( fd, 0 ) < 0 ){
@@ -601,7 +541,7 @@ void Clean_log( int trunc, char *type, struct dpathname *dpath, char *logfile )
 				malloc_or_die( buffer, buflen );
 			}
 			/* seek to the end of the file - trunc */
-			if( lseek( fd,  (off_t)(-len), SEEK_END ) < 0 ){
+			if( lseek( fd,  -len, SEEK_END ) < 0 ){
 				logerr_die( LOG_ERR, "Clean_log: lseek on '%s' failed", s );
 			}
 			for( j = len, s = buffer;

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -53,22 +53,23 @@
  ***************************************************************************/
 
 static char *const _id =
-"$Id: getopt.c,v 3.2 1996/09/09 14:24:41 papowell Exp papowell $";
+"$Id: getopt.c,v 3.2 1997/01/30 21:15:20 papowell Exp $";
 
 #include "lp.h"
+/**** ENDINCLUDE ****/
 
 int Optind;                 /* next argv to process */
 int Opterr = 1;                 /* Zero disables errors msgs */
 char *Optarg;               /* Pointer to option argument */
 char *next_opt;			    /* pointer to next option char */
-char *Name;						/* Name of program */
+char *Name;					/* Name of program */
 char **Argv_p;
 int Argc_p;
 
 int
 Getopt (int argc, char *argv[], char *optstring)
 {
-	char  option;               /* current option found */
+	int  option;               /* current option found */
 	char *match;                /* matched option in optstring */
 
 	if( argv == 0 ){
@@ -78,25 +79,25 @@ Getopt (int argc, char *argv[], char *optstring)
 		return(0);
 	}
 
-	if (Optind == 0) {
+	if (Optind == 0 ) {
+		char *basename;
 		/*
 		 * set up the Name variable for error messages
 		 * setproctitle will change this, so
 		 * make a copy.
 		 */
-		char *basename, *basi;
-		
-		basename = argv[0];
-		basi = strrchr( basename, '/' );
-		if( basi ){
-			basename = basi + 1;
-		}
-		Name = malloc( strlen(basename) + 1);
 		if( Name == 0 ){
-			fprintf( stderr, "Getopt: malloc failed\n");
-			exit(1);
+			if( argv[0] ){
+				if( (basename = strrchr( argv[0], '/' )) ){
+					++basename;
+				} else {
+					basename = argv[0];
+				}
+				Name = basename;
+			} else {
+				Name = "???";
+			}
 		}
-		strcpy(Name, basename);
 		Argv_p = argv;
 		Argc_p = argc;
 		Optind = 1;
@@ -151,7 +152,7 @@ Getopt (int argc, char *argv[], char *optstring)
 				Optarg = 0;
 			}
 		}
-		if( Optarg == 0 && Opterr == 0) {
+		if( Optarg == 0 && Opterr ) {
 			(void) fprintf (stderr,
 				"%s: missing argument for '%c'\n", Name, option);
 			option = '?';

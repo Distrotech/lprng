@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,15 +11,28 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_remove.c,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 3.5 1997/01/30 21:15:20 papowell Exp $";
 
-#include "lpd.h"
+#include "lp.h"
 #include "printcap.h"
-#include "lp_config.h"
-#include "permission.h"
+#include "checkremote.h"
+#include "cleantext.h"
 #include "decodestatus.h"
-#include "pr_support.h"
+#include "errorcodes.h"
+#include "gethostinfo.h"
 #include "jobcontrol.h"
+#include "killchild.h"
+#include "linksupport.h"
+#include "malloclist.h"
+#include "patselect.h"
+#include "permission.h"
+#include "pr_support.h"
+#include "sendlprm.h"
+#include "setstatus.h"
+#include "setupprinter.h"
+#include "waitchild.h"
+#include "removejob.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
 Commentary:
@@ -56,20 +69,19 @@ int Job_remove( int *socket, char *input, int maxlen )
 	int tokencount;
 	int i, c;
 	int noperm;			/* no permissions */
-	char *name, *s, *end, *user;
-	struct printcap *pc, *ppc;
+	char *name, *s, *user;
 
 	Name = "Job_remove";
 
 	/* get the format */
 	++input;
 	if( (s = strchr(input, '\n' )) ) *s = 0;
-	DEBUG3("Job_remove: doing '%s'", input );
+	DEBUG2("Job_remove: doing '%s'", input );
 
 	/* check printername for characters, underscore, digits */
 	tokencount = Crackline(input, tokens, sizeof(tokens)/sizeof(tokens[0]));
 
-	DEBUG6("Job_remove: tokencount %d", tokencount );
+	DEBUG3("Job_remove: tokencount %d", tokencount );
 	if( tokencount == 0 ){
 		plp_snprintf( error, sizeof(error),
 			"missing printer name");
@@ -104,11 +116,11 @@ int Job_remove( int *socket, char *input, int maxlen )
 	Perm_check.service = 'C';
 	Init_perms_check();
 	controlperm =  Perms_check( &Perm_file, &Perm_check,
-			(struct control_file *)0 );
+			Cfp_static );
 	if( controlperm == REJECT ){
 		controlperm = 0;
 	}
-	DEBUG3("Job_remove: controlperm after C check '%s'",
+	DEBUG2("Job_remove: controlperm after C check '%s'",
 		perm_str(controlperm) );
 
 	noperm = controlperm;
@@ -116,14 +128,14 @@ int Job_remove( int *socket, char *input, int maxlen )
 		Perm_check.service = 'M';
 		Init_perms_check();
 		noperm = Perms_check( &Perm_file, &Perm_check,
-				(struct control_file *)0 );
+				Cfp_static );
 	}
-	DEBUG3("Job_remove: noperm after M check '%s'", perm_str(noperm) );
+	DEBUG2("Job_remove: noperm after M check '%s'", perm_str(noperm) );
 
 	if( noperm == 0 ){
 		noperm = Last_default_perm;
 	}
-	DEBUG3("Job_remove: noperm final value '%s'", perm_str(noperm) );
+	DEBUG2("Job_remove: noperm final value '%s'", perm_str(noperm) );
 
 	if( noperm == REJECT ){
 		plp_snprintf( error, sizeof(error),
@@ -132,43 +144,48 @@ int Job_remove( int *socket, char *input, int maxlen )
 	}
 
 	if( strcmp( name, "all" ) ){
-		DEBUG4( "Job_remove: checking printcap entry '%s'",  name );
+		DEBUG3( "Job_remove: checking printcap entry '%s'",  name );
 		Get_queue_remove( user, name, socket, tokencount - 1, &tokens[1] );
 	} else {
 		/* we work our way down the printcap list, checking for
 			ones that have a spool queue */
 		/* note that we have already tried to get the 'all' list */
-		if( All_list && *All_list ){
-			static char *list;
-			if( list ){
-				free( list );
-				list = 0;
-			}
-			list = safestrdup( All_list );
-			for( s = list; s && *s; s = end ){
-				end = strpbrk( s, ", \t" );
-				if( end ){
-					*end++ = 0;
+		if( All_list.count ){
+			char **line_list;
+			struct printcap_entry *entry;
+			DEBUG4("checkpc: using the All_list" );
+			line_list = All_list.list;
+			for( i = 0; i < All_list.count; ++i ){
+				Printer = line_list[i];
+				if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
+					continue;
 				}
-				while( (c = *s) && isspace(c) ) ++s;
-				if( c == 0 ) continue;
-				Printer = s;
-				Get_queue_remove_server( user, Printer, socket,
-					tokencount-1,&tokens[1]);
-			}
-		} else {
-			for( i = 0; i < Printcapfile.pcs.count; ++i ){
-				ppc = (void *)Printcapfile.pcs.list;
-				pc = &ppc[i];
-				Printer = pc->pcf->lines.list[pc->name];
-				DEBUG4( "Job_control: checking printcap entry '%s'",  Printer );
-
-				/* this is a printcap entry with spool directory -
-					we need to check it out
-				 */
-				s = Get_pc_option( "sd", pc );
+				Printer = Find_printcap_entry( Printer, &entry );
+				if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
+					continue;
+				}
+				s = Get_pc_option_value( "sd", entry );
 				if( s ){
-					Get_queue_remove_server( user, Printer, socket,
+					Get_queue_remove( user, Printer, socket,
+						tokencount-1,&tokens[1]);
+				}
+			}
+		} else if( Expanded_printcap_entries.count > 0 ){
+			struct printcap_entry *entries, *entry;
+			DEBUG4("checkpc: using the printcap list" );
+			entries = (void *)Expanded_printcap_entries.list;
+			c = Expanded_printcap_entries.count;
+			for( i = 0; i < c; ++i ){
+				entry = &entries[i];
+				Printer = entry->names[0];
+				DEBUG4("checkpc: printcap entry [%d of %d] '%s'",
+					i, c,  Printer );
+				if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
+					continue;
+				}
+				s = Get_pc_option_value( "sd", entry );
+				if( s ){
+					Get_queue_remove( user, Printer, socket,
 						tokencount-1,&tokens[1]);
 				}
 			}
@@ -178,41 +195,12 @@ int Job_remove( int *socket, char *input, int maxlen )
 
 error:
 	log( LOG_INFO, "Job_remove: error '%s'", error );
-	DEBUG3("Job_remove: error msg '%s'", error );
-	(void)Link_send( ShortRemote, socket, Send_timeout,
-		0x00, error, '\n', 0 );
-
+	DEBUG2("Job_remove: error msg '%s'", error );
+	safestrncat(error,"\n");
+	if( Write_fd_str( *socket, error ) < 0 ) cleanup(0);
 done:
-	DEBUG4( "Job_remove: done" );
+	DEBUG3( "Job_remove: done" );
 	return( 0 );
-}
-
-
-/***************************************************************************
- * Get_queue_remove_server()
- * create a child for the scanning information
- * and call Get_queue_remote()
- ***************************************************************************/
-
-void Get_queue_remove_server( char *user, char *name, int *socket,
-	int tokencount, struct token *tokens )
-{
-	pid_t pid, result;
-	plp_status_t status;
-
-	if( (pid = fork()) < 0 ){
-		logerr_die( LOG_ERR, "Get_queue_server: fork failed" );
-	} else if( pid ){
-		do{
-			result = plp_waitpid( pid, &status, 0 );
-			DEBUG8( "Get_queue_server: result %d, '%s'",
-				result, Decode_status( &status ) );
-			removepid( result );
-		} while( result != pid );
-		return;
-	}
-	Get_queue_remove( user, name, socket, tokencount, tokens );
-	exit(0);
 }
 
 /***************************************************************************
@@ -239,12 +227,13 @@ void Get_queue_remove( char *user, char *name, int *socket,
 	struct token *original_tokens = tokens;
 	int allflag = 0;
 	struct destination *destination;
+	int pid;			/* pid of active server */
 
 	/* set printer name and printcap variables */
 	Name = "Get_queue_remove";
-	DEBUG4( "Get_queue_remove: user '%s' name '%s' tokencount %d",
+	DEBUG3( "Get_queue_remove: user '%s' name '%s' tokencount %d",
 		user, name, tokencount );
-	if( Debug > 4 ){
+	if(DEBUGL4 ){
 		for( i = 0; i < tokencount; ++i ){
 			logDebug( "token[%d] '%s'", i, tokens[i].start );
 		}
@@ -254,34 +243,33 @@ void Get_queue_remove( char *user, char *name, int *socket,
 	for( i = 1; !allflag && i < tokencount; ++i ){
 		allflag = !strcasecmp( "all", tokens[i].start );
 	}
-	DEBUG4("Get_queue_remove: allflag %d", allflag );
+	DEBUG3("Get_queue_remove: allflag %d", allflag );
 
 	strcpy( error, "??? odd error???" );
 	Errorcode = 0;
 	setproctitle( "lpd %s '%s'", Name, name );
 	if( Setup_printer( name, error, sizeof(error),
-		(void *)0, debug_vars, 0, (void *)0 ) ){
-		DEBUG4("Get_queue_remove: %s", error );
+		debug_vars, 1, (void *)0, (void *)0) ){
+		DEBUG3("Get_queue_remove: %s", error );
 		goto error;
 	}
-	DEBUG4("Get_queue_remove: RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
+	DEBUG3("Get_queue_remove: RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
 		RemoteHost, RemotePrinter, Lp_device );
 
-	plp_snprintf( msg, sizeof(msg), "Printer %s@%s: ", Printer, ShortHost );
-	(void)Link_send( ShortRemote, socket, Send_timeout,
-		0x00, msg, '\n', 0 );
+	plp_snprintf( msg, sizeof(msg), "Printer %s@%s: \n", Printer, ShortHost );
+	if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 	Perm_check.printer = Printer;
 	Perm_check.service = 'C';
 	if( controlperm == 0 ){
 		Init_perms_check();
 		controlperm = Perms_check( &Local_perm_file, &Perm_check,
-			(struct control_file *)0 );
+			Cfp_static );
 	}
 	if( controlperm == REJECT ){
 		controlperm = 0;
 	}
-	DEBUG3("Get_queue_remove: controlperm after C check '%s'", perm_str(controlperm) );
+	DEBUG2("Get_queue_remove: controlperm after C check '%s'", perm_str(controlperm) );
 
 	/*
 	 * handle special case when we have control permissions AND
@@ -294,17 +282,17 @@ void Get_queue_remove( char *user, char *name, int *socket,
 		Perm_check.service = 'M';
 		Init_perms_check();
 		noperm = Perms_check( &Perm_file, &Perm_check,
-				(struct control_file *)0 );
+				Cfp_static );
 		if( noperm == 0 ){
 			noperm = Perms_check( &Local_perm_file, &Perm_check,
-				(struct control_file *)0 );
+				Cfp_static );
 		}
 	}
-	DEBUG3("Get_queue_remove: noperm after M check '%s'", perm_str(noperm) );
+	DEBUG2("Get_queue_remove: noperm after M check '%s'", perm_str(noperm) );
 	if( noperm == 0 ){
 		noperm = Last_default_perm;
 	}
-	DEBUG3("Get_queue_remove: noperm final value '%s'", perm_str(noperm) );
+	DEBUG2("Get_queue_remove: noperm final value '%s'", perm_str(noperm) );
 
 	if( noperm == REJECT ){
 		plp_snprintf( error, sizeof(error),
@@ -318,9 +306,7 @@ void Get_queue_remove( char *user, char *name, int *socket,
 		goto remote;
 	}
 
-	/* get the spool entries */
-	Scan_queue( 0 );
-	DEBUG8("Get_queue_remove: total files %d", C_files_list.count );
+	DEBUG4("Get_queue_remove: total files %d", C_files_list.count );
 
 	/* scan the files to see if there is one which matches */
 
@@ -334,10 +320,10 @@ void Get_queue_remove( char *user, char *name, int *socket,
 		 * check to see if this entry matches any of the patterns
 		 */
 
-		DEBUG4("Get_queue_remove: checking '%s'", cfp->name );
-		plp_snprintf( msg, sizeof(msg), "checking '%s'", cfp->name );
-		status = Link_send( ShortRemote, socket, Send_timeout,
-			0x00, msg, '\n', 0 );
+		Make_identifier( cfp );
+		DEBUG3("Get_queue_remove: checking '%s'", cfp->identifier+1 );
+		plp_snprintf( msg, sizeof(msg), "checking '%s'\n", cfp->identifier+1 );
+		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 		destination = 0;
 		if( allflag || tokencount == 1 || controlperm ){
@@ -345,14 +331,13 @@ void Get_queue_remove( char *user, char *name, int *socket,
 		} else {
 			select = 0;
 			for( j = 0; !select && j < tokencount; ++j ){
-				select |= patselect( &tokens[j], cfp, &destination );
+				select |= Patselect( &tokens[j], cfp, &destination );
 			}
 		}
 		if( !select ) continue;
-		DEBUG4("Get_queue_remove: considering '%s'", cfp->name );
-		plp_snprintf( msg, sizeof(msg), "  checking perms '%s'", cfp->name );
-		status = Link_send( ShortRemote, socket, Send_timeout,
-			0x00, msg, '\n', 0 );
+		DEBUG3("Get_queue_remove: considering '%s'", cfp->identifier+1 );
+		plp_snprintf( msg, sizeof(msg), "  checking perms '%s'\n", cfp->identifier+1 );
+		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 		/* we check to see if we can remove this one if we are the
 			user */
@@ -365,12 +350,11 @@ void Get_queue_remove( char *user, char *name, int *socket,
 			} else {
 				Perm_check.user = 0;
 			}
-			if( cfp->FROMHOST && cfp->FROMHOST[1] ){
-				Perm_check.host = Find_fqdn( cfp->FROMHOST+1, Domain_name );
-				Perm_check.ip = ntohl(Find_ip( Perm_check.host ));
+			if( cfp->FROMHOST && cfp->FROMHOST[1]
+				&& Find_fqdn( &PermcheckHostIP,cfp->FROMHOST+1, 0 ) ){
+				Perm_check.host = &PermcheckHostIP;
 			} else {  
 				Perm_check.host = 0;
-				Perm_check.ip = 0;
 			}
 			Perm_check.service = 'M';
 			Init_perms_check();
@@ -383,9 +367,9 @@ void Get_queue_remove( char *user, char *name, int *socket,
 			}
 		}
 		if( noperm == REJECT ){
-			plp_snprintf( msg, sizeof(msg), "  no permissions '%s'", cfp->name );
-			status = Link_send( ShortRemote, socket, Send_timeout,
-				0x00, msg, '\n', 0 );
+			plp_snprintf( msg, sizeof(msg), "  no permissions '%s'\n",
+				cfp->identifier+1 );
+			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 			continue;
 		}
@@ -398,80 +382,72 @@ next_destination:
 		} else {
 			select = 0;
 			for( j = 1; !select && j < tokencount; ++j ){
-				select |= patselect( &tokens[j], cfp, &destination );
+				select |= Patselect( &tokens[j], cfp, &destination );
 			}
 		}
 
 		if( !select ){
-			plp_snprintf( msg, sizeof(msg), "  not selecting '%s'", cfp->name );
-			status = Link_send( ShortRemote, socket, Send_timeout,
-				0x00, msg, '\n', 0 );
+			plp_snprintf( msg, sizeof(msg), "  not selecting '%s'\n",
+				cfp->identifier+1 );
+			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 			continue;
 		}
 
-		DEBUG8("Get_queue_remove: removing '%s', destination 0x%x", cfp->name,
+		DEBUG4("Get_queue_remove: removing '%s', destination 0x%x",
+			cfp->identifier+1,
 			destination );
 		/* we report this job being removed */
 		if( destination ){
-			DEBUG8("Get_queue_remove: removing '%s' destination '%s'", cfp->name,
-				destination->identifier );
-			plp_snprintf( msg, sizeof(msg), "  removing '%s' destination %s",
-				cfp->name, destination->identifier );
+			DEBUG4("Get_queue_remove: removing '%s' destination '%s'",
+				cfp->identifier+1, destination->identifier+1 );
+			plp_snprintf( msg, sizeof(msg), "  removing '%s' destination %s\n",
+				cfp->identifier+1, destination->identifier+1 );
 		} else {
-			DEBUG8("Get_queue_remove: removing '%s'", cfp->name );
-			plp_snprintf( msg, sizeof(msg), "  removing '%s'", cfp->identifier );
+			DEBUG4("Get_queue_remove: removing '%s'", cfp->identifier+1 );
+			plp_snprintf( msg, sizeof(msg), "  removing '%s'\n",
+				cfp->identifier+1 );
 		}
-		status = Link_send( ShortRemote, socket, Send_timeout,
-			0x00, msg, '\n', 0 );
+		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 		if( destination ){
 			plp_snprintf( destination->error, sizeof( destination->error ),
 				"entry deleted" );
 			destination->done = time( (void *)0 );
-			Set_job_control( cfp );
+			Set_job_control( cfp, (void *)0, 0 );
 			goto next_destination;
 		}
 		if( Remove_job( cfp ) ){
 			plp_snprintf( error, sizeof(error),
-				"error: could not remove '%s'", cfp->name ); 
+				"error: could not remove '%s'", cfp->identifier+1 ); 
 			goto error;
 		}
+		setmessage( cfp, "TRACE", "%s@%s: lprm removed job", Printer, FQDNHost );
 		/* check to see if active */
-		if( cfp->active ){
-			plp_snprintf( msg, sizeof(msg), "killing subserver '%d'",
-				cfp->active );
-			status = Link_send( ShortRemote, socket, Send_timeout,
-				0x00, msg, '\n', 0 );
+		if( (pid = cfp->hold_info.active) > 0 ){
+			plp_snprintf( msg, sizeof(msg), "killing subserver '%d'\n", pid );
+			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 			/* we need to kill the unspooler */
 			/* we will be gentle here */
-			DEBUG4("Get_queue_remove: kill subserver pid '%d'", cfp->active );
-			if( kill( cfp->active, SIGUSR1 ) < 0 ){
-				logerr( LOG_INFO, "Get_queue_remove: kill pid %d failed" );
-			}
-			/* sigh ... yes, you may need to start it */
-			kill( cfp->active, SIGCONT );
+			DEBUG3("Get_queue_remove: kill subserver pid '%d'", pid );
+			kill( pid, SIGUSR1 );
+				/* sigh ... yes, you may need to start it */
+			kill( pid, SIGCONT );
 		}
 		if( tokencount == 1 && allflag == 0 ){
-			DEBUG4("Get_queue_remove: single job remove finished '%s'", name );
+			DEBUG3("Get_queue_remove: single job remove finished '%s'", name );
 			return;
 		}
 	}
-	/*********
-	if( status == 0 ){
-		status = Link_send( ShortRemote, socket, Send_timeout,
-		0x00, 0, '\n', 0 );
-	}
-	**********/
-	DEBUG4( "Get_queue_remove: before bounce user '%s' name '%s' tokencount %d",
+	DEBUG3( "Get_queue_remove: before bounce user '%s' name '%s' tokencount %d",
 		user, name, tokencount );
-	if( Debug > 4 ){
+	if(DEBUGL4 ){
 		for( i = 0; i < tokencount; ++i ){
 			logDebug( "token[%d] '%s'", i, tokens[i].start );
 		}
 	}
 
 	if( Bounce_queue_dest ){
-		DEBUG4( "Get_queue_remove: bounce queue %s", Bounce_queue_dest );
+		DEBUG3( "Get_queue_remove: bounce queue %s", Bounce_queue_dest );
 		if( strchr( Bounce_queue_dest, '@' ) == 0 ){
 			Errorcode = JABORT;
 			fatal( LOG_ERR,
@@ -502,7 +478,7 @@ remote:
 			list[args.count] = tokens[i].start;
 		}
 		list[args.count] = 0;
-		DEBUG4("Get_queue_remove: user '%s' on remote host '%s' printer '%s'", 
+		DEBUG3("Get_queue_remove: user '%s' on remote host '%s' printer '%s'", 
 			user, RemoteHost, RemotePrinter );
 		Send_lprmrequest( RemotePrinter?RemotePrinter:Printer,
 			RemoteHost, user, list,
@@ -518,23 +494,23 @@ remote:
 		Get_subserver_info( &servers, Server_names );
 		server_info = (void *)servers.list;
 		for( i = 0; i < servers.count; ++server_info, ++i ){
-			DEBUG4("Get_queue_remove: removing subservers jobs '%s'", 
+			DEBUG3("Get_queue_remove: removing subservers jobs '%s'", 
 				server_info->name );
 			Get_queue_remove( user, server_info->name, socket,
 				tokencount, tokens );
-			DEBUG4("Get_queue_remove: finished removing subserver jobs '%s'", 
+			DEBUG3("Get_queue_remove: finished removing subserver jobs '%s'", 
 				server_info->name );
 		}
 	}
 
-	DEBUG4("Get_queue_remove: finished '%s'", name );
+	DEBUG3("Get_queue_remove: finished '%s'", name );
 	return;
 
 error:
 	log( LOG_INFO, "Get_queue_remove: error '%s'", error );
-	DEBUG3("Get_queue_remove: error msg '%s'", error );
-	(void)Link_send( ShortRemote, socket, Send_timeout,
-		0x00, error, '\n', 0 );
-	DEBUG4( "Get_queue_remove: done" );
+	DEBUG2("Get_queue_remove: error msg '%s'", error );
+	safestrncat(error,"\n");
+	if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
+	DEBUG3( "Get_queue_remove: done" );
 	return;
 }

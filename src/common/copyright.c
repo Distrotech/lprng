@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -12,15 +12,15 @@
 
 #include "lp.h"
 #include "patchlevel.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: copyright.c,v 3.0 1996/05/19 04:05:56 papowell Exp $";
+"$Id: copyright.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
 
 char *Copyright[] = {
 "LPRng version " PATCHLEVEL "",
-"Author: Patrick Powell,"
-"   San Diego State University <papowell@sdsu.edu>",
-"Contributors include:"
+"Author: Patrick Powell, <papowell@sdsu.edu>",
+"Contributors include:",
 "  Justin Mason, Iona Technologies <jmason@iona.ie>",
 "  Angus Duggan, Harlequin Ltd. <angus@harlequin.co.uk>",
 "  Julian Turnbull, Edinburgh University <jst@dcs.edinburgh.ac.uk>",
@@ -51,12 +51,12 @@ char *Copyright[] = {
 "",
 "        COPYRIGHT NOTICES",
 "",
-"Copyright (c) 1986-1995 Patrick Powell",
+"Copyright (c) 1986-1997 Patrick Powell",
 ""
 "THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND",
 "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE",
 "IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE",
-"ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE",
+"ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE",
 "FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL",
 "DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS",
 "OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)",
@@ -65,13 +65,14 @@ char *Copyright[] = {
 "OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF",
 "SUCH DAMAGE.",
 "",
-"Copyright (c) 1988 The Regents of the University of California.",
-"Copyright (c) 1989 The Regents of the University of California.",
-"Copyright (c) 1990 The Regents of the University of California.",
+"Copyright 1988-1997, Patrick Powell, San Diego, CA.",
 "All rights reserved.",
 "",
 "This code is derived from software contributed to Berkeley by",
 "Chris Torek.",
+"",
+" Copyright (c) 1988 The Regents of the University of California.",
+" All rights reserved.",
 "",
 "Redistribution and use in source and binary forms, with or without",
 "modification, are permitted provided that the following conditions",

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -22,11 +22,17 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: errormsg.c,v 3.0 1996/05/19 04:05:57 papowell Exp $";
+"$Id: errormsg.c,v 3.3 1997/01/22 23:09:32 papowell Exp $";
 
 #include "lp.h"
-#include "timeout.h"
+#include "errormsg.h"
+#include "killchild.h"
+#include "setstatus.h"
+/**** ENDINCLUDE ****/
 
+#if defined(HAVE_SYSLOG_H)
+# include <syslog.h>
+#endif
 
 /****************************************************************************/
 
@@ -107,6 +113,8 @@ static char * logmsg (int kind)
     int i;
     static char b[32];
 
+	b[0] = 0;
+	if( kind < 0 ) return(b);
     for (i = 0; msg_name[i].str; ++i) {
 		if ( msg_name[i].var == kind) {
 			return (msg_name[i].str);
@@ -168,16 +176,17 @@ static void log_backend (int kind)
     char stamp_buf[SMALLBUFFER];
 	int n;
 	char *s;
+	plp_block_mask omask;
 	int err = errno;
 
-    plp_block_signals (); /**/
+    plp_block_all_signals (&omask); /**/
 	/* put the error message into the status file as well */
     /*
      * syslogd does most of the things we do after this point,
 	 *	so there's no point in filling up the logs with useless stuff;
 	 *  syslog the message here, and then do verbose stuff
      */
-    if (kind <= LOG_INFO && !Interactive ){
+    if( kind >= 0 && Is_server ){
         use_syslog (kind, log_buf);
 	}
     /*
@@ -199,7 +208,7 @@ static void log_backend (int kind)
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) plp_snprintf( s, n, " %s", Name );
 		}
-		if (Debug) {
+		if(DEBUGL0){
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) plp_snprintf(s, n, " [%ld]", (long)getpid ());
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
@@ -219,7 +228,7 @@ static void log_backend (int kind)
     }
 	Write_fd_str( 2, stamp_buf );
 
-    plp_unblock_signals (); /**/
+    plp_unblock_all_signals ( &omask ); /**/
 	errno = err;
 }
 
@@ -227,7 +236,7 @@ static void log_backend (int kind)
  * Put the printer name at the start of the log buffer
  *****************************************************/
  
-static void prefix_printer()
+static void prefix_printer( void )
 {
 	log_buf[0] = 0;
     if (Printer && *Printer) {
@@ -277,7 +286,6 @@ void fatal (va_alist) va_dcl
     int kind;
     char *msg;
 #endif
-	int err = errno;
 	int n;
 	char *s;
     VA_LOCAL_DECL
@@ -298,8 +306,6 @@ void fatal (va_alist) va_dcl
 
     VA_END;
     cleanup(0);
-	errno = err;
-    exit( Errorcode );
 }
 
 /* VARARGS2 */
@@ -327,7 +333,7 @@ void logerr (va_alist) va_dcl
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) vplp_snprintf(s, n, msg, ap);
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) plp_snprintf (s, n, " - %s", Errormsg (err));
+		if( err ) (void) plp_snprintf (s, n, " - %s", Errormsg (err));
 		setstatus( NORMAL, "%s", log_buf );
 		log_backend (kind);
 		in_log = 0;
@@ -362,14 +368,12 @@ void logerr_die (va_alist) va_dcl
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) vplp_snprintf (s, n, msg, ap);
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) plp_snprintf (s, n, " - %s", Errormsg (err));
+		if( err ) (void) plp_snprintf (s, n, " - %s", Errormsg (err));
 		setstatus( NORMAL, "%s", log_buf );
 		log_backend (kind);
 		in_log = 0;
 	}
     cleanup(0);
-	errno = err;
-    exit(Errorcode);
     VA_END;
 }
 
@@ -391,7 +395,6 @@ void Diemsg (va_alist) va_dcl
 	char buffer[LINEBUFFER];
 	char *s;
 	int n;
-	int err = errno;
     VA_LOCAL_DECL
 
     VA_START (msg);
@@ -418,8 +421,6 @@ void Diemsg (va_alist) va_dcl
 	}
 
     cleanup(0);
-	errno = err;
-    exit( Errorcode );
     VA_END;
 }
 
@@ -489,7 +490,7 @@ void logDebug (va_alist) va_dcl
 		prefix_printer();
 		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) vplp_snprintf(s, n, msg, ap);
-		log_backend (LOG_DEBUG);
+		log_backend(-1);
 		in_log = 0;
 	}
 	errno = err;
@@ -506,5 +507,4 @@ void Malloc_failed( unsigned size )
 	logerr( LOG_ERR, "malloc of %d failed", size );
 	errno = err;
 	cleanup (0);
-	exit( Errorcode );
 }

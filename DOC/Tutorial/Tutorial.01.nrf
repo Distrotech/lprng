@@ -8,7 +8,7 @@
 .\" ***************************************************************************
 .\" * MODULE: README
 .\" * PURPOSE: Overview of Software
-.\" * $Id: Tutorial.01.nrf,v 3.0 1996/05/19 04:07:00 papowell Exp $
+.\" * $Id: Tutorial.01.nrf,v 3.1 1996/12/28 21:48:16 papowell Exp $
 .\" **************************************************************************/
 .\"
 .\"Uses the NROFF -me macros, supplemented by the following:

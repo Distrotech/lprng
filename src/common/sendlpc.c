@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -12,12 +12,20 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpc.c,v 3.0 1996/05/19 04:06:10 papowell Exp $";
+"$Id: sendlpc.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
 
 #include "lp.h"
-#include "lp_config.h"
-#include "getprinter.h"
+#include "sendlpc.h"
 #include "control.h"
+#include "errorcodes.h"
+#include "getprinter.h"
+#include "killchild.h"
+#include "linksupport.h"
+#include "readstatus.h"
+#include "sendauth.h"
+#include "setstatus.h"
+#include "fileopen.h"
+/**** ENDINCLUDE ****/
 
 
 /***************************************************************************
@@ -48,11 +56,11 @@ void Send_lpcrequest(
 {
 	char *s;
 	int i, len, status, argc;
-	int sock;		/* socket to use */
+	int sock = -1;		/* socket to use */
 	char line[LINEBUFFER];
 	int err;
 
-	DEBUG4("Send_lpcrequest: connect_timeout %d, transfer_timeout %d",
+	DEBUG1("Send_lpcrequest: connect_timeout %d, transfer_timeout %d",
 			connect_timeout, transfer_timeout );
 
 	/*
@@ -65,7 +73,7 @@ void Send_lpcrequest(
 		return;
 	}
 
-	if( argc > 1 && action != LPD && action != REREAD ){
+	if( argc > 1 && action != LPD && action != REREAD && action != PRINTCAP ){
 		/* second argument is the printer */
 		Printer = options[1];
 		RemoteHost = 0;
@@ -91,9 +99,27 @@ void Send_lpcrequest(
 		goto error;
 	}
 
-	DEBUG4("Send_lpcrequest: Printer '%s', Remote printer %s, RemoteHost '%s'",
+	DEBUG3("Send_lpcrequest: Printer '%s', Remote printer %s, RemoteHost '%s'",
 		Printer, RemotePrinter, RemoteHost );
+	/* now format the option line */
+	plp_snprintf( line, sizeof(line), "%c%s %s\n",
+		REQ_CONTROL, RemotePrinter?RemotePrinter:Printer, user );
 
+	for( i = 0; (s = options[i]); ++i ){
+		len = strlen(line) - 1;
+		if( len + strlen(s) >= sizeof(line) - 4 ){
+			break;
+		}
+		plp_snprintf( line+len, sizeof(line) - len,
+			" %s\n", s );
+	}
+	if( s ){
+		plp_snprintf( line, sizeof(line)-2,
+			"too many options or options too long" );
+		goto error;
+	}
+
+	DEBUG0("Send_lpcrequest: sending '%s'", line );
 	sock = Link_open( RemoteHost, 0, connect_timeout );
 	err = errno;
 	if( sock < 0 ){
@@ -103,40 +129,30 @@ void Send_lpcrequest(
 		goto error;
 	}
 
-	/* now format the option line */
-	plp_snprintf( line, sizeof(line), "%s %s",
-		RemotePrinter?RemotePrinter:Printer, user );
-	for( i = 0; (s = options[i]); ++i ){
-		len = sizeof(line) - (strlen(line) + strlen(s) + 2);
-		if( len <= 0 ){
-			break;
-		}
-		strcat( line, " " );
-		strcat( line, s );
-	}
-	/* lets see if they fit */
-	if( s ){
-		Write_fd_str( 1, "too many options or options too long\n" );
+	Fix_auth();
+
+	/* send the command */
+	if( Use_auth || Use_auth_flag ){
+		DEBUG3("Send_lpcrequest: using authentication" );
+		status = Send_auth_command( RemotePrinter, RemoteHost, &sock,
+			transfer_timeout, line, output );
 	} else {
-		DEBUG4("Send_lpcrequest: sending '\\%d'%s'", REQ_CONTROL, line );
-		status = Link_send( RemoteHost, &sock, transfer_timeout, REQ_CONTROL,
-			line, '\n', 0 );
-		while( status == 0 ){
-			i = 64*1024;	/* stop at 64K */
-			status = Link_file_read( RemoteHost, &sock, transfer_timeout,
-				transfer_timeout, output, &i, (void *)0 );
-		}
+		DEBUG3("Send_lpcrequest: sending '%s'", line );
+		status = Link_send( RemoteHost, &sock, transfer_timeout, line,
+			strlen( line ), 0 );
 	}
+	Read_status_info( Printer, 0, sock, RemoteHost, output );
 	Link_close( &sock );
 	return;
 
 error:
-	setstatus( NORMAL, line );
+	Errorcode = JFAIL;
 	if( Interactive ){
-		strcat(line, "\n" );
-		if( Write_fd_str( 2, line ) < 0 ){
-			cleanup( 0 );
-			exit(-2);
-		}
+		safestrncat(line, "\n" );
+		Write_fd_str( output, line );
+	} else {
+		setstatus( NORMAL, line );
 	}
+	Link_close( &sock );
+	return;
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,35 +11,30 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: termclear.c,v 3.3 1996/08/25 22:20:05 papowell Exp papowell $";
-/***************************************************************************
- * U. Minnesota LPD Software * Copyright 1987, 1988, Patrick Powell
- ***************************************************************************
- * MODULE: termclear.c
- ***************************************************************************
- * 1. Do the initialization if neccessary
- * 2. clear the screen using the termcap information
- ***************************************************************************/
+"$Id: termclear.c,v 3.1 1996/12/28 21:40:22 papowell Exp $";
 
 #include "lp.h"
+#include "termclear.h"
+/**** ENDINCLUDE ****/
 
 #if defined(IS_LINUX)
-#include <termios.h>
+# include <termios.h>
 #endif
-
-#include "termclear.h"
 
 /* terminfo has a termcap emulation */
 #ifdef HAVE_CURSES_H
-#include <curses.h>
+# include <curses.h>
 #endif
 
-#if defined(HAVE_TERMCAP_H) && !defined(__FreeBSD__)
-#include <termcap.h>
+#if defined(HAVE_TERMCAP_H) && !defined(__FreeBSD__) && !defined(__linux__)
+# include <termcap.h>
 #endif
 
-#if defined(HAVE_TERM_H) && !defined(SOLARIS)
-#include <term.h>
+/* solaris gets confused when you include term.h?
+ * this is totally bizarre... so you need to worry about versions now?
+ */
+#if defined(HAVE_TERM_H) && (!defined(SOLARIS) || SOLARIS > 250)
+# include <term.h>
 #endif
 
 #if defined(HAVE_TERMCAP_H) || defined(HAVE_CURSES_H) || defined(HAVE_TERM_H)
@@ -81,6 +76,8 @@ static char *area = xp;
  */
 
 #define PPUTS_RETTYPE int
+#define TPUTS_RETTYPE int
+#define PPUTS_VALTYPE int
 #define PPUTS_RETVAL(X) (X)
 #if defined(IS_BSDI)
 #undef PPUTS_RETTYPE
@@ -88,14 +85,20 @@ static char *area = xp;
 #define PPUTS_RETTYPE void
 #define PPUTS_RETVAL(X)
 #endif
+#if defined(SOLARIS)
+#undef PPUTS_VALTYPE
+#define PPUTS_VALTYPE char
+#endif
 
-static PPUTS_RETTYPE pputs(int c)
+#if !defined(HAVE_TGETSTR_DEF)
+char *tgetstr(char *id, char **area);
+#endif
+
+static PPUTS_RETTYPE pputs(PPUTS_VALTYPE c)
 {
 	putchar(c); /* this does the work */
 	return PPUTS_RETVAL(c);
 }
-
-extern char *tgetstr();
 
 void Term_clear(void)
 {

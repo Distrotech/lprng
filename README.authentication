@@ -1,0 +1,353 @@
+
+      File and Command Transfer
+
+          Patrick Powell
+ Original: Wed Nov 27 20:29:04 PST 1996
+  Updated: Wed Dec 25 05:54:33 PST 1996
+
+One of the major problems in a print spooler system is providing
+privacy and authentication services for users.  One method is to
+construct a specific set of protocols which will be used for
+providing the privacy or authentication;  another is to provide a
+simple interface to a set of tools that will do the authentication
+and/or encryption.  The LPRng system adopts this latter approach.
+
+A careful study of the authentication problem shows that it occurs
+during reception of commands and/or jobs from a remote user and/or
+spooler.  At this time the following must be done:
+
+1. The received command must be checked for consistency,  and the
+   remote user and host must be determined.
+
+2. The remote user and host must be authenticated.
+
+3. The command and/or spooling operation must be carried out.
+
+4. The results must be returned to the remote system.
+
+User Names and UserIDs, Server Names and ServerIDs, and Authentication
+
+When a user logs into a system,  they are assigned a user name
+and a corresponding UserID.  This user name is used by the LPRng
+software when transferring jobs to identify the user.
+
+When we look into the problem of authentication,  we will possibly
+have a more global user identification to deal with, the
+authentication identifier (AuthID).  One way to deal with this problem is to
+give LPRng intimate knowledge of the UserID and AuthID relationship.
+While this is possible,  it may be difficult to deal with in a
+simple and extensible manner.  An alternate solution is to provide
+a mapping service,  where the authentication procedure provides
+a map between the UserID and AuthID.
+
+LPD Protocol Extensions
+
+The RFC1179 protocol specifies that a LPD server command sent on 
+a connection has the form:
+
+  \nnn[additional fields]\n
+
+  \nnn is a one octet (byte) value with the following meaning:
+
+REQ_START   1    start printer
+
+REQ_RECV    2    transfer a printer job
+
+REQ_DSHORT  3    print short form of queue status
+
+REQ_DLONG   4    print long form of queue status
+
+REQ_REMOVE  5    remove jobs
+
+The LPRng system extends the protocol with the following additional
+types:
+
+REQ_CONTROL 6    do control operation
+
+REQ_BLOCK   7    transfer a block format print job
+
+REQ_SECURE  8    do operation with authentication
+
+The REQ_CONTROL allows a remote user to send LPC commands to the
+server.  The REQ_BLOCK provides an alternate method to transfer a
+job.  Rather than transferring the control and data files individually,
+this format transfers one file.  The REQ_AUTH provides a mechanism
+for providing an authentication mechanism and is described in this
+document.
+
+Client To Server Authentication
+
+1. The client will open a connection to the server
+   and sends a command with the following format:
+
+   \REQ_SECUREprinter C user authtype\n          - for commands
+
+   \REQ_SECUREprinter C user authtype controfilename\n - for print jobs
+
+   Note that \REQ_SECURE is a one byte code indicating an authenticated
+   transfer.  Printer is the spool queue name, C in the character 'C'
+   indicating a client request, user is the login of the user,
+   authtype is a keyword identifying the authentication type,
+   and controlfile name is the name of the controlfile to be transferred.
+
+2. On reception of this command,  the server will send a one byte
+   success code as below.  An error code may be followed by additional
+   error information.
+
+   The values used by LPRng include:
+
+   ACK_SUCCESS 0   success
+
+   ACK_STOP_Q  1   failed; no spooling to the remote queue
+
+   ACK_RETRY   2   failed; retry later
+
+   ACK_FAIL    3   failed; job rejected, no retry
+
+   These values will be shown as \ACK_SUCCESS, etc, in the following
+   text.  If there is an error, additional error status may follow
+   the non-zero success code byte.  At the end of this information
+   the connection will be terminated.
+
+   If the success code is zero, the server will then start an
+   authentication process, and provide the following open file
+   descriptors for it.  The authenticator process will run UID
+   serveruser.
+
+   FD  Options Purpose
+
+   0  R/W     socket connection to remote host (R/W)
+
+   1  W       pipe or file descriptor,  for information for server
+
+   2  W       error log
+
+   3  R       pipe or file descriptor,  for responses to client
+
+   Command line arguments:
+
+   program -S -Pprinter -nuser -aauthtype -Rserveruser -Ttempfile
+
+   The authenticator can create additional temporary or working
+   files with the pathnames tempfile.ext;  these will be deleted
+   after the authentication process has been completed.
+
+3. If the client receives a non-zero one byte success indication,
+   it will read the additional error status information and then
+   terminate the connection.  If the success indication byte is 0,
+   the client will start an authenticator process and provide the
+   following open file descriptors for it.  The authenticator
+   process will run UID user.
+
+   FD  Options Purpose
+
+   0  R/W     socket connection to remote host (R/W)
+
+   1  W       pipe or file descriptor,  for responses to client
+
+   2  W       error log
+
+   Command line arguments:
+
+   program -C -Pprinter -nuser -aauthtype -Rserveruser -Ttempfile
+
+   The authenticator can create additional temporary or working
+   files with the pathnames tempfile.ext;  these will be deleted
+   after the authentication process has been completed.
+
+   The client authenticator will be running as the client user.
+
+4. The client authenticator will transfer the contents of the
+   temporary file to the server authenticator, using FD 0.  It will
+   then wait for reply status on FD 0.   If the transfer step fails,
+   or there is no reply status of the correct format,  the client
+   authenticator will print error information on FD 2 and then exit
+   with error code JFAIL.
+
+5. After receiving the files on FD 0,  the server authenticator
+   will perform the required authentication procedures and leave
+   the results in tempfile.  The server authentictor will write
+   the following to FD 1,  for use by the server.  Note that this
+   should be a single line, of a maximum of 127 characters
+   (LPRng LINEBUFFER maximum size).
+
+   authentication_info\n
+
+   If the transfer step or authentication fails,  then the server
+   will write an error message to FD 2 and exit with error code
+   JFAIL.  The authenticated_host_id field is optional.
+
+6. The server authentication process will read input from FD 3,
+   and then proceed to transfer the input to the client authenticator.
+   It may use the tempfile to hold the information during the
+   reading and transfer process.
+
+   If the data transfer fails,  then the process will exit with
+   error code JFAIL, otherwise it will exit with error code JSUCC.
+
+7. The client authenticator will read the status information from
+   FD 0,  and after performing authentication will write it to FD
+   1.  If data transfer or authentication fails,  the authenticator
+   will write an error message to FD 2 and exit with error code
+   JFAIL, otherwise it will exit with error code JSUCC.
+
+Server to Server Authentication
+
+   The Server to Server authentication procedure is used by one server
+   to forward jobs or commands to another server.  It should be noted
+   that this forwarding operation puts an implicit trust in the security
+   of the client to server to server chain.  In the description below,
+   src and dst are the userid of the source and destination servers
+   respectively.
+
+   The originating host takes the part of the client, and will
+   transfer a job acting like the client.  The initial information
+   transfer from the src server will have the format:
+
+   \REQ_SECUREprinter F user authtype \n          - for commands
+
+   \REQ_SECUREprinter F user authtype controfilename\n - for print jobs
+
+   The source server will invoke its authenticator with the arguments:
+
+   program -C -Pprinter -nsrc_serveruser -aauthtype \e
+         -Rdest_serveruser -Ttempfile
+
+   On the destintation server the authenticator is invoked with the arguments:
+
+   program -S -Pprinter -nsrc_serveruser -aauthtype \e
+         -Rdest_serveruser -Ttempfile
+
+   The authentication is performed to determine that the transfer was
+   between the two servers,  rather than the user to server.
+
+Printcap and Configuration Variables
+
+   user_auth=authtype  - configuration variable and printcap flag
+     (default: "").  When set, clients use authentication when sending
+     jobs to the server, and authtype is set to the authtype value.
+
+   forward_auth=authtype  - configuration variable and printcap flag
+     (default: "").  When set, LPD uses authentication when forwarding
+     commands to the remote destination of a spool queue and authtype
+     is set to the authtype value.
+
+   server_auth_command, client_auth_command - authenticate command
+     Filter to be used for authentication by clients and servers
+
+   server_user - server id to be used in transfer.
+     Defaults to daemon (i.e. 'user' configuration file value)
+      
+   forward_user - server id to be used as destination when server forwarding
+      to another server.
+      Defaults to daemon (i.e. 'user' configuration file value)
+
+Permissions Extensions
+
+   AUTH=[NONE,USER,FWD]  - authentication
+   
+      AUTH=NONE       - no authentication
+   
+      AUTH=USER     - authentication from a client
+   
+      AUTH=FWD      - forwarded authentication from a lpd server
+   
+      (Note: this match will always succeed if done for a
+       X or connection operation).
+
+   AUTHTYPE=globmatch  - authentication type.  matches the authtype
+       value used for authentication.
+   
+   AUTHUSER=globmatch
+
+      for a command received from a client, matches the auth_user information
+      returned by the authenticator
+
+      for a command received from a server (i.e.- forwarded by a server),
+      refers to the original auth_user_id determined by the remote server.
+
+   FWDUSER=globmatch
+
+      matches the forwarding servers authentication information
+      returned by the authenticator
+
+   For example,  to reject non-authenticated operations, the following
+   line could be put in the permissions file.
+
+   REJECT AUTH=NONE
+
+   To reject server forwarded authentication as well, we use:
+
+   REJECT AUTH=NONE,FWD
+
+   If a remote server has id information FFEDBEEFDEAF,  then the
+   following will accept only forwarded jobs from this server.  Note
+   that AUTHUSER will only match on authenticated transfers;
+   FWDUSER will only match on forwarded transfers.
+
+   ACCEPT FWDUSER=FFEDBEEFDEAF
+   REJECT AUTH=FWD
+
+Authenticated Print Job Transfer
+
+   The authenticated print job transfer will use the Print Job
+   Block format to transfer a print job.  In this format,  a print
+   job is a single file which has the format:
+
+   \CONTROL_FILEnnnn filename\n
+
+   [nnnn bytes of control file information]
+
+   \DATA_FILEnnnn filename\n
+
+   [nnnn bytes of data file information]
+
+   \DATA_FILEnnnn filename\n
+
+   [nnnn bytes of data file information]
+
+   ....
+
+   The CONTROL_FILE and DATA_FILE are one byte values indicating
+   a control or data file.  This is followed by the number of bytes
+   in the file and then by the control or data file name.  The \n
+   terminates the information,  and is then followed by the actual
+   control or data information.
+
+Authenticated Forwarded Print Job Transfer
+
+   When a server needs to forward a print job,  it will send the
+   job as the server.  The block transfer will have the same form,
+   and the control file will have the entry:
+
+   _authentication_info
+
+   This information will be removed from the control file when
+   not using authenticated transfers.  The authentication_info
+   is used for the AUTHUSER permissions checking.
+
+Authenticated Command Transfer
+
+   The LPRng protocol command format is:
+
+   \OPCODE[arguments]\n
+
+   When transferring a command from a client to a server,  this
+   command is simply transferred.  The server will check to ensure
+   that the user ID in the command portion is compatible with
+   the AuthID returned by the authenticator.
+
+   When forwarding a command from a server to a server,  the  format
+   will be:
+
+   \OPCODE[arguments]\n
+   authentication_info\n
+
+   The authentication_info  is used for the AUTHUSER permissions checking.
+
+Using PGP for Authentication
+   See README.pgp_authentication for details on the authenticate_pgp
+   program which implements authentication using PGP.
+
+Using Kerberos for Authentication
+   See README.kerberos_authentication for details.

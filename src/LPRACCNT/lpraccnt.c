@@ -1,3 +1,17 @@
+/***************************************************************************
+ * LPRng - An Extended Print Spooler System
+ *
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ *     papowell@sdsu.edu
+ * See LICENSE for conditions of use.
+ *
+ ***************************************************************************
+ * MODULE: lpraccnt.c
+ * PURPOSE: do accounting
+ **************************************************************************/
+
+static char *const _id =
+"$Id: lpraccnt.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
 /*
  * Monitor for Accounting Information
  *  Opens a tcp socket and waits for data to be sent to it.
@@ -6,18 +20,23 @@
  *   port is an integer number or a service name in the services database
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+# include "portable.h"
+#endif
+
 #include "lp.h"
+/**** ENDINCLUDE ****/
 
 int tcp_open( char *portname );
 
 char buffer[1024];
 char *portname = "3000";
-int Debug;
 
 const char * Errormsg ( int err );
 
-extern int getopt(), optind;
-extern char *optarg;
+extern int Getopt(), Optind;
+extern char *Optarg;
 char *prog = "???";
 
 void usage()
@@ -38,20 +57,24 @@ int main( int argc, char *argv[] )
 	int len;
 
 	if( argv[0] ) prog = argv[0];
-	while( (i = getopt( argc, argv, "D:p:")) != EOF ){
+	while( (i = Getopt( argc, argv, "D:p:")) != EOF ){
 		switch( i ){
 		default: usage(); break;
-		case 'D': Debug = atoi( optarg ); break;
-		case 'p': portname = optarg; break;
+		case 'D':
+#if !defined(NODEBUG)
+			Debug = atoi( Optarg );
+#endif
+			break;
+		case 'p': portname = Optarg; break;
 		}
 	}
-	if( optind < argc ) usage();
+	if( Optind < argc ) usage();
 	fd2 = tcp_open( portname );
 	if( fd2 < 0 ){
 		usage();
 	}
 	maxfds = fd2+1;
-	if(Debug)printf("fd2 %d\n", fd2 );
+	if(DEBUGL0)fprintf(stdout,"fd2 %d\n", fd2 );
 	FD_ZERO( &readfds );
 	FD_ZERO( &exceptfds );
 	FD_SET( fd2, &readfds );
@@ -61,15 +84,20 @@ int main( int argc, char *argv[] )
 		memcpy( &use_exceptfds, &exceptfds, sizeof(use_exceptfds) );
 		fds = maxfds;
 		fd1 = 0;
-		avail = select( fds, &use_readfds, (fd_set *)0, &use_exceptfds, (struct timeval *)0 );
-		if(Debug)printf("select returned %d\n", avail);
+		avail = select( fds,
+			FD_SET_FIX((fd_set *))&use_readfds,
+			FD_SET_FIX((fd_set *))0,
+			FD_SET_FIX((fd_set *))&use_exceptfds, (struct timeval *)0 );
+		n = errno;
+		if(DEBUGL0)fprintf(stdout,"select returned %d\n", avail);
+		if( avail == -1 && n != EINTR ) break;
 		for(; avail > 0; --avail ){
 			/* find out if a read request is outstanding */
-			if(Debug)printf("checking, avail %d, starting at %d\n", avail, fd1);
+			if(DEBUGL0)fprintf(stdout,"checking, avail %d, starting at %d\n", avail, fd1);
 			for( ; fd1 < fds
 				&& !FD_ISSET( fd1, &use_readfds)
 				&& !FD_ISSET( fd1, &use_exceptfds); ++fd1 );
-			if(Debug)printf("found fd %d\n", fd1);
+			if(DEBUGL0)fprintf(stdout,"found fd %d\n", fd1);
 			if( fd1 >= fds ){
 				fprintf( stderr, "%s: bad select! '%s'\n", prog, Errormsg(errno) );
 				exit(1);
@@ -105,7 +133,7 @@ int main( int argc, char *argv[] )
 					continue;
 				}
 				len = 1;
-				if( Debug )printf( "accepted %d\n", fd1 );
+				if(DEBUGL0)fprintf(stdout, "accepted %d\n", fd1 );
 				/* now put it into the list */
 				FD_SET( fd1, &readfds );
 				FD_SET( fd1, &exceptfds );
@@ -120,7 +148,7 @@ int tcp_open( char *portname )
 {
 	int port, i, fd, err, len;
 	struct sockaddr_in sin;
-	struct servent *servent, *getservbyname();
+	struct servent *servent;
 
 	port = atoi( portname );
 	if( port <= 0 ){

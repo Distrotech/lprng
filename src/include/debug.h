@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,7 +10,7 @@
  * PURPOSE: define parsing and other information for debug option
  *  handling.
  *
- * $Id: debug.h,v 3.0 1996/05/19 04:06:18 papowell Exp $
+ * $Id: debug.h,v 3.3 1997/01/29 03:04:39 papowell Exp $
  **************************************************************************/
 
 /****************************************
@@ -26,137 +26,128 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_ 1
 
-/* general purpose debug test */
-#define DEBUGC(VAL,FLAG) if( (Debug > VAL ) || (FLAG & DbgFlag) ) logDebug
-#define DEBUGV(VAL,VAR) if( (VAR > VAL) ) logDebug
-#define DEBUGM(VAL,VAR,FLAG) if( (VAR > VAL) || (FLAG & DbgFlag) ) logDebug
-#define DEBUGF(FLAG) if( (FLAG & DbgFlag) ) logDebug
-
 /* to remove all debugging, redefine this as follows
  * note that a good optimizing compiler should not produce code
  *	for the logDebug call.  It may produce lots of warnings, but no code...
  */
+
 #ifdef NODEBUG
-#undef DEBUGC
-#undef DEBUGV
-#undef DEBUGM
-#undef DEBUGF
-#define DEBUGC(VAL,FLAG) if( 0 ) logDebug
-#define DEBUGV(VAL,VAR) if( 0 ) logDebug
-#define DEBUGM(VAL,VAR,FLAG) if( 0 ) logDebug
-#define DEBUGF(FLAG) if( 0 ) logDebug
+
+#if 0
+#define DEBUGC(VAL,FLAG)      if( 0 ) logDebug
+#define DEBUGV(VAL,VAR)       if( 0 ) logDebug
+#define DEBUGFC(FLAG)         if( 0 )
 #endif
 
+#define DEBUGFSET(FLAG)       ( 0 )
+#define DEBUGF(FLAG)          if( 0 ) logDebug
+#define DEBUGFC(FLAG)        if( 0 )
+#define DEBUG0      if(0) logDebug
+#define DEBUGL0     (0)
+#define DEBUG1      if(0) logDebug
+#define DEBUGL1     (0)
+#define DEBUG2      if(0) logDebug
+#define DEBUGL2     (0)
+#define DEBUG3      if(0) logDebug
+#define DEBUGL3     (0)
+#define DEBUG4      if(0) logDebug
+#define DEBUGL4     (0)
+
+#else
+
+/* general purpose debug test */
+#define DEBUGC(VAL,FLAG)     if( (Debug > (VAL) ) || ((FLAG) & DbgFlag) ) logDebug
+#define DEBUGL(VAL,FLAG)     ( (Debug > (VAL) ) || ((FLAG) & DbgFlag) )
+#define DEBUGF(FLAG)         if( (FLAG & DbgFlag) ) logDebug
+#define DEBUGFC(FLAG)        if( (FLAG & DbgFlag) )
+#define DEBUGFSET(FLAG)      ( (FLAG & DbgFlag) )
+
+EXTERN int Debug;	/* debug flags */
+EXTERN int DbgFlag;	/* force job number */
+EXTERN int DbgAuth;	/* debug authenticated transfer */
+
 /* Debug variable level */
-#define DEBUG0      DEBUGV(0,Debug)
-#define DEBUG1      DEBUGV(1,Debug)
-#define DEBUG2      DEBUGV(2,Debug)
-#define DEBUG3      DEBUGV(3,Debug)
-#define DEBUG4      DEBUGV(4,Debug)
-#define DEBUG5      DEBUGV(5,Debug)
-#define DEBUG6      DEBUGV(6,Debug)
-#define DEBUG7      DEBUGV(7,Debug)
-#define DEBUG8      DEBUGV(8,Debug)
-#define DEBUG9      DEBUGV(9,Debug)
+#define DEBUG0      DEBUGC(0,DPRINT1|DNW1|DDB1|DRECV1|DAUTH1)
+#define DEBUGL0     DEBUGL(0,DPRINT1|DNW1|DDB1|DRECV1|DAUTH1)
+#define DEBUG1      DEBUGC(1,DPRINT2|DNW2|DDB2|DRECV2|DAUTH2)
+#define DEBUGL1     DEBUGL(1,DPRINT2|DNW2|DDB2|DRECV2|DAUTH2)
+#define DEBUG2      DEBUGC(2,DPRINT3|DNW3|DDB3|DRECV3|DAUTH3)
+#define DEBUGL2     DEBUGL(2,DPRINT3|DNW3|DDB3|DRECV3|DAUTH3)
+#define DEBUG3      DEBUGC(3,DPRINT4|DNW4|DDB4|DRECV4|DAUTH4)
+#define DEBUGL3     DEBUGL(3,DPRINT4|DNW4|DDB4|DRECV4|DAUTH4)
+#define DEBUG4      DEBUGC(4,DPRINT4|DNW4|DDB4|DRECV4|DAUTH4)
+#define DEBUGL4     DEBUGL(4,DPRINT4|DNW4|DDB4|DRECV4|DAUTH4)
 
-#define DEBUG0F(FLAG)      DEBUGC(0,FLAG)
-#define DEBUG1F(FLAG)      DEBUGC(1,FLAG)
-#define DEBUG2F(FLAG)      DEBUGC(2,FLAG)
-#define DEBUG3F(FLAG)      DEBUGC(3,FLAG)
-#define DEBUG4F(FLAG)      DEBUGC(4,FLAG)
-#define DEBUG5F(FLAG)      DEBUGC(5,FLAG)
-#define DEBUG6F(FLAG)      DEBUGC(6,FLAG)
-#define DEBUG7F(FLAG)      DEBUGC(7,FLAG)
-#define DEBUG8F(FLAG)      DEBUGC(8,FLAG)
-#define DEBUG9F(FLAG)      DEBUGC(9,FLAG)
-
-#define DBGREM0     DEBUGV(0,DbgRem)
-#define DBGREM1     DEBUGV(1,DbgRem)
-#define DBGREM2     DEBUGV(2,DbgRem)
-#define DBGREM3     DEBUGV(3,DbgRem)
-#define DBGREM4     DEBUGV(4,DbgRem)
-#define DBGREM5     DEBUGV(5,DbgRem)
-#define DBGREM6     DEBUGV(6,DbgRem)
-#define DBGREM7     DEBUGV(7,DbgRem)
-#define DBGREM8     DEBUGV(8,DbgRem)
-#define DBGREM9     DEBUGV(9,DbgRem)
-
-#define DBGREM0F(FLAG)      DEBUGM(0,DbgRem,FLAG)
-#define DBGREM1F(FLAG)      DEBUGM(1,DbgRem,FLAG)
-#define DBGREM2F(FLAG)      DEBUGM(2,DbgRem,FLAG)
-#define DBGREM3F(FLAG)      DEBUGM(3,DbgRem,FLAG)
-#define DBGREM4F(FLAG)      DEBUGM(4,DbgRem,FLAG)
-#define DBGREM5F(FLAG)      DEBUGM(5,DbgRem,FLAG)
-#define DBGREM6F(FLAG)      DEBUGM(6,DbgRem,FLAG)
-#define DBGREM7F(FLAG)      DEBUGM(7,DbgRem,FLAG)
-#define DBGREM8F(FLAG)      DEBUGM(8,DbgRem,FLAG)
-#define DBGREM9F(FLAG)      DEBUGM(9,DbgRem,FLAG)
-
+#endif
 
 /* Flags for debugging */
 
-#define DPRINT1 ((1<<8))
-#define DPRINT2 ((3<<8))
-#define DPRINT3 ((7<<8))
-#define DPRINT4 ((0xF<<8))
-#define DPRINT5 ((0x1F<<8))
-#define DPRINT6 ((0x3F<<8))
-#define DNW1 ((1<<16))
-#define DNW2 ((3<<16))
-#define DNW3 ((7<<16))
-#define DNW4 ((0xF<<16))
-#define DNW5 ((0x1F<<16))
-#define DNW6 ((0x3F<<16))
-#define DDB1 ((1<<20))
-#define DDB2 ((3<<20))
-#define DDB3 ((7<<20))
-#define DDB4 ((0xF<<20))
-#define DDB5 ((0x1F<<20))
-#define DDB6 ((0x3F<<20))
+#define DPRSHIFT 0
+#define DPRINTMASK ((0xF<<DPRSHIFT))
+#define DPRINT1  ((0xF<<DPRSHIFT))
+#define DBPRINT1 ((0x8<<DPRSHIFT))
+#define DPRINT2  ((0x7<<DPRSHIFT))
+#define DBPRINT2 ((0x4<<DPRSHIFT))
+#define DPRINT3  ((0x3<<DPRSHIFT))
+#define DBPRINT3 ((0x2<<DPRSHIFT))
+#define DPRINT4  ((0x1<<DPRSHIFT))
+#define DBPRINT4 ((0x1<<DPRSHIFT))
 
-EXTERN int Debug;	/* debug flags */
-EXTERN int DbgRem;	/* Remote Connection debug flags */
+#define DNWSHIFT 4
+#define DNWMASK  ((0xF<<DNWSHIFT))
+#define DNW1     ((0xF<<DNWSHIFT))
+#define DBNW1    ((0x8<<DNWSHIFT))
+#define DNW2     ((0x7<<DNWSHIFT))
+#define DBNW2    ((0x4<<DNWSHIFT))
+#define DNW3     ((0x3<<DNWSHIFT))
+#define DBNW3    ((0x2<<DNWSHIFT))
+#define DNW4     ((0x1<<DNWSHIFT))
+#define DBNW4    ((0x1<<DNWSHIFT))
+
+#define DDBSHIFT 8
+#define DDBMASK  ((0xF<<DDBSHIFT))
+#define DDB1     ((0xF<<DDBSHIFT))
+#define DBB1     ((0x8<<DDBSHIFT))
+#define DDB2     ((0x7<<DDBSHIFT))
+#define DBB2     ((0x4<<DDBSHIFT))
+#define DDB3     ((0x3<<DDBSHIFT))
+#define DBB3     ((0x2<<DDBSHIFT))
+#define DDB4     ((0x1<<DDBSHIFT))
+#define DBB4     ((0x1<<DDBSHIFT))
+
+#define DRECVSHIFT 12
+#define DRECVMASK  ((0xF<<DRECVSHIFT))
+#define DRECV1     ((0xF<<DRECVSHIFT))
+#define DBRECV1    ((0x8<<DRECVSHIFT))
+#define DRECV2     ((0x7<<DRECVSHIFT))
+#define DBRECV2    ((0x4<<DRECVSHIFT))
+#define DRECV3     ((0x3<<DRECVSHIFT))
+#define DBRECV3    ((0x2<<DRECVSHIFT))
+#define DRECV4     ((0x1<<DRECVSHIFT))
+#define DBRECV4    ((0x1<<DRECVSHIFT))
+
+#define DAUTHSHIFT 16
+#define DAUTHMASK  ((0xF<<DAUTHSHIFT))
+#define DAUTH1     ((0xF<<DAUTHSHIFT))
+#define DBAUTH1    ((0x8<<DAUTHSHIFT))
+#define DAUTH2     ((0x7<<DAUTHSHIFT))
+#define DBAUTH2    ((0x4<<DAUTHSHIFT))
+#define DAUTH3     ((0x3<<DAUTHSHIFT))
+#define DBAUTH3    ((0x2<<DAUTHSHIFT))
+#define DAUTH4     ((0x1<<DAUTHSHIFT))
+#define DBAUTH4    ((0x1<<DAUTHSHIFT))
+
+
 EXTERN int DbgTest;			/* Flags set to test various options */
 EXTERN int DbgJob;	/* force job number */
-EXTERN int DbgFlag;	/* force job number */
 EXTERN char *New_log_file;	/* new log file for spooler */
 
 #define IP_TEST 0x0001		/* test IP address */
 
+extern struct keywords debug_vars[];		/* debugging variables */
 void Parse_debug( char *arg, struct keywords *keys, int interactive);
 void Get_debug_parm(int argc, char *argv[], char *optstr,
 	struct keywords *list);
 void Get_parms(int argc,char *argv[]);
-
-EXTERN struct keywords debug_vars[]		/* debugging variables */
-
-#ifdef DEFINE
- = {
-    { "debug",INTEGER_K,(void *)&Debug },
-    { "test",INTEGER_K,(void *)&DbgTest },
-    { "remote",INTEGER_K,(void *)&DbgRem },
-    { "job",INTEGER_K,(void *)&DbgJob },
-    { "print",FLAG_K,(void *)&DbgFlag,DPRINT1 },
-    { "print+",FLAG_K,(void *)&DbgFlag,DPRINT2 },
-    { "print+3",FLAG_K,(void *)&DbgFlag,DPRINT3 },
-    { "print+4",FLAG_K,(void *)&DbgFlag,DPRINT4 },
-    { "print+5",FLAG_K,(void *)&DbgFlag,DPRINT5 },
-    { "print+6",FLAG_K,(void *)&DbgFlag,DPRINT6 },
-    { "network",FLAG_K,(void *)&DbgFlag,DNW1 },
-    { "network+",FLAG_K,(void *)&DbgFlag,DNW2 },
-    { "network+3",FLAG_K,(void *)&DbgFlag,DNW3 },
-    { "network+4",FLAG_K,(void *)&DbgFlag,DNW4 },
-    { "network+5",FLAG_K,(void *)&DbgFlag,DNW5 },
-    { "network+6",FLAG_K,(void *)&DbgFlag,DNW6 },
-    { "database",FLAG_K,(void *)&DbgFlag,DDB1 },
-    { "database+",FLAG_K,(void *)&DbgFlag,DDB2 },
-    { "database+3",FLAG_K,(void *)&DbgFlag,DDB3 },
-    { "database+4",FLAG_K,(void *)&DbgFlag,DDB4 },
-    { "database+5",FLAG_K,(void *)&DbgFlag,DDB5 },
-    { "database+6",FLAG_K,(void *)&DbgFlag,DDB6 },
-    { (char *)0 }
-}
-#endif
-;
 
 #endif

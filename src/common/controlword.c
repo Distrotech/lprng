@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,10 +11,11 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: controlword.c,v 3.0 1996/05/19 04:05:55 papowell Exp $";
+"$Id: controlword.c,v 3.1 1996/12/28 21:40:11 papowell Exp $";
 
 #include "lp.h"
 #include "control.h"
+/**** ENDINCLUDE ****/
 
 #define PAIR(X) { #X, INTEGER_K, (void *)0, X }
 static struct keywords controlwords[] = {
@@ -38,8 +39,8 @@ PAIR(DOWN),
 PAIR(REREAD),
 PAIR(MOVE),
 PAIR(DEBUG),
-PAIR(AUTOHOLD),
-PAIR(NOAUTOHOLD),
+PAIR(HOLDALL),
+PAIR(NOHOLDALL),
 PAIR(CLAss),
 {0}
 };

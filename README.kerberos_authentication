@@ -1,0 +1,122 @@
+       LPRng and Kerberos Authentication
+         Thu Jan 16 11:23:28 PST 1997
+
+This version of the authentication program was developed using the
+Kerberos5-1.0 release as of December 20, 1997.  This was obtained
+from MIT:
+1) ftp to ATHENA-DIST.MIT.EDU (18.159.0.42), login anonymous, password
+       your_email_address
+2) Change into the directory '/pub/kerberos/
+3) Get the README files and look at the details of using FTP to get
+   the distribution.  Note that there are also patches available
+   which you might want to use.
+
+Note that this distribution has only the most superficial documentation. 
+There are no man pages for any of the support libraries, etc. etc.
+
+How to proceed:
+
+1. Get the Kerberos 5 distribution.
+2. Compile and install the distribution.
+3. Create the /etc/krb5.conf, /usr/local/var/krb5kdc/kdc.conf
+   files using templates from the src/conf-files subdirectory.
+   See the Installation notes and the System Administrators Guide.
+4. Don't forget to create the /usr/local/var/krb5kdc/kdc.acl file;
+   I did and it took me HOURS to figure out what was wrong...
+5. Start up the KDC and KADMIN servers - you might want to put
+    the following in your rc.local or equivalent file:
+
+if [ -f /etc/krb5.conf -a -f /usr/local/var/krb5kdc/kdc.conf  ]; then
+    echo -n ' krb5kdc ';    /usr/local/sbin/krb5kdc;
+    echo -n ' kadmind ';    /usr/local/sbin/kadmind;
+fi
+
+5. use kadmin (or kadmin.local) to create principals for your users.
+
+6. Now you need to create principals for the lprng servers.  I have been
+   using:  lpr/hostname.REALM  as a template-
+      i.e. lpr/dickory.sdsu.edu@SDSU.EDU for an example
+
+   Do this for all the servers.
+   You will also need to create one for the localhost as well.
+
+   WARNING: you cannot make your default server 'localhost', or
+   Kerberos gets very upset when trying to find principal names.
+
+7. Now you need to extract the keytab for each of the servers:
+
+       kadmin ...
+        ktadd -k file_for_host  lpr/hostname.REALM
+
+   The 'file_for_host' contains the keytab information, which is the
+   equivalent information for the server.  This file should be place
+
+8. Copy the 'file_for_host' to the server (you might want to encrypt
+   or use a secure transfer for this).
+
+9. The lpd.conf now contains the entries:
+
+	keytab /etc/lpd.keytab
+	service lpr
+	life
+	renew
+
+	The keytab entry is the location of the keytab file;
+	service is the service that will be used to generate
+    a server principal name.  This is the "lpr" that
+	appears in the above operations.
+
+    life and renew determine the lifetime and renewability
+	of Kerberos tickets.  The lifetime defaults to 10
+	hours,  and the ticket will be refreshed when it expires
+	if necessary.
+
+   Edit this file to reflect your local environment.
+
+10.  Copy the keytab file_for_host  to /etc/lpd.keytab on your
+   client machine.  This file MUST be owned by daemon, and have
+   read only permissions:
+
+   #> ls -l /etc/lpd.keytab
+    -rw-------  1 daemon  wheel  128 Jan 16 11:06 /etc/lpd.keytab
+
+11.  You might like to check out the authentication using the sclient and
+    sserver test programs.  These link in the kerberos authentication and
+    allow you to test it without all of LPD being involved.
+
+    cd src; make sserver sclient
+
+    usage: sserver [-D] [-p port] [-s service] [-S keytab] file
+       -D turns debugging on
+
+       1. opens TCP   port 'port' (defautl 1234)
+       2. waits for a connection
+       3. when a connection comes in,  uses 'service' to get the principal
+           name of the server,  and looks up the key in keytab file.
+       4. Goes through the kerberos authentication.
+       5. Copies the input from remote server to 'file'
+       6. exits.
+
+     usage: sclient [-D] [-p port] [-s service] host file
+       -D turns debugging on
+
+       1. opens a connection to port on host (i.e. - host%port)
+       2. does the authentication.  You must have done kinit to get
+           for your ticket to be valid.
+       3. sends the file to remote host.
+
+      procedure:  start up sserver on one host/window, then run sclient.
+         The error messages are pretty straight forward.
+
+12. Change the lpd.conf file to have:
+       use_auth      kerberos
+       default_auth  kerberos
+
+13. If you are using printers in different domains,  then you can
+    put the explicit name of the server in the printcap file,
+    using the server_principal entry.  For example:
+	lp_offsite
+		:lp=printer@erehwon.org
+		:use_auth=kerberos
+		:server_principal=lpr/erehwon.org@BLUESKY.ORG
+

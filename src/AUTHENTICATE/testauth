@@ -1,0 +1,47 @@
+#!/bin/sh
+# '$Id: testauth,v 3.2 1997/01/22 23:06:12 papowell Exp $'
+USER=${USER:-`whomai`};
+# show environment variables
+#/tmp/setupauth \
+# 	"${USER}" "/bin/ksh -c 'echo CLIENT; printenv ;'" \
+# 	"${USER}" "/bin/ksh -c 'echo SERVER; printenv ;'"
+#
+#exit 0;
+#
+# check birectionality of data transfer
+#  /tmp/setupauth \
+# 	"${USER}" "/bin/ksh -c 'echo CLIENT STARTING SENDING 1>&2; echo hi 1>&0;'" \
+# 	"${USER}" "/bin/ksh -c 'echo SERVER READING; cat ;'" \
+# sleep 3;
+#  /tmp/setupauth \
+# 	"${USER}" "/bin/ksh -c 'echo CLIENT STARTING READING; cat '" \
+# 	"${USER}" "/bin/ksh -c 'echo SERVER SENDING 1>&2; echo hi 1>&0'"
+# 
+# check the authenticate pgp operation
+#  Note: you can also use
+#  'sh -x ./authenticate_pcp ...' to see the detailed actions.
+#  Note: you must be root to run the next test.
+#
+echo "When output stops, Enter a line of text, and then a ^D for EOF"; 
+rm -f /tmp/tempc /tmp/temps
+echo Hi $$ >/tmp/tempc
+chmod 777 /tmp/tempc
+/tmp/setupauth \
+ 	${USER} "./authenticate_pgp -C -n${USER} -R${USER} -T/tmp/tempc" \
+ 	${USER} "./authenticate_pgp -S -n${USER} -R${USER} -T/tmp/temps"
+ 
+ 
+# Set KEY to be the identifier to be used to look up the server key
+# Set DAEMON to be the daemon user
+KEY=daemon_ecepc110
+DAEMON=daemon
+echo "Both $user and $DAEMON should have keys for ${KEY} and $user"
+
+rm -f /tmp/tempc /tmp/temps
+echo "When output stops, Enter a line of text, and then a ^D for EOF"; 
+echo Hi $$ >/tmp/tempc
+chmod 777 /tmp/tempc
+/tmp/setupauth \
+	${USER} "sh -x ./authenticate_pgp -C -n${USER} -R$KEY -T/tmp/tempc" \
+	${DAEMON} "./authenticate_pgp -S -n${USER} -R$KEY -T/tmp/temps"
+rm -f /tmp/tempc /tmp/temps

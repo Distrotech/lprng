@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -20,17 +20,28 @@
  *
  *	Mon Aug  7 20:49:45 PDT 1995 Patrick Powell
  ***************************************************************************/
-static char *const _id = "$Id: setstatus.c,v 3.3 1996/09/09 14:24:41 papowell Exp papowell $";
+static char *const _id = "$Id: setstatus.c,v 3.4 1997/01/22 23:09:32 papowell Exp $";
 
 #include "lp.h"
-#include "lp_config.h"
-#include "printcap.h"
+#include "setstatus.h"
+#include "errorcodes.h"
+#include "fileopen.h"
+#include "linksupport.h"
+#include "pathname.h"
+/**** ENDINCLUDE ****/
 
 static int in_setstatus;
-static char msg[LARGEBUFFER];
+static char *msg_b;
+static int msg_b_len;
 
 static void put_header( struct control_file *cfp, char *header );
 static void put_end( struct control_file *cfp );
+
+static void set_msg_b( void )
+{
+	msg_b_len = LARGEBUFFER;
+	malloc_or_die( msg_b, msg_b_len+1 );
+}
 
 /*
  * Error status on STDERR
@@ -59,6 +70,8 @@ void setstatus (va_alist) va_dcl
     VA_SHIFT (cfp, struct control_file * );
     VA_SHIFT (fmt, char *);
 
+	if( msg_b == 0 ) set_msg_b();
+	msg_b[0] = 0;
 	/* prevent recursive calls */
 	if( in_setstatus ) return;
 	++in_setstatus;
@@ -72,16 +85,15 @@ void setstatus (va_alist) va_dcl
 		return;
 	}
 
-	put_header( cfp, "STATUS" );
-	len = strlen(msg);
-	startmsg = msg+len;
-	(void) vplp_snprintf( msg+len, sizeof(msg)-len, fmt, ap);
-	len = strlen(msg);
-	at_time = msg+len;
-	(void) plp_snprintf( msg+len, sizeof(msg)-len, " at %s", 
+	len = strlen(msg_b);
+	startmsg = msg_b+len;
+	(void) vplp_snprintf( msg_b+len, msg_b_len-len, fmt, ap);
+	len = strlen(msg_b);
+	at_time = msg_b+len;
+	(void) plp_snprintf( msg_b+len, msg_b_len-len, " at %s", 
 		Time_str(-1,0) );
-	DEBUG8("setstatus: new status '%s'", startmsg );
-	safestrncat( msg, "\n" );
+	DEBUG3("setstatus: new status '%s'", startmsg );
+	safestrncat( msg_b, "\n" );
 
 	/* append new status to end of old */
 
@@ -111,21 +123,21 @@ void setstatus (va_alist) va_dcl
 		dpath = *CDpathname;
 		path = Add2_path( &dpath, "status.", Printer );
 		Status_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
-		DEBUG8("setstatus: status file '%s'", path);
+		DEBUG4("setstatus: status file '%s'", path);
 		if( Status_fd < 0 ){
 			logerr_die( LOG_ERR, "setstatus: cannot open '%s'", path );
 		}
 	}
 	path = dpath.pathname;
-	/*DEBUG8("setstatus: file '%s', size %d", path, statb.st_size ); */
+	/*DEBUG4("setstatus: file '%s', size %d", path, statb.st_size ); */
 	str = 0;
 	if( size > 0 && statb.st_size > size ){
 		/* we truncate it */
-		DEBUG8("setstatus: truncating '%s'", path );
+		DEBUG4("setstatus: truncating '%s'", path );
 		if( save == 0 ){
 			malloc_or_die( save, minsize+1 );
 		}
-		if( lseek( Status_fd, (off_t)(statb.st_size-minsize), 0 ) < 0 ){
+		if( lseek( Status_fd, statb.st_size-minsize, SEEK_SET ) < 0 ){
 			logerr_die( LOG_ERR, "setstatus: cannot seek '%s'", path );
 		}
 		for( len = minsize, str = save;
@@ -149,7 +161,7 @@ void setstatus (va_alist) va_dcl
 	}
 done:
 	if( at_time ) *at_time = 0;
-	put_end( cfp );
+	if( Logger_destination && *Logger_destination ) put_end( cfp );
 	in_setstatus = 0;
 	VA_END;
 }
@@ -171,26 +183,37 @@ done:
 
 static void put_header( struct control_file *cfp, char *header )
 {
-	char pr[SMALLBUFFER];
+	char pr[LINEBUFFER];
 
-	msg[0] = 0;
+	if( msg_b == 0 ) set_msg_b();
+	msg_b[0] = 0;
 	pr[0] = 0;
 	if( cfp ){
 		if( Printer && *Printer ){
-			plp_snprintf( pr, sizeof(pr), " PRINTER %s@%s",
+			plp_snprintf( pr, sizeof(pr), "PRINTER %s@%s\n",
 				Printer, FQDNHost );
 		}
-		(void) plp_snprintf( msg, sizeof(msg),
-			"IDENTIFIER %s%s AT %s\n%s\n",
-			cfp->identifier, pr, Time_str(-1,0), header );
+		(void) plp_snprintf( msg_b, msg_b_len,
+			"IDENTIFIER %s\n%sAT %s\n%s\n",
+			cfp->identifier+1, pr, Time_str(-1,0), header );
 	}
 }
 
 static void put_end( struct control_file *cfp )
 {
-	if( cfp ){
-		safestrncat( msg, ".\n" );
-		send_to_logger( msg );
+	int len;
+
+	len = strlen(msg_b);
+	if( len ){
+		if( len >= (msg_b_len - 3) ){
+			len = msg_b_len - 3;
+		}
+		if( msg_b[len-1] != '\n' ){
+			strcpy( &msg_b[len], "\n.\n" );
+		} else {
+			strcpy( &msg_b[len], ".\n" );
+		}
+		send_to_logger( msg_b );
 	}
 }
 
@@ -198,10 +221,33 @@ static int logger_fd;
 static char *saved_host, *host;
 static int prot_num, port_num;
 
+void reset_logging( void )
+{
+	DEBUG3( "reset_logging: logger_fd %d, saved_host '%s'",
+		logger_fd, saved_host );
+	if( logger_fd > 0 ){
+		close( logger_fd );
+		logger_fd = 0;
+	}
+	if( saved_host ){
+		free( saved_host );
+		saved_host = 0;
+	}
+	if( host ){
+		free( host );
+		host = 0;
+	}
+}
+
+/***************************************************************************
+ * send_to_logger( char *msg )
+ *  This will try and send to the logger.  It usually will not try to
+ *  reset a connection unless asked.
+ ***************************************************************************/
+
 void send_to_logger( char *msg )
 {
-
-	DEBUG5( "send_to_logger: dest '%s', olddest '%s',fd %d,msg '%s'",
+	DEBUG3( "send_to_logger: dest '%s', olddest '%s',fd %d,msg '%s'",
 		Logger_destination, saved_host, logger_fd, msg );
 	if( Logger_destination == 0 || *Logger_destination == 0 ){
 		return;
@@ -211,22 +257,11 @@ void send_to_logger( char *msg )
 		char *protocol = Default_logger_protocol;
 		char *s;
 		struct servent *sp;
-		DEBUG5( "send_to_logger: closing logger_fd %d", logger_fd );
-		if( logger_fd > 0 ){
-			close( logger_fd );
-			logger_fd = 0;
-		}
-		if( saved_host ){
-			free( saved_host );
-			saved_host = 0;
-		}
-		if( host ){
-			free( host );
-			host = 0;
-		}
+
+		reset_logging();
 		saved_host = safestrdup( Logger_destination );
 		host = safestrdup(saved_host);
-		DEBUG5( "send_to_logger: dest '%s',msg '%s',port'%s',prot'%s'",
+		DEBUG3( "send_to_logger: dest '%s',msg '%s',port'%s',prot'%s'",
 			saved_host, msg, port, protocol );
 		/* OK, we try to open a connection to the logger */
 		if( (s = strchr( host, ',')) ){
@@ -250,18 +285,20 @@ void send_to_logger( char *msg )
 			Errorcode = JABORT;
 			fatal( LOG_CRIT, "send_to_logger: bad protocol '%s'", protocol );
 		}
-		if ((sp = getservbyname(port, protocol)) == 0) {
-			DEBUG5("getservbyname(\"%s\",%s) failed", port, protocol);
+		port_num = 0;
+		if( isdigit(port[0]) ){
 			/* try integer value */
 			port_num = atoi( port );
-		} else {
+		} else if( (sp = getservbyname(port, protocol)) ) {
 			port_num = ntohs(sp->s_port);
+		} else {
+			DEBUG3("getservbyname(\"%s\",%s) failed", port, protocol);
 		}
 		if( port_num <= 0 ){
 			Errorcode = JABORT;
 			fatal( LOG_CRIT, "send_to_logger: bad port number '%s'", port );
 		}
-		DEBUG5("send_to_logger: host '%s', port %d, protocol %d",
+		DEBUG3("send_to_logger: host '%s', port %d, protocol %d",
 			host, port_num, prot_num );
 	}
 	if( logger_fd <= 0 ){
@@ -272,11 +309,11 @@ void send_to_logger( char *msg )
 				"send_to_logger: file descriptor out of range '%d'",
 			logger_fd );
 		}
-		DEBUG5("send_to_logger: logger_fd '%d'", logger_fd );
+		DEBUG3("send_to_logger: logger_fd '%d'", logger_fd );
 	}
 	if( msg && logger_fd > 0 ){
 		if( Write_fd_str( logger_fd, msg ) < 0 ){
-			DEBUG9("send_to_logger: write to fd %d failed - %s",
+			DEBUG4("send_to_logger: write to fd %d failed - %s",
 				logger_fd, Errormsg(errno) );
 			if( prot_num != SOCK_DGRAM ){
 				close( logger_fd );
@@ -316,12 +353,22 @@ void setmessage (va_alist) va_dcl
 		return;
 	}
 	put_header( cfp, header );
-	len = strlen( msg );
-	(void) vplp_snprintf( msg+len, sizeof(msg)-len, fmt, ap);
-	len = strlen( msg );
-	if( len > 0 && msg[len-1] != '\n' ){
-		safestrncat( msg, "\n" );
-	}
+	len = strlen( msg_b );
+	(void) vplp_snprintf( msg_b+len, msg_b_len-len, fmt, ap);
 	put_end( cfp );
 	VA_END;
+}
+
+
+/***************************************************************************
+ * Dup_logger_fd( int fd )
+ *  Dup the logger_fd file descriptor to fd.
+ *  If it fails, don't worry.
+ ***************************************************************************/
+
+void Dup_logger_fd( int fd )
+{
+	if( logger_fd > 0 && dup2( logger_fd, fd ) == 0 ){
+		logger_fd = fd;
+	}
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,7 +10,7 @@
  * PURPOSE:
  **************************************************************************/
 
-static char *const _id = "$Id: freespace.c,v 3.1 1996/06/30 17:12:44 papowell Exp $";
+static char *const _id = "$Id: freespace.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
 
 /***************************************************************************
  * Check_space()
@@ -27,6 +27,10 @@ static char *const _id = "$Id: freespace.c,v 3.1 1996/06/30 17:12:44 papowell Ex
  * portable macros to work with statfs (theoretically portable, at least)
  *************************************************************************/
 #include "lp.h"
+#include "pathname.h"
+#include "fileopen.h"
+#include "freespace.h"
+/**** ENDINCLUDE ****/
 
 #ifdef HAVE_SYS_MOUNT_H
 # include <sys/mount.h>
@@ -39,6 +43,10 @@ static char *const _id = "$Id: freespace.c,v 3.1 1996/06/30 17:12:44 papowell Ex
 #endif
 #ifdef HAVE_SYS_VFS_H
 # include <sys/vfs.h>
+#endif
+
+#ifdef SUNOS
+extern int statfs(const char *, struct statfs *);
 #endif
 
 # if USE_STATFS_TYPE == STATVFS
@@ -54,7 +62,7 @@ static char *const _id = "$Id: freespace.c,v 3.1 1996/06/30 17:12:44 papowell Ex
 #  define plp_fs_free_bytes(f) (f.fd_bfree * f.fd_bsize)
 # endif
 
-# if USE_STATFS_TYPE ==  SVR3__STATFS
+# if USE_STATFS_TYPE ==  SVR3_STATFS
 #  define plp_struct_statfs struct statfs
 #  define plp_fs_free_bytes(f) (f.f_bfree * f.f_bsize)
 #  define plp_statfs(path,buf) statfs(path,buf,sizeof(struct statfs),0)
@@ -69,28 +77,33 @@ static char *const _id = "$Id: freespace.c,v 3.1 1996/06/30 17:12:44 papowell Ex
 /***************************************************************************
  * Space_needed() - get the amount of free space needed in the spool directory
  ***************************************************************************/
-unsigned long Space_needed( char *min_space, struct dpathname *dpath )
+unsigned long Space_needed( char *space, struct dpathname *dpath )
 {
-	char *end, *s;
+	char *end, *min_space;
 	unsigned long needed = 0;
 	char line[MAXPATHLEN];
+	char buffer[LINEBUFFER];
 	int fd, i;
 	struct stat statb;
 
 	/* get the limits */
-	if( min_space && *min_space ){
-		if( (s = strchr( min_space, '\n' )) ) s = 0;
-		DEBUG6("Space_needed: MI '%s'", min_space );
+	if( space && *space ){
+		safestrncpy(buffer, space );
+		min_space = buffer;
+		while( isspace(*min_space) ) ++min_space;
+		trunc_str( min_space );
+		DEBUG3("Space_needed: MI '%s'", min_space );
 		end = min_space;
+		if( *min_space == '#' ) ++min_space;
 		needed = strtol( min_space, &end, 10 );
 		if( min_space == end ){
 			/* could be a file name */
 			if( min_space[0] != '/' ){
 				min_space = Add_path( dpath, min_space );
 			}
-			DEBUG6("Space_needed: trying to open '%s'", min_space );
+			DEBUG3("Space_needed: trying to open '%s'", min_space );
 			fd = Checkread( min_space, &statb );
-			DEBUG6("Space_needed: file '%s' fd %d", min_space, fd );
+			DEBUG3("Space_needed: file '%s' fd %d", min_space, fd );
 			if( fd >= 0 ){
 				/* we read a line */ 
 				i = read( fd, line, sizeof(line)-1 );
@@ -101,7 +114,8 @@ unsigned long Space_needed( char *min_space, struct dpathname *dpath )
 					needed = strtol(min_space, &end, 10 );
 				}
 			} else {
-				logerr( LOG_ERR, "Space_needed: cannot open '%s'", s);
+				logerr( LOG_ERR, "Space_needed: cannot open '%s'",
+				min_space);
 			}
 		}
 		switch( *end ){
@@ -109,7 +123,7 @@ unsigned long Space_needed( char *min_space, struct dpathname *dpath )
 		}
 	}
 
-	DEBUG6("Space_needed: need %ld", needed );
+	DEBUG3("Space_needed: need %ld", needed );
 	return( needed );
 }
 
@@ -128,19 +142,28 @@ unsigned long Space_avail( struct dpathname *dpath )
 		logerr( LOG_ERR, "Space_avail: cannot stat '%s'", pathname );
 	}
 	space = (plp_fs_free_bytes( fsb ) + 1023)/1024;
-	DEBUG6("Space_avail: path '%s', space %ld", pathname, space );
+	DEBUG3("Space_avail: path '%s', space %ld", pathname, space );
 	return( space );
 }
 
+/***************************************************************************
+ * int Check_space( int jobsize, char *min_space, struct dpathname *dpath )
+ *   RETURNS 0 if space available, 1 if none
+ ***************************************************************************/
 int Check_space( int jobsize, char *min_space, struct dpathname *dpath )
 {
 	unsigned long needed;
 	unsigned long avail;
+	int ok;
 
+	jobsize = ((jobsize+1023)/1024);
+	DEBUG3("Check_space: jobsize %dK", jobsize );
 	needed = Space_needed( min_space, dpath );
-	if( needed == 0 ) return( 0 );
+	DEBUG3("Check_space: need %ldK free", needed );
 	avail = Space_avail( dpath );
-	DEBUG6("Check_space: needed %ld, job %d, space avail %d",
-		needed, jobsize, avail );
-	return( (needed + ((jobsize+1023)/1024)) < avail );
+	DEBUG3("Check_space: available %ldK free", avail );
+	ok = ( (needed + jobsize) >= avail );
+	DEBUG3("Check_space: need %ldK free, job %dK, space avail %ldK, ok %d",
+		needed, jobsize, avail, ok );
+	return( ok );
 }

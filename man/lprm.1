@@ -1,30 +1,44 @@
-.ds VE LPRng-2.3.12
+.ds VE LPRng-3.1.2
 .TH LPRM 1 \*(VE "LPRng"
 .ig
-$Id: lprm.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+$Id: lprm.1,v 3.4 1997/01/31 22:42:36 papowell Exp $
 ..
 .SH NAME
 lprm \- remove jobs from the line printer spooling queue
 .SH SYNOPSIS
 .B lprm
 [
-.BI \-P printer
-] [
 .B \-a
-] [
-.B \-V
-] [
+]
+[
+.B \-A
+]
+[
 .BI \-D debugopt
-] [
-jobid *
-] [
-all
+]
+[
+.BI \-P printer
+]
+[
+.B \-V
+]
+.ti +5n
+[
+.IR jobid \|.\|.\|.
+]
+[
+.I all
 ]
 .SH DESCRIPTION
 .PP
 .I Lprm
 will send a request to the LPD server to remove jobs
 from a spool queue.
+(See
+.IR clean (1)
+for an
+.IR lp (1)
+compatible interface.)
 .I Lprm
 is normally the only method by which a user may remove a job.
 The jobs to be removed are specified by the job number or user name;
@@ -39,18 +53,20 @@ then for jobs that match any of the specified set of tags.
 If no tags are specified,
 only the first job in the queue that the user has permissions to remove
 will be removed.
-.PP
 If the
 .B \-a
-flag is specified, 
+flag or the
+.I all
+spool queue is specified,
 .I lprm
-will search all available spool queues for the specified jobs and remove them.
+will search all available spool queues.
 .LP
-The all
-wildcard is used to match all jobs in a spool queue;
+The
+.I all
+wildcard jobid is used to match all jobs in a spool queue;
 however unless the user has
 .I control
-permissions  for the spool queue only his jobs will be removed.
+permissions  for the spool queue only the user's jobs will be removed.
 See the
 .BR lpd (1)
 man page for details about control permissions.
@@ -101,6 +117,8 @@ shell glob expansion.
 .sp
 lprm -Pt1 'nobody@system*'
 .SH OPTIONS
+.IP "\fB\-A\fR" 5
+Use authentication when sending a request to the server.
 .IP "\fB\-a\fR" 5
 Remove files from all spool queues available to the user.
 .IP "\fB\-P\fIprinter\fR" 5
@@ -169,22 +187,24 @@ help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
 .LP
-LPRng is a enhanced printer spooler system,
-with functionality similar to the Berkeley LPR software,
-and is derived from the PLP (Public Line Printer) software,
-version 4.0.
-LPRng has many advanced features, which are described in
-.I "LPRng - An Enhanced Line Printer Spooler"
-by Patrick Powell, San Diego State University (papowell@sdsu.edu),
-et al.
-It is available from
-dickory.sdsu.edu:/pub/LPRng.
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
 .LP
-The LPRng software is based on PLP4.0,
-supported and extended by Justin Mason (jmason@iona.ie),
-which is available from ftp://ftp.iona.ie/pub/PLP4.0.
-Justin greatly aided in the design and development of many of the
-software features,
-as well as contributing a large number of bug fixes,
-design reviews,
-and other suggestions.
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

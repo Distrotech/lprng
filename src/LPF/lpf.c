@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  * From the original PLP Software distribution
@@ -21,7 +21,7 @@
  ***************************************************************************/
 #ifndef lint
 static char *const _id =
-	"$Id: lpf.c,v 3.0 1996/05/19 04:05:44 papowell Exp $";
+	"$Id: lpf.c,v 3.1 1996/12/28 21:40:03 papowell Exp $";
 #endif
 
 /***************************************************************************
@@ -54,7 +54,7 @@ static char *const _id =
  *  number of pages that were used.
  *  The "halt string", which is a sequence of characters that
  *  should cause the filter to suspend itself, is passed to filter.
- *  When these characters are detected,  the "suspend()" routine should be
+ *  When these characters are detected,  the "suspend_ofilter()" routine should be
  *  called.
  *
  *  On successful termination,  the accounting file will be updated.
@@ -114,6 +114,7 @@ static char *const _id =
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
+# include "portable.h"
 #endif
 
 #include <sys/types.h>
@@ -349,10 +350,9 @@ void logerr_die( va_alist ) va_dcl
  *	writes the accounting information to the accounting file
  *  This has the format: user host printer pages format date
  */
-void doaccnt()
+void doaccnt(void)
 {
-	time_t t, time();
-	char *ctime();
+	time_t t;
 	char buffer[256];
 	FILE *f;
 	int l, len, c;
@@ -411,6 +411,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		switch(c){
 			case 'C': class = optarg; break; 
 			case 'E': errorfile = optarg; break;
+			case 'D': debug = atoi( optarg ); break;
 			case 'T':
 					for( s = optarg; s && *s; s = end ){
 						end = strchr( s, ',' );
@@ -418,9 +419,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 							*end++ = 0;
 						}
 						while( isspace( *s ) ) ++s;
-						if( isdigit( *s ) ){
-							debug = atoi( optarg );
-						} else xflag = *s; break;
+						xflag = *s;
 					}
 					break; 
 			case 'F': format = optarg; break; 
@@ -498,9 +497,9 @@ void getargs( int argc, char *argv[], char *envp[] )
 }
 
 /*
- * suspend():  suspends the output filter, waits for a signal
+ * suspend_ofilter():  suspends the output filter, waits for a signal
  */
-void suspend()
+void suspend_ofilter(void)
 {
 	if(debug)fprintf(stderr,"FILTER suspending\n");
 	fflush(stderr);
@@ -513,7 +512,7 @@ void suspend()
  * filter will scan the input looking for the suspend string
  * if any.
  ******************************************/
-void cleanup() {}
+void cleanup(void) {}
 
 void filter(char *stop)
 {
@@ -557,7 +556,7 @@ void filter(char *stop)
 					logerr( "fflush returned error" );
 					break;
 				}
-				suspend();
+				suspend_ofilter();
 			}
 		} else {
 			for( i = 0; i < state; ++i ){

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/printcap.proto
 # PURPOSE: printcap prototype
-# $Id: printcap.proto,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $
+# $Id: printcap.proto,v 3.2 1997/01/24 20:27:06 papowell Exp $
 ########################################################################## 
 #
 # This is a set of printcap entries used for testing and an example of the
@@ -26,8 +26,8 @@ t1
 	:cm=Test Printer 1
 	:rw
 	:lf=log
-#	:db=9,remote=10
-	:lp=/tmp/t1_lp
+#	:db=4,network,database,receive
+	:lp=_TMP_/t1_lp
 	:ld=leader\n
 	:tr=trailer\n
 	:of=_TMP_LPD/lpf -D10
@@ -39,7 +39,7 @@ t1
 #
 #start t2
 t2|Test Printer 2:sd=_TMP_LPD/t2:lp=t1@_HOST_:lf=log
-#	:db=9
+#	:db=4,network,database,receive
 #end t2
 #
 # The following entry is used in a database to specify the
@@ -48,7 +48,7 @@ t2|Test Printer 2:sd=_TMP_LPD/t2:lp=t1@_HOST_:lf=log
 #
 #start t3
 t3:lp=t3@_HOST_
-#	:db=9
+#	:db=4,network,database,receive
 #end t3
 #
 # server and subserver queues
@@ -56,15 +56,15 @@ t3:lp=t3@_HOST_
 #
 #start t4
 t4:sd=_TMP_LPD/t4:sv=t5,t6
-#	:db=9
+#	:db=4,network,database,receive
 #end t4
 #start t5
-t5:sd=_TMP_LPD/t5:ss=t4:lp=/tmp/t5_lp
-#	:db=9
+t5:sd=_TMP_LPD/t5:ss=t4:lp=_TMP_/t5_lp
+#	:db=4,network,database,receive
 #end t5
 #start t6
-t6:sd=_TMP_LPD/t6:ss=t4:lp=/tmp/t6_lp
-#	:db=9
+t6:sd=_TMP_LPD/t6:ss=t4:lp=_TMP_/t6_lp
+#	:db=4,network,database,receive
 #end t6
 # use this when you want to explicitly specify a list of printers
 # to be used for all queries

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,9 +10,11 @@
  * PURPOSE: dump various data structures
  **************************************************************************/
 
-static char *const _id = "$Id: dump.c,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $";
+static char *const _id = "$Id: dump.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
 
 #include "lp.h"
+#include "dump.h"
+/**** ENDINCLUDE ****/
 
 /**********************************************************************
  *dump_params( char *title, struct keywords *k )
@@ -23,13 +25,14 @@ static char *const _id = "$Id: dump.c,v 3.1 1996/08/25 22:20:05 papowell Exp pap
 void dump_parms( char *title, struct keywords *k )
 {
 	char *s, **l;
-	int i;
+	int i, v;
 
 	if( title ) logDebug( "*** %s ***", title );
 	for( ; k &&  k->keyword; ++k ){
 		switch(k->type){
 		case FLAG_K: case INTEGER_K:
-			logDebug( "%s: %d", k->keyword, *(int *)(k->variable) );
+			v =	*(int *)(k->variable);
+			logDebug( "%s: %d (0x%x, 0%o)", k->keyword,v,v,v);
 			break;
 		case STRING_K:
 			s = *(char **)(k->variable);
@@ -77,10 +80,11 @@ void dump_data_file( char *title,  struct data_file *list )
 {
 	if( title ) logDebug( "*** %s ***", title );
 	if( list ){
-		logDebug( "openname '%s', transfername '%s', N '%s', U '%s'",
-			list->openname, list->transfername, list->Ninfo, list->Uinfo );
-		logDebug( "  fd %d, line %d, linecount %d, flags %d, copies %d",
-			list->fd, list->line, list->linecount, list->flags, list->copies );
+		logDebug( "original '%s' openname '%s', transfername '%s'",
+			list->original, list->openname, list->transfername );
+		logDebug( "  N '%s', U '%s'", list->Ninfo, list->Uinfo );
+		logDebug( "  fd %d, found %d, copies %d",
+			list->fd, list->found, list->copies );
 	}
 }
 void dump_data_file_list( char *title,  struct data_file *list, int count )
@@ -120,16 +124,25 @@ void dump_control_file( char *title,  struct control_file *cf )
 	char **line;
 	if( title ) logDebug( "*** %s ***", title );
 	if( cf ){
-		logDebug( "name '%s', number %d, jobsize %d, filehostname '%s'",
-			cf->name, cf->number, cf->jobsize, cf->filehostname );
-		logDebug( "active %d, held_class %d",
-			cf->active, cf->held_class );
-		logDebug( "   flags 0x%x, priority_time %ld, hold_time %ld, error `%s'",
-			 cf->flags, cf->priority_time, cf->hold_time, cf->error );
-		logDebug( "   print_attempts %d, control_info %d",
-			cf->print_attempts, cf->control_info );
-		count = cf->info_lines.count;
-		line = (void *)cf->info_lines.list;
+		logDebug( "original '%s', openname '%s'",
+			cf->original, cf->openname );
+		logDebug( "  transfername '%s', holdfile '%s'",
+			cf->transfername, cf->hold_file );
+		logDebug( "  number %d, recvd_number %d, jobsize %d, filehostname '%s'",
+			cf->number, cf->recvd_number, cf->jobsize, cf->filehostname );
+		logDebug( "  active %d, receiver %d, held_class %d",
+			cf->hold_info.active, cf->hold_info.receiver,  cf->hold_info.held_class );
+		logDebug( "  flags 0x%x, priority_time %ld, hold_time %ld, error `%s'",
+			cf->flags, cf->hold_info.priority_time,
+			cf->hold_info.hold_time, cf->error );
+		logDebug( "  done_time %ld, remove_time %ld",
+			cf->hold_info.done_time, cf->hold_info.remove_time );
+		logDebug( "  print_attempt %d, control_info %d, control_file_lines.count %d",
+			cf->hold_info.attempt, cf->control_info, cf->control_file_lines.count );
+		logDebug( "  auth_id '%s', forward_id '%s'",
+			cf->auth_id, cf->forward_id );
+		count = cf->control_file_lines.count;
+		line = (void *)cf->control_file_lines.list;
 		for( i = 0; i < count; ++i ){
 			logDebug( "line [%d] '%s'", i, line[i] );
 		}
@@ -150,20 +163,24 @@ void dump_control_file( char *title,  struct control_file *cf )
 			for( i = 0; i < cf->destination_list.count; ++i ){
 				d = &destination[i];
 				logDebug( "destination %d", i );
-				logDebug( "  dest='%s', id='%s', error='%s', done %d",
-					d->destination,d->identifier,d->error, d->done );
-				logDebug( "  copies=%d, copy_done=%d, status=%d, active=%d",
-					d->copies, d->copy_done, d->status, d->active );
+				logDebug( "  dest='%s', identifier '%s'",
+					d->destination,d->identifier );
+				logDebug( "  error='%s'",
+					d->error);
+				logDebug(
+			"  done %d, copies=%d, copy_done=%d, status=%d, active=%d, seq %d",
+					d->done,d->copies, d->copy_done, d->status, d->active,
+					d->sequence_number );
 				logDebug( "  arg_start=%d, arg_count=%d",
 					d->arg_start, d->arg_count );
-				lines = &cf->destination_lines.list[d->arg_start];
+				lines = &cf->hold_file_lines.list[d->arg_start];
 				for( j = 0; j < d->arg_count; ++j ){
 					logDebug( "  arg[%d]='%s'", j, lines[j] );
 				}
 			}
 		}
 		dump_data_file_list( "Data files",
-			(void *)cf->data_file.list, cf->data_file.count );
+			(void *)cf->data_file_list.list, cf->data_file_list.count );
 	}
 }
 
@@ -202,3 +219,38 @@ void dump_filter( char *title,  struct filter *filter )
 	}
 }
 
+
+/***************************************************************************
+ * dump_host_information( char *title, struct host_information *info )
+ * Dump file information
+ ***************************************************************************/
+
+void dump_host_information( char *title,  struct host_information *info )
+{
+	int i, j;
+	char **list;
+	unsigned char *s;
+	if( title ) logDebug( "*** %s ***", title );
+	if( info ){
+		logDebug( "info name count %d", info->host_names.count );
+		list = info->host_names.list;
+		for( i = 0; i < info->host_names.count; ++i ){
+			logDebug( "  [%d] '%s'", i, list[i] );
+		}
+		logDebug( "  address type %d, length %d count %d",
+				info->host_addrtype, info->host_addrlength,
+				info->host_addr_list.count );
+		s = (void *)info->host_addr_list.list;
+		for( i = 0; i < info->host_addr_list.count; ++i ){
+			char msg[64];
+			int len;
+			plp_snprintf( msg, sizeof(msg), "  [%d] 0x", i );
+			for( j = 0; j < info->host_addrlength; ++j ){
+				len = strlen( msg );
+				plp_snprintf( msg+len, sizeof(msg)-len, "%02x",s[j] );
+			}
+			logDebug( "%s", msg );
+			s += info->host_addrlength;
+		}
+	}
+}

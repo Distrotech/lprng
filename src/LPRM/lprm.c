@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -9,6 +9,8 @@
  * MODULE: lprm.c
  * PURPOSE:
  **************************************************************************/
+static char *const _id =
+"$Id: lprm.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
 
 /***************************************************************************
  * SYNOPSIS
@@ -34,14 +36,16 @@ information display and parameters.
 
 */
 
-#include "lprm.h"
-#include "printcap.h"
-#include "setuid.h"
-#include "lp_config.h"
+#include "lp.h"
+#include "initialize.h"
+#include "killchild.h"
+#include "sendlprm.h"
 #include "getprinter.h"
+/**** ENDINCLUDE ****/
 
-static char *const _id =
-"$Id: lprm.c,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $";
+char LPRM_optstr[]   /* LPRM options */
+ = "aAD:P:V" ;
+
 
 /***************************************************************************
  * main()
@@ -49,12 +53,11 @@ static char *const _id =
  *
  ****************************************************************************/
 
-extern void usage();
+extern void usage(void);
 
 int main(int argc, char *argv[], char *envp[])
 {
-	char *s;
-
+	struct printcap_entry *printcap_entry = 0;
 	/*
 	 * set up the user state
 	 */
@@ -72,50 +75,10 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* scan the argument list for a 'Debug' value */
 
-	Opterr = 0;
 	Get_debug_parm( argc, argv, LPRM_optstr, debug_vars );
-	Opterr = 1;
 
-	/* Get configuration file information */
-	Parsebuffer( "default configuration", Default_configuration,
-		lprm_config, &Config_buffers );
-	/* get the configuration file information if there is any */
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV or do not run clients as ROOT\n",
-			Name );
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			Client_config_file = s;
-		}
-    }
-
-
-	DEBUG0("main: Configuration file '%s'", Client_config_file?Client_config_file:"NULL" );
-
-	Getconfig( Client_config_file, lprm_config, &Config_buffers );
-
-	if( Debug > 5 ) dump_config_list( "LPRM Configuration", lprm_config );
-
-
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-	Get_local_host();
-
-	/* expand the information in the configuration file */
-	Expandconfig( lprm_config, &Config_buffers );
-
-	if( Debug > 4 ) dump_config_list( "LPRM Configuration After Expansion",
-		lprm_config );
+	/* setup configuration */
+	Setup_configuration();
 
 	/* scan the input arguments, setting up values */
 	Get_parms(argc, argv);      /* scan input args */
@@ -123,7 +86,7 @@ int main(int argc, char *argv[], char *envp[])
 	/*if( argc  - Optind <= 0 ) usage(); */
 
 	/* now look for the printcap entry */
-	Get_printer();
+	Get_printer(&printcap_entry);
 	if( All_printers ){
 		Printer = "all";
 		RemotePrinter = 0;
@@ -137,7 +100,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 	}
 
-	DEBUG4("lprm: printer '%s', remote printer '%s', remote host '%s'",
+	DEBUG3("lprm: printer '%s', remote printer '%s', remote host '%s'",
 		Printer, RemotePrinter, RemoteHost );
 	if( RemoteHost == 0 ){
 		Warnmsg( "No remote host specified" );
@@ -148,13 +111,9 @@ int main(int argc, char *argv[], char *envp[])
 		RemotePrinter = Printer;
 	}
 
-	/*
-	 * get the user name
-	 */
-
-	Logname = Get_user_information();
-
 	Send_lprmrequest( RemotePrinter?RemotePrinter:Printer,
 		RemoteHost, Logname, &argv[Optind], Connect_timeout, Send_timeout, 1 );
-	exit(0);
+	Errorcode = 0;
+	cleanup(0);
+	return(0);
 }

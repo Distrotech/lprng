@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lockfile.c,v 3.0 1996/05/19 04:06:04 papowell Exp $";
+"$Id: lockfile.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.
@@ -61,8 +61,9 @@ static char *const _id =
  ***************************************************************************/
 
 #include "lp.h"
-#include "lp_config.h"
-#include "setuid.h"
+#include "lockfile.h"
+#include "fileopen.h"
+/**** ENDINCLUDE ****/
 
 #ifdef HAVE_FCNTL
 int devlock_fcntl( int fd, int nowait);
@@ -77,7 +78,7 @@ int devlock_lockf( int fd, int nowait);
 #ifdef HAVE_SYS_TTYCOM_H
 #include <sys/ttycom.h>
 #endif
-#ifdef HAVE_SYS_TTOLD_H
+#if defined(HAVE_SYS_TTOLD_H) && !defined(IRIX)
 #include <sys/ttold.h>
 #endif
 #ifdef HAVE_SYS_IOCTL_H
@@ -94,10 +95,11 @@ int Lockf( char *filename, int *lock, int *create, struct stat *statb )
     /*
      * Open the lock file for RW
      */
-	*lock = 0;
+	if( lock ) *lock = 0;
+	if( create ) *create = 0;
     if( (fd = Checkwrite(filename, statb, O_RDWR, 0, 0 )) < 0) {
 		err = errno;
-		DEBUG5("Lockf: '%s' does not exist", filename);
+		DEBUG3("Lockf: '%s' does not exist", filename);
     } else {
 		status = fd;
 	}
@@ -119,7 +121,7 @@ int Lockf( char *filename, int *lock, int *create, struct stat *statb )
 	if( status < 0 && fd >= 0 ){
 		close( fd );
 	}
-    DEBUG5 ("Lockf: file '%s', status %d, lock '%s'", filename, status,
+    DEBUG3 ("Lockf: file '%s', status %d, lock '%s'", filename, status,
 		lock?(*lock?"YES":"NO"):"NOT REQUESTED");
 	errno = err;
     return( status );
@@ -178,7 +180,7 @@ int Lock_fd( int fd, char *filename, int *lock, struct stat *statb )
 		*lock = Do_lock( fd, filename, 0 );
 	}
 
-    DEBUG5 ("Lock_fd: file '%s', status %d, lock '%s'", filename, status,
+    DEBUG3 ("Lock_fd: file '%s', status %d, lock '%s'", filename, status,
 		lock?(*lock?"YES":"NO"):"NOT REQUESTED");
     return( status );
 }
@@ -194,25 +196,25 @@ int Do_lock( int fd, const char *filename, int block )
 {
     int code = -1;
 
-	DEBUG6("Do_lock: fd %d, file '%s' block '%d'", fd, filename, block );
+	DEBUG3("Do_lock: fd %d, file '%s' block '%d'", fd, filename, block );
 #ifdef HAVE_FCNTL
-	DEBUG6("Do_lock: using fcntl");
+	DEBUG3("Do_lock: using fcntl");
 	code = devlock_fcntl( fd, block );
 #else
 #ifdef HAVE_LOCKF
     /*
      * want to try F_TLOCK
      */
-	DEBUG6("Do_lock: using lockf");
+	DEBUG3("Do_lock: using lockf");
 	code = devlock_lockf( fd, block );
 #else
     /* last resort -- doesn't work over NFS */
-	DEBUG6("Do_lock: using flock");
+	DEBUG3("Do_lock: using flock");
 	code = devlock_flock( fd, block );
 #endif  /* HAVE_LOCKF */
 #endif  /* HAVE_FCNTL */
 
-    DEBUG5 ("Do_lock: status %d", code);
+    DEBUG3 ("Do_lock: status %d", code);
     return( code);
 }
  
@@ -235,7 +237,7 @@ int devlock_fcntl( int fd, int block)
 	int err;
 	int status;
 	int how;
-	DEBUG5 ("devlock_fcntl: using fcntl with SEEK_SET, block %d", block );
+	DEBUG3 ("devlock_fcntl: using fcntl with SEEK_SET, block %d", block );
 
  	how = F_SETLK;
  	if( block ) how = F_SETLKW;
@@ -274,7 +276,7 @@ int devlock_flock( int fd, int block)
 		how = LOCK_EX|LOCK_NB;
 	}
 
-	DEBUG5 ("devlock_flock: block %d", block );
+	DEBUG3 ("devlock_flock: block %d", block );
 	status = flock( fd, how );
 	err = errno;
 	if( status < 0 ){
@@ -306,7 +308,7 @@ int devlock_lockf( int fd, int block)
 		how = F_TLOCK;
 	}
 
-	DEBUG5 ("devlock_lockf: using lockf, block %d", block );
+	DEBUG3 ("devlock_lockf: using lockf, block %d", block );
 	status = lockf( fd, how, 0L);
 	err = errno;
 	if( status < 0 ){
@@ -331,7 +333,10 @@ int devlock_lockf( int fd, int block)
  * the same print device. First does a non-blocking lock, if this fails,
  * puts a nice message in the status file and blocks in a second lock.
  * (contributed by Michael Joosten <joost@cadlab.de>)
- * returns: >= 0 if successful, < 0 if fails
+ *
+ * Finally, you can set locking off (:lk@:)
+ *
+ * RETURNS: >= 0 if successful, < 0 if fails
  ***************************************************************************/
 
 int LockDevice(int fd, char *devname)
@@ -339,14 +344,14 @@ int LockDevice(int fd, char *devname)
 	int lock = 1;
 	int err = errno;
 
-	DEBUG3 ("LockDevice: locking '%s'", devname);
+	DEBUG2 ("LockDevice: locking '%s'", devname );
 
 #if defined(TIOCEXCL) && !defined(HAVE_BROKEN_TIOCEXCL)
-	DEBUG3 ("LockDevice: TIOCEXL on '%s', isatty %d",
+	DEBUG2 ("LockDevice: TIOCEXL on '%s', isatty %d",
 		devname, isatty( fd ) );
-    if( isatty (fd) != 0 ){
+    if( isatty (fd) ){
         /* use the TIOCEXCL ioctl. See termio(4). */
-		DEBUG3 ("LockDevice: TIOCEXL on '%s'", devname);
+		DEBUG2 ("LockDevice: TIOCEXL on '%s'", devname);
         lock = ioctl( fd, TIOCEXCL, (void *) 0);
 		err = errno;
         if( lock < 0) {
@@ -357,6 +362,7 @@ int LockDevice(int fd, char *devname)
     } else
 #endif
 		lock = Do_lock( fd, devname, 0 );
+
 	errno = err;
 	return( lock );
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,24 +11,37 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: decodestatus.c,v 3.2 1996/08/31 21:11:58 papowell Exp papowell $";
+"$Id: decodestatus.c,v 3.4 1997/01/29 03:22:18 papowell Exp $";
 #include "lp.h"
 #include "decodestatus.h"
+#include "errorcodes.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
  * char *Sigstr(n)
  * Return a printable form the the signal
  ***************************************************************************/
 
-#if !defined(HAVE_SYS_SIGLIST) || defined(SOLARIS)
-# undef HAVE_SYS_SIGLIST
-
-#define PAIR(X) { #X , X }
-
-static struct signame {
+struct signame {
     char *str;
     int value;
-} signals[] = {
+};
+#undef PAIR
+#define PAIR(X) { #X , X }
+
+#if !defined(HAVE_SYS_SIGLIST) && defined(HAVE__SYS_SIGLIST)
+#   define sys_siglist _sys_siglist
+#   undef NSIG
+#   define NSIG _sys_siglistn
+#   define HAVE_SYS_SIGLIST
+#endif
+
+#if defined(HAVE__SYS_SIGLIST_DEF) && !defined(HAVE_SYS_SIGLIST_DEF)
+#   define HAVE_SYS_SIGLIST_DEF
+#endif
+
+#if !defined(HAVE_SYS_SIGLIST)
+struct signame signals[] = {
 { "NO SIGNAL", 0 },
 #ifdef SIGHUP
 PAIR(SIGHUP),
@@ -177,11 +190,14 @@ const char *Decode_status (plp_status_t *status)
 {
     static char msg[LINEBUFFER];
 
+	int n;
     *msg = 0;		/* just in case! */
     if (WIFEXITED (*status)) {
+		n = WEXITSTATUS(*status);
+		if( n > 0 && n < 32 ) n += JFAIL-1;
 		(void) plp_snprintf (msg, sizeof(msg),
 		"exited with status %d (%s)", WEXITSTATUS (*status),
-				 Server_status(*status) );
+				 Server_status(n) );
     } else if (WIFSTOPPED (*status)) {
 		(void) strcpy(msg, "stopped");
     } else {
@@ -199,26 +215,35 @@ const char *Decode_status (plp_status_t *status)
  * char *Server_status( int d )
  *  translate the server status;
  ***************************************************************************/
+
+static struct signame statname[] = {
+PAIR(JSUCC),
+PAIR(JFAIL),
+PAIR(JABORT),
+PAIR(JREMOVE),
+PAIR(JACTIVE),
+PAIR(JIGNORE),
+PAIR(JHOLD),
+PAIR(JNOSPOOL),
+PAIR(JNOPRINT),
+{0,0}
+};
+
 char *Server_status( int d )
 {
 	char *s;
+	int i;
 	static char msg[LINEBUFFER];
-	switch( d ){
-		case JSUCC: s = "SUCCESS"; break;
-		case JFAIL: s = "FAILURE"; break;
-		case JABORT: s = "ABORT"; break;
-		case JREMOVE: s = "REMOVE"; break;
-		case JACTIVE: s = "ACTIVE"; break;
-		case JIGNORE: s = "IGNORE"; break;
-		default:
-			s = msg;
-			if( d > 1 && d < 32 ){
-				plp_snprintf( msg, sizeof(msg), "TERMINATED SIGNAL %s",
-					Sigstr( d ) );
-			} else {
-				plp_snprintf( msg, sizeof(msg), "UNKNOWN STATUS '%d'", d );
-			}
-			break;
+
+	for( i = 0; (s = statname[i].str) && statname[i].value != d; ++i );
+	if( s == 0 ){
+		s = msg;
+		if( d > 0 && d < 32 ){
+			plp_snprintf( msg, sizeof(msg), "TERMINATED SIGNAL %s",
+				Sigstr( d ) );
+		} else {
+			plp_snprintf( msg, sizeof(msg), "UNKNOWN STATUS '%d'", d );
+		}
 	}
 	return(s);
 }

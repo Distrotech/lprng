@@ -1,7 +1,7 @@
-.ds VE LPRng-2.3.12
+.ds VE LPRng-3.1.2
 .TH LPC 1 \*(VE "LPRng"
 .ig
-$Id: lpc.1,v 3.11 1996/08/25 22:20:05 papowell Exp papowell $
+$Id: lpc.1,v 3.4 1997/01/31 22:42:36 papowell Exp $
 Mon Jul 17 20:14:17 PDT 1995 Patrick Powell
 ..
 .SH NAME
@@ -9,10 +9,13 @@ lpc \- line printer control program
 .SH SYNOPSIS
 .B lpc
 [
-.BI \-P printer
+.B \-A
 ]
 [
 .BI \-D debugopts
+]
+[
+.BI \-P printer
 ]
 [
 .B \-V
@@ -59,8 +62,29 @@ arguments as parameters to the command.
 Permission to use spool queue control commands is determined by the
 printer permissions file
 (See FILES).
-.SH OPTIONS
+.SH OPERATION
 .PP
+The operation of each spool queue is controlled by a
+.I "spoolcontrol"
+file which has a set of keyword options and values.
+(Other print spoolers have used permissions bits of directories and files
+for similar purposes).
+In addition,
+each job in the spool queue can have a
+.I "holdfile"
+which contains detailed information on how the spooler is to treat the
+particular job.
+The server will update these files with status and other information as the
+job is processed.
+The
+.I lpc
+command operates by sending requests to the
+.I lpd
+server process to update the information in these files and to signal
+server processes that the information has been updated.
+.SH OPTIONS
+.IP "\fB\-A\fR" 5
+Use authentication when sending command to server.
 .IP "\fB\-P\fIprinter\fR" 5
 Printer spool queue to operate on.
 if no name is given,
@@ -94,6 +118,8 @@ The form -D= will display a list of debugging options.
 .SH COMMANDS
 .PP
 The following is the alphabetical list of recognized commands.
+The jobcontrol or holdfile fields effective are listed as
+part of the command.
 .TP
 ?
 .br
@@ -102,43 +128,88 @@ Also, any unrecognized input produces a help listing.
 .TP
 abort { all | printer* }
 .br
-Disable any further unspooling for all printers or the selected printer
-and kill the active job.
+Kill the active job and disables unspooling.
 The active job will not be deleted from the queue.
+.br
+Action: kills server process, updates spool control file
+.I printing_disabled
+field.
 .TP
-autohold { all | printer* }
+holdall { all | printer* }
 .br
 Turn on automatic job holding.
 Jobs will be held until released with the hold command,
-or autohold turned off with the noautohold command.
+or holdall turned off with the noholdall command.
 The :ah: printcap flag can enable automatic holding as well.
-The authold command will override the printcap entry.
+.br
+Action: updates spool control file
+.I holdall
+field.
 .TP
-debug { all | printer } [string | off ]
+debug j all | printer } [string | off ]
 .br
 Set the debugging string for the specified printer.
 This is a diagnostic aid and should be used with caution;
 refer to the reference manual for details of the debugging string format.
 In general,
-you can use: INTEGER [,key=integer] [log=pathname].
-The INTEGER is a general debugging level, key is the name of a special
-debugging flag, and log is the pathname of a log file.
+you can use:
+.br
+.I INTEGER
+\- the integer number sets the general debugging level
+.br
+keyword=value
+.br
+\- sets a debugging variable to a specified value
+.br
+keyword
+\- sets a debugging flag
+.br
+Action: updates spool control file
+.I debug
+field.
 .TP
 disable { all | printer }
 .br
 Disable spooling to the specified spool queues.
 See
 .I enable.
+.br
+Action: updates spool control file
+.I printing_disabled
+field.
+.TP
+class {all | printer } (off | classlist | X=globmatch)
+.br
+Controls the class of jobs currently being printed.
+The
+.I off
+option removes any class restrictions.
+The classlist option is a list of classes;
+for example A,B,C would release classes A, B, and C for printing.
+The X=globmatch form performs a match against a control file entry
+starting with the indicated capital letter.
+For example,  J=*form1* would allow jobs which had the string
+form1 in their job title to be printed.
 .TP
 down {all | printer }
 .br
 Disable both queuing and printing for all printers or the selected printer.
 See
 .I up.
+.br
+Action: updates spool control file
+.I printing_disabled
+and
+.I spooling_disabled
+fields.
 .TP
 enable { all | printer }
 .br
 Enable spooling for all printers or the selected printer.
+.br
+Action: updates spool control file
+.I spooling_disabled
+field.
 .TP
 exit or quit
 .br
@@ -154,13 +225,21 @@ Holds the specified printer job (or jobs) in the queue.
 The job will not be
 printed even if spooling and printing is enabled. It must be released
 with the relase command.
-The autohold command
+The holdall command
 or :ah: printcap flag can enable automatic holding of spooled jobs.
+.br
+Action: updates job holdfile
+.I hold
+field with time that job was held.
+A 0 value release job for printing.
 .TP
 kill { all | printer ... }
 .br
-Do an abort followed by a start.
+Do an abort command followed by a start command.
 This is a quick way to kill off a server that has problems.
+Note that due to race conditions and delays,
+that the start command may not be effective this action should
+be monitored to ensure that the job restarts.
 .TP
 lpd
 .br
@@ -188,11 +267,16 @@ move printer { jobid }  destinationPrinter
 .br
 Send the specified jobs to the destination printer and remove them
 from the printer queue.
+.br
+Action: updates the job holdfile
+.I move
+field with the destination and starts a server process to do the
+job transfer.
 .TP
-noautohold { all | printer* }
+noholdall { all | printer* }
 .br
 Turn off automatic job holding.
-See autohold command.
+See holdall command.
 .TP
 quit or exit
 .br
@@ -202,6 +286,10 @@ redirect [printer [destinationPrinter | off ]]
 .br
 redirect the jobs in the printer queue to another printer
 or turn redirection off.
+.br
+Action: updates spool control file
+.I redirect
+field.
 .TP
 release [printer [jobid]]
 .br
@@ -285,22 +373,24 @@ help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
 .LP
-LPRng is a enhanced printer spooler system,
-with functionality similar to the Berkeley LPR software,
-and is derived from the PLP (Public Line Printer) software,
-version 4.0.
-LPRng has many advanced features, which are described in
-.I "LPRng - An Enhanced Line Printer Spooler"
-by Patrick Powell, San Diego State University (papowell@sdsu.edu),
-et al.
-It is available from
-dickory.sdsu.edu:/pub/LPRng.
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
 .LP
-The LPRng software is based on PLP4.0,
-supported and extended by Justin Mason (jmason@iona.ie),
-which is available from ftp://ftp.iona.ie/pub/PLP4.0.
-Justin greatly aided in the design and development of many of the
-software features,
-as well as contributing a large number of bug fixes,
-design reviews,
-and other suggestions.
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

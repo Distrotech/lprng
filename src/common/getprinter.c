@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,12 +11,14 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getprinter.c,v 3.0 1996/05/19 04:06:01 papowell Exp $";
+"$Id: getprinter.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
 
 #include "lp.h"
-#include "printcap.h"
-#include "lp_config.h"
 #include "getprinter.h"
+#include "printcap.h"
+#include "checkremote.h"
+#include "dump.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
 Get_printer()
@@ -37,12 +39,13 @@ Get_printer()
 	a primary name of the form printer@host will be detected as the
 	destination.  Sigh...
  ***************************************************************************/
-void Get_printer()
+void Get_printer( struct printcap_entry **pcv )
 {
 	char *s;
+	struct printcap_entry *pc = 0;
 
 
-	DEBUG4("Get_printer: start printer '%s'", Printer );
+	DEBUG0("Get_printer: original printer '%s'", Printer );
 	if( Printer == 0 ){
 		Printer = getenv( "PRINTER" );
 		/* Sigh... some folks want one for Solaris, one for LPRng... ok */
@@ -51,23 +54,25 @@ void Get_printer()
 	}
 
 	/* see if there is something in the printcap file */
-	if( Printer == 0 && Printcapfile.init == 0
-		&& Printcap_path && *Printcap_path ){
-		DEBUG4("Get_printer: reading printcap '%s'", Printcap_path );
-		Getprintcap( &Printcapfile, Printcap_path, 0 );
-	}
-	if( Printer == 0 || *Printer == 0 ){
-		Printer = Get_first_printer( &Printcapfile );
+	if( Printer == 0 ){
+		Printer = Get_first_printer();
 	}
 	if( Printer == 0 || *Printer == 0 ){
 		Printer = Default_printer;
 	}
+	if( Printer && (s = strchr( Printer, '\n' )) ) *s = 0;
 	if( Printer == 0 || *Printer == 0 ){
 		fatal( LOG_ERR, "Get_printer: no printer name available" );
 	}
 
-	if( (s = strchr( Printer, '\n' )) ) *s = 0;
+	/* now we try getting the printcap entry */
+	Queue_name = safestrdup( Printer );
+	s = Get_printer_vars( Printer, &pc );
+	if( s ) Printer = s;
 	Fix_remote_name( 0 );
+
+	if(DEBUGL1)dump_parms("Get_printer",Pc_var_list);
+	if( pcv ) *pcv = pc;
 }
 
 /***************************************************************************
@@ -79,12 +84,16 @@ void Fix_remote_name( int cyclecheck )
 {
 	static char *sdup;
 	static char *pdup;
-	char error[LINEBUFFER];
 	char *s;
 
+	DEBUG0("Fix_remote_name: printer name '%s'", Printer );
 	if( pdup ) free( pdup ); pdup = 0;
 	if( sdup ) free( sdup ); sdup = 0;
-	Queue_name = sdup = safestrdup( Printer );
+	if( Queue_name ){
+		Queue_name = sdup = safestrdup( Queue_name );
+	} else {
+		Queue_name = sdup = safestrdup( Printer );
+	}
 	Printer = pdup = safestrdup( Printer );
 
 	/*
@@ -95,21 +104,16 @@ void Fix_remote_name( int cyclecheck )
 	 * 4. no printcap entry, we use default printer, default remote host
 	 */
 
-	DEBUG4("Fix_remote_name: printer name '%s'", Printer );
-
 	if( (s = strchr( Queue_name, '@' ))  ){
 		*s++ = 0;
 		Printer = Queue_name;
 		Lp_device = pdup;
 		Check_remotehost( cyclecheck );
+	} else if( (s = strchr( Printer, '@' ))  ){
+		Lp_device = pdup;
+		Check_remotehost( cyclecheck );
 	} else {
-		if( Printcapfile.init == 0
-			&& Printcap_path && *Printcap_path ){
-			Getprintcap( &Printcapfile, Printcap_path, 0 );
-		}
-		s = Get_printer_vars( Printer, error, sizeof(error),
-			&Printcapfile, &Pc_var_list, Default_printcap_var,
-			(void *)0 );
+		s = Get_printer_vars( Printer, (void *)0 );
 		if( s ){
 			Printer = s;
 			Check_remotehost( cyclecheck );
@@ -125,8 +129,12 @@ void Fix_remote_name( int cyclecheck )
 		}
 	}
 
-	DEBUG7(
-		"Fix_remote_name: Queue_name '%s', Printer '%s',"
-		" RemotePrinter '%s', RemoteHost '%s'",
+	if( RemoteHost && strlen(RemoteHost) > 64 ){
+		fatal( LOG_ERR, "Fix_remote_name: RemoteHost too long '%s'",
+			RemoteHost );
+	}
+
+	DEBUG0(
+		"Fix_remote_name: Queue_name '%s', Printer '%s', RemotePrinter '%s', RemoteHost '%s'",
 		Queue_name, Printer, RemotePrinter, RemoteHost );
 }

@@ -1,0 +1,16 @@
+#!/bin/sh
+while read inc filename; do
+	awk "
+/^#include/{
+	print \$0;
+	if( found == 0 ){
+		print \"#include \\\"$inc\\\"\";
+		++found;
+	}
+	next;
+}
+{
+	print \$0;
+} " $filename >/tmp/d
+cp /tmp/d $filename 
+done;

@@ -1,0 +1,21 @@
+      	SVR4 LP Simulation
+     Wed Jan 22 17:18:12 PST 1997
+       Patrick Powell
+
+After fighting with LP simulation,  I finally decided to make the
+interface part of the LPR/LPQ package.  If LPR is invoked as LP,
+then it will 'act' like a 'semi-compatible' LP; similarly for LPQ and LPSTAT,
+and LPRM and CANCEL
+
+To get this functionality, you need to either make a symbolic link
+or a hard link to the appropriate executable.
+
+cd /usr/local/bin
+
+ln -s lpr lp
+ln -s lpq lpstat
+ln -s lprm cancel
+
+See the man pages for lp, lpstat, and clear in the LPRng/man directory.
+Note that not all the funtions of the interfaces are supported.
+

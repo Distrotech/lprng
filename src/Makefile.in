@@ -1,17 +1,19 @@
 ########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-1995 Patrick Powell, San Diego State University
+# Copyright 1988-1997 Patrick Powell, San Diego, California
 #     papowell@sdsu.edu
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.in,v 1.3 1996/09/09 14:24:41 papowell Exp papowell $
+# $Id: Makefile.in,v 3.14 1997/01/31 22:30:08 papowell Exp $
 ###########################################################################
 #
-# WARNING: This is a makefile for GNU Make
-# It uses VPATH and replacement facilities
+# WARNING: This is a makefile for GNU Make or when modified by BSD Make
+# the appropriate install script.
+# GNU Make uses VPATH and replacement facilities
+# BSD Make uses .PATH and replacement facilities
 
 #************** GENERAL CONFIGURATION INFORMATION ************************
 # where user commands are installed: lpr, lpq, lprm, lpc.
@@ -19,25 +21,53 @@
 # If these paths are /usr/lib, /usr/ucb etc., make sure you
 # have backup copies of the system version!
 #
-INSTALL_BIN =     @prefix@/bin
-
-# where daemons are installed: lpd
+PREFIX =     @prefix@
 #
-INSTALL_LIB =     @prefix@/bin
+# These are automatically sedded in by the "configure" script, but you
+# may need to change them if you're on a strange version of UNIX.
 
-# where maintenance commands are installed: pac, checkpc, setstatus
+# any libs that need to be used to get these programs to compile:
 #
-INSTALL_MAINT =   @prefix@/bin
+LIBS=@LIBS@
+# LIBS=-lposix -s       # (on A/UX, if the above doesn't work)
+
+
+# what command to use to "ranlib" or "lorder" the library.
+#
+RANLIB=@RANLIB@
 
 # the compiler optimisation/debugging flags you wish to use.
-# These are in addition to the CCFLAGS and LDFLAGS
-CCOPTFLAGS =
-LDFLAGS    := -g $(LDFLAGS)
+#
+# what C compiler to use.
+#
+CC=@CC@
+
+# what C preprocessor to use.
+#
+CPP=@CPP@ $(CCOPTFLAGS)
+
+# how to install stuff.
+#
+INSTALLCMD=@INSTALL@
+
+# a shell interpreter that's as close to the POSIX shell as possible.
+#
+SHELL_PATH=@SHELL@
+SHELL = @SHELL@
+
+SRC=@srcdir@
+@SET_MAKE@
+LDCC=@LDCC@
+
+CF := @CFLAGS@ @DEFS@
+
+#********************** End of configure modifiable settings ************
 
 #********************** OPTIONAL DEFINITIONS ****************************
 # These are various flags and settings that will be used by the
 # compiler to generate code
 #
+
 #### ****** TESTING AND SECURITY LOOPHOLE ******************************
 # Define TESTVERSION and GETENV to allow the LPD_CONFIG environment
 #  variable to be used as the name of a configuration file.  In non-testing
@@ -46,6 +76,20 @@ LDFLAGS    := -g $(LDFLAGS)
 ifdef TESTVERSION
 GETENV_CFLAGS = -DGETENV
 endif
+
+# where executables are installed
+INSTALL_BIN =     $(PREFIX)/bin
+
+# where daemons are installed: lpd
+INSTALL_LIB =     $(PREFIX)/bin
+
+# where maintenance commands are installed: pac, checkpc, setstatus
+INSTALL_MAINT =   $(PREFIX)/bin
+
+# the compiler optimisation/debugging flags you wish to use.
+# These are in addition to the CCFLAGS and LDFLAGS
+CCOPTFLAGS =
+LDFLAGS    := -g $(LDFLAGS)
 
 #********************* OVERRIDING CONFIGURES' GUESSES ******************
 #
@@ -113,94 +157,66 @@ endif
 # ROOT_CFLAG=-DROOT_PERMS_TO_FILTER_SECURITY_LOOPHOLE
 
 
+#**********************  End of Configurable Part ****************************
 #**************************** SYSTEM DEPENDENCIES **************************
-#
-# These are automatically sedded in by the "configure" script, but you
-# may need to change them if you're on a strange version of UNIX.
 
-# any libs that need to be used to get these programs to compile:
-#
-LIBS=@LIBS@
-# LIBS=-lposix -s       # (on A/UX, if the above doesn't work)
+TARGET= \
+		authenticate_pgp readfilecount removeoneline setupauth \
+		liblpr.a checkpc lpr lpd lpq lprm lpc lpbanner \
+		lpf lpraccnt monitor lp cancel lpstat
+NONTARGET = sserver sclient testauth
 
-# Define TERMLIB if lpq uses curses.
-#
-TERMLIB=@TERMLIBS@
-
-# what command to use to "ranlib" or "lorder" the library.
-#
-RANLIB=@RANLIB@
-
-# the compiler optimisation/debugging flags you wish to use.
-#
-# what C compiler to use.
-#
-CC=@CC@
-
-# what C preprocessor to use.
-#
-CPP=@CPP@ $(CCOPTFLAGS)
-
-# how to install stuff.
-#
-INSTALLCMD=@INSTALL@
-
-# a shell interpreter that's as close to the POSIX shell as possible.
-#
-SHELL_PATH=@SHELL@
-SHELL = @SHELL@
-
-#**********************  Helpful definitions *******************************
-SRC=@srcdir@
-@SET_MAKE@
-
-
-TARGET= liblpr.a checkpc lpr lpd lpq lprm lpc lpbanner lpf lpraccnt monitor
 
 SRCDIRS=${SRC}/common ${SRC}/LPD ${SRC}/LPQ ${SRC}/LPR \
 	${SRC}/LPRM ${SRC}/LPC ${SRC}/CHECKPC ${SRC}/LPBANNER ${SRC}/LPF \
-	${SRC}/LPRACCNT ${SRC}/MONITOR
+	${SRC}/LPRACCNT ${SRC}/MONITOR ${SRC}/AUTHENTICATE
 INCLUDE=.. ${SRC}/include
 EXTRA=${SRC}/TESTSUPPORT ${SRC}/UTILS
 
-FILES= Makefile Makefile.in
-
+#GNU
 VPATH=$(subst :, ,$(INCLUDE) $(SRCDIRS))
+INCS= $(patsubst %,-I%,$(INCLUDE))
+#
+#BSD .PATH: $(INCLUDE) $(SRCDIRS)
+#BSD INCS= $(INCLUDE:S/^/-I/g)
 
-CFLAGS := @CFLAGS@ $(CCOPTFLAGS) @DEFS@ $(patsubst %,-I%,$(INCLUDE)) \
+CFLAGS := $(CF) $(CCOPTFLAGS) -DHAVE_CONFIG_H $(INCS) \
 	${GETENV_CFLAGS} $(STTY_CFLAGS) $(STATFS_CFLAGS) $(RWSOCKETS_CFLAGS) \
 	$(LOCK_DEVS_CFLAGS) $(SETPROCTITLE_CFLAGS) $(LONG_STATUS_FORMAT) \
 	$(ROOT_CFLAG)
 
 LIBLPR_OBJS = \
-	bsd-compat.o checkremote.o cleantext.o controlword.o copyright.o \
-	decodestatus.o dump.o errormsg.o fileopen.o \
-	fixcontrol.o freespace.o getcnfginfo.o gethostinfo.o getopt.o \
-	getparms.o getprinter.o getqueue.o getuserinfo.o globmatch.o \
-	initialize.o jobcontrol.o killchild.o link_support.o lockfile.o \
-	malloclist.o parse_debug.o pathname.o permissions.o pr_support.o \
-	proctitle.o printcap.o printjob.o removejob.o rw_pipe.o sendjob.o \
-	sendlpc.o sendlprm.o sendstatus.o serverpid.o setstatus.o \
-	setuid.o setup_filter.o setupprinter.o snprintf.o spoolcontrol.o \
-	stty.o termclear.o timeout.o utilities.o waitchild.o
+	bsd-compat.o checkremote.o cleantext.o controlword.o \
+	copyright.o decodestatus.o default.o dump.o \
+	errormsg.o fileopen.o fixcontrol.o freespace.o \
+	getcnfginfo.o gethostinfo.o getopt.o getparms.o \
+	getprinter.o getqueue.o getuserinfo.o globmatch.o inet_ntop.o \
+	initialize.o jobcontrol.o killchild.o krb5_auth.o krb5_sendauth.o link_support.o \
+	lockfile.o malloclist.o merge.o parse_debug.o \
+	pathname.o patselect.o permissions.o pr_support.o \
+	printcap.o printjob.o proctitle.o readstatus.o \
+	removejob.o rw_pipe.o sendauth.o sendjob.o \
+	sendlpc.o sendlprm.o sendlpq.o serverpid.o \
+	setstatus.o setuid.o setup_filter.o setupprinter.o \
+	snprintf.o spoolcontrol.o stty.o termclear.o \
+	timeout.o utilities.o vars.o waitchild.o
 
-LPD_OBJS= lpd.o copyright.o lpd_gbl.o \
-	lpd_getparms.o lpd_rcvjob.o lpd_status.o lpd_jobs.o \
-	lpd_sendmail.o lpd_remove.o lpd_control.o default.o
+LPD_OBJS= lpd.o \
+	lpd_getparms.o lpd_rcvjob.o lpd_secure.o lpd_status.o lpd_jobs.o \
+	lpd_sendmail.o lpd_remove.o lpd_control.o
 
-LPR_OBJS= lpr.o copyright.o lpr_gbl.o lpr_getparms.o \
-	lpr_chkparms.o lpr_cpyfiles.o lpr_makejob.o default.o
+LPR_OBJS= lpr.o lpr_getparms.o \
+	lpr_chkparms.o lpr_cpyfiles.o lpr_makejob.o
 
-LPQ_OBJS= lpq.o copyright.o lpq_gbl.o lpq_getparms.o default.o
+LPQ_OBJS= lpq.o lpq_getparms.o
 
-LPRM_OBJS= lprm.o copyright.o lprm_gbl.o lprm_getparm.o default.o
+LPRM_OBJS= lprm.o lprm_getparm.o
 
-LPC_OBJS= lpc.o copyright.o lpc_gbl.o lpc_getparms.o default.o
+LPC_OBJS= lpc.o lpc_getparms.o
 
-CHECKPC_OBJS = checkpc.o copyright.o checkpc_perm.o checkpc_port.o \
-	checkpc_gbl.o default.o
+CHECKPC_OBJS = checkpc.o checkpc_perm.o checkpc_port.o
 
-LPBANNER_OBJS = lpbanner.o lpbanner_gbl.o lpbanner_prn.o \
+LPBANNER_OBJS = lpbanner.o lpbanner_prn.o \
 	lpbanner_fnt.o
 
 LPF_OBJS = lpf.o
@@ -209,25 +225,18 @@ LPRACCNT_OBJS= lpraccnt.o
 
 MONITOR_OBJS= monitor.o getopt.o
 
-all: warn $(TARGET)
+all: $(TARGET)
 
-.PHONY: all warn ci clean \
+.PHONY: all ci clean \
 	uninstall realclean mostlyclean distclean \
 	TAGS info
 
-warn:
-ifdef notdef
-	@if ${MAKE} -v 2>&1 | grep -s GNU >/dev/null; then \
-		: ; \
-	else \
-		echo "Not using GNU make"; \
-		exit 1; \
-	fi;
-endif
-
 # we want to force default.o to be updated whenever we
-# change the options in Makefile
+# change the options in Makefile or Makefile.bsd
+#GNU
 default.o: Makefile
+#
+#BSD default.o: Makefile.bsd
 
 #
 # use RANLIB with no ordering, or lorder/tsort if it is there
@@ -240,38 +249,75 @@ liblpr.a: $(LIBLPR_OBJS)
 	$(RANLIB) $@
 
 lpr: $(LPR_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lpd: $(LPD_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lpq: $(LPQ_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS) $(TERMLIB)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lprm: $(LPRM_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lpc: $(LPC_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 checkpc: $(CHECKPC_OBJS) liblpr.a
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lpbanner: $(LPBANNER_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 lpf: $(LPF_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
-lpraccnt: $(LPRACCNT_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+lpraccnt: $(LPRACCNT_OBJS) liblpr.a
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 monitor: $(MONITOR_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+readfilecount: readfilecount.o
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+removeoneline: removeoneline.o
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+setupauth: setupauth.o
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+authenticate_pgp: authenticate_pgp.sh
+	rm -f $@; cp $^ $@; chmod 555 $@
+
+#ptest: common/snprintf.c
+#	$(LDCC) $(CFLAGS) -DTEST -o ptest common/snprintf.c
+
+sserver: sserver.o liblpr.a
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+sclient: sclient.o liblpr.a
+	$(LDCC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+cancel:
+	rm -f $@; ln -s lprm $@ 
+lpstat:
+	rm -f $@; ln -s lpq $@ 
+lp:
+	rm -f $@; ln -s lpr $@
+
+###########################################################################
+# 
+NORM_PERMS=      0755
+SUID_ROOT_PERMS= 04755 -oroot
+PERMS=$(NORM_PERMS)
+#PERMS=$(SUID_ROOT_PERMS)
 ###########################################################################
 
 install: all ${INSTALL_LIB} ${INSTALL_BIN} ${INSTALL_MAINT}
-	${INSTALLCMD} -m 755 lpd ${INSTALL_LIB}
-	${INSTALLCMD} -m 755 lpf ${INSTALL_LIB}
-	${INSTALLCMD} -m 755 lpbanner ${INSTALL_LIB}
-	${INSTALLCMD} -m 755 lpq ${INSTALL_BIN}
-	${INSTALLCMD} -m 755 lprm ${INSTALL_BIN}
-	${INSTALLCMD} -m 755 lpr ${INSTALL_BIN}
-	${INSTALLCMD} -m 755 lpc ${INSTALL_MAINT}
-	${INSTALLCMD} -m 755 checkpc ${INSTALL_MAINT}
-	${INSTALLCMD} -m 755 lpraccnt ${INSTALL_MAINT}
+	${INSTALLCMD} -m $(PERMS) lpq ${INSTALL_BIN}
+	${INSTALLCMD} -m $(PERMS) lprm ${INSTALL_BIN}
+	${INSTALLCMD} -m $(PERMS) lpr ${INSTALL_BIN}
+	${INSTALLCMD} -m $(PERMS) lpc ${INSTALL_MAINT}
+	${INSTALLCMD} -m $(NORM_PERMS) lpd ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) lpf ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) lpbanner ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) checkpc ${INSTALL_MAINT}
+	${INSTALLCMD} -m $(NORM_PERMS) lpraccnt ${INSTALL_MAINT}
+	${INSTALLCMD} -m $(NORM_PERMS) readfilecount ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) removeoneline ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) authenticate_pgp ${INSTALL_LIB}
+	${INSTALLCMD} -m $(NORM_PERMS) setupauth ${INSTALL_LIB}
+	rm -f ${INSTALL_BIN}/lp;     ln -s lpr  ${INSTALL_BIN}/lp;
+	rm -f ${INSTALL_BIN}/lpstat; ln -s lpq  ${INSTALL_BIN}/lpstat;
+	rm -f ${INSTALL_BIN}/cancel; ln -s lprm ${INSTALL_BIN}/cancel;
 
 ${INSTALL_LIB}::
 	${SRC}/mkinstalldirs $@
@@ -296,35 +342,49 @@ uninstall:
 
 
 clean::
-	-rm -f *.o core $(TARGET)
+	-rm -f *.o *.core ? core $(TARGET) $(NONTARGET)
 
 realclean mostlyclean distclean:: clean
-	-rm -f Makefile tags
+	-rm -f Makefile Makefile.bsd tags
 
 info:
-TAGS:
-	ctags -t */*.c */*.h
+tags TAGS:
+	ctags -t -d common/*.c include/*.h LPC/*.c LPD/*.c \
+		LPQ/*.c LPR/*.c LPRM/*.c
 
 ###########################################################################
 
-ci:
+cifiles:
+	if [ ! -d RCS ] ; then mkdir RCS ; fi ;
 	checkin() { \
+		echo $$1 ; \
 		ci $(CI) -l -mUpdate -t-Initial $$1; \
 	}; \
 	for i in *; do \
-		echo $$i ; \
 		if [ -f "$$i" ] ; then \
 			case $$i in \
-				'Makefile*' ) checkin $$i ;; \
+				Makefile*|*install* ) echo $$i; checkin $$i ;; \
 			esac; \
-		elif [ -d "$$i" ] ; then \
-			if [ ! -d $$i/RCS ] ; then mkdir $$i/RCS ; fi ; \
-			for j in $$i/*; do \
-				echo $$j ; \
-				if [ -f "$$j" ] ; then \
-					ci $(CI) -l -mUpdate -t-Initial $$j; \
-				fi; \
-			done; \
+		fi; \
+	done;
+
+ci: cifiles
+	checkin() { \
+		echo $$1 ; \
+		ci $(CI) -l -mUpdate -t-Initial $$1; \
+	}; \
+	for i in *; do \
+		if [ -d "$$i" ] ; then \
+			case $$i in \
+			RCS ) ;; \
+			* ) if [ ! -d $$i/RCS ] ; then mkdir $$i/RCS ; fi ; \
+				for j in $$i/*; do \
+					if [ -f "$$j" ] ; then \
+						checkin $$j; \
+					fi; \
+				done; \
+				;; \
+			esac; \
 		fi; \
 	done;
 
@@ -366,111 +426,119 @@ depend: /tmp/dep /tmp/order
     
 ###########################################################################
 
-default.o: Makefile
-
 ############# GENERATED ###################################################
 
 
 ########### LIBRARY ORDER #########
 LIBLPR_ORDER = \
-	 controlword.o copyright.o freespace.o getcnfginfo.o\
-	 getparms.o getqueue.o getuserinfo.o initialize.o\
-	 proctitle.o removejob.o sendjob.o fixcontrol.o\
-	 printjob.o jobcontrol.o pr_support.o sendlpc.o\
-	 getprinter.o sendlprm.o sendstatus.o link_support.o\
-	 serverpid.o setupprinter.o checkremote.o parse_debug.o\
-	 getopt.o permissions.o globmatch.o spoolcontrol.o\
-	 lockfile.o stty.o termclear.o setup_filter.o\
-	 cleantext.o gethostinfo.o printcap.o dump.o\
-	 rw_pipe.o setuid.o timeout.o waitchild.o\
-	 errormsg.o killchild.o bsd-compat.o decodestatus.o\
-	 malloclist.o setstatus.o fileopen.o pathname.o\
-	 snprintf.o utilities.o
+	 termclear.o setupprinter.o serverpid.o sendlpq.o\
+	 sendlprm.o sendlpc.o sendjob.o sendauth.o\
+	 removejob.o readstatus.o proctitle.o printjob.o\
+	 pr_support.o permissions.o patselect.o parse_debug.o\
+	 krb5_auth.o initialize.o getuserinfo.o getqueue.o\
+	 getprinter.o getparms.o getopt.o getcnfginfo.o\
+	 freespace.o fixcontrol.o controlword.o checkremote.o\
+	 stty.o spoolcontrol.o krb5_sendauth.o waitchild.o\
+	 utilities.o timeout.o setup_filter.o rw_pipe.o\
+	 printcap.o merge.o jobcontrol.o globmatch.o\
+	 default.o cleantext.o vars.o copyright.o\
+	 setuid.o setstatus.o link_support.o gethostinfo.o\
+	 dump.o inet_ntop.o malloclist.o lockfile.o\
+	 fileopen.o pathname.o killchild.o decodestatus.o\
+	 errormsg.o snprintf.o bsd-compat.o
 
 
 ########### DEPENDENCIES #########
-bsd-compat.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-checkpc.o :	config.h checkpc.h checkpc_perm.h debug.h decodestatus.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h lpd.h patchlevel.h permission.h portable.h printcap.h setuid.h timeout.h 
-checkpc_gbl.o :	config.h checkpc.h debug.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h lpd.h permission.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-checkpc_perm.o :	config.h checkpc.h checkpc_perm.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpd.h portable.h setuid.h 
-checkpc_port.o :	config.h debug.h errorcodes.h errormsg.h freespace.h lp.h lp_config.h portable.h printcap.h rw_pipe.h setuid.h timeout.h 
-checkremote.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h printcap.h 
-cleantext.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-controlword.o :	config.h control.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-copyright.o :	config.h debug.h errorcodes.h errormsg.h lp.h patchlevel.h portable.h 
-decodestatus.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h portable.h 
+bsd-compat.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+checkpc.o :	config.h bsd-compat.h checkpc_perm.h debug.h dump.h errormsg.h fileopen.h getcnfginfo.h getqueue.h initialize.h lp.h patchlevel.h pathname.h permission.h portable.h printcap.h removejob.h setuid.h setupprinter.h timeout.h utilities.h 
+checkpc_perm.o :	config.h bsd-compat.h checkpc_perm.h debug.h errormsg.h lp.h pathname.h portable.h setuid.h utilities.h 
+checkpc_port.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h freespace.h killchild.h lockfile.h lp.h pathname.h portable.h rw_pipe.h setuid.h stty.h timeout.h utilities.h waitchild.h 
+checkremote.o :	config.h bsd-compat.h checkremote.h debug.h errormsg.h gethostinfo.h lp.h portable.h printcap.h utilities.h 
+cleantext.o :	config.h bsd-compat.h cleantext.h debug.h errormsg.h lp.h portable.h utilities.h 
+controlword.o :	config.h bsd-compat.h control.h debug.h errormsg.h lp.h portable.h utilities.h 
+copyright.o :	config.h bsd-compat.h debug.h errormsg.h lp.h patchlevel.h portable.h utilities.h 
+decodestatus.o :	config.h bsd-compat.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h portable.h utilities.h 
 default.o :	
-dump.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-errormsg.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h timeout.h 
-fileopen.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h 
-fixcontrol.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h printcap.h 
-freespace.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-getcnfginfo.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h 
-gethostinfo.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h 
-getopt.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-getparms.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-getprinter.o :	config.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h portable.h printcap.h 
-getqueue.o :	config.h debug.h errorcodes.h errormsg.h globmatch.h jobcontrol.h lp.h portable.h printcap.h 
-getuserinfo.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h setuid.h 
-globmatch.o :	config.h debug.h errorcodes.h errormsg.h globmatch.h lp.h portable.h 
-initialize.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h setuid.h 
-jobcontrol.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h printcap.h 
-killchild.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h portable.h 
-link_support.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h setuid.h timeout.h 
-lockfile.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h setuid.h 
-lpbanner.o :	
+dump.o :	config.h bsd-compat.h debug.h dump.h errormsg.h lp.h portable.h utilities.h 
+errormsg.o :	config.h bsd-compat.h debug.h errormsg.h killchild.h lp.h portable.h setstatus.h utilities.h 
+fileopen.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h fileopen.h killchild.h lockfile.h lp.h pathname.h portable.h timeout.h utilities.h waitchild.h 
+fixcontrol.o :	config.h bsd-compat.h cleantext.h debug.h dump.h errormsg.h fixcontrol.h lp.h malloclist.h merge.h portable.h utilities.h 
+freespace.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h freespace.h lp.h pathname.h portable.h utilities.h 
+getcnfginfo.o :	config.h bsd-compat.h debug.h dump.h errormsg.h fileopen.h getcnfginfo.h lp.h malloclist.h merge.h portable.h printcap.h utilities.h 
+gethostinfo.o :	config.h bsd-compat.h debug.h dump.h errormsg.h gethostinfo.h lp.h malloclist.h portable.h utilities.h 
+getopt.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+getparms.o :	config.h bsd-compat.h debug.h errormsg.h getparms.h lp.h portable.h utilities.h 
+getprinter.o :	config.h bsd-compat.h checkremote.h debug.h dump.h errormsg.h getprinter.h lp.h portable.h printcap.h utilities.h 
+getqueue.o :	config.h bsd-compat.h cleantext.h debug.h dump.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h globmatch.h jobcontrol.h lp.h malloclist.h merge.h pathname.h permission.h portable.h utilities.h 
+getuserinfo.o :	config.h bsd-compat.h debug.h errormsg.h getuserinfo.h lp.h portable.h setuid.h utilities.h 
+globmatch.o :	config.h bsd-compat.h debug.h errormsg.h globmatch.h lp.h portable.h utilities.h 
+inet_ntop.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+initialize.o :	config.h bsd-compat.h debug.h dump.h errormsg.h fileopen.h getcnfginfo.h gethostinfo.h getuserinfo.h initialize.h killchild.h lp.h portable.h printcap.h setuid.h utilities.h waitchild.h 
+jobcontrol.o :	config.h bsd-compat.h debug.h decodestatus.h dump.h errorcodes.h errormsg.h jobcontrol.h lockfile.h lp.h malloclist.h pathname.h portable.h pr_support.h setup_filter.h utilities.h 
+killchild.o :	config.h bsd-compat.h debug.h decodestatus.h errormsg.h killchild.h lp.h malloclist.h portable.h utilities.h 
+krb5_auth.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h killchild.h krb5_auth.h lp.h portable.h utilities.h 
+krb5_sendauth.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+link_support.o :	config.h bsd-compat.h debug.h errormsg.h gethostinfo.h linksupport.h lp.h portable.h setuid.h timeout.h utilities.h 
+lockfile.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h lockfile.h lp.h portable.h utilities.h 
+lpbanner.o :	lpbanner.h 
 lpbanner_fnt.o :	lpbanner.h 
-lpbanner_gbl.o :	errorcodes.h lpbanner.h 
 lpbanner_prn.o :	lpbanner.h 
-lpc.o :	config.h control.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h lpc.h portable.h setuid.h 
-lpc_gbl.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpc.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-lpc_getparms.o :	config.h debug.h errorcodes.h errormsg.h lp.h lpc.h patchlevel.h portable.h 
-lpd.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpd.h permission.h portable.h pr_support.h printcap.h setuid.h 
-lpd_control.o :	config.h control.h debug.h decodestatus.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h lpd.h permission.h portable.h printcap.h 
-lpd_gbl.o :	config.h debug.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h lpd.h permission.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-lpd_getparms.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpd.h patchlevel.h portable.h 
-lpd_jobs.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h lpd.h permission.h portable.h pr_support.h printcap.h sendjob.h timeout.h 
-lpd_rcvjob.o :	config.h debug.h errorcodes.h errormsg.h freespace.h lp.h lp_config.h lpd.h permission.h portable.h printcap.h 
-lpd_remove.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h lp_config.h lpd.h permission.h portable.h printcap.h 
-lpd_sendmail.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpd.h portable.h pr_support.h printcap.h 
-lpd_status.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h lpd.h permission.h portable.h printcap.h 
+lpc.o :	config.h bsd-compat.h control.h debug.h decodestatus.h errormsg.h getprinter.h initialize.h killchild.h lp.h portable.h sendlpc.h setuid.h utilities.h waitchild.h 
+lpc_getparms.o :	config.h bsd-compat.h debug.h errormsg.h lp.h patchlevel.h portable.h utilities.h 
+lpd.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h gethostinfo.h initialize.h killchild.h krb5_auth.h linksupport.h lp.h permission.h portable.h printcap.h serverpid.h setstatus.h utilities.h waitchild.h 
+lpd_control.o :	config.h bsd-compat.h cleantext.h control.h debug.h decodestatus.h errormsg.h fileopen.h getqueue.h jobcontrol.h killchild.h linksupport.h lp.h pathname.h patselect.h permission.h portable.h printcap.h serverpid.h setstatus.h setupprinter.h utilities.h waitchild.h 
+lpd_getparms.o :	config.h bsd-compat.h debug.h errormsg.h lp.h patchlevel.h portable.h utilities.h 
+lpd_jobs.o :	config.h bsd-compat.h checkremote.h cleantext.h debug.h decodestatus.h dump.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h jobcontrol.h killchild.h linksupport.h lockfile.h lp.h malloclist.h merge.h pathname.h permission.h portable.h pr_support.h printcap.h printjob.h removejob.h sendjob.h serverpid.h setstatus.h setup_filter.h setupprinter.h utilities.h waitchild.h 
+lpd_rcvjob.o :	config.h bsd-compat.h cleantext.h debug.h dump.h errorcodes.h errormsg.h fileopen.h freespace.h gethostinfo.h getqueue.h jobcontrol.h killchild.h linksupport.h lockfile.h lp.h malloclist.h merge.h pathname.h permission.h portable.h serverpid.h setstatus.h setup_filter.h setupprinter.h utilities.h 
+lpd_remove.o :	config.h bsd-compat.h checkremote.h cleantext.h debug.h decodestatus.h errorcodes.h errormsg.h gethostinfo.h jobcontrol.h killchild.h linksupport.h lp.h malloclist.h patselect.h permission.h portable.h pr_support.h printcap.h removejob.h sendlprm.h setstatus.h setupprinter.h utilities.h waitchild.h 
+lpd_secure.o :	config.h bsd-compat.h cleantext.h debug.h errorcodes.h errormsg.h fileopen.h killchild.h krb5_auth.h linksupport.h lockfile.h lp.h malloclist.h pathname.h permission.h portable.h setup_filter.h setupprinter.h utilities.h waitchild.h 
+lpd_sendmail.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h fileopen.h lp.h pathname.h portable.h pr_support.h setup_filter.h utilities.h 
+lpd_status.o :	config.h bsd-compat.h cleantext.h debug.h errormsg.h fileopen.h gethostinfo.h getqueue.h jobcontrol.h killchild.h linksupport.h lp.h malloclist.h pathname.h patselect.h permission.h portable.h printcap.h sendlpq.h serverpid.h setup_filter.h setupprinter.h utilities.h 
 lpf.o :	
-lpq.o :	config.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h lpq.h portable.h printcap.h setuid.h termclear.h 
-lpq_gbl.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpq.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-lpq_getparms.o :	config.h debug.h errorcodes.h errormsg.h lp.h lpq.h patchlevel.h portable.h 
-lpr.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpr.h portable.h printcap.h sendjob.h setuid.h 
-lpr_chkparms.o :	config.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h lpr.h portable.h printcap.h 
-lpr_cpyfiles.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpr.h portable.h 
-lpr_gbl.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpr.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-lpr_getparms.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lpr.h patchlevel.h portable.h printcap.h 
-lpr_makejob.o :	config.h debug.h errorcodes.h errormsg.h lp.h lpr.h portable.h printcap.h 
-lpraccnt.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-lprm.o :	config.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h lprm.h portable.h printcap.h setuid.h 
-lprm_gbl.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h lprm.h portable.h pr_support.h printcap.h setuid.h timeout.h 
-lprm_getparm.o :	config.h debug.h errorcodes.h errormsg.h lp.h lprm.h portable.h 
-malloclist.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-parse_debug.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-pathname.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-permissions.o :	config.h debug.h errorcodes.h errormsg.h globmatch.h lp.h lp_config.h permission.h portable.h printcap.h 
-pr_support.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h portable.h pr_support.h printcap.h timeout.h 
-printcap.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h pr_support.h printcap.h 
-printjob.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h jobcontrol.h lp.h lp_config.h portable.h pr_support.h printcap.h 
-proctitle.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-removejob.o :	config.h debug.h errorcodes.h errormsg.h jobcontrol.h lp.h portable.h 
-rw_pipe.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h rw_pipe.h 
-sendjob.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h pr_support.h printcap.h sendjob.h 
-sendlpc.o :	config.h debug.h errorcodes.h errormsg.h getprinter.h lp.h lp_config.h portable.h 
-sendlprm.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-sendstatus.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-serverpid.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-setstatus.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h 
-setuid.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h setuid.h 
-setup_filter.o :	config.h debug.h errorcodes.h errormsg.h lp.h lp_config.h portable.h pr_support.h printcap.h rw_pipe.h setuid.h timeout.h 
-setupprinter.o :	config.h debug.h errorcodes.h errormsg.h jobcontrol.h lp.h permission.h portable.h pr_support.h printcap.h 
-snprintf.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h 
-spoolcontrol.o :	config.h debug.h errorcodes.h errormsg.h jobcontrol.h lp.h portable.h printcap.h 
-stty.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h printcap.h 
-termclear.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h termclear.h 
-timeout.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h timeout.h 
-utilities.o :	config.h debug.h errorcodes.h errormsg.h lp.h portable.h timeout.h 
-waitchild.o :	config.h debug.h decodestatus.h errorcodes.h errormsg.h lp.h portable.h 
+lpq.o :	config.h bsd-compat.h checkremote.h debug.h errormsg.h fileopen.h getprinter.h initialize.h killchild.h lp.h malloclist.h portable.h printcap.h readstatus.h sendlpq.h termclear.h utilities.h 
+lpq_getparms.o :	config.h bsd-compat.h debug.h errormsg.h lp.h malloclist.h patchlevel.h portable.h utilities.h 
+lpr.o :	config.h bsd-compat.h debug.h dump.h errormsg.h initialize.h killchild.h lp.h pathname.h portable.h sendjob.h setuid.h utilities.h 
+lpr_chkparms.o :	config.h bsd-compat.h debug.h errormsg.h getprinter.h getuserinfo.h lp.h portable.h utilities.h 
+lpr_cpyfiles.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h fileopen.h killchild.h lp.h malloclist.h pathname.h portable.h utilities.h 
+lpr_getparms.o :	config.h bsd-compat.h debug.h errormsg.h getparms.h lp.h patchlevel.h portable.h utilities.h 
+lpr_makejob.o :	config.h bsd-compat.h debug.h dump.h errormsg.h lp.h malloclist.h portable.h utilities.h 
+lpraccnt.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+lprm.o :	config.h bsd-compat.h debug.h errormsg.h getprinter.h initialize.h killchild.h lp.h portable.h sendlprm.h utilities.h 
+lprm_getparm.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h printcap.h utilities.h 
+malloclist.o :	config.h bsd-compat.h debug.h errormsg.h lp.h malloclist.h portable.h utilities.h 
+merge.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+monitor.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+parse_debug.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h killchild.h lp.h portable.h utilities.h 
+pathname.o :	config.h bsd-compat.h debug.h errormsg.h lp.h pathname.h portable.h utilities.h 
+patselect.o :	config.h bsd-compat.h debug.h errormsg.h globmatch.h lp.h patselect.h portable.h utilities.h 
+permissions.o :	config.h bsd-compat.h debug.h dump.h errormsg.h fileopen.h gethostinfo.h globmatch.h lp.h malloclist.h permission.h portable.h setup_filter.h utilities.h 
+pr_support.o :	config.h bsd-compat.h debug.h decodestatus.h errorcodes.h errormsg.h fileopen.h killchild.h linksupport.h lockfile.h lp.h portable.h pr_support.h printcap.h setstatus.h setup_filter.h stty.h timeout.h utilities.h waitchild.h 
+printcap.o :	config.h bsd-compat.h cleantext.h debug.h dump.h errormsg.h fileopen.h gethostinfo.h globmatch.h lp.h malloclist.h merge.h pathname.h portable.h printcap.h setup_filter.h utilities.h 
+printjob.o :	config.h bsd-compat.h debug.h decodestatus.h dump.h errorcodes.h errormsg.h fileopen.h jobcontrol.h killchild.h linksupport.h lp.h malloclist.h portable.h pr_support.h printcap.h printjob.h setstatus.h setup_filter.h utilities.h waitchild.h 
+proctitle.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+readfilecount.o :	config.h portable.h 
+readstatus.o :	config.h bsd-compat.h cleantext.h debug.h errormsg.h killchild.h linksupport.h lp.h malloclist.h portable.h readstatus.h setstatus.h utilities.h 
+removejob.o :	config.h bsd-compat.h debug.h dump.h errormsg.h fileopen.h jobcontrol.h lp.h portable.h removejob.h setstatus.h utilities.h 
+removeoneline.o :	config.h portable.h 
+rw_pipe.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h rw_pipe.h utilities.h 
+sclient.o :	config.h bsd-compat.h debug.h errormsg.h krb5_auth.h lp.h portable.h utilities.h 
+sendauth.o :	config.h bsd-compat.h cleantext.h debug.h errorcodes.h errormsg.h fileopen.h killchild.h krb5_auth.h linksupport.h lp.h malloclist.h portable.h printcap.h sendauth.h setstatus.h setup_filter.h utilities.h 
+sendjob.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h fileopen.h fixcontrol.h jobcontrol.h killchild.h linksupport.h lp.h malloclist.h portable.h pr_support.h printcap.h printjob.h readstatus.h sendauth.h sendjob.h setstatus.h setup_filter.h utilities.h 
+sendlpc.o :	config.h bsd-compat.h control.h debug.h errorcodes.h errormsg.h fileopen.h getprinter.h killchild.h linksupport.h lp.h portable.h readstatus.h sendauth.h sendlpc.h setstatus.h utilities.h 
+sendlpq.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h killchild.h linksupport.h lp.h portable.h readstatus.h sendauth.h sendlpq.h utilities.h 
+sendlprm.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h killchild.h linksupport.h lp.h portable.h readstatus.h sendauth.h sendlprm.h setstatus.h utilities.h 
+serverpid.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h serverpid.h utilities.h 
+setstatus.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h fileopen.h linksupport.h lp.h pathname.h portable.h setstatus.h utilities.h 
+setuid.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h setuid.h utilities.h 
+setup_filter.o :	config.h bsd-compat.h cleantext.h debug.h decodestatus.h dump.h errorcodes.h errormsg.h gethostinfo.h jobcontrol.h killchild.h lp.h malloclist.h pathname.h portable.h pr_support.h printcap.h rw_pipe.h setstatus.h setuid.h setup_filter.h timeout.h utilities.h waitchild.h 
+setupauth.o :	config.h portable.h 
+setupprinter.o :	config.h bsd-compat.h checkremote.h cleantext.h debug.h dump.h errormsg.h fileopen.h getcnfginfo.h getqueue.h jobcontrol.h lp.h pathname.h permission.h portable.h pr_support.h printcap.h setupprinter.h utilities.h 
+snprintf.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h utilities.h 
+spoolcontrol.o :	config.h bsd-compat.h debug.h errorcodes.h errormsg.h lockfile.h lp.h malloclist.h pathname.h portable.h utilities.h 
+sserver.o :	config.h bsd-compat.h debug.h errormsg.h krb5_auth.h lp.h portable.h utilities.h 
+stty.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h stty.h utilities.h 
+termclear.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h termclear.h utilities.h 
+timeout.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h timeout.h utilities.h 
+utilities.o :	config.h bsd-compat.h debug.h errormsg.h lp.h portable.h timeout.h utilities.h 
+vars.o :	config.h bsd-compat.h debug.h errormsg.h fileopen.h lp.h permission.h portable.h pr_support.h printcap.h setuid.h timeout.h utilities.h waitchild.h 
+waitchild.o :	config.h bsd-compat.h debug.h decodestatus.h errormsg.h killchild.h lp.h portable.h timeout.h utilities.h waitchild.h 

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,18 +11,20 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getuserinfo.c,v 3.0 1996/05/19 04:06:01 papowell Exp $";
+"$Id: getuserinfo.c,v 3.1 1996/12/28 21:40:14 papowell Exp $";
 /********************************************************************
- * void Get_user_information();
+ * char *Get_user_information();
  *  get the user name
  *
  * 
  ********************************************************************/
 
 #include "lp.h"
+#include "getuserinfo.h"
 #include "setuid.h"
+/**** ENDINCLUDE ****/
 
-char *Get_user_information()
+char *Get_user_information( void )
 {
 	char *name = 0;
 	static char uid_msg[32];
@@ -42,12 +44,12 @@ char *Get_user_information()
 		plp_snprintf( uid_msg, sizeof(uid_msg), "UID_%d", uid );
 		name = uid_msg;
 	} else {
-		name = safestrdup( name );
+		safestrncpy( uid_msg, name );
 	}
-    return( name );
+    return( uid_msg );
 }
 
-int Root_perms()
+int Root_perms( void )
 {
 	return( getuid() == 0 );
 }

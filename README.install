@@ -8,18 +8,24 @@
  ***************************************************************************
  * MODULE: README
  * PURPOSE: Overview of Software
- * $Id: README.install,v 3.0 1996/05/19 04:05:25 papowell Exp $
+ * $Id: README.install,v 3.1 1997/01/22 23:15:29 papowell Exp $
  **************************************************************************/
 
 Patrick Powell <papowell@sdsu.edu>
 Jason Mason    <jmason@iona.ie>
   Sat Feb 24 07:05:52 PST 1996
+  Sun Jan 19 06:32:18 PST 1997
 
 The LPRng software requires an ANSI C compiler and the
-GNU Make software from the Free Software Foundation.
-This is available at many FTP sites, such as:
+GNU Make software from the Free Software Foundation,
+or a BSD 4.3/4.4 compatible make.
+GNU Make is available at many FTP sites, such as:
   ftp://prep.ai.mit.edu/pub/gnu
   ftp://ftp.uu.net/pub/gnu
+
+If you are using the BSD Make,  you will need to use make -f Makefile.bsd
+or rename the Makefile.bsd files as Makefile and edit them, replacing
+the lines containing 'make -f Makefile.bsd' with just 'make'.
 
 The LPRng software distribution has the following structure:
 following files,  listed here
@@ -63,16 +69,22 @@ For adventurous and/or experienced users, you can compile and install the
   method,  but will get things installed as quickly as possible.
 
     configure;
-	make;
-	su   { you must do the following commands as root }
+    make;
+      (or if you are using BSD make, make -f Makefile.bsd)
+    su   { you must do the following commands as root }
     make install
+      (or if you are using BSD make, make -f Makefile.bsd install)
     if [ ! -f /etc/lpd.perms ]; make default;
+      (or if you are using BSD make, make -f Makefile.bsd default)
     checkpc -f
     kill `ps -aux |grep lpd | awk '{print $2}'`
     mv /usr/lib/lpd /usr/lib/lpd.old
     ln -s /usr/local/bin/lpd /usr/lib/lpd
     lpd
     lpq
+
+    If you are running on Solaris, see the README.solaris for
+        further instructions.
       
 GENERATION.
 
@@ -120,7 +132,7 @@ For testing, set the LPD_CONF environment variable to
   CSH:
     setenv LPD_CONF /tmp/LPD/lpd_conf
     set path=( /tmp/LPD $path )
-	setenv PRINTER
+    setenv PRINTER
   Bourne Shell:
     LPD_CONF=/tmp/LPD/lpd_conf.$HOST; export LPD_CONF
     PATH=/tmp/LPD:$PATH; export PATH
@@ -425,7 +437,7 @@ Installation Summary:
     or link the old lpd executable to the new
 
     mv /usr/lib/lpd /usr/lib/lpd.old
-	ln -s /usr/local/bin/lpd /usr/lib/lpd
+    ln -s /usr/local/bin/lpd /usr/lib/lpd
 
 
 MAINTENANCE AND PERIODIC CLEANUP

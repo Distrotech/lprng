@@ -8,22 +8,25 @@
 ###########################################################################
 # MODULE: UTILS/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile,v 3.0 1996/05/19 04:06:53 papowell Exp $
+# $Id: Makefile,v 3.2 1997/01/19 14:34:56 papowell Exp $
 ########################################################################## 
 
-.PHONY: all clean ci install FRC realclean mostlyclean distclean
 
 all:
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
+
+.PHONY: all clean ci install FRC realclean mostlyclean distclean
+
 realclean mostlyclean distclean clean:
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
 install:
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
 
-ALLDIRS = Intro Install
+ALLDIRS = Intro Install Tutorial Macros
 
 $(ALLDIRS): FRC
-	$(MAKE) -C $@ $(MAKETARGET)
+	(cd $@; $(MAKE) $(MAKETARGET))
+FRC:
 
 
 Install.txt: Install.nroff
@@ -35,6 +38,11 @@ DIRS= Install Intro
 
 
 ci:
+	for i in $(ALLDIRS) ; do \
+		if test ! -d $$i/RCS ; then \
+			mkdir $$i/RCS ; \
+		fi; \
+	done;
 	checkin() { \
 		ci $(CI) -l -mUpdate -t-Initial $$1; \
 	}; \

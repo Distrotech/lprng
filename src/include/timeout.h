@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: timeout.h
  * PURPOSE: timeout support definitions
- * "$Id: timeout.h,v 3.0 1996/05/19 04:06:35 papowell Exp $"
+ * "$Id: timeout.h,v 3.1 1996/12/28 21:40:37 papowell Exp $"
  **************************************************************************/
 
 #ifndef _TIMEOUT_H 
@@ -16,19 +16,18 @@
 
 #include <setjmp.h>
 
-EXTERN plp_signal_t (*Old_alarm_fun)(int);      /* save the alarm function */
 EXTERN int Alarm_timed_out;                                     /* flag */
-EXTERN int *Close_fd;      /* close on timeout */
 EXTERN int Timeout_pending;
+EXTERN int *Close_fd;
 
 #if defined(HAVE_SIGSETJMP)
 EXTERN sigjmp_buf Timeout_env;
-#  define Set_timeout(t,s) (sigsetjmp(Timeout_env,1)==0 && Set_timeout_alarm(t,s))
+#  define Set_timeout() (sigsetjmp(Timeout_env,1)==0)
 #else
 EXTERN jmp_buf Timeout_env;
-#  define Set_timeout(t,s) (setjmp(Timeout_env)==0 && Set_timeout_alarm(t,s))
+#  define Set_timeout() (setjmp(Timeout_env)==0)
 #endif
 int Set_timeout_alarm( int timeout, int *socket );
-void Clear_timeout();
+void Clear_timeout( void );
 
 #endif

@@ -8,7 +8,7 @@
 .\" ***************************************************************************
 .\" * MODULE: README
 .\" * PURPOSE: Overview of Software
-.\" * $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" * $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
 .\" **************************************************************************/
 .\"
 .\"Uses the NROFF tmac.usenix macros
@@ -985,9 +985,9 @@ References
 .B
 LPRng - An Enhanced Printer Spooler
 .sz 14
-Introduction
+Introduction and Reference Manual
 .sz 10
-(Beta Release)
+Version 3.1, Jan. 1, 1997
 .sp .5v
 .sz 12
 Patrick Powell <papowell@sdsu.edu>
@@ -1009,7 +1009,7 @@ and
 a greatly improved permission and authorization mechanism.
 .br
 .EA                     \" end abstract, start paper
-.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
 .SH                     \" (.NH maps to .SH)
 Introduction
 .PP
@@ -1126,6 +1126,36 @@ and
 .I Gnumake
 allow operating system dependent versions of various support routines
 to be selected at compile time in an automatic manner.
+.PP
+Since the original release of LPRng in 1994,
+there has been growing use of it for commercial and other business
+applications.
+The Artisitic license meets the needs of most end users;
+a commercial license and support is available for users and
+institutions that require it.
+In addition to the original goals,
+Version 3.1 of LPRng now provide the following capabilities:
+.np
+Unique identification of user jobs.
+.np
+Long job numbers (up to 6 digits long),
+which avoids problems when spooling a large number of jobs
+to a single spool queue.
+.np
+Dynamic redirection and routing of jobs.
+A spool queue can now duplication and redirect a job
+to one or more spool queues.
+This allows dynamic routing of jobs based on load
+conditions and other considerations.
+.np
+Authenticated job and command transfers between users and
+servers.
+The original LPR protocol as defined in RFC1179 has been
+extended to provide for authentication.
+The actual authentication is separate from LPRng,
+which provides an interface and specification for its use.
+Currently,
+PGP and Kerberos authentication is supported.
 .PP
 The following sections discuss the overall architecture of the
 LPRng software,
@@ -1322,12 +1352,12 @@ and a variety of other attributes.
 After a job is placed in a print queue,
 .T lpd
 creates a server process to manage the printing operations.
-This server process then creates the necessary
+This server process then creates one or more
 filter processes which interface to the printer hardware.
 The data files are passed through the filters to the
 actual printer.
 .if \nt=0 .so Intro.f2
-.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
 .SH
 Configuration Information
 .PP
@@ -1341,6 +1371,8 @@ and provides a set of default for commonly specified system information.
 Compile time defaults can be overridden by values read from
 a configuration file,
 whose format is shown in Figure 2.
+The configuration file can also be used to specify default values
+for printcap variables.
 .PP
 In all LPRng database files
 leading whitespace,
@@ -1475,12 +1507,16 @@ server.
 If 
 .T lpd
 receives a SIGHUP signal it rereads the database information.
+This can be done by using the
+.T lpc
+.I reread
+command.
 Finally,
 it is possible to use the
 .T include
 facility to read additional configuration files.
 This facility may be removed in later releases of the LPRng software.
-.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
 .SH
 Printcap Information
 .PP
@@ -1496,6 +1532,9 @@ blank lines,
 and lines whose first character is
 .T `#'
 are ignored.
+Default values for printcap variables are set in the
+configuration file,
+using the same tags as the printcap file.
 For compatibility with the historical LPR printcap format,
 .T \e
 at the end of a line appends the next line to the current line.
@@ -1595,6 +1634,15 @@ The
 .T tc
 tag (recursively) appends a printcap
 entry to the end of the referencing entry.
+Multiple
+.T tc
+tags may appear in a printcap entry.
+Printcap entries whose primary (first)
+name starts with a non-alphabetic character
+are considered to be
+dummy entries and can only be referenced by
+.T tc
+tags.
 .F1
 .DS
 .sp
@@ -1610,13 +1658,14 @@ p1
 # second printer,
 p2
   :sd=/usr/spool/LPD/p2
-  :tc=common
+  :tc=@common
 # common information
-common:
+@common:
   :lf=log
   :rw
   :of=/tmp/LPD/psof
   :if=/tmp/LPD/psif
+p3:sd=/usr/spool/%P:tc=@common
 .sp 1.0
 # Printer specific information
 #   used by server,
@@ -1634,7 +1683,7 @@ p1
   :if=/tmp/LPD/psif
 # debug
 #   :db=9,remote=10
-# autohold
+# autohold - hold all jobs on submission
 #   :ah
 .DE
 .FG "Figure 3b" "Server/Client Printcap Examples
@@ -1656,8 +1705,7 @@ the clients ignore the
 tags and the server gets printer specific information
 from the printcap file in the spool directory.
 .PP
-In addition,
-the
+The
 .T oh
 (options for host) entry can be used to specify that the
 printcap entry is used only by a host whose IP address
@@ -1672,6 +1720,8 @@ By using the
 .T oh
 entry in the server printcap entry a single printcap database file
 can be used.
+.ds S_ F4
+.if \nt=0 .so Intro.f4
 .PP
 A major administration problem
 is the distribution of printcap information.
@@ -1722,7 +1772,79 @@ HESIOD,
 DBII,
 Sybase,
 and other databases can be supported in the same manner.
-.\" $Id: Intro.nroff,v 3.0 1996/05/19 04:06:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.PP
+The actual printcap expansion algorithm is as follows.
+The list of printcap files specified by the configuration database
+values
+.T printcap_path
+and on the LPD server the additional
+.T lpd_printcap_path
+are searched.
+These values should be semicolon or comma separated lists of files,
+or the command for a filter.
+The files are read,
+and any include files are read at the indicated points.
+(This is similar to the manner in which the C language
+preprocessor operates.)
+Next,
+the input is parsed into printcap fields,
+and organized into raw printcap entries.
+The raw entries are then sorted and
+joined together to form the final printcap entries.
+As each entry is added,
+it is checked for a
+.T tc
+field and the specified entry is recursively processed.
+.PP
+Strings with
+.T %X
+in them will be processed and the string substitions
+will be made.
+Currently,
+%P, %H, %h, %R, %M are replaced by
+the printer name,
+fully qualified host name,
+short host name,
+remote printer,
+and remote host respectively.
+The result of this process will be a set of printcap entries
+whose values are organized in sorted order.
+The resulting printcap entry can be examined using the
+.T lpc
+program
+.T printcap
+command.
+.PP
+The printcap database is consulted only when actual information about
+a printer is needed.
+When an actual printcap entry is needed,
+the database is checked to see if a printcap entry
+with the printer name is present.
+If it is not and a filter
+has been specified in the
+.I printcap_path
+configuration information,
+then the filter started and the required printer name
+is made available on the filter
+.I stdin
+(file descriptor 0).
+The filter will write information to its
+.I stdout
+(file descriptor 1),
+which is in turn read by the LPRng software.
+The result is then parsed and checked as for the
+printcap entries obtained from files.
+.PP
+When the
+.T tc
+entry to be expanded is not in the printcap database
+and a filter is available,
+then the filter will be invoked to obtain the entry.
+If the first printer name in the printcaps entry is non-alphabetic
+character,
+then the entry can only be used as a reference for
+.T tc .
 .SH
 Job Submission
 .PP
@@ -1750,14 +1872,11 @@ or do not support this capability.
 This is useful when creating large jobs,
 or there is are security related problems
 with creating a temporary file on the client host.
-.if \nt=0 .so Intro.f4
 .PP
 The LPRng clients can run as ordinary user processes;
 eliminates any problems with unauthorized
 access to files,
 as the client has no permission except those of the user.
-.ds S_ F5
-.if \nt>0 .so Intro.f5
 .PP
 However,
 for the
@@ -1797,6 +1916,8 @@ symbolic link option has no effect as files are transferred directly
 to the server,
 and the remove option has caused more than one user to
 accidentaly delete the files that he wanted printed!
+.ds S_ F5
+.if \nt=0 .so Intro.f5
 .SH
 Permissions and Authorization Checking
 .PP
@@ -1807,7 +1928,6 @@ The LPRng software uses a rather elaborate permissions
 and authorization mechanism,
 similar to the ones used by
 computer network firewalls.
-.if \nt=0 .so Intro.f5
 .PP
 Since all spooling operations are carried out by the
 .T lpd
@@ -1827,6 +1947,8 @@ which copies control and data files directly to a spool directory,
 to be used with the LPRng software.
 See the Security Considerations section for a discussion of problems
 related to allowing this type of activity.
+.ds S_ F5
+.if \nt>0 .so Intro.f5
 .PP
 Each request for service has a set of attributes and values;
 a list of these attributes is shown in Figure 4.
@@ -1866,6 +1988,10 @@ has permission to access a file.
 The filter output is used as an additional permission file for permissions
 checking.
 .PP
+For a complete list of keys and tags,
+see the
+.IR lpd.perms (5)
+manual page for details.
 If no match is found after searching all specified databases
 then the last specified default permission will be used.
 .PP
@@ -1999,10 +2125,13 @@ are used when printing the job.
 The LPRng software extends the basic RFC1179 control file entries 
 by adding
 .T Z
-(output filters options)
-and
+(output filters options),
 .T Q
-(original queue).
+(original queue),
+and
+.T A
+(identification)
+options.
 The value of these options are passed to the filters
 that format and print the data files.
 For example,
@@ -2011,7 +2140,7 @@ with several aliases.
 The
 .T lpr
 command
-\f(CWlpr -Q -Pdouble -Zheavy_paper
+\f(CWlpr -Q -Pdouble -Zheavy_paper\fR
 will create a control file with the
 .T Qdouble
 and
@@ -2072,7 +2201,7 @@ entry causes the server
 to transfer all spool jobs to the
 specified remote printer.
 When
-.T autohold
+.T holdall
 is enabled,
 the server will not process a jobs until it is
 released by a request from the
@@ -2080,14 +2209,28 @@ released by a request from the
 program.
 The printcap
 .T ah
-flag can be used to set autohold on by default.
+(automatically hold)
+flag can be used to set job holding on by default,
+or it can be enabled/disabled by using the
+.T lpc
+.T holdall
+or
+.T noholdall
+commands.
+If the
+.T ah
+flag is on,
+it cannot be overriden by the
+.T lpc
+.T holdall/noholdall
+commands.
 .F1
 .DS
 printing_disabled 0
 spooling_disabled 1
 debug 10,remote=5,log=/tmp/log
 redirect  p3@mentor
-autohold  off
+holdall  off
 class     A,B
 .DE
 .FG "Figure 7a" "Spool Control File
@@ -2140,6 +2283,18 @@ The
 program can also request
 (brutal) spool server process termination,
 and (gentle) restarting of spooling activities.
+The
+.T lpc
+stop and start commands are used to enable and disable printing;
+enable and disable is used to enable and disable spooling.
+The abort command will attempt to brutally stop printing of the current
+job and remove it;
+the kill command will stop printing and then attempt to restart the last job.
+There are similar commands to modify the
+various fields in the control file;
+see the
+.T lpc
+man page for details.
 .PP
 The spool server process scans the spool queue,
 ordering jobs to be serviced in a first-in,
@@ -2296,6 +2451,13 @@ of the bounce queue, i.e.-
 .T "  :sd=/var/...
 .br
 .T "  :if=/if_filter
+.PP
+The
+.T :lpr_bounce:
+printcap flag will cause the LPR program to perform filtering
+before sending the jobs to a server.
+This can have unexpected results if the filters are not available on the
+local host.
 .SH
 Printing Algorithm
 .PP
@@ -2507,6 +2669,8 @@ changes.
 The section on Filters discusses how they are accommodated.
 .ds S_ F9
 .if \nt=0 .so Intro.f9
+.ds S_ F9
+.if \nt>0 .so Intro.f9
 .PP
 LPRng supports multiple printers serving a single print queue.
 The master print queue has a
@@ -2527,8 +2691,6 @@ and then process the job.
 Note that print jobs can be directly spooled to slave spool queues,
 allowing users to send jobs to a server printer as well as to the
 master spool queue.
-.ds S_ F9
-.if \nt>0 .so Intro.f9
 .SH
 Filters
 .PP
@@ -2565,28 +2727,88 @@ flag.
 The options are scanned for variable
 substitutions indicated by
 .T $
-characters.
+characters,
+followed by zero or more of the format indication
+characters
+.T '
+(single quote),
+.T -
+(minus),
+or
+.T 0
+(zero).
 If
 .I key
 has a non-zero length string value
 .T X ,
 then
-\f(CW$\fIkey\fR expands to \f(CW-\fIkey\f(CWX\fP,
-\f(CW$-\fIkey\fR expands to \f(CWX\fR,
+\f(CW$\fIkey\fR expands to \f(CW-\fIkey\f(CW'X'\fP;
+the
+.T 0
+format key add as space between the key letter and the value,
+.T '
+suppresses quotation marks,
 and
-\f(CW$0\fIkey\fR to \f(CW-\fIkey\fP\0\f(CWX\fR,
-i.e. a space separating the key and value.
-For a printer filter,
-if the data file format is binary
+.T -
+suppresses the key flag.
+.nf
+.in +5n
+\f(CW$0\fIkey\fR expands to \f(CW-\fIkey\0\f(CW'X'\fP
+\f(CW$-\fIkey\fR expands to \f(CW'X'\fP
+\f(CW$'\fIkey\fR expands to \f(CW-\fIkey\0\f(CWX\fP
+\f(CW$-'\fIkey\fR expands to \f(CWX\fP
+.in -5n
+.fi
+.lp
+The
+.T $c
+key should be used only for printing filters.
+If the data file format is
+.T l
+(i.e.- binary)
 .T $c
 expands
-.T -c .
+.T -c
+otherwise it is the empty string and does not appear in the output.
+The following is a list of keys and their corresponding values
+(:x: indicates a printcap value, control file is a line from the
+job control file).
+.in +5n
+.nf
+.ta 6n +20n +4n +4n
+Key	Source	Value
+a	:af:	accounting file
+b	data file	data file size
+c	control file	data file format (see above).
+d	LPD	control directory
+e	LPD	pathname of data file in spool queue
+f	control file	data file original file name
+h	control file	short form of originating host name
+i	control file	indent specified to LPR
+j	control file	job number
+l	:pl:	page length
+m	:cf:	page cost factor for accounting
+n	control file	user name
+s	:ps:	printer status file
+t	LPD 	current time
+w	:pw:	page width
+x	:px:	page x dimension
+F	data file	format
+P	LPD	printer name
+S	:cm:	comment tag
+Upper Case Character
+	control file	Corresponding control file field
+.in -5n
+.fi
+.lp
+If there is no corresponding value for any of these keys,
+the result is a null (empty) string.
 The substitution formats allow the user to
 create interfaces to
 .I vintage
 printer filters
 with a minimum of effort;
-see Figure 9 for an example.
+see below for an example.
 As a further aid,
 The printcap
 .T bkf
@@ -2708,13 +2930,16 @@ The current version of the LPRng software depends on the various
 system configuration and database utilities to provide
 user authentication and system authentication.
 This is clearly inadequate,
-and a future release of LPRng will support encryption based authentication;
-the KERBEROS and the PGP systems are under active study for possible use.
-The method will be base on using the
+and LPRng support encryption based authentication;
+support for using Kerberos (version 5)
+is built into the system.
+PGP and other forms of authentication are supported
+by using the
 .I filter
 mechanism to invoke a set of authentication programs rather than
 directly incorporating the code into the LPRng software.
-This allows a variety of mechanisms to be used.
+Details of the exact interface for authentication can be found in the
+lpd(8) man page documentation.
 .PP
 One of the arguments for running client programs SUID ROOT
 is that it allows them to connect to the server from a privileged
@@ -3053,34 +3278,69 @@ they discovered and provided fixes for literally hundreds of bugs.
 LPRng was based on PLP Release 4.0,
 to which the following people (in alphabetical order) contributed:
 .nf
-.U "Dave Alden" "<alden@math.ohio-state.edu>"
-.U "Julian Anderson" "<jules@comp.vuw.ac.nz>"
-.U "Jan Barte" "<yann@uni-paderborn.de>"
-.U "Baba Z Buehler" "<baba@beckman.uiuc.edu>"
-.U "Lothar Butsch" "<but@unibw-hamburg.de>"
-.U "David M Clarke" "<dmc900@durras.anu.edu.au>"
-.U "Panos Dimakopoulos" "<dimakop@cti.gr>"
+.U "Alan F Lundin" "<aflundi@sandia.gov>"
+.U "Alan Shutko" "<ats@shep1.wustl.edu>"
+.U "Andrew Leahy" "<A.Leahy@st.nepean.uws.edu.au>,"
+.U "Andrew Richards" "<physajr@phys.canterbury.ac.nz>"
 .U "Angus Duggan" "<angus@harlequin.co.uk>"
-.U "Martin Forssen" "<maf@math.chalmers.se>"
-.U "Michael Haardt" "<u31b3hs@POOL.Informatik." "RWTH-Aachen.DE>"
-.U "Eric C Hagberg" "<hagberg@mail.med.cornell.edu>"
-.U "Paul Haldane" "<Paul.Haldane@edinburgh.ac.uk>"
-.U "George Harrach" "<ghharrac@ouray.Denver." "Colorado.EDU>"
-.U "Stefano Ianigro" "<w_stef@unibw-hamburg.de>"
-.U "Helmut Jarausch" "<jarausch@igpm" ".igpm.rwth-aachen.de>"
-.U "Michael Joosten" "<joost@ori.cadlab.de>"
-.U "Stuart Kemp" "<stuart@cs.jcu.edu.au>"
-.U "Hendrik Klompmaker" "<Hendrik.Klompmaker@Beheer." "zod.wau.nl>"
-.U "Rick Martin" "<rickm@cs.umb.edu>"
-.U "Todd C. Miller" "<Todd.Miller@cs.colorado.edu>"
-.U "Corey Minyard" "<minyard@wf-rch.cirr.com>"
-.U "Dorab Patel" "<dorab@twinsun.com>"
-.U "Ed Santiago" "<esm@lanl.gov>"
-.U "Bjarne Steinsbo" "<bjarne@hsr.no>"
-.U "Harlan Stenn" "<harlan@pfcs.com>"
-.U "Julian Turnbull" "<jst@dcs.edinburgh.ac.uk>"
+.U "Avery Earle" "<ae@play.psych.mun.ca>"
+.U "Baba Z Buehler" "<baba@beckman.uiuc.edu>"
+.U "Bertrand Decouty-INRIA Rennes-France" "<Bertrand.Decouty@irisa.fr>"
 .U "Bertrand Wallrich" "<Bertrand.Wallrich@loria.fr>"
+.U "Bjarne Steinsbo" "<bjarne@hsr.no>"
+.U "Brad Greer" "<brad@cac.washington.edu>"
+.U "Carl Hilton" "<chilton@dns2.sac.usace.army.mil>"
+.U "Chao-Wen Young" "<kiki@eng.dowjones.com>"
+.U "Corey Minyard" "<minyard@wf-rch.cirr.com>"
+.U "Dave Alden" "<alden@math.ohio-state.edu>"
+.U "David M Clarke" "<dmc900@durras.anu.edu.au>"
+.U "Desmond Macauley" "<desmondm@eng.dowjones.com>"
+.U "Dirk Wrocklage" "<dirkw@uni-paderborn.de>"
+.U "Dorab Patel" "<dorab@twinsun.com>"
+.U "Doug White" "<dwhite@gdi.uoregon.edu>,"
+.U "Dwaine C. Gonyier" "<virtual@panthra.catt.ncsu.edu>"
+.U "Ed Santiago" "<esm@lanl.gov>"
+.U "Elliot Lee" "<sopwith@cuc.edu>"
+.U "Eric C Hagberg" "<hagberg@mail.med.cornell.edu>"
+.U "Geoff Ballinger" "<geoff@chemeng.ed.ac.uk>"
+.U "George Harrach" "<ghharrac@ouray.Denver." "Colorado.EDU>"
+.U "George Lindholm" "<lindholm@ucs.ubc.ca>"
 .U "Greg Wohletz" "<greg@cs.unlv.edu>"
+.U "Harlan Stenn" "<Harlan.Stenn@pfcs.com>"
+.U "Helmut Jarausch" "<jarausch@igpm" ".igpm.rwth-aachen.de>"
+.U "Hendrik Klompmaker" "<Hendrik.Klompmaker@Beheer." "zod.wau.nl>"
+.U "Jan Barte" "<yann@uni-paderborn.de>"
+.U "Jarrod Douglas" "<jarrod@cs.curtin.edu.au>"
+.U "Jens Thiel" "<thielj@athene.informatik.uni-bonn.de>"
+.U "Jon E. Ferguson" "<jon@media.mit.edu>"
+.U "Jos Backus" "<jos@oce.nl>"
+.U "Julian Anderson" "<jules@comp.vuw.ac.nz>"
+.U "Julian Turnbull" "<jst@dcs.edinburgh.ac.uk>"
+.U "Klaus Steinberger" "<Klaus.Steinberger@Physik.Uni-Muenchen.DE>"
+.U "Lothar Butsch" "<but@unibw-hamburg.de>"
+.U "Marc Baudoin" "<Marc.Baudoin@hsc.fr.net>"
+.U "Martin Forssen" "<maf@math.chalmers.se>"
+.U "Marty Leisner" "<leisner@sdsp.mc.xerox.com>"
+.U "Michael Haardt" "<u31b3hs@POOL.Informatik." "RWTH-Aachen.DE>"
+.U "Michael Joosten" "<joost@ori.cadlab.de>"
+.U "Michel Robitaille" "<robitail@IRO.UMontreal.CA>"
+.U "Ole Benner" "<olb@kom.auc.dk>"
+.U "Panos Dimakopoulos" "<dimakop@cti.gr>"
+.U "Paul Burry" "<rpburry@magi.com>"
+.U "Paul Eggert" "<eggert@twinsun.com>"
+.U "Paul Haldane" "<Paul.Haldane@edinburgh.ac.uk>"
+.U "Per Foreby" "<perf@efd.lth.se>"
+.U "QingLong" "<qinglong@Bolizm.ihep.su>"
+.U "Rick Martin" "<rickm@cs.umb.edu>"
+.U "Ron Roskens" "<roskens@cs.umn.edu>"
+.U "Scott Sutherland" "<scott@math.sunysb.edu>"
+.U "Sherwood Botsford" "<sherwood@space.ualberta.ca>"
+.U "Stefan Monnier" "<stefan.monnier@lia.di.epfl.ch>"
+.U "Stefano Ianigro" "<w_stef@unibw-hamburg.de>"
+.U "Stuart Kemp" "<stuart@cs.jcu.edu.au>"
+.U "Sven Rudolph" "<sr1@inf.tu-dresden.de>"
+.U "Todd C. Miller" "<Todd.Miller@cs.colorado.edu>"
+.U "Zygo Blaxell" "<zblaxell@myrus.com>"
 .fi
 .BB                     \" biography information for first author
 Patrick Powell
@@ -3090,10 +3350,24 @@ San Diego State University, San Diego CA 92182, where he teaches
 Computer Networks, Real Time Systems, and Distributed Computing.
 .BE                     \" biography end
 .]<
-.ds [F Pow95
+.ds [F Pow96
 .]-
 .ds [A Patrick A. Powell
-.ds [T LPRng \- Enanced Printer Spooler Software Reference Manual
+.ds [T LPRng Version 3.1 \- README and MAN Pages
+.ds [I Dept. of Electrical and Computer Engineering, San Diego State University
+.ds [C San Diego, CA 92182
+.ds [D 1997
+.ds [O FTP://ftp.iona.ie /pub/LPRng/, FTP:// dickory.sdsu.edu /pub/LPRng/
+.ds [K LPRng
+.nr [T 0
+.nr [A 0
+.nr [O 0
+.][ 2 book
+.ds [F Pow95
+.]-
+.ds [F Pow95
+.ds [A Patrick A. Powell
+.ds [T LPRng \- Introduction and Reference Manual
 .ds [I Dept. of Electrical and Computer Engineering, San Diego State University
 .ds [C San Diego, CA 92182
 .ds [D 1995

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -13,10 +13,9 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_getparms.c,v 3.0 1996/05/19 04:05:39 papowell Exp $";
+"$Id: lpd_getparms.c,v 3.1 1996/12/28 21:40:01 papowell Exp $";
 
-#include "lpd.h"
-#include "lp_config.h"
+#include "lp.h"
 #include "patchlevel.h"
 
 /***************************************************************************
@@ -51,7 +50,6 @@ void Get_parms(int argc, char *argv[] )
 		case 'L': Logfile = Optarg; break;
 		case 'F': Foreground = 1; Logfile = "-"; break;
 		case 'P': Printer = Optarg; break;
-		case 'i': Inetd_started = 1; break;
 		case 'c': Clean = 1; break;
 		default:
 			Printlist(msg, stderr);

@@ -1,0 +1,7 @@
+#!/bin/sh
+from=$1;
+shift;
+for i ; do
+	sed -e "/#include/s/$from/lp.h/" $i >/tmp/d;
+	cp /tmp/d $i;
+done

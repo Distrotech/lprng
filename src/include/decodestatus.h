@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: decodestatus.h
  * PURPOSE: declare decode status routines
- * $Id: decodestatus.h,v 3.1 1996/08/31 21:11:58 papowell Exp papowell $
+ * $Id: decodestatus.h,v 3.1 1996/12/28 21:40:25 papowell Exp $
  **************************************************************************/
 
 const char *Sigstr (int n);

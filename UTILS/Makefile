@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: UTILS/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile,v 3.0 1996/05/19 04:06:47 papowell Exp $
+# $Id: Makefile,v 3.1 1996/12/28 21:40:50 papowell Exp $
 ########################################################################## 
 
 .PHONY: all clean ci install realclean mostlyclean distclean

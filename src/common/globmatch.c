@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,10 +10,11 @@
  * PURPOSE: permform a glob type of match
  **************************************************************************/
 
-static char *const _id = "$Id: globmatch.c,v 3.1 1996/06/30 17:12:44 papowell Exp $";
+static char *const _id = "$Id: globmatch.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
 
 #include "lp.h"
 #include "globmatch.h"
+/**** ENDINCLUDE ****/
 
 static int glob_pattern( char *pattern, char *str )
 {
@@ -22,7 +23,7 @@ static int glob_pattern( char *pattern, char *str )
 	char *glob;
 	char pairs[3];
 
-	DEBUG9("glob_pattern: pattern '%s' to '%s'\n", pattern, str );
+	DEBUG4("glob_pattern: pattern '%s' to '%s'\n", pattern, str );
 	result =  strcasecmp( pattern, str );
 	/* now we do walk through pattern */ 
 	if( result && (glob = strchr( pattern, '*' )) ){
@@ -69,18 +70,11 @@ int Globmatch( char *pattern, char *str )
 	int result;
 
 	/* try simple test first: string compare */
-	DEBUG9("Globmatch: pattern '%s' to '%s'\n",
-		ISNULL(pattern), ISNULL(str)
-		);
-	if( pattern && strcasecmp( pattern, "NULL" ) == 0 ) pattern = 0;
+	DEBUG4("Globmatch: pattern '%s' to '%s'\n", pattern, str );
+	if( pattern && strcasecmp( pattern, "NULL" ) == 0 ) pattern = "";
 	if( pattern == 0 ) pattern = "";
 	if( str == 0 ) str = "";
-	result = (strcasecmp( str , pattern ) != 0);
-	if( result ){
-		result = glob_pattern( pattern, str );
-	}
-	DEBUG9("Globmatch: '%s' to '%s' result %d\n",
-		ISNULL(pattern), ISNULL(str),
-		result );
+	result = glob_pattern( pattern, str );
+	DEBUG4("Globmatch: '%s' to '%s' result %d\n", pattern, str, result );
 	return( result );
 }

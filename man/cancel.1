@@ -1,0 +1,185 @@
+.ds VE LPRng-3.1.2
+'\" e
+.\" @(#)lp.1 1.36 95/10/09 SMI; from SVr4
+.\" Copyright 1989 AT&T
+.\" Copyright (c) 1995, Sun Microsystems, Inc.
+.\" All Rights Reserved
+.\" Portions Copyright (c) 1992, X/Open Company Limited
+.\" Portions Copyright (c) 1996, Patrick Powell
+.\" All Rights Reserved
+.ig
+.EQ
+gsize 10
+delim $$
+.EN
+..
+.TH CANCEL 1 \*(VE "LPRng"
+.SH NAME
+cancel \- send cancel requests to an LPRng print service
+.SH SYNOPSIS
+.B cancel
+[
+.BI \-P " printer"
+] [
+.BI \-D " debug-options"
+]
+.if n .ti +5n
+[
+.IR request-ID \|.\|.\|.
+] [
+.IR printer
+]
+.SH DESCRIPTION
+.IX "cancel command" "" "\fLcancel\fP \(em cancel requests to an LP print service"
+.IX "LPRng print services" "cancel requests" "" "cancel requests \(em \fLcancel\fP"
+.IX "printers" "cancel requests" "" "cancel requests \(em \fLcancel\fP"
+.LP
+The LPRng
+\f3lprm\fP
+client supports an \f3cancel\fP interface when invoked with an
+\f3cancel\fP
+program name.
+This is similar to the
+.BR ex (1)
+and
+.BR vi (1)
+programs.
+The supported form of the \f3cancel\fP command
+arranges for the named \f2jobs\fP to be removed
+from the specified print queues.
+The action is identical to that of
+.BR lprm (1) ,
+including the options,
+with the difference that the last argument on the
+command line can be an optional printer name.
+If the name does not appear in the LPRng
+printcap database,
+then the name is assumed to be a job identifier.
+.br
+.ne 10
+.SH OPTIONS
+.LP
+.TP
+\f3\-P \f2printer\f1
+printer name.
+This is an alternate way of specifying
+the printer.
+The last argument is still checked
+to see if it has a printcap entry.
+.TP
+.BI \-D " debug-options"
+Debug options for the program.
+.ne 10
+.SH OPERANDS
+The following operands are supported by
+.BR cancel :
+.TP 15
+.I ID
+A request
+.IR ID ,
+as returned by
+.BR lp .
+Specifying a request
+.I ID
+cancels the associated request even if it is currently printing.
+.TP
+.I printer
+A printer name
+(for a complete list of printer names, use
+.BR lpq ).
+Specifying a printer
+cancels the request that is currently printing on that printer.
+.SH ENVIRONMENT
+See
+.BR environ (5)
+for descriptions of the following environment variables that affect the
+execution of
+.BR cancel :
+.TP 15
+.SB LPDEST
+Determine the spool queue.
+If the
+.SB LPDEST
+environment variable is not set,
+the
+.SB PRINTER
+environment variable will be used.
+The
+.BI \-P \0dest
+option takes precedence over
+.SB LPDEST\s0\f1.
+Results are undefined when
+.B \-P
+is not specified and
+.SB LPDEST
+contains a value that is not a valid device or destination name.
+.TP
+.SB PRINTER
+Determine the output device or destination.
+If the
+.SB LPDEST
+and
+.SB PRINTER
+environment variables are not set, an unspecified output device is used.  The
+.BI \-P \0dest
+option and the
+.SB LPDEST
+environment variable takes precedence over
+.SB PRINTER\s0\f1.
+Results are undefined when
+.B \-P
+is not specified,
+.SB LPDEST
+is unset, and
+.SB PRINTER
+contains a value that is not a valid device or destination name.
+.SH "EXIT STATUS"
+The following exit values are returned by
+.BR cancel :
+.TP 15
+.B 0
+Successful completion.
+.TP
+.B >0
+An error occurred.
+.SH SEE ALSO
+lpd.conf(5),
+lpc(8),
+lpd(8),
+lpr(1),
+lpq(1),
+lprm(1),
+printcap(5),
+lpd.perms(5),
+pr(1).
+.SH DIAGNOSTICS
+.nf
+Most of the diagnostics are self explanatory.
+If you are puzzled over the exact cause of failure,
+set the debugging level on (-D5) and run again.
+The debugging information will 
+help you to pinpoint the exact cause of failure.
+.fi
+.SH "HISTORY"
+.LP
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
+.LP
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

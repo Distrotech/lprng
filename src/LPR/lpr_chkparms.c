@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -12,12 +12,12 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_chkparms.c,v 3.2 1996/07/20 02:42:11 papowell Exp papowell $";
+"$Id: lpr_chkparms.c,v 3.5 1997/01/29 03:04:39 papowell Exp $";
 
-#include "lpr.h"
-#include "printcap.h"
-#include "lp_config.h"
+#include "lp.h"
+#include "getuserinfo.h"
 #include "getprinter.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
 Check Parms()
@@ -30,18 +30,16 @@ Check Parms()
 		that does not support multiple users
  ***************************************************************************/
 
-void Check_parms()
+void Check_parms( struct printcap_entry **pce )
 {
 	int c;
 
-	if( Printer && *Printer ){
-		Queue_name = safestrdup( Printer );
+	if( LP_mode && Printer == 0 ){
+		Printer = getenv( "LPDEST" );
 	}
 
-	Get_printer();
-	if( Queue_name == 0 && Printer && *Printer ){
-		Queue_name = safestrdup( Printer );
-	}
+	Get_printer( pce );
+
     if( (RemoteHost == 0 || *RemoteHost == 0) ){
 		RemoteHost = 0;
         if( Default_remote_host && *Default_remote_host ){
@@ -96,6 +94,7 @@ void Check_parms()
 			/* watch out for security loop holes */
 			for( i = 0, j = 0; j < M_JOBNAME && i < Filecount; ++i ){
 				s = Files[i];
+				if( strcmp(s, "-" ) == 0 ) s = "(stdin)";
 				if( j && j < M_JOBNAME ) c[j++] = ' ';
 				while( (v = *s++) && j < M_JOBNAME ){
 					c[j++] = v;
@@ -125,15 +124,9 @@ void Check_parms()
 		Bnrname = 0;
 	}
 
-	/* check to see if you use short host or long host form of name */
-
-	if( Use_shorthost ){
-		Host = ShortHost;
-	} else {
-		Host = FQDNHost;
-	}
-
 	/* check the format */
+
+	DEBUG0("Check_parms: before checking format '%s'", Format );
 	if( Binary ){
 		if(Format ){
 			Diemsg( "Cannot specify binary with format '%s'", Format  );
@@ -146,6 +139,7 @@ void Check_parms()
 	if( Format == 0 ){
 		Format = "f";
 	}
+	DEBUG0("Check_parms: after checking format '%s'", Format );
 	if( strlen( Format ) != 1 || !islower( c = *Format )
 		|| strchr( "aios", c )
 		|| (Formats_allowed && !strchr( Formats_allowed, c ) )){
@@ -159,8 +153,8 @@ void Check_parms()
 		Copies = 1;
 	}
 	/* check the for the -Q flag */
-	Use_queuename |= Use_queuename_flag;
-	DEBUG3("Check_parms: Use_shorthost %d, Host '%s', Use_queuename %d, Queue_name '%s'",
-		Use_shorthost, Host, Use_queuename, Queue_name );
-	if( Use_queuename == 0 ) Queue_name = 0;
+	if( Use_queuename_flag ) Use_queuename = 1;
+	if( Force_queuename ) Use_queuename = 1;
+	DEBUG2("Check_parms: Use_shorthost %d, Use_queuename %d, Queue_name '%s'",
+		Use_shorthost, Use_queuename, Queue_name );
 }

@@ -8,14 +8,13 @@
  ***************************************************************************
  * MODULE: README.lpd.perms
  * PURPOSE: Overview of lpd.perms file
- * $Id: README.lpd.perms,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $
+ * $Id: README.lpd.perms,v 3.1 1997/01/22 23:15:31 papowell Exp $
  **************************************************************************/
-
-
 
                  LPRng - An Enhanced Printer Spooler
                     lpd.perms file
                   Patrick Powell <papowell@sdsu.edu>
+                Updated Mon Jan 13 07:08:27 PST 1997
 
 Access control to the LPRng facilities is controlled by entries
 in a set of lpd.perms files.  The common location for these files
@@ -40,6 +39,7 @@ SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C,S'
 USER         S     -       JUSR  JUSR   JUSR JUSR  JUSR
 HOST         S     RH      JH    JH     JH   JH    JH
 GROUP        S     -       JUSR  JUSR   JUSR JUSR  JUSR
+IFIP         IP    IFIP    IFIP  -      IFIP IFIP  IFIP
 IP           IP    RIP     JIP   JIP    RIP  JIP   JIP
 PORT         N     PORT    PORT  -      PORT PORT  PORT
 REMOTEUSER   S     -       JUSR  JUSR   JUSR CUSR  CUSR
@@ -66,6 +66,7 @@ KEY:
   SA= IP of source of request = IP of host in control file
   SU= user from request = user in control file
   SA= IP of source of request = IP of server host
+  IFIP= Interface IP address of source
 
 Match: S = string with wild card, IP = IPaddress[/netmask],
   N = low[-high] number range, V = exact value match.
@@ -115,6 +116,10 @@ The SAMEUSER and SAMEHOST are options that form values from information
 in control files or connections.  The GROUP entry searches the user group 
 database for group names matching the pattern,  and then searches these
 for the user name.  If the name is found,  the search is successful.
+If the group name has the form @group, then it is treated as a netgroup
+if the innetgrp() function is available on the local host.  Note that
+wild card matches fail on netgroups.
+
 The SERVER entry is successful if the request originated from the current
 lpd server host.
 
@@ -123,14 +128,45 @@ in the control file currently being checked for permissions.  The
 REMOTEUSER, REMOTEHOST, and REMOTEIP are based on values supplied as part
 of a connection to the LPD server,  or on the actual TCP/IP connection.
 
+There is a subtle problem with names and IP addresses which are
+obtained for 'multi-homed hosts', i.e. - those with multiple
+ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
+can have multiple addresses,  and for the normal host which can have
+both a short name and a fully qualified domain name.
+
+The IFIP (interface IP) field can be used to check the IP address
+of the origination of the request,  as reported by the information
+returned by the accept() system call.  Note that this information may
+be IPV4 or IPV6 information,  depending on the origination of the
+system.  This information is used by gethostbyaddr() to obtain the
+orginating host fully qualified domain name (FQDN) and set of IP addresses.
+Note that this FQDN will be for the originating interface,  and may
+not be the cannonical host name.  Some systems which use the Domain Name Server
+(DNS) system may add the cannonical system name as an alias.
+
+When performing an IP address match,  the entire list of IP addresses
+for a system will now be checked.  If one of these matches, then success
+is reported.  Similarly,  the entire list of host names and aliases will
+be checked.  If one of these matches,  then success will be reported.
+
+In addition,  when checking for printing, if the name lookup for the
+host reported in the control file fails,  then we assume that the host
+is unknown and all match checks for names or IP addresses will fail.
+You can determine if a host has an entry by using the following check,
+which will reject all requests from a remotehost which does not have
+a DNS entry.
+  REJECT NOT REMOTEHOST=*
+
 Example Permissions
 
 # All operations allowed except those specifically forbidden
 DEFAULT ACCEPT
 
-#Reject connections from hosts not on subnet 130.191.0.0
-# or Engineering pc's
-  REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
+#Reject connections which do not originate from hosts with an
+# address on 130.191.0.0 or from localhost,
+# or name is not assigned to Engineering pc's
+
+  REJECT SERVICE=X NOT IFIP=130.191.0.0/16,127.0.0.1/32
   REJECT SERVICE=X NOT REMOTEHOST=engpc*
 
 #Do not allow anybody but root or papowell on

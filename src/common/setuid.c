@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setuid.c,v 3.0 1996/05/19 04:06:12 papowell Exp $";
+"$Id: setuid.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
 /*
  * setuid.c:
  * routines to manipulate user-ids securely (and hopefully, portably).
@@ -60,7 +60,7 @@ Group permissions are almost useless for a server;
 usually you are running as a specified group ID and do not
 need to change.  Client programs are slightly different.
 You need to worry about permissions when creating a file;
-for this reason most client programs do a umask(0277) before any
+for this reason most client programs do a u mask(0277) before any
 file creation to ensure that nobody can read the file, and create
 it with only user access permissions.
 
@@ -107,8 +107,8 @@ Change
  ***************************************************************************/
 
 #include "lp.h"
-#include "lp_config.h"
 #include "setuid.h"
+/**** ENDINCLUDE ****/
 
 #if !defined(HAVE_SETREUID) && !defined(HAVE_SETEUID) && !defined(HAVE_SETRESUID)
 #error You need one of setreuid(), seteuid(), setresuid()
@@ -122,7 +122,7 @@ Change
  *  is necessary on some wierd system.
  *   Patrick Powell Fri Aug 11 22:46:39 PDT 1995
  ***************************************************************************/
-#if !defined(HAVESETREUID) && defined(HAVE_SETRESUID)
+#if !defined(HAVE_SETEUID) && !defined(HAVE_SETREUID) && defined(HAVE_SETRESUID)
 # define setreuid(x,y) (setresuid( (x), (y), -1))
 # define HAVE_SETREUID
 #endif
@@ -135,7 +135,7 @@ Change
  * 4. Sets UID_root flag to indicate that we can change
  ***************************************************************************/
 
-static void setup_info()
+static void setup_info(void)
 {
 	int err = errno;
 	static int SetRootUID;	/* did we set UID to root yet? */
@@ -149,10 +149,10 @@ static void setup_info()
 		if( OriginalEUID == 0 || OriginalRUID == 0 ){
 			/* set RUID/EUID to ROOT - possible if EUID or UID is 0 */
 			if(
-#				ifdef HAVE_SETREUID
-					setuid( (uid_t)0 ) || setreuid( 0, 0 )
-#				else
+#				ifdef HAVE_SETEUID
 					setuid( (uid_t)0 ) || seteuid( (uid_t)0 )
+#				else
+					setuid( (uid_t)0 ) || setreuid( 0, 0 )
 #				endif
 				){
 				fatal( LOG_ERR,
@@ -189,17 +189,20 @@ static int seteuid_wrapper( int to )
 		OriginalRUID, OriginalEUID, DaemonUID, UID_root );
 	if( UID_root ){
 		/* be brutal: set both to root */
-#ifdef HAVE_SETREUID
-			/* set EUID to ROOT */
-			if( setreuid( -1, 0  ) || setreuid( -1, to) ){
-				logerr_die( LOG_ERR,
-				"seteuid_wrapper: setreuid() failed!!");
-			}
+		if( setuid( 0 ) ){
+			logerr_die( LOG_ERR,
+			"seteuid_wrapper: setuid() failed!!");
+		}
+#if defined(HAVE_SETEUID)
+		if( seteuid( to ) ){
+			logerr_die( LOG_ERR,
+			"seteuid_wrapper: seteuid() failed!!");
+		}
 #else
-			if( setuid( (uid_t)0 ) || seteuid( (uid_t)to ) ){
-				logerr_die( LOG_ERR,
-				"seteuid_wrapper: setuid() orseteuid() failed!!");
-			}
+		if( setreuid( 0, to) ){
+			logerr_die( LOG_ERR,
+			"seteuid_wrapper: setreuid() failed!!");
+		}
 #endif
 	}
 	euid = geteuid();
@@ -214,9 +217,9 @@ static int seteuid_wrapper( int to )
  *  - these are really idiot level,  as all of the tough work is done
  * in setup_info() and seteuid_wrapper() 
  */
-int To_root() 	{ setup_info(); return( seteuid_wrapper( 0 )	); }
-int To_daemon()	{ setup_info(); return( seteuid_wrapper( DaemonUID )	); }
-int To_user()	{ setup_info(); return( seteuid_wrapper( OriginalRUID )	); }
+int To_root(void) 	{ setup_info(); return( seteuid_wrapper( 0 )	); }
+int To_daemon(void)	{ setup_info(); return( seteuid_wrapper( DaemonUID )	); }
+int To_user(void)	{ setup_info(); return( seteuid_wrapper( OriginalRUID )	); }
 int To_uid( int uid ) { setup_info(); return( seteuid_wrapper( uid ) ); }
 
 /*
@@ -228,12 +231,6 @@ int setuid_wrapper(int to)
 {
 	int err = errno;
 	if( UID_root ){
-#ifdef HAVE_SETREUID
-		if( setreuid( -1, 0  ) ){
-			logerr_die( LOG_ERR,
-			"seteuid_wrapper: setreuid( -1, 0 ) failed!!");
-		}
-#endif
 		/* Note: you MUST use setuid() to force saved_setuid correctly */
 		if( setuid( (uid_t)0 ) ){
 			logerr_die( LOG_ERR, "setuid_wrapper: setuid(0) failed!!");
@@ -242,13 +239,14 @@ int setuid_wrapper(int to)
 			logerr_die( LOG_ERR, "setuid_wrapper: setuid(%d) failed!!", to);
 		}
 	}
-    DEBUG6("after setuid: (%d, %d)", getuid(),geteuid());
+    DEBUG3("after setuid: (%d, %d)", getuid(),geteuid());
 	errno = err;
 	return( to != getuid() || to != geteuid() );
 }
 
-int Full_daemon_perms()	{ setup_info(); return(setuid_wrapper(DaemonUID)); }
-int Full_root_perms()	{ setup_info(); return(setuid_wrapper( 0 )); }
+int Full_daemon_perms(void)	{ setup_info(); return(setuid_wrapper(DaemonUID)); }
+int Full_root_perms(void)	{ setup_info(); return(setuid_wrapper( 0 )); }
+int Full_user_perms(void)	{ setup_info(); return(setuid_wrapper(OriginalRUID)); }
 
 
 /***************************************************************************
@@ -257,22 +255,22 @@ int Full_root_perms()	{ setup_info(); return(setuid_wrapper( 0 )); }
  *
  ***************************************************************************/
 
-int Getdaemon()
+int Getdaemon(void)
 {
 	char *str = 0;
 	char *t;
 	struct passwd *pw;
 	int uid;
 
-	if( Server_user ){
-		str = Server_user;
+	if( Daemon_user ){
+		str = Daemon_user;
 	}
 	if( str == 0 ){
 		str = "daemon";
 	}
 	while( isspace( *str ) ) ++str;
 	if( (t = strpbrk( str, " \t:;")) )  *t = 0;
-	DEBUG4( "Getdaemon: Server_user '%s', daemon '%s'", Server_user, str );
+	DEBUG3( "Getdaemon: Daemon_user '%s', daemon '%s'", Daemon_user, str );
 	t = str;
 	uid = strtol( str, &t, 10 );
 	if( str == t || *t ){
@@ -283,7 +281,7 @@ int Getdaemon()
 		}
 	}
 	if( uid == 0 ) uid = getuid();
-	DEBUG4( "Getdaemon: uid '%d'", uid );
+	DEBUG3( "Getdaemon: uid '%d'", uid );
 	return( uid );
 }
 
@@ -293,21 +291,21 @@ int Getdaemon()
  *
  ***************************************************************************/
 
-int Getdaemon_group()
+int Getdaemon_group(void)
 {
 	char *str = 0;
 	char *t;
 	struct group *gr;
 	gid_t gid;
 
-	if( Server_group ){
-		str = Server_group;
+	if( Daemon_group ){
+		str = Daemon_group;
 	}
-	DEBUG4( "Getdaemon_group: Server_group '%s'", str?str:"<NULL>" );
+	DEBUG3( "Getdaemon_group: Daemon_group '%s'", str?str:"<NULL>" );
 	if( str == 0 ){
 		str = "daemon";
 	}
-	DEBUG4( "Getdaemon_group: name '%s'", str );
+	DEBUG3( "Getdaemon_group: name '%s'", str );
 	t = str;
 	gid = strtol( str, &t, 10 );
 	if( str == t ){
@@ -318,7 +316,7 @@ int Getdaemon_group()
 		}
 	}
 	if( gid == 0 ) gid = getgid();
-	DEBUG4( "Getdaemon_group: gid '%d'", gid );
+	DEBUG3( "Getdaemon_group: gid '%d'", gid );
 	return( gid );
 }
 
@@ -329,29 +327,30 @@ int Getdaemon_group()
  * 3. set the RGID/EGID
  ***************************************************************************/
 
-int Setdaemon_group()
+int Setdaemon_group(void)
 {
 	uid_t euid;
 	int status;
 	int err;
 
-	euid = geteuid();
 	DaemonGID = Getdaemon_group();
-	DEBUG4( "setdaemon_group: set '%d'", DaemonGID );
-	if( UID_root ) To_root();	/* set RUID/EUID to root */
-	status = setgid( DaemonGID );
-	err = errno;
-	if( UID_root && To_uid( euid ) ){
+	DEBUG3( "Setdaemon_group: set '%d'", DaemonGID );
+	if( UID_root ){
+		euid = geteuid();
+		To_root();	/* set RUID/EUID to root */
+		status = setgid( DaemonGID );
 		err = errno;
-		logerr_die( LOG_ERR, "setdaemon_group: To_uid '%d' failed '%s'",
-			euid, Errormsg( err ) );
-	}
-	if( status < 0 ){
-		DEBUG4( "setdaemon_group: setgid '%d' failed '%s'",
+		if( To_uid( euid ) ){
+			err = errno;
+			logerr_die( LOG_ERR, "setdaemon_group: To_uid '%d' failed '%s'",
+				euid, Errormsg( err ) );
+		}
+		if( status < 0 || DaemonGID != getegid() ){
+			logerr_die( LOG_ERR, "setdaemon_group: setgid '%d' failed '%s'",
 			DaemonGID, Errormsg( err ) );
+		}
 	}
-	errno = err;
-	return( DaemonGID != getegid() );
+	return( 0 );
 }
 
 
@@ -367,7 +366,7 @@ int Setdaemon_group()
  * Daemon UID == 0, then we run as the user which started LPD.
  */
 
-void Reset_daemonuid()
+void Reset_daemonuid(void)
 {
 	uid_t uid;
     uid = Getdaemon();  /* get the config file daemon id */
@@ -379,5 +378,5 @@ void Reset_daemonuid()
         }
     }
 	To_daemon();        /* now we are running with desired UID */
-    DEBUG4( "DaemonUID %d", DaemonUID );
+    DEBUG3( "DaemonUID %d", DaemonUID );
 }

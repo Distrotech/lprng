@@ -1,14 +1,14 @@
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-1995 Patrick Powell, San Diego State University
+# Copyright 1988-1995 Patrick Powell, San Diego, CA
 #     papowell@sdsu.edu
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 3.0 1996/05/19 04:05:24 papowell Exp $
+# $Id: Makefile.in,v 3.9 1997/01/31 22:12:52 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -27,30 +27,27 @@ SRC=@srcdir@
 DIRS= src man
 ALLDIRS= $(DIRS) ${SRC}/TESTSUPPORT ${SRC}/UTILS ${SRC}/DOC
 
+all: $(DIRS)
+
 # define default target
 .PHONY: all warn \
 	TAGS clean uninstall install \
 	info dvi check \
 	realclean mostlyclean distclean \
-	dist ci cifiles FRC default
+	dist ci cifiles FRC default newmake cifast
 MAKETARGET=all
 
-all: warn $(DIRS)
-
-#### USE GNU MAKE #####
-warn:
-ifdef notdef
-	@if ${MAKE} -v 2>&1 | grep -s GNU >/dev/null ; then \
-		: ; \
-	else \
-		echo "Not using GNU make"; \
-		exit 1; \
-	fi;
-endif
 
 #force phony target to be made
+# Note: all the lines to the next comment will be removed
+# when generating the BSD version
 $(ALLDIRS): FRC
-	$(MAKE) -C $@ $(MAKETARGET) 
+#GNU
+	$(MAKE) -C $@ $(MAKETARGET)
+#
+#BSD 	(cd $@; $(MAKE) -f Makefile.bsd $(MAKEFLAGS) $(MAKETARGET))
+
+FRC:
 
 #install default versions of the lpd.conf and lpd.perm files
 default:
@@ -59,7 +56,10 @@ default:
 ###############################################################################
 
 TAGS clean uninstall install: 
+#GNU
 	$(MAKE) MAKETARGET=$@ $(DIRS)
+#
+#BSD 	$(MAKE) -f Makefile.bsd MAKETARGET=$@ $(DIRS)
 
 info dvi check:
 
@@ -72,9 +72,15 @@ realclean mostlyclean distclean: clean
 ###############################################################################
 
 ci: cifiles
+	for i in $(ALLDIRS); do \
+		if test ! -d $$i/RCS ; then \
+			mkdir $$i/RCS; \
+		fi; \
+	done; \
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
 
-cifiles:
+cifiles: newmake
+	if test ! -d RCS ; then mkdir RCS; fi;
 	checkin() { \
 		ci $(CI) -l -mUpdate -t-Initial $$1; \
 	}; \
@@ -88,9 +94,19 @@ cifiles:
 		fi; \
 	done;
 
-cifast:
+newmake:
+	for i in Makefile.bsd.in */Makefile.bsd.in ; do \
+		d=`dirname $$i`; b=`basename $$i .bsd.in`; c=$${d}/$${b}.in; \
+		sed -e '/^#GNU/,/^#/d' -e 's/^#BSD.//' -e 's/$$^/$$>/' \
+		 -e	's/^if/.if/' -e 's/^endif/.endif/' $$c >/tmp/Makefile.bsd.in; \
+		diff $$i /tmp/Makefile.bsd.in >/dev/null || cp /tmp/Makefile.bsd.in $$i;\
+	done
+
+cifast: newmake
+	if test ! -d RCS ; then mkdir RCS; fi;
 	find . -type f -newer VERSION -print \
 		| sed \
+			-e '/\.orig$$/d' \
 			-e '/core$$/d' \
 			-e '/RCS/d' \
 			-e '/\.o$$/d'  \
@@ -104,7 +120,15 @@ cifast:
 			-e '/.*lpbanner$$/d' \
 			-e '/.*lpf$$/d' \
 			-e '/.*lpraccnt$$/d' \
+			-e '/.*monitor$$/d' \
+			-e '/.*server$$/d' \
+			-e '/.*client$$/d' \
+			-e '/.*old$$/d' \
+			-e '/.*line$$/d' \
+			-e '/.*auth$$/d' \
+			-e '/.*pgp$$/d' \
 		 >/tmp/list
+	echo VERSION >>/tmp/list
 	cat /tmp/list
 	ci $(CI) -l -mUpdate -t-Initial `cat /tmp/list`; \
 	
@@ -117,17 +141,16 @@ cifast:
 #  Patrick Powell
 ###############################################################################
 
-update: VERSION ./src/include/patchlevel.h 
+update:
+#GNU
 	$(MAKE) -C man update
-
-VERSION: FRC
+#
+#BSD 	(cd man; $(MAKE) update)
 	DIR=`pwd | sed 's,.*/,,' `; \
-		echo $$DIR >$@ ;
-	sleep 1;
+		echo "#define PATCHLEVEL " \"$$DIR\" >./src/include/patchlevel.h; \
+		sleep 1; \
+		echo $$DIR >VERSION ;
 	
-./src/include/patchlevel.h: FRC
-	DIR=`pwd | sed 's,.*/,,' `; \
-		echo "#define PATCHLEVEL " \"$$DIR\" >$@ ;
 
 ###############################################################################
 # Make a gnutar distribution
@@ -151,27 +174,60 @@ shar:
 	cat >/tmp/$${DIR}-Part.01 /tmp/_a.list; \
 	rm /tmp/_a.list
 
-dist:
+dist_list:
 	echo RCS >/tmp/X
 	if [ -n "$$NO" ]; then \
 		for i in $$NO ; do \
 			echo "*/$$i"  >>/tmp/X; \
 		done; \
 	fi;
-	echo src/Makefile >>/tmp/X
-	echo man/Makefile >>/tmp/X
-	echo TESTSUPPORT/Makefile >>/tmp/X
+	for i in Makefile.old  Makefile.in.old \
+		'*src/Makefile' '*man/Makefile' \
+		'*TESTSUPPORT/Makefile' \
+		Makefile.bsd '*src/Makefile.bsd' '*man/Makefile.bsd' \
+		'*TESTSUPPORT/Makefile.bsd' ; do echo $$i >>/tmp/X; done;
 	echo core >>/tmp/X
+	echo '*core' >>/tmp/X
+	echo '*.orig' >>/tmp/X
 	echo '?' >>/tmp/X
 	echo '*.o' >>/tmp/X
 	echo '*.a' >>/tmp/X
-	for i in tags liblpr.a checkpc lpr lpd lpq lprm lpc lpbanner lpf lpraccnt; do \
+	for i in tags \
+		authenticate_pgp readfilecount removeoneline setupauth \
+		sserver sclient \
+		liblpr.a checkpc lpr lpd lpq lprm lpc lpbanner \
+		lpf lpraccnt monitor lp cancel lpstat \
+			; do \
 		echo "*/$$i"  >>/tmp/X; \
 	done;
 	echo config.cache >>/tmp/X
 	echo config.status >>/tmp/X
 	echo config.log >>/tmp/X
 	echo config.h >>/tmp/X
-	cat /tmp/X
 	DIR=`pwd | sed 's,.*/,,' `; \
-		cd ..; tar zXcfv /tmp/X $${DIR}.tgz $${DIR}
+		cd ..; \
+		echo $${DIR}/Makefile >>/tmp/X;
+#	cat /tmp/X
+
+dist: dist_list
+	DIR=`pwd | sed 's,.*/,,' `; \
+		cd ..; \
+		tar zXcf /tmp/X $${DIR}.tgz $${DIR}; \
+		md5 $${DIR}.tgz > $${DIR}.tgz.md5
+
+dist_doc: dist_list
+	echo src >>/tmp/X
+	echo LP_SIMULATION >>/tmp/X
+	echo UTILS >>/tmp/X
+	DIR=`pwd | sed 's,.*/,,' `; \
+		cd ..; \
+		tar zXcf /tmp/X $${DIR}_doc.tgz $${DIR}; \
+		md5 $${DIR}_doc.tgz > $${DIR}_doc.md5
+	
+dist_src: dist_list
+	echo DOC >>/tmp/X
+	echo man >>/tmp/X
+	DIR=`pwd | sed 's,.*/,,' `; \
+		cd ..; \
+		tar zXcf /tmp/X $${DIR}_src.tgz $${DIR}; \
+		md5 $${DIR}_src.tgz > $${DIR}_src.md5

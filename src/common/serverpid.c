@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,9 +11,11 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: serverpid.c,v 3.0 1996/05/19 04:06:11 papowell Exp $";
+"$Id: serverpid.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
 
 #include "lp.h"
+#include "serverpid.h"
+/**** ENDINCLUDE ****/
 
 
 /**************************************************************************
@@ -25,7 +27,7 @@ int Read_pid( int fd, char *str, int len )
 	char line[LINEBUFFER];
 	int n;
 
-	if( lseek( fd, 0, SEEK_SET ) == (off_t)(-1) ){
+	if( lseek( fd, 0, SEEK_SET ) < 0 ){
 		logerr_die( LOG_ERR, "Read_pid: lseek failed" );
 	}
 
@@ -39,7 +41,7 @@ int Read_pid( int fd, char *str, int len )
 	}
 	str[n] = 0;
 	n = atoi( line );
-	DEBUG4( "Read_pid: %d", n );
+	DEBUG3( "Read_pid: %d", n );
 	return( n );
 }
 
@@ -54,14 +56,14 @@ void Write_pid( int fd, int pid, char *str )
 	if( ftruncate( fd, 0 ) ){
 		logerr_die( LOG_ERR, "Write_pid: ftruncate failed" );
 	}
-	DEBUG2( "Write_pid: pid %d, '%s'", pid, str );
+	DEBUG1( "Write_pid: pid %d, '%s'", pid, str );
 
 	if( str ){
 		plp_snprintf( line, sizeof(line), "%s\n", str );
 	} else {
 		plp_snprintf( line, sizeof(line), "%d\n", pid );
 	}
-	DEBUG2( "Write_pid: '%s'", line );
+	DEBUG1( "Write_pid: '%s'", line );
 	if( Write_fd_str( fd, line ) < 0 ){
 		logerr_die( LOG_ERR, "Write_pid: write failed" );
 	}

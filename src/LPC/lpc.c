@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -50,14 +50,19 @@ environment variable, etc.
 
 */
 
-#include "lpc.h"
-#include "lp_config.h"
+#include "lp.h"
 #include "control.h"
-#include "setuid.h"
+#include "initialize.h"
+#include "killchild.h"
+#include "sendlpc.h"
 #include "getprinter.h"
+#include "waitchild.h"
+#include "setuid.h"
+#include "decodestatus.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpc.c,v 3.2 1996/09/09 14:24:41 papowell Exp papowell $";
+"$Id: lpc.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
 
 /***************************************************************************
  * main()
@@ -66,20 +71,20 @@ static char *const _id =
  ****************************************************************************/
 
 
-void Send_lpcrequest(
-	char *user,					/* user name */
-	char **options,				/* options to send */
-	int connect_timeout,		/* timeout on connection */
-	int transfer_timeout,		/* timeout on transfer */
-	int output,					/* output file descriptor */
-	int action					/* action */
-	);
+
+
+char LPC_optstr[] 	/* LPC options */
+ = "AD:P:V";
+
+void use_msg(void);
 
 int main(int argc, char *argv[], char *envp[])
 {
 	char *s;
 	char msg[ LINEBUFFER ];
+	char orig_msg[ LINEBUFFER ];
 	int action;
+	struct printcap_entry *printcap_entry = 0;
 
 	/*
 	 * set up the user state
@@ -98,59 +103,17 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* scan the argument list for a 'Debug' value */
 
-	Opterr = 0;
 	Get_debug_parm( argc, argv, LPC_optstr, debug_vars );
 
-	/* Get configuration file information */
-	Parsebuffer( "default configuration", Default_configuration,
-		lpc_config, &Config_buffers );
+	/* setup configuration */
+	Setup_configuration();
 
-	/* get the configuration file information if there is any */
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV or do not run clients as ROOT\n",
-			Name );
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			Client_config_file = s;
-		}
-    }
-
-	DEBUG0("main: Configuration file '%s'",
-		Client_config_file?Client_config_file:"NULL" );
-
-	Getconfig( Client_config_file, lpc_config, &Config_buffers );
-
-	if( Debug > 5 ) dump_config_list( "LPC Configuration", lpc_config );
-
-
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-	Get_local_host();
-
-	/* expand the information in the configuration file */
-	Expandconfig( lpc_config, &Config_buffers );
-
-	if( Debug > 4 ) dump_config_list( "LPC Configuration After Expansion",
-		lpc_config );
-
-	Logname = Get_user_information();
 
 	/* scan the input arguments, setting up values */
-	Opterr = 1;
 	Get_parms(argc, argv);      /* scan input args */
 
 	/* get the printer name */
-	Get_printer();
+	Get_printer(&printcap_entry);
     if( (RemoteHost == 0 || *RemoteHost == 0) ){
 		RemoteHost = 0;
         if( Default_remote_host && *Default_remote_host ){
@@ -166,12 +129,24 @@ int main(int argc, char *argv[], char *envp[])
 		RemotePrinter = Printer;
 	}
 
-	DEBUG4("lpc: printer '%s', remote host '%s'", Printer, RemoteHost );
-	DEBUG4("lpc: Optind '%d', argc '%d'", Optind, argc );
+	DEBUG0("lpc: printer '%s', remote host '%s'", Printer, RemoteHost );
+	DEBUG0("lpc: Optind '%d', argc '%d'", Optind, argc );
+	if(DEBUGL1){
+		int i;
+		for( i = Optind; i < argc; ++i ){
+			logDebug( " [%d] '%s'", i, argv[i] );
+		}
+	}
+
 	if( Optind < argc ){
 		/* we have a command line */
-		Send_lpcrequest( Logname, &argv[Optind],
-			Connect_timeout, Send_timeout, 1, 0 );
+		action = Get_controlword( argv[Optind] );
+		if( action == 0 ){
+			use_msg();
+		} else {
+			Send_lpcrequest( Logname, &argv[Optind],
+				Connect_timeout, Send_timeout, 1, action );
+		}
 	} else while(1){
 		int tokencount, i;
 #define MAXTOKEN 20
@@ -182,7 +157,8 @@ int main(int argc, char *argv[], char *envp[])
 		fflush( stdout );
 		if( fgets( msg, sizeof(msg), stdin ) == 0 ) break;
 		if( (s = strchr( msg, '\n' )) ) *s = 0;
-		DEBUG4("lpc: '%s'", msg );
+		DEBUG1("lpc: '%s'", msg );
+		safestrncpy( orig_msg, msg );
 		tokencount = Crackline( msg, tokens, MAXTOKEN );
 		if( tokencount == 0 ) continue;
 		if( tokencount >= MAXTOKEN ){
@@ -197,6 +173,31 @@ int main(int argc, char *argv[], char *envp[])
 		s = lineargs[0];
 		if( strcasecmp(s,"exit") == 0 || s[0] == 'q' || s[0] == 'Q' ){
 			break;
+		} else if( strcasecmp(s,"lpq") == 0 ){
+			pid_t pid, result;
+			plp_status_t status;
+			if( tokencount == 1 && Printer ){
+				i = strlen(orig_msg);
+				plp_snprintf( orig_msg+i, sizeof(orig_msg)-i, " -P%s", Printer );
+			}
+			if( (pid = dofork()) == 0 ){
+				/* we are going to close a security loophole */
+				Full_user_perms();
+				/* this would now be the same as executing LPQ as user */
+				DEBUG0("lpc: doing system(%s)",orig_msg);
+				Errorcode = system( orig_msg );
+				DEBUG0("lpc: system returned %d",Errorcode);
+				cleanup(0);
+			} else if( pid < 0 ) {
+				Diemsg( "fork failed - %s'", Errormsg(errno) );
+			}
+			while(1){
+				result = plp_waitpid( pid, &status, 0 );
+				if( (result == -1 && errno != EINTR) || result == 0 ) break;
+			}
+			DEBUG0("lpc: 'lpq' system pid %d, exit status %s",
+				result, Decode_status( &status ) );
+			continue;
 		}
 		action = Get_controlword( s );
 		if( action == 0 ){
@@ -206,5 +207,7 @@ int main(int argc, char *argv[], char *envp[])
 		Send_lpcrequest( Logname, lineargs,
 			Connect_timeout, Send_timeout, 1, action );
 	}
-	exit(0);
+	Errorcode = 0;
+	cleanup(0);
+	return(0);
 }

@@ -1,4 +1,4 @@
-.ds VE LPRng-2.3.12
+.ds VE LPRng-3.1.2
 .TH LPR 1 \*(VE "LPRng"
 .ig
 Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
@@ -8,51 +8,109 @@ lpr \- off line print
 .SH SYNOPSIS
 .B lpr
 [
-.BI \-P printer
-] [
-.BI \-K copies
-] [
+.B \-A
+]
+[
+.B \-b,l
+]
+[
+.BI \-C " class"
+]
+[
+.BI \-D " debugopt"
+]
+.ti +5n
+[
+.BI \-F " filterformat"
+]
+[
+.B \-h
+]
+[
+.BI \-i " indentcols"
+]
+.ti +5n
+[
+.B \-k
+]
+[
+.BI \-J " job"
+]
+[
+.BI \-K,# " copies"
+]
+.ti +5n
+[
+.BI \-m " mailTo"
+]
+[
+.BI \-P " printer"
+]
+[
 .B \-Q
-] [
-.B \-C
-.I class
-] [
-.B \-J
-.I job
-] [
-.BI \-R remoteAccount
-] [
-.BI \-m mailTo
-] [
-.BI \-T title
-] [
-.BI \-i numcols
-] [
-.BI \-w num
-] [
-.BI \-Z zoptions
-] [
-.BI \-U user
-] [
-.BI \-F filter
-] [
-.B \-bhkrsV
-] [
-.BI \-D debugopt
-] [
-filename ...
+]
+[
+.B \-r
+]
+.ti +5n
+[
+.BI \-R " remoteAccount"
+]
+[
+.B \-s
+]
+[
+.BI \-T " title"
+]
+[
+.BI \-U " user"
+]
+.ti +5n
+[
+.B \-V
+]
+[
+.BI \-w " width"
+]
+[
+.BI \-Z " zoptions"
+]
+.ti +5n
+[
+.IR filename " \|.\|.\|."
 ]
 .SH DESCRIPTION
 .B Lpr
 uses a spooling daemon to print the named files when facilities
 become available.  If no names appear, the standard input is assumed.
-.IP "\fB\-P\fIprinter\fR" 5
-Output to the specific printer;
-the default is to use
-the value of the
-environment variable PRINTER and
-and then the default (site dependent) printer.
-.IP "\fB\-F\fIf\fR" 5
+.SH OPTIONS
+.TP 5
+.B \-A
+Use the authenticated transfer facilities if they are available.
+.TP 5
+.BI \-C " class"
+Specify the job classification for use on the burst page and to
+set the priority.
+Priorities range from A (highest) to Z (lowest);
+the default priority is A.
+For example,
+.br
+.ti +0.5i
+lpr \-C B foo.c
+.br
+sets the priority/class to B and the file foo.c is printed.
+.TP 5
+\fB\-D\fP\ \fIdebugoptions\fP
+Debugging is controlled using the
+.B \-D
+option. This accepts a comma-separated list of debugging
+settings. These settings take one of two forms: 
+.BI facility =value, 
+or
+.B value 
+to set an overall default value.
+.TP 5
+\fB\-F\fI filterformat\fR
 Filter or format specification.
 By default,
 input is assumed to a standard text file and the
@@ -76,136 +134,174 @@ the format types can be used as options themselves
 .BR F )
 except where noted below,
 a warning may be issued in such cases.
-.IP \fBc\fP 5
+.RS 5
+.TP 5
+.B "\-b, \-l"
+either of these flags specifies a
+binary or literal file,
+and no processing is to be done.
+Printed using the
+.I f
+format filter,
+with processing suppressed.
+.TP 5
+.B \-c
 data produced by
 .IR cifplot (l).
-.IP \fBd\fP 5
+.TP 5
+.B \-d
 output from
 .IR tex (l)
 (DVI format from Stanford).
-.IP \fBg\fP 5
+.TP 5
+.B \-g
 standard plot data as produced by the
 .IR plot (3X)
 routines (see also
 .IR plot (1G)
 for the filters used by the printer spooler).
-.IP \fBl\fP,\0b 5
-binary or literal file,
-no checking to be done.
-Printed using the
-.I f
-format.
-.IP \fBn\fP 5
+.TP 5
+.B \-n
 output from (device independent)
 .IR troff .
-.IP \fBp\fP 5
+.TP 5
+.B \-p
 First use
 .IR pr (1)
 to format the files,
 then print using 
 .I f
 format.
-.IP \fBr\fP 5
+.TP 5
+.B \-r
 text in which the first character of each line is interpreted as a
 standard FORTRAN carriage control character.
 The effect of this format used to be obtained with the
 .B \-f
 option.
-.IP \fBs\fP 5
-This flag is included for compatibility with other versions of lpr.
-In these versions it will create a symbolic link to the files to be
-printed.  
-.I Lpr
-now sends files directly to the server and it is irrelevant.
-.IP \fBt\fP 5
+.TP 5
+.B \-t
 output from
 .IR troff (1)
 (originally cat phototypesetter commands,
 but now we assume the same as the
 .B n
 format).
-.IP \fBv\fP 5
+.TP 5
+.B \-v
 a raster image for devices like the Benson Varian.
-.PP
-The remaining options have the following meaning.
-.IP \fB\-C\fP\ \fIclass\fP 5
-Specify the job classification for use on the burst page and to
-set the priority.
-Priorities range from A (highest) to Z (lowest);
-the default priority is A.
-For example,
-.br
-.ti +0.5i
-lpr \-C B foo.c
-.br
-sets the priority/class to B and the file foo.c is printed.
-.IP \fB\-R\fP\ \fIremoteAccount\fP 5
+.RE
+.TP 5
+\fB\-h\fP
+No banner or header for this job.
+.TP 5
+.BI \-i " indentcols"
+Indent input by indentcols.
+Note that this option is not supported on all printers.
+.TP 5
+.BI -J " jobname"
+Specify the job name to print on the burst page;
+defaults to the name of the first file in job or
+.I "(STDIN)"
+if input is from a pipe.
+.TP 5
+.B \-k
+When used as a filter, lpr normally creates a temporary file
+for the input read from stdin before sending it to the remote
+printer.
+The
+.B \-k
+causes the job to be sent directly to the server.
+If you kill the job in the middle of creation,
+then the partly transferred file will get printed.
+This option may not work with very large jobs or non-LPRng spoolers.
+.TP 5
+\fB\-K\fP\fIcopies\fP,\0\fB\-#\fP\fIcopies\fP
+Specify the number of copies of each file to be printed.
+.TP 5
+.BI \-m " mailTo"
+Send mail upon unsuccessful completion to user
+.IR mailTo .
+.TP 5
+.BI \-P " printer"
+Output to the specific printer;
+the default is (in order of priority)
+the explictly specified -P value,
+the environment variable PRINTER,
+the first entry in the printcap information,
+and the default_printer entry from the
+configuration file,
+and finally the hard coded (site dependent) default_printer
+value.
+.TP 5
+.B \-Q
+Put the name of the spool queue into the job file.
+This information can then be used by the spooling software
+to control output format.
+.TP 5
+.BI \-R " remoteAccount"
 Specify accounting information to be used by a remote system that prints
 your output.
 .sp
 This parameter
 can be used to specify a billing code to be charged for the
 printing.
-.IP "\fB\-D\fP\ \fIdebugoptions\fP" 5
-Debugging is controlled using the
-.B \-D
-option. This accepts a comma-separated list of debugging
-settings. These settings take one of two forms: 
-.B facility=value , 
-or
-.B value 
-to set an overall default value.
-.IP \fB\-K\fP\fIcopies\fP,\0\fB\-#\fP\fIcopies\fP 5
-Specify the number of copies of each file to be printed.
-.IP \fB\-J\fP\ \fIjobname\fP 5
-Specify the job name to print on the burst page;
-defaults to the name of the first file in job or
-.I "(STDIN)"
-if input is from a pipe.
-.IP \fB\-Q\fP
-Put the name of the spool queue into the job file.
-This information can then be used by the spooling software
-to control output format.
-.IP \fB\-T\fP\ \fItitle\fP 5
+.TP 5
+.B \-s
+This flag is included for compatibility with other versions of lpr.
+In these versions it will create a symbolic link to the files to be
+printed.  
+.I Lpr
+now sends files directly to the server and it is irrelevant.
+.TP 5
+.BI \-T "  title"
 Specify the title used by
 .IR pr (1);
 defaults to the file name.
-.IP "\fB\-U\fP\ \fIusername\fP" 5
+.TP 5
+\fB\-U\fP\ \fIusername\fP
 The
 .B \-U
 option is used to specify a user name
 for the job.
-.IP "\fB\-V\fP
-Verbose mode during spooling; additional -V options
-increase verbosity.
-.IP "\fB\-Z\fP\ \fIzoptions\fP" 5
+This is obviously a security loophole,
+but it is present for compatibility reasons.
+See
+.B "Authenticated Transfers"
+below.
+.TP 5
+.B \-V
+Verbose mode. Additional -V flags increase verbosity.
+Use debug flags for extreme verbosity.
+.TP 5
+.BI \-w " width"
+Specify the page width for printing the job.
+.TP 5
+.BI -Z " zoptions"
 This option is used to pass options to the print spooler,
 and is used when additional or specialized information
 must be provided to the spooler.
-.IP \fB\-h\fP 5
-No banner or header for this job.
-.IP \fB\-k\fP 5
-When used as a filter, lpr normally creates a temporary file
-for the spooled job.
-The
-.B \-k
-causes the job to be sent directly to the server.
-If you kill the job in the middle of creation,
-then the partly transferred file will get printed.
-.IP "\fB\-m \fImailTo\fP" 5
-Send mail upon unsuccessful completion to user
-.I mailTo .
-.IP \fB\-w\fP\fIwidth\fP 5
-Specify the page width for printing the job.
-.IP "\fB\-i \fInumcols\fP" 5 
-Indent input by numcols.
-Note that this option is not supported on all printers.
+.TP 5
+.BI \-1,2,3,4 "fontname"
+Specify a font to be mounted on font position \fIi\fR
+for TROFF printing (Obsolete).
+.SH FILENAMES
 .PP
-The options
-.IP "\fB\-1234\fP\ \fIfontname\fP" 5
-The number options
-are were used to specify a font to be mounted on font position \fIi\fR
-for TROFF printing.
+By default,
+if no filenames are specified
+.I lpr
+will read stdin and print it.
+A filename of the form
+.I -
+(single minus sign)
+will take input from STDIN (file descriptor 0).
+.SH "AUTHENTICATED TRANSFERS"
+.PP
+The original LPR network protocol defined in RFC1179 did not
+provide for user to server authentication.
+This is now supported by LPRng.
+See the LPRng support documentation for details on its operation
+and support.
 .SH COMPATIBILITY 
 .PP
 The LPRng version of lpr
@@ -259,22 +355,24 @@ help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
 .LP
-LPRng is a enhanced printer spooler system,
-with functionality similar to the Berkeley LPR software,
-and is derived from the PLP (Public Line Printer) software,
-version 4.0.
-LPRng has many advanced features, which are described in
-.I "LPRng - An Enhanced Line Printer Spooler"
-by Patrick Powell, San Diego State University (papowell@sdsu.edu),
-et al.
-It is available from
-dickory.sdsu.edu:/pub/LPRng.
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
 .LP
-The LPRng software is based on PLP4.0,
-supported and extended by Justin Mason (jmason@iona.ie),
-which is available from ftp://ftp.iona.ie/pub/PLP4.0.
-Justin greatly aided in the design and development of many of the
-software features,
-as well as contributing a large number of bug fixes,
-design reviews,
-and other suggestions.
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

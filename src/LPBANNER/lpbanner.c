@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  * From the original PLP Software distribution
@@ -21,7 +21,7 @@
  ***************************************************************************/
 #ifndef lint
 static char *const _id =
-"$Id: lpbanner.c,v 3.1 1996/07/20 02:42:11 papowell Exp papowell $";
+"$Id: lpbanner.c,v 3.1 1996/12/28 21:39:59 papowell Exp $";
 #endif
 
 /***************************************************************************
@@ -54,7 +54,7 @@ static char *const _id =
  *  number of pages that were used.
  *  The "halt string", which is a sequence of characters that
  *  should cause the filter to suspend itself, is passed to filter.
- *  When these characters are detected,  the "suspend()" routine should be
+ *  When these characters are detected,  the "suspend_ofilter()" routine should be
  *  called.
  *
  *  On successful termination,  the accounting file will be updated.
@@ -111,78 +111,15 @@ static char *const _id =
  * compiling with the -DDEBUG option.
  */
 
+
+#define EXTERN
+#define DEFINE
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
+# include "portable.h"
 #endif
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <time.h>
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_SYS_FILE_H
-# include <sys/file.h>
-#endif
-
-#ifndef HAVE_ERRNO_DECL
-extern int errno;
-#endif
-
-#ifdef HAVE_SYS_FCNTL_H
-# include <sys/fcntl.h>
-#else
-# ifdef HAVE_FCNTL_H
-#  include <fcntl.h>
-# endif
-#endif
-
-/* varargs declarations: */
-
-#if defined(HAVE_STDARG_H)
-# include <stdarg.h>
-# define HAVE_STDARGS    /* let's hope that works everywhere (mj) */
-# define VA_LOCAL_DECL   va_list ap;
-# define VA_START(f)     va_start(ap, f)
-# define VA_SHIFT(v,t)	;	/* no-op for ANSI */
-# define VA_END          va_end(ap)
-#else
-# if defined(HAVE_VARARGS_H)
-#  include <varargs.h>
-#  undef HAVE_STDARGS
-#  define VA_LOCAL_DECL   va_list ap;
-#  define VA_START(f)     va_start(ap)		/* f is ignored! */
-#  define VA_SHIFT(v,t)	v = va_arg(ap,t)
-#  define VA_END		va_end(ap)
-# else
-XX ** NO VARARGS ** XX
-# endif
-#endif
-
-/*
- * default exit status, causes abort
- */
-extern int errorcode;
-extern char *name;		/* name of filter */
-/* set from flags */
-extern int debug, verbose, width, length, xwidth, ylength, literal, indent;
-extern char *zopts, *class, *job, *login, *accntname, *host, *accntfile, *format;
-extern char *printer, *controlfile, *bnrname, *comment;
-extern char *queuename, *errorfile;
-extern int npages;	/* number of pages */
-extern int special;
-/* char filter_stop[] = "\031\001";	/ * sent to cause filter to suspend */
+#include "lpbanner.h"
 
 void getargs( int argc, char *argv[], char *envp[] );
 
@@ -346,10 +283,9 @@ void logerr_die( va_alist ) va_dcl
  *	writes the accounting information to the accounting file
  *  This has the format: user host printer pages format date
  */
-void doaccnt()
+void doaccnt(void)
 {
-	time_t t, time();
-	char *ctime();
+	time_t t;
 	FILE *f;
 
 	t = time((time_t *)0);
@@ -469,9 +405,9 @@ void getargs( int argc, char *argv[], char *envp[] )
 }
 
 /*
- * suspend():  suspends the output filter, waits for a signal
+ * suspend_ofilter():  suspends the output filter, waits for a signal
  */
-void suspend()
+void suspend_ofilter(void)
 {
 	if(debug)fprintf(stderr,"FILTER suspending\n");
 	fflush(stderr);
@@ -484,7 +420,7 @@ void suspend()
  * filter will scan the input looking for the suspend string
  * if any.
  ******************************************/
-void cleanup() {}
+void cleanup(void) {}
 
 #ifdef DEBUG
 filter(stop)
@@ -520,7 +456,7 @@ filter(stop)
 					if( fflush(stdout) ){
 						logerr_die( "fflush returned error" );
 					}
-					suspend();
+					suspend_ofilter();
 				}
 			} else if( state ){
 				for( i = 0; i < state; ++i ){

@@ -76,6 +76,9 @@
 /* Define if <errno.h> contains a declaration for extern int errno */
 #undef HAVE_ERRNO_DECL
 
+/* Define if you do not have gethostname() defined */
+#undef HAVE_GETHOSTNAME_DEF
+
 /* Define if your system has its own `getloadavg' function.  */
 #undef HAVE_GETLOADAVG
 
@@ -85,8 +88,8 @@
 /* Define if you have to use getpgrp(0) to get process group */
 #undef HAVE_GETPGRP_0
 
-/* Define if you have to use setpgrp(0,0) to set process group */
-#undef HAVE_SETPGRP_0
+/* Define if you have innetgr() defined in include file */
+#undef HAVE_INNETGR_DEF
 
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE
@@ -97,9 +100,18 @@
 /* Define if you have a working `mmap' system call.  */
 #undef HAVE_MMAP
 
+/* Define if you have a openlog prototype.  */
+#undef HAVE_OPENLOG_DEF
+
 /* Define if system calls automatically restart after interruption
    by a signal.  */
 #undef HAVE_RESTARTABLE_SYSCALLS
+
+/* Define if you have to use setpgrp(0,0) to set process group */
+#undef HAVE_SETPGRP_0
+
+/* Define if you do have setproctitle() defined */
+#undef HAVE_SETPROCTITLE_DEF
 
 /* Define if your struct stat has st_blksize.  */
 #undef HAVE_ST_BLKSIZE
@@ -125,20 +137,29 @@
 /* Define if sys_errlist is defined.  */
 #undef HAVE_SYS_ERRLIST_DEF
 
-/* Define if sys_siglist has the signal strings. */
-#undef HAVE_SYS_SIGLIST
-
-/* Define if sys_siglist is defined in unistd.h include file */
-#undef HAVE_SYS_SIGLIST_DEF
-
 /* Define if sys_nerr has number of err strings. */
 #undef HAVE_SYS_NERR
 
 /* Define if sys_nerr has definition.  */
 #undef HAVE_SYS_NERR_DEF
 
+/* Define if sys_siglist has the signal strings. */
+#undef HAVE_SYS_SIGLIST
+
+/* Define if _sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST
+
+/* Define if sys_siglist is defined in unistd.h include file */
+#undef HAVE_SYS_SIGLIST_DEF
+
+/* Define if sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST_DEF
+
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
+
+/* Define if tgetstr() has definition  */
+#undef HAVE_TGETSTR_DEF
 
 /* Define if your struct tm has tm_zone.  */
 #undef HAVE_TM_ZONE
@@ -165,8 +186,17 @@
 /* Define if you have the wait3 system call.  */
 #undef HAVE_WAIT3
 
+/* HP/UX */
+#undef HPUX
+
 /* HP/UX source */
 #undef _HPUX_SOURCE
+
+/* Define if the struct in6_addr is defined */
+#undef IN6_ADDR
+
+/* Define if the LINUX struct in_addr6 is defined */
+#undef IN_ADDR6
 
 /* Define as __inline if that's what the C compiler calls it.  */
 #undef inline
@@ -188,6 +218,7 @@
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef mode_t
+
 
 /* Define if you don't have <dirent.h>, but have <ndir.h>.  */
 #undef NDIR
@@ -247,8 +278,11 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-/* Define on SunOS 4.1.4  */
-#undef SUNOS4_1_4
+/* Define if you have struct stat with st_mtime_nsec */
+#undef ST_MTIME_NSEC
+
+/* Define on SunOS */
+#undef SUNOS
 
 /* Define on System V Release 4.  */
 #undef SVR4
@@ -258,9 +292,6 @@
 
 /* Define if you don't have <dirent.h>, but have <sys/ndir.h>.  */
 #undef SYSNDIR
-
-/* Define if `sys_siglist' is declared by <signal.h>.  */
-#undef SYS_SIGLIST_DECLARED
 
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #undef TIME_WITH_SYS_TIME

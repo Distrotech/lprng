@@ -1,3 +1,21 @@
+/***************************************************************************
+ * LPRng - An Extended Print Spooler System
+ *
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ *     papowell@sdsu.edu
+ * See LICENSE for conditions of use.
+ *
+ ***************************************************************************
+ * MODULE: monitor.c
+ * PURPOSE: get status information sent from server
+ **************************************************************************/
+
+static char *const _id =
+"$Id: monitor.c,v 3.1 1996/12/28 21:40:06 papowell Exp $";
+
+#include "lp.h"
+/**** ENDINCLUDE ****/
+
 /*
  * Monitor for TCP/UDP data
  *  Opens a UDP or TCP socket and waits for data to be sent to it.
@@ -7,7 +25,11 @@
  *   default is to use UDP.
  */
 
-#include <portable.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+# include "portable.h"
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,7 +69,7 @@ char *prog = "???";
 int Getopt( int argc, char *argv[], char *optstring );
 extern int Optind, Opterr;
 
-void usage()
+void usage(void)
 {
 	char *s;
 
@@ -68,7 +90,7 @@ fd_set testfds;
 
 int main(int argc, char *argv[] )
 {
-	int n, i, c;
+	int n, i, c, err;
 	char *portname;
 	struct servent *servent;
 	prog = argv[0];
@@ -118,10 +140,14 @@ int main(int argc, char *argv[] )
 	}
 	while(1){
 		testfds = readfds;
-		n = select( count_fd, &testfds, (fd_set *)0, (fd_set *)0,
+		n = select( count_fd,
+			FD_SET_FIX((fd_set *))&testfds,
+			FD_SET_FIX((fd_set *))0, FD_SET_FIX((fd_set *))0,
 			(struct timeval *)0 );
+		err = errno;
 		if( n < 0 ){
 			fprintf( stderr, "select error - %s\n", Errormsg(errno) );
+			if( err != EINTR ) break;
 		}
 		for( i = 0; n > 0 ; ++i ){
 			if( FD_ISSET(i, &testfds) ){
@@ -135,7 +161,7 @@ int main(int argc, char *argv[] )
 							Errormsg(errno) );
 						continue;
 					}
-					printf( "connection from %s\n",
+					fprintf( stdout, "connection from %s\n",
 						inet_ntoa( sin.sin_addr ) );
 					if( i >= count_fd ) count_fd = i + 1;
 					FD_SET(i, &readfds);
@@ -143,11 +169,11 @@ int main(int argc, char *argv[] )
 					c = read( i, buffer, sizeof(buffer)-1 );
 					if( c == 0 ){
 						/* closed connection */
-						printf( "closed connection %d\n", i );
+						fprintf(stdout, "closed connection %d\n", i );
 						if( i != udp_fd ) close( i );
 					} else if( c > 0 ){
 						buffer[c] = 0;
-						printf( "recv: %s\n", buffer );
+						fprintf( stdout, "recv: %s\n", buffer );
 						fflush(stdout);
 					} else {
 						fprintf( stderr, "read error - %s\n",
@@ -157,6 +183,7 @@ int main(int argc, char *argv[] )
 			}
 		}
 	}
+	return(0);
 }
 
 int udp_open( int port )

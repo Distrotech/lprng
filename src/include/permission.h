@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: permission.h
  * PURPOSE: permission file parsing
- * $Id: permission.h,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $
+ * $Id: permission.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
  **************************************************************************/
 
 #ifndef _PERMISSION_H
@@ -21,24 +21,27 @@
 struct perm_val {
 	int key;			/* keyword of permssion entry */
 	char *token;		/* token for it */
-	struct malloc_list values;	/* values of strings */
+	int list;			/* index into list of strings */
+	/* int value;			/ * single value if neccessary */
 };
 
 struct perm_line {
-	int name;	/* permssion name */
 	int flag;	/* flags */
-	struct malloc_list options;	/* options on line */
+	int list;	/* index into list of perm_vals */
 };
 
 /*
- * The printcap files are stored using the following data structures
+ * The permission files are stored using the following data structures
  * The fields field points to the lines in the printcap files
  * The entry
  */
 
 struct perm_file {
+	struct malloc_list files;	/* list of buffers */
+	struct malloc_list filters;	/* list of filters */
 	struct malloc_list lines;	/* lines in permisson */
-	struct malloc_list buffers;	/* list of buffers */
+	struct malloc_list values;	/* values in permisson */
+	struct malloc_list list;	/* list of options for each value */
 };
 
 EXTERN struct perm_file Perm_file;
@@ -71,6 +74,15 @@ EXTERN struct perm_file Perm_file;
 #define GROUP	 	16	/* user is in named group - uses getpwname() */
 #define SERVER	 	17	/* request is from the server */
 #define REMOTEUSER 	18	/* USER from control information */
+#define REMOTEGROUP	19	/* remote user is in named group - uses getpwname() */
+#define AUTH		20	/* authentication type - USER, SERVER, NONE */
+#define AUTHUSER	21	/* authentication user name */
+#define FWDUSER		22	/* forwarded user name */
+#define IFIP		23	/* interface IP address */
+
+#define AUTH_NONE	0	/* authentication type - USER, SERVER, NONE */
+#define AUTH_USER	1	/* authentication type - USER, SERVER, NONE */
+#define AUTH_SERVER	2	/* authentication type - USER, SERVER, NONE */
 
 /*
  * First character of protocol to letter mappings
@@ -89,14 +101,13 @@ struct perm_check {
 							/* or REMOTEUSER from command line */
 	char *remoteuser;		/* remote user name sent on command line */
 							/* or USER field if no command line */
-	char *host;				/* HOST field from control file */
+	struct host_information *host;	/* HOST field from control file */
 							/* or REMOTEHOST if no control file */
-	char *remotehost;		/* remote HOST name making connection */
+	struct host_information *remotehost;/* remote HOST name making connection */
 							/* or HOST if no control file */
 	int	port;				/* port for remote connection */
-	unsigned long ip;		/* IP address of HOST */
-	unsigned long remoteip;	/* IP address of REMOTEHOST */
 	char *printer;			/* printer name */
+	struct sockaddr *addr;	/* IF address information */
 	int service;			/* first character service */
 };
 
@@ -114,11 +125,8 @@ int Filter_perms( char *name, struct perm_file *perms, char *filter );
 
 int Buffer_perms( struct perm_file *perms, char *file, char *buffer );
 char *perm_str( int val );
-void dump_perm_line( char *title,  struct perm_line *perms );
-void dump_perm_file( char *title,  struct perm_file *perms );
-void dump_perm_check( char *title,  struct perm_check *check );
 
-void Init_perms_check();
+void Init_perms_check( void );
 void Free_perms( struct perm_file *perms );
 int Perms_check( struct perm_file *perms, struct perm_check *check,
 	struct control_file *cf );

@@ -2,20 +2,20 @@ dnl process this file with GNU autoconf to produce a configure script.
 dnl
 dnl jmason 23 dec 94 -- fixed union wait and sys_errlist checks
 dnl Patrick Powell Fri Jul  7 21:08:48 PDT 1995
-dnl $Id: configure.in,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $
+dnl $Id: configure.in,v 3.9 1997/01/31 22:13:00 papowell Exp $
 dnl  Original version from PLP4.0 Release
 
-AC_INIT(src/include/lp.h)
+AC_INIT(Makefile.in)
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER(config.h)
 AC_PREFIX_DEFAULT(/usr/local)
-AC_SUBST(TERMLIBS)
 AC_SUBST(INSTALL)
 AC_SUBST(INSTALL_MAN)
 AC_SUBST(SHELL)
 AC_SUBST(CPP)
 AC_SUBST(CFLAGS)
+AC_SUBST(LDCC)
 
 
 dnl ----------------------------------------------------------------------------
@@ -44,27 +44,49 @@ AC_ISC_POSIX
 AC_MINIX
 AC_AIX
 
-system_type="`echo $target | sed 's/-.*//'`"
-echo "Target is $target, architecture $system_type"
-AC_DEFINE_UNQUOTED(ARCHITECTURE,"$system_type")
+changequote(, )dnl
+version=`echo $target_os | sed -e 's/[^0-9][^0-9]*//' -e 's/\.//g'`
+changequote([, ])dnl
+echo "Target is $target, arch $target_cpu, os $target_os, version $version"
+AC_DEFINE_UNQUOTED(ARCHITECTURE,"$target_cpu")
 
+LDCC="$CC"
 checklibs=
-case $target in
-	 *-sgi-irix5* )
-		AC_DEFINE(HAVE_BROKEN_TIOCEXCL)
-		AC_DEFINE(SVR4)
+case $target_os in
+	 bsdi* )
+		LDCC=shlicc
+		;;
+	 unicos* )
 		checklibs=no
 		;;
-	*solaris* )
-		AC_DEFINE(SVR4)
-		AC_DEFINE(SOLARIS)
+	 irix6* )
+		checklibs=no
+		AC_DEFINE_UNQUOTED(IRIX,$version)
+		LIBS="$LIBS -lcurses"
 		;;
-	*hpux* )
+	 irix5* )
+		AC_DEFINE(HAVE_BROKEN_TIOCEXCL)
+		AC_DEFINE(SVR4)
+		AC_DEFINE_UNQUOTED(IRIX,$version)
+		LIBS="$LIBS -lcurses"
+		checklibs=no
+		;;
+	 irix* )
+		AC_DEFINE_UNQUOTED(IRIX,$version)
+		LIBS="$LIBS -ltermcap"
+		checklibs=no
+		;;
+	solaris* )
+		AC_DEFINE(SVR4)
+		AC_DEFINE_UNQUOTED(SOLARIS,$version)
+		;;
+	hpux* )
 		AC_DEFINE(_HPUX_SOURCE)
 		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
+		AC_DEFINE_UNQUOTED(HPUX,$version)
 		;;
-	*sunos4.1.4* )
-		AC_DEFINE(SUNOS4_1_4)
+	sunos* )
+		AC_DEFINE_UNQUOTED(SUNOS,$version)
 		;;
 esac
 
@@ -81,6 +103,9 @@ dnl check to see if we suppress probing for libraries
 dnl this is done by using the checklibs variable
 
 if test -z "$checklibs"; then
+
+	dnl BSDI uses this for setproctitle
+	AC_CHECK_LIB(util, setproctitle, [LIBS="$LIBS -lutil"])
 
 	dnl A/UX uses this...
 	AC_CHECK_LIB(posix, getpwent, [LIBS="$LIBS -lposix"])
@@ -105,6 +130,22 @@ if test -z "$checklibs"; then
 	AC_CHECK_LIB(sun, getpwnam, [LIBS="$LIBS -lsun"])
 	AC_CHECK_LIB(c_s, atoi, [LIBS="$LIBS -lc_s"])
 
+	dnl Kerberos V
+	AC_CHECK_LIB(krb5, krb5_init_context,
+		[LIBS="$LIBS -lkrb5 -lcrypto -lcom_err"], , -lcrypto -lcom_err)
+
+	dnl this should solve problems of missing termlib, termcap
+	dnl libraries.  Note that there may be some conflicts if both
+	dnl termcap and termlib are both included, but this is not
+	dnl supposed to be the case - only one will get resolved
+	TERMLIB=
+	AC_CHECK_LIB(termlib, tgetent, [LIBS="$LIBS -ltermlib"; TERMLIB=yes])
+	if test -z "$TERMLIB" ; then
+	AC_CHECK_LIB(termcap, tgetent, [LIBS="$LIBS -ltermcap"; TERMLIB=yes])
+	fi;
+	if test -z "$TERMLIB" ; then
+	AC_CHECK_LIB(curses, tgetent, [LIBS="$LIBS -lcurses"; TERMLIB=yes])
+	fi;
 fi
 dnl **** end library checks 
 
@@ -126,32 +167,34 @@ AC_TYPE_PID_T
 
 dnl ----------------------------------------------------------------------------
 dnl headers:
-AC_CHECK_HEADERS(a.out.h aouthdr.h ar.h arpa/inet.h)
-AC_CHECK_HEADERS(assert.h ctype.h curses.h dirent.h)
-AC_CHECK_HEADERS(errno.h fcntl.h filehdr.h float.h)
-AC_CHECK_HEADERS(grp.h limits.h locale.h machine/vmparam.h malloc.h minix/config.h)
-AC_CHECK_HEADERS(ndir.h netdb.h netinet/in.h nlist.h)
-AC_CHECK_HEADERS(pwd.h reloc.h sgs.h sgtty.h)
-AC_CHECK_HEADERS(signal.h stab.h stdarg.h stdio.h)
-AC_CHECK_HEADERS(stdlib.h string.h sys/dir.h sys/exec.h sys/exechdr.h)
-AC_CHECK_HEADERS(sys/fcntl.h sys/file.h sys/ioctl.h sys/loader.h sys/mount.h)
-AC_CHECK_HEADERS(sys/ndir.h sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/socket.h)
-AC_CHECK_HEADERS(sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h)
-AC_CHECK_HEADERS(sys/termios.h sys/ttold.h sys/ttycom.h sys/types.h)
-AC_CHECK_HEADERS(sys/utsname.h sys/vfs.h sys/wait.h syslog.h term.h termcap.h)
-AC_CHECK_HEADERS(termio.h termios.h unistd.h utsname.h)
-AC_CHECK_HEADERS(varargs.h vfork.h)
+
+AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(a.out.h a_out.h aouthdr.h ar.h arpa/inet.h arpa/nameser.h)
+AC_CHECK_HEADERS(assert.h com_err.h compat.h ctype.h curses.h dirent.h)
+AC_CHECK_HEADERS(errno.h exechdr.h fcntl.h filehdr.h grp.h krb5.h)
+AC_CHECK_HEADERS(limits.h locale.h machine/vmparam.h malloc.h memory.h ndir.h)
+AC_CHECK_HEADERS(netdb.h netinet/in.h nlist.h pwd.h reloc.h resolv.h)
+AC_CHECK_HEADERS(setjmp.h sgs.h sgtty.h signal.h stab.h stdarg.h)
+AC_CHECK_HEADERS(stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h)
+AC_CHECK_HEADERS(sys/exechdr.h sys/fcntl.h sys/file.h sys/ioctl.h sys/loader.h)
+AC_CHECK_HEADERS(sys/mount.h sys/ndir.h sys/param.h sys/pstat.h sys/resource.h)
+AC_CHECK_HEADERS(sys/select.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h)
+AC_CHECK_HEADERS(sys/syslog.h sys/systeminfo.h sys/termio.h sys/time.h sys/ttold.h)
+AC_CHECK_HEADERS(sys/ttycom.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h)
+AC_CHECK_HEADERS(term.h termcap.h termio.h termios.h time.h unistd.h)
+AC_CHECK_HEADERS(utsname.h varargs.h vmparam.h)
 
 dnl ----------------------------------------------------------------------------
 dnl function checks:
-AC_CHECK_FUNCS(assert cfsetispeed fchmod fcntl flock)
-AC_CHECK_FUNCS(fseek fstat ftime ftruncate getdtablesize gethostname)
-AC_CHECK_FUNCS(gethrtime getrusage gettimeofday getwd innetgr killpg lockf)
-AC_CHECK_FUNCS(mkstemp mktemp seteuid setpgid setproctitle)
-AC_CHECK_FUNCS(setsid setresuid setreuid sigaction)
-AC_CHECK_FUNCS(sigprocmask sigsetjmp socketpair statvfs strcasecmp strchr strcspn strdup)
-AC_CHECK_FUNCS(strerror strncasecmp strndup strtok strtoul)
-AC_CHECK_FUNCS(sysinfo tcsetattr times uname vfork wait3 waitpid)
+
+AC_CHECK_FUNCS(cfsetispeed fcntl flock gethostbyname2 getdtablesize)
+AC_CHECK_FUNCS(gethostname getrlimit inet_aton inet_ntop inet_pton)
+AC_CHECK_FUNCS(innetgr killpg lockf mkstemp)
+AC_CHECK_FUNCS(mktemp openlog seteuid setpgid setproctitle)
+AC_CHECK_FUNCS(setresuid setreuid setsid sigaction)
+AC_CHECK_FUNCS(sigprocmask sigsetjmp socketpair strcasecmp)
+AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysinfo)
+AC_CHECK_FUNCS(tcflush tcsetattr uname wait3 waitpid)
 
 if test ! "$ac_cv_func_setreuid" = yes -a ! "$ac_cv_func_seteuid" = yes -a ! "$ac_cv_func_setresuid" = yes; then
 	echo "WARNING: missing setreuid(), seteuid(), and setresuid()"
@@ -160,7 +203,6 @@ fi
 AC_FUNC_VFORK
 AC_FUNC_VPRINTF
 
-AC_TRY_COMPILE([#include <errno.h>],[int i = errno],AC_DEFINE(HAVE_ERRNO_DECL))
 
 dnl ----------------------------------------------------------------------------
 
@@ -341,6 +383,16 @@ fi
 
 dnl ----------------------------------------------------------------------------
 dnl
+AC_MSG_CHECKING(for errno declaration)
+AC_CACHE_VAL(ac_cv_decl_errno,
+[AC_TRY_COMPILE([#include <errno.h>
+#include <stdio.h>],[printf("%d",errno);],
+	ac_cv_decl_errno=yes, ac_cv_decl_errno=no)
+])
+AC_MSG_RESULT($ac_cv_decl_errno)
+if test $ac_cv_decl_errno = yes; then
+	AC_DEFINE(HAVE_ERRNO_DECL)
+fi;
 
 AC_MSG_CHECKING(for sys_nerr)
 AC_CACHE_VAL(ac_cv_decl_sys_nerr,
@@ -354,10 +406,8 @@ fi;
 
 AC_MSG_CHECKING(for sys_nerr declaration)
 AC_CACHE_VAL(ac_cv_decl_sys_nerr_def,
-[AC_TRY_LINK([
-#ifdef HAVE_STDIO_H
+[AC_TRY_COMPILE([
 #include <stdio.h>
-#endif
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -384,10 +434,9 @@ fi
 
 AC_MSG_CHECKING(for sys_errlist declaration)
 AC_CACHE_VAL(ac_cv_decl_sys_errlist_def,
-[AC_TRY_LINK([
-#ifdef HAVE_STDIO_H
+[AC_TRY_COMPILE([
 #include <stdio.h>
-#endif
+#include <errno.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -399,6 +448,25 @@ ac_cv_decl_sys_errlist_def=yes, ac_cv_decl_sys_errlist_def=no)
 AC_MSG_RESULT($ac_cv_decl_sys_errlist_def)
 if test $ac_cv_decl_sys_errlist_def = yes; then
     AC_DEFINE(HAVE_SYS_ERRLIST_DEF)
+fi
+
+
+AC_MSG_CHECKING(for setproctitle declaration)
+AC_CACHE_VAL(ac_cv_decl_setproctitle_def,
+[AC_TRY_COMPILE([
+#include <stdio.h>
+#include <errno.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],[printf("%s",setproctitle);],
+ac_cv_decl_setproctitle_def=yes, ac_cv_decl_setproctitle_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_setproctitle_def)
+if test $ac_cv_decl_setproctitle_def = yes; then
+    AC_DEFINE(HAVE_SETPROCTITLE_DEF)
 fi
 
 
@@ -415,21 +483,27 @@ if test $ac_cv_decl_sys_siglist = yes; then
 	AC_DEFINE(HAVE_SYS_SIGLIST)
 fi
 
+AC_MSG_CHECKING(for _sys_siglist array)
+AC_CACHE_VAL(ac_cv_decl__sys_siglist,
+[AC_TRY_LINK(,[extern char *_sys_siglist[]; printf("%s",_sys_siglist[0]);],
+	ac_cv_decl__sys_siglist=yes, ac_cv_decl__sys_siglist=no)
+])
+AC_MSG_RESULT($ac_cv_decl__sys_siglist)
+if test $ac_cv_decl__sys_siglist = yes; then
+	AC_DEFINE(HAVE__SYS_SIGLIST)
+fi
+
 AC_MSG_CHECKING(for sys_siglist declaration)
 AC_CACHE_VAL(ac_cv_decl_sys_siglist_def,
-[AC_TRY_LINK([
-#ifdef HAVE_STDIO_H
+[AC_TRY_COMPILE([
 #include <stdio.h>
-#endif
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SIGNAL_H
-#include <signal.h>
-#endif],[printf("%s",sys_siglist[0]);],
+#include <signal.h>],[printf("%s",sys_siglist[0]);],
 ac_cv_decl_sys_siglist_def=yes, ac_cv_decl_sys_siglist_def=no)
 ])
 AC_MSG_RESULT($ac_cv_decl_sys_siglist_def)
@@ -438,20 +512,46 @@ if test $ac_cv_decl_sys_siglist_def = yes; then
 fi
 
 
+AC_MSG_CHECKING(for _sys_siglist declaration)
+AC_CACHE_VAL(ac_cv_decl__sys_siglist_def,
+[AC_TRY_COMPILE([
+#include <stdio.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <signal.h>],[printf("%s",_sys_siglist[0]);],
+ac_cv_decl__sys_siglist_def=yes, ac_cv_decl__sys_siglist_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl__sys_siglist_def)
+if test $ac_cv_decl__sys_siglist_def = yes; then
+    AC_DEFINE(HAVE__SYS_SIGLIST_DEF)
+fi
+
 dnl ----------------------------------------------------------------------------
 dnl check to see if you have getpgrp(0) or getpgrp()
+dnl 
+dnl POSIX `getpgrp(void)'  define HAVE_GETPGRP_0
+dnl BSD   `getpgrp(int)' - takes 0 as argument
+dnl                        define HAVE_GETPGRP_0 0
 
-AC_MSG_CHECKING(for getprgp form)
+dnl check to see if you have getpgrp(0) or getpgrp()
+
+AC_MSG_CHECKING(for getprgp() or getpgrp(0) form)
 AC_CACHE_VAL(ac_cv_func_getpgrp_0,
 [AC_TRY_COMPILE([
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif],[getpgrp(0);],
-	ac_cv_func_getpgrp_0=getpgrp_0, ac_cv_func_getpgrp_0=getpgrp)
+ac_cv_func_getpgrp_0=getpgrp_0, ac_cv_func_getpgrp_0=getpgrp)
 ])
 AC_MSG_RESULT($ac_cv_func_getpgrp_0)
-if test $ac_cv_func_getpgrp_0 = getpgrp_0; then
-	AC_DEFINE(HAVE_GETPGRP_0)
+if test "$ac_cv_func_getpgrp_0" = getpgrp_0; then
+AC_DEFINE(HAVE_GETPGRP_0,0)
+else
+AC_DEFINE(HAVE_GETPGRP_0,)
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -498,15 +598,198 @@ if test $ac_cv_unionwait = yes; then
 fi
 
 dnl ----------------------------------------------------------------------------
+dnl Would you believe the gethostname declarations are broken on some machines
+dnl ----------------------------------------------------------------------------
+AC_MSG_CHECKING(for gethostname declaration)
+AC_CACHE_VAL(ac_cv_decl_gethostname_def,
+[AC_TRY_COMPILE([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],[printf("%d",gethostname);],
+ac_cv_decl_gethostname_def=yes, ac_cv_decl_gethostname_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_gethostname_def)
+if test $ac_cv_decl_gethostname_def = yes; then
+    AC_DEFINE(HAVE_GETHOSTNAME_DEF)
+fi
+
+
+dnl ----------------------------------------------------------------------------
+dnl tgetstr definitions are missing
+dnl ----------------------------------------------------------------------------
+AC_MSG_CHECKING(for tgetstr declaration)
+AC_CACHE_VAL(ac_cv_decl_tgetstr_def,
+[AC_TRY_COMPILE([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_TERM_H
+#include <term.h>
+#endif],[printf("%d",tgetstr);],
+ac_cv_decl_tgetstr_def=yes, ac_cv_decl_tgetstr_def=no)
+if test $ac_cv_decl_tgetstr_def != yes; then
+	AC_TRY_COMPILE([
+	#ifdef HAVE_STDIO_H
+	#include <stdio.h>
+	#endif
+	#ifdef HAVE_STDLIB_H
+	#include <stdlib.h>
+	#endif
+	#ifdef HAVE_UNISTD_H
+	#include <unistd.h>
+	#endif
+	#ifdef HAVE_CURSES_H
+	#include <curses.h>
+	#endif],[printf("%d",tgetstr);],
+	ac_cv_decl_tgetstr_def=yes, ac_cv_decl_tgetstr_def=no)
+fi
+])
+AC_MSG_RESULT($ac_cv_decl_tgetstr_def)
+if test $ac_cv_decl_tgetstr_def = yes; then
+    AC_DEFINE(HAVE_TGETSTR_DEF)
+fi
+
+
+dnl ----------------------------------------------------------------------------
+dnl innetgr() declarations missing
+dnl ----------------------------------------------------------------------------
+AC_MSG_CHECKING(for innetgr declaration)
+AC_CACHE_VAL(ac_cv_decl_innetgr_def,
+[AC_TRY_COMPILE([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif],[printf("%d",innetgr);],
+ac_cv_decl_innetgr_def=yes, ac_cv_decl_innetgr_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_innetgr_def)
+if test $ac_cv_decl_innetgr_def = yes; then
+    AC_DEFINE(HAVE_INNETGR_DEF)
+fi
+
+
+dnl ----------------------------------------------------------------------------
+dnl openlog() declarations missing
+dnl ----------------------------------------------------------------------------
+AC_MSG_CHECKING(for openlog declaration)
+AC_CACHE_VAL(ac_cv_decl_openlog_def,
+[AC_TRY_COMPILE([
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif],[printf("%d",openlog);],
+ac_cv_decl_openlog_def=yes, ac_cv_decl_openlog_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_openlog_def)
+if test $ac_cv_decl_openlog_def = yes; then
+    AC_DEFINE(HAVE_OPENLOG_DEF)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl IPV6 - check for structure declarations
+dnl ----------------------------------------------------------------------------
+
+AC_MSG_CHECKING(for struct in6_addr declaration)
+AC_CACHE_VAL(ac_cv_decl_in6_addr_def,
+[AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>],[struct in6_addr v;],
+ac_cv_decl_in6_addr_def=yes, ac_cv_decl_in6_addr_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_in6_addr_def)
+if test $ac_cv_decl_in6_addr_def = yes; then
+    AC_DEFINE(IN6_ADDR)
+fi
+
+
+AC_MSG_CHECKING(for struct in_addr6 declaration (LINUX))
+AC_CACHE_VAL(ac_cv_decl_in_addr6_def,
+[AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>],[struct in_addr6 v;],
+ac_cv_decl_in_addr6_def=yes, ac_cv_decl_in_addr6_def=no)
+])
+AC_MSG_RESULT($ac_cv_decl_in_addr6_def)
+if test "$ac_cv_decl_in_addr6_def" = yes; then
+    AC_DEFINE(IN_ADDR6)
+fi
+
+dnl ----------------------------------------------------------------------------
+dnl struct stat can have a st_mtime_nsec field
+dnl ----------------------------------------------------------------------------
+
+
+AC_MSG_CHECKING(for struct stat has mtimespec.ts_nsec or mtimespec.ts_nsec)
+AC_CACHE_VAL(ac_cv_decl_st_mtime_nsec_def,
+[AC_TRY_COMPILE([
+#include <sys/types.h>
+#if defined(HAVE_SYS_TIME_H)
+#include <sys/time.h>
+#endif
+#include <sys/stat.h>],[struct stat statb; statb.st_mtimespec.ts_nsec;],
+ac_cv_decl_st_mtime_nsec_def=st_mtimespec.ts_nsec)
+])
+
+if test -z "$ac_cv_decl_st_mtime_nsec_def" ; then #{
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#if defined(HAVE_SYS_TIME_H)
+#include <sys/time.h>
+#endif
+#include <sys/stat.h>],[struct stat statb; statb.st_mtime_nsec;],
+ac_cv_decl_st_mtime_nsec_def=st_mtime_nsec )
+fi #}
+
+
+if test -z "$ac_cv_decl_st_mtime_nsec_def" ; then #{
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#if defined(HAVE_SYS_TIME_H)
+#include <sys/time.h>
+#endif
+#include <sys/stat.h>],[struct stat statb; statb.st_mtim.tv_nsec;],
+ac_cv_decl_st_mtime_nsec_def=st_mtim.tv_nsec )
+fi #}
+
+if test -z "$ac_cv_decl_st_mtime_nsec_def"; then
+ac_cv_decl_st_mtime_nsec_def=no
+fi
+
+AC_MSG_RESULT($ac_cv_decl_st_mtime_nsec_def)
+if test ! "$ac_cv_decl_st_mtime_nsec_def" = no; then
+    AC_DEFINE_UNQUOTED(ST_MTIME_NSEC,$ac_cv_decl_st_mtime_nsec_def)
+fi
+
+dnl ----------------------------------------------------------------------------
 dnl make stuff:
 
-TERMLIBS=
-AC_CHECK_LIB(curses, tgetent, [TERMLIBS="$TERMLIBS -lcurses"])
-AC_CHECK_LIB(termlib, tgetent, [TERMLIBS="$TERMLIBS -ltermlib"])
-AC_CHECK_LIB(termcap, tgetent, [TERMLIBS="$TERMLIBS -ltermcap"])
 
 AC_PROG_INSTALL
-AC_CHECK_PROG(INSTALL_MAN,auxman,auxman,[$INSTALL -m 644 -c])
+AC_CHECK_PROG(INSTALL_MAN,auxman,auxman,[$INSTALL -m 644])
 
 AC_PROG_RANLIB
 AC_PROG_MAKE_SET
@@ -517,4 +800,4 @@ SHELL=/bin/sh
 AC_MSG_RESULT(using $SHELL (FORCED))
 
 dnl ----------------- GCC Compilation ----------------------------------
-AC_OUTPUT(Makefile src/Makefile man/Makefile TESTSUPPORT/Makefile )
+AC_OUTPUT(Makefile src/Makefile man/Makefile TESTSUPPORT/Makefile Makefile.bsd src/Makefile.bsd )

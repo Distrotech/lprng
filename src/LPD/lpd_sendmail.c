@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,11 +11,14 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_sendmail.c,v 3.2 1996/08/31 21:11:58 papowell Exp papowell $";
-#include "lpd.h"
-#include "lp_config.h"
-#include "printcap.h"
+"$Id: lpd_sendmail.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
+#include "lp.h"
+#include "errorcodes.h"
+#include "fileopen.h"
+#include "pathname.h"
 #include "pr_support.h"
+#include "setup_filter.h"
+/**** ENDINCLUDE ****/
 
 /*
  * sendmail --- tell people about job completion
@@ -25,7 +28,7 @@ static char *const _id =
  */
 
 void Sendmail_to_user( int status, struct control_file *cfp,
-	struct pc_used *pc_used )
+	struct printcap_entry *pc_used )
 {
 	FILE *mail = 0;
 	int fd;
@@ -38,17 +41,20 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	if( cfp->MAILNAME == 0
 		|| cfp->MAILNAME[0] == 0
 		|| cfp->MAILNAME[1] == 0 ){
-		DEBUG3("Sendmail: no mail wanted");
+		DEBUG2("Sendmail: no mail wanted");
 		return;
 	}
 	if( !Sendmail || !*Sendmail) {
-		DEBUG3("Sendmail: mail is turned off");
+		DEBUG2("Sendmail: mail is turned off");
 		return;
 	}
-	DEBUG3("Sendmail: '%s'", Sendmail );
+	DEBUG2("Sendmail: '%s'", Sendmail );
 
 	/* create the sendmail process */
-	Make_filter( 'f', cfp, &Pr_fd_info, Sendmail, 1, 1, 1,pc_used, (void*)0, 0, 0);
+	if( Make_filter( 'f', cfp, &Pr_fd_info, Sendmail, 1, 1, 1,
+			pc_used, (void*)0, 0, 0, 0) ){
+		fatal( LOG_ERR, "%s", cfp->error );
+	}
 
 	mail = fdopen( Pr_fd_info.input, "a+" );
 	if( mail == 0 ){
@@ -61,10 +67,10 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	}
 	(void) fprintf( mail, "From: %s@%s\n", Printer, FQDNHost );
 	(void) fprintf( mail, "Subject: %s@%s job %s\n\n",
-		Printer, FQDNHost, cfp->name );
+		Printer, FQDNHost, cfp->transfername );
 
 	/* now do the message */
-	(void) fprintf( mail, "printer %s job %s", Printer, cfp->name );
+	(void) fprintf( mail, "printer %s job %s", Printer, cfp->transfername );
 	if( cfp->JOBNAME ){
 		(void) fprintf( mail, " (%s)", cfp->JOBNAME+1 );
 	}
@@ -116,5 +122,5 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	(void) fflush( mail );
 	(void) fclose( mail );
 	/* give the mail a chance */
-	Close_filter( &Pr_fd_info, 2 );
+	Close_filter( &Pr_fd_info, 0, "mailer" );
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -100,6 +100,9 @@ The control file is the most difficult part of making a portable front end,
 as it must be compatible with several existing systems.  There are historical
 restrictions on the order and contents of the various fields.
 
+A - Job Id (LPRng)
+  Identifier for the job.  This should be unique for each job
+  that is generated.
 H - Hostname     (RFC1179 - 31 or fewer octets)
   The Hostname field is used to identify the host originating the job.
   However,  RFC1179 does not specify if this is a 'short' or 'fully
@@ -216,13 +219,20 @@ certainly will get a duplicate.
 */
 
 static char *const _id =
-"$Id: lpr.c,v 3.3 1996/09/09 14:24:41 papowell Exp papowell $";
+"$Id: lpr.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
 
-#include "lpr.h"
-#include "lp_config.h"
+#include "lp.h"
+#include "dump.h"
+#include "initialize.h"
+#include "killchild.h"
+#include "pathname.h"
+#include "sendjob.h"
 #include "setuid.h"
 #include "printcap.h"
-#include "sendjob.h"
+/**** ENDINCLUDE ****/
+
+char LPR_optstr[]    /* LPR options */
+ = "1:2:3:4:#:AC:D:F:J:K:NP:QR:T:U:VZ:bcdfghi:lkm:nprstvw:" ;
 
 /***************************************************************************
  * main()
@@ -242,13 +252,11 @@ static char *const _id =
  *
  ****************************************************************************/
 
-struct control_file cf;	/* control file for the print job */
-
 int main(int argc, char *argv[], char *envp[])
 {
 	off_t job_size;
-	char *s;
 	struct dpathname dpath;
+	struct printcap_entry *printcap_entry = 0;
 
 
 	/*
@@ -268,55 +276,9 @@ int main(int argc, char *argv[], char *envp[])
 
 
 	/* scan the argument list for a 'Debug' value */
-	Opterr = 0;
 	Get_debug_parm( argc, argv, LPR_optstr, debug_vars );
-	Opterr = 1;
 
-	/* Get configuration file information */
-	Parsebuffer( "default configuration", Default_configuration, lpr_config,
-		&Config_buffers );
-
-	/* get the configuration file information if there is any */
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV or do not run clients as ROOT\n",
-			Name );
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			Client_config_file = s;
-		}
-    }
-
-	DEBUG0("main: Configuration file '%s'", Client_config_file?Client_config_file:"NULL" );
-
-	Getconfig( Client_config_file, lpr_config, &Config_buffers );
-
-	if( Debug > 5 ) dump_config_list( "LPR Configuration", lpr_config );
-
-
-
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-	Get_local_host();
-
-	/* expand the information in the configuration file */
-	Expandconfig( lpr_config, &Config_buffers );
-
-	if( Debug > 4 ) dump_config_list( "LPR Configuration After Expansion",
-		lpr_config );
-
-
-	/* get the user name */
-	Logname = Get_user_information();
+	Setup_configuration();
 
 	/* scan the input arguments, setting up values */
 	Get_parms(argc, argv);      /* scan input args */
@@ -324,22 +286,20 @@ int main(int argc, char *argv[], char *envp[])
 	/* Note: we may need the open connection to the remote printer
 		to get our IP address if it is not available */
 
-	/* now check for consistency */
+	Check_parms( &printcap_entry );
 
-	Check_parms();
-
-	if( Debug > 4 ) dump_config_list("LPR Vars after checking parms",lpr_vars);
+	if(DEBUGL4 ) dump_parms("LPR Vars after checking parms",Lpr_parms);
 
 	/*
 	 * copy from standard in?
 	 */
 	if (Filecount == 0) {
-		job_size = Copy_stdin( &cf );
+		job_size = Copy_stdin( Cfp_static );
 	} else {
 		/*
 		 * check to see that the input files are printable
 		 */
-		job_size = Check_files( &cf, Files, Filecount );
+		job_size = Check_files( Cfp_static, Files, Filecount );
 	}
 	if( job_size == 0 ){
 		Errorcode = 1;
@@ -347,20 +307,20 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	/* print the jobs in the file */
-	if( Debug > 4 ) dump_control_file( "LPR files", &cf );
+	if(DEBUGL4 ) dump_control_file( "LPR files", Cfp_static );
 
 	/*
 	 * Fix the rest of the control File
 	 */
-	Make_job( &cf );
+	Make_job( Cfp_static );
 
 	/* Send job to the LPD server for the printer */
 
 	Init_path( &dpath, (char *)0 );
 
-	Send_job( RemotePrinter?RemotePrinter:Printer, RemoteHost, &cf,
+	Send_job( RemotePrinter?RemotePrinter:Printer, RemoteHost, Cfp_static,
 		&dpath, 1, Connect_timeout,
-		Connect_interval, Send_timeout, (void *)0 );
+		Connect_interval, Send_timeout, printcap_entry );
 
 	/* the dreaded -r (remove files) option */
 	if( Removefiles ){
@@ -378,5 +338,5 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	Errorcode = 0;
 	cleanup(0);
-	exit(0);
+	return(0);
 }

@@ -1,4 +1,4 @@
-.ds VE LPRng-2.3.12
+.ds VE LPRng-3.1.2
 .TH LPD.PERMS 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -89,6 +89,8 @@ which is being received or checked for permissions.
 The REMOTEUSER, REMOTEHOST and REMOTEIP keys are those either sent
 as part of a command,
 or derived from information about the current network connection.
+(See below for details involving Domain Name Service lookups
+and other information.)
 Each line of the permissions file is scanned for key names and
 values, and these are matched against the request keys information.
 When all matches on a line are made,
@@ -113,6 +115,7 @@ a group name starting with a
 will be treated as a netgroup name,
 and current user name from the job file will bechecked to see if
 it is in the group.
+Note that wildcard matches are not performed on netgroups.
 Similarly,
 the
 REMOTEGROUP entry will check a remote user name.
@@ -138,6 +141,7 @@ SERVICE	S	'X'	'R'	'P'	'Q'	'M'	'C,S'
 USER	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
 HOST	S	RH	JH	JH	JH	JH	JH
 GROUP	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
+IFIP	IP	IFIP	IFIP	-	IFIP	IFIP	IFIP
 IP	IP	RIP	JIP	JIP	RIP	JIP	JIP
 PORT	N	PORT	PORT	-	PORT	PORT	PORT
 REMOTEUSER	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
@@ -150,6 +154,10 @@ FORWARD	V	-	-	SA	-	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
+AUTH	V	-	AU	-	AU	AU	AU
+AUTHTYPE	S	-	AU	-	AU	AU	AU
+AUTHUSER	S	-	AU	-	AU	AU	AU
+FWDUSER	S	-	AU	-	AU	AU	AU
 
 .ta 3m +\w'RH = REMOTEHOST    'u
 KEY:
@@ -165,7 +173,11 @@ KEY:
 	SA= IP of source of request = IP of host in control file
 	SU= user from request = user in control file
 	SA= IP of source of request = IP of server host
-	
+	SV= matches if from same address as server
+	AU= value determined by server authentication operation
+	    NONE - no authentication, USER - user sending authentication
+	    FWD - server forwarding authentication
+	IFIP= matches the remote IP address of the connection
 Match: S = string with wild card, IP = IPaddress[/netmask],
 	N = low[-high] number range, V = exact value match
 SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
@@ -221,6 +233,62 @@ N = numerical range  -  low-high integer range.
 	Example: PORT=0-1023 matches a port in range 0 - 1023 (privileged)
 .fi
 .PP
+The authentication entries
+AUTH, AUTHTYPE,
+AUTHUSER, and FWDUSER
+can be used to check permissions for authenticated operations. 
+AUTH can have the values NONE (no authentication),
+USER (user authenticated),
+or FWD (forwarded authentication from a server).
+For example,
+to reject non-authenticated operations,
+we can use:
+.br
+REJECT AUTH=NONE
+.br
+To accept only authenticated jobs directly from users
+use REJECT AUTH=NONE,FWD in the permissions file.
+The AUTHTYPE can be used to match the authentication type
+being used or requested by the remote client or server.
+The AUTHUSER matches the authentication information
+originated by the client to user transfer;
+These may be identical to the user name,  but also may
+be different values.
+The FWDUSER matches the authentication information originated by
+the server to server forwarding operation,
+and can be used to restrict these operations. 
+.SH "DNS, IPV6, AND MULTIHOMED HOSTS"
+.PP
+There is a subtle problem with names and IP addresses which are
+obtained for 'multi-homed hosts', i.e. - those with multiple
+ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
+can have multiple addresses,  and for the normal host which can have
+both a short name and a fully qualified domain name.
+.PP
+The IFIP (interface IP) field can be used to check the IP address
+of the origination of the request,  as reported by the information
+returned by the accept() system call.  Note that this information may
+be IPV4 or IPV6 information,  depending on the origination of the
+system.  This information is used by gethostbyaddr() to obtain the
+orginating host fully qualified domain name (FQDN) and set of IP addresses.
+Note that this FQDN will be for the originating interface,  and may
+not be the cannonical host name.  Some systems which use the Domain Name Server
+(DNS) system may add the cannonical system name as an alias.
+.PP
+When performing an IP address match,  the entire list of IP addresses
+for a system will now be checked.  If one of these matches, then success
+is reported.  Similarly,  the entire list of host names and aliases will
+be checked.  If one of these matches,  then success will be reported.
+.PP
+In addition,  when checking for printing, if the name lookup for the
+host reported in the control file fails,  then we assume that the host
+is unknown and all match checks for names or IP addresses will fail.
+You can determine if a host has an entry by using the following check,
+which will reject all requests from a remotehost which does not have
+a DNS entry.
+.br
+REJECT NOT REMOTEHOST=*
+.br
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -257,22 +325,24 @@ help you to pinpoint the exact cause of failure.
 .fi
 .SH "HISTORY"
 .LP
-LPRng is a enhanced printer spooler system,
-with functionality similar to the Berkeley LPR software,
-and is derived from the PLP (Public Line Printer) software,
-version 4.0.
-LPRng has many advanced features, which are described in
-.I "LPRng - An Enhanced Line Printer Spooler"
-by Patrick Powell, San Diego State University (papowell@sdsu.edu),
-et al.
-It is available from
-dickory.sdsu.edu:/pub/LPRng.
+LPRng is a enhanced printer spooler system
+with functionality similar to the Berkeley LPR software.
+In 1988 Patrick Powell released
+the PLP (Public Line Printer) software,
+which went through several evolutions.
+Justin Mason (jmason@iona.ie)
+generated PLP4.0 from several older releases of PLP.
+In 1992 Patrick Powell
+release LPRng,
+a completely redesigned and newly written version of the software.
 .LP
-The LPRng software is based on PLP4.0,
-supported and extended by Justin Mason (jmason@iona.ie),
-which is available from ftp://ftp.iona.ie/pub/PLP4.0.
-Justin greatly aided in the design and development of many of the
-software features,
-as well as contributing a large number of bug fixes,
-design reviews,
-and other suggestions.
+The LPRng mailing list is plp@iona.ie;
+subscribe by sending mail to plp-request@iona.ie with
+the word subscribe in the body.
+The software is available from ftp://iona.ie/pub/LPRng.
+.LP
+LPRng is distributed under the GNU software license for non-commercial
+use,
+the Artistic License for limited commercial use. 
+Commerical support and licensing is available through
+Patrick Powell <papowell@sdsu.edu>.

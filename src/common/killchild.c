@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,18 +10,29 @@
  * PURPOSE: kill and create children
  **************************************************************************/
 
-static char *const _id = "$Id: killchild.c,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $";
+static char *const _id = "$Id: killchild.c,v 3.8 1997/01/31 22:13:45 papowell Exp $";
 
 #include "lp.h"
 #include "decodestatus.h"
+#include "malloclist.h"
+#include "killchild.h"
+/**** ENDINCLUDE ****/
+
 /*
  * Historical compatibility
  */
-#ifdef HAVE_SYS_TTOLD_H
-# include <sys/ttold.h>
-#endif
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
+#endif
+
+/*
+ * This avoids some problems
+ * when you have things redefined in system include files.
+ * Don't even think about how * this came about - simply mutter
+ * the mantra 'Portablility at any cost...' and be happy.
+ */
+#if !defined(TIOCNOTTY) && defined(HAVE_SYS_TTOLD_H) && !defined(IRIX)
+#  include <sys/ttold.h>
 #endif
 
 /***************************************************************************
@@ -52,8 +63,8 @@ void killchildren( int signal, pid_t pid )
 	int i;
 	struct pinfo *p;
 	
-	DEBUG8("killchildren: pid %d, signal %s", pid, Sigstr(signal) );
-	if(Debug>8){
+	DEBUG2("killchildren: pid %d, signal %s", pid, Sigstr(signal) );
+	if(DEBUGL2){
 		p = (void *)prgrps.list;
 		for( i = 0; i < prgrps.count; ++i ){
 			logDebug( "[%d] pid %d parentpid %d", i, p[i].pid, p[i].parentpid );
@@ -71,7 +82,7 @@ void killchildren( int signal, pid_t pid )
  * dofork: fork a process and set it up as a process group leader
  */
 
-int dofork()
+int dofork( void )
 {
 	struct pinfo *p;
 	pid_t pid;
@@ -83,10 +94,10 @@ int dofork()
 		/* set subgroups to 0 */
 		prgrps.count = 0;
 
-		/* you MUST put the process in another group;
+		/* you MUST put the process in another process group;
 		 * if you have a filter, and it does a 'killpg()' signal,
 		 * if you do not have it in a separate group the effects
-		 * would be catastrophic.
+		 * are catastrophic.  Believe me on this one...
 		 */
 
 #if defined(HAVE_SETSID)
@@ -113,7 +124,7 @@ int dofork()
 		/* BSD: non-zero process group id, so it cannot get control terminal */
 		/* you MUST be able to turn off the control terminal this way */
 		if ((i = open ("/dev/tty", O_RDWR, 0600 )) >= 0) {
-			if( ioctl (i, TIOCNOTTY, (struct sgttyb *)0 ) < 0 ){
+			if( ioctl (i, TIOCNOTTY, (void *)0 ) < 0 ){
 				logerr_die( LOG_ERR, "dofork: TIOCNOTTY failed" );
 			}
 			(void)close(i);
@@ -132,9 +143,18 @@ int dofork()
 		 *		Advanced Programming in the UNIX environment,
 		 *		 W. Richard Stevens, Section 9.5
 		 */
+		/* we do not want to copy our parent's exit jobs or temp files */
+		if( Tempfile ){
+			Tempfile->pathname[0] = 0;
+		}
+		if(Cfp_static){
+			Cfp_static->remove_on_exit = 0;
+		}
+		clear_exit();
 	} else if( pid != -1 ){
-		if( prgrps.count >= prgrps.max ){
-			extend_malloc_list( &prgrps, sizeof( struct pinfo), 10 );
+		if( prgrps.count+1 >= prgrps.max ){
+			extend_malloc_list( &prgrps, sizeof( struct pinfo),
+				prgrps.count+10 );
 		}
 		p = (void *)prgrps.list;
 		for( i = 0; i < prgrps.count; ++i ){
@@ -150,9 +170,9 @@ int dofork()
 			++prgrps.count;
 		}
 	}
-	DEBUG8("dofork: pid %d, daughter %d, number of children %d",
+	DEBUG2("dofork: pid %d, daughter %d, number of children %d",
 		getpid(), pid, prgrps.count );
-	if(Debug>8){
+	if(DEBUGL2){
 		p = (void *)prgrps.list;
 		for( i = 0; i < prgrps.count; ++i ){
 			logDebug( "[%d] pid %d parentpid %d", i, p[i].pid, p[i].parentpid );
@@ -161,7 +181,10 @@ int dofork()
 	return( pid );
 }
 
-void removepid( pid_t pid )
+/*
+ * remove a process from the prgrps list
+ */
+void Removepid( pid_t pid )
 {
 	int i;
 	struct pinfo *p;
@@ -173,7 +196,25 @@ void removepid( pid_t pid )
 			break;
 		}
 	}
-} 
+}
+
+int Countpid( void )
+{
+	int i, count;
+	struct pinfo *p;
+	plp_block_mask oblock;
+	count = 0;
+
+	plp_block_one_signal( SIGCHLD, &oblock ); /* race condition otherwise */
+	p = (void *)prgrps.list;
+	for( i = 0; i < prgrps.count; ++i ){
+		if( p[i].pid > 0 ){
+			++count;
+		}
+	}
+	plp_unblock_all_signals( &oblock );  /* race condition otherwise */
+	return( count );
+}
 
 /*
  * routines to call on exit
@@ -198,17 +239,28 @@ struct exit_info {
 	void *parm;
 } exit_list[MAX_EXIT];
 
+int last_exit;
+
 int register_exit( exit_ret exit, void *p )
 {
 	int i;
-	for( i = 0; i < MAX_EXIT && exit_list[i].exit; ++i );
-	if( i < MAX_EXIT ){
+	/* check to see if already registered */
+	for( i = 0; i < last_exit; ++i ){
+		if( exit == exit_list[i].exit ) break;
+	}
+	if( i < MAX_EXIT  ){
 		exit_list[i].exit = exit;
 		exit_list[i].parm = p;
+		if( i >= last_exit ) ++last_exit;
 	} else {
 		fatal( LOG_ERR, "cannot register exit function" );
 	}
 	return( i );
+}
+
+void clear_exit( void )
+{
+	last_exit = 0;
 }
 
 void remove_exit( int i )
@@ -220,11 +272,11 @@ plp_signal_t cleanup (int passed_signal)
 {
 	int i, pgrp;
 	int signal = passed_signal;
+ 	plp_block_mask omask;
 
-	DEBUG6("cleanup: signal %d, Errorcode %d", signal, Errorcode);
+	DEBUG2("cleanup: signal %d, Errorcode %d", signal, Errorcode);
 	if( passed_signal == 0 ) signal = SIGINT;
-    plp_block_signals (); /**/
-	for( i = MAX_EXIT; i-- > 0; ){
+	for( i = last_exit; i-- > 0; ){
 		if( exit_list[i].exit ){
 			exit_list[i].exit( exit_list[i].parm );
 		}
@@ -237,20 +289,16 @@ plp_signal_t cleanup (int passed_signal)
 		a parameter */
 
 #if defined(HAVE_GETPGRP_0)
-	pgrp = getpgrp(0);
-#else
-	pgrp = getpgrp();
-#endif
+	pgrp = getpgrp( HAVE_GETPGRP_0 );
 
+	plp_block_all_signals ( &omask );
 	if( (i == pgrp) ){
 		killpg( i, signal );
 	}
-	/* plp_unblock_signals (); / **/
-	/* sleep for a second to allow the children to get gathered */
-	/* sleep(1); / **/
+#endif
+
 	if( Errorcode ){
 		exit( Errorcode );
 	}
 	exit(passed_signal);
 }
-

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -79,37 +79,52 @@ root: 2nd                                [job 031taco]
 
 */
 
-#include "lpq.h"
+#include "lp.h"
 #include "printcap.h"
-#include "setuid.h"
-#include "lp_config.h"
+#include "checkremote.h"
+#include "initialize.h"
+#include "killchild.h"
 #include "termclear.h"
+#include "sendlpq.h"
 #include "getprinter.h"
+#include "fileopen.h"
+#include "malloclist.h"
+#include "readstatus.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpq.c,v 3.2 1996/08/31 21:11:58 papowell Exp papowell $";
+"$Id: lpq.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+
+
+char LPQ_optstr[]    /* LPQ options */
+ = "AD:P:Vaclst:v" ;
+
+static void Extract_pr( struct malloc_list *list, struct malloc_list *all );
+
+#define MAX_SHORT_STATUS 6
 
 /***************************************************************************
  * main()
- * - top level of LPP Lite.
+ * - top level of LPQ
  *
  ****************************************************************************/
 
-static struct malloc_list list;
-
 int main(int argc, char *argv[], char *envp[])
 {
-	char *s, *end;
 	char msg[LINEBUFFER];
-	int i, c;
+	int i;
 	struct stat statb;
-	static char *alist;
+	char **list;
+	char orig_name[LINEBUFFER];
+	struct printcap_entry *printcap_entry = 0;
 
 	/*
 	 * set up the user state
 	 */
 	Interactive = 1;
 	Longformat = 1;
+	Displayformat = REQ_DLONG;
+	orig_name[0] = 0;
 	Initialize();
 
 
@@ -121,61 +136,55 @@ int main(int argc, char *argv[], char *envp[])
 	(void) plp_signal (SIGTERM, cleanup);
 
 
+
 	/* scan the argument list for a 'Debug' value */
-
-	Opterr = 0;
-	Get_debug_parm( argc, argv, LPQ_optstr, debug_vars );
-	Opterr = 1;
-
-	/* get the configuration file information if there is any */
-	Parsebuffer( "default configuration", Default_configuration,
-		lpq_config, &Config_buffers );
-
-    if( Allow_getenv ){
-		if( UID_root ){
-			fprintf( stderr,
-			"%s: WARNING- LPD_CONF environment variable option enabled\n"
-			"  and running as root!  You have an exposed security breach!\n"
-			"  Recompile without -DGETENV or do not run clients as ROOT\n",
-			Name);
-		}
-		if( (s = getenv( "LPD_CONF" )) ){
-			Client_config_file = s;
-		}
-    }
-
-	DEBUG0("main: Configuration file '%s'", Client_config_file?Client_config_file:"NULL" );
-
-	/* Get configuration file information */
-	Getconfig( Client_config_file, lpq_config, &Config_buffers );
-
-	if( Debug > 5 ) dump_config_list( "LPQ Configuration", lpq_config );
-
-
-	/* get the fully qualified domain name of host and the
-		short host name as well
-		FQDN - fully qualified domain name
-		Host - actual one to use in H fields
-		ShortHost - short host name
-		NOTE: on PCs this will be the IP address
-	*/
-
-	Get_local_host();
-
-	/* expand the information in the configuration file */
-	Expandconfig( lpq_config, &Config_buffers );
-
-	if( Debug > 4 ) dump_config_list( "LPQ Configuration After Expansion",
-		lpq_config );
-
+	Get_debug_parm( argc, argv, 0, debug_vars );
 	/* scan the input arguments, setting up values */
 	Get_parms(argc, argv);      /* scan input args */
-
-	/* now look for the printcap entry */
-	if( All_printers ){
-		Printer = "all";
+	if( Printer ){
+		safestrncpy( orig_name, Printer );
 	}
-	Get_printer();
+
+	/* set up configuration */
+	Setup_configuration();
+
+	/* fake the lpstat information */
+	if( Lp_sched ){
+		if( Write_fd_str( 1, "scheduler is running\n" ) < 0 ) cleanup(0);
+	}
+	/* check to see if you have the default */
+	if( Lp_default ){
+		Get_printer( &printcap_entry );
+		plp_snprintf( msg, sizeof(msg),
+		"system default destination: %s\n", Printer );
+		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+	}
+	if( LP_mode && (Lp_accepting == 0)
+		&& (Lp_status == 0) && (Lp_getlist == 0) ){
+		DEBUG0( "LPmode %d, Lp_accepting %d, Lp_status %d",
+			LP_mode, Lp_accepting, Lp_status );
+		cleanup(0);
+	}
+
+	if( Lp_pr_list.count ){
+		Extract_pr( &Lp_pr_list, &All_list );
+		if( All_list.count ){
+			All_printers = 1;
+		}
+		Optind = 0;
+		argv = Lp_pr_list.list;
+	}
+	/* now force the printer list */
+	if( All_printers ){
+		if( All_list.count == 0 ){
+			Printer = "all";
+			Get_printer(&printcap_entry);
+		}
+	} else {
+		if( *orig_name ) Printer = orig_name;
+		Get_printer(&printcap_entry);
+		if( *orig_name == 0 ) safestrncpy( orig_name, Printer );
+	}
 	if( RemoteHost == 0 || *RemoteHost == 0 ){
 		RemoteHost = 0;
 		if( Default_remote_host && *Default_remote_host ){
@@ -191,41 +200,28 @@ int main(int argc, char *argv[], char *envp[])
 		RemotePrinter = Printer;
 	}
 
-	if( All_list && *All_list ){
-		alist = safestrdup( All_list );
-		for( s = alist; s && *s; s = end ){
-			end = strpbrk( s, ", \t" );
-			if( end ){
-				*end++ = 0;
-			}
-			while( (c = *s) && isspace(c) ) ++s;
-			if( c == 0 ) continue;
-			if( list.count >= list.max ){
-				extend_malloc_list( &list, sizeof( s ), 100 );
-			}
-			list.list[list.count++] = s;
-		}
-		if( list.count >= list.max ){
-			extend_malloc_list( &list, sizeof( s ), 100 );
-		}
-		list.list[list.count] = 0;
-	}
-
+	DEBUG0("lpq: Printer '%s', All_printers %d, All_list.count %d",
+		Printer, All_printers, All_list.count );
 	/* we do the individual printers */
+	if( LP_mode ){
+		Clear_scr = 0;
+		Interval = 0;
+	}
+	if( Longformat && (Longformat < MAX_SHORT_STATUS )
+		&& Displayformat != REQ_VERBOSE ){
+		Max_status_lines = (1 << (Longformat-1));
+	}
 	do {
 		if( Clear_scr ) Term_clear();
-		if( alist ){
-			if(Debug>2){
-				logDebug("Do_all_printers: all = '%s'", All_list );
-				for( i = 0; i < list.count; ++i ){
-					logDebug(" [%d] %s", i, list.list[i]);
-				}
-			}
-			for( i = 0; i < list.count; ++i ){
+		Pr_status_check( 0 );
+		if( All_printers && All_list.count ){
+			list = All_list.list;
+			for( i = 0; i < All_list.count; ++i ){
 				RemoteHost = RemotePrinter = 0;
-				Printer = Lp_device = list.list[i];
-				DEBUG4("Do_all_printers: Printer [%d of %d] '%s'",
-					i, list.count, Printer );
+				Printer = Lp_device = list[i];
+				DEBUG0("LPQ: Printer [%d of %d] '%s'",
+					i, All_list.count, Printer );
+				safestrncpy( orig_name, Printer );
 				Check_remotehost(1);
 				if( RemoteHost == 0 || *RemoteHost == 0 ){
 					if( Default_remote_host && *Default_remote_host ){
@@ -234,33 +230,36 @@ int main(int argc, char *argv[], char *envp[])
 						RemoteHost = FQDNHost;
 					}
 				}
-				if( RemotePrinter && strcmp( RemotePrinter, Printer ) ){
+				if( LP_mode == 0 && Displayformat != REQ_DSHORT
+					&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
 					plp_snprintf( msg, sizeof(msg), "Printer: %s is %s@%s\n",
 						Printer, RemotePrinter, RemoteHost );
-					DEBUG4("Do_all_printers: '%s'",msg);
+					DEBUG0("Do_all_printers: '%s'",msg);
 					/* write as long as you can */
-					if(  Write_fd_str( 1, msg ) < 0 ) exit(0);
+					if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 				}
-				Send_statusrequest(
+				Send_lpqrequest(
 					RemotePrinter?RemotePrinter:Printer,
-					RemoteHost, Longformat, &argv[Optind],
+					RemoteHost, Displayformat, &argv[Optind],
 					Connect_timeout, Send_timeout, 1 );
-				/* if(  Write_fd_str( 1, "\n" ) < 0 ) exit(0); */
+				/* if(  Write_fd_str( 1, "\n" ) < 0 ) cleanup(0); */
 			}
 		} else {
-			DEBUG4("lpq: remoteprinter '%s', remote host '%s'",
-				RemotePrinter, RemoteHost );
-			if( RemotePrinter && strcmp( RemotePrinter, Printer ) ){
+			DEBUG0("lpq: remoteprinter '%s', remote host '%s'",
+				RemotePrinter?RemotePrinter:"NULL STRING", RemoteHost );
+			if( LP_mode == 0 && Displayformat != REQ_DSHORT
+				&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
 				plp_snprintf( msg, sizeof(msg), "Printer: %s is %s@%s\n",
 					Printer, RemotePrinter, RemoteHost );
-				if(  Write_fd_str( 1, msg ) < 0 ) exit(0);
+				if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 			}
-			Send_statusrequest(
+			Send_lpqrequest(
 				RemotePrinter?RemotePrinter:Printer,
-				RemoteHost, Longformat, &argv[Optind],
+				RemoteHost, Displayformat, &argv[Optind],
 				Connect_timeout, Send_timeout, 1 );
-			/* if(  Write_fd_str( 1, "\n" ) < 0 ) exit(0); */
+			/* if(  Write_fd_str( 1, "\n" ) < 0 ) cleanup(0); */
 		}
+		Remove_tempfiles();
 		if( Interval > 0 ){
 			sleep( Interval );
 		}
@@ -269,5 +268,59 @@ int main(int argc, char *argv[], char *envp[])
 	if( Clear_scr ){
 		Term_finish();
 	}
-	exit(0);
+	Errorcode = 0;
+	cleanup(0);
+	return(0);
+}
+
+
+/***************************************************************************
+ * Extract_pr - extract the list of printers out of the list
+ * or arguments. Put the non-printer values back in the list
+ * and put the printers in the all list.
+ ***************************************************************************/
+static void Extract_pr( struct malloc_list *list, struct malloc_list *all )
+{
+	char **arg_list;
+	char **all_list;
+	int i, j, k;
+	char *name;
+	int allflag = 0;
+
+	if( list->count+1 >= all->max ){
+		extend_malloc_list( all, sizeof( arg_list[0] ), list->count+1 );
+	}
+	arg_list = list->list;
+	all_list = all->list;
+	for( i = j = k = 0; i < list->count; ++i ){
+		arg_list[j] = name = arg_list[i];
+		if( strcmp( name, "all" ) == 0 ) allflag = 1;
+		if( Find_printcap_entry( name, 0 ) ){
+			all_list[all->count++] = name;
+		} else {
+			++j;
+		}
+	}
+	list->count = j;
+	arg_list[j] = 0;
+	if( allflag ){
+		All_printers = 1;
+		all->count = 0;
+	}
+	all_list[all->count] = 0;
+	if(DEBUGL0 ){
+		logDebug("Extract_pr: allflag %d, arg_list %d entries",
+			allflag, list->count );
+		arg_list = list->list;
+		for( i = 0; arg_list[i]; ++i ){
+			logDebug( " [%d] '%s'", i, arg_list[i] );
+		}
+		logDebug("Extract_pr: all_list 0x%x %d entries",
+			all->list, all->count );
+		arg_list = all->list;
+		for( i = 0; arg_list[i]; ++i ){
+			logDebug( " [%d] '%s'", i, arg_list[i] );
+		}
+	}
+	DEBUG0( "Extract_pr: done" );
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,15 +10,20 @@
  * PURPOSE: test portabile functionality
  **************************************************************************/
 
-static char *const _id = "$Id: checkpc_port.c,v 3.0 1996/05/19 04:05:33 papowell Exp $";
+static char *const _id = "$Id: checkpc_port.c,v 3.2 1997/01/15 02:21:18 papowell Exp $";
 
 #include "lp.h"
-#include "lp_config.h"
+#include "fileopen.h"
+#include "freespace.h"
+#include "killchild.h"
+#include "lockfile.h"
+#include "pathname.h"
 #include "rw_pipe.h"
 #include "setuid.h"
-#include "freespace.h"
+#include "stty.h"
 #include "timeout.h"
-#include "printcap.h"
+#include "waitchild.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
  * We have put a slew of portatbility tests in here.
@@ -31,10 +36,6 @@ static char *const _id = "$Id: checkpc_port.c,v 3.0 1996/05/19 04:05:33 papowell
  * 7. try serial line locking
  * 8. try file locking
  ***************************************************************************/
-/***************************************************************************
- * sleep() with select - simple minded way to avoid problems
- ***************************************************************************/
-static int plp_sleep( int i );
 
 void Test_port(int ruid, int euid, char *serial_line )
 {
@@ -109,10 +110,10 @@ rw_test:
 	if( status < 0 ){
 		fprintf( stderr, "rw_pipe failed - %s", Errormsg(errno) );
 	} else {
-		if( (pid = fork()) < 0 ){
+		if( (pid = dofork()) < 0 ){
 			fprintf( stderr, "fork failed - %s", Errormsg(errno) );
 		} else if( pid ){
-			plp_sleep(1);
+			plp_usleep(1000);
 			/* Mother */
 			fprintf( stderr, "Mother writing to %d\n", fds[0] );
 			fflush(stderr);
@@ -160,7 +161,7 @@ rw_test:
 				}
 			}
 			fflush(stderr);
-			plp_sleep(1);
+			plp_usleep(1000);
 			fprintf( stderr, "Daughter writing to %d\n", fds[1] );
 			fflush(stderr);
 			s = child;
@@ -175,24 +176,27 @@ rw_test:
 		}
 
 		fflush(stderr);
-		plp_sleep(1);
-		do{
+		plp_usleep(1000);
+		while(1){
+			status = 0;
 			result = plp_waitpid( -1, &status, 0 );
+			err = errno;
+			fprintf( stderr, "waitpid result %d, status %d, errno '%s'\n",
+				(int)result, status, Errormsg(err) );
 			if( result == pid ){
 				fprintf( stderr, "Daughter exit status %d\n", status );
 				if( status != 0 ){
 					fprintf( stderr, "rw_test failed\n");
-					break;
 				}
-			} else if( result != -1 || errno != ECHILD ){
+				break;
+			} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+				break;
+			} else if( result == -1 && errno != EINTR ){
 				fprintf( stderr,
 					"plp_waitpid() failed!  This should not happen!");
-				status = -1;
-				break;
 			}
 			fflush(stderr);
-			removepid( result );
-		} while( result == -1 && errno == ECHILD );
+		}
 		fflush(stderr);
 		signal( SIGCHLD, SIG_DFL );
 		if( status == 0 ){
@@ -229,10 +233,7 @@ rw_test:
 	} else {
 		fprintf( stderr, "Trying to open '%s'\n",
 			serial_line );
-		if( Set_timeout( 2, 0 ) ){
-			fd = Checkwrite( serial_line, &statb, O_RDWR, 0, 1 );
-		}
-		Clear_timeout();
+		fd = Checkwrite_timeout( 2, serial_line, &statb, O_RDWR, 0, 1 );
 		err = errno;
 		if( Alarm_timed_out ){
 			fprintf( stderr,
@@ -253,10 +254,7 @@ rw_test:
 			goto test_stty;
 		} else {
 			fprintf( stderr, "\nTrying read with timeout\n" );
-			if( Set_timeout( 1, 0 ) ){
-				i = read( fd, cmd, sizeof(cmd) );
-			}
-			Clear_timeout();
+			i = Read_fd_len_timeout( 1, fd, cmd, sizeof(cmd) );
 			err = errno;
 			if( Alarm_timed_out ){
 				fprintf( stderr, "***** Read with Timeout successful\n" );
@@ -297,7 +295,8 @@ rw_test:
 		goto test_stty;
 #endif
 
-		if( Set_timeout( 1, 0 ) ){
+		if( Set_timeout() ){
+			Set_timeout_alarm( 1, 0);
 			i =  LockDevice( fd, serial_line );
 		}
 		Clear_timeout();
@@ -330,7 +329,8 @@ rw_test:
 			i = -1;
 			fprintf( stderr, "Daughter re-opening line '%s'\n", serial_line );
 			fflush(stderr);
-			if( Set_timeout( 1, 0 ) ){
+			if( Set_timeout() ){
+				Set_timeout_alarm( 1, 0);
 				fd = Checkwrite( serial_line, &statb, O_RDWR, 0, 0 );
 				if( fd >= 0 ) i = LockDevice( fd, serial_line );
 			}
@@ -367,27 +367,31 @@ rw_test:
 			fflush(stderr);
 			fprintf( stderr, "Mother starting sleep\n" );
 			fflush(stderr);
-			plp_sleep(2);
+			plp_usleep(2000);
 			fprintf( stderr, "Mother sleep done\n" );
 			fflush(stderr);
-			do{
+			while(1){
 				result = plp_waitpid( -1, &status, 0 );
+				err = errno;
+				fprintf( stderr, "waitpid result %d, status %d, errno '%s'\n",
+					(int)result, status, Errormsg(err) );
 				if( result == pid ){
 					fprintf( stderr, "Daughter exit status %d\n", status );
 					fflush(stderr);
 					if( status != 0 ){
 						fprintf( stderr, "LockDevice failed\n");
-						break;
 					}
-				} else if( result != -1 || errno != ECHILD ){
+					break;
+				} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+					break;
+				} else if( result == -1 && errno != EINTR ){
 					fprintf( stderr,
 						"plp_waitpid() failed!  This should not happen!");
 					status = -1;
 					break;
 				}
 				fflush(stderr);
-				removepid( result );
-			} while( result == -1 && errno == ECHILD );
+			}
 			fflush(stderr);
 			signal( SIGCHLD, SIG_DFL );
 			if( status == 0 ){
@@ -476,24 +480,25 @@ test_stty:
 			close(fd);
 			fd = -1;
 			status = 0;
-			do{
+			while(1){
 				result = plp_waitpid( -1, &status, 0 );
 				if( result == pid ){
 					fprintf( stderr, "Daughter exit status %d\n", status );
 					fflush(stderr);
 					if( status != 0 ){
 						fprintf( stderr, "STTY operation failed\n");
-						break;
 					}
-				} else if( result != -1 || errno != ECHILD ){
+					break;
+				} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+					break;
+				} else if( result == -1 && errno == EINTR ){
 					fprintf( stderr,
 						"plp_waitpid() failed!  This should not happen!");
 					status = -1;
 					break;
 				}
 				fflush(stderr);
-				removepid( result );
-			} while( result == -1 && errno == ECHILD );
+			}
 			fflush(stderr);
 			signal( SIGCHLD, SIG_DFL );
 			if( status == 0 ){
@@ -546,22 +551,24 @@ test_lockfd:
 		exit(0);
 	} else {
 		fflush(stderr);
-		plp_sleep(1);
+		plp_usleep(1000);
 		fflush(stderr);
 		status = 0;
-		do{
+		while(1){
 			result = plp_waitpid( -1, &status, 0 );
 			if( result == pid ){
 				fprintf( stderr, "Daughter exit status %d\n", status );
-			} else if( result != -1 || errno != ECHILD ){
+				break;
+			} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+				break;
+			} else if( result == -1 && errno != EINTR ){
 				fprintf( stderr,
 					"plp_waitpid() failed!  This should not happen!");
 				status = -1;
 				break;
 			}
-			removepid( result );
 			fflush(stderr);
-		} while( result == -1 && errno == ECHILD );
+		}
 		signal( SIGCHLD, SIG_DFL );
 		if( status == 0 ){
 			fprintf( stderr, "***** Lockf() works\n" );
@@ -614,7 +621,7 @@ test_lockfd:
 		exit(0);
 	} else {
 		fflush(stderr);
-		plp_sleep(1);
+		plp_usleep(1000);
 		fflush(stderr);
 
 		fprintf( stderr, "Mother closing '%s', releasing lock\n", line );
@@ -622,19 +629,21 @@ test_lockfd:
 		fflush(stderr);
 		fd = -1;
 		status = 0;
-		do{
+		while(1){
 			result = plp_waitpid( -1, &status, 0 );
 			if( result == pid ){
 				fprintf( stderr, "Daughter exit status %d\n", status );
-			} else if( result != -1 || errno != ECHILD ){
+				break;
+			} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+				break;
+			} else if( result == -1 && errno != EINTR ){
 				fprintf( stderr,
 					"plp_waitpid() failed!  This should not happen!");
 				status = -1;
 				break;
 			}
 			fflush(stderr);
-			removepid( result );
-		} while( result == -1 && errno == ECHILD );
+		}
 		fflush(stderr);
 		signal( SIGCHLD, SIG_DFL );
 		if( status == 0 ){
@@ -662,23 +671,4 @@ test_lockfd:
 		fprintf( stdout, "***** setproctitle debugging aid unavailable (not a problem)\n" );
 	}
 	exit(0);
-}
-/***************************************************************************
- * sleep() with select - simple minded way to avoid problems
- ***************************************************************************/
-static int plp_sleep( int i )
-{
-	struct timeval t;
-	DEBUG4("plp_sleep: starting sleep %d", i );
-	if( i > 0 ){
-		memset( &t, 0, sizeof(t) );
-		t.tv_sec = i;
-		i = select( 0,
-			(fd_set *)(0) /*rd*/,
-			(fd_set *)(0) /*wr*/,
-			(fd_set *)(0) /*op*/,
-			&t );
-		DEBUG4("plp_sleep: sleep done, status %d", i );
-	}
-	return( i );
 }

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,12 +11,17 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_cpyfiles.c,v 3.1 1996/08/31 21:11:58 papowell Exp papowell $";
+"$Id: lpr_cpyfiles.c,v 3.4 1997/01/29 03:04:39 papowell Exp $";
 
-#include "lpr.h"
-#include "lp_config.h"
+#include "lp.h"
+#include "errorcodes.h"
+#include "fileopen.h"
+#include "killchild.h"
+#include "malloclist.h"
+#include "pathname.h"
+/**** ENDINCLUDE ****/
 
-int Check_printable(char *file, int fd, struct stat *statb, int format );
+int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
 /***************************************************************************
  * off_t Copy_stdin()
  * 1. we get the name of a temporary file
@@ -24,98 +29,54 @@ int Check_printable(char *file, int fd, struct stat *statb, int format );
  *    no more.
  * 3. stat the  temporary file to prevent games
  ***************************************************************************/
-void remove_tmp( void *p )
-{
-	if( Tempfile ){
-		unlink( Tempfile );
-	}
-}
 
+static int did_stdin;
 
 off_t Copy_stdin( struct control_file *cf )
 {
-	struct dpathname dpath;
-	char *dir = 0;
-	char *file = 0;
 	int fd, count;
 	off_t size = 0;
 	int i;			/* The all-seeing i */
 	struct data_file *df;
-	int err;
-	char buffer[4096];
+	char buffer[LARGEBUFFER];
+
 
 	/* we get the temporary directory for these operations */
+	DEBUG2( "Copy_stdin: file count %d", cf->data_file_list.count );
+	if( did_stdin ){
+		Diemsg( "You have already specified STDIN in the job list" );
+	}
+	did_stdin = 1;
 
 	/* OK, now we can set up the information */
-	if( cf->data_file.count >= cf->data_file.max ){
-		extend_malloc_list( &cf->data_file, sizeof( df[0] ), 10 );
+	if( cf->data_file_list.count+4 >= cf->data_file_list.max ){
+		extend_malloc_list( &cf->data_file_list, sizeof( df[0] ), 10 );
 	}
-	df = (void *)cf->data_file.list;
+	df = (void *)cf->data_file_list.list;
+	df = &df[cf->data_file_list.count++];
 
-	df->Ninfo = "(stdin)";
+	plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", "(stdin)" );
 	df->fd = 0;
 	df->copies = Copies;
-	cf->data_file.count++;
 
 	/* we simply set up the filter and return */
 	if( Secure != 0 ){
 		df->flags |= PIPE_FLAG;
 		df->fd = dup( 0 );
 		size = -1;
+		DEBUG2( "Copy_stdin: setting up pipe" );
 		return( size );
 	}
 
-	if( dir == 0 || *dir == 0 ){
-		dir = getenv( "LPR_TMP" );
-	}
-	if( dir == 0 || *dir == 0 ){
-		dir = Default_tmp_dir;
-	}
-	if( dir == 0 || *dir == 0 ){
-		dir = "/tmp";
-	}
-
-	/* build up the string */
-	Init_path( &dpath, dir );
-	file = Add_path( &dpath, "LPRXXXXXX" );
-
-	/* open the file for reading and writing */
-	/* there is a race condition here - we block all signals */
-
-	plp_block_signals();
-
-	/* Note: we set up the mask value to protect the user */
-	register_exit( remove_tmp, 0 );
-#if defined(HAVE_MKSTEMP)
-	fd = mkstemp( file );
-#else
-# if defined(HAVE_MKTEMP)
-	mktemp( file );
-# else
-#   error missing mkstemp and mktemp functions
-# endif
-	fd = -1;
-	{
-	struct stat statb;
-	if( file[0] ) fd = Checkwrite( file, &statb, O_RDWR, 1, 0 );
-	}
-#endif
-	err = errno;
-	Tempfile = safestrdup( file );
-	plp_unblock_signals();
-	if( fd < 0 ){
-		logerr_die( LOG_INFO, "Copy_stdin: cannot open temp file");
-	}
-
-	df->openname = Tempfile;
-
-	DEBUG2("Temporary file '%s', fd %d", Tempfile, fd );
+	fd = Make_temp_fd( cf, buffer, sizeof(buffer) );
 
 	if( fd < 0 ){
-		logerr_die( LOG_INFO, "mkstemp '%s' failed", Tempfile );
+		logerr_die( LOG_INFO, "Make_temp_fd failed" );
 	} else if( fd == 0 ){
 		Diemsg( "You have closed STDIN! cannot pipe from a closed connection");
 	}
+	safestrncpy( df->openname, buffer );
+	DEBUG1("Temporary file '%s', fd %d", df->openname, fd );
 	/* now we copy standard input into the file until we get EOF */
 	i = 1;
 	size = 0;
@@ -126,18 +87,13 @@ off_t Copy_stdin( struct control_file *cf )
 		}
 		size += count;
 	}
-	/*
-	if( count < 0 ){
-		logerr_die( LOG_INFO, "Copy_stdin: read failed!!");
-	}
-	*/
 	if( fstat( fd, &df->statb ) < 0 ){
-		logerr_die( LOG_INFO, "Copy_stdin: fstat '%s' failed", Tempfile);
+		logerr_die( LOG_INFO, "Copy_stdin: fstat '%s' failed", df->openname);
 	}
-	if( !Check_printable(df->Ninfo, fd, &df[0].statb, *Format)){
+	if( !Check_lpr_printable(df->Ninfo+1, fd, &df[0].statb, *Format)){
 		return( 0 );
 	}
-	DEBUG5( "Copy_Stdin: Tempfile '%s' size %d ", Tempfile, size );
+	DEBUG3( "Copy_Stdin: Tempfile '%s' size %d ", Tempfile, size );
 	return( size );
 }
 
@@ -164,35 +120,39 @@ off_t Check_files( struct control_file *cf, char **files, int filecount )
 
 	/* OK, now we can set up the information */
 	for( i = 0; i < filecount; ++i){
-		DEBUG5( "Check_files: doing '%s'", files[i] );
+		DEBUG2( "Check_files: doing '%s'", files[i] );
+		if( strcmp( files[i], "-" ) == 0 ){
+			Copy_stdin( cf );		
+			continue;
+		}
 		fd = Checkread( files[i], &statb );
 		err = errno;
 		if( fd < 0 ){
 			Warnmsg( "Cannot open file '%s', %s", files[i], Errormsg( err ) );
 			continue;
 		}
-		printable = Check_printable( files[i], fd, &statb, *Format );
+		printable = Check_lpr_printable( files[i], fd, &statb, *Format );
 		close( fd );
 		if( printable > 0 ){
-			DEBUG5( "Check_files: printing '%s'", files[i] );
-			if( cf->data_file.count >= cf->data_file.max ){
-				extend_malloc_list( &cf->data_file, sizeof( df[0] ), 10 );
+			DEBUG3( "Check_files: printing '%s'", files[i] );
+			if( cf->data_file_list.count+4 >= cf->data_file_list.max ){
+				extend_malloc_list( &cf->data_file_list, sizeof( df[0] ), 10 );
 			}
-			df = (void *)cf->data_file.list;
-			df = &df[cf->data_file.count++];
+			df = (void *)cf->data_file_list.list;
+			df = &df[cf->data_file_list.count++];
 			size += statb.st_size*Copies;
 			df->statb = statb;
-			df->openname = files[i];
-			df->Ninfo = files[i];
+			strncpy( df->openname,files[i],sizeof(df->openname));
+			plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", files[i] );
 			df->copies = Copies;
 		}
 	}
-	DEBUG5( "Check_files: size %d", size );
+	DEBUG3( "Check_files: size %d", size );
 	return( size );
 }
 
 /***************************************************************************
- * int Check_printable(char *file, int fd, struct stat *statb, int format )
+ * int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
  * 1. Check to make sure it is a regular file.
  * 2. Check to make sure that it is not 'binary data' file
  * 3. If a text file,  check to see if it has some control characters
@@ -201,9 +161,8 @@ off_t Check_files( struct control_file *cf, char **files, int filecount )
 
 static int is_arch(char *buf, int n);
 static int is_exec( char *buf, int n);
-static int is_mmdf_mail(char *buf);
 
-int Check_printable(char *file, int fd, struct stat *statb, int format )
+int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
 {
     char buf[LINEBUFFER];
     int n, i, c;                /* Acme Integers, Inc. */
@@ -214,7 +173,7 @@ int Check_printable(char *file, int fd, struct stat *statb, int format )
 	 * Do an LSEEK on the file, i.e.- see to the start
 	 * Ignore any error return
 	 */
-	lseek( fd, (off_t)0, 0 );
+	lseek( fd, 0, 0 );
     if(!S_ISREG( statb->st_mode )) {
 		Diemsg(err, file, "not a regular file");
     } if(statb->st_size == 0) {
@@ -233,8 +192,6 @@ int Check_printable(char *file, int fd, struct stat *statb, int format )
         Diemsg (err, file, "executable program");
     } else if (is_arch ( buf, n)) {
         Diemsg (err, file, "archive file");
-    } else if (is_mmdf_mail (buf)) {
-        printable = 1;
     } else {
         printable = 1;
 		for (i = 0; printable && i < n; ++i) {
@@ -253,19 +210,6 @@ int Check_printable(char *file, int fd, struct stat *statb, int format )
  *
  * Patrick Powell Wed Apr 12 19:58:58 PDT 1995
  ***************************************************************************/
-
-/***************************************************************************
- * Why do we want to treat MMDF files as printable?  They have funny
- * control characters in them... sigh.
- * Patrick Powell Wed Apr 12 19:58:58 PDT 1995
- ***************************************************************************/
-
-#define MMDF_SEPARATOR "\001\001\001\001"
-static char mmdf[] = { 1, 1, 1, 1 };
-static int is_mmdf_mail(char *buf)
-{
-    return (!memcmp (buf, mmdf, sizeof(mmdf )));
-}
 
 /***************************************************************************
  * The is_exec and is_arch are system dependent functions which

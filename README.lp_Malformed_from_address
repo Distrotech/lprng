@@ -1,0 +1,23 @@
+  Frequently Asked Question Number 1
+    Malformed from address?
+
+    Wed Jan 29 15:12:16 PST 1997
+	   Patrick Powell
+
+# To: plp@iona.ie
+# Subject: Malformed from address
+
+# Does anybody know what this error message is related to?
+# tizero[~]>lpq
+# /usr/sbin/lpd: lp: Malformed from address
+
+# tizero[~]>lpr out.ps
+# usr/sbin/lpd: lp: Malformed from address
+# job 'cfA559tizero.usr.dsi.unimi.it' transfer to lp@dotto.usr.dsi.unimi.it
+# failed after 1 attempts
+
+Please See:
+     README.LPRng_to_lpr_spooling
+   	 References: RFC 1179
+
+

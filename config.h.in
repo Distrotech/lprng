@@ -94,11 +94,23 @@
 /* Define if <errno.h> contains a declaration for extern int errno */
 #undef HAVE_ERRNO_DECL
 
+/* Define if you do not have gethostname() defined */
+#undef HAVE_GETHOSTNAME_DEF
+
 /* Define if you have to use getpgrp(0) to get process group */
 #undef HAVE_GETPGRP_0
 
+/* Define if you have innetgr() defined in include file */
+#undef HAVE_INNETGR_DEF
+
+/* Define if you have a openlog prototype.  */
+#undef HAVE_OPENLOG_DEF
+
 /* Define if you have to use setpgrp(0,0) to set process group */
 #undef HAVE_SETPGRP_0
+
+/* Define if you do have setproctitle() defined */
+#undef HAVE_SETPROCTITLE_DEF
 
 /* Define if we have a BSD-ish struct exec in <a.out.h> */
 #undef HAVE_STRUCT_EXEC
@@ -109,20 +121,29 @@
 /* Define if sys_errlist is defined.  */
 #undef HAVE_SYS_ERRLIST_DEF
 
-/* Define if sys_siglist has the signal strings. */
-#undef HAVE_SYS_SIGLIST
-
-/* Define if sys_siglist is defined in unistd.h include file */
-#undef HAVE_SYS_SIGLIST_DEF
-
 /* Define if sys_nerr has number of err strings. */
 #undef HAVE_SYS_NERR
 
 /* Define if sys_nerr has definition.  */
 #undef HAVE_SYS_NERR_DEF
 
+/* Define if sys_siglist has the signal strings. */
+#undef HAVE_SYS_SIGLIST
+
+/* Define if _sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST
+
+/* Define if sys_siglist is defined in unistd.h include file */
+#undef HAVE_SYS_SIGLIST_DEF
+
+/* Define if sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST_DEF
+
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
+
+/* Define if tgetstr() has definition  */
+#undef HAVE_TGETSTR_DEF
 
 /* Use the "union wait" union to get process status from wait3/waitpid */
 #undef HAVE_UNION_WAIT
@@ -133,8 +154,17 @@
 /* Define if you have the vprintf function.  */
 #undef HAVE_VPRINTF
 
+/* HP/UX */
+#undef HPUX
+
 /* HP/UX source */
 #undef _HPUX_SOURCE
+
+/* Define if the struct in6_addr is defined */
+#undef IN6_ADDR
+
+/* Define if the LINUX struct in_addr6 is defined */
+#undef IN_ADDR6
 
 /* Define as __inline if that's what the C compiler calls it.  */
 #undef inline
@@ -170,8 +200,11 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-/* Define on SunOS 4.1.4  */
-#undef SUNOS4_1_4
+/* Define if you have struct stat with st_mtime_nsec */
+#undef ST_MTIME_NSEC
+
+/* Define on SunOS */
+#undef SUNOS
 
 /* Define on System V Release 4.  */
 #undef SVR4
@@ -200,14 +233,8 @@
 /* Define vfork as fork if vfork does not work.  */
 #undef vfork
 
-/* Define if you have the assert function.  */
-#undef HAVE_ASSERT
-
 /* Define if you have the cfsetispeed function.  */
 #undef HAVE_CFSETISPEED
-
-/* Define if you have the fchmod function.  */
-#undef HAVE_FCHMOD
 
 /* Define if you have the fcntl function.  */
 #undef HAVE_FCNTL
@@ -215,35 +242,26 @@
 /* Define if you have the flock function.  */
 #undef HAVE_FLOCK
 
-/* Define if you have the fseek function.  */
-#undef HAVE_FSEEK
-
-/* Define if you have the fstat function.  */
-#undef HAVE_FSTAT
-
-/* Define if you have the ftime function.  */
-#undef HAVE_FTIME
-
-/* Define if you have the ftruncate function.  */
-#undef HAVE_FTRUNCATE
-
 /* Define if you have the getdtablesize function.  */
 #undef HAVE_GETDTABLESIZE
+
+/* Define if you have the gethostbyname2 function.  */
+#undef HAVE_GETHOSTBYNAME2
 
 /* Define if you have the gethostname function.  */
 #undef HAVE_GETHOSTNAME
 
-/* Define if you have the gethrtime function.  */
-#undef HAVE_GETHRTIME
+/* Define if you have the getrlimit function.  */
+#undef HAVE_GETRLIMIT
 
-/* Define if you have the getrusage function.  */
-#undef HAVE_GETRUSAGE
+/* Define if you have the inet_aton function.  */
+#undef HAVE_INET_ATON
 
-/* Define if you have the gettimeofday function.  */
-#undef HAVE_GETTIMEOFDAY
+/* Define if you have the inet_ntop function.  */
+#undef HAVE_INET_NTOP
 
-/* Define if you have the getwd function.  */
-#undef HAVE_GETWD
+/* Define if you have the inet_pton function.  */
+#undef HAVE_INET_PTON
 
 /* Define if you have the innetgr function.  */
 #undef HAVE_INNETGR
@@ -259,6 +277,9 @@
 
 /* Define if you have the mktemp function.  */
 #undef HAVE_MKTEMP
+
+/* Define if you have the openlog function.  */
+#undef HAVE_OPENLOG
 
 /* Define if you have the seteuid function.  */
 #undef HAVE_SETEUID
@@ -290,17 +311,11 @@
 /* Define if you have the socketpair function.  */
 #undef HAVE_SOCKETPAIR
 
-/* Define if you have the statvfs function.  */
-#undef HAVE_STATVFS
-
 /* Define if you have the strcasecmp function.  */
 #undef HAVE_STRCASECMP
 
 /* Define if you have the strchr function.  */
 #undef HAVE_STRCHR
-
-/* Define if you have the strcspn function.  */
-#undef HAVE_STRCSPN
 
 /* Define if you have the strdup function.  */
 #undef HAVE_STRDUP
@@ -311,29 +326,17 @@
 /* Define if you have the strncasecmp function.  */
 #undef HAVE_STRNCASECMP
 
-/* Define if you have the strndup function.  */
-#undef HAVE_STRNDUP
-
-/* Define if you have the strtok function.  */
-#undef HAVE_STRTOK
-
-/* Define if you have the strtoul function.  */
-#undef HAVE_STRTOUL
-
 /* Define if you have the sysinfo function.  */
 #undef HAVE_SYSINFO
+
+/* Define if you have the tcflush function.  */
+#undef HAVE_TCFLUSH
 
 /* Define if you have the tcsetattr function.  */
 #undef HAVE_TCSETATTR
 
-/* Define if you have the times function.  */
-#undef HAVE_TIMES
-
 /* Define if you have the uname function.  */
 #undef HAVE_UNAME
-
-/* Define if you have the vfork function.  */
-#undef HAVE_VFORK
 
 /* Define if you have the wait3 function.  */
 #undef HAVE_WAIT3
@@ -342,6 +345,9 @@
 #undef HAVE_WAITPID
 
 /* Define if you have the <a.out.h> header file.  */
+#undef HAVE_A_OUT_H
+
+/* Define if you have the <a_out.h> header file.  */
 #undef HAVE_A_OUT_H
 
 /* Define if you have the <aouthdr.h> header file.  */
@@ -353,8 +359,17 @@
 /* Define if you have the <arpa/inet.h> header file.  */
 #undef HAVE_ARPA_INET_H
 
+/* Define if you have the <arpa/nameser.h> header file.  */
+#undef HAVE_ARPA_NAMESER_H
+
 /* Define if you have the <assert.h> header file.  */
 #undef HAVE_ASSERT_H
+
+/* Define if you have the <com_err.h> header file.  */
+#undef HAVE_COM_ERR_H
+
+/* Define if you have the <compat.h> header file.  */
+#undef HAVE_COMPAT_H
 
 /* Define if you have the <ctype.h> header file.  */
 #undef HAVE_CTYPE_H
@@ -368,17 +383,20 @@
 /* Define if you have the <errno.h> header file.  */
 #undef HAVE_ERRNO_H
 
+/* Define if you have the <exechdr.h> header file.  */
+#undef HAVE_EXECHDR_H
+
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
 
 /* Define if you have the <filehdr.h> header file.  */
 #undef HAVE_FILEHDR_H
 
-/* Define if you have the <float.h> header file.  */
-#undef HAVE_FLOAT_H
-
 /* Define if you have the <grp.h> header file.  */
 #undef HAVE_GRP_H
+
+/* Define if you have the <krb5.h> header file.  */
+#undef HAVE_KRB5_H
 
 /* Define if you have the <limits.h> header file.  */
 #undef HAVE_LIMITS_H
@@ -392,8 +410,8 @@
 /* Define if you have the <malloc.h> header file.  */
 #undef HAVE_MALLOC_H
 
-/* Define if you have the <minix/config.h> header file.  */
-#undef HAVE_MINIX_CONFIG_H
+/* Define if you have the <memory.h> header file.  */
+#undef HAVE_MEMORY_H
 
 /* Define if you have the <ndir.h> header file.  */
 #undef HAVE_NDIR_H
@@ -412,6 +430,12 @@
 
 /* Define if you have the <reloc.h> header file.  */
 #undef HAVE_RELOC_H
+
+/* Define if you have the <resolv.h> header file.  */
+#undef HAVE_RESOLV_H
+
+/* Define if you have the <setjmp.h> header file.  */
+#undef HAVE_SETJMP_H
 
 /* Define if you have the <sgs.h> header file.  */
 #undef HAVE_SGS_H
@@ -436,6 +460,9 @@
 
 /* Define if you have the <string.h> header file.  */
 #undef HAVE_STRING_H
+
+/* Define if you have the <strings.h> header file.  */
+#undef HAVE_STRINGS_H
 
 /* Define if you have the <sys/dir.h> header file.  */
 #undef HAVE_SYS_DIR_H
@@ -497,8 +524,8 @@
 /* Define if you have the <sys/termio.h> header file.  */
 #undef HAVE_SYS_TERMIO_H
 
-/* Define if you have the <sys/termios.h> header file.  */
-#undef HAVE_SYS_TERMIOS_H
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
 
 /* Define if you have the <sys/ttold.h> header file.  */
 #undef HAVE_SYS_TTOLD_H
@@ -533,6 +560,9 @@
 /* Define if you have the <termios.h> header file.  */
 #undef HAVE_TERMIOS_H
 
+/* Define if you have the <time.h> header file.  */
+#undef HAVE_TIME_H
+
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 
@@ -542,5 +572,5 @@
 /* Define if you have the <varargs.h> header file.  */
 #undef HAVE_VARARGS_H
 
-/* Define if you have the <vfork.h> header file.  */
-#undef HAVE_VFORK_H
+/* Define if you have the <vmparam.h> header file.  */
+#undef HAVE_VMPARAM_H

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -22,7 +22,7 @@
  *    Justin Mason <jmason@iona.ie> especially.  Some of the things
  *    that you have to do to get portability are truely bizzare.
  *
- * $Id: portable.h,v 3.2 1996/08/25 22:20:05 papowell Exp papowell $
+ * $Id: portable.h,v 3.6 1997/01/29 03:04:39 papowell Exp $
  **************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -85,6 +85,23 @@ LPRng requires ANSI Standard C compiler
 #endif
 
 
+/*************************************************************************
+ * Cray
+ *************************************************************************/
+
+#if defined(cray)
+#define MAXPATHLEN	1023
+#define HAVE_SIGSETJMP	1
+
+/* configure incorrectly chooses STATVFS */
+#if defined(USE_STATFS_TYPE)
+#undef  USE_STATFS_TYPE
+#endif
+
+#define USE_STATFS_TYPE	SRV3_STATFS
+#endif
+
+
 /*************************************************************************/
 #if defined(NeXT)
 # define IS_NEXT
@@ -127,7 +144,6 @@ LPRng requires ANSI Standard C compiler
 # define IS_AUX
 # define _POSIX_SOURCE
 
-# undef HAVE_GETPGRP_0
 # undef SETPROCTITLE
 
 #endif
@@ -210,24 +226,6 @@ LPRng requires ANSI Standard C compiler
  * Patrick Powell Thu Apr  6 07:21:10 PDT 1995
  *********************************************************************/
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-
-#include <sys/stat.h>
-#include <pwd.h>
-#include <signal.h>
-#include <sys/wait.h>
-#include <ctype.h>
-
-#include <errno.h>
-#include <grp.h>
 /*********************************************************************
  * yuck -- this is a nightmare! half-baked-ANSI systems are poxy (jm)
  *
@@ -255,10 +253,44 @@ LPRng requires ANSI Standard C compiler
   void abort(void);
 #endif
 
+#include <sys/types.h>
+#include <stdio.h>
+#include <string.h>
+#if defined(HAVE_STRINGS_H)
+# include <strings.h>
+#endif
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+#include <sys/stat.h>
+#include <pwd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <ctype.h>
+
+#include <errno.h>
+#include <grp.h>
+
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
+
 #ifndef HAVE_STRCHR
 # define strchr			index
 # define strrchr		rindex
 #endif
+
+/* case insensitive compare for OS without it */
+#if !defined(HAVE_STRCASECMP)
+ int strcasecmp (const char *s1, const char *s2);
+#endif
+#if !defined(HAVE_STRNCASECMP)
+ int strncasecmp (const char *s1, const char *s2, int len );
+#endif
+
 
 /*********************************************************************
  * directory management is nasty.  There are two standards:
@@ -397,6 +429,8 @@ typedef struct dirent plp_dir_t;
 
 #ifndef HAVE_KILLPG
 # define killpg(pg,sig)	((int) kill ((pid_t)(-(pg)), (sig)))
+#else
+extern int killpg(pid_t pgrp, int sig);
 #endif
 
 /***********************************************************************
@@ -481,6 +515,7 @@ typedef union wait		plp_status_t;
  ***********************************************************************/
 
 typedef RETSIGTYPE plp_signal_t;
+typedef plp_signal_t (*plp_sigfunc_t)(int) ;
 
 #ifndef HAVE_GETDTABLESIZE
 # ifdef NOFILE
@@ -490,21 +525,6 @@ typedef RETSIGTYPE plp_signal_t;
 #   define getdtablesize()	NOFILES_MAX
 #  endif
 # endif
-#endif
-
-
-#if !defined(NDEBUG)
-# ifdef HAVE_ASSERT_H
-#  include <assert.h>
-# else
-#  ifdef HAVE_ASSERT
-    extern void assert();
-#  else
-#   define assert(X) if(!(X)){abort(); /* crash and burn */ }
-#  endif
-# endif
-#else
-# define assert(X) /* empty */
 #endif
 
 #ifndef HAVE_STRDUP
@@ -548,8 +568,8 @@ XX ** NO VARARGS ** XX
 #if defined(HAVE_SYS_SYSLOG_H)
 # include <syslog.h>
 #endif
-# if defined(LOG_PID) && defined(LOG_NOWAIT)
-#  define HAVE_OPENLOG
+# if !(defined(LOG_PID) && defined(LOG_NOWAIT) && defined(HAVE_OPENLOG))
+#  undef HAVE_OPENLOG
 # endif /* LOG_PID && LOG_NOWAIT */
 
 /*
@@ -580,7 +600,6 @@ XX ** NO VARARGS ** XX
  * If we have SVR4 and no setpgid() then we need getpgrp() 
  *************************************************************************/
 #if defined(SVR4) || defined(__alpha__)
-# undef HAVE_GETPGRP_0
 # undef HAVE_SETPGRP_0
 #endif
 
@@ -611,6 +630,137 @@ XX ** NO VARARGS ** XX
 
 #if defined(HAVE_SYS_SELECT_H)
 # include <sys/select.h>
+#endif
+
+/**********************************************************************
+ *  Signal blocking
+ **********************************************************************/
+#ifdef HAVE_SIGPROCMASK
+/* a signal set */
+typedef sigset_t plp_block_mask;
+#else
+/* an integer */
+typedef int plp_block_mask;
+#endif
+
+#define FD_SET_FIX(X) X
+
+/**********************************************************************
+ * IPV6 and newer versions
+ **********************************************************************/
+#if !defined(HAVE_INET_PTON)
+int inet_pton( int family, const char *strptr, void *addr );
+#endif
+#if !defined(HAVE_INET_NTOP)
+char *inet_ntop( int family, const void *addr, char *strptr, int len );
+#endif
+
+/**********************************************************************
+ *  SUNOS Definitions
+ **********************************************************************/
+#ifdef SUNOS
+extern int _flsbuf(int, FILE *);
+extern int _filbuf(FILE *);
+extern int accept(int s, struct sockaddr *name, int *namelen);
+extern int bind(int s, struct sockaddr *name, int namelen);
+extern int connect(int s, struct sockaddr *name, int namelen);
+extern void bzero(void *s, size_t n);
+extern void endgrent( void );
+extern int fflush( FILE *stream );
+extern int fclose( FILE *stream );
+extern int flock( int fd, int operation );
+extern int fprintf(FILE *, const char *, ...);
+extern int fstat(int fd, struct stat *buf );
+extern int ftruncate( int fd, off_t length );
+extern int getdtablesize( void );
+extern int getpeername(int s, struct sockaddr *name, int *namelen);
+extern int getsockname(int s, struct sockaddr *name, int *namelen);
+extern int getsockopt(int s, int level, int optname, char *optval,int *optlen);
+extern int ioctl(int fd, int request, caddr_t arg );
+extern int killpg(int pgrp, int sig );
+extern int listen(int s, int backlog );
+extern int lockf(int fd, int cmd, long size );
+/*extern int lseek(int fd, off_t pos, int how ); */
+extern int lstat(const char *path, struct stat *buf );
+#define memmove(dest,src,len) bcopy(src,dest,len)
+extern void bcopy(char *src,char *dest,int len);
+extern int mkstemp(char *s );
+extern int openlog( const char *ident, int logopt, int facility );
+extern int perror(const char *);
+extern int rename(const char *, const char *);
+extern int select (int width, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+extern void setgrent(void);
+extern int setreuid( int ruid, int euid );
+extern int setsockopt(int s, int level, int optname, const char *optval,int optlen);
+extern int socket( int domain, int type, int protocol );
+extern int socketpair(int, int, int, int *);
+extern int stat(const char *path, struct stat *buf );
+extern int strcasecmp( const char *, const char * );
+extern char *strerror( int );
+extern int strncasecmp( const char *, const char *, int n );
+extern int long strtol( char *str, char **ptr, int base );
+extern int strftime(char *buf, int bufsize, const char *fmt, struct tm *tm);
+extern void syslog(int, const char *, ...);
+extern int system( const char *str );
+extern int tgetent( char *buffer, char *name );
+extern time_t time( time_t *t );
+extern int tolower( int );
+extern int toupper( int );
+extern void tputs( const char *cp, int affcnt, int (*outc)() );
+extern int vfprintf(FILE *, const char *, ...);
+extern int vprintf(FILE *, const char *, va_list ap);
+#endif
+
+#ifdef SOLARIS
+extern int setreuid( uid_t ruid, uid_t euid );
+extern int mkstemp(char *s );
+#ifdef HAVE_GETDTABLESIZE
+extern int getdtablesize(void);
+#endif
+#endif
+
+#ifdef HPUX
+extern void syslog(int, const char *, ...);
+#if !defined(HAVE_OPENLOG_DEF)
+extern int openlog( const char *ident, int logopt, int facility );
+#endif
+#undef FD_SET_FIX
+#define FD_SET_FIX(X) (int *)
+#endif
+
+#ifdef IS_AIX32
+extern int tgetent(char *, char *);
+#if !defined(HAVE_OPENLOG_DEF)
+void openlog(const char *, int, int);
+void syslog(int, const char *, ...);
+#endif
+extern int seteuid(uid_t);
+#endif
+
+
+/* IPV6 structures define */
+
+#if !defined(AF_INET6)
+#  define AF_INET6 24
+#endif
+
+#if defined(IN_ADDR6)
+# define in6_addr in_addr6
+# define IN6_ADDR
+#endif
+
+#if !defined(IN6_ADDR)
+# define IN6_ADDR
+# define SIN6_LEN 16
+
+struct in6_addr { unsigned char s6_addr[SIN6_LEN]; };
+struct sockaddr_in6 {
+	/* unsigned char sin6_len; */
+	unsigned char sin6_family;
+	unsigned short sin6_port;
+	unsigned int sin6_flowinfo;
+	struct in6_addr sin6_addr;
+};
 #endif
 
 #endif	/* PLP_PORTABLE_H */

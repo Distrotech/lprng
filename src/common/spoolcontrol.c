@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,11 +11,14 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: spoolcontrol.c,v 3.0 1996/05/19 04:06:13 papowell Exp $";
+"$Id: spoolcontrol.c,v 3.5 1997/01/30 21:15:20 papowell Exp $";
 
 #include "lp.h"
-#include "printcap.h"
-#include "jobcontrol.h"
+#include "errorcodes.h"
+#include "lockfile.h"
+#include "malloclist.h"
+#include "pathname.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
 Get_spool_control()
@@ -32,97 +35,94 @@ static struct keywords status_key[] = {
 	{ "spooling_disabled", INTEGER_K, &Spooling_disabled },
 	{ "debug", STRING_K, &Control_debug},
 	{ "redirect", STRING_K, &Forwarding},
-	{ "autohold", INTEGER_K, &Auto_hold },
+	{ "holdall", INTEGER_K, &Hold_all },
 	{ "class", STRING_K, &Classes},
 	{ "server_order", STRING_K, &Server_order},
 	{ 0 },
 };
 
-int Get_spool_control( struct stat *oldstatb )
+int Get_spool_control( struct stat *oldstatb, int *fdptr )
 {
 	char *s, *t, *end;					/* ACME Pointers */
 	int fd, i, len;
 	struct stat statb;
-	static char buffer[SMALLBUFFER];
+	static struct malloc_list save_status;
+	char *buffer;
+	char *filename;
 	int lock, create;
 
-	if( Debug > 4 ){
-		DEBUG4( "Get_spool_control: before checking " );
-		for( i = 0; (s = status_key[i].keyword); ++i ){
-			switch( status_key[i].type ){
-				case FLAG_K:
-				case INTEGER_K:
-					logDebug( "  %s %d", status_key[i].keyword,
-					*(int *)(status_key[i].variable) );
-					break;
-				case STRING_K:
-					t = *(char **)(status_key[i].variable);
-					if( t ) logDebug( "  %s %s", status_key[i].keyword,t);
-					break;
-				default: break;
-			}
-		}
-	}
-	s = Add2_path( CDpathname, "control.", Printer );
+	if( fdptr ) *fdptr = 0;
+	filename = Add2_path( CDpathname, "control.", Printer );
 
-	if( oldstatb && (stat(s, &statb) == 0)
-		&& statb.st_ctime == oldstatb->st_ctime ){
+	if( oldstatb && (stat(filename, &statb) == 0)
+		&& statb.st_mtime == oldstatb->st_mtime
+#if defined(ST_MTIME_NSEC)
+		&& statb.ST_MTIME_NSEC == oldstatb->ST_MTIME_NSEC
+#endif
+	){
 		/* no change */
-		DEBUG5("Get_spool_control: file '%s' no change", s );
+		DEBUG3("Get_spool_control: file '%s' no change", filename );
 		return(0);
 	}
 
+	DEBUG3( "Get_spool_control: clearing values" );
+	for( i = 0; (s = status_key[i].keyword); ++i ){
+		switch( status_key[i].type ){
+			case FLAG_K:
+			case INTEGER_K:
+				*(int *)(status_key[i].variable) = 0;
+				break;
+			case STRING_K:
+				*(char **)(status_key[i].variable) = 0;
+				break;
+			default: break;
+		}
+	}
 	/* open and lock the file */
-	fd = Lockf( s, &lock, &create, &statb );
+	fd = Lockf( filename, &lock, &create, &statb );
 	if( fd < 0 ){
-		logerr( LOG_ERR,
-			"Get_spool_control: cannot create file '%s'",s);
-		return(1);
+		logerr_die( LOG_ERR,
+			"Get_spool_control: cannot create file '%s'",filename);
 	}
 	if( lock == 0 ){
-		DEBUG8("Get_spool_control: waiting for lock" );
+		DEBUG4("Get_spool_control: waiting for lock" );
 		/* we need to lock the file */
-		lock = Do_lock( fd, s, 1 );
+		lock = Do_lock( fd, filename, 1 );
 	}
 	if( lock <= 0 ){
-		DEBUG8("Get_spool_control: locking failed" );
+		DEBUG4("Get_spool_control: locking failed" );
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR,
-			"Get_spool_control: cannot lock file '%s'",s);
+			"Get_spool_control: cannot lock file '%s'",filename);
 	}
 
-	DEBUG5("Get_spool_control: file '%s', fd %d", s, fd );
+	DEBUG3("Get_spool_control: file '%s', fd %d", filename, fd );
 	if( oldstatb ){
 		*oldstatb = statb;
 	}
 	/* read in new status */
-	buffer[0] = 0;
-	if( (len = statb.st_size) != 0 ){
-		if( len >= sizeof(buffer) ){
-			len = sizeof(buffer) - 1;
-		}
-		for( s = buffer;
-			len > 0 && (i = read( fd, s, len)) > 0;
-			len -= i, s += i );
-		*s = 0;
+	len = statb.st_size;
+	if( len + 1 >= save_status.max  ){
+		extend_malloc_list( &save_status, 1, len+1 );
 	}
-	close(fd);
-	DEBUG6("Get_spool_control: '%s'", buffer );
+	buffer = (void *)save_status.list;
+	for( i = 0, s = buffer;
+		len > 0 && (i = read( fd, s, len)) > 0;
+		len -= i, s += i );
+	if( i < 0 ){
+		Errorcode = JABORT;
+		logerr_die( LOG_ERR, "Get_spool_control: '%s' read failed",
+			filename );
+	}
+	*s = 0;
+	if( fdptr == 0 ){
+		close(fd);
+	} else {
+		*fdptr = fd;
+	}
+	DEBUG3("Get_spool_control: '%s'", buffer );
 
 	/* clear the current status */
-
-#if 0
-	/* disable this - you want control file to OVERIDE defaults */
-	/* Wed Apr 24 07:29:39 PDT 1996 */
-	for( i = 0; status_key[i].keyword; ++i ){
-		switch( status_key[i].type ){
-			case FLAG_K:
-			case INTEGER_K: *(int *)(status_key[i].variable) = 0; break;
-			case STRING_K: *(char **)(status_key[i].variable) = 0; break;
-			default: break;
-		}
-	}
-#endif
 
 	for( s = buffer; s && *s; s = end ){
 		end = strchr( s, '\n' );
@@ -134,7 +134,7 @@ int Get_spool_control( struct stat *oldstatb )
 			*t++ = 0;
 			while( isspace( *t ) ) ++t;
 		}
-		DEBUG6("Get_spool_control: key '%s' value '%s'", s, t );
+		DEBUG3("Get_spool_control: key '%s' value '%s'", s, t );
 		for( i = 0;
 			status_key[i].keyword
 				&& strcasecmp( s, status_key[i].keyword );
@@ -145,12 +145,12 @@ int Get_spool_control( struct stat *oldstatb )
 			switch( status_key[i].type ){
 				case FLAG_K:
 				case INTEGER_K:
-					DEBUG6("Get_spool_control: update '%s' with integer '%d'",
+					DEBUG3("Get_spool_control: update '%s' with integer '%d'",
 					status_key[i].keyword, len );
 					*(int *)(status_key[i].variable) = len;
 					break;
 				case STRING_K:
-					DEBUG6("Get_spool_control: update '%s' with string '%s'", 
+					DEBUG3("Get_spool_control: update '%s' with string '%s'", 
 					status_key[i].keyword, t );
 					*(char **)(status_key[i].variable) = t;
 					break;
@@ -158,8 +158,8 @@ int Get_spool_control( struct stat *oldstatb )
 			}
 		}
 	}
-	if( Debug > 4 ){
-		DEBUG4( "Get_spool_control:" );
+	if(DEBUGL4 ){
+		DEBUG3( "Get_spool_control:" );
 		for( i = 0; (s = status_key[i].keyword); ++i ){
 			switch( status_key[i].type ){
 				case FLAG_K:
@@ -187,10 +187,10 @@ int Get_spool_control( struct stat *oldstatb )
  *    spooling_disabled 1/0
  ***************************************************************************/
 
-int Set_spool_control()
+int Set_spool_control( int *fdptr, int forcechange )
 {
 	struct dpathname dpath;
-	struct stat statb;
+	struct stat statb, newstatb;
 	char buffer[SMALLBUFFER];
 	char *s, *t;
 	int lock, create;
@@ -224,30 +224,52 @@ int Set_spool_control()
 	}
 
 	s = Add2_path( CDpathname, "control.", Printer );
-	DEBUG8("Set_spool_control: file '%s', '%s'",s, buffer );
+	DEBUG4("Set_spool_control: file '%s', '%s'",s, buffer );
 
-	fd = Lockf( s, &lock, &create, &statb );
-	if( fd < 0 ){
-		logerr( LOG_ERR,
-			"Set_spool_control: cannot create file '%s'",s);
-		return( 1 );
-	}
-	if( lock == 0 ){
-		DEBUG8("Set_spool_control: waiting for lock" );
-		/* we want to lock the file */
-		lock = Do_lock( fd, s, 1 );
-	}
-	if( lock <= 0 ){
-		DEBUG8("Set_spool_control: locking failed" );
-		Errorcode = JABORT;
-		logerr_die( LOG_ERR,
-			"Set_spool_control: cannot lock file '%s'",s);
+	if( fdptr == 0 ){
+		fd = Lockf( s, &lock, &create, &statb );
+		if( fd < 0 ){
+			logerr( LOG_ERR,
+				"Set_spool_control: cannot create file '%s'",s);
+			return( 1 );
+		}
+		if( lock == 0 ){
+			DEBUG4("Set_spool_control: waiting for lock" );
+			/* we want to lock the file */
+			lock = Do_lock( fd, s, 1 );
+		}
+		if( lock <= 0 ){
+			DEBUG4("Set_spool_control: locking failed" );
+			Errorcode = JABORT;
+			logerr_die( LOG_ERR,
+				"Set_spool_control: cannot lock file '%s'",s);
+		}
+	} else {
+		fd = *fdptr;
 	}
 	if( ftruncate( fd, 0 ) < 0 ){
 		logerr( LOG_ERR,
 			"Set_spool_control: cannot truncate '%s'",s);
 	}
 	if( Write_fd_str( fd, buffer ) < 0 ){
+		Errorcode = JABORT;
+		logerr_die( LOG_ERR,
+			"Set_spool_control: cannot write '%s'",s);
+	}
+	if( fstat(fd, &newstatb)  ){
+		logerr_die( LOG_ERR,
+			"Set_spool_control: cannot stat '%s'",s);
+	}
+	if( forcechange && statb.st_mtime == newstatb.st_mtime
+		&& statb.st_size == newstatb.st_size
+#if defined(ST_MTIME_NSEC)
+		&& statb.ST_MTIME_NSEC == newstatb.ST_MTIME_NSEC
+#endif
+	){
+		DEBUG3("Set_spool_control: file '%s' no change, sleeping", s );
+		sleep(1);
+	}
+	if( Write_fd_str( fd, "\n" ) < 0 ){
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR,
 			"Set_spool_control: cannot write '%s'",s);

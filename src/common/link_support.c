@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: link_support.c,v 3.3 1996/08/25 22:20:05 papowell Exp $";
+"$Id: link_support.c,v 3.4 1997/01/22 23:06:12 papowell Exp $";
 
 /***************************************************************************
  * MODULE: Link_support.c
@@ -152,21 +152,14 @@ Local_port:  The BSD UNIX networking software had a concept of reserved
 	are present,  a port in the range lowportnumber-highportnumber
 	will be used.
 
-Remote_ip: look up address using gethostbyname(), gethostbyaddr()
-
-Remote_port:
-	1. check to see if Lpd_port (set by configuratio file) is set
-	   - either an integer value or name to look up using getservbyname()
-	2. check for "printer" service using getservbyname
-
  ***************************************************************************/
 
 #include "lp.h"
-#include "lp_config.h"
-#include "timeout.h"
+#include "linksupport.h"
 #include "setuid.h"
-
-static int reserveport (int low, int high, int type );
+#include "timeout.h"
+#include "gethostinfo.h"
+/**** ENDINCLUDE ****/
 
 /***************************************************************************
  * int Link_open(char *host, int retry, int timeout );
@@ -181,32 +174,15 @@ static int reserveport (int low, int high, int type );
  *    Give up with error message
  *
  * In RFC1192, it specifies that the originating ports will be in
- * a specified range; PLP has an option to check that this is so-
- * Allow_non_priv_ports.  Since a reserved port can only
+ * a specified range, 721-731; Since a reserved port can only
  * be accessed by UID 0 (root) processes, this would appear to prevent
  * ordinary users from directly contacting the remote daemon.
- *
  * However,  enter the PC.  We can generate a connection from ANY port.
- * Thus,  all of these restrictions are somewhat bogus.
- * Note: we use helper functions reserveport() and getconnection()
+ * Thus,  all of these restrictions are somewhat bogus.  We use the
+ * configuration file 'PORT' restrictions instead
  ***************************************************************************/
 
-/*
- * reserveport(int max_port_no, min_port_no, type)
- * open a sock and bind to a port, starting at min_port_no, up max_port_no.
- * 
- * NOTE: if min_port_no == maxportno == 0, then we simply open any socket
- *       if min_port_no == 0, maxportno >0 then we open maxportno
- *       if min_port_no < maxportno, then we need a socket in the
- *       specified range.
- * Returns: socket if successful, LINK errorcode if not
- *
- * NOTES AND WARNINGS
- * - This code should work on any system that has a BIND call.
- *   If it does not,  then the reason for failure will not be
- *   bind() call related, but system related.  Watch out for
- *   non-reuse of sockets.  See the setsockopt() call in the code.
- */
+int AF_Protocol = AF_INET;
 
 int Link_setreuse( int sock )
 {
@@ -219,7 +195,7 @@ int Link_setreuse( int sock )
 	if( getsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (char *)&option, &len ) ){
 		logerr_die( LOG_ERR, "Link_setreuse: getsockopt failed" );
 	}
-	DBGREM4F(DNW4) ("SO_REUSEADDR: socket %d, value %d", sock, option);
+	DEBUGF(DNW4) ("SO_REUSEADDR: socket %d, value %d", sock, option);
 	if( option == 0 ){
 		option = 1;
 		if( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
@@ -231,90 +207,6 @@ int Link_setreuse( int sock )
 
 	return( option );
 }
-
-static int reserveport(int port_no,  int max_port_no, int connection_type )
-{
-	struct sockaddr_in sin;
-	int sock, uid, err;
-	int status;
-
-	status = 0;
-	DBGREM4F(DNW4) ("reserveport( min %d, max %d )", port_no, max_port_no );
-	/* this may or may not be a void function */
-	/* we check to see if there is a limit to the reserved ports */
-
-	if( port_no == 0 && max_port_no ){
-		port_no = max_port_no;
-	}
-	/*
-	 * if not running SUID root or not root user
-	 * check to see if we have less than reserved port
-	 */
-	if( !UID_root && port_no < IPPORT_RESERVED ){
-		port_no = IPPORT_RESERVED;
-	}
-	if( port_no > max_port_no ){
-		port_no = max_port_no = 0;
-	}
-
-	/* work your way up */
-
-	status = -1;
-	uid = geteuid();
-	sock = -1;
-	while( status < 0 && port_no <= max_port_no ){
-		memset(&sin, 0, sizeof (sin));
-		sin.sin_family = AF_INET;
-		sin.sin_addr.s_addr = HostIP;
-		sin.sin_port = htons((u_short)port_no);
-		/*
-		 * do the soket, bind and the set reuse flag operation as
-		 * ROOT;  this appears to be the side effect of some
-		 * very odd system implementations.  Note that you can
-		 * read and write to the socket as a user.
-		 */
-		if( sock < 0 ){
-			if( UID_root ) (void)To_root();
-			sock = socket(AF_INET, connection_type, 0);
-			err = errno;
-			if( UID_root ) (void)To_uid( uid );
-			if( sock < 0 ){
-				errno = err;
-				logerr_die(LOG_DEBUG, "reserveport: socket call failed");
-				return( LINK_OPEN_FAIL );
-			}
-			DBGREM4F(DNW4) ("reserveport: socket %d", sock);
-		}
-		if( UID_root ) (void)To_root();
-		status = bind(sock, (struct sockaddr *)&sin, sizeof(sin));
-
-		/* set up the 'resuse' flag on socket, or you may not be
-			able to reuse a port for up to 10 minutes */
-		if( status >= 0 ) status = Link_setreuse( sock );
-
-		if( UID_root ) (void)To_uid( uid );
-
-		DBGREM4F(DNW4) ("reserveport: sock %d, port %d, bind and reuse status %d",
-			sock, port_no, status );
-		if( status >= 0 ){
-			break;
-		}
-		++port_no;
-		if( port_no > max_port_no && max_port_no ){
-			/* try getting ordinary port as desperation move */
-			port_no = max_port_no = 0;
-		}
-	}
-
-	DBGREM4F(DNW4) ("reserveport: final sock %d, bind status %d, port %d",
-		sock, status, port_no);
-
-	if( status < 0 ){
-		if( sock >= 0 ) (void) close (sock);
-		sock = LINK_OPEN_FAIL;
-	}
-	return ( sock );
-}
 /*
  * int getconnection(char *host, int timeout )
  *   opens a connection to the remote host
@@ -323,57 +215,74 @@ static int reserveport(int port_no,  int max_port_no, int connection_type )
  * 3. makes a connection to the remote host
  */
 
-int getconnection ( char *host, int timeout, int connection_type )
+
+static int connect_timeout( int timeout,
+	int sock, struct sockaddr *name, int namelen)
 {
-	struct hostent *hostent;    /* host entry pointer */
-	static int sock;                   /* socket */
-	int i, err;                 /* ACME Generic Integers */
-	struct sockaddr_in sin;     /* inet socket address */
+	int status = -1;
+	int err = 0;
+	if( Set_timeout() ){
+		Set_timeout_alarm( timeout, 0);
+		status = connect(sock, name, namelen );
+		err = errno;
+	} else {
+		status = -1;
+		err = errno;
+	}
+	Clear_timeout();
+	errno = err;
+	return( status );
+}
+
+int getconnection ( char *hostname, int timeout, int connection_type )
+{
+	int sock;            /* socket */
+	int i, err;            /* ACME Generic Integers */
+	struct sockaddr_in dest_sin;     /* inet socket address */
+	struct sockaddr_in src_sin;     /* inet socket address */
 	int maxportno, minportno;	/* max and minimum port numbers */
+	int euid;
+	int status;				/* status of operation */
+	plp_block_mask oblock;
 
 	/*
-	 * Zero out the sockaddr_in struct
+	 * find the address
 	 */
+	DEBUGF(DNW1)("getconnection: host %s, timeout %d, connection_type %d",
+		hostname, timeout, connection_type);
+	euid = geteuid();
 	sock = -1;
-	memset(&sin, 0, sizeof (sin));
-	/*
-	 * Get the destination host address and remote port number to connect to.
-	 */
-	DBGREM4F(DNW4)("getconnection: host %s", host);
-	sin.sin_family = AF_INET;
-	errno = 0;
-	if( (hostent = gethostbyname(host)) ){
+	memset(&dest_sin, 0, sizeof (dest_sin));
+	dest_sin.sin_family = AF_Protocol;
+	if( Find_fqdn( &LookupHostIP, hostname, 0 ) ){
 		/*
-		 * set up the address information
+		 * Get the destination host address and remote port number to connect to.
 		 */
-		if( hostent->h_addrtype != AF_INET ){
-			logerr(LOG_DEBUG, "getconnection: bad address type for host '%s'",
-				host);
-			return( LINK_OPEN_FAIL );
+		DEBUGF(DNW1)("getconnection: fqdn %s", LookupHostIP.fqdn);
+		dest_sin.sin_family = LookupHostIP.host_addrtype;
+		if( LookupHostIP.host_addrlength > sizeof( dest_sin.sin_addr ) ){
+			fatal( LOG_ALERT, "getconnection: addresslength outsize value");
 		}
-		memcpy( &sin.sin_addr, hostent->h_addr, hostent->h_length );
-	} else {
-		DBGREM3F(DNW3)("getconnection: '%s', trying inet address", host);
-		sin.sin_addr.s_addr = inet_addr(host);
-		if( sin.sin_addr.s_addr == -1){
-			logerr(LOG_DEBUG, "getconnection: unknown host '%s'", host);
-			return( LINK_OPEN_FAIL );
-		}
+		memcpy( &dest_sin.sin_addr, (void *)LookupHostIP.host_addr_list.list,
+			LookupHostIP.host_addrlength );
+	} else if( inet_pton( AF_Protocol, hostname, &dest_sin.sin_addr ) != 1 ){
+		DEBUGF(DNW2)("getconnection: cannot get address for '%s'", hostname );
+		return( LINK_OPEN_FAIL );
 	}
 	if( Destination_port ){
-		sin.sin_port = htons( Destination_port );
+		dest_sin.sin_port = htons( Destination_port );
 	} else {
-		sin.sin_port = Link_dest_port_num();
+		dest_sin.sin_port = Link_dest_port_num();
 	}
-	if( sin.sin_port == 0 ){
+	if( dest_sin.sin_port == 0 ){
 		logerr(LOG_INFO,
 		"getconnection: bad port number for LPD connection!\n"
 		"check 'lpd-port' in configuration file, or the\n"
 		"/etc/services file for a missing 'printer 515/tcp' entry" );
 		return( LINK_OPEN_FAIL );
 	}
-	DBGREM3F(DNW3)("getconnection: destination '%s' port %d",
-		inet_ntoa( sin.sin_addr ), ntohs( sin.sin_port ) );
+	DEBUGF(DNW2)("getconnection: destination IP '%s' port %d",
+		inet_ntoa( dest_sin.sin_addr ), ntohs( dest_sin.sin_port ) );
 
 	/* check on the low and high port values */
 	/* we decode the minimum and  maximum range */
@@ -381,7 +290,6 @@ int getconnection ( char *host, int timeout, int connection_type )
 	if( Originate_port ){
 		char *s, *end;
 		int m;
-
 		s = end = Originate_port;
 		m = strtol( s, &end, 10 );
 		if( s != end ){
@@ -393,57 +301,117 @@ int getconnection ( char *host, int timeout, int connection_type )
 			}
 		}
 	}
-
-	/*
-	 * open a socket and bind to a port in the specified range
-	 */
-
+	/* check for reversed order ... */
 	if( maxportno < minportno ){
 		i = maxportno;
 		maxportno = minportno;
 		minportno = i;
 	}
-	sock = reserveport( minportno, maxportno, connection_type );
-	if( sock < 0 ){
-		return( sock );
+	/* check for only one */
+	if( minportno == 0 ){
+		minportno = maxportno;
 	}
-
 	/*
-	 * set up timeout and then make connect call
+	 * if not running SUID root or not root user
+	 * check to see if we have less than reserved port
 	 */
-	if( Set_timeout( timeout, 0 ) ){
-		i = connect (sock, (struct sockaddr *) & sin, sizeof (sin));
-	}
-	Clear_timeout();
-	err = errno;
-
-	DBGREM4F(DNW4)("getconnection: connect sock %d, status %d, errno %d",
-		sock, i, err );
-	if( i < 0 || Alarm_timed_out ){
-		if( Alarm_timed_out ) {
-			DBGREM4F(DNW4)("getconnection: connection to '%s' timed out", host);
-		} else {
-			DBGREM4F(DNW4)("getconnection: connection to '%s' failed '%s'",
-				host, Errormsg(err) );
+	if( !UID_root && minportno < IPPORT_RESERVED ){
+		minportno = IPPORT_RESERVED;
+		if( minportno > maxportno ){
+			minportno = maxportno = 0;
 		}
-		(void) close (sock);
-		sock = LINK_OPEN_FAIL;
-	} else {
-		struct sockaddr_in src;     /* inet socket address */
-		i = sizeof( src );
-		if( getsockname( sock, (struct sockaddr *)&src, &i ) < 0 ){
-			logerr(LOG_DEBUG,"getconnnection: getsockname failed" );
+	}
+	DEBUGF(DNW2)("getconnection: minportno %d, maxportno %d",
+		minportno, maxportno );
+
+	/* we now have a range of ports and a starting position
+	 * Note 1: if port == 0, then we get any port,
+	 *  and do not set SOCKREUSE.  We only try once.
+     * Note 2: if port != 0, then we get port in range.
+     *  we DO set SOCKREUSE.
+     * Note 3. we try all ports in range; if none work,
+     *  we get an error.
+     */ 
+	do{
+		/*
+		 * do the sock et, bind and the set reuse flag operation as
+		 * ROOT;  this appears to be the side effect of some
+		 * very odd system implementations.  Note that you can
+		 * read and write to the socket as a user.
+		 */
+		plp_block_all_signals( &oblock );
+		if( UID_root ) (void)To_root();
+		sock = socket(AF_Protocol, connection_type, 0);
+		err = errno;
+		if( UID_root ) (void)To_uid( euid );
+		plp_unblock_all_signals( &oblock );
+		if( sock < 0 ){
+			errno = err;
+			logerr_die(LOG_DEBUG, "getconnection: socket call failed");
+		}
+		DEBUGF(DNW4) ("getconnection: socket %d", sock);
+
+		src_sin.sin_family = AF_Protocol;
+		/* src_sin.sin_addr.s_addr = HostIP; */
+		src_sin.sin_addr.s_addr = INADDR_ANY;
+		src_sin.sin_port = htons((u_short)minportno);
+
+		plp_block_all_signals( &oblock );
+		if( UID_root ) (void)To_root();
+
+		/* we do the next without interrupts */
+		status = bind(sock, (struct sockaddr *)&src_sin, sizeof(src_sin));
+
+		/* set up the 'resuse' flag on socket, or you may not be
+			able to reuse a port for up to 10 minutes */
+		if( minportno && status >= 0 ) status = Link_setreuse( sock );
+
+		if( UID_root ) (void)To_uid( euid );
+		plp_unblock_all_signals( &oblock );
+
+		DEBUGF(DNW2) ("getconnection: sock %d, port %d, bind and reuse status %d",
+			sock, minportno, status );
+
+		if( status < 0 ){
+			if( sock > 0 ) close( sock );
+			sock = LINK_OPEN_FAIL;
+			continue;
+		}
+
+		/*
+		 * set up timeout and then make connect call
+		 */
+		errno = 0;
+		if( UID_root ) (void)To_root();
+		status = connect_timeout(timeout,sock,
+			(struct sockaddr *) &dest_sin, sizeof(dest_sin));
+		if( UID_root ) (void)To_uid( euid );
+
+		DEBUGF(DNW2)("getconnection: connect sock %d, status %d, errno %d",
+			sock, status, err );
+		if( status < 0 || Alarm_timed_out ){
+			if( Alarm_timed_out ) {
+				DEBUGF(DNW1)("getconnection: connection to '%s' timed out",
+					hostname);
+			} else {
+				DEBUGF(DNW1)("getconnection: connection to '%s' failed '%s'",
+					hostname, Errormsg(err) );
+			}
 			(void) close (sock);
 			sock = LINK_OPEN_FAIL;
+		} else {
+			i = sizeof( src_sin );
+			if( getsockname( sock, (struct sockaddr *)&src_sin, &i ) < 0 ){
+				logerr_die(LOG_ERR,"getconnnection: getsockname failed" );
+			}
+			DEBUGF(DNW1)( "getconnection: src ip %s, port %d, dest ip %s, port %d\n",
+				inet_ntoa( src_sin.sin_addr ), ntohs( src_sin.sin_port ),
+				inet_ntoa( dest_sin.sin_addr ), ntohs( dest_sin.sin_port ) );
 		}
-		DEBUG4(
-			"getconnection: src ip %s, port %d, dest ip %s, port %d\n",
-			inet_ntoa( src.sin_addr ), ntohs( src.sin_port ),
-			inet_ntoa( sin.sin_addr ), ntohs( sin.sin_port ) );
-	}
+	} while( sock < 0 && minportno && minportno++ < maxportno );
+	DEBUGF(DNW1)( "getconnection: socket returned %d", sock );
 	return (sock);
 }
-
 /*
  * int Link_listen()
  *  1. opens a socket on the current host
@@ -451,7 +419,7 @@ int getconnection ( char *host, int timeout, int connection_type )
  *  3. does a bind to port determined by Link_dest_port_num();
  */
 
-int Link_listen()
+int Link_listen( void )
 {
 	int sock;                   /* socket */
 	int status;                   /* socket */
@@ -467,24 +435,22 @@ int Link_listen()
 	/*
 	 * Get the destination host address and remote port number to connect to.
 	 */
-	sin.sin_family = AF_INET;
+	sin.sin_family = AF_Protocol;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = Link_dest_port_num();
 	port = ntohs( sin.sin_port );
-	DBGREM4F(DNW4)("Link_listen: lpd port %d", port );
+	DEBUGF(DNW4)("Link_listen: lpd port %d", port );
 
-	euid = 0;
-	if( UID_root && port < IPPORT_RESERVED && (euid = geteuid()) ){
-		(void)To_root();
-	}
+	euid = geteuid();
+	if( UID_root ) (void)To_root();
 	errno = 0;
-	status = (sock = socket (AF_INET, SOCK_STREAM, 0)) < 0
+	status = (sock = socket (AF_Protocol, SOCK_STREAM, 0)) < 0
 		|| Link_setreuse( sock ) < 0
 		|| bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0;
 	err = errno;
-	if( euid ) (void)To_uid( euid );
+	if( UID_root ) (void)To_uid( euid );
 	if( status ){
-		DBGREM4F(DNW4)("Link_listen: bind to lpd port %d failed '%s'",
+		DEBUGF(DNW4)("Link_listen: bind to lpd port %d failed '%s'",
 			port, Errormsg(err));
 		if( sock >= 0 ){
 			(void)close( sock );
@@ -501,7 +467,7 @@ int Link_listen()
 		err = errno;
 		return( LINK_OPEN_FAIL );
 	}
-	DBGREM4F(DNW4)("Link_listen: port %d, socket %d", ntohs( sin.sin_port ), sock);
+	DEBUGF(DNW4)("Link_listen: port %d, socket %d", ntohs( sin.sin_port ), sock);
 	errno = err;
 	return (sock);
 }
@@ -513,26 +479,26 @@ int Link_listen()
 int Link_open(char *host, int retry, int timeout )
 {
 	int sock;
-	DBGREM4F(DNW4) ("Link_open: host '%s', retry %d, timeout %d",host,retry,timeout);
-	do {
-		sock = getconnection( host, timeout, SOCK_STREAM );
-	} while( sock < 0 && retry-- > 0  );
-	DBGREM4F(DNW4) ("Link_open: socket %d", sock );
-	return( sock );
+	DEBUGF(DNW4) ("Link_open: host '%s', retry %d, timeout %d",host,retry,timeout);
+	sock = Link_open_type( host, retry, timeout, Destination_port, SOCK_STREAM );
+	DEBUGF(DNW4) ("Link_open: socket %d", sock );
+	return(sock);
 }
 
-int Link_open_type(char *host, int retry, int timeout, int port, int connection_type )
+int Link_open_type(char *host, int retry, int timeout, int port,
+	int connection_type )
 {
 	int sock;
 	int oldport = Destination_port;
 	Destination_port = port;
-	DBGREM4F(DNW4) ("Link_open_type: host '%s', retry %d, timeout %d, port %d, type %d",
+	DEBUGF(DNW4)(
+		"Link_open_type: host '%s', retry %d, timeout %d, port %d, type %d",
 		host,retry,timeout, port, connection_type );
 	do {
 		sock = getconnection( host, timeout, connection_type );
 	} while( sock < 0 && retry-- > 0  );
 	Destination_port = oldport;
-	DBGREM4F(DNW4) ("Link_open_type: socket %d", sock );
+	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
 }
 
@@ -543,7 +509,7 @@ int Link_open_type(char *host, int retry, int timeout, int port, int connection_
 
 void Link_close( int *sock )
 {
-	DBGREM4F(DNW4) ("Link_close: closing socket %d", *sock );
+	DEBUGF(DNW4) ("Link_close: closing socket %d", *sock );
 	if( *sock >= 0 ){
 		(void)close(*sock);
 	}
@@ -552,10 +518,18 @@ void Link_close( int *sock )
 
 int Link_ack( char *host, int *socket, int timeout, int sendc, int *ack )
 {
-	int status;
+	int status, len = 0;
+	char buffer[2];
 
-	status = Link_send( host, socket, timeout, sendc, (char *)0, 0, ack );
-	DBGREM1F(DNW1)("Link_ack: status %d", status );
+	DEBUGF(DNW1)("Link_ack: host '%s' sendc 0x%x, ack 0x%x",host, sendc, ack );
+	buffer[0] = 0;
+	buffer[1] = 0;
+	if( sendc ){
+		len = 1;
+		buffer[0] = sendc;
+	}
+	status = Link_send( host, socket, timeout, buffer, len, ack );
+	DEBUGF(DNW1)("Link_ack: status %d", status );
 	return(status);
 }
 
@@ -585,80 +559,43 @@ int Link_ack( char *host, int *socket, int timeout, int sendc, int *ack )
  ***************************************************************************/
 
 int Link_send( char *host, int *socket, int timeout,
-	int ch, char *send, int lf, int *ack )
+	char *send, int count, int *ack )
 {
-	static int i, len;      /* Watch out for longjmp * ACME Integers, Inc. */
-	char *str;	/* ack value */
-	static int status;		/* return status */
-	static int msg_length;
-	static char *buffer;	/* buffer */
-	static int max_str;	/* maximum buffer length */
+	int i;      /* Watch out for longjmp * ACME Integers, Inc. */
+	int status;		/* return status */
 	int err = 0;
 
 	/*
 	 * set up initial conditions
 	 */
-	len = i = status = 0;	/* shut up GCC */
+	i = status = 0;	/* shut up GCC */
 	if(*socket < 0) {
-		DBGREM1F(DNW1)( "Link_send: bad socket" );
+		DEBUGF(DNW1)( "Link_send: bad socket" );
 		return( LINK_TRANSFER_FAIL );
 	}
 	if( ack ){
 		*ack = 0;
 	}
 
-	/* get total message length */
-	msg_length = 0;
-	if( ch ) ++msg_length;
-	if( send ) msg_length += strlen( send );
-	if( lf ) ++msg_length;
-
-	/* allocate buffer if necessary */
-	if( buffer == 0 || max_str <= msg_length ){
-		if( buffer ){
-			free(buffer);
-			buffer = 0;
-		}
-		max_str += msg_length + 256;	/* lengthen it */
-		malloc_or_die( buffer, max_str );
-	}
-
-	/* set up the string to send */
-	str = buffer;
-	if( ch ) *str++ = ch;
-	if( send ){
-		strcpy( str, send );
-		str += strlen( send );
-	}
-	if( lf ) *str++ = lf;
-	/* make sure strings are terminated */
-	*str++ = 0;
-
-	DBGREM1F(DNW1)( "Link_send: host '%s' socket %d, timeout %d",
+	DEBUGF(DNW1)( "Link_send: host '%s' socket %d, timeout %d",
 		host, *socket, timeout );
-	DBGREM1F(DNW1)( "Link_send: ch 0x%x, str '%s', lf  0x%x, ack 0x%x",
-		ch, send, lf, ack );
-	DBGREM8F(DNW5)("Link_send: write len %d, '%d'%s'",
-		msg_length, buffer[0], &buffer[1] );
+	DEBUGF(DNW1)( "Link_send: str '%s', count %d, ack 0x%x",
+		send, count , ack );
 
 	/*
 	 * set up timeout and then write
 	 */
 	
-	if( Set_timeout( timeout, socket ) ){
-		i = Write_fd_len( *socket, buffer, msg_length );
-	}
-	Clear_timeout();
-	err = errno;
+	i = Write_fd_len_timeout( timeout, *socket, send, count );
 
 	/* now decode the results */
-	DBGREM3F(DNW3)("Link_send: final write status %d", i );
+	DEBUGF(DNW3)("Link_send: final write status %d", i );
 	if( i < 0 || Alarm_timed_out ){
 		if( Alarm_timed_out ){
-			DEBUG8("Link_send: write to '%s' timed out", host);
+			DEBUGF(DNW3)("Link_send: write to '%s' timed out", host);
 			status = LINK_TRANSFER_FAIL;
 		} else {
-			DEBUG8("Link_send: write to '%s' failed '%s'",
+			DEBUGF(DNW3)("Link_send: write to '%s' failed '%s'",
 				host, Errormsg(err) );
 			status = LINK_TRANSFER_FAIL;
 		}
@@ -666,45 +603,43 @@ int Link_send( char *host, int *socket, int timeout,
 
 	/* check for an ACK to be received */
 	if( status == 0 && ack ){
-		DBGREM3F(DNW3)("Link_send: ack required" );
-		buffer[0] = 0;
-		len = 1;	/* special case, only 1 char! */
-		while( len > 0 ){
-			if( Set_timeout( timeout, socket ) ){
-				i = read (*socket, buffer, len );
-			}
-			Clear_timeout();
-			err = errno;
+		char buffer[1];
 
-			if( Alarm_timed_out || i <= 0 ) break;
-			len -= i;
-		}
-		*ack = buffer[0];
+		DEBUGF(DNW3)("Link_send: ack required" );
+		buffer[0] = 0;
+		i = Read_fd_len_timeout(timeout, *socket, buffer, 1 );
+		Clear_timeout();
+		err = errno;
+
 		if( i <= 0 || Alarm_timed_out ){
 			if( Alarm_timed_out ){
-				DBGREM3F(DNW3)("Link_send: ack read from '%s' timed out", host);
+				DEBUGF(DNW3)("Link_send: ack read from '%s' timed out", host);
 				status = LINK_TRANSFER_FAIL;
 			} else {
-				DBGREM3F(DNW3)("Link_send: ack read from '%s' failed - %s",
+				DEBUGF(DNW3)("Link_send: ack read from '%s' failed - %s",
 					host, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL;
 			}
-		} else if( *ack ){
+		} else if( buffer[0] ){
+			*ack = buffer[0];
 			status = LINK_ACK_FAIL;
 		}
-		DBGREM3F(DNW3)("Link_send: ack read status %d, operation status %s, ack=%s",
+		DEBUGF(DNW3)("Link_send: ack read status %d, operation status %s, ack=%s",
 			i, Link_err_str(status), Ack_err_str(*ack) );
-		if( status == 0 ){
+		if( status == 0 && *ack == 0 ){
 			/* check to see if you have some additional stuff pending */
 			fd_set readfds;
 			struct timeval delay;
 
 			memset( &delay,0,sizeof(delay));
+			delay.tv_usec = 1000;
 			FD_ZERO( &readfds );
 			FD_SET( *socket, &readfds );
-			i = select( (*socket)+1,(fd_set *)&readfds,
-				(fd_set *)0, (fd_set *)0, &delay );
-			if( i != 0 ){
+			i = select( (*socket)+1,
+				FD_SET_FIX((fd_set *))&readfds,
+				FD_SET_FIX((fd_set *))0,
+				FD_SET_FIX((fd_set *))0, &delay );
+			if( i > 0 ){
 				log( LOG_ERR,
 				"Link_send: PROTOCOL ERROR - pending input from '%s' after ACK received",
 				host );
@@ -714,7 +649,7 @@ int Link_send( char *host, int *socket, int timeout,
 	if( status && status != LINK_ACK_FAIL ){
 		Link_close( socket );
 	}
-	DBGREM1F(DNW1)("Link_send: final status %s", Link_err_str(status) );
+	DEBUGF(DNW1)("Link_send: final status %s", Link_err_str(status) );
 	return (status);
 }
 
@@ -732,18 +667,18 @@ int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
 	char *src, int fd, int pcount)
 {
 	char buf[LARGEBUFFER];      /* buffer */
-	static int len;              /* ACME Integer, Inc. */
-	static int status;				/* status of operation */
-	static int count;	/* might be clobbered by longjmp */
+	int len;              /* ACME Integer, Inc. */
+	int status;				/* status of operation */
+	int count;	/* might be clobbered by longjmp */
 	int err;					/* saved error status */
 
 	count = pcount;
 	len = status = 0;	/* shut up GCC */
-	DBGREM4F(DNW4)("Link_copy: sending %d of '%s' to %s, rdtmo %d, wrtmo %d, fd %d",
+	DEBUGF(DNW4)("Link_copy: sending %d of '%s' to %s, rdtmo %d, wrtmo %d, fd %d",
 		count, src, host, readtimeout, writetimeout, fd );
 	/* check for valid socket */
 	if(*socket < 0) {
-		DBGREM4F(DNW4)( "Link_copy: bad socket" );
+		DEBUGF(DNW4)( "Link_copy: bad socket" );
 		return (LINK_OPEN_FAIL);
 	}
 	/* do the read */
@@ -751,21 +686,18 @@ int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
 		len = count;
 		if( count < 0 || len > sizeof(buf) ) len = sizeof(buf);
 		/* do the read with timeout */
-		if( Set_timeout( readtimeout, socket ) ){
-			len = read( fd, buf, len );
-		}
-		Clear_timeout();
+		len = Read_fd_len_timeout( readtimeout, fd, buf, len );
 		err = errno;
 
 		if( Alarm_timed_out || len <= 0 ){
 			/* EOF on input */
 			if( count > 0 ){
-				DBGREM4F(DNW4)(
+				DEBUGF(DNW4)(
 					"Link_copy: read from '%s' failed, %d bytes left - %s",
 					src, count, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL;
 			} else {
-				DBGREM4F(DNW4)("Link_copy: read status %d count %d", len, count );
+				DEBUGF(DNW4)("Link_copy: read status %d count %d", len, count );
 				status = 0;
 			}
 			break;
@@ -774,20 +706,16 @@ int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
 			count -= len;
 		}
 
-		DBGREM4F(DNW4)("Link_copy: read %d bytes", len );
-		if( Set_timeout( writetimeout, socket ) ){
-			len = Write_fd_len( *socket, buf, len );
-		}
-		Clear_timeout();
-		err = errno;
+		DEBUGF(DNW4)("Link_copy: read %d bytes", len );
+		len = Write_fd_len_timeout(writetimeout, *socket, buf, len );
 
-		DBGREM4F(DNW4)("Link_copy: write done, status %d", len );
+		DEBUGF(DNW4)("Link_copy: write done, status %d", len );
 		if( len < 0 || Alarm_timed_out ){
 			if( Alarm_timed_out ){
-				DBGREM4F(DNW4)("Link_copy: write to '%s' timed out", host);
+				DEBUGF(DNW4)("Link_copy: write to '%s' timed out", host);
 				status = LINK_TRANSFER_FAIL;
 			} else {
-				DBGREM4F(DNW4)("Link_copy: write to '%s' failed - %s",
+				DEBUGF(DNW4)("Link_copy: write to '%s' failed - %s",
 					host, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL;
 			}
@@ -803,15 +731,17 @@ int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
 		memset( &delay,0,sizeof(delay));
 		FD_ZERO( &readfds );
 		FD_SET( *socket, &readfds );
-		i = select( *socket+1,(fd_set *)&readfds,
-			(fd_set *)0, (fd_set *)0, &delay );
+		i = select( *socket+1,
+			FD_SET_FIX((fd_set *))&readfds,
+			FD_SET_FIX((fd_set *))0,
+			FD_SET_FIX((fd_set *))0, &delay );
 		if( i != 0 ){
 			log( LOG_ERR,
 			"Link_copy: PROTOCOL ERROR - pending input from '%s' after transfer",
 			host );
 		}
 	}
-	DBGREM4F(DNW4)("Link_copy: status %d", status );
+	DEBUGF(DNW4)("Link_copy: status %d", status );
 	return( status );
 }
 
@@ -821,7 +751,7 @@ int Link_copy( char *host, int *socket, int readtimeout, int writetimeout,
  * Get the destination port number
  * look up the service in the service directory using getservent
  ***************************************************************************/
-int Link_dest_port_num()
+int Link_dest_port_num( void )
 {
 	struct servent *sp;
 	char *s;
@@ -834,13 +764,13 @@ int Link_dest_port_num()
 	port_num = 0;
 
 	if ((sp = getservbyname(s, "tcp")) == 0) {
-		DBGREM4F(DNW4)("getservbyname(\"%s\",tcp) failed", s);
+		DEBUGF(DNW4)("getservbyname(\"%s\",tcp) failed", s);
 		/* try integer value */
 		port_num = htons( atoi( s ) );
 	} else {
 		port_num = sp->s_port;
 	}
-	DBGREM4F(DNW4)("Link_dest_port_num: port %s = %d", s, ntohs( port_num ) );
+	DEBUGF(DNW4)("Link_dest_port_num: port %s = %d", s, ntohs( port_num ) );
 	return (port_num);
 }
 
@@ -865,16 +795,16 @@ int Link_dest_port_num()
 int Link_line_read(char *host, int *socket, int timeout,
 	  char *buf, int *count )
 {
-	static int i, len, max, err = 0;	/* ACME Integer, Inc. */
-	static int status;				/* status of operation */
-	static char *s = 0;				/* location of \n */
+	int i, len, max, err = 0;	/* ACME Integer, Inc. */
+	int status;				/* status of operation */
+	char *s = 0;				/* location of \n */
 
 	len = i = status = 0;	/* shut up GCC */
-	DBGREM4F(DNW4) ("Link_line_read: reading %d from '%s' on %d, timeout %d",
+	DEBUGF(DNW4) ("Link_line_read: reading %d from '%s' on %d, timeout %d",
 		*count, host, *socket, timeout );
 	/* check for valid socket */
 	if(*socket < 0) {
-		DBGREM4F(DNW4)("Link_line_read: bad socket" );
+		DEBUGF(DNW4)("Link_line_read: bad socket" );
 		*count = 0;
 		return (LINK_OPEN_FAIL);
 	}
@@ -891,17 +821,14 @@ int Link_line_read(char *host, int *socket, int timeout,
 	 */
 	s = 0;
 	while( len < max ){
-		if( Set_timeout( timeout, socket ) ){
-			i = read( *socket, &buf[len], max - len );
-		}
-		Clear_timeout();
+		i = Read_fd_len_timeout(timeout, *socket, &buf[len], max - len );
 		err = errno;
 		if( i <= 0 || Alarm_timed_out ){
 			break;
 		}
 		len += i;
 		buf[len] = 0;
-		DBGREM4F(DNW4)("Link_line_read: len %d, last read %d, last '0x%02x' '%s'",
+		DEBUGF(DNW4)("Link_line_read: len %d, last read %d, last '0x%02x' '%s'",
 			len, i, buf[len-1], buf );
 		if( (s = strchr( buf, '\n' )) ){
 			break;
@@ -912,21 +839,21 @@ int Link_line_read(char *host, int *socket, int timeout,
 	 * long line, timeout, error, or OK
 	 */
 	if( Alarm_timed_out ){
-		DBGREM4F(DNW4)( "Link_line_read: read from '%s' timed out", host);
+		DEBUGF(DNW4)( "Link_line_read: read from '%s' timed out", host);
 		status = LINK_TRANSFER_FAIL;
 	} else if( i == 0 ){
-		DBGREM4F(DNW4)("Link_line_read: EOF from '%s'", host );
+		DEBUGF(DNW4)("Link_line_read: EOF from '%s'", host );
 		status = LINK_TRANSFER_FAIL;
 	} else if( i < 0 ){
-		DBGREM4F(DNW4)("Link_line_read: read from '%s' failed - %s", host,
+		DEBUGF(DNW4)("Link_line_read: read from '%s' failed - %s", host,
 			Errormsg(err) );
 		status = LINK_TRANSFER_FAIL;
 	} else if( s == 0 ){
-		DBGREM4F(DNW4)("Link_line_read: no LF on line from '%s'", host );
+		DEBUGF(DNW4)("Link_line_read: no LF on line from '%s'", host );
 		status = LINK_LONG_LINE_FAIL;
 	} else {
 		*s++ = 0;
-		DBGREM4F(DNW4)("Link_line_read: len %d, LF '%d'", len, s-buf );
+		DEBUGF(DNW4)("Link_line_read: len %d, LF '%d'", len, s-buf );
 		/* get the length of line */
 		i  = len - (s - buf);
 		if( i ){
@@ -948,8 +875,10 @@ int Link_line_read(char *host, int *socket, int timeout,
 		memset( &delay,0,sizeof(delay));
 		FD_ZERO( &readfds );
 		FD_SET( *socket, &readfds );
-		i = select( *socket+1,(fd_set *)&readfds,
-			(fd_set *)0, (fd_set *)0, &delay );
+		i = select( *socket+1,
+			FD_SET_FIX((fd_set *))&readfds,
+			FD_SET_FIX((fd_set *))0,
+			FD_SET_FIX((fd_set *))0, &delay );
 		if( i != 0 ){
 			log( LOG_ERR,
 			"Link_line_read: PROTOCOL ERROR - pending input from '%s' after transfer",
@@ -957,7 +886,7 @@ int Link_line_read(char *host, int *socket, int timeout,
 		}
 	}
 
-	DBGREM4F(DNW4)("Link_line_read: status %d", status );
+	DEBUGF(DNW4)("Link_line_read: status %d", status );
 	errno = err;
 	return( status );
 }
@@ -980,55 +909,58 @@ int Link_line_read(char *host, int *socket, int timeout,
 int Link_read(char *host, int *socket, int timeout,
 	  char *buf, int *count )
 {
-	static int i, len;              /* ACME Integer, Inc. */
-	static char *str;					/* input buffer pointer */
-	static int status;				/* status of operation */
+	int len, i, status;      /* ACME Integer, Inc. */
+	char *str;				/* input buffer pointer */
 	int err;
 
-	err = len = i = status = 0;	/* shut up GCC */
-	DBGREM4F(DNW4) ("Link_read: reading %d from '%s' on socket %d",
+	status = 0;	/* shut up GCC */
+	DEBUGF(DNW1) ("Link_read: reading %d from '%s' on socket %d",
 		*count, host, *socket );
 	/* check for valid socket */
 	if(*socket < 0) {
-		DBGREM4F(DNW4)( "Link_read: bad socket" );
+		DEBUGF(DNW1)( "Link_read: bad socket" );
 		return (LINK_OPEN_FAIL);
 	}
-	errno = 0;
-	/* do the read */
 	if( *count < 0 ) *count = 0;
 	len = *count;
+	*count = 0;
 	str = buf;
-	while( len > 0 ){
-		/*
-		 * set up timeout and then do operation
-		 */
-		if( Set_timeout( timeout, socket ) ){
-			i = read( *socket, str, len );
-		}
-		Clear_timeout();
-		err = errno;
-		DBGREM9F(DNW6)("Link_read: len %d read %d", len, i );
-		if( i <= 0 || Alarm_timed_out ) break;
-		len -= i;
-		str += i;
+	/*
+	 * set up timeout and then do operation
+	 */
+	i = Read_fd_len_timeout(timeout, *socket, str, len );
+	err = errno;
+	if( i > 0 ){
+		*count = i;
 	}
-	*count = *count - len;
-
-	if( (*count == 0) ){
-		if( Alarm_timed_out ){
-			DBGREM4F(DNW4)("Link_read: read %d from '%s' timed out", len, host, i );
-		} else if( i < 0 ) {
-			DBGREM4F(DNW4)("Link_read: read %d from '%s' failed - %s",
-				len, host, i, Errormsg(err) );
+	DEBUGFC(DNW3){
+		char shortpart[32];
+		int j;
+		shortpart[0] = 0;
+		if( i > 0 ){
+			j = sizeof(shortpart) -1;
+			if( i < j ) j = i;
+			strncpy( shortpart, str, j ); 
+			shortpart[j] = 0;
 		}
+		logDebug( "Link_read: wanted %d, got %d, start='%s'",
+			len, i, shortpart );
+	}
+
+	if( Alarm_timed_out ){
+		DEBUGF(DNW3)("Link_read: read %d from '%s' timed out",
+			len, host, i );
+		status = LINK_TRANSFER_FAIL;
+	} else if( i < 0 ) {
+		DEBUGF(DNW3)("Link_read: read %d from '%s' failed, returned %d - %s",
+			len, host, i, Errormsg(err) );
 		status = LINK_TRANSFER_FAIL;
 	}
-	
+
 	if( status ){
 		Link_close( socket );
 	}
 
-	DBGREM4F(DNW4)("Link_read: status %d", status );
 	errno = err;
 	return( status );
 }
@@ -1052,16 +984,16 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	  int fd, int *count, int *ack )
 {
 	char str[LARGEBUFFER];		/* input buffer pointer */
-	static int i, l, len, cnt;			/* number to read or write */
-	static int status;				/* status of operation */
+	int i, l, len, cnt;			/* number to read or write */
+	int status;				/* status of operation */
 	int err;					/* error */
 
 	len = i = status = cnt = 0;	/* shut up GCC */
-	DBGREM4F(DNW4) ("Link_file_read: reading %d from '%s' on %d",
+	DEBUGF(DNW4) ("Link_file_read: reading %d from '%s' on %d",
 		*count, host, *socket );
 	/* check for valid socket */
 	if(*socket < 0) {
-		DBGREM4F(DNW4)( "Link_file_read: bad socket" );
+		DEBUGF(DNW2)( "Link_file_read: bad socket" );
 		return (LINK_OPEN_FAIL);
 	}
 	/*
@@ -1071,33 +1003,26 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	/* do the read */
 	len = *count;
 	while( status == 0 && len > 0 ){
+		DEBUGF(DNW3)("Link_file_read: doing data read" );
 		l = sizeof(str);
 		if( l > len ) l = len;
-		if( Set_timeout( readtimeout, socket ) ){
-			i = read( *socket, str, l );
-		}
-		Clear_timeout();
+		i = Read_fd_len_timeout( readtimeout, *socket, str, l );
 		err = errno;
 		if( Alarm_timed_out ){
-			DBGREM4F(DNW4)( "Link_file_read: read from '%s' timed out", host);
+			DEBUGF(DNW4)( "Link_file_read: read from '%s' timed out", host);
 			status = LINK_TRANSFER_FAIL;
 		} else if( i > 0 ){
-			DBGREM9F(DNW6)("Link_file_read: len %d, readlen %d, read %d", len, l, i );
+			DEBUGF(DNW4)("Link_file_read: len %d, readlen %d, read %d", len, l, i );
 			len -= i;
-
-			if( Set_timeout( writetimeout, 0 ) ){
-				cnt = Write_fd_len( fd, str, i );
-			}
-			Clear_timeout();
+			cnt = Write_fd_len_timeout(writetimeout, fd, str, i );
 			err = errno;
-
 			if( Alarm_timed_out || cnt < 0 ){
-				DBGREM4F(DNW4)( "Link_file_read: write %d to fd %d failed - %s",
+				DEBUGF(DNW4)( "Link_file_read: write %d to fd %d failed - %s",
 					i, fd, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL; 
 			}
 		} else {
-			DBGREM4F(DNW4)("Link_file_read: read from '%s' failed - %s",
+			DEBUGF(DNW4)("Link_file_read: read from '%s' failed - %s",
 				host, Errormsg(err) );
 			status = LINK_TRANSFER_FAIL;
 		}
@@ -1105,28 +1030,23 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	*count -= len;
 
 	if( status == 0 && ack ){
-		DBGREM9F(DNW6)("Link_file_read: doing ACK read" );
-		if( Set_timeout( readtimeout, socket ) ){
-			i = read( *socket, str, 1 );
-		}
-		Clear_timeout();
+		DEBUGF(DNW3)("Link_file_read: doing ACK read" );
+		i = Read_fd_len_timeout(readtimeout, *socket, str, 1 );
 		err = errno;
 
 		if( Alarm_timed_out ){
-			DBGREM4F(DNW4)( "Link_file_read: ack read from '%s' timed out", host);
+			DEBUGF(DNW4)( "Link_file_read: ack read from '%s' timed out", host);
 			status = LINK_TRANSFER_FAIL;
 		} else if( i > 0 ){
-			DBGREM9F(DNW6)("Link_file_read: ACK read count %d value %d", i, *str );
+			DEBUGF(DNW4)("Link_file_read: ACK read count %d value %d", i, *str );
 			*ack = *str;
 			if( *ack ){
-				DBGREM2F(DNW2)( "Link_file_read: nonzero ack '%d'", *ack );
+				DEBUGF(DNW2)( "Link_file_read: nonzero ack '%d'", *ack );
 				status = LINK_ACK_FAIL;
 			}
 		} else {
-			DBGREM4F(DNW4)("Link_file_read: ack read from '%s' failed - %s",
+			DEBUGF(DNW2)("Link_file_read: ack read from '%s' failed - %s",
 				len, host, i, Errormsg(err) );
-			status = LINK_TRANSFER_FAIL;
-			DBGREM2F(DNW2)( "Link_file_read: reading ack failed" );
 			status = LINK_TRANSFER_FAIL;
 		}
 		if( status == 0 ){
@@ -1137,8 +1057,10 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 			memset( &delay,0,sizeof(delay));
 			FD_ZERO( &readfds );
 			FD_SET( *socket, &readfds );
-			i = select( *socket+1,(fd_set *)&readfds,
-				(fd_set *)0, (fd_set *)0, &delay );
+			i = select( *socket+1,
+				FD_SET_FIX((fd_set *))&readfds,
+				FD_SET_FIX((fd_set *))0,
+				FD_SET_FIX((fd_set *))0, &delay );
 			if( i != 0 ){
 				log( LOG_ERR,
 				"Link_file_read: PROTOCOL ERROR - pending input from '%s' after transfer",
@@ -1150,7 +1072,7 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 		Link_close( socket );
 	}
 
-	DBGREM4F(DNW4)("Link_file_read: status %d", status );
+	DEBUGF(DNW4)("Link_file_read: status %d", status );
 	return( status );
 }
 

@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -13,9 +13,9 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpc_getparms.c,v 3.0 1996/05/19 04:05:37 papowell Exp $";
+"$Id: lpc_getparms.c,v 3.1 1996/12/28 21:40:00 papowell Exp $";
 
-#include "lpc.h"
+#include "lp.h"
 #include "patchlevel.h"
 
 /***************************************************************************
@@ -25,7 +25,7 @@ static char *const _id =
  ***************************************************************************/
 
 extern char *next_opt;
-void usage();
+void usage(void);
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -33,6 +33,8 @@ void Get_parms(int argc, char *argv[] )
 
 	while ((option = Getopt (argc, argv, LPC_optstr )) != EOF) {
 		switch (option) {
+		case 'A': Use_auth_flag = 1; /* use authentication */
+			break;
 		case 'D': /* debug has already been done */
 			break;
 		case 'P': if( Optarg == 0 ) usage();
@@ -49,24 +51,25 @@ void Get_parms(int argc, char *argv[] )
 }
 
 char *msg[] = {
-	"usage: %s [-Ddebuglevel] [-V] [-Pprinter] [commands]",
+	"usage: %s [-A] [-Ddebuglevel] [-Pprinter] [-V] [command]",
 	" with no commands, reads from stdin"
+	"  -A           - use authentication",
 	"  -Pprinter    - specify printer",
 	"  -V           - increase information verbosity",
 	"  -Ddebuglevel - debug level",
 	" commands:",
 	" abort   (printer[@host] | all)  - stop server",
-	" autohold (printer[@host] | all)  - autohold on",
 	" disable (printer[@host] | all)  - disable queueing",
 	" debug   (printer[@host] | all) debugparms - set debug level for printer",
 	" enable  (printer[@host] | all)  - enable  queueing",
 	" hold    (printer[@host] | all) (name[@host] | job | all)* - hold job",
+	" holdall (printer[@host] | all)  - hold all jobs on",
 	" kill    (printer[@host] | all)  - stop and restart server",
 	" lpd [HUP]  - get LPD PID, signal it to reread printcap and configuration",
 	" lpq (printer[@host] | all) (name[@host] | job | all)*     - invoke LPQ",
 	" lprm (printer[@host] | all) (name[@host]|host|job| all)*  - invoke LPRM",
 	" move printer (user|jobid)* target - move jobs to new queue",
-	" noautohold (printer[@host] | all)  - autohold off",
+	" noholdall (printer[@host] | all)  - hold all jobs off",
 	" printcap (printer[@host] | all) - report printcap values",
 	" quit                            - exit LPC",
 	" redirect (printer[@host] | all) (printer@host | off )*    - redirect jobs",
@@ -79,13 +82,13 @@ char *msg[] = {
 	0
 };
 
-void usage()
+void usage(void)
 {
 	Printlist(msg, stderr);
 	exit(1);
 }
 
-void use_msg()
+void use_msg(void)
 {
 	Printlist(msg, stdout);
 	fflush(stdout);

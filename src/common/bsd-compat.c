@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: bsd-compat.c,v 3.1 1996/06/30 17:12:44 papowell Exp $";
+"$Id: bsd-compat.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
 
 /*******************************************************************
  * Some stuff for Solaris and other SVR4 impls; emulate BSD sm'tics.
@@ -23,6 +23,8 @@ static char *const _id =
  ******************************************************************/
 
 #include "lp.h"
+#include "bsd-compat.h"
+/**** ENDINCLUDE ****/
 
 /**************************************************************
  * 
@@ -41,6 +43,14 @@ static char *const _id =
  * get declared. :(
  */
 
+/* plp_signal will set flags so that signal handlers will continue
+ * note that in Solaris,  you MUST reinstall the
+ * signal hanlders in the signal handler!  The default action is
+ * to try to restart the system call - note that the code should
+ * be written so that you check for error returns, and continue
+ * so this is merely a convenience.
+ */
+
 plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
 {
 	struct sigaction act, oact;
@@ -50,13 +60,37 @@ plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
 	act.sa_flags = 0;
 	if (signo == SIGALRM) {
 #ifdef SA_INTERRUPT
-		act.sa_flags |= SA_INTERRUPT;           /* SunOS */
+		act.sa_flags |= SA_INTERRUPT            /* SunOS */
 #endif
+		;
 	} else {
 #ifdef SA_RESTART
-		act.sa_flags |= SA_RESTART;             /* SVR4, 4.3+BSD */
+		act.sa_flags |= SA_RESTART             /* SVR4, 4.3+BSD */
 #endif
+		;
 	}
+	if (sigaction (signo, &act, &oact) < 0) {
+		return (SIG_ERR);
+	}
+	return (plp_sigfunc_t) oact.sa_handler;
+}
+
+/* plp_signal_break is similar to plp_signal,  but will cause
+ * TERMINATION of a system call if possible.  This allows
+ * you to force a signal to cause termination of a system
+ * wait or other action.
+ */
+
+plp_sigfunc_t plp_signal_break (int signo, plp_sigfunc_t func)
+{
+	struct sigaction act, oact;
+
+	act.sa_handler = func;
+	(void) sigemptyset (&act.sa_mask);
+	act.sa_flags = 0;
+#ifdef SA_INTERRUPT
+	act.sa_flags |= SA_INTERRUPT;            /* SunOS */
+#endif
 	if (sigaction (signo, &act, &oact) < 0) {
 		return (SIG_ERR);
 	}
@@ -70,45 +104,69 @@ plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
 	/* sigaction is not supported. Just set the signals. */
 	return (plp_sigfunc_t)signal (signo, func); 
 }
+
+plp_sigfunc_t plp_signal_break (int signo, plp_sigfunc_t func)
+{
+	/* sigaction is not supported. Just set the signals. */
+	return (plp_sigfunc_t)signal (signo, func); 
+}
 #endif
 
 /**************************************************************/
 
 #ifdef HAVE_SIGPROCMASK
-static sigset_t oblock;
 
 void 
-plp_block_signals () {
+plp_block_all_signals ( plp_block_mask *oblock ) {
 	sigset_t block;
 
-	(void) sigemptyset (&block);
-	(void) sigaddset (&block, SIGCHLD);
-	(void) sigaddset (&block, SIGHUP);
-	(void) sigaddset (&block, SIGINT);
-	(void) sigaddset (&block, SIGQUIT);
-	(void) sigaddset (&block, SIGTERM);
-	if (sigprocmask (SIG_BLOCK, &block, &oblock) < 0)
-		logerr_die( LOG_ERR, "plp_block_signals: sigprocmask failed");
+	(void) sigfillset (&block); /* block all signals */
+	if (sigprocmask (SIG_BLOCK, &block, oblock) < 0)
+		logerr_die( LOG_ERR, "plp_block_all_signals: sigprocmask failed");
 }
 
 void 
-plp_unblock_signals () {
-	(void) sigprocmask (SIG_SETMASK, &oblock, (sigset_t *) 0);
-}
-
-#else /* HAVE_SIGPROCMASK */
-
-static int omask;
-
-void 
-plp_block_signals () {
-	omask = sigblock (sigmask (SIGCHLD) | sigmask (SIGHUP)
-	  | sigmask (SIGINT) | sigmask (SIGQUIT) | sigmask (SIGTERM));
+plp_unblock_all_signals ( plp_block_mask *oblock ) {
+	(void) sigprocmask (SIG_SETMASK, oblock, (sigset_t *) 0);
 }
 
 void 
-plp_unblock_signals () {
-	(void) sigsetmask (omask);
+plp_block_one_signal( int sig, plp_block_mask *oblock ) {
+	sigset_t block;
+
+	(void) sigemptyset (&block); /* clear out signals */
+	(void) sigaddset (&block, sig ); /* clear out signals */
+	if (sigprocmask (SIG_BLOCK, &block, oblock ) < 0)
+		logerr_die( LOG_ERR, "plp_block_one_signal: sigprocmask failed");
+}
+
+void
+plp_sigpause( void ) {
+	sigset_t block;
+	(void) sigemptyset (&block); /* clear out signals */
+	(void) sigsuspend( &block );
+}
+#else
+/* ! HAVE_SIGPROCMASK */
+
+void 
+plp_block_all_signals ( plp_block_mask *omask ) {
+	*omask = sigblock( ~0 ); /* block all signals */
+}
+
+void 
+plp_unblock_all_signals ( plp_block_mask *omask ) {
+	(void) sigsetmask (*omask);
+}
+
+void 
+plp_block_one_signal( int sig, plp_block_mask *omask ) {
+	*omask = sigblock( sigmask( sig ) );
+}
+
+void
+plp_sigpause( void ) {
+	(void)sigpause( 0 );
 }
 #endif
 
@@ -186,199 +244,50 @@ int safestrcmp( const char *s1, const char *s2 )
 	return( (strcmp)(s1, s2) );
 }
 
-#ifndef HAVE_STRTOUL
-/* 
- *      Source code for the "strtoul" library procedure.
- * taken from TCL 7.1 by John Ousterhout (ouster@cs.berkeley.edu).
- *
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
- *
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
- * 
- * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
- * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
- * OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
- * CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
- * ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
- * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
- */
-
-#include <ctype.h>
-
-/*
- * The table below is used to convert from ASCII digits to a
- * numerical equivalent.  It maps from '0' through 'z' to integers
- * (100 for non-digit characters).
- */
-
-static char cvtIn[] = {
-	0, 1, 2, 3, 4, 5, 6, 7, 8, 9,               /* '0' - '9' */
-	100, 100, 100, 100, 100, 100, 100,          /* punctuation */
-	10, 11, 12, 13, 14, 15, 16, 17, 18, 19,     /* 'A' - 'Z' */
-	20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-	30, 31, 32, 33, 34, 35,
-	100, 100, 100, 100, 100, 100,               /* punctuation */
-	10, 11, 12, 13, 14, 15, 16, 17, 18, 19,     /* 'a' - 'z' */
-	20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-	30, 31, 32, 33, 34, 35};
-/*
- *----------------------------------------------------------------------
- *
- * strtoul --
- *
- *      Convert an ASCII string into an integer.
- *
- * Results:
- *      The return value is the integer equivalent of string.  If endPtr
- *      is non-NULL, then *endPtr is filled in with the character
- *      after the last one that was part of the integer.  If string
- *      doesn't contain a valid integer value, then zero is returned
- *      and *endPtr is set to string.
- *
- * Side effects:
- *      None.
- *
- *----------------------------------------------------------------------
- */
-
-unsigned long int
-strtoul(const char *string, const char **endPtr, int base)
-	/* char *string;             * String of ASCII digits, possibly
-			                     * preceded by white space.  For bases
-			                     * greater than 10, either lower- or
-			                     * upper-case digits may be used.
-			                     */
-	/* char **endPtr;            * Where to store address of terminating
-			                     * character, or NULL. */
-	/* int base;                 * Base for conversion.  Must be less
-			                     * than 37.  If 0, then the base is chosen
-			                     * from the leading characters of string:
-			                     * "0x" means hex, "0" means octal, anything
-			                     * else means decimal.
-			                     */
+/***************************************************************************
+ * plp_usleep() with select - simple minded way to avoid problems
+ ***************************************************************************/
+int plp_usleep( int i )
 {
-	register const char *p;
-	register unsigned long int result = 0;
-	register unsigned digit;
-	int anyDigits = 0;
-
-	/*
-	 * Skip any leading blanks.
-	 */
-
-	p = string;
-	while (isspace(*p)) {
-		p += 1;
+	struct timeval t;
+	DEBUG3("plp_sleep: starting sleep %d", i );
+	if( i > 0 ){
+		memset( &t, 0, sizeof(t) );
+		t.tv_usec = i;
+		i = select( 0,
+			FD_SET_FIX((fd_set *))(0),
+			FD_SET_FIX((fd_set *))(0),
+			FD_SET_FIX((fd_set *))(0),
+			&t );
+		DEBUG3("plp_sleep: select done, status %d", i );
 	}
-
-	/*
-	 * If no base was provided, pick one from the leading characters
-	 * of the string.
-	 */
-	
-	if (base == 0)
-	{
-		if (*p == '0') {
-			p += 1;
-			if (*p == 'x') {
-			    p += 1;
-			    base = 16;
-			} else {
-
-			    /*
-			     * Must set anyDigits here, otherwise "0" produces a
-			     * "no digits" error.
-			     */
-
-			    anyDigits = 1;
-			    base = 8;
-			}
-		}
-		else base = 10;
-	} else if (base == 16) {
-
-		/*
-		 * Skip a leading "0x" from hex numbers.
-		 */
-
-		if ((p[0] == '0') && (p[1] == 'x')) {
-			p += 2;
-		}
-	}
-
-	/*
-	 * Sorry this code is so messy, but speed seems important.  Do
-	 * different things for base 8, 10, 16, and other.
-	 */
-
-	if (base == 8) {
-		for ( ; ; p += 1) {
-			digit = *p - '0';
-			if (digit > 7) {
-			    break;
-			}
-			result = (result << 3) + digit;
-			anyDigits = 1;
-		}
-	} else if (base == 10) {
-		for ( ; ; p += 1) {
-			digit = *p - '0';
-			if (digit > 9) {
-			    break;
-			}
-			result = (10*result) + digit;
-			anyDigits = 1;
-		}
-	} else if (base == 16) {
-		for ( ; ; p += 1) {
-			digit = *p - '0';
-			if (digit > ('z' - '0')) {
-			    break;
-			}
-			digit = cvtIn[digit];
-			if (digit > 15) {
-			    break;
-			}
-			result = (result << 4) + digit;
-			anyDigits = 1;
-		}
-	} else {
-		for ( ; ; p += 1) {
-			digit = *p - '0';
-			if (digit > ('z' - '0')) {
-			    break;
-			}
-			digit = cvtIn[digit];
-			if (digit >= base) {
-			    break;
-			}
-			result = result*base + digit;
-			anyDigits = 1;
-		}
-	}
-
-	/*
-	 * See if there were any digits at all.
-	 */
-
-	if (!anyDigits) {
-		p = string;
-	}
-
-	if (endPtr != 0) {
-		*endPtr = p;
-	}
-
-	return result;
+	return( i );
 }
 
-#endif /* !HAVE_STRTOUL */
+
+/***************************************************************************
+ * int get_max_processes()
+ *  get the maximum number of processes allowed
+ ***************************************************************************/
+
+int Get_max_servers( void )
+{
+#if defined(CHILD_MAX)
+	int n = CHILD_MAX;	/* We need some sort of limit here */
+#else
+	int n = 20;	/* We need some sort of limit here */
+#endif
+
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NPROC)
+	struct rlimit pcount;
+	if( getrlimit(RLIMIT_NPROC, &pcount) == -1 ){
+		fatal( LOG_ERR, "get_max_processes: getrlimit failed" );
+	}
+	n = pcount.rlim_cur;
+#endif
+	n = n/2;
+	if( Max_servers_active && Max_servers_active < n ){
+		n = Max_servers_active;
+	}
+	return( n );
+}

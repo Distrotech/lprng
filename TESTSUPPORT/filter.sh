@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/filter.sh
 # PURPOSE: test filter for LPR software
-# $Id: filter.sh,v 3.0 1996/05/19 04:06:42 papowell Exp $
+# $Id: filter.sh,v 3.1 1996/12/28 21:40:46 papowell Exp $
 ########################################################################## 
 #	Filter Dummy Test
 # 

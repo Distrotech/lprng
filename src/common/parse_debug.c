@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -12,9 +12,12 @@
  **************************************************************************/
 
 #include "lp.h"
+#include "killchild.h"
+#include "errorcodes.h"
+/**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: parse_debug.c,v 3.0 1996/05/19 04:06:05 papowell Exp $";
+"$Id: parse_debug.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
 
 /*************************************************************
  * void Get_debug_parm(int argc, char *argv[], struct keywords *list)
@@ -26,27 +29,83 @@ static char *const _id =
  *     option expected.
  *************************************************************/
 
+struct keywords debug_vars[]		/* debugging variables */
+ = {
+#if !defined(NODEBUG)
+    { "debug",INTEGER_K,(void *)&Debug },
+    { "test",INTEGER_K,(void *)&DbgTest },
+    { "job",INTEGER_K,(void *)&DbgJob },
+/*    { "print",FLAG_K,(void *)&DbgFlag,DPRINTMASK, DPRINTMASK }, */
+    { "print",FLAG_K,(void *)&DbgFlag,DBPRINT3, DPRINTMASK },
+    { "print+1",FLAG_K,(void *)&DbgFlag,DBPRINT1, DPRINTMASK },
+    { "print+2",FLAG_K,(void *)&DbgFlag,DBPRINT2, DPRINTMASK },
+    { "print+3",FLAG_K,(void *)&DbgFlag,DBPRINT3, DPRINTMASK },
+    { "print+4",FLAG_K,(void *)&DbgFlag,DBPRINT4, DPRINTMASK },
+/*    { "network",FLAG_K,(void *)&DbgFlag,DNWMASK, DNWMASK }, */
+    { "network",FLAG_K,(void *)&DbgFlag,DBNW3, DNWMASK },
+    { "network+1",FLAG_K,(void *)&DbgFlag,DBNW1, DNWMASK },
+    { "network+2",FLAG_K,(void *)&DbgFlag,DBNW2, DNWMASK },
+    { "network+3",FLAG_K,(void *)&DbgFlag,DBNW3, DNWMASK },
+    { "network+4",FLAG_K,(void *)&DbgFlag,DBNW4, DNWMASK },
+/*    { "database",FLAG_K,(void *)&DbgFlag,DDBMASK, DDBMASK }, */
+    { "database",FLAG_K,(void *)&DbgFlag,DBB3, DDBMASK },
+    { "database+1",FLAG_K,(void *)&DbgFlag,DBB1, DDBMASK },
+    { "database+2",FLAG_K,(void *)&DbgFlag,DBB2, DDBMASK },
+    { "database+3",FLAG_K,(void *)&DbgFlag,DBB3, DDBMASK },
+    { "database+4",FLAG_K,(void *)&DbgFlag,DBB4, DDBMASK },
+/*    { "receive",FLAG_K,(void *)&DbgFlag,DRECVMASK, DRECVMASK }, */
+    { "receive",FLAG_K,(void *)&DbgFlag,DBRECV3, DRECVMASK },
+    { "receive+1",FLAG_K,(void *)&DbgFlag,DBRECV1, DRECVMASK },
+    { "receive+2",FLAG_K,(void *)&DbgFlag,DBRECV2, DRECVMASK },
+    { "receive+3",FLAG_K,(void *)&DbgFlag,DBRECV3, DRECVMASK },
+    { "receive+4",FLAG_K,(void *)&DbgFlag,DBRECV4, DRECVMASK },
+/*    { "auth",FLAG_K,(void *)&DbgFlag,DAUTHMASK, DAUTHMASK }, */
+    { "auth",FLAG_K,(void *)&DbgFlag,DBAUTH3, DAUTHMASK },
+    { "auth+1",FLAG_K,(void *)&DbgFlag,DBAUTH1, DAUTHMASK },
+    { "auth+2",FLAG_K,(void *)&DbgFlag,DBAUTH2, DAUTHMASK },
+    { "auth+3",FLAG_K,(void *)&DbgFlag,DBAUTH3, DAUTHMASK },
+    { "auth+4",FLAG_K,(void *)&DbgFlag,DBAUTH4, DAUTHMASK },
+#endif
+    { (char *)0 }
+};
+
 void Parse_debug (char *dbgstr, struct keywords *list, int interactive );
-extern int Debug;	/* debug level */
 
 void Get_debug_parm(int argc, char *argv[], char *optstr,
 	struct keywords *list)
 {
-	int option;
-	while ((option = Getopt (argc, argv, optstr )) != EOF) {
+#if !defined(NODEBUG)
+	int option, flag;
+	flag = Opterr;
+	Opterr = 0;
+	
+	while ((option = Getopt (argc,argv,optstr?optstr:"D:"))!= EOF) {
 		switch (option) {
 		case 'D':
 		    if( Optarg ){
 				Parse_debug (Optarg, list, 1 );
 			} else {
-				exit( 1 );
+				if( Interactive ){
+					fprintf(stderr, "-D missing option");
+				}
+				Errorcode = JABORT;
+				cleanup(0);
 			}
 		    break;
 		default: break;
 		}
 	}
+	Opterr = flag;
 	Getopt( 0, (void *)0, (void *) 0 );
-	if( Debug ) dump_parms( "Get_debug_parms", list );
+	if( DEBUGL0 ){
+		struct keywords *keywords;
+		for( keywords = list; keywords->keyword; ++keywords ){
+			if( strchr( keywords->keyword, '+' ) ) continue;
+			logDebug( "Get_debug_parm: %s = 0x%x",
+				keywords->keyword, *((int **)keywords->variable) );
+		}
+	}
+#endif
 }
 
 /*
@@ -63,12 +122,14 @@ Input string:  value,key=value,flag,flag@,...
 
 void Parse_debug (char *dbgstr, struct keywords *list, int interactive )
 {
-	char *s, *buf, *key, *value, *notflag, *convert, *end;
+#if !defined(NODEBUG)
+	char *s, *key, *value, *notflag, *convert, *end;
 	int i, n, found;
+	static char buf[LINEBUFFER];
 
 	/* duplicate the string */
 
-	buf = safestrdup( dbgstr );
+	safestrncpy( buf, dbgstr );
 
 	/* crack the string at ',' */
 
@@ -130,15 +191,21 @@ void Parse_debug (char *dbgstr, struct keywords *list, int interactive )
 			}
 		}
 		if (found == 0 && interactive ) {
+			int lastflag = 0;
+			int nooutput = 0;
 		    fprintf (stderr,
-	"debug usage: -D [ num | key=num | key=str | key | key@ ]*\n");
+	"debug usage: -D [ num | key=num | key=str | flag | flag@ | flag+N ]*\n");
 		    fprintf (stderr, "  keys recognized:");
 		    for (i = 0; list[i].keyword; i++) {
-				if( i ){
-					fprintf( stderr, ", " );
-					if( !(i % 4) ) fprintf( stderr, "\n   " );
+				if( nooutput == 0 ){
+					if( i ){
+						fprintf( stderr, ", " );
+						if( !(i % 4) ) fprintf( stderr, "\n   " );
+					} else {
+						fprintf( stderr, " " );
+					}
 				} else {
-					fprintf( stderr, " " );
+					nooutput = 0;
 				}
 				switch( list[i].type ){
 				case INTEGER_K:
@@ -148,14 +215,21 @@ void Parse_debug (char *dbgstr, struct keywords *list, int interactive )
 					fprintf (stderr, "%s=str", list[i].keyword);
 					break;
 				case FLAG_K:
-					fprintf (stderr, "%s", list[i].keyword );
+					if( list[i].maxval == 0 || lastflag != list[i].flag ){
+						fprintf (stderr, "%s[+N,@]", list[i].keyword );
+						lastflag = list[i].maxval;
+					} else {
+						nooutput = 1;
+					}
 					break;
 				default:
 					break;
 				}
 			}
 		    fprintf (stderr, "\n");
-		    exit (1);
+			Errorcode = JABORT;
+		    cleanup(0);
 		}
 	}
+#endif
 }

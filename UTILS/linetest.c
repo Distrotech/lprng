@@ -15,6 +15,18 @@
  * linetest [width]
  * Sat Jun 18 09:47:06 CDT 1988 Patrick Powell
  * $Log: linetest.c,v $
+ * Revision 3.1  1996/12/28 21:40:52  papowell
+ * Update
+ *
+ * Revision 3.1  1996/12/28 21:32:47  papowell
+ * Update
+ *
+ * Revision 1.1  1996/12/28 21:07:15  papowell
+ * Update
+ *
+ * Revision 4.1  1996/11/05  06:38:20  papowell
+ * Update
+ *
  * Revision 3.0  1996/05/19  04:06:49  papowell
  * Update
  *
@@ -77,7 +89,7 @@
 #include <stdio.h>
 #include <ctype.h>
 static char id_str1[] =
-	"$Id: linetest.c,v 3.0 1996/05/19 04:06:49 papowell Exp $ PLP Copyright 1988 Patrick Powell";
+	"$Id: linetest.c,v 3.1 1996/12/28 21:40:52 papowell Exp $ PLP Copyright 1988 Patrick Powell";
 char *Name;
 
 main(argc, argv)

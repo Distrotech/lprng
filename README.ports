@@ -2,12 +2,26 @@ Running configure will set up the various
 compilation options.  The following systems have been tested,
 and worked as of release LPRng-2.0.6.
 
+Updated Fri Jan 17 13:42:47 PST 1997
 Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
-                  Solaris/ SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4, 2.5
+                  Solaris/ SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4, 2.5, 2.5.1
 BSDI: BSDI 2.0.0, 2.0.1, 2.1.0
 HPUX: 8.2, 9.4, 10.0
-SGI:  IRIX5
-Linux:  Slackware 1.2.13, Dec. 1, 1994
+SGI:  IRIX5, IRIX6
+Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997)
 DEC:     ULTRIX, DEC Alpha
 AIX:     5.1
-FreeBSD: 2.0.5
+FreeBSD: 2.0.5, 2.1.5
+
+
+Note:
+  Some systems do not have prototypes for all system functions.  See the
+  src/include/portable.h file for help - you can enable a set of default
+  prototypes.
+
+Note: some systems appear to have conflicts in definitions  in different
+files.  This is a SYSTEM fault, not LPRng's.  Effort has been made to
+detect these systems and to not include conflicting files.  To make life
+worse,  these conflicts may appear in one version and get fixed in the
+next.  See the #if statements in various files, i.e. - stty.c is a good
+example of insanity.

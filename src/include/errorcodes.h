@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: errorcode.h
  * PURPOSE: filter error return codes
- * "$Id: errorcodes.h,v 3.0 1996/05/19 04:06:18 papowell Exp $"
+ * "$Id: errorcodes.h,v 3.2 1997/01/27 20:04:24 papowell Exp $"
  **************************************************************************/
 
 /*
@@ -24,5 +24,7 @@
 #define JABORT   33    /* aborted - do not try again, but keep job */
 #define JREMOVE  34    /* failed - remove job */
 #define JACTIVE  35    /* active server - try later */
-#define JIGNORE  36    /* ignore this job */
+#define JIGNORE  36    /* ignore this job - not used! */
 #define JHOLD    37    /* hold this job */
+#define JNOSPOOL 38    /* no spooling to this queue */
+#define JNOPRINT 39    /* no printing from this queue  */

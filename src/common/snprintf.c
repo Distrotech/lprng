@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -11,10 +11,26 @@
  **************************************************************************/
 
 #include "lp.h"
+/**** ENDINCLUDE ****/
 
-static char *const _id = "$Id: snprintf.c,v 3.0 1996/05/19 04:06:13 papowell Exp $";
-static void dopr();
+static char *const _id = "$Id: snprintf.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+
+/*
+ * dopr(): poor man's version of doprintf
+ */
+
+static char * plp_Errormsg ( int err );
+static void dopr( char *buffer, const char *format, va_list args );
+static void fmtstr(  char *value, int ljust, int len, int zpad, int precision );
+static void fmtnum(  long value, int base, int dosign,
+	int ljust, int len, int zpad, int precision );
+static void fmtdouble( int fmt, double value,
+	int ljust, int len, int zpad, int precision );
+static void dostr( char * );
+static char *output;
+static void dopr_outch( int c );
 static char *end;
+int visible_control = 1;
 
 /**************************************************************
  * Original:
@@ -30,11 +46,7 @@ static char *end;
  * causing nast effects.
  **************************************************************/
 
-int vplp_snprintf(str, count, fmt, args)
-	char *str;
-	size_t count;
-	const char *fmt;
-	va_list args;
+int vplp_snprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	str[0] = 0;
 	end = str+count-1;
@@ -68,21 +80,7 @@ int plp_snprintf (va_alist) va_dcl
 	return( strlen( str ) );
 }
 
-/*
- * dopr(): poor man's version of doprintf
- */
-
-static void fmtstr(  char *value, int ljust, int len, int zpad );
-static void fmtnum(  long value, int base, int dosign,
-	int ljust, int len, int zpad );
-static void dostr( char * );
-static char *output;
-static void dopr_outch( int c );
-
-static void dopr( buffer, format, args )
-	char *buffer;
-	char *format;
-	va_list args;
+static void dopr( char *buffer, const char *format, va_list args )
 {
 	int ch;
 	long value;
@@ -91,12 +89,17 @@ static void dopr( buffer, format, args )
 	int ljust;
 	int len;
 	int zpad;
+	int precision;
+	int set_precision;
+	double dval;
+	int err = errno;
 
 	output = buffer;
 	while( (ch = *format++) ){
 		switch( ch ){
 		case '%':
 			ljust = len = zpad = 0;
+			precision = -1; set_precision = 0;
 		nextch: 
 			ch = *format++;
 			switch( ch ){
@@ -104,57 +107,77 @@ static void dopr( buffer, format, args )
 				dostr( "**end of format**" );
 				return;
 			case '-': ljust = 1; goto nextch;
+			case '.': set_precision = 1; precision = 0; goto nextch;
+			case '*': len = va_arg( args, int ); goto nextch;
 			case '0': /* set zero padding if len not set */
-				if(len==0) zpad = '0';
+				if(len==0 && set_precision == 0 ) zpad = '0';
 			case '1': case '2': case '3':
 			case '4': case '5': case '6':
 			case '7': case '8': case '9':
-				len = len*10 + ch - '0';
+				if( set_precision ){
+					precision = precision*10 + ch - '0';
+				} else {
+					len = len*10 + ch - '0';
+				}
 				goto nextch;
 			case 'l': longflag = 1; goto nextch;
 			case 'u': case 'U':
-				/*fmtnum(value,base,dosign,ljust,len,zpad) */
+				/*fmtnum(value,base,dosign,ljust,len, zpad, precision) */
 				if( longflag ){
 					value = va_arg( args, long );
 				} else {
 					value = va_arg( args, int );
 				}
-				fmtnum( value, 10,0, ljust, len, zpad ); break;
+				fmtnum( value, 10,0, ljust, len, zpad, precision ); break;
 			case 'o': case 'O':
-				/*fmtnum(value,base,dosign,ljust,len,zpad) */
+				/*fmtnum(value,base,dosign,ljust,len, zpad, precision) */
 				if( longflag ){
 					value = va_arg( args, long );
 				} else {
 					value = va_arg( args, int );
 				}
-				fmtnum( value, 8,0, ljust, len, zpad ); break;
+				fmtnum( value, 8,0, ljust, len, zpad, precision ); break;
 			case 'd': case 'D':
 				if( longflag ){
 					value = va_arg( args, long );
 				} else {
 					value = va_arg( args, int );
 				}
-				fmtnum( value, 10,1, ljust, len, zpad ); break;
+				fmtnum( value, 10,1, ljust, len, zpad, precision ); break;
 			case 'x':
 				if( longflag ){
 					value = va_arg( args, long );
 				} else {
 					value = va_arg( args, int );
 				}
-				fmtnum( value, 16,0, ljust, len, zpad ); break;
+				fmtnum( value, 16,0, ljust, len, zpad, precision ); break;
 			case 'X':
 				if( longflag ){
 					value = va_arg( args, long );
 				} else {
 					value = va_arg( args, int );
 				}
-				fmtnum( value,-16,0, ljust, len, zpad ); break;
+				fmtnum( value,-16,0, ljust, len, zpad, precision ); break;
 			case 's':
 				strvalue = va_arg( args, char *);
-				fmtstr( strvalue,ljust,len,zpad ); break;
+				fmtstr( strvalue,ljust,len, zpad, precision );
+				break;
 			case 'c':
 				ch = va_arg( args, int );
-				dopr_outch( ch ); break;
+				{ char b[2];
+					int vsb = visible_control;
+					b[0] = ch;
+					b[1] = 0;
+					visible_control = 0;
+					fmtstr( b,ljust,len, zpad, precision );
+					visible_control = vsb;
+				}
+				break;
+			case 'f': case 'g':
+				dval = va_arg( args, double );
+				fmtdouble( ch, dval,ljust,len, zpad, precision ); break;
+			case 'm':
+				fmtstr( plp_Errormsg(err),ljust,len, zpad, precision ); break;
 			case '%': dopr_outch( ch ); continue;
 			default:
 				dostr(  "???????" );
@@ -169,17 +192,30 @@ static void dopr( buffer, format, args )
 	*output = 0;
 }
 
+/*
+ * Format '%[-]len[.precision]s'
+ * -   = left justify (ljust)
+ * len = minimum length
+ * precision = numbers of chars in string to use
+ */
 static void
-fmtstr(  value, ljust, len, zpad )
-	char *value;
-	int ljust, len, zpad;
+fmtstr(  char *value, int ljust, int len, int zpad, int precision )
 {
-	int padlen, strlen;	/* amount to pad */
+	int padlen, strlen, i, c;	/* amount to pad */
 
 	if( value == 0 ){
 		value = "<NULL>";
 	}
-	for( strlen = 0; value[strlen]; ++ strlen ); /* strlen */
+	if( precision > 0 ){
+		strlen = precision;
+	} else {
+		/* cheap strlen so you do not have library call */
+		for( strlen = 0; (c=value[strlen]); ++ strlen ){
+			if( visible_control && iscntrl( c ) && !isspace( c ) ){
+				++strlen;
+			}
+		}
+	}
 	padlen = len - strlen;
 	if( padlen < 0 ) padlen = 0;
 	if( ljust ) padlen = -padlen;
@@ -187,7 +223,14 @@ fmtstr(  value, ljust, len, zpad )
 		dopr_outch( ' ' );
 		--padlen;
 	}
-	dostr( value );
+	/* output characters */
+	for( i = 0; (c = value[i]); ++i ){
+		if( visible_control && iscntrl( c ) && !isspace( c ) ){
+			dopr_outch('^');
+			c = ('@' | (c & 0x1F));
+		}
+		dopr_outch(c);
+	}
 	while( padlen < 0 ) {
 		dopr_outch( ' ' );
 		++padlen;
@@ -195,9 +238,8 @@ fmtstr(  value, ljust, len, zpad )
 }
 
 static void
-fmtnum(  value, base, dosign, ljust, len, zpad )
-	long value;
-	int base, dosign, ljust, len, zpad;
+fmtnum(  long value, int base, int dosign, int ljust,
+	int len, int zpad, int precision )
 {
 	int signvalue = 0;
 	unsigned long uvalue;
@@ -254,17 +296,120 @@ fmtnum(  value, base, dosign, ljust, len, zpad )
 	}
 }
 
-static void dostr( str )
-	char *str;
+static void
+fmtdouble( int fmt, double value, int ljust, int len, int zpad, int precision )
+{
+	char convert[128];
+	char fmtstr[128];
+	int l;
+
+	if( len == 0 ) len = 10;
+	if( len > sizeof(convert) - 10 ){
+		len = sizeof(convert) - 10;
+	}
+	if( precision > sizeof(convert) - 10 ){
+		precision = sizeof(convert) - 10;
+	}
+	if( precision > len ) precision = len;
+	strcpy( fmtstr, "%" );
+	if( ljust ) strcat(fmtstr, "-" );
+	if( len ){
+		sprintf( fmtstr+strlen(fmtstr), "%d", len );
+	}
+	if( precision > 0 ){
+		sprintf( fmtstr+strlen(fmtstr), ".%d", precision );
+	}
+	l = strlen( fmtstr );
+	fmtstr[l] = fmt;
+	fmtstr[l+1] = 0;
+	sprintf( convert, fmtstr, value );
+	dostr( convert );
+}
+
+static void dostr( char *str )
 {
 	while(*str) dopr_outch(*str++);
 }
 
-static void dopr_outch( c )
-	int c;
+static void dopr_outch( int c )
 {
 	if( end == 0 || output < end ){
 		*output++ = c;
 	}
 }
 
+
+/****************************************************************************
+ * static char *plp_errormsg( int err )
+ *  returns a printable form of the
+ *  errormessage corresponding to the valie of err.
+ *  This is the poor man's version of sperror(), not available on all systems
+ *  Patrick Powell Tue Apr 11 08:05:05 PDT 1995
+ ****************************************************************************/
+/****************************************************************************/
+#if !defined(HAVE_STRERROR)
+
+# if defined(HAVE_SYS_NERR)
+#  if !defined(HAVE_SYS_NERR_DEF)
+     extern int sys_nerr;
+#  endif
+#  define num_errors    (sys_nerr)
+# else
+#  define num_errors    (-1)            /* always use "errno=%d" */
+# endif
+
+# if defined(HAVE_SYS_ERRLIST)
+#  if !defined(HAVE_SYS_ERRLIST_DEF)
+     extern const char *const sys_errlist[];
+#  endif
+# else
+#  undef  num_errors
+#  define num_errors   (-1)            /* always use "errno=%d" */
+# endif
+
+#endif
+
+static char * plp_Errormsg ( int err )
+{
+    char *cp;
+
+#if defined(HAVE_STRERROR)
+	cp = (void *)strerror(err);
+#else
+# if defined(HAVE_SYS_ERRLIST)
+    if (err >= 0 && err < num_errors) {
+		cp = (void *)sys_errlist[err];
+    } else
+# endif
+	{
+		static char msgbuf[32];     /* holds "errno=%d". */
+		/* SAFE use of sprintf */
+		(void) sprintf (msgbuf, "errno=%d", err);
+		cp = msgbuf;
+    }
+#endif
+    return (cp);
+}
+
+#if defined(TEST)
+#include <stdio.h>
+int main( void )
+{
+	char buffer[128];
+	char *t;
+	char *test1 = "01234";
+	errno = 1;
+	plp_snprintf( buffer, sizeof(buffer), (t="errno '%m'")); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%s"), test1 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%12s"), test1 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%-12s"), test1 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%12.2s"), test1 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%-12.2s"), test1 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%g"), 1.25 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%g"), 1.2345 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%12g"), 1.25 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%12.2g"), 1.25 ); printf( "%s = '%s'\n", t, buffer );
+	plp_snprintf( buffer, sizeof(buffer), (t = "%0*d"), 6, 1 ); printf( "%s = '%s'\n", t, buffer );
+	return(0);
+}
+#endif

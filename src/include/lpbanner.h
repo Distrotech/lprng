@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: lpbanner.h
  * PURPOSE: lpbanner program declarations
- * "$Id: lpbanner.h,v 3.0 1996/05/19 04:06:24 papowell Exp $"
+ * "$Id: lpbanner.h,v 3.1 1996/12/28 21:40:30 papowell Exp $"
  **************************************************************************/
 
 #ifndef _LP_BANNER_
@@ -18,7 +18,7 @@
 #define EXTERN extern
 #endif
 
-extern int errorcode;
+EXTERN int errorcode;
 EXTERN char *name;		/* name of filter */
 EXTERN int debug, verbose, width, length, xwidth, ylength, literal, indent;
 EXTERN char *zopts, *class, *job, *login, *accntname, *host;

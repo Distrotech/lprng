@@ -8,9 +8,11 @@ DOC= Intro.txt Intro.ps
 all: $(DOC)
 
 Intro.ps: Intro.nroff 
-	typeset -p -Tps -O$@ $^
+	groff -p -Tps >$@ Intro.nroff
+	#typeset -p -Tps -O$@ Intro.nroff
 Intro.txt: Intro.nroff 
-	typeset -rt1 -p $^ |striph >$@
+	groff -rt1 -p -Tascii Intro.nroff |striph >$@
+	#typeset -rt1 -p Intro.nroff |striph >$@
 
 ci:
 	for i in * ; do \
@@ -20,5 +22,5 @@ ci:
 realclean mostlyclean distclean clean:
 	-rm -f $(DOC)
 
-install:
+install: all
 	mv $(DOC) $(INSTALL_DIR)

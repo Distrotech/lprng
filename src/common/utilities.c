@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -10,40 +10,41 @@
  * PURPOSE: basic set of utilities
  **************************************************************************/
 
-static char *const _id = "$Id: utilities.c,v 3.1 1996/09/09 14:24:41 papowell Exp papowell $";
+static char *const _id = "$Id: utilities.c,v 3.2 1997/01/15 02:21:18 papowell Exp $";
 
 #include "lp.h"
+#include "utilities.h"
 #include "timeout.h"
+/**** ENDINCLUDE ****/
 
 /*
  * Time_str: return "cleaned up" ctime() string...
  *
- * Thu Aug 4 12:34:17 BST 1994 -> Aug  4 12:34:17
+ * in YY/MO/DY/hr:mn:sc
  * Thu Aug 4 12:34:17 BST 1994 -> 12:34:17
  */
 
-char *Time_str(int shortform, time_t tm)
+char *Time_str(int shortform, time_t t)
 {
-    time_t tvec;
-    static char s[99];
-	char *t;
+    static char buffer[99];
+	struct tm *tmptr;
 
-	if( tm ){
-		tvec = tm;
+	if( t == 0 ){
+		t = time( (time_t *) 0 );
+	}
+	tmptr = localtime( &t );
+	if( shortform ){
+		plp_snprintf( buffer, sizeof(buffer),
+			"%02d:%02d:%02d",
+			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec );
 	} else {
-		tvec = time( (void *) 0 );
+		plp_snprintf( buffer, sizeof(buffer),
+			"%d-%02d-%02d-%02d:%02d:%02d",
+			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
+			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec );
 	}
-    (void) strcpy(s, ctime(&tvec) );
-	t = s;
-	s[24] = 0;
-	if( shortform > 0 ){
-		t = &s[11];
-		s[19] = 0;
-	} else if( shortform == 0 ){
-		t = &s[4];
-		s[19] = 0;
-	}
-	return(t);
+	/* now format the time */
+	return( buffer );
 }
 
 /***************************************************************************
@@ -53,13 +54,8 @@ char *Time_str(int shortform, time_t tm)
 
 void Printlist( char **m, FILE *f )
 {
-	char *s;
-	if( (s = strrchr( Name, '/' )) ) ++s;
-	if( s == 0 ) s = Name;
-	if( s == 0 ) s = "?????";
-	
 	if( *m ){
-		fprintf( f, *m, s );
+		fprintf( f, *m, Name );
 		fprintf( f, "\n" );
 		++m;
 	}
@@ -84,11 +80,6 @@ void Printlist( char **m, FILE *f )
  * Note: we do the write first and then check for timeout.
  ***************************************************************************/
 
-int Write_fd_str( int fd, char *msg )
-{
-	return( msg? Write_fd_len( fd, msg, strlen(msg) ) : 0 );
-}
-
 int Write_fd_len( int fd, char *msg, int len )
 {
 	int i;
@@ -104,6 +95,48 @@ int Write_fd_len( int fd, char *msg, int len )
 	return( i );
 }
 
+int Write_fd_len_timeout( int timeout, int fd, char *msg, int len )
+{
+	int i;
+	if( Set_timeout() ){
+		Set_timeout_alarm( timeout, &fd );
+		i = Write_fd_len( fd, msg, len );
+	} else {
+		i = -1;
+	}
+	Clear_timeout();
+	return( i );
+}
+
+int Write_fd_str( int fd, char *msg )
+{
+	if( msg && *msg ){
+		return( Write_fd_len( fd, msg, strlen(msg) ));
+	}
+	return( 0 );
+}
+
+int Write_fd_str_timeout( int timeout, int fd, char *msg )
+{
+	if( msg && *msg ){
+		return( Write_fd_len_timeout( timeout, fd, msg, strlen(msg) ) );
+	}
+	return( 0 );
+}
+
+int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
+{
+	int i;
+	if( Set_timeout() ){
+		Set_timeout_alarm( timeout, &fd );
+		i = read( fd, msg, len );
+	} else {
+		i = -1;
+	}
+	Clear_timeout();
+	return( i );
+}
+
 /***************************************************************************
  * void trunc_str(char *s)
  *  - remove trailing spaces from the end of a string
@@ -112,13 +145,129 @@ int Write_fd_len( int fd, char *msg, int len )
 
 void trunc_str( char *s )
 {
-	int l, c = 0;
+	int l, c = 0, backslash_count;
+	char *t;
 	if( s ){
 		l = strlen(s);
 		while( l-- > 0 && isspace( s[l] ) ){
 			c = s[l];
 			s[l] = 0;
 		}
-		if( l >= 0 && s[l] == '\\' && c ) s[l] = c;
+		if( s[l] == '\\' ){
+			t = &s[l];
+			for( backslash_count = 0; l >= 0 && s[l] == '\\'; --l ){
+				++backslash_count;
+			}
+			if( backslash_count & 1 ){
+				*t = c;
+			}
+		}
 	}
 }
+
+/**************************************************************************
+ * static int Fix_job_number();
+ * - fixes the job number range and value
+ **************************************************************************/
+
+void Fix_job_number( struct control_file *cfp )
+{
+	if( Long_number && !Backwards_compatible ){
+		cfp->number_len = 6;
+		cfp->max_number = 1000000;
+	} else {
+		cfp->number_len = 3;
+		cfp->max_number = 1000;
+	}
+	cfp->number = cfp->number % cfp->max_number;
+}
+
+
+/************************************************************************
+ * Make_identifier - add an identifier field to the job
+ *  the identifier has the format Aname@host%id
+ *  Since the identifier is put in the cfp->identifier field,
+ *  and you may want to use it as the job identifier,  we put the
+ *  leading 'A' character on the name.
+ * 
+ ************************************************************************/
+int Make_identifier( struct control_file *cfp )
+{
+	char *user = "nobody";
+	char *host = "unknown";
+	int len, status = 0;
+
+	if( cfp->identifier[0] ){
+		return( 0 );
+	}
+	Fix_job_number( cfp );
+	if( cfp->LOGNAME ){
+		if( cfp->LOGNAME[1] == 0 ){
+			plp_snprintf( cfp->error, sizeof( cfp->error),
+				"bad LOGNAME line in '%s'", cfp->transfername );
+			status = 1;
+		} else {
+			user = cfp->LOGNAME+1;
+		}
+	}
+	if( cfp->FROMHOST ){
+		if( cfp->FROMHOST[1] == 0 ){
+			plp_snprintf( cfp->error, sizeof( cfp->error),
+				"bad FROMHOST line in '%s'", cfp->transfername );
+			status = 1;
+		} else {
+			host = cfp->FROMHOST+1;
+		}
+	}
+	plp_snprintf( cfp->identifier, sizeof(cfp->identifier),
+		"A%s@%s", user, host );
+	if( (host = strchr( cfp->identifier, '.' )) ) *host = 0;
+	len = strlen( cfp->identifier );
+	if( Long_number ){
+		struct tm *tmptr;
+		time_t t = cfp->statb.st_ctime;
+		int cnt;
+
+		if( t == 0 ){
+			t = time( (time_t *) 0 );
+		}
+		tmptr = localtime( &t );
+		cnt = cfp->number % 1000;
+		plp_snprintf( cfp->identifier+len, sizeof(cfp->identifier)-len,
+			"+%02d%02d%02d%03d",
+			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec, cnt );
+	} else {
+		plp_snprintf( cfp->identifier+len, sizeof(cfp->identifier)-len,
+			"+%0*d", cfp->number_len, cfp->number );
+	}
+	return( status );
+}
+
+/***************************************************************************
+ * int *Crackline( char *line, struct token *token )
+ *  cracks the input line into tokens,  separating them at whitespace
+ *  Note: for most practical purposes,  you have either
+ *  1 token:  keyword
+ *  2 tokens: keyword value-to-<endofline>
+ *  many tokens: keyword value1 value2 value3
+ *    - single word tokens separated by whitespace
+ ***************************************************************************/
+
+int Crackline( char *line, struct token *token, int max )
+{
+	int i;
+	char *end;
+	for(i=0; *line && i < max; ){
+		/* strip off whitespace */
+		while( *line && isspace( *line ) ) ++line;
+		if( *line ){
+			token[i].start = line;
+			for( end = line; *end && !isspace( *end ); ++end );
+			token[i].length = end-line;
+			line = end;
+			++i;
+		}
+	}
+	return( i );
+}
+

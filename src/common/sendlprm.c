@@ -1,7 +1,7 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997, Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
@@ -12,9 +12,17 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlprm.c,v 3.0 1996/05/19 04:06:10 papowell Exp $";
+"$Id: sendlprm.c,v 3.4 1997/01/27 20:04:17 papowell Exp $";
 
 #include "lp.h"
+#include "sendlprm.h"
+#include "killchild.h"
+#include "linksupport.h"
+#include "readstatus.h"
+#include "sendauth.h"
+#include "setstatus.h"
+#include "fileopen.h"
+/**** ENDINCLUDE ****/
 
 
 /***************************************************************************
@@ -65,12 +73,12 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 	int output )				/* output fd */
 {
 	char *s;
-	int i, status;
+	int status;
 	int sock;		/* socket to use */
 	char line[LINEBUFFER];
 	int err;
 
-	DEBUG4("Send_lprmrequest: connect_timeout %d, transfer_timeout %d",
+	DEBUG3("Send_lprmrequest: connect_timeout %d, transfer_timeout %d",
 			connect_timeout, transfer_timeout );
 	sock = Link_open( host, 0, connect_timeout );
 	err = errno;
@@ -81,38 +89,40 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 		setstatus( NORMAL, line );
 		if( Interactive ){
 			strcat(line, "\n" );
-			if( Write_fd_str( 2, line ) < 0 ){
-				cleanup(0);
-				exit(-2);
-			}
+			if( Write_fd_str( 2, line ) < 0 ) cleanup(0);
 		}
 	}
-	DEBUG4("Send_lprmrequest: socket %d", sock );
+	DEBUG3("Send_lprmrequest: socket %d", sock );
+
+	/* we check if we need to do authentication */
+	Fix_auth();
 
 	/* now format the option line */
 	line[0] = 0;
-	plp_snprintf(line, sizeof(line), "%s %s", printer, user );
+	plp_snprintf(line, sizeof(line), "%c%s %s\n",
+		REQ_REMOVE, printer, user );
+	s = 0;
 	for( ; options && (s = *options); ++options ){
-		safestrncat( line, " " );
-		safestrncat( line, s );
-	}
-	if( strlen( line ) >= sizeof( line ) - 1 ){
-		s = "too many options or options too long";
-		if( Interactive ){
-			Diemsg( s );
-		} else {
-			log( LOG_INFO, "Send_lprmrequest: %s", s );
-			return;
+		int len = strlen(line) - 1;
+		if( len + strlen(s) >= sizeof(line) - 4){
+			break;
 		}
+		plp_snprintf( line+len, sizeof(line)-len,
+			" %s\n", s );
 	}
 	/* send the REQ_REMOVE request */
-	DEBUG4("Send_lprmrequest: sending '\\%d'%s'", REQ_REMOVE, line );
-	status = Link_send( host, &sock, transfer_timeout, REQ_REMOVE,
-		line, '\n', 0 );
-	while( status == 0 ){
-		i = 64*1024;
-		status = Link_file_read( host, &sock, transfer_timeout,
-			transfer_timeout, output, &i, (void *)0 );
+	if( s ){
+		Write_fd_str( output, "too many options or options too long\n" );
+		Link_close( &sock );
+	} else if( Use_auth || Use_auth_flag ){
+		DEBUG3("Send_lprmrequest: using authentication" );
+		status = Send_auth_command( RemotePrinter, RemoteHost, &sock,
+			transfer_timeout, line, output );
+	} else {
+		DEBUG3("Send_lprmrequest: sending '%s'", line );
+		status = Link_send( RemoteHost, &sock, transfer_timeout,
+			line, strlen(line), 0 );
 	}
+	Read_status_info( Printer, 0, sock, host, output );
 	Link_close( &sock );
 }

@@ -3,6 +3,9 @@
 Mon Apr 22 09:05:58 PDT 1996
 Updated Tue Jun  4 14:21:11 PDT 1996
 Updated Sun Sep  8 08:34:32 PDT 1996
+Updated Sun Jan 26 13:17:28 PST 1997
+Tue Jan 28 08:23:15 PST 1997
+
        Patrick Powell
 
 A bounce queue is a special spool queue that will pass
@@ -16,6 +19,13 @@ should be followed.
    queue on the host where processing is done.
 2. the :bq=destination: entry should specify where the
    filtered job is sent after filtering.
+3. If you need to change the format of data files,
+   use the :translate_format: printcap entry.  This consists
+   of from/to pairs of formats. Note that 'l' or literal
+   format should not have any further filtering performed.
+4. There are desperation times when you MUST munge the
+   control file in order to make it compatble with some
+   whacko system.  See the 'Control filter' topic below.
 
 Examples:
 
@@ -31,7 +41,9 @@ multifmt|1up|2up|landscape|normal
     :bq=finalprinter@host
     :sd=/usr/spool/multifmt
     :if=/usr/filter_for_f_format
-    :translate_format=mfpf
+	# m -> f or 'DEfAULT format'
+	# p -> l or 'lITERAL (binary) format'
+    :translate_format=mfpl
     :pf=/usr/filter_for_pr
     :mf=/usr/filter_for_m_format
 
@@ -66,3 +78,28 @@ you can use a :pf: specification for a print filter. If you use this,
 then you should also use the 'translate_format' option to rename the
 format of the file as well.  Note that the pf filter will need to
 do both /bin/pr formatting as well as the f format filtering.
+
+Bounce Queues and the 'lpr_bounce' option
+
+You can cause LPR to do the bounce queue filtering by enabling the
+:lpr_bounce: flag in the printcap for the printer.  This is useful
+when you want to send directly to a server,  and do not want
+to have to have a server do filtering.
+
+When this flag is set,  the LPR job will check for filters and use
+them.  This can cause unexpected results when used on systems that
+do not have filters in the appropriate locations.
+
+Control filter
+
+There are times when you simply must reformat the control file
+before sending to a remote printer.  The 'control_filter' printcap
+option specifies that the control file be passed through
+a filter.  The output from the filter is used as the actual control file.
+Note that no checks for correctness are performed on this output.
+
+The exit status of the filter is used to control further processing as well.
+If the status is JSUCC, processing proceeds normally;
+JABORT will terminate processing, JREMOVE will remove the job,
+JFAIL will indicate job failure.  Any other status will be treated
+as JFAIL.

@@ -9,12 +9,12 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/common.conf.proto
 # PURPOSE: include file for lpd.conf
-# $Id: common.conf.proto,v 3.1 1996/08/25 22:20:05 papowell Exp papowell $
+# $Id: common.conf.proto,v 3.1 1996/12/28 21:40:46 papowell Exp $
 ########################################################################## 
 originate_port 2000 3000
 lpd_port 4000
 #user 0
 #group 0
-transfer_timeout 10
+send_timeout 10
 logfile _TMP_LPD/logfile
 use_identifier yes

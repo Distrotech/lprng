@@ -1,18 +1,22 @@
 Please read the README and documentation in the following order.
-You might find life much easier if you do.
+You might find life much easier if you do.  The * indicates
+that life will be happier if you keep a copy of this around while
+you are doing the installation.
 
 Patrick Powell
 
 README.1st      - this file
 README          - announcement and quick overview
-DOC/Intro       - introduction and overview
-man/lpd.8       - manual page, Intro in less words
+ | DOC/Intro       - introduction and overview
+ | man/lpd.8       - manual page, Intro in less words
+ V
+* README.install  - installation for the impatient
+* README.printcap - printcap file quick overview
+* README.lpd.conf - the LPRng configuration file quick overview
 
-README.install  - installation for the impatient
+Details for various things.  Note that these duplicate
+material in man pages,  but have some nice hints and suggestions.
 
-README.ports    - systems support and/or ported to
-README.printcap - printcap file quick overview
-README.lpd.conf - the LPRng configuration file quick overview
 README.lpd.perms - the LPRng lpd server permissions file
 README.accounting - accounting problems you may encounter
 README.bouncequeues - bouncequeues quick overview
@@ -20,5 +24,10 @@ README.logger     - logger quick overview
 README.routing    - routing jobs to different destinations
 README.solaris    - how to install on solaris
 README.solaris.newsprint - newsprint
+README.authentication	- authentication interface
+README.pgp_authenticator - PGP authenticator
+README.banner	- banner printing
+README.nis		- using NIS for printcap distribution
 
 DOC/Tutorial    - tutorial for the novice
+README.ports    - systems support and/or ported to

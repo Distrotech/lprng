@@ -8,7 +8,7 @@
 .\" ***************************************************************************
 .\" * MODULE: README
 .\" * PURPOSE: Overview of Software
-.\" * $Id: Install.nroff,v 3.0 1996/05/19 04:06:54 papowell Exp $
+.\" * $Id: Install.nroff,v 3.2 1996/12/29 06:04:22 papowell Exp $
 .\" **************************************************************************/
 .\"
 .\"Uses the NROFF -me macros, supplemented by the following:
@@ -1153,28 +1153,6 @@ After testing the installation
 you can delete 
 .L defaults.o
 and remake the distribtion.
-.PP
-Some systems such as SUNOS 4.1.1 do not have function prototypes
-for all the system functions;
-you will get a large number of spurious warning messages.
-The following is a sed script which can
-strip out various warnings.
-.DS
-.nf
-.L
-.sz 9
-#!/bin/sh
-# stripjunk - strip out meaningless errors
-# example: make 2>errs ; stripjunk errs
-sed \e
--e '/^gcc/d' \e
--e '/implicit dec.* `fprintf\'/d' \e
--e '/implicit dec.* `bzero/d\'' \e
--e '/implicit dec.* `getpeername/d\'' \e
--e '/At top level:/d' \e
- "$@"
-.DE
-.NH 1
 PORTABILITY AND TESTING VERSION
 .PP
 Once you have generated the test version using
@@ -1418,14 +1396,32 @@ Some filters
 root permissions as they perform operations such as opening sockets
 in the privileged port range.
 If this is the case, 
-you will need to set the filters executables
-.L "SUID ROOT"
-and executable only by group daemon.
-.DS
-chown root $filter
-chgrp daemon $filter
-chmod 4010 $filter
-.DE
+you will probably need to read the warnings about
+running filters as ROOT,
+and enable the source compilation flag to allow this to be done.
+You MUST read the warnings in the src/Makefile before this
+can be done.
+You must also use the following in the printcap file:
+.nf
+.ft CW
+:if=ROOT /bin/....
+.fi
+.ft R
+.PP
+This has been done deliberately to make it difficult to ignore
+the serious security problems this will open.
+.PP
+By default,
+the LPD server passes files to filters by using a pipe.
+This allows the server to monitor the progress of printing.
+However, some filters require direct access to the file
+for doing fseek and other operations.
+To allow this,
+set the
+.ft CW
+:direct_read:
+.ft R
+printcap flag.
 .NH 1
 Installation
 .PP
@@ -1450,6 +1446,7 @@ a simple set of
 and
 .L lpd.perms
 files are available.
+You can install these by using the Makefile in the distribution.
 .DS
 make default
 .DE
@@ -1457,6 +1454,11 @@ make default
 Next,
 you should stop the current lpd daemon and save the
 existing printcap file.
+If you are installing software on a Sun Microsystems Solaris
+system,  see the detailed description in the README.solaris
+file in the distribution.
+On most other systems,
+you can do:
 .DS
 ps -axu | grep lpd
 kill \fIlpd pid\fP
@@ -1471,7 +1473,7 @@ to ensure that the current printcap file is correct.
 .DS
 cp /etc/printcap /etc/printcap.old
 checkpc
-checkpc -f  \fIif necessary\fP
+checkpc -f \fIif necessary to force correct permissions\fP
 .DE
 .NP
 Start the lpd daemon and check its operation.

@@ -1,2352 +1,559 @@
-%!PS-Adobe-1.0
-%%Creator: devps (Pipeline Associates, Inc.) Prepared for LaserWriter plus
-%%CreationDate: Tue Jul  2 18:59:16 1996
-%%Pages: (atend)
-%%DocumentFonts: (atend)
-
-/X{exch}def
-/r{rmoveto}def
-/m{moveto}def
-/l{lineto}def
-/rl{rlineto}def
-/lc{yc X xc X l st}def
-/mc{yc X xc X m}def
-/el{gs /a X def a div 1 X scale cp np a xc 2 div 0 360 arc st gr}def
-/ar{cp 7 2 roll np xc 5 1 roll atan 3 1 roll atan X arc st}def
-/sp{yc X xc X 6 2 roll yc X xc X 6 2 roll yc X xc X 6 2 roll ct}def
-/st{stroke}def
-/gs{gsave}def
-/gr{grestore}def
-/cp{currentpoint}def
-/np{newpath}def
-/ct{curveto}def
-/m0{0 0 moveto}def
-/BP{/devps-save save def m0}def
-/EP{
-clear devps-save restore
-showpage}def
-/V{res neg div 792 add
-currentpoint pop X
-m}def
-/H{res div
-currentpoint X pop
-moveto}def
-/h{res div 0 r}def
-/v{res neg div 0 X r}def
-/xc{res div}def
-/yc{res neg div 792 add}def
-/S{X H show}def
-/psize 10 def
-/height 1 def
-/slant 0 def
-/FF{findfont X dup 12 div setlinewidth /psize X def
-    [psize 0 psize height mul slant sin slant cos div mul psize height mul 0 0]
-    makefont setfont}def
-/shade{gs
- /dy X def
- /dx X def
- np m
- setgray
- 0 dy rl
- dx 0 rl
- 0 dy neg rl
- dx neg 0 rl
- closepath
- fill
-gr}def
-1 setlinecap
-/DocumentInitState [ matrix currentmatrix currentlinewidth currentlinecap
-currentlinejoin currentdash currentgray currentmiterlimit ] cvx def
-
-/startFig {
-	/SavedState save def
-	userdict maxlength dict begin
-	currentpoint transform
-
-	DocumentInitState setmiterlimit setgray setdash setlinejoin setlinecap
-		setlinewidth setmatrix
-
-	itransform moveto
-
-	/ury exch def
-	/urx exch def
-	/lly exch def
-	/llx exch def
-	/y exch 72 mul resolution div def
-	/x exch 72 mul resolution div def
-	
-	currentpoint /cy exch def /cx exch def
-
-	/sx x urx llx sub div def 	% scaling for x
-	/sy y ury lly sub div def	% scaling for y
-
-	sx sy scale			% scale by (sx,sy)
-
-	cx sx div llx sub
-	cy sy div ury sub translate
-	
-	/DefFigCTM matrix currentmatrix def
-
-	/initmatrix {
-		DefFigCTM setmatrix
-	} def
-	/defaultmatrix {
-		DefFigCTM exch copy
-	} def
-
-	/initgraphics {
-		DocumentInitState setmiterlimit setgray setdash 
-			setlinejoin setlinecap setlinewidth setmatrix
-		DefFigCTM setmatrix
-	} def
-
-	/showpage {
-		initgraphics
-	} def
-
-} def
-/clipFig {
-	currentpoint 6 2 roll
-	newpath 4 copy
-	4 2 roll moveto
-	6 -1 roll exch lineto
-	exch lineto
-	exch lineto
-	closepath clip
-	newpath
-	moveto
-} def
-/doclip { llx lly urx ury clipFig } def
-/endFig {
-	end SavedState restore
-} def
-/globalstart {
-	% Push details about the enviornment on the stack.
-	psize slant height
-	resolution currentpoint 
-	gsave 
-} def
-/globalend {
-	grestore moveto
-	setres
-	/height exch def
-	/slant exch def /psize exch def
-} def
-
-/setres {/resolution exch def
-	/res resolution 72.0 div def} def
-720 setres
-/R{/Times-Roman FF}def
-/B{/Times-Bold FF}def
-/I{/Times-Italic FF}def
-/C{/Courier FF}def
-%%EndProlog
-10 R
-%%Page: 1 1
-BP
-/slant 0 def
-/height 1.000000 def
-10 R
-10 B
-240 V
-20 B
-1224(LPRng)S
-1886(Portability)S
-2858(Testing)S
-3542(and)S
-3916(Installation)S
-468 V
-12 B
-2093(Patrick)S
-2503(Powell)S
-2873(<papowell@sdsu.edu>)S
-612 V
-1941(Dept.)S
-2247(Electrical)S
-2771(and)S
-2995(Computer)S
-3551(Engineering)S
-756 V
-1805(San)S
-2029(Diego)S
-2352(State)S
-2642(University,)S
-3236(San)S
-3460(Diego,)S
-3813(CA)S
-4015(92182)S
-1044 V
-2689(ABSTRACT)S
-12 R
-1226 V
-10 R
-720(This)S
-927(is)S
-1023(a)S
-1095(detailed)S
-1439(set)S
-1578(of)S
-1689(procedures)S
-2154(for)S
-2298(installing)S
-2699(the)S
-2849(LPRng)S
-3161(software)S
-3532(and)S
-3704(testing)S
-3999(it)S
-4083(for)S
-4227(portability.)S
-4722(The)S
-10 I
-4905(Introduci-)S
-1336 V
-720(ton)S
-10 R
-881(document)S
-1308(provides)S
-1685(a)S
-1762(detailed)S
-2111(description)S
-2588(of)S
-2704(the)S
-2859(LPRng)S
-3176(software)S
-3552(and)S
-3729(the)S
-10 I
-3884(Tutorial)S
-10 R
-4246(document)S
-4673(provides)S
-5049(details)S
-1446 V
-720(on)S
-845(the)S
-992(management)S
-1527(procedures.)S
-2039(The)S
-2219(various)S
-10 I
-2538(man)S
-10 R
-2735(pages)S
-2987(provide)S
-3317(details)S
-3603(on)S
-3728(each)S
-3935(of)S
-4043(the)S
-4190(LPRng)S
-4499(components.)S
-10 B
-1736 V
-1347(Introduction)S
-10 R
-1901 V
-510(The)S
-697(LPRng)S
-1013(software)S
-1388(is)S
-1487(a)S
-1563(descendent)S
-2038(of)S
-2152(the)S
-2305(Berkeley)S
-2696(LPR)S
-2011 V
-360(software,)S
-757(with)S
-964(the)S
-1115(same)S
-1349(general)S
-1670(functionality.)S
-2259(The)S
-2442(source)S
-2730(dis-)S
-2121 V
-360(tribution)S
-730(has)S
-888(the)S
-1035(structure)S
-1409(shown)S
-1695(in)S
-1798(Table)S
-2050(1.)S
-10 B
-2313 V
-1221(Order)S
-1512(of)S
-1620(Activities)S
-10 R
-2478 V
-510(I)S
-570(recommend)S
-1068(the)S
-1217(following)S
-1633(steps,)S
-1884(each)S
-2092(of)S
-2201(which)S
-2471(is)S
-2564(detailed)S
-2588 V
-360(below.)S
-2731 V
-360(1.  Generate)S
-869(the)S
-1016(test)S
-1180(version)S
-1499(of)S
-1607(the)S
-1754(LPRng)S
-2063(software.)S
-2874 V
-360(2.  Check)S
-765(the)S
-912(various)S
-1231(portability)S
-1673(issues.)S
-3017 V
-360(3.  Check)S
-765(the)S
-912(printcap)S
-1264(and)S
-1433(filters)S
-1691(for)S
-1832(existing)S
-2174(devices.)S
-5208 V
-360 H
-5040 5208 lc
-5040 5208 mc
-5412 V
-1080(configure)S
-1880(configuration)S
-2443(script)S
-5532 V
-1080(CHANGES)S
-1880(change)S
-2187(log)S
-2340(\(major)S
-2631(changes)S
-2977(only\))S
-5652 V
-1080(DOC/*)S
-1880(docmentation)S
-5772 V
-1080(INFORMATION)S
-1880(a)S
-1949(short)S
-2174(overview)S
-2570(of)S
-2678(LPRng)S
-5892 V
-1080(INSTALL)S
-1880(Gnu)S
-2077(Autoconf)S
-2479(installation)S
-2949(information)S
-6012 V
-1080(TESTSUPPORT)S
-1880(Test)S
-2077(LPR)S
-2286(system)S
-6132 V
-1080(README)S
-1880(This)S
-2083(document)S
-6252 V
-1080(man/*)S
-1880(man)S
-2077(pages)S
-2329(for)S
-2470(the)S
-2617(major)S
-2875(components.)S
-6372 V
-1080(src/*)S
-1880(source)S
-2165(code)S
-6492 V
-1080(src/Makefile)S
-1880(Makefile)S
-2265(for)S
-2406(executables)S
-6612 V
-1080(src/lpd)S
-1880(LPRng)S
-2189(server)S
-6732 V
-1080(src/lpr,lpr,lprm,lpc)S
-1880(LPRng)S
-2189(clients)S
-6852 V
-1080(src/checkpc)S
-1880(LPRng)S
-2189(checkout)S
-2574(and)S
-2743(test)S
-10 B
-7032 V
-2979(Table)S
-3249(1)S
-10 R
-3299(:)S
-3377(Distribution)S
-3160 V
-510(By)S
-661(convention,)S
-1163(in)S
-1274(the)S
-1429(following)S
-1851(discussion)S
-2301(files)S
-2506(are)S
-2660(refer-)S
-3270 V
-360(enced)S
-617(with)S
-820(respect)S
-1127(to)S
-1230(the)S
-1377(root)S
-1563(of)S
-1671(the)S
-1818(LPRng)S
-2127(distribution.)S
-10 B
-3462 V
-1250(COMPILATION)S
-10 R
-3627 V
-510(LPRng)S
-823(is)S
-919(written)S
-1231(in)S
-1337(ANSI)S
-1598(C)S
-1693(and)S
-1865(uses)S
-2065(the)S
-2215(GNU)S
-2459(Make)S
-2714(pro-)S
-3737 V
-360(gram.)S
-643(If)S
-737(you)S
-915(do)S
-1043(not)S
-1199(have)S
-1415(an)S
-1537(ANSI)S
-1798(C)S
-1893(compiler)S
-2276(you)S
-2454(can)S
-2620(try)S
-2758(us-)S
-3847 V
-360(ing)S
-516(the)S
-10 C
-701(unproto5.shar.gz)S
-10 R
-1689(software)S
-2060(in)S
-2166(the)S
-2316(UTIL)S
-2570(directo-)S
-3957 V
-360(ry.)S
-519(This)S
-723(software)S
-1091(valiantly)S
-1466(tries)S
-1663(to)S
-1766(convert)S
-2090(ANSI)S
-2348(C)S
-2440(to)S
-2543(K&R)S
-2785(C;)S
-4067 V
-360(most)S
-582(of)S
-692(the)S
-840(code)S
-1054(will)S
-1236(translate)S
-1600(directly)S
-1931(but)S
-2085(the)S
-10 C
-2268(VARARGS)S
-10 R
-2714(rou-)S
-4177 V
-360(tines)S
-582(will)S
-771(require)S
-1086(special)S
-1396(consideration.)S
-2017(The)S
-2205(GNU)S
-2454(Make)S
-2714(pro-)S
-4287 V
-360(gram)S
-777(can)S
-1127(be)S
-1433(obtained)S
-1989(by)S
-2301(FTP)S
-2686(from)S
-10 C
-4397 V
-360(ftp://prep.ai.mit.edu/pub/gnu)S
-10 R
-2100(,)S
-2211(or)S
-2379(from)S
-2658(many)S
-4507 V
-360(other)S
-590(mirror)S
-870(sites.)S
-4650 V
-510(The)S
-723(LPRng)S
-1065(executables)S
-1588(are)S
-1766(the)S
-10 C
-1980(lpd)S
-10 R
-2217(server)S
-2517(program,)S
-10 C
-4760 V
-360(lpr)S
-10 R
-566(for)S
-708(job)S
-862(submission,)S
-10 C
-1398(lpq)S
-10 R
-1603(for)S
-1744(displaying)S
-2186(status,)S
-10 C
-2499(lprm)S
-10 R
-2764(for)S
-4870 V
-360(removing)S
-809(jobs,)S
-1067(and)S
-10 C
-1312(checkpc)S
-10 R
-1798(which)S
-2107(performs)S
-2532(test)S
-2736(and)S
-4980 V
-360(checkout)S
-745(functions.)S
-1736 V
-3318(First,)S
-3563(run)S
-3732(the)S
-10 C
-3925(configure)S
-10 R
-4501(script)S
-4759(in)S
-4873(the)S
-5030(distribution)S
-5527(root)S
-1846 V
-3168(directory;)S
-3630(the)S
-10 C
-3861(INSTALL)S
-10 R
-4355(file)S
-4562(contains)S
-4969(a)S
-5087(description)S
-5605(of)S
-1956 V
-3168(configure's)S
-3656(options.)S
-4035(The)S
-4224(configure)S
-4640(script)S
-4896(will)S
-5086(check)S
-5351(for)S
-5500(vari-)S
-2066 V
-3168(ous)S
-3357(system)S
-3685(configuration)S
-4273(options,)S
-4643(and)S
-4837(generate)S
-5223(the)S
-5394(various)S
-2176 V
-3168(Makefiles)S
-3596(and)S
-3769(a)S
-10 C
-3877(config.h)S
-10 R
-4386(file.)S
-4598(By)S
-4743(default,)S
-5073(the)S
-5223(executables)S
-2286 V
-3168(will)S
-3349(be)S
-3468(generated)S
-3880(in)S
-3983(the)S
-10 C
-4165(src)S
-10 R
-4370(subdirectory.)S
-2429 V
-3318(To)S
-3455(generate)S
-3818(executables)S
-4308(in)S
-4411(the)S
-10 C
-4593($MYBIN)S
-10 R
-4978(directory,)S
-5388(starting)S
-2539 V
-3168(in)S
-3271(the)S
-3418(distribution)S
-3905(root)S
-4091(do)S
-4216(the)S
-4363(following)S
-4777(commands:)S
-10 C
-2693 V
-3240(SRC=`pwd`)S
-2803 V
-3240(cd)S
-3420($MYBIN)S
-2913 V
-3240($SRC/configure)S
-4140(--srcdir=$SRC)S
-3023 V
-3240(make)S
-10 R
-3210 V
-3318(The)S
-3501(configure)S
-3911(script)S
-4161(is)S
-4256(produced)S
-4654(by)S
-4781(the)S
-4930(GNU)S
-10 C
-5208(autoconf)S
-10 R
-3320 V
-3168(and)S
-10 C
-3404(autoheader)S
-10 R
-4061(program,)S
-4481(using)S
-4755(the)S
-10 C
-4968(configure.in)S
-10 R
-3430 V
-3168(and)S
-10 C
-3402(acconfig.h)S
-10 R
-4057(files.)S
-4334(If)S
-4455(you)S
-4660(regenerate)S
-5129(the)S
-5306(configure)S
-3540 V
-3168(script,)S
-3445(use)S
-3608(the)S
-3760(2.1)S
-3915(or)S
-4028(later)S
-4235(version)S
-4559(of)S
-4672(autoconf,)S
-5075(and)S
-5248(run)S
-5410(the)S
-5561(au-)S
-3650 V
-3168(toheader)S
-3538(program)S
-3902(as)S
-4011(well.)S
-4259(See)S
-4429(the)S
-4577(autoconf)S
-4952(documentation)S
-5572(for)S
-3760 V
-3168(details)S
-3454(on)S
-3579(these)S
-3809(programs.)S
-3903 V
-3318(Once)S
-3615(configure)S
-4084(finishes,)S
-4507(you)S
-4744(can)S
-4969(then)S
-5227(do)S
-10 C
-5448(make)S
-4013 V
-3168(TESTVERSION=YES)S
-4227(all)S
-10 R
-4531(or)S
-10 C
-4772(cd)S
-5050(src;)S
-5448(make)S
-4123 V
-3168(TESTVERSION=YES)S
-4128(all)S
-10 R
-4333(to)S
-4436(generate)S
-4798(the)S
-4945(executables.)S
-4266 V
-3318(The)S
-10 C
-3559(TESTVERSION)S
-10 R
-4270(flag)S
-4476(causes)S
-4787(a)S
-4882(test)S
-5072(and)S
-5266(debugging)S
-4376 V
-3168(version)S
-3489(of)S
-3599(the)S
-3748(software)S
-4118(to)S
-4223(be)S
-4344(generated.)S
-4808(This)S
-5013(version)S
-5334(will)S
-5517(read)S
-4486 V
-3168(the)S
-10 C
-3352(LPD_CONF)S
-10 R
-3859(environment)S
-4391(variable)S
-4739(for)S
-4881(the)S
-5029(name)S
-5271(of)S
-5380(a)S
-5450(confi-)S
-4596 V
-3168(guration)S
-3545(file,)S
-3747(whose)S
-4046(contents)S
-4423(can)S
-4605(override)S
-4980(the)S
-5145(compile)S
-5510(time)S
-4706 V
-3168(defaults.)S
-3562(This)S
-3767(is)S
-3861(a)S
-3932(blatant)S
-4231(security)S
-4574(loophole)S
-4951(especially)S
-5377(running)S
-4816 V
-3168(SUID)S
-3432(root;)S
-3652(see)S
-3809(Security)S
-4172(Considerations)S
-4802(later)S
-5009(in)S
-5117(the)S
-5269(document.)S
-4926 V
-3168(Only)S
-3411(the)S
-10 C
-3611(defaults.o)S
-10 R
-4254(file)S
-4429(uses)S
-4643(this)S
-4830(flag)S
-5027(for)S
-5185(compilation.)S
-5036 V
-3168(After)S
-3423(testing)S
-3735(the)S
-3902(installation)S
-4392(you)S
-4587(can)S
-4770(delete)S
-10 C
-5088(defaults.o)S
-10 R
-5146 V
-3168(and)S
-3337(remake)S
-3655(the)S
-3802(distribtion.)S
-10 B
-7450 V
-360(LPRng - Portability Testing and Installation)S
-4990(1)S
-7920 V
-EP
-%%Page: 2 2
-BP
-/slant 0 def
-/height 1.000000 def
-10 B
-322 V
-360(LPRng Portability)S
-10 R
-672 V
-510(Some)S
-770(systems)S
-1119(such)S
-1334(as)S
-1448(SUNOS)S
-1807(4.1.1)S
-2038(do)S
-2169(not)S
-2328(have)S
-2547(function)S
-782 V
-360(prototypes)S
-824(for)S
-981(all)S
-1122(the)S
-1285(system)S
-1604(functions;)S
-2045(you)S
-2236(will)S
-2433(get)S
-2596(a)S
-2681(large)S
-892 V
-360(number)S
-693(of)S
-804(spurious)S
-1171(warning)S
-1526(messages.)S
-1981(The)S
-2164(following)S
-2581(is)S
-2676(a)S
-2747(sed)S
-1002 V
-360(script)S
-607(which)S
-876(can)S
-1039(strip)S
-1242(out)S
-1395(various)S
-1714(warnings.)S
-10 C
-1154 V
-9 C
-432(#!/bin/sh)S
-1262 V
-432(#)S
-540(stripjunk)S
-1080(-)S
-1188(strip)S
-1512(out)S
-1728(meaningless)S
-2376(errors)S
-1370 V
-432(#)S
-540(example:)S
-1026(make)S
-1296(2>errs)S
-1674(;)S
-1782(stripjunk)S
-2322(errs)S
-1478 V
-432(sed)S
-648(\\)S
-1586 V
-432(-e)S
-594('/^gcc/d')S
-1134(\\)S
-1694 V
-432(-e)S
-594('/implicit)S
-1188(dec.*)S
-1512(`fprintf\302/d')S
-2214(\\)S
-1802 V
-432(-e)S
-594('/implicit)S
-1188(dec.*)S
-1512(`bzero/d\302')S
-2106(\\)S
-1910 V
-432(-e)S
-594('/implicit)S
-1188(dec.*)S
-1512(`getpeername/d\302')S
-2430(\\)S
-2018 V
-432(-e)S
-594('/At)S
-864(top)S
-1080(level:/d')S
-1620(\\)S
-2126 V
-486("$@")S
-9 B
-2358 V
-768(PORTABILITY)S
-1421(AND)S
-1639(TESTING)S
-2062(VERSION)S
-9 R
-2520 V
-495(Once)S
-760(you)S
-970(have)S
-1215(generated)S
-1640(the)S
-1825(test)S
-2025(version)S
-2364(using)S
-9 C
-2664(make)S
-2628 V
-360(TESTVERSION=YES)S
-9 R
-1170(,)S
-1247(you)S
-1436(should)S
-1730(set)S
-1884(up)S
-2028(a)S
-2121(user)S
-2324(version)S
-2642(of)S
-2770(the)S
-2736 V
-360(LPRng)S
-643(software)S
-981(by)S
-1099(using)S
-1322(the)S
-1460(files)S
-1643(in)S
-1741(the)S
-9 C
-1910(TESTSUPPORT)S
-9 R
-2532(directory.)S
-2844 V
-360(This)S
-543(requires)S
-856(the)S
-989(following)S
-1362(steps.)S
-9 C
-2995 V
-432(cd)S
-594(TESTSUPPORT)S
-3211 V
-432(setenv)S
-810(USER)S
-1080(`whoami`)S
-3319 V
-432(setenv)S
-810(HOST)S
-9 I
-1080(fully)S
-1263(qualified)S
-1606(domain)S
-1899(name)S
-9 C
-3427 V
-432(setenv)S
-810(LPD_CONF)S
-1296(/tmp/LPD/lpd.conf)S
-3535 V
-432(set)S
-648(path=\()S
-1026(/tmp/LPD)S
-1512($path)S
-1836(\))S
-9 B
-3643 V
-432(OR)S
-9 C
-3751 V
-432(USER=`whoami`;)S
-1242(export)S
-1620(USER)S
-3859 V
-432(HOST=)S
-9 I
-756(fully)S
-939(qualified)S
-1282(domain)S
-1575(name)S
-9 C
-1770(;)S
-1878(export)S
-2256(HOST)S
-3967 V
-432(PATH=/tmp/LPD)S
-1188($path:$PATH)S
-4075 V
-432(LPD_CONF=/tmp/LPD/lpd.conf;)S
-1944(export)S
-2322(LPD_CONF)S
-4291 V
-432(make)S
-4431 V
-495(The)S
-728(test)S
-1015(files)S
-1356(and)S
-1589(executables)S
-2254(will)S
-2540(be)S
-2718(in-)S
-4539 V
-360(stalled)S
-807(in)S
-984(the)S
-1215(/tmp/LPD)S
-1716(directory.)S
-2379(This)S
-2664(tar-)S
-4647 V
-360(get)S
-589(directory)S
-1142(can)S
-1371(be)S
-1546(changed)S
-1991(by)S
-2166(modifying)S
-2718(the)S
-4755 V
-360(TESTSUPPORT/Makefile.)S
-4895 V
-495(During)S
-916(testing,)S
-1445(the)S
-1704(environment)S
-2394(variables)S
-5003 V
-360(should)S
-756(be)S
-936(set)S
-1170(in)S
-1350(the)S
-1584(.cshrc)S
-1980(or)S
-2160(.profile)S
-2664(ini-)S
-5111 V
-360(tialization)S
-1008(files.)S
-9 B
-5300 V
-1111(PORTABILTY)S
-1729(TESTING)S
-9 R
-5462 V
-495(If)S
-594(your)S
-798(system)S
-1087(is)S
-1186(not)S
-1340(listed)S
-1574(in)S
-1683(the)S
-9 C
-1863(README.ports)S
-9 R
-2550(file,)S
-2732(it)S
-2820(is)S
-5570 V
-360(strongly)S
-683(recommended)S
-1221(that)S
-1384(you)S
-1547(check)S
-1785(the)S
-1923(installation)S
-2350(for)S
-2482(portability.)S
-5678 V
-360(These)S
-605(tests)S
-795(use)S
-945(the)S
-9 C
-1116(TESTSUPPORT)S
-9 R
-1740(version,)S
-2058(installed)S
-2392(as)S
-2496(detailed)S
-2810(in)S
-5786 V
-360(the)S
-493(previous)S
-826(section.)S
-1150(The)S
-1313(executables)S
-1756(are)S
-1889(placed)S
-2147(in)S
-9 C
-2271(/tmp/LPD)S
-9 R
-2703(.)S
-5926 V
-495(The)S
-9 C
-692(checkpc)S
-9 R
-1096(program)S
-1427(has)S
-1573(several)S
-1854(portablility)S
-2280(tests)S
-2465(that)S
-2625(are)S
-2760(run)S
-6034 V
-360(by)S
-477(using)S
-699(the)S
-9 C
-867(checkpc)S
-1303(-T)S
-9 R
-1438(flag.)S
-1651(You)S
-1833(will)S
-2000(need)S
-2197(to)S
-2293(be)S
-2404(superuser)S
-2775(for)S
-6142 V
-360(some)S
-577(of)S
-679(these)S
-891(tests;)S
-1102(this)S
-1258(is)S
-1344(only)S
-1530(for)S
-1661(testing)S
-1927(that)S
-2088(the)S
-2224(SUID)S
-2460(functionali-)S
-6250 V
-360(ty)S
-461(is)S
-552(working.)S
-929(In)S
-1035(the)S
-1176(directory)S
-1532(where)S
-1783(you)S
-1949(generated)S
-2330(the)S
-9 C
-2502(checkpc)S
-9 R
-6358 V
-360(executable,)S
-793(execute)S
-1093(the)S
-1228(following)S
-1602(command,)S
-2004(where)S
-9 I
-2248(serial)S
-9 R
-2477(is)S
-2561(the)S
-2695(path-)S
-6466 V
-360(name)S
-578(of)S
-676(a)S
-739(serial)S
-957(port.)S
-9 C
-6617 V
-432(checkpc)S
-864(-T)S
-9 I
-1026(serial)S
-9 B
-6795 V
-360(SUID)S
-598(Test)S
-9 R
-6930 V
-495(The)S
-667(first)S
-844(test)S
-1001(involves)S
-1338(SUID)S
-1579(checking.)S
-1981(This)S
-2172(test)S
-2328(can)S
-2484(be)S
-2600(delayed)S
-7038 V
-360(until)S
-559(installation)S
-993(time,)S
-1210(but)S
-1359(must)S
-1568(be)S
-1687(done)S
-1896(before)S
-2159(installing)S
-2527(a)S
-2600(produc-)S
-7146 V
-360(tion)S
-540(version.)S
-891(If)S
-9 C
-1022(checkpc)S
-9 R
-1440(is)S
-1540(not)S
-1695(run)S
-1855(as)S
-1969(ROOT)S
-2253(or)S
-2367(as)S
-2481(a)S
-2560(SETUID)S
-670 V
-3168(ROOT)S
-3436(program,)S
-3787(this)S
-3940(test)S
-4088(is)S
-4171(skipped.)S
-810 V
-3303(To)S
-3436(create)S
-3684(a)S
-3756(SETUID)S
-4108(ROOT)S
-4385(checkpc)S
-4712(program)S
-5049(and)S
-5211(run)S
-5363(the)S
-5505(tests,)S
-918 V
-3168(carry)S
-3381(out)S
-3524(the)S
-3662(following)S
-4040(steps.)S
-4293(Delete)S
-4555(the)S
-4692(SETUID)S
-5039(after)S
-5231(finishing)S
-5578(the)S
-1026 V
-3168(tests!)S
-9 C
-1177 V
-3240(cd)S
-3402(/tmp/LPD)S
-1285 V
-3240(su)S
-9 R
-3960(become)S
-4263(root)S
-9 C
-1393 V
-3240(chown)S
-3564(root)S
-3834(checkpc)S
-9 R
-4320(change)S
-4598(ownership)S
-9 C
-1501 V
-3240(chmod)S
-3564(4111)S
-3834(checkpc)S
-9 R
-4320(make)S
-4538(SETUID)S
-4881(ROOT)S
-9 C
-1609 V
-3240(exit)S
-9 R
-3960(\(become)S
-4293(regular)S
-4571(user\))S
-9 C
-1717 V
-3240(checkpc)S
-3672(-T)S
-9 I
-3834(serial)S
-9 R
-4140(run)S
-4283(tests)S
-1825 V
-3456(\(check)S
-3719(test)S
-3867(results\))S
-9 C
-1933 V
-3240(su)S
-9 R
-3960(become)S
-4263(root)S
-9 C
-2041 V
-3240(chmod)S
-3564(755)S
-3780(checkpc)S
-2149 V
-3240(chown)S
-3564(`whoami`)S
-4050(checkpc)S
-2257 V
-3240(exit)S
-9 R
-4014(\(become)S
-4347(regular)S
-4625(user\))S
-2440 V
-3303(If)S
-3389(the)S
-3525(setuid)S
-3766(test)S
-3917(succeeds,)S
-4286(then)S
-4467(a)S
-4533(success)S
-4828(message)S
-5158(will)S
-5323(be)S
-5433(printed)S
-2548 V
-3168(out.)S
-3357(If)S
-3445(it)S
-3523(fails,)S
-3729(then)S
-3912(rerun)S
-4130(the)S
-4268(test)S
-4421(with)S
-4609(diagnostics)S
-5042(enabled)S
-5350(as)S
-5453(shown)S
-2656 V
-3168(below)S
-3412(and)S
-3566(save)S
-3750(the)S
-3884(output)S
-4138(to)S
-4232(a)S
-4296(file.)S
-4485(A)S
-4573(study)S
-4791(of)S
-4889(the)S
-5022(output)S
-5275(should)S
-5538(pro-)S
-2764 V
-3168(vide)S
-3346(detailed)S
-3654(information)S
-4102(as)S
-4200(to)S
-4293(the)S
-4426(cause)S
-4649(of)S
-4747(failure.)S
-9 C
-2915 V
-3240(checkpc)S
-3672(-D9)S
-3888(-T)S
-9 I
-4050(serial)S
-9 B
-3093 V
-3168(BIDIRECTIONAL)S
-3931(PIPES)S
-9 R
-3228 V
-3303(A)S
-3392(bidirectional)S
-3871(pipe)S
-4050(is)S
-4134(used)S
-4323(for)S
-4452(inter-filter)S
-4846(communication.)S
-5475(If)S
-5558(this)S
-3336 V
-3168(test)S
-3326(fails,)S
-3536(then)S
-3723(you)S
-3890(should)S
-4162(enable)S
-9 C
-4460(RWSOCKETS_CFLAGS)S
-9 R
-5356(option)S
-5618(in)S
-3444 V
-3168(the)S
-9 C
-3355(src/Makefile)S
-9 R
-4049(and)S
-4225(regenerate)S
-9 C
-4676(rw_pipe.o)S
-9 R
-5162(.)S
-5253(This)S
-5458(option)S
-3552 V
-3168(implements)S
-3611(bidirectional)S
-4089(pipes)S
-4302(by)S
-4415(using)S
-4633(a)S
-4696(socket)S
-4949(based)S
-5177(mechanism.)S
-9 B
-3687 V
-3168(SERIAL)S
-3526(DEVICE)S
-3899(OPEN)S
-4172(AND)S
-4390(LOCK)S
-9 R
-3822 V
-3303(The)S
-3506(next)S
-3724(test)S
-3912(checks)S
-4219(to)S
-4351(see)S
-4528(if)S
-4645(the)S
-9 C
-4848(Checkwrite\(\))S
-9 R
-5558(and)S
-9 C
-3930 V
-3168(Lock_device\(\))S
-9 R
-3908(routines)S
-4235(open)S
-4447(and)S
-4614(lock)S
-4806(a)S
-4883(serial)S
-5115(device.)S
-5433(Device)S
-4038 V
-3168(locking)S
-3463(is)S
-3548(done)S
-3747(by)S
-3861(using)S
-4080(the)S
-9 C
-4245(TIOCEXCL)S
-4732(ioctl\(\))S
-9 R
-5134(call.)S
-5334(If)S
-5418(locking)S
-4146 V
-3168(fails,)S
-3369(set)S
-9 C
-3523(-D4)S
-9 R
-3708(and)S
-3861(determine)S
-4244(which)S
-4487(lock)S
-4665(method)S
-4958(is)S
-5041(being)S
-5264(used.)S
-4286 V
-3303(See)S
-3531(the)S
-9 C
-3770(LOCK_DEVS_CFLAGS)S
-9 R
-4732(variable)S
-5120(description)S
-5618(in)S
-9 C
-4394 V
-3168(src/Makefile)S
-9 R
-3851(and)S
-4015(comments)S
-4419(in)S
-9 C
-4554(src/common/lockfile.c)S
-9 R
-4502 V
-3168(on)S
-3294(how)S
-3485(to)S
-3591(select)S
-3832(the)S
-3978(fallback)S
-4304(locking)S
-4609(method.)S
-4960(Once)S
-5185(selected,)S
-5533(You)S
-4610 V
-3168(will)S
-3334(need)S
-3530(to)S
-3626(regenerate)S
-9 C
-4058(lockfile.o)S
-9 R
-4624(and)S
-4780(the)S
-4916(executables)S
-5362(and)S
-5518(rein-)S
-4718 V
-3168(stall)S
-3341(them)S
-3544(in)S
-3637(the)S
-3770(test)S
-3918(location.)S
-9 B
-4853 V
-3168(FILE)S
-3401(OPEN)S
-3674(AND)S
-3892(LOCK)S
-9 R
-4988 V
-3303(The)S
-3476(next)S
-3664(set)S
-3797(of)S
-3905(tests)S
-4098(check)S
-4341(that)S
-4509(file)S
-4662(locking)S
-4965(works.)S
-5264(If)S
-5357(they)S
-5545(fail,)S
-5096 V
-3168(then)S
-3423(try)S
-3623(using)S
-3918(an)S
-4102(alternative)S
-4581(locking)S
-4950(method)S
-5319(with)S
-5578(the)S
-9 C
-5204 V
-3168(STATFS_CFLAGS)S
-9 R
-3899(variable)S
-4218(in)S
-4316(the)S
-9 C
-4485(src/Makefile)S
-9 R
-5133(.)S
-5207(See)S
-5365(the)S
-5503(com-)S
-5312 V
-3168(ments)S
-3416(in)S
-9 C
-3550(src/common/lockfile.c)S
-9 R
-4717(as)S
-4824(well.)S
-5057(You)S
-5244(will)S
-5416(need)S
-5618(to)S
-5420 V
-3168(regenerate)S
-9 C
-3597(lockfile.o)S
-9 R
-4160(and)S
-4313(the)S
-4446(executables.)S
-9 B
-5555 V
-3168(STTY)S
-3426(FUNCTIONS)S
-9 R
-5690 V
-3303(The)S
-3483(next)S
-3678(test)S
-3843(checks)S
-4128(the)S
-9 C
-4309(stty)S
-9 R
-4565(\(set)S
-4735(serial)S
-4969(line)S
-5143(characteristics\))S
-5798 V
-3168(capabilities.)S
-3651(In)S
-3753(order)S
-3970(to)S
-4067(do)S
-4184(as)S
-4286(system)S
-4563(independent)S
-5030(operations)S
-5432(as)S
-5533(pos-)S
-5906 V
-3168(sible,)S
-3385(line)S
-3544(status)S
-3773(is)S
-3857(displayed)S
-4225(using)S
-4443(the)S
-9 C
-4607(stty)S
-9 R
-4846(command.)S
-5270(You)S
-5448(should)S
-6014 V
-3168(check)S
-3415(the)S
-3562(output)S
-3829(of)S
-3941(this)S
-4108(command)S
-4500(to)S
-4607(make)S
-4839(sure)S
-5026(that)S
-5197(the)S
-5343(requested)S
-6122 V
-3168(STTY)S
-3416(operations)S
-3814(did)S
-3952(take)S
-4125(place.)S
-6262 V
-3303(If)S
-3391(a)S
-3459(stty)S
-3617(operation)S
-3985(failes,)S
-4231(using)S
-4454(the)S
-9 C
-4623(checkpc)S
-5060(-D9)S
-9 R
-5249(flag)S
-5416(and)S
-5573(ex-)S
-6370 V
-3168(amine)S
-3446(the)S
-3614(diagnostic)S
-4042(output)S
-4330(for)S
-4493(the)S
-4661(cause)S
-4919(of)S
-5052(failure.)S
-5391(See)S
-5578(the)S
-9 C
-6478 V
-3168(STTY_CFLAGS)S
-9 R
-3787(section)S
-4066(of)S
-9 C
-4196(src/Makefile)S
-9 R
-4868(on)S
-4982(how)S
-5161(to)S
-5255(select)S
-5484(an)S
-5593(al-)S
-6586 V
-3168(ternatve)S
-3492(STTY)S
-3751(interface)S
-4100(function)S
-4434(if)S
-4523(the)S
-4667(one)S
-4831(selected)S
-5155(by)S
-9 C
-5310(config-)S
-6694 V
-3168(ure)S
-9 R
-3362(is)S
-3454(not)S
-3601(suitable.)S
-3959(You)S
-4146(will)S
-4318(need)S
-4520(to)S
-4622(regenerate)S
-9 C
-5060(stty.o)S
-9 R
-5416(and)S
-5578(the)S
-6802 V
-3168(executables.)S
-9 B
-7450 V
-10 B
-360(2)S
-3146(LPRng - Portability Testing and Installation)S
-7920 V
-EP
-%%Page: 3 3
-BP
-/slant 0 def
-/height 1.000000 def
-10 B
-322 V
-4248(LPRng Portability)S
-670 V
-9 B
-360(PROCTITLE)S
-9 R
-805 V
-495(The)S
-9 C
-692(setproctitle\(\))S
-9 R
-1474(function)S
-1800(modifies)S
-2140(the)S
-2275(process)S
-2570(status)S
-2800(so)S
-913 V
-360(that)S
-529(the)S
-9 C
-704(ps\(1\))S
-9 R
-1008(command)S
-1396(will)S
-1569(display)S
-1862(the)S
-2005(process)S
-2308(activity.)S
-2657(If)S
-2750(this)S
-1021 V
-360(test)S
-541(fails,)S
-775(then)S
-986(you)S
-1177(might)S
-1443(want)S
-1674(to)S
-1800(see)S
-1971(if)S
-2082(you)S
-2273(can)S
-2454(modify)S
-2770(the)S
-9 C
-1129 V
-360(src/proctitle.c)S
-9 R
-1199(code)S
-1398(so)S
-1506(that)S
-1669(it)S
-1747(works.)S
-2041(Otherwise,)S
-2462(just)S
-2620(modify)S
-1237 V
-360(the)S
-9 C
-538(SETPROCTITLE_CFLAGS)S
-9 R
-1601(variable)S
-1928(in)S
-9 C
-2066(src/Makefile)S
-9 R
-2750(and)S
-1345 V
-360(recompile.)S
-9 B
-1534 V
-1358(Filter)S
-1596(Testing)S
-9 R
-1696 V
-495(You)S
-676(should)S
-942(test)S
-1093(the)S
-1229(filters)S
-1465(for)S
-1596(your)S
-1787(existing)S
-2098(printers)S
-2399(by)S
-2515(first)S
-2685(using)S
-1804 V
-360(the)S
-500(test)S
-655(version.)S
-996(You)S
-1181(can)S
-1336(simply)S
-1611(copy)S
-1816(the)S
-1956(existing)S
-2271(printcap)S
-2596(entry)S
-2810(to)S
-1912 V
-360(the)S
-497(test)S
-649(printcap)S
-971(file,)S
-1141(and)S
-1298(modify)S
-1585(the)S
-1722(entry)S
-1934(so)S
-2041(that)S
-2203(it)S
-2280(uses)S
-2462(the)S
-2599(test)S
-2750(set-)S
-2020 V
-360(up)S
-473(directories.)S
-2160 V
-495(Next,)S
-732(try)S
-871(running)S
-1190(a)S
-1268(job)S
-1421(through)S
-1739(the)S
-1887(filters,)S
-2158(and)S
-2326(see)S
-2479(if)S
-2572(it)S
-2660(works)S
-2268 V
-360(correctly.)S
-771(Some)S
-1021(filters)S
-9 B
-1276(require)S
-9 R
-1606(root)S
-1796(permissions)S
-2271(as)S
-2391(they)S
-2590(perform)S
-2376 V
-360(operations)S
-771(such)S
-972(as)S
-1083(opening)S
-1409(sockets)S
-1709(in)S
-1814(the)S
-1959(privileged)S
-2359(port)S
-2539(range.)S
-2820(If)S
-2484 V
-360(this)S
-527(is)S
-624(the)S
-771(case,)S
-986(you)S
-1158(will)S
-1335(need)S
-1542(to)S
-1649(set)S
-1785(the)S
-1931(filters)S
-2177(executables)S
-9 C
-2664(SUID)S
-2592 V
-360(ROOT)S
-9 R
-599(and)S
-752(executable)S
-1160(only)S
-1343(by)S
-1456(group)S
-1689(daemon.)S
-9 C
-2743 V
-432(chown)S
-756(root)S
-1026($filter)S
-2851 V
-432(chgrp)S
-756(daemon)S
-1134($filter)S
-2959 V
-432(chmod)S
-756(4010)S
-1026($filter)S
-9 B
-3191 V
-1400(Installation)S
-9 R
-3353 V
-495(Once)S
-715(you)S
-880(have)S
-1079(finished)S
-1398(testing,)S
-1690(you)S
-1854(can)S
-2008(perform)S
-2327(a)S
-2396(final)S
-2590(installa-)S
-3461 V
-360(tion.)S
-569(The)S
-732(following)S
-1105(steps)S
-1308(should)S
-1571(be)S
-1679(followed.)S
-3601 V
-360(1.  First,)S
-685(compile)S
-998(the)S
-1131(non-test)S
-1444(version)S
-1732(and)S
-1885(install)S
-2128(it)S
-2201(in)S
-2294(the)S
-2427(default)S
-2700(loca-)S
-3709 V
-474(tions.)S
-9 C
-3860 V
-432(rm)S
-594(src/default.o)S
-3968 V
-432(su)S
-9 I
-702(may)S
-875(need)S
-1068(root)S
-1241(perms)S
-1484(to)S
-1577(install)S
-9 C
-4076 V
-432(make)S
-702(install)S
-9 R
-4259 V
-360(2.  Next,)S
-702(if)S
-787(you)S
-952(are)S
-1092(performing)S
-1527(an)S
-1642(initial)S
-1882(installation,)S
-2335(a)S
-2405(simple)S
-2675(set)S
-2805(of)S
-9 C
-4367 V
-474(lpd.conf)S
-9 R
-929(and)S
-9 C
-1113(lpd.perms)S
-9 R
-1622(files)S
-1800(are)S
-1933(available.)S
-9 C
-4518 V
-432(make)S
-702(default)S
-9 R
-4701 V
-360(3.  Next,)S
-701(you)S
-865(should)S
-1134(stop)S
-1313(the)S
-1452(current)S
-1736(lpd)S
-1880(daemon)S
-2194(and)S
-2353(save)S
-2542(the)S
-2680(exist-)S
-4809 V
-474(ing)S
-612(printcap)S
-930(file.)S
-9 C
-4960 V
-432(ps)S
-594(-axu)S
-864(|)S
-972(grep)S
-1242(lpd)S
-5068 V
-432(kill)S
-9 I
-702(lpd)S
-840(pid)S
-9 R
-5251 V
-360(4.  If)S
-562(you)S
-725(need)S
-922(to,)S
-1042(copy)S
-1244(the)S
-1381(new)S
-1558(printcap)S
-1880(file)S
-2027(to)S
-9 C
-2155(/etc/printcap)S
-9 R
-2857(.)S
-5359 V
-474(Use)S
-9 C
-668(checkpc)S
-9 R
-1069(to)S
-1162(ensure)S
-1420(that)S
-1578(the)S
-1711(current)S
-1989(printcap)S
-2307(file)S
-2450(is)S
-2533(correct.)S
-9 C
-5510 V
-432(cp)S
-594(/etc/printcap)S
-1350(/etc/printcap.old)S
-5618 V
-432(checkpc)S
-5726 V
-432(checkpc)S
-864(-f)S
-9 I
-1080(if)S
-1153(necessary)S
-9 R
-5909 V
-360(5.  Start)S
-667(the)S
-800(lpd)S
-938(daemon)S
-1246(and)S
-1399(check)S
-1632(its)S
-1740(operation.)S
-9 C
-6060 V
-432(lpd)S
-6168 V
-432(exit)S
-9 I
-756(return)S
-1004(to)S
-1097(user)S
-9 C
-6276 V
-432(lpq)S
-9 R
-6459 V
-360(6.  Edit)S
-685(the)S
-856(print)S
-1087(spooler)S
-1413(startup)S
-1719(commands)S
-2170(in)S
-2300(the)S
-2470(appropriate)S
-9 C
-6567 V
-474(rc.local)S
-9 R
-1100(or)S
-1368(other)S
-1746(startup)S
-2184(file)S
-2497(to)S
-2760(use)S
-9 C
-6675 V
-474(/usr/local/bin/lpd)S
-9 R
-1446(.)S
-6815 V
-360(7.  Reboot)S
-757(system)S
-1030(to)S
-1123(ensure)S
-1381(that)S
-1539(server)S
-1782(is)S
-1865(started)S
-2128(correctly.)S
-9 B
-670 V
-4006(Periodic)S
-4349(Maintenance)S
-9 R
-832 V
-3303(It)S
-3393(is)S
-3488(recommended)S
-4033(that)S
-4203(the)S
-9 C
-4379(checkpc)S
-9 R
-4791(program)S
-5130(be)S
-5249(run)S
-5403(periodi-)S
-940 V
-3168(cally)S
-3378(to)S
-3483(remove)S
-3788(aborted)S
-4092(jobs)S
-4276(and)S
-4440(to)S
-4544(truncate)S
-4868(various)S
-5167(log)S
-5316(files.)S
-5528(This)S
-1048 V
-3168(can)S
-3316(be)S
-3424(done)S
-3622(by)S
-3735(putting)S
-4013(the)S
-4146(following)S
-4519(entry)S
-4727(in)S
-4820(the)S
-9 I
-4953(crontab)S
-9 R
-5256(for)S
-5384(root.)S
-9 C
-1199 V
-3240(15)S
-3402(5)S
-3510(*)S
-3618(*)S
-3726(*)S
-3834(/usr/local/lib/cleanlog)S
-9 R
-1382 V
-3303(The)S
-9 C
-3500(cleanlog)S
-9 R
-3958(script)S
-4184(can)S
-4335(be)S
-4446(used)S
-4637(to)S
-4733(clean)S
-4948(and/or)S
-5203(truncate)S
-5518(vari-)S
-1490 V
-3168(ous)S
-3316(files.)S
-3540(The)S
-3703(following)S
-4076(is)S
-4159(a)S
-4222(typical)S
-4490(script.)S
-9 C
-1641 V
-3240(#!/bin/sh)S
-1749 V
-3240(trunc)S
-3564(\(\))S
-3726({)S
-1857 V
-3420(tail)S
-3690($1)S
-3852(>/tmp/$$)S
-1965 V
-3420(cat)S
-3636(/tmp/$$)S
-4068(>$1)S
-2073 V
-3420(rm)S
-3582(/tmp/$$)S
-2181 V
-3240(})S
-2397 V
-3240(FILES="/usr/spool/lpd/log*)S
-4698(/usr/spool/lpd/accnt")S
-2505 V
-3240(for)S
-3456(i)S
-3564(in)S
-3726($FILES)S
-4104(do)S
-2613 V
-3420(echo)S
-3690($i)S
-2721 V
-3240(done)S
-9 B
-7450 V
-10 B
-360(LPRng - Portability Testing and Installation)S
-4990(3)S
-7920 V
-EP
-%%Trailer
-%%DocumentFonts: Times-Roman Times-Bold Times-Italic Courier
+%!PS-Adobe-3.0
+%%Creator: groff version 1.10
+%%CreationDate: Fri Jan 17 23:10:12 1997
+%%DocumentNeededResources: font Times-Bold
+%%+ font Times-Roman
+%%+ font Times-Italic
+%%+ font Courier
+%%DocumentSuppliedResources: procset grops 1.10 0
 %%Pages: 3
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset grops 1.10 0
+/setpacking where{
+pop
+currentpacking
+true setpacking
+}if
+/grops 120 dict dup begin
+/SC 32 def
+/A/show load def
+/B{0 SC 3 -1 roll widthshow}bind def
+/C{0 exch ashow}bind def
+/D{0 exch 0 SC 5 2 roll awidthshow}bind def
+/E{0 rmoveto show}bind def
+/F{0 rmoveto 0 SC 3 -1 roll widthshow}bind def
+/G{0 rmoveto 0 exch ashow}bind def
+/H{0 rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/I{0 exch rmoveto show}bind def
+/J{0 exch rmoveto 0 SC 3 -1 roll widthshow}bind def
+/K{0 exch rmoveto 0 exch ashow}bind def
+/L{0 exch rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/M{rmoveto show}bind def
+/N{rmoveto 0 SC 3 -1 roll widthshow}bind def
+/O{rmoveto 0 exch ashow}bind def
+/P{rmoveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/Q{moveto show}bind def
+/R{moveto 0 SC 3 -1 roll widthshow}bind def
+/S{moveto 0 exch ashow}bind def
+/T{moveto 0 exch 0 SC 5 2 roll awidthshow}bind def
+/SF{
+findfont exch
+[exch dup 0 exch 0 exch neg 0 0]makefont
+dup setfont
+[exch/setfont cvx]cvx bind def
+}bind def
+/MF{
+findfont
+[5 2 roll
+0 3 1 roll
+neg 0 0]makefont
+dup setfont
+[exch/setfont cvx]cvx bind def
+}bind def
+/level0 0 def
+/RES 0 def
+/PL 0 def
+/LS 0 def
+/MANUAL{
+statusdict begin/manualfeed true store end
+}bind def
+/PLG{
+gsave newpath clippath pathbbox grestore
+exch pop add exch pop
+}bind def
+/BP{
+/level0 save def
+1 setlinecap
+1 setlinejoin
+72 RES div dup scale
+LS{
+90 rotate
+}{
+0 PL translate
+}ifelse
+1 -1 scale
+}bind def
+/EP{
+level0 restore
+showpage
+}bind def
+/DA{
+newpath arcn stroke
+}bind def
+/SN{
+transform
+.25 sub exch .25 sub exch
+round .25 add exch round .25 add exch
+itransform
+}bind def
+/DL{
+SN
+moveto
+SN
+lineto stroke
+}bind def
+/DC{
+newpath 0 360 arc closepath
+}bind def
+/TM matrix def
+/DE{
+TM currentmatrix pop
+translate scale newpath 0 0 .5 0 360 arc closepath
+TM setmatrix
+}bind def
+/RC/rcurveto load def
+/RL/rlineto load def
+/ST/stroke load def
+/MT/moveto load def
+/CL/closepath load def
+/FL{
+currentgray exch setgray fill setgray
+}bind def
+/BL/fill load def
+/LW/setlinewidth load def
+/RE{
+findfont
+dup maxlength 1 index/FontName known not{1 add}if dict begin
+{
+1 index/FID ne{def}{pop pop}ifelse
+}forall
+/Encoding exch def
+dup/FontName exch def
+currentdict end definefont pop
+}bind def
+/DEFS 0 def
+/EBEGIN{
+moveto
+DEFS begin
+}bind def
+/EEND/end load def
+/CNT 0 def
+/level1 0 def
+/PBEGIN{
+/level1 save def
+translate
+div 3 1 roll div exch scale
+neg exch neg exch translate
+0 setgray
+0 setlinecap
+1 setlinewidth
+0 setlinejoin
+10 setmiterlimit
+[]0 setdash
+/setstrokeadjust where{
+pop
+false setstrokeadjust
+}if
+/setoverprint where{
+pop
+false setoverprint
+}if
+newpath
+/CNT countdictstack def
+userdict begin
+/showpage{}def
+}bind def
+/PEND{
+clear
+countdictstack CNT sub{end}repeat
+level1 restore
+}bind def
+end def
+/setpacking where{
+pop
+setpacking
+}if
+%%EndResource
+%%IncludeResource: font Times-Bold
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Times-Italic
+%%IncludeResource: font Courier
+grops begin/DEFS 1 dict def DEFS begin/u{.001 mul}bind def end/RES 72
+def/PL 792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron
+/scaron/zcaron/Ydieresis/trademark/quotesingle/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef/.notdef
+/.notdef/.notdef/space/exclam/quotedbl/numbersign/dollar/percent
+/ampersand/quoteright/parenleft/parenright/asterisk/plus/comma/hyphen
+/period/slash/zero/one/two/three/four/five/six/seven/eight/nine/colon
+/semicolon/less/equal/greater/question/at/A/B/C/D/E/F/G/H/I/J/K/L/M/N/O
+/P/Q/R/S/T/U/V/W/X/Y/Z/bracketleft/backslash/bracketright/circumflex
+/underscore/quoteleft/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y
+/z/braceleft/bar/braceright/tilde/.notdef/quotesinglbase/guillemotleft
+/guillemotright/bullet/florin/fraction/perthousand/dagger/daggerdbl
+/endash/emdash/ff/fi/fl/ffi/ffl/dotlessi/dotlessj/grave/hungarumlaut
+/dotaccent/breve/caron/ring/ogonek/quotedblleft/quotedblright/oe/lslash
+/quotedblbase/OE/Lslash/.notdef/exclamdown/cent/sterling/currency/yen
+/brokenbar/section/dieresis/copyright/ordfeminine/guilsinglleft
+/logicalnot/minus/registered/macron/degree/plusminus/twosuperior
+/threesuperior/acute/mu/paragraph/periodcentered/cedilla/onesuperior
+/ordmasculine/guilsinglright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE
+/Ccedilla/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex
+/Idieresis/Eth/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis
+/multiply/Oslash/Ugrave/Uacute/Ucircumflex/Udieresis/Yacute/Thorn
+/germandbls/agrave/aacute/acircumflex/atilde/adieresis/aring/ae/ccedilla
+/egrave/eacute/ecircumflex/edieresis/igrave/iacute/icircumflex/idieresis
+/eth/ntilde/ograve/oacute/ocircumflex/otilde/odieresis/divide/oslash
+/ugrave/uacute/ucircumflex/udieresis/yacute/thorn/ydieresis]def
+/Courier@0 ENC0/Courier RE/Times-Italic@0 ENC0/Times-Italic RE
+/Times-Roman@0 ENC0/Times-Roman RE/Times-Bold@0 ENC0/Times-Bold RE
+%%EndProlog
+%%Page: 1 1
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 20/Times-Bold@0 SF(LPRng P)123.76 24 Q(ortability T)-.4 E
+(esting and Installation)-1.84 E/F1 12/Times-Bold@0 SF -.12(Pa)209.706
+46.8 S(trick P).12 E -.12(ow)-.24 G(ell <papo).12 E(well@sdsu.edu>)-.12
+E(Dept. Electrical and Computer Engineering)194.172 61.2 Q
+(San Diego State Uni)180.954 75.6 Q -.12(ve)-.12 G(rsity).12 E 3(,S)-.66
+G(an Diego, CA 92182)-3 E(ABSTRA)269.16 104.4 Q(CT)-.66 E/F2 10
+/Times-Roman@0 SF .354
+(This is a detailed set of procedures for installing the LPRng softw)72
+122.6 R .353(are and testing it for portability)-.1 F 5.353(.T)-.65 G
+(he)-5.353 E/F3 10/Times-Italic@0 SF(Intr)2.853 E(oduci-)-.45 E(ton)72
+133.6 Q F2 .832(document pro)3.332 F .833
+(vides a detailed description of the LPRng softw)-.15 F .833
+(are and the)-.1 F F3 -.55(Tu)3.333 G(torial).55 E F2 .833(document pro)
+3.333 F .833(vides details)-.15 F(on the management procedures.)72 144.6
+Q(The v)5 E(arious)-.25 E F3(man)2.5 E F2(pages pro)2.5 E
+(vide details on each of the LPRng components.)-.15 E/F4 10/Times-Bold@0
+SF(Intr)134.865 173.6 Q(oduction)-.18 E F2 .667(The LPRng softw)51 190.1
+R .667(are is a descendent of the Berk)-.1 F(ele)-.1 E 3.166(yL)-.15 G
+(PR)-3.166 E(softw)36 201.1 Q .385
+(are, with the same general functionality)-.1 F 5.385(.T)-.65 G .385
+(he source dis-)-5.385 F(trib)36 212.1 Q(ution has the structure sho)-.2
+E(wn in T)-.25 E(able 1.)-.8 E F4(Order of Acti)122.06 231.35 Q(vities)
+-.1 E F2 2.632(Ir)51 247.85 S .131(ecommend the follo)-2.632 F .131
+(wing steps, each of which is detailed)-.25 F(belo)36 258.85 Q -.65(w.)
+-.25 G 2.5(1. Generate)36 273.15 R(the test v)2.5 E
+(ersion of the LPRng softw)-.15 E(are.)-.1 E 2.5(2. Check)36 287.45 R
+(the v)2.5 E(arious portability issues.)-.25 E 2.5(3. Check)36 301.75 R
+(the printcap and \214lters for e)2.5 E(xisting de)-.15 E(vices.)-.25 E
+.4 LW 504 521.75 36 521.75 DL 39.73(con\214gure con\214guration)108
+542.15 R(script)2.5 E 30.28(CHANGES change)108 554.15 R
+(log \(major changes only\))2.5 E 48.61(DOC/* docmentation)108 566.15 R
+(INFORMA)108 578.15 Q 8.62(TION a)-1.11 F(short o)2.5 E -.15(ve)-.15 G
+(rvie).15 E 2.5(wo)-.25 G 2.5(fL)-2.5 G(PRng)-2.5 E(INST)108 590.15 Q
+36.77(ALL Gnu)-.93 F(Autoconf installation information)2.5 E(TESTSUPPOR)
+108 602.15 Q 12.81(TT)-.6 G(est LPR system)-13.51 E 35.28(README This)
+108 614.15 R(document)2.5 E 52.5(man/* man)108 626.15 R
+(pages for the major components.)2.5 E 58.06(src/* source)108 638.15 R
+(code)2.5 E(src/Mak)108 650.15 Q 27.61(e\214le Mak)-.1 F(e\214le for e)
+-.1 E -.15(xe)-.15 G(cutables).15 E 50.28(src/lpd LPRng)108 662.15 R
+(serv)2.5 E(er)-.15 E(src/lpr)108 674.15 Q(,lpr)-.4 E 3.03
+(,lprm,lpc LPRng)-.4 F(clients)2.5 E 30.3(src/checkpc LPRng)108 686.15 R
+(check)2.5 E(out and test)-.1 E F4 -.92(Ta)298.525 704.15 S(ble 1).92 E
+F2 5(:D)C(istrib)-5 E(ution)-.2 E .969(By con)51 316.05 R -.15(ve)-.4 G
+.969(ntion, in the follo).15 F .969(wing discussion \214les are refer)
+-.25 F(-)-.2 E(enced with respect to the root of the LPRng distrib)36
+327.05 Q(ution.)-.2 E F4(COMPILA)125.53 346.3 Q(TION)-.95 E F2 .319
+(LPRng is written in ANSI C and uses the GNU Mak)51 362.8 R 2.82(ep)-.1
+G(ro-)-2.82 E 2.791(gram. If)36 373.8 R .291(you do not ha)2.791 F .591
+-.15(ve a)-.2 H 2.791(nA).15 G .291(NSI C compiler you can try us-)
+-2.791 F .757(ing the)36 384.8 R/F5 10/Courier@0 SF(unproto5.shar.gz)
+3.257 E F2(softw)3.257 E .757(are in the UTIL directo-)-.1 F(ry)36 395.8
+Q 5.148(.T)-.65 G .148(his softw)-5.148 F .148(are v)-.1 F .147
+(aliantly tries to con)-.25 F -.15(ve)-.4 G .147(rt ANSI C to K&R C;).15
+F .467(most of the code will translate directly b)36 406.8 R .467
+(ut the)-.2 F F5(VARARGS)2.967 E F2(rou-)2.967 E .755
+(tines will require special consideration.)36 417.8 R .755(The GNU Mak)
+5.755 F 3.255(ep)-.1 G(ro-)-3.255 E 18.67
+(gram can be obtained by FTP from)36 428.8 R F5
+(ftp://prep.ai.mit.edu/pub/gnu)36 439.8 Q F2 8.554(,o)C 8.553(rf)-8.554
+G 6.053(rom man)-8.553 F(y)-.15 E(other mirror sites.)36 450.8 Q .708
+(The LPRng e)51 465.1 R -.15(xe)-.15 G .709(cutables are the).15 F F5
+(lpd)3.209 E F2(serv)3.209 E .709(er program,)-.15 F F5(lpr)3.209 E F2
+1.576(for job submission,)36 476.1 R F5(lpq)4.076 E F2 1.576
+(for displaying status,)4.076 F F5(lprm)4.075 E F2 1.575(for re-)4.075 F
+(mo)36 487.1 Q .138(ving jobs, and)-.15 F F5(checkpc)2.639 E F2 .139
+(which performs test and check)2.639 F(out)-.1 E(functions.)36 498.1 Q
+1.545(First, run the)331.8 173.6 R F5(configure)4.045 E F2 1.545
+(script in the distrib)4.045 F 1.545(ution root)-.2 F .906
+(directory; the)316.8 184.6 R F5(INSTALL)3.406 E F2 .906
+(\214le contains a description of con\214g-)3.406 F(ure')316.8 195.6 Q
+2.97(so)-.55 G 2.97(ptions. The)-2.97 F .47
+(con\214gure script will check for v)2.97 F .47(arious sys-)-.25 F .737
+(tem con\214guration options, and generate the v)316.8 206.6 R .738
+(arious Mak)-.25 F(e\214les)-.1 E 2.159(and a)316.8 217.6 R F5(config.h)
+4.659 E F2 4.659(\214le. By)4.659 F(def)4.659 E 2.159(ault, the e)-.1 F
+-.15(xe)-.15 G 2.159(cutables will be).15 F(generated in the)316.8 228.6
+Q F5(src)2.5 E F2(subdirectory)2.5 E(.)-.65 E 2.317 -.8(To g)331.8 242.9
+T .717(enerate e).8 F -.15(xe)-.15 G .717(cutables in the).15 F F5
+($MYBIN)3.217 E F2(directory)3.217 E 3.218(,s)-.65 G(tarting)-3.218 E
+(in the distrib)316.8 253.9 Q(ution root do the follo)-.2 E
+(wing commands:)-.25 E F5(SRC=`pwd`)324 269.3 Q(cd $MYBIN)324 280.3 Q
+($SRC/configure --srcdir=$SRC)324 291.3 Q(make)324 302.3 Q F2 .713
+(The con\214gure script is produced by the GNU)331.8 321 R F5(autoconf)
+3.212 E F2(and)316.8 332 Q F5(autoheader)3.475 E F2 .975
+(program, using the)3.475 F F5(configure.in)3.475 E F2(and)3.475 E F5
+(acconfig.h)316.8 343 Q F2 4.639(\214les. If)4.639 F 2.139(you re)4.639
+F 2.138(generate the con\214gure script,)-.15 F .125
+(use the 2.1 or later v)316.8 354 R .126
+(ersion of autoconf, and run the autoheader)-.15 F 1.089
+(program as well.)316.8 365 R 1.089
+(See the autoconf documentation for details)6.089 F(on these programs.)
+316.8 376 Q 6.781(Once con\214gure \214nishes, you can then do)331.8
+390.3 R F5(make)9.282 E 10.534(TESTVERSION=YES all)316.8 401.3 R F2(or)
+13.034 E F5 10.534(cd src; make)13.034 F(TESTVERSION=YES all)316.8 412.3
+Q F2(to generate the e)2.5 E -.15(xe)-.15 G(cutables.).15 E(The)331.8
+426.6 Q F5(TESTVERSION)2.976 E F2 .476(\215ag causes a test and deb)
+2.976 F .477(ugging v)-.2 F(er)-.15 E(-)-.2 E 1.452(sion of the softw)
+316.8 437.6 R 1.452(are to be generated.)-.1 F 1.452(This v)6.452 F
+1.452(ersion will read)-.15 F(the)316.8 448.6 Q F5(LPD_CONF)2.558 E F2
+(en)2.559 E .059(vironment v)-.4 F .059
+(ariable for the name of a con\214g-)-.25 F .569
+(uration \214le, whose contents can o)316.8 459.6 R -.15(ve)-.15 G .569
+(rride the compile time de-).15 F -.1(fa)316.8 470.6 S 3.876(ults. This)
+.1 F 1.376(is a blatant security loophole especially running)3.876 F
+.496(SUID root; see Security Considerations later in the document.)316.8
+481.6 R 2.298(Only the)316.8 492.6 R F5(defaults.o)4.798 E F2 2.299
+(\214le uses this \215ag for compilation.)4.799 F .045
+(After testing the installation you can delete)316.8 503.6 R F5
+(defaults.o)2.545 E F2(and)2.545 E(remak)316.8 514.6 Q 7.398(et)-.1 G
+4.898(he distribtion.)-7.398 F(POR)9.898 E -.93(TA)-.6 G 4.898
+(BILITY AND TESTING).93 F F4(LPRng - P)36 744.96 Q(ortability T)-.2 E
+(esting and Installation)-.92 E(1)274.93 E EP
+%%Page: 2 2
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Bold@0 SF(LPRng P)36 32.16 Q(ortability)-.2 E/F1 10
+/Times-Roman@0 SF(VERSION)36 67.16 Q 2.804(Once you ha)51 81.46 R 3.104
+-.15(ve g)-.2 H 2.804(enerated the test v).15 F 2.803(ersion using)-.15
+F/F2 10/Courier@0 SF(make)5.303 E(TESTVERSION=YES)36 92.46 Q F1 2.864
+(,y)C .364(ou should set up a user v)-2.864 F .365(ersion of the)-.15 F
+1.018(LPRng softw)36 103.46 R 1.018(are by using the \214les in the)-.1
+F F2(TESTSUPPORT)3.517 E F1(di-)3.517 E(rectory)36 114.46 Q 5(.T)-.65 G
+(his requires the follo)-5 E(wing steps.)-.25 E/F3 9/Courier@0 SF
+(cd TESTSUPPORT)43.2 129.66 Q(setenv USER `whoami`)43.2 151.26 Q
+(setenv HOST)43.2 162.06 Q/F4 9/Times-Italic@0 SF
+(fully quali\214ed domain name)5.4 E F3
+(setenv LPD_CONF /tmp/LPD/lpd.conf)43.2 172.86 Q
+(set path=\( /tmp/LPD $path \))43.2 183.66 Q/F5 9/Times-Bold@0 SF(OR)
+43.2 194.46 Q F3(USER=`whoami`; export USER)43.2 205.26 Q(HOST=)43.2
+216.06 Q F4(fully quali\214ed domain name)5.4 E F3 5.4(;e)C(xport HOST)
+-5.4 E(PATH=/tmp/LPD $path:$PATH)43.2 226.86 Q
+(LPD_CONF=/tmp/LPD/lpd.conf; export LPD_CONF)43.2 237.66 Q(make)43.2
+259.26 Q 1.671(The test files and executables will be in-)49.5 273.3 R
+1.5(stalled in the /tmp/LPD directory.)36 284.1 R 1.5(This tar-)12.3 F
+1.286(get directory can be changed by modifying the)36 294.9 R
+(TESTSUPPORT/Makefile.)36 305.7 Q 4.275
+(During testing, the environment variables)49.5 319.74 R 1.8
+(should be set in the .cshrc or .profile ini-)36 330.54 R
+(tialization files.)36 341.34 Q F5(POR)112.113 360.24 Q -.81(TA)-.36 G
+(BIL).81 E(TY TESTING)-.828 E/F6 9/Times-Roman@0 SF 1.972
+(If your system is not listed in the)49.5 376.44 R F3(README.ports)4.222
+E F6 1.971(\214le, it is)4.222 F .607
+(strongly recommended that you check the installation for portability)36
+387.24 R(.)-.585 E 1.084(These tests use the)36 398.04 R F3(TESTSUPPORT)
+3.334 E F6 -.135(ve)3.334 G 1.084(rsion, installed as detailed in).135 F
+(the pre)36 408.84 Q(vious section.)-.225 E(The e)4.5 E -.135(xe)-.135 G
+(cutables are placed in).135 E F3(/tmp/LPD)2.25 E F6(.)A(The)49.5 422.88
+Q F3(checkpc)2.955 E F6 .705(program has se)2.955 F -.135(ve)-.225 G
+.705(ral portablility tests that are run).135 F .814(by using the)36
+433.68 R F3 .814(checkpc -T)3.064 F F6 3.064(\215ag. Y)3.064 F .814
+(ou will need to be superuser for)-.99 F .042(some of these tests; this is only for testing that the SUID functionality)
+36 444.48 R .748(is w)36 455.28 R 2.998(orking. In)-.09 F .748
+(the directory where you generated the)2.998 F F3(checkpc)2.998 E F6
+-.135(ex)2.997 G(-).135 E 1.199(ecutable, e)36 466.08 R -.135(xe)-.135 G
+1.199(cute the follo).135 F 1.199(wing command, where)-.225 F F4(serial)
+3.449 E F6 1.199(is the path-)3.449 F(name of a serial port.)36 476.88 Q
+F3(checkpc -T)43.2 492 Q F4(serial)5.4 E F5(SUID T)36 509.82 Q(est)-.828
+E F6 1.021(The \214rst test in)49.5 523.32 R -.18(vo)-.36 G(lv).18 E
+1.021(es SUID checking.)-.135 F 1.02(This test can be delayed)5.521 F
+.043(until installation time, b)36 534.12 R .043
+(ut must be done before installing a production)-.18 F -.135(ve)36
+544.92 S 3.484(rsion. If).135 F F3(checkpc)3.484 E F6 1.234
+(is not run as R)3.484 F(OO)-.36 E 3.484(To)-.36 G 3.484(ra)-3.484 G
+3.483(saS)-3.484 G 1.233(ETUID R)-3.483 F(OO)-.36 E(T)-.36 E
+(program, this test is skipped.)36 555.72 Q 2.565 -.72(To c)49.5 569.76
+T 1.125(reate a SETUID R).72 F(OO)-.36 E 3.375(Tc)-.36 G 1.125
+(heckpc program and run the tests,)-3.375 F .576(carry out the follo)36
+580.56 R .576(wing steps.)-.225 F .576
+(Delete the SETUID after \214nishing the)5.076 F(tests!)36 591.36 Q F3
+(cd /tmp/LPD)43.2 606.48 Q(su)43.2 617.28 Q F6(become root)61.2 E F3
+(chown root checkpc)43.2 628.08 Q F6(change o)10.8 E(wnership)-.225 E F3
+(chmod 4111 checkpc)43.2 638.88 Q F6(mak)10.8 E 2.25(eS)-.09 G(ETUID R)
+-2.25 E(OO)-.36 E(T)-.36 E F3(exit)43.2 649.68 Q F6(\(become re)50.4 E
+(gular user\))-.135 E F3(checkpc -T)43.2 660.48 Q F4(serial)5.4 E F6
+(run tests)10.098 E(\(check test results\))52.2 671.28 Q F3(su)43.2
+682.08 Q F6(become root)61.2 E F3(chmod 755 checkpc)43.2 692.88 Q
+(chown `whoami` checkpc)43.2 703.68 Q(exit)43.2 714.48 Q F6(\(become re)
+55.8 E(gular user\))-.135 E .322
+(If the setuid test succeeds, then a success message will be printed)
+330.3 66.96 R 2.841(out. If)316.8 77.76 R .591(it f)2.841 F .591
+(ails, then rerun the test with diagnostics enabled as sho)-.09 F(wn)
+-.225 E(belo)316.8 88.56 Q 2.432(wa)-.225 G .182(nd sa)-2.432 F .452
+-.135(ve t)-.18 H .182(he output to a \214le.).135 F 2.433(As)4.683 G
+.183(tudy of the output should pro-)-2.433 F
+(vide detailed information as to the cause of f)316.8 99.36 Q(ailure.)
+-.09 E F3(checkpc -D9 -T)324 114.48 Q F4(serial)5.4 E F5(BIDIRECTION)
+316.8 132.3 Q(AL PIPES)-.18 E F6 2.467(Ab)330.3 145.8 S .217
+(idirectional pipe is used for inter)-2.467 F .217
+(-\214lter communication.)-.18 F .217(If this)4.717 F 1.368(test f)316.8
+156.6 R 1.368(ails, then you should enable)-.09 F F3(RWSOCKETS_CFLAGS)
+3.618 E F6 1.368(option in)3.618 F(the)316.8 167.4 Q F3(src/Makefile)
+3.037 E F6 .787(and re)3.037 F(generate)-.135 E F3(rw_pipe.o)3.037 E F6
+5.287(.T)C .787(his option im-)-5.287 F
+(plements bidirectional pipes by using a sock)316.8 178.2 Q
+(et based mechanism.)-.09 E F5(SERIAL DEVICE OPEN AND LOCK)316.8 191.7 Q
+F6 4.346(The ne)330.3 205.2 R 4.346(xt test checks to see if the)-.135 F
+F3(Checkwrite\(\))6.596 E F6(and)6.596 E F3(Lock_device\(\))316.8 216 Q
+F6 1.537(routines open and lock a serial de)3.787 F 3.786(vice. De)-.225
+F(vice)-.225 E .801(locking is done by using the)316.8 226.8 R F3 -2.349
+(TIOCEXCL ioctl\(\))3.051 F F6 3.051(call. If)3.051 F(locking)3.051 E
+-.09(fa)316.8 237.6 S(ils, set).09 E F3(-D4)2.25 E F6
+(and determine which lock method is being used.)2.25 E 8.219(See the)
+330.3 251.64 R F3(LOCK_DEVS_CFLAGS)10.469 E F6 -.225(va)10.469 G 8.219
+(riable description in).225 F F3(src/Makefile)316.8 262.44 Q F6 1.951
+(and comments in)4.2 F F3(src/common/lockfile.c)4.201 E F6 1.46(on ho)
+316.8 273.24 R 3.71(wt)-.225 G 3.71(os)-3.71 G 1.46(elect the f)-3.71 F
+1.46(allback locking method.)-.09 F 1.459(Once selected, Y)5.96 F(ou)
+-.99 E .746(will need to re)316.8 284.04 R(generate)-.135 E F3
+(lockfile.o)2.996 E F6 .746(and the e)2.996 F -.135(xe)-.135 G .746
+(cutables and rein-).135 F(stall them in the test location.)316.8 294.84
+Q F5(FILE OPEN AND LOCK)316.8 308.34 Q F6 1.145(The ne)330.3 321.84 R
+1.145(xt set of tests check that \214le locking w)-.135 F 3.394
+(orks. If)-.09 F(the)3.394 E 3.394(yf)-.135 G(ail,)-3.484 E 7.734
+(then try using an alternati)316.8 332.64 R 8.004 -.135(ve l)-.225 H
+7.735(ocking method with the).135 F F3(STATFS_CFLAGS)316.8 343.44 Q F6
+-.225(va)3.321 G 1.071(riable in the).225 F F3(src/Makefile)3.321 E F6
+5.571(.S)C 1.071(ee the com-)-5.571 F 1.512(ments in)316.8 354.24 R F3
+(src/common/lockfile.c)3.762 E F6 1.512(as well.)3.762 F -.99(Yo)6.012 G
+3.762(uw).99 G 1.512(ill need to)-3.762 F(re)316.8 365.04 Q(generate)
+-.135 E F3(lockfile.o)2.25 E F6(and the e)2.25 E -.135(xe)-.135 G
+(cutables.).135 E F5(STTY FUNCTIONS)316.8 378.54 Q F6 .56(The ne)330.3
+392.04 R .56(xt test checks the)-.135 F F3(stty)2.81 E F6 .56
+(\(set serial line characteristics\) ca-)2.81 F 2.902(pabilities. In)
+316.8 402.84 R .653
+(order to do as system independent operations as possi-)2.902 F 1.114
+(ble, line status is displayed using the)316.8 413.64 R F3(stty)3.364 E
+F6 3.364(command. Y)3.364 F 1.114(ou should)-.99 F 1.443
+(check the output of this command to mak)316.8 424.44 R 3.693(es)-.09 G
+1.444(ure that the requested)-3.693 F(STTY operations did tak)316.8
+435.24 Q 2.25(ep)-.09 G(lace.)-2.25 E .16(If a stty operation f)330.3
+449.28 R .16(ailes, using the)-.09 F F3 -2.991(checkpc -D9)2.409 F F6
+.159(\215ag and e)2.409 F(xam-)-.135 E 4.663
+(ine the diagnostic output for the cause of f)316.8 460.08 R 6.913
+(ailure. See)-.09 F(the)6.913 E F3(STTY_CFLAGS)316.8 470.88 Q F6 .533
+(section of)2.783 F F3(src/Makefile)2.783 E F6 .533(on ho)2.783 F 2.783
+(wt)-.225 G 2.783(os)-2.783 G .533(elect an al-)-2.783 F(ternatv)316.8
+481.68 Q 2.575(eS)-.135 G .325(TTY interf)-2.575 F .325
+(ace function if the one selected by)-.09 F F3(configure)2.575 E F6 .072
+(is not suitable.)316.8 492.48 R -.99(Yo)4.572 G 2.322(uw).99 G .072
+(ill need to re)-2.322 F(generate)-.135 E F3(stty.o)2.322 E F6 .072
+(and the e)2.322 F -.135(xe)-.135 G(cuta-).135 E(bles.)316.8 503.28 Q F5
+(PR)316.8 516.78 Q(OCTITLE)-.27 E F6(The)330.3 530.28 Q F3
+(setproctitle\(\))3.058 E F6 .809
+(function modi\214es the process status so)3.058 F .007(that the)316.8
+541.08 R F3(ps\(1\))2.257 E F6 .007
+(command will display the process acti)2.257 F(vity)-.225 E 4.506(.I)
+-.585 G 2.256(ft)-4.506 G .006(his test)-2.256 F -.09(fa)316.8 551.88 S
+.362(ils, then you might w).09 F .362(ant to see if you can modify the)
+-.09 F F3(src/proc-)2.613 E(title.c)316.8 562.68 Q F6 1.096
+(code so that it w)3.346 F 3.345(orks. Otherwise,)-.09 F 1.095
+(just modify the)3.345 F F3(SET-)3.345 E(PROCTITLE_CFLAGS)316.8 573.48 Q
+F6 -.225(va)2.759 G .509(riable in).225 F F3(src/Makefile)2.759 E F6 .51
+(and recompile.)2.76 F F5(Filter T)417.091 592.38 Q(esting)-.828 E F6
+-.99(Yo)330.3 608.58 S 2.785(us).99 G .534
+(hould test the \214lters for your e)-2.785 F .534
+(xisting printers by \214rst using)-.135 F .874(the test v)316.8 619.38
+R 3.124(ersion. Y)-.135 F .875(ou can simply cop)-.99 F 3.125(yt)-.09 G
+.875(he e)-3.125 F .875(xisting printcap entry to)-.135 F .055(the test printcap \214le, and modify the entry so that it uses the test setup)
+316.8 630.18 R(directories.)316.8 640.98 Q(Ne)330.3 655.02 Q .245
+(xt, try running a job through the \214lters, and see if it w)-.135 F
+.246(orks cor)-.09 F(-)-.18 E(rectly)316.8 665.82 Q 5.148(.S)-.585 G
+.648(ome \214lters)-5.148 F F5 -.162(re)2.898 G(quir).162 E(e)-.162 E F6
+.648(root permissions as the)2.898 F 2.898(yp)-.135 G .648
+(erform opera-)-2.898 F .831(tions such as opening sock)316.8 676.62 R
+.831(ets in the pri)-.09 F(vile)-.225 E .831(ged port range.)-.135 F
+.831(If this is)5.331 F .694
+(the case, you will probably need to read the w)316.8 687.42 R .693
+(arnings about running)-.09 F .603(\214lters as R)316.8 698.22 R(OO)-.36
+E 1.935 -.666(T, a)-.36 H .603
+(nd enable the source compilation \215ag to allo).666 F 2.853(wt)-.225 G
+(his)-2.853 E .452(to be done.)316.8 709.02 R -.99(Yo)4.952 G 2.702(uM)
+.99 G .452(UST read the w)-2.702 F .451(arnings in the src/Mak)-.09 F
+.451(e\214le before)-.09 F F0 274.93(2L)36 744.96 S(PRng - P)-274.93 E
+(ortability T)-.2 E(esting and Installation)-.92 E EP
+%%Page: 3 3
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 10/Times-Bold@0 SF(LPRng P)425.03 32.16 Q(ortability)-.2 E/F1 9
+/Times-Roman@0 SF .075(this can be done.)36 66.96 R -.99(Yo)4.575 G
+2.325(um).99 G .075(ust also use the follo)-2.325 F .076
+(wing in the printcap \214le:)-.225 F/F2 9/Courier@0 SF
+(:if=ROOT /bin/....)36 77.76 Q F1 .736
+(This has been done deliberately to mak)49.5 91.8 R 2.985(ei)-.09 G
+2.985(td)-2.985 G(if)-2.985 E .735(\214cult to ignore the)-.225 F
+(serious security problems this will open.)36 102.6 Q .687(By def)49.5
+116.64 R .687(ault, the LPD serv)-.09 F .687
+(er passes \214les to \214lters by using a pipe.)-.135 F .559(This allo)
+36 127.44 R .559(ws the serv)-.225 F .559
+(er to monitor the progress of printing.)-.135 F(Ho)5.058 E(we)-.225 E
+-.135(ve)-.225 G -.36(r,).135 G .463(some \214lters require direct access to the \214le for doing fseek and other)
+36 138.24 R 2.25(operations. T)36 149.04 R 2.25(oa)-.72 G(llo)-2.25 E
+2.25(wt)-.225 G(his, set the)-2.25 E F2(:direct_read:)2.25 E F1
+(printcap \215ag.)5.4 E/F3 9/Times-Bold@0 SF(Installation)139.995 167.94
+Q F1 .81(Once you ha)49.5 184.14 R 1.08 -.135(ve \214)-.18 H .81
+(nished testing, you can perform a \214nal installa-).135 F 2.25
+(tion. The)36 194.94 R(follo)2.25 E(wing steps should be follo)-.225 E
+(wed.)-.225 E 2.25(1. First,)36 208.98 R .09(compile the non-test v)2.34
+F .09(ersion and install it in the def)-.135 F .09(ault loca-)-.09 F
+(tions.)47.25 219.78 Q F2(rm src/default.o)43.2 234.9 Q(su)43.2 245.7 Q
+/F4 9/Times-Italic@0 SF(may need r)16.2 E(oot perms to install)-.405 E
+F2(make install)43.2 256.5 Q F1 2.25(2. Ne)36 274.86 R .787
+(xt, if you are performing an initial installation, a simple set of)
+-.135 F F2(lpd.conf)47.25 285.66 Q F1(and)3.046 E F2(lpd.perms)3.046 E
+F1 .796(\214les are a)3.046 F -.225(va)-.18 G 3.047(ilable. Y).225 F
+.797(ou can install)-.99 F(these by using the Mak)47.25 296.46 Q
+(e\214le in the distrib)-.09 E(ution.)-.18 E F2(make default)43.2 311.58
+Q F1 2.25(3. Ne)36 329.94 R .715
+(xt, you should stop the current lpd daemon and sa)-.135 F .985 -.135
+(ve t)-.18 H .715(he e).135 F(xist-)-.135 E .056(ing printcap \214le.)
+47.25 340.74 R .056(If you are installing softw)4.556 F .057
+(are on a Sun Microsys-)-.09 F 5.283(tems Solaris system,)47.25 351.54 R
+5.283(see the detailed description in the)9.783 F .74
+(README.solaris \214le in the distrib)47.25 362.34 R 2.99(ution. On)-.18
+F .741(most other systems,)2.99 F(you can do:)47.25 373.14 Q F2
+(ps -axu | grep lpd)43.2 388.26 Q(kill)43.2 399.06 Q F4(lpd pid)5.4 E F1
+2.25(4. If)36 417.42 R .889(you need to, cop)3.14 F 3.139(yt)-.09 G .889
+(he ne)-3.139 F 3.139(wp)-.225 G .889(rintcap \214le to)-3.139 F F2
+(/etc/printcap)3.139 E F1(.)A(Use)47.25 428.22 Q F2(checkpc)2.25 E F1
+(to ensure that the current printcap \214le is correct.)2.25 E F2
+(cp /etc/printcap /etc/printcap.old)43.2 443.34 Q(checkpc)43.2 454.14 Q
+(checkpc -f)43.2 464.94 Q F4(if necessary to for)5.4 E(ce corr)-.333 E
+(ect permissions)-.333 E F1 2.25(5. Start)36 483.3 R
+(the lpd daemon and check its operation.)2.25 E F2(lpd)43.2 498.42 Q
+(exit)43.2 509.22 Q F4 -.333(re)10.8 G(turn to user).333 E F2(lpq)43.2
+520.02 Q F1 2.25(6. Edit)36 538.38 R 3.846
+(the print spooler startup commands in the appropriate)6.096 F F2
+(rc.local)47.25 549.18 Q F1 .194(or other startup \214le to use)2.445 F
+F2(/usr/local/bin/lpd)2.444 E F1(.)A 2.25(7. Reboot)36 563.22 R
+(system to ensure that serv)2.25 E(er is started correctly)-.135 E(.)
+-.585 E F3 -.18(Pe)119.97 582.12 S(riodic Maintenance).18 E F1 .388
+(It is recommended that the)49.5 598.32 R F2(checkpc)2.638 E F1 .388
+(program be run periodical-)2.638 F .627(ly to remo)36 609.12 R .897
+-.135(ve a)-.135 H .627(borted jobs and to truncate v).135 F .627
+(arious log \214les.)-.225 F .627(This can)5.127 F
+(be done by putting the follo)36 619.92 Q(wing entry in the)-.225 E F4
+(cr)2.25 E(ontab)-.405 E F1(for root.)2.25 E F2
+(15 5 * * * /usr/local/lib/cleanlog)43.2 635.04 Q F1(The)49.5 653.4 Q F2
+(cleanlog)2.907 E F1 .658(script can be used to clean and/or truncate v)
+2.908 F(ari-)-.225 E(ous \214les.)36 664.2 Q(The follo)4.5 E
+(wing is a typical script.)-.225 E F2(#!/bin/sh)43.2 679.32 Q
+(trunc \(\) {)43.2 690.12 Q(tail $1 >/tmp/$$)61.2 700.92 Q
+(cat /tmp/$$ >$1)61.2 711.72 Q(rm /tmp/$$)342 66.96 Q(})324 77.76 Q
+(FILES="/usr/spool/lpd/log* /usr/spool/lpd/accnt")324 99.36 Q
+(for i in $FILES do)324 110.16 Q(echo $i)342 120.96 Q(done)324 131.76 Q
+F0(LPRng - P)36 744.96 Q(ortability T)-.2 E(esting and Installation)-.92
+E(3)274.93 E EP
+%%Trailer
+end
+%%EOF
