@@ -1,4 +1,5 @@
 #!/bin/sh
+# $Id: ncpprint,v 1.42 2002/12/04 21:12:17 papowell Exp $
 # This script is an input filter for printcap printing on a unix machine. It
 # uses the nprint program to print the file to the specified ncp-based 
 # server and queue.
@@ -13,7 +14,7 @@
 #
 # This version reads from a ${SPOOLDIR}/general.cfg
 #  file or uses the PRINTCAP_ENTRY environment variable
-#  passed by LPRng,  and the 'smb_options' value in it.
+#  passed by LPRng,  and the 'ncp_options' value in it.
 #  The username and password information are in an 'authfile'
 #
 #
@@ -30,23 +31,22 @@
 # authfile has:
 #   username=fred
 #   password=
-
 #
-# The last parameter to the filter is the accounting file name.
-#   Extract the directory name from the file name.
-#   Concat this with /.config to get the config file.
+# You can also  put options into the printcap ncp_options entry
+# ncp:lp=/dev/null:sd=/usr/spool/ncp:sh:if=/usr/local/bin/ncpprint
+#   ncp_options= server=NWSERVER printer=P_QUEUE1 authfile=authfile
 #
 
 if [ -f ./general.cfg ] ; then
 	. ./general.cfg
 fi
-options=`echo "${PRINTCAP_ENTRY}" | sed -n -e 's/:smb_options=//' `
+options=`echo "${PRINTCAP_ENTRY}" | sed -n -e 's/:ncp_options=//' `
 if [ -n "$options" ] ; then
 	eval export $options
 fi
 
 # get username and password values
-if [ -n "$authfile' -a -f $authfile ] ; then
+if [ -n "$authfile' -a -f "$authfile" ] ; then
 	. $authfile
 fi
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: monitor.c,v 1.37 2002/08/12 00:01:45 papowell Exp $";
+"$Id: monitor.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -226,8 +226,13 @@ int main(int argc, char *argv[] )
 			if( FD_ISSET(i, &testfds) ){
 				if( debug ) FPRINTF(STDERR,"monitor: input on %d\n", i );
 				if( i == tcp_fd ){
+#if defined(HAVE_SOCKLEN_T)
+					socklen_t len;
+#else
+					int len;
+#endif
 					struct sockaddr_in sinaddr;
-					int len = sizeof( sinaddr );
+					len = sizeof( sinaddr );
 					i = accept( tcp_fd, (struct sockaddr *)&sinaddr, &len );
 					if( i < 0 ){
 						FPRINTF( STDERR, "accept error - %s\n",

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: getqueue.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 
 /***************************************************************************
@@ -248,9 +248,7 @@ int Get_file_image_and_split( const char *file,
 {
 	char *s = 0;
 	if( return_image ) *return_image = 0;
-	if( file ){
-		s = Get_file_image( file, maxsize );
-	}
+	if( !ISNULL(file) ) s = Get_file_image( file, maxsize );
 	if( s == 0 ) return 1;
 	if( clean ) Clean_meta(s);
 	Split( l, s, sep, sort, keysep, uniq, trim, nocomments ,0);
@@ -307,7 +305,7 @@ void Setup_job( struct job *job, struct line_list *spool_control,
 	int i, j, size = 0;
 
 	/* add the hold file information directly */ 
-	DEBUG3("Setup_job: hf_name '%s', cf_name '%s'", hf_name, cf_name );
+	DEBUG3("Setup_job: hf_name '%s', cf_name (TRANSFERNAME) '%s'", hf_name, cf_name );
 	if( cf_name ){
 		Set_str_value(&job->info,TRANSFERNAME, cf_name);
 	}
@@ -498,8 +496,8 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 		s = Find_str_value(&job->info,OPENNAME,Value_sep);
 		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 		DEBUG3("Setup_cf_info: control file '%s', hpformat '%d'", s, hpformat );
-		i = Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0);
-		if( i && check_for_existence ){
+		if( Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0)
+			 && check_for_existence ){
 			DEBUG3("Setup_cf_info: missing or empty control file '%s'", s );
 			SNPRINTF(buffer,sizeof(buffer))
 				"no control file %s - %s", s, Errormsg(errno) );
@@ -622,10 +620,11 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 	if( file_found ){
 		Check_max(&job->datafiles,1);
 		job->datafiles.list[job->datafiles.count++] = (void *)datafile;
+		datafile = 0;
 	} else {
 		free(datafile);
+		datafile = 0;
 	}
-	datafile = 0;
 	Set_str_value(&job->info,FILENAMES,names);
 
  done:
@@ -646,9 +645,9 @@ char *Make_hf_image( struct job *job )
 	outstr = 0;
 	for( i = 0; i < job->info.count; ++i ){
 		s = job->info.list[i];
-		if( !safestrpbrk(s,Line_ends) &&
+		if( !ISNULL(s) && !safestrpbrk(s,Line_ends) &&
 			safestrncasecmp(OPENNAME,s,len) ){
-			outstr = safeextend3(outstr,"\n",s,__FILE__,__LINE__);
+			outstr = safeextend3(outstr,s,"\n",__FILE__,__LINE__);
 		}
 	}
 	return( outstr );
@@ -667,14 +666,12 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 	outstr = 0;
 
 	if(DEBUGL4)Dump_job("Set_hold_file",job);
+	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
 	if( !(hf_name = Find_str_value(&job->info,HF_NAME,Value_sep)) ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Set_hold_file: LOGIC ERROR- no HF_NAME in job information");
 	}
-
-	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
 	outstr = Make_hf_image( job );
-
 	if( !fd ){
 		fd = Make_temp_fd( &tempfile );
 		if( Write_fd_str(fd, outstr) < 0 ){
@@ -729,19 +726,14 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 
 void Get_hold_file( struct job *job, char *hf_name )
 {
-	int status = 0;
 	char *s;
 	if( (s = safestrchr(hf_name, '=')) ){
 		hf_name = s+1;
 	}
 	DEBUG1("Get_hold_file: checking on '%s'", hf_name );
 
-	if( ISNULL(hf_name) ) return;
-
-	if( !status ) {
-		Get_file_image_and_split( hf_name, 0, 0,
-			&job->info, Line_ends, 1, Value_sep,1,1,1,0);
-	}
+	Get_file_image_and_split( hf_name, 0, 0,
+		&job->info, Line_ends, 1, Value_sep,1,1,1,0);
 	if( !Find_str_value(&job->info,HF_NAME,Value_sep) ){
 		Set_str_value(&job->info,HF_NAME,hf_name);
 	}
@@ -890,13 +882,15 @@ void Make_sort_key( struct job *job )
 		FATAL(LOG_ERR)"Make_sort_key: order_routine requested and ORDER_ROUTINE undefined");
 #endif
 	} else {
+		/* first key is REMOVE_TIME - remove jobs come last */
+		intval(REMOVE_TIME,&job->info,job);
+#if 0
 		/* first key is DONE_TIME - done jobs come last */
 		intval(DONE_TIME,&job->info,job);
 		intval(INCOMING_TIME,&job->info,job);
-		/* next key is REMOVE_TIME - removed jobs come before last */
-		intval(REMOVE_TIME,&job->info,job);
 		/* next key is ERROR - error jobs jobs come before removed */
 		intval(ERROR_TIME,&job->info,job);
+#endif
 		/* next key is HOLD - before the error jobs  */
 		intval(HOLD_CLASS,&job->info,job);
 		intval(HOLD_TIME,&job->info,job);
@@ -1423,8 +1417,6 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	} else if( Find_flag_value(&job->info,HOLD_TIME,Value_sep) ){
 		SNPRINTF(buffer,sizeof(buffer)) "hold" );
 		held = 1;
-	} else if( Find_flag_value(&job->info,REMOVE_TIME,Value_sep) ){
-		SNPRINTF(buffer,sizeof(buffer)) "remove" );
 	} else if( (done = Find_flag_value(&job->info,DONE_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "done" );
 	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))
@@ -1464,8 +1456,6 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 			} else if( Find_flag_value(&job->destination,HOLD_TIME,Value_sep) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "hold" );
 				held += 1;
-			} else if( Find_flag_value(&job->destination,REMOVE_TIME,Value_sep) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "remove" );
 			} else if( Find_flag_value(&job->destination,DONE_TIME,Value_sep) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "done" );
 			} else if( (n = Find_flag_value(&job->destination,SERVER,Value_sep))
@@ -1809,7 +1799,6 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	Set_str_value(&job->info,DATAFILES,dataline);
 	s = Find_str_value(&job->info,DATAFILES,Value_sep);
 	while( (s = safestrchr(s,'\n')) ) *s++ = '\001';
-
 	return(dataline);
 }
 
@@ -1865,7 +1854,7 @@ int ordercomp(  const void *left, const void *right, const void *orderp)
 void Fix_control( struct job *job, char *filter, char *xlate_format )
 {
 	char *s, *file_hostname, *number, *priority,
-		*datalines, *order;
+		*order;
 	char buffer[SMALLBUFFER], pr[2];
 	int tempfd, tempfc;
 	int i, n, j, cccc, wildcard, len;
@@ -1873,19 +1862,23 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 
 	Init_line_list(&controlfile);
 
+	if(DEBUGL3) Dump_job( "Fix_control: starting", job );
 
 	/* we set the control file with the single letter values in the
-	   information job file
+	   hold job file
 	 */
-
 	for( i = 0; i < job->info.count; ++i ){
+		int c;
 		s = job->info.list[i];
-		if( s && s[0] && s[1] == '=' ){
-			Add_line_list( &controlfile, s, Value_sep, 1, 1);
+		if( s && (c = s[0]) && isupper(c) && c != 'N' && c != 'U'
+			&& s[1] == '=' ){
+			s[1] = 0;
+			Add_line_list( &controlfile, s, Value_sep, 1, 1 );
+			Set_str_value(&controlfile,s,s+2);
+			s[1] = '=';
 		}
 	}
 
-	if(DEBUGL3) Dump_job( "Fix_control: starting", job );
 	if(DEBUGL3) Dump_line_list( "Fix_control: control file", &controlfile );
 
 	n = j = 0;
@@ -2017,17 +2010,20 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		s = controlfile.list[i];
 		memmove(s+1,s+2,safestrlen(s+2)+1);
 	}
-	s = Join_line_list(&controlfile,"\n");
-	DEBUG3( "Fix_control: control info '%s'", s );
+	s = 0;
 
-	datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
-	DEBUG3( "Fix_control: data info '%s'", datalines );
-	s = safeextend2(s,datalines,__FILE__,__LINE__);
-	if( datalines ) free(datalines); datalines = 0;
+	/* we really should not use 's', but it is embedded here... */
+	{
+		char *datalines;
+		char *s = Join_line_list(&controlfile,"\n");
+		DEBUG3( "Fix_control: control info '%s'", s );
 
-	Set_str_value(&job->info,CF_OUT_IMAGE,s);
-	if( s ) free(s); s = 0;
-	if( datalines ) free(datalines); datalines = 0;
+		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
+		DEBUG3( "Fix_control: data info '%s'", datalines );
+		s = safeextend2(s,datalines,__FILE__,__LINE__);
+		Set_str_value(&job->info,CF_OUT_IMAGE,s);
+		if( s ) free(s); s = 0;
+	}
 	
 	if( filter ){
 		DEBUG3("Fix_control: filter '%s'", filter );
@@ -2079,11 +2075,9 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 int Create_control( struct job *job, char *error, int errlen,
 	char *xlate_format )
 {
-	char *s, *t, *file_hostname, *number, *priority, *datalines, *openname;
+	char *s, *t, *file_hostname, *number, *priority, *openname;
 	int status = 0, fd, i;
-	struct line_list controlfile;
-
-	Init_line_list(&controlfile);
+	struct stat statb;
 
 	if(DEBUGL3) Dump_job( "Create_control: before fixing", job );
 
@@ -2165,39 +2159,43 @@ int Create_control( struct job *job, char *error, int errlen,
 	Set_str_value(&job->info,TRANSFERNAME,s);
 	if(s) free(s); s = 0;
 
-	/* now we generate the control file image by getting the info
-	 * from the control file
-	 */
-	for( i = 0; i < job->info.count; ++i ){
-		s = job->info.list[i];
-		if( s && s[0] && s[1] == '=' ){
-			s[1] = s[0];
-			Add_line_list( &controlfile, s+1, Value_sep, 1, 1);
-			s[1] = '=';
+	{
+		/* now we generate the control file image by getting the info
+		 * from the hold file
+		 */
+		char *s = 0, *datalines;
+		for( i = 0; i < job->info.count; ++i ){
+			char *t = job->info.list[i];
+			int c;
+			if( t && (c = t[0]) && isupper(c) && c != 'N' && c != 'U' 
+				&& t[1] == '=' ){
+				t[1] = 0;
+				s = safeextend4(s,t,t+2,"\n",__FILE__,__LINE__);
+				t[1] = '=';
+			}
 		}
+
+		DEBUG4("Create_control: first part '%s'", s );
+		datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
+		DEBUG4("Create_control: data info '%s'", datalines );
+		s = safeextend2(s,datalines,__FILE__,__LINE__);
+		DEBUG4("Create_control: joined '%s'", s );
 	}
-
-	s = Join_line_list(&controlfile,"\n");
-	DEBUG4("Create_control: first part '%s'", s );
-
-	datalines = Fix_datafile_info( job, number, file_hostname, xlate_format );
-	DEBUG4("Create_control: data info '%s'", datalines );
-	s = safeextend2(s,datalines,__FILE__,__LINE__);
-	DEBUG4("Create_control: joined '%s'", s );
-	if( datalines ) free(datalines); datalines = 0;
 
 	openname = Find_str_value(&job->info,OPENNAME,Value_sep); 
 	if( !openname ) openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep); 
-	if( (fd = open(openname,O_WRONLY,0)) < 0
+	DEBUG4("Create_control: writing to '%s'", openname );
+	if( (fd = Checkwrite(openname,&statb,0,1,0)) < 0
 		|| ftruncate(fd,0) || Write_fd_str(fd,s) < 0 ){
-		SNPRINTF(error,errlen)"Create_control: cannot write '%s' - '%s'",
+		SNPRINTF(error,errlen)"Write_control: cannot write '%s' - '%s'",
 			openname, Errormsg(errno) );
 		status = 1;
 	}
 	Max_open(fd);
-	if( s ) free(s); s = 0;
 	if( fd > 0 ) close(fd); fd = -1;
-	if(DEBUGL3) Dump_job( "Create_control: after fixing", job );
+
+	if( s ) free(s); s = 0;
+
 	return( status );
 }
 

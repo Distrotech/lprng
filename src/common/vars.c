@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.37 2002/08/12 00:01:46 papowell Exp $";
+"$Id: vars.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 
 /* force local definitions */
@@ -210,6 +210,10 @@ struct keywords Pc_var_list[] = {
 { "fakelargefile", 0,  INTEGER_K,  &Fake_large_file_DYN,0,0,0},
    /*  string to send for a form feed */
 { "ff", 0,  STRING_K,  &Form_feed_DYN,0,0,"=\\f"},
+   /* enforce FIFO (first in, first out) order */
+{ "fifo", 0, STRING_K, &Fifo_DYN,0,0,0},
+   /* FIFO lock file */
+{ "fifo_lock_file", 0, STRING_K, &Fifo_lock_file_DYN,0,0,"=fifo.lock"},
    /* default filter */
 { "filter", 0, STRING_K, &Filter_DYN,0,0,0},
    /* filter LD_LIBRARY_PATH value */
@@ -324,6 +328,8 @@ struct keywords Pc_var_list[] = {
 { "lpr_bounce", 0, FLAG_K, &Lpr_bounce_DYN,0,0,0},
    /* BSD LPR -m flag, does not require mail address */
 { "lpr_bsd", 0, FLAG_K, &LPR_bsd_DYN,0,0,0},
+   /* numbers of times for lpr to try sending job - 0 is infinite */
+{ "lpr_send_try", 0, INTEGER_K, &Lpr_send_try_DYN,0,0,"=3"},
    /* from address to use in mail messages */
 { "mail_from", 0, STRING_K, &Mail_from_DYN,0,0,0},
    /* mail to this operator on error */
@@ -337,7 +343,7 @@ struct keywords Pc_var_list[] = {
    /* maximum log file size in Kbytes */
 { "max_log_file_size", 0, INTEGER_K, &Max_log_file_size_DYN,0,0,"=1000"},
    /* maximum number of servers that can be active */
-{ "max_servers_active", 0, INTEGER_K, &Max_servers_active_DYN,1,0,0},
+{ "max_servers_active", 0, INTEGER_K, &Max_servers_active_DYN,1,0,"=1024"},
    /* maximum length of status line */
 { "max_status_line", 0, INTEGER_K, &Max_status_line_DYN,0,0,"=79"},
    /* maximum size (in K) of status file */
@@ -452,13 +458,13 @@ struct keywords Pc_var_list[] = {
 { "send_block_format", 0, FLAG_K, &Send_block_format_DYN,0,0,0},
    /* send data files first, then control file */
 { "send_data_first", 0, FLAG_K, &Send_data_first_DYN,0,0,0},
-   /* failure action to take after send_try attempts failed */
+   /* failure action for server to take after send_try attempts failed */
 { "send_failure_action", 0, STRING_K, &Send_failure_action_DYN,0,0,"=remove"},
    /* timeout for read/write lpr IO operatons */
 { "send_job_rw_timeout", 0, INTEGER_K, &Send_job_rw_timeout_DYN,0,0,"=6000"},
    /* timeout for read/write status or control operatons */
 { "send_query_rw_timeout", 0, INTEGER_K, &Send_query_rw_timeout_DYN,0,0,"=30"},
-   /* numbers of times to try sending job - 0 is infinite */
+   /* numbers of times for server to try sending job - 0 is infinite */
 { "send_try", 0, INTEGER_K, &Send_try_DYN,0,0,"=3"},
    /* sendmail program */
 { "sendmail", 0, STRING_K, &Sendmail_DYN,0,0,"=/usr/sbin/sendmail -oi -t"},

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.37 2002/08/12 00:01:45 papowell Exp $";
+"$Id: lpr.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -60,6 +60,7 @@ int main(int argc, char *argv[], char *envp[])
 	char *s, *t, buffer[SMALLBUFFER], *send_to_pr = 0;
 	struct job prjob;
 	struct line_list opts, newargs;
+	int attempt = 0;
 	int n;
 
 #ifndef NODEBUG
@@ -253,7 +254,7 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = 0;
 		fd = pid = status_fd = poll_for_status = 0;
 		fd = Printer_open(send_to_pr, &status_fd, &prjob,
-			Send_try_DYN, Connect_interval_DYN, Max_connect_interval_DYN,
+			Lpr_send_try_DYN, Connect_interval_DYN, Max_connect_interval_DYN,
 			Connect_grace_DYN, Connect_timeout_DYN, &pid, &poll_for_status );
 
 		/* note: we NEVER return fd == 0 or horrible things have happened */
@@ -288,10 +289,41 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		DEBUG1("lpr: status %s", Server_status(Errorcode) );
 	} else {
-		Errorcode = Send_job( &prjob, &prjob, Connect_timeout_DYN,
-			Connect_interval_DYN,
-			Max_connect_interval_DYN,
-			Send_job_rw_timeout_DYN, User_filter_JOB );
+		Errorcode = 0;
+		attempt = 1;
+		do {
+			if( Errorcode ){
+				if(DEBUGL1)Dump_job("lpr - after error",&prjob);
+				buffer[0] = 0;
+				SNPRINTF(buffer,sizeof(buffer))
+					_("Status Information, attempt %d:\n"), attempt);
+				if( Lpr_send_try_DYN ){
+					n = strlen(buffer)-2;
+					SNPRINTF(buffer+n,sizeof(buffer)-n)
+					_(" of %d:\n"), Lpr_send_try_DYN);
+				}
+				Write_fd_str(2,buffer);
+				s = Join_line_list(&Status_lines,"\n ");
+				if( (t = safestrrchr(s,' ')) ) *t = 0;
+				Write_fd_str(2,s);
+				if(s) free(s); s = 0;
+				Init_line_list( &Status_lines );
+				++attempt;
+				n = Connect_interval_DYN + Connect_grace_DYN;
+				if( n > 0 ){
+					buffer[0] = 0;
+					SNPRINTF(buffer,sizeof(buffer))
+						_("Waiting %d seconds before retry\n"), n);
+					Write_fd_str(2,buffer);
+					plp_sleep( n );
+				}
+				Errorcode = 0;
+			}
+			Errorcode = Send_job( &prjob, &prjob, Connect_timeout_DYN,
+				Connect_interval_DYN,
+				Max_connect_interval_DYN,
+				Send_job_rw_timeout_DYN, User_filter_JOB );
+		} while( Errorcode && (Lpr_send_try_DYN == 0 || attempt < Lpr_send_try_DYN) );
 	}
 
   exit:
@@ -299,19 +331,18 @@ int main(int argc, char *argv[], char *envp[])
 	if( Errorcode ){
 		Errorcode = 1;
 		if(DEBUGL1)Dump_job("lpr - after error",&prjob);
-		if( !Verbose ){
-			Write_fd_str(2,_("Status Information:\n "));
-			s = Join_line_list(&Status_lines,"\n ");
-			if( (t = safestrrchr(s,' ')) ) *t = 0;
-			Write_fd_str(2,s);
-			if(s) free(s); s = 0;
-		} else {
-			buffer[0] = 0;
-			if( (s = Find_str_value(&prjob.info,ERROR,Value_sep)) ){
-				SNPRINTF(buffer,sizeof(buffer))_("job failed - %s\n"),s );
-			}
-			Write_fd_str(2,buffer);
+		buffer[0] = 0;
+		SNPRINTF(buffer,sizeof(buffer))
+			_("Status Information, attempt %d:\n"), attempt);
+		if( Lpr_send_try_DYN ){
+			n = strlen(buffer)-2;
+			SNPRINTF(buffer+n,sizeof(buffer)-n)
+			_(" of %d:\n"), Lpr_send_try_DYN);
 		}
+		s = Join_line_list(&Status_lines,"\n ");
+		if( (t = safestrrchr(s,' ')) ) *t = 0;
+		Write_fd_str(2,s);
+		if(s) free(s); s = 0;
 		cleanup(0);
 	}
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.37 2002/08/12 00:01:45 papowell Exp $";
+"$Id: lprm.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -60,7 +60,7 @@
  *   [+[n]]
  *        Forces lprm to periodically display  the  spool  queues.
  *        Supplying  a  number immediately after the + sign indi-
- *        cates that lprm should sleep n seconds in between  scans
+ *        cates that lprm should sl eep n seconds in between  scans
  *        of the queue.
  *        Note: the screen will be cleared at the start of each
  *        display using the 'curses.h' package.

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: checkpc.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 
 
@@ -1356,7 +1356,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 		exit(0);
 	}
 	FPRINTF( STDERR, "Mother pausing before releasing lock on fd %d\n", fd );
-	sleep(3);
+	plp_sleep(3);
 
 	FPRINTF( STDERR, "Mother closing '%s', releasing lock on fd %d\n",
 		line, fd );

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 
 #include "lp.h"
@@ -172,9 +172,16 @@ void Service_connection( struct line_list *args )
 	/* make sure you use blocking IO */
 	Set_block_io(talk);
 
-	len = sizeof( sinaddr );
-	if( getpeername( talk, &sinaddr, &len ) ){
-		LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
+	{
+#if defined(HAVE_SOCKLEN_T)
+		socklen_t len;
+#else
+		int len;
+#endif
+		len = sizeof( sinaddr );
+		if( getpeername( talk, &sinaddr, &len ) ){
+			LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
+		}
 	}
 
 	DEBUG1("Service_connection: family %d, "

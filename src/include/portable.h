@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.37 2002/08/12 00:01:47 papowell Exp $
+ * $Id: portable.h,v 1.41 2002/12/04 21:12:20 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -811,6 +811,8 @@ extern int openlog( const char *ident, int logopt, int facility );
 
 #ifdef IS_AIX32
 extern int seteuid(uid_t);
+extern int setruid(uid_t);
+extern int setenv(char *, char *, int);
 #endif
 
 

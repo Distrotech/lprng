@@ -1,4 +1,4 @@
-VERSION=3.8.15
+VERSION=3.8.18
 RELEASE=1
 RPM=/usr/src/redhat/RPMS/i386/LPRng-${VERSION}-${RELEASE}.i386.rpm
 CONFIGURE_ARGS=--prefix=/usr --sysconfdir=/etc --with-filterdir=/usr/libexec/filters --with-ld_library_path=/lib:/usr/lib:/usr/local/lib --with-filter_path=/bin:/usr/bin:/usr/libexec:/usr/local/libexec:/usr/sbin:/var/spool/bin
@@ -8,6 +8,7 @@ COPY_HERE=
 
 all:
 	make update
+	chown root.bin *
 	make rpm
 
 rpm:	${RPM}
@@ -38,4 +39,5 @@ update:
 		" LPRng.spec;
 
 checkit: update
+	chown root.bin *
 	make rpm

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -585,10 +585,6 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_decimal_value(&job.info,SERVER,0);
 			mod = 1;
 		}
-		if( Find_str_value(&job.info,OPENNAME,Value_sep ) ){
-			Set_str_value(&job.info,OPENNAME,0);
-			mod = 1;
-		}
 		if((destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep))){
 			if( Find_str_value(&job.info,DESTINATION,Value_sep ) ){
 				Set_str_value(&job.info,DESTINATION,0);
@@ -627,7 +623,8 @@ int Do_queue_jobs( char *name, int subserver )
 					&& (time(0) - Done_time) > Done_jobs_max_age_DYN) ){
 			Susr1 = 1;
 		}
-		DEBUG1( "Do_queue_jobs: Susr1 before scan %d", Susr1 );
+		DEBUG1( "Do_queue_jobs: Susr1 before scan %d, check_for_done %d",
+			Susr1, check_for_done );
 		while( Susr1 ){
 			Susr1 = 0;
 			Done_time = 0;
@@ -673,10 +670,8 @@ int Do_queue_jobs( char *name, int subserver )
 		if(DEBUGL4) Dump_line_list("Do_queue_jobs - sort order printable",
 			&Sort_order );
 
-		if( check_for_done ){
-			Remove_done_jobs();
-			check_for_done = 0;
-		}
+		Remove_done_jobs();
+
 		/* make sure you can print */
 		printing_enabled
 			= !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
@@ -1041,6 +1036,7 @@ int Do_queue_jobs( char *name, int subserver )
 		if( use_subserver > 0 ){
 			/* we set up a copy of the job descriptor to use to make
 				the job in the new directory */
+			int holdfile_fd = -1;
 			struct job jcopy;
 			Init_job(&jcopy);
 			Copy_job(&jcopy,&job);
@@ -1119,7 +1115,8 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 
 			/* get the job set up */
-			i = Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0, -1 );
+			i = Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0, &holdfile_fd );
+			if( holdfile_fd >= 0 ) close( holdfile_fd ); holdfile_fd = -1;
 			Free_job(&jcopy);
 
 			/* now we switch back to the old context */
@@ -1155,7 +1152,7 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(&tinfo,MOVE_DEST,move_dest);
 			if( (pid = Fork_subserver( &servers, 0, &tinfo )) < 0 ){
 				setstatus( &job, _("sleeping, waiting for processes to exit"));
-				sleep(1);
+				plp_sleep(1);
 			} else {
 				Set_str_value(sp,HF_NAME,hf_name);
 				Set_str_value(sp,IDENTIFIER,id);
@@ -1194,7 +1191,7 @@ int Do_queue_jobs( char *name, int subserver )
 		unlink(Lpq_status_file_DYN);
 	}
 	plp_unblock_all_signals( &oblock);
-	sleep(2);
+	plp_usleep(500);
 	DEBUG1( "Do_queue_jobs: Susr1 at end %d", Susr1 );
 	if( Susr1 ){
 		DEBUG1("Do_queue_jobs: SIGUSR1 just before exit" );
@@ -1241,17 +1238,17 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		if( status ){
 			SNPRINTF(buffer,sizeof(buffer))
 				"accounting check failed '%s'", Server_status(status));
-			SETSTATUS(job)"%s", buffer );
+				SETSTATUS(job)"%s", buffer );
 			switch(status){
-	case JFAIL: break;
-	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
-	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
-	default:
-			Set_str_value(&job->info,ERROR,buffer);
-			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-			break;
+			case JFAIL: break;
+			case JHOLD: /* Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); */ break;
+			case JREMOVE: /* Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); */ break;
+			default:
+					Set_str_value(&job->info,ERROR,buffer);
+					Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+					Set_hold_file(job, 0, 0 );
+					break;
 			}
-			Set_hold_file(job, 0, 0 );
 			goto exit;
 		}
 	}
@@ -1437,15 +1434,15 @@ int Local_job( struct job *job, char *id )
 				"accounting check failed '%s'", Server_status(status));
 			SETSTATUS(job)"%s", buffer );
 			switch(status){
-	case JFAIL: break;
-	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
-	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
-	default:
-		Set_str_value(&job->info,ERROR,buffer);
-		Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-		break;
+			case JFAIL: break;
+			case JHOLD: /* Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); */ break;
+			case JREMOVE: /* Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); */ break;
+			default:
+				Set_str_value(&job->info,ERROR,buffer);
+				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+				Set_hold_file(job, 0, 0 );
+				break;
 			}
-			Set_hold_file(job, 0, 0 );
 			goto exit;
 		}
 	}
@@ -1611,7 +1608,6 @@ void Wait_for_subserver( int timeout, struct line_list *servers
 				pid, Sigstr(sigval));
 			status = JABORT;
 		}
-		setstatus( &job, "%s", buffer );
 		if(DEBUGL4) Dump_subserver_info("Wait_for_subserver", servers );
 
 		for( found = i = 0; !found && i < servers->count; ++i ){
@@ -1636,9 +1632,7 @@ void Wait_for_subserver( int timeout, struct line_list *servers
 					pid, pr, hf_name, id );
 
 				/* see if you can get the hold file and update the status */
-				if( job.info.count ){
-					Update_status( &job, status );
-				}
+				Update_status( &job, status );
 				Set_str_value(sp,HF_NAME,0);
 				Set_str_value(sp,IDENTIFIER,0);
 				Update_spool_info(sp);
@@ -1787,10 +1781,8 @@ void Update_status( struct job *job, int status )
 
 	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
 	if( !id ){
-		Errorcode = JABORT;
-		FATAL(LOG_ERR)
-			_("Update_status: no identifier for '%s'"),
-			Find_str_value(&job->info,HF_NAME,Value_sep) );
+		if(DEBUGL1)Dump_job("Update_status - no ID", job );
+		return;
 	}
 
 	if( (destinations = Find_flag_value(&job->info,DESTINATIONS,Value_sep)) ){
@@ -1823,7 +1815,7 @@ void Update_status( struct job *job, int status )
 		break;
 
 	case JSUCC:	/* successful, remove job */
-		if(DEBUGL3)Dump_job("Update_status - JSUCC", job );
+		if(DEBUGL3)Dump_job("Update_status - JSUCC start", job );
 		if( destination ){
 			done = 0;
 			copies = Find_flag_value(&job->info,SEQUENCE,Value_sep);
@@ -1896,19 +1888,18 @@ void Update_status( struct job *job, int status )
 			hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
 			DEBUG3("Update_status: done_job, id '%s', hf '%s'", id, hf_name );
 			if( hf_name ){
+				Set_flag_value(&job->info,REMOVE_TIME,time((void *)0));
 				Set_hold_file( job, 0, 0 );
 				if(DEBUGL3)Dump_job("Update_status - done_job", job );
-				if( !(Save_when_done_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+				if( (Save_when_done_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+					setstatus( job, _("job '%s' saved"), id );
+					++Done_count;
+					if( !Done_time ) Done_time = time(0);
+				} else {
 					if( Remove_job( job ) ){
 						setstatus( job, _("could not remove job '%s'"), id);
 					} else {
 						setstatus( job, _("job '%s' removed"), id );
-					}
-				} else {
-					setstatus( job, _("job '%s' saved"), id );
-					if( Done_jobs_DYN || Done_jobs_max_age_DYN ){
-						++Done_count;
-						if( !Done_time ) Done_time = time(0);
 					}
 				}
 			}
@@ -2002,12 +1993,21 @@ void Update_status( struct job *job, int status )
 			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 			}
+			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
 			Set_hold_file( job, 0, 0 );
 			Sendmail_to_user( status, job );
-		}
-		if( destination == 0 && !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
-			setstatus( job, _("removing job '%s' - failed, no retry"), id);
-			Remove_job( job );
+			if( (Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+				setstatus( job, _("job '%s' saved"), id );
+				++Done_count;
+				if( !Done_time ) Done_time = time(0);
+			} else {
+				setstatus( job, _("removing job '%s' - JFAILNORETRY"), id);
+				if( Remove_job( job ) ){
+					setstatus( job, _("could not remove job '%s'"), id);
+				} else {
+					setstatus( job, _("job '%s' removed"), id );
+				}
+			}
 		}
 		break;
 
@@ -2035,12 +2035,21 @@ void Update_status( struct job *job, int status )
 			}
 			strv = Find_str_value(&job->info,ERROR,Value_sep);
 			setstatus( job, "job '%s' error '%s'",id, strv);
+			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
+			Set_hold_file( job, 0, 0 );
 			Sendmail_to_user( status, job );
-		}
-		Set_hold_file( job, 0, 0 );
-		if( destination == 0 && !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
-			setstatus( job, _("removing job '%s' - ABORT"), id);
-			Remove_job( job );
+			if( (Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+				setstatus( job, _("job '%s' saved"), id );
+				++Done_count;
+				if( !Done_time ) Done_time = time(0);
+			} else {
+				setstatus( job, _("removing job '%s' - JABORT"), id);
+				if( Remove_job( job ) ){
+					setstatus( job, _("could not remove job '%s'"), id);
+				} else {
+					setstatus( job, _("job '%s' removed"), id );
+				}
+			}
 		}
 		if( Stop_on_abort_DYN ){
 			setstatus( job, _("stopping printing on filter JABORT exit code") );
@@ -2056,32 +2065,34 @@ void Update_status( struct job *job, int status )
 					_("removing destination due to errors") );
 				Set_str_value(destination,ERROR,buffer);
 			}
-			Set_flag_value(destination,DONE_TIME, time( (void *)0) );
-			Set_flag_value(destination,REMOVE_TIME, time( (void *)0) );
+			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+				Set_nz_flag_value(destination,ERROR_TIME,time(0));
+			}
 			Update_destination(job);
 			Set_hold_file( job, 0, 0 );
 		} else {
-			if( !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
-				if( !Find_str_value(&job->info,ERROR,Value_sep) ){
-					SNPRINTF( buffer, sizeof(buffer))
-						_("removing job due to errors") );
-					Set_str_value(&job->info,ERROR,buffer);
-				}
-				Set_flag_value(&job->info,DONE_TIME, time( (void *)0) );
-				Set_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
-				Set_hold_file( job, 0, 0 );
-				Sendmail_to_user( status, job );
-				setstatus( job, _("removing job '%s' - JREMOVE"), id );
-				Remove_job( job );
+			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+				SNPRINTF( buffer, sizeof(buffer))
+					_("too many errors") );
+				Set_str_value(&job->info,ERROR,buffer);
+			}
+			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+			}
+			Set_nz_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
+			Set_hold_file( job, 0, 0 );
+			Sendmail_to_user( status, job );
+			if( (Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+				setstatus( job, _("job '%s' saved"), id );
+				++Done_count;
+				if( !Done_time ) Done_time = time(0);
 			} else {
-				if( !Find_str_value(&job->info,ERROR,Value_sep) ){
-					SNPRINTF( buffer, sizeof(buffer))
-						_("job removal requested") );
-					Set_str_value(&job->info,ERROR,buffer);
+				setstatus( job, _("removing job '%s' - JREMOVE"), id);
+				if( Remove_job( job ) ){
+					setstatus( job, _("could not remove job '%s'"), id);
+				} else {
+					setstatus( job, _("job '%s' removed"), id );
 				}
-				Set_nz_flag_value(&job->info,ERROR_TIME, time( (void *)0) );
-				Set_hold_file( job, 0, 0 );
-				setstatus( job, _("keeping error job '%s'"), id );
 			}
 		}
 		break;
@@ -2302,7 +2313,7 @@ void Service_worker( struct line_list *args )
 		DEBUG1("Service_worker: attempt %d, sleeping %d", attempt, n);
 		if( n > 0 ){
 			setstatus( &job, "attempt %d, sleeping %d before retry", attempt+1, n );
-			sleep(n);
+			plp_sleep(n);
 		}
 	}
 
@@ -2865,10 +2876,13 @@ int Remove_done_jobs( void )
 	char *id;
 	time_t tm, when;
 	int removed = 0;
-	int job_index, pid, printable, held, move, error, done, i, number, incoming;
+	int job_index, info_index, pid, printable, held, move, remove, error, done, i, number, incoming;
 	struct line_list info;
 	char tval[SMALLBUFFER];
 
+	DEBUG3("Remove_done_jobs: save_when_done %d, save_on_error %d, done_jobs %d, d_j_max_age %d",
+		Save_when_done_DYN, Save_on_error_DYN,
+		Done_jobs_DYN, Done_jobs_max_age_DYN );
 	if( Save_when_done_DYN || Save_on_error_DYN
 		|| !(Done_jobs_DYN > 0 || Done_jobs_max_age_DYN > 0) ){
 		return( 0 );
@@ -2878,65 +2892,64 @@ int Remove_done_jobs( void )
 	time( &tm );
 	Init_job(&job);
 	for( job_index = 0; job_index < Sort_order.count; ++job_index ){
+		char *hold_file = Sort_order.list[job_index];
 		Free_job(&job);
-		if( !Sort_order.list[job_index] ) continue;
+		if( ISNULL(hold_file) ) continue;
 		DEBUG3("Remove_done_jobs: done_jobs - job_index [%d] '%s'", job_index,
-			Sort_order.list[job_index] );
-		Get_hold_file( &job, Sort_order.list[job_index] );
+			hold_file);
+		Get_hold_file( &job, hold_file );
 		if(DEBUGL4)Dump_job("Remove_done_jobs: done_jobs - job ",&job);
 		if( job.info.count == 0 ) continue;
 		/* get status from hold file */
+		id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
 		done = Find_flag_value(&job.info,DONE_TIME,Value_sep);
 		error = Find_flag_value(&job.info,ERROR_TIME,Value_sep);
 		incoming = Find_flag_value(&job.info,INCOMING_TIME,Value_sep);
-		DEBUG3("Remove_done_jobs: done 0x%x, error 0x%x, incoming 0x%x",
-			done, error, incoming );
-		/* check to see if active */
-		if( incoming || !(error || done) ) continue;
+		remove = Find_flag_value(&job.info,REMOVE_TIME,Value_sep);
+		DEBUG3("Remove_done_jobs: remove 0x%x, done 0x%x, error 0x%x, incoming 0x%x",
+			remove, done, error, incoming );
+		if( !remove ) continue;
 		if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) && kill( pid, 0 ) == 0 ){
-			DEBUG3("Remove_done_jobs: [%d] active %d", job_index, pid );
+			DEBUG3("Remove_done_jobs: '%s' active %d", hold_file, pid );
 			continue;
 		}
-		id = Make_identifier(&job);
 		if( Done_jobs_max_age_DYN > 0
 			&& ( (error && (tm - error) > Done_jobs_max_age_DYN)
 			   || (done && (tm - done) > Done_jobs_max_age_DYN) ) ){
 			setstatus( &job, _("job '%s' removed- status expired"), id );
 			/* Setup_cf_info( &job, 0 ); */
 			Remove_job( &job );
-			removed = 1;
-			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
-			continue;
-		}
-		if( Done_jobs_DYN > 0 ){
+		} else if( Done_jobs_DYN > 0 ){
 			char *s;
-			SNPRINTF(tval,sizeof(tval)) "0x%08x,%c,%s",
-				done?done:error, done?'D':'E', id );
-			while( (s = safestrchr(tval,'=')) ) *s = '_';
-			Set_flag_value(&info, tval, job_index );
+			SNPRINTF(tval,sizeof(tval)) "0x%08x", remove );
+			Set_str_value(&info, tval, hold_file );
 		}
 	}
 
 	if(DEBUGL1)Dump_line_list("Remove_done_jobs - removal candidates",&info);
 	DEBUG1( "Remove_done_jobs: checking for removal - remove_count %d", Done_jobs_DYN );
 
-	for( i = 0; i < info.count - Done_jobs_DYN; ++i ){
-		char *s = info.list[i];
-		if( (s = safestrchr( s, '=' )) ) ++s;
-		if( !s ) continue;
-		job_index = atoi(s);
+	for( info_index = 0; info_index < info.count - Done_jobs_DYN; ++info_index ){
+		char *hold_file = info.list[info_index];
+		if( (hold_file = safestrchr( hold_file, '=' )) ){
+			++hold_file;
+		} else {
+			Errorcode = JABORT;
+			fatal(LOG_ERR,"Remove_done_jobs: bad hold file format '%s'",
+				info.list[info_index]);
+		}
+		DEBUG1( "Remove_done_jobs: [%d] hold_file '%s'",
+			info_index, hold_file );
 		Free_job(&job);
-		Get_hold_file( &job, Sort_order.list[job_index] );
-		id = Make_identifier(&job);
-		DEBUG1( "Remove_done_jobs: [%d] entry %s, job_index %d",
-			i, info.list[i], job_index );
-		setstatus( &job, _("job '%s' removed"), id );
+		Get_hold_file( &job, hold_file );
 		Setup_cf_info( &job, 0 );
 		Remove_job( &job );
 		removed = 1;
-		free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 	}
 	Free_job(&job);
 	Free_line_list(&info);
+	if( removed && Lpq_status_file_DYN ){
+		unlink(Lpq_status_file_DYN);
+	}
 	return( removed );
 }

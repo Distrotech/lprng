@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: krb5_auth.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -1226,8 +1226,12 @@ int Receive_k4auth( int *sock, char *input )
 	struct line_list values;
 	int ack = ACK_SUCCESS;
 	int k4error=0;
+#if defined(HAVE_SOCKLEN_T)
+	socklen_t sin_len;
+#else
+	int sin_len;
+#endif
 
-	int sin_len = sizeof(struct sockaddr_in);
 	struct sockaddr_in faddr;
 	int len;
 	uid_t euid;
@@ -1239,6 +1243,7 @@ int Receive_k4auth( int *sock, char *input )
 	char k4version[9];
 	char k4name[ANAME_SZ + INST_SZ + REALM_SZ + 3];
 
+	sin_len = sizeof(struct sockaddr_in);
 	Init_line_list(&values);
 	error_msg[0] = '\0';
 	DEBUG1("Receive_k4auth: doing '%s'", ++input);

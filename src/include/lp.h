@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.37 2002/08/12 00:01:46 papowell Exp $
+ * $Id: lp.h,v 1.41 2002/12/04 21:12:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -293,6 +293,9 @@ EXTERN int Direct_DYN;		/* allow LPR to send jobs to a socket */
 EXTERN int Exit_linger_timeout_DYN;	/* we set this timeout on all of the sockets */
 EXTERN int FF_on_close_DYN; /* print a form feed when device is closed */
 EXTERN int FF_on_open_DYN; /* print a form feed when device is opened */
+EXTERN int Fifo_DYN; /* FIFO (first in first out) order enforced */
+EXTERN char* Fifo_lock_file_DYN; /* lock file for FIFO */
+
 EXTERN char* Filter_DYN; /* default filter */
 EXTERN int   Filter_stderr_to_status_file_DYN; /* filter errors sent to :ps file */
 EXTERN char* Filter_ld_path_DYN;
@@ -347,6 +350,7 @@ EXTERN int   Lpq_status_cached_DYN;  /* how many to cache */
 EXTERN int   Lpq_status_interval_DYN;  /* interval between updates */
 EXTERN int   Lpq_status_stale_DYN;  /* cached lpq status is stale after this */
 EXTERN char* Lpr_opts_DYN;		/* addional options for LPR */
+EXTERN int Lpr_send_try_DYN; /* number of times for lpr to try sending job */
 EXTERN char* Mail_from_DYN;
 EXTERN char* Mail_operator_on_error_DYN;
 EXTERN int Max_connect_interval_DYN;	/* maximum connect interval */

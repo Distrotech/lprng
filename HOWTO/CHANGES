@@ -1,3 +1,38 @@
+Version LPRng-3.8.18 - Mon Dec 2 12:08:34 PST 2002
+  Added the 'fifo' option  - this now makes LPRng handle
+  one incoming job at a time in FIFO order.  If you send
+  jobs A B C then they get delivered in order A B C.
+  For users who MUST have sequential delivery of jobs.
+
+  Some Linux distributions set 'unlimited' resources for all
+  parameters, such as user processes.  Added limit of 1024
+  processes for such cases as the system will die a horrible
+  death at startup.
+
+
+Version LPRng-3.8.17 - Sat Oct 26 20:11:28 PDT 2002
+  Found a race condition between LPD printing, LPRM, and LPC actions
+   that would cause LPD to stop printing if you removed or did
+   an LPC action on a job.  After a bit of thought, decided that
+   the job would get moved or removed anyways.  Sigh...
+   But you might get a bogus error message about 'cannot
+   find id' as the job hold file has been removed.
+
+Version LPRng-3.8.16 - Mon Aug 12 15:26:05 PDT 2002
+
+  lpr now honors :mx=xx values so you can check job size
+  before you send it.
+   (Suggested by:  Rick Cochran <rcc2@cornell.edu>)
+
+  configure --disable-werror removes the -Werror option from CFLAGS.
+   (From the wish list of: Rick Cochran <rcc2@cornell.edu>)
+
+  Bad incoming jobs are removed.  You do not get the jobs
+  left in the queue as errors.  Note - spoolers will
+  keep trying to send jobs even when they get error and
+  sit in an endless loop.  No solution for this one except
+  to get a better print spooler or whatever...
+
 Version LPRng-3.8.15 - Sun Aug 11 13:11:48 PDT 2002
   
   Remove_done_jobs

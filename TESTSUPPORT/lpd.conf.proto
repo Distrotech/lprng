@@ -39,6 +39,7 @@ printcap_path=_TMP_LPD/printcap.%H
 
 #perms_path=|_TMP_LPD/dbserver _TMP_LPD/lpd.perms.db.%H
 perms_path=_TMP_LPD/lpd.perms.%H
+unix_socket_path=_TMP_LPD/lprng.%H
 
 use-info-cache
 use_identifier

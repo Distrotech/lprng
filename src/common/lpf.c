@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 1.37 2002/08/12 00:01:45 papowell Exp $";
+"$Id: lpf.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -226,7 +226,6 @@ int main( int argc, char *argv[], char *envp[] )
 	 * Turn off SIGPIPE
 	 */
 	(void)signal( SIGPIPE, SIG_IGN );
-	(void)signal( SIGPIPE, SIG_DFL );
 	(void)signal( SIGINT,  SIG_DFL );
 	(void)signal( SIGHUP,  SIG_DFL );
 	(void)signal( SIGQUIT, SIG_DFL );

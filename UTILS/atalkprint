@@ -1,9 +1,10 @@
 #!/bin/sh
+# $Id: atalkprint,v 1.42 2002/12/04 21:12:16 papowell Exp $
 # This is a template file for hooking up printing to a remote
 #  printer that needs a communication program
 #
 #  Modified by Patrick Powell <papowell@astart.com> for the LPRngTool
-#   Note 1: the .config file is assumed to be in the current directory
+#   Note 1: the general.config file is assumed to be in the current directory
 #   Note 2: entries can be in any order in the file
 #
 # This script is an input filter for printcap printing on a unix machine. It
@@ -12,21 +13,22 @@
 # For example you could have a printcap entry like this
 #
 # atalk:lp=/dev/null:sd=/usr/spool/lpd/atalk:if=/usr/local/filters/atalkprint
-#  :lprngtooloptions=authfile=.auth
-#
+# 
 # which would create a unix printer called "atalk" that will print via this 
 # script.
 #
-# The script gets its information from the .config file in the
-# printer spool directory
-
-# You can get the configuration values from the printcap 'smb_options' line
+# The script gets its information from the general.config file
+# file in the printer spool directory or the atalk_options line
+# or from the printcap 'atalk_options' line
+# The options used are:
 #   host=host           host for printing
 #   printer=printer     printer
-#   share=//host/share  for SMB printing
-#   hostip=whatever     for SMB printing
-#   auth=authfile       for username and password
-# example:  :smb_options= host="host" printer="lp"
+#   username=printer     printer
+# example: general.config file -
+#    host="host"
+#    printer="lp"
+#
+# :atalk_options= host="host" printer="lp"
 #
 # Should read the following variables set in the auth file:
 #   username=username       for authentication
@@ -35,22 +37,11 @@
 if [ -f ./general.cfg ] ; then
 	. ./general.cfg
 fi
-options=`echo "${PRINTCAP_ENTRY}" | sed -n 's/:smb_options=//p' `
+options=`echo "${PRINTCAP_ENTRY}" | sed -n 's/:atalk_options=//p' `
 if [ -n "$options" ] ; then
 	eval export $options
 fi
 
-# do this if you need to set the value in shell variables
-if [ -n "$authfile" -a -f "$authfile" ] ; then
-	. ${authfile}
-fi
-
-# now you simply use the paramters you have to extract the options and
-# put them on the command line.
+# now you simply use the paramters you have extracted
 #
-# here is an example for SMB printing using smbprint
-# smbclient "$share" -E ${hostip:+-I} $hostip -N ${workgroup:+-W} "$workgroup" \
-#     ${authfile:+-A} "$authfile" -c "$command" 2>/dev/null
-# We modify this a bit and use PAP from the netatalk package
 /usr/bin/pap -p "$username:$printer@$host"
-

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: lpd_control.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 
 #include "lp.h"
@@ -528,7 +528,7 @@ void Do_queue_control( char *user, int action, int *sock,
 	/* start the server if necessary */
 	switch( action ){
 	case OP_KILL:
-			sleep(1);
+			plp_sleep(1);
 			serverpid = 0;
 			break;
 	case OP_START:

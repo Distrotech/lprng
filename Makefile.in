@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# Makefile.in,v 3.23 1998/03/29 19:39:21 papowell Exp
+# $Id: Makefile.in,v 1.42 2002/12/04 21:12:14 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -151,7 +151,7 @@ realclean mostlyclean distclean: clean
 	rm -f `find . -type f -name '*.old' -print` \
 	 `find . -type f -name '*.bak' -print` \
 	 `find . -type f -name '*.orig' -print` \
-	  config.cache config.log config.status lpd.conf libtool \
+	  configure.lineno config.cache config.log config.status lpd.conf libtool \
 	  Makefile */Makefile intl/po2tbl.sed po/POTFILES
 	rm -f `find . -type f -name '*.in' -print | sed -e 's/\.in$$//' -e /configure/d `
 

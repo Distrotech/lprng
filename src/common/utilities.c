@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.37 2002/08/12 00:01:45 papowell Exp $";
+"$Id: utilities.c,v 1.41 2002/12/04 21:12:18 papowell Exp $";
 
 #include "lp.h"
 
@@ -491,7 +491,8 @@ int plp_usleep( int i )
 	DEBUG3("plp_usleep: starting usleep %d", i );
 	if( i > 0 ){
 		memset( &t, 0, sizeof(t) );
-		t.tv_usec = i;
+		t.tv_usec = i%1000000;
+		t.tv_sec =  i/1000000;
 		i = select( 0,
 			FD_SET_FIX((fd_set *))(0),
 			FD_SET_FIX((fd_set *))(0),
@@ -539,6 +540,13 @@ int Get_max_servers( void )
 		FATAL(LOG_ERR) "Get_max_servers: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
+#ifdef RLIMIT_INFINITY
+	if( pcount.rlim_cur == RLIM_INFINITY ){
+		n = Max_servers_active_DYN;
+		DEBUG1("Get_max_servers: using %d", n );
+	}
+#endif
+
 	DEBUG1("Get_max_servers: getrlimit returns %d", n );
 #else
 # if defined(HAVE_SYSCONF) && defined(_SC_CHILD_MAX)
@@ -556,7 +564,12 @@ int Get_max_servers( void )
 #  endif
 # endif
 #endif
-	n = n/2;
+	if( n <= 0 ){
+		n = Max_servers_active_DYN;
+	} else {
+		n = n/2;
+	}
+	if( n <= 0 ) n = 64;
 
 	if( Max_servers_active_DYN && n > Max_servers_active_DYN ) n = Max_servers_active_DYN;
 	DEBUG1("Get_max_servers: returning %d", n );
@@ -592,7 +605,7 @@ int Get_max_fd( void )
 # endif
 #endif
 
-	if( n < 0 || n > 10240 ){
+	if( n <= 0 || n > 10240 ){
 		/* we have some systems that will return a VERY
 		 * large or negative number for unlimited FD's.  Well, we
 		 * don't want to use a large number here.  So we

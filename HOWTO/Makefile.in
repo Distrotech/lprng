@@ -56,11 +56,11 @@ $(DOC).tex: $(DOC).sgml $(FMT).dsl Makefile
 		$(CATALOGS) -d $(FMT).dsl $(DOC).sgml
 
 $(DOC).dvi: $(DOC).tex $(FMT).dsl Makefile
-	echo "==> TeX pass 1/3"
+	@echo "==> TeX pass 1/3"
 	-tex "&jadetex" $(DOC).tex  2>&1 >/dev/null
-	echo "==> TeX pass 2/3"
+	@echo "==> TeX pass 2/3"
 	-tex "&jadetex" $(DOC).tex  2>&1 >/dev/null
-	echo "==> TeX pass 3/3"
+	@echo "==> TeX pass 3/3"
 	tex "&jadetex" $(DOC).tex
 
 $(DOC).ps: $(DOC).dvi

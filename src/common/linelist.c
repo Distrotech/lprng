@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: linelist.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -318,13 +318,11 @@ void Free_line_list( struct line_list *l )
 	if( l == 0 ) return;
 	if( l->list ){
 		for( i = 0; i < l->count; ++i ){
-			if( l->list[i] ) free( l->list[i]);
+			if( l->list[i] ) free( l->list[i]); l->list[i] = 0;
 		}
 		free(l->list);
 	}
-	l->count = 0;
-	l->list = 0;
-	l->max = 0;
+	memset(l,0,sizeof(l[0]));
 }
 
 void Free_listof_line_list( struct line_list *l )
@@ -335,6 +333,7 @@ void Free_listof_line_list( struct line_list *l )
 	for( i = 0; i < l->count; ++i ){
 		lp = (void *)l->list[i];
 		Free_line_list(lp);
+		memset( lp, 0, sizeof(lp[0]) );
 	}
 	Free_line_list(l);
 }
@@ -544,7 +543,7 @@ void Split( struct line_list *l, char *str, const char *sep,
 {
 	char *end = 0, *t, *buffer = 0;
 	int len, blen = 0;
-	if(DEBUGL4){
+	if(DEBUGL5){
 		char b[40];
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
@@ -559,7 +558,7 @@ void Split( struct line_list *l, char *str, const char *sep,
 			if( escape && t != str && cval(t-1) == '\\'
 				&& strchr( escape, cval(t) ) ){
 				++t;
-				DEBUG4("Split: escape '%s'", t );
+				DEBUG5("Split: escape '%s'", t );
 				continue;
 			}
 			end = t+1;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
+"$Id: lpd.c,v 1.41 2002/12/04 21:12:17 papowell Exp $";
 
 
 #include "lp.h"
@@ -498,7 +498,11 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		}
 		if( sock > 0 && FD_ISSET( sock, &readfds ) ){
+#if defined(HAVE_SOCKLEN_T)
+			socklen_t len;
+#else
 			int len;
+#endif
 			len = sizeof( sinaddr );
 			newsock = accept( sock, &sinaddr, &len );
 			err = errno;
@@ -543,7 +547,11 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		}
 		if( unix_sock > 0 && FD_ISSET( unix_sock, &readfds ) ){
+#if defined(HAVE_SOCKLEN_T)
+			socklen_t len;
+#else
 			int len;
+#endif
 			len = sizeof( sinaddr );
 			newsock = accept( unix_sock, &sinaddr, &len );
 			err = errno;
