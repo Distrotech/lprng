@@ -219,7 +219,7 @@ certainly will get a duplicate.
 */
 
 static char *const _id =
-"$Id: lpr.c,v 3.19 1998/01/08 09:51:06 papowell Exp $";
+"lpr.c,v 3.20 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "dump.h"
@@ -248,6 +248,7 @@ static char *const _id =
  * 8. send control file to server
  *
  ****************************************************************************/
+extern void	Check_parms( struct printcap_entry **printcap_entry );
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -261,7 +262,7 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 	Errorcode = 1;
 	Interactive = 1;
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 	/* set signal handlers */
 	(void) plp_signal (SIGHUP, cleanup_HUP);

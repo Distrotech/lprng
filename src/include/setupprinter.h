@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: setupprinter.h
  * PURPOSE: declare setupprinter.c fucntions
- * $Id: setupprinter.h,v 3.1 1996/12/28 21:40:36 papowell Exp $
+ * setupprinter.h,v 3.1 1996/12/28 21:40:36 papowell Exp
  **************************************************************************/
 
 int Setup_printer( char *name,

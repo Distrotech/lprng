@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: krb5_auth.c,v 1.8 1997/10/15 04:06:28 papowell Exp $";
+"krb5_auth.c,v 1.9 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "krb5_auth.h"
@@ -746,8 +746,8 @@ int des_read( krb5_context context,
 	if( len <= 0 ) return(len);
 
 	if( desinbuf.data == 0 ){
-		malloc_or_die( desinbuf.data, ENCBUFFERSIZE );
-		malloc_or_die( storage, ENCBUFFERSIZE );
+		desinbuf.data = malloc_or_die(  ENCBUFFERSIZE );
+		storage = malloc_or_die( ENCBUFFERSIZE );
 	}
 	if (nstored >= len) {
 		memcpy(buf, store_ptr, len);
@@ -817,7 +817,7 @@ int des_write( krb5_context context,
 
 	if( len <= 0 ) return( len );
 	if( desoutbuf.data == 0 ){
-		malloc_or_die( desoutbuf.data, ENCBUFFERSIZE );
+		desoutbuf.data = malloc_or_die( ENCBUFFERSIZE );
 	}
 	desoutbuf.length = krb5_encrypt_size(len, eblock->crypto_entry);
 	if (desoutbuf.length > ENCBUFFERSIZE ){

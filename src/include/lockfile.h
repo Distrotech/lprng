@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: lockfile.h
  * PURPOSE: lockfile.c functions
- * $Id: lockfile.h,v 3.2 1997/12/16 15:06:44 papowell Exp $
+ * lockfile.h,v 3.2 1997/12/16 15:06:44 papowell Exp
  **************************************************************************/
 
 #ifndef _LOCKFILE_H

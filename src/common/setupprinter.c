@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setupprinter.c,v 3.7 1997/09/18 19:46:06 papowell Exp $";
+"setupprinter.c,v 3.8 1998/03/29 18:32:57 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -25,6 +25,7 @@ static char *const _id =
 #include "pathname.h"
 #include "permission.h"
 #include "pr_support.h"
+#include "errorcodes.h"
 #include "setupprinter.h"
 
 /**** ENDINCLUDE ****/
@@ -228,23 +229,69 @@ void Fix_update( struct keywords *debug_list, int info_only )
 
 static void Open_log(void)
 {
-	char *s;
-	int fd;				/* file descriptor */
+	int fd, m, tempfd;				/* file descriptor */
 	struct stat statb;	/* status buffer for file */
+	int maxsize = Max_log_file_size *1024;
+	int minsize = Min_log_file_size *1024;
+	char *s, buffer[20*1024], *t;
 
 	s = 0;
-	if( Log_file ) s = Log_file;
-	if( New_log_file ) s = New_log_file;
+	if( Log_file && *Log_file ) s = Log_file;
+	if( New_log_file && *New_log_file ) s = New_log_file;
 	if( s ){
-		DEBUG0("Open_log: log file '%s'", s );
 		if( s[0] != '/' ){
 			s = Add_path( CDpathname, s );
 		}
+		DEBUG0("Open_log: log file '%s'", s );
 		fd = Checkwrite( s, &statb, O_WRONLY|O_APPEND, 0, 0 );
 		if( fd >= 0 ){
 			if( fd != 2 ){
-				dup2( fd, 2 );
+				if( dup2( fd, 2 ) == -1 ){
+					Errorcode = JABORT;
+					logerr_die( LOG_INFO, "Open_log: dup2 failed");
+				};
 				close( fd );
+			}
+			if( Max_log_file_size > 0
+				&& statb.st_size > maxsize ){
+				if( minsize <= 0 ) minsize = maxsize/4;
+				/* we seek to the end of the log file,
+				 * and we ignore errors as several loggers might do
+				 * this
+				 */
+				tempfd = Make_temp_fd(0,0);
+				lseek( 2, -minsize, SEEK_END );
+				while( (m = read( 2, buffer, sizeof(buffer) )) > 0 ){
+					if( write(tempfd,buffer,m) < 0 ){
+						Errorcode = JABORT;
+						logerr_die( LOG_INFO,
+							"Open_log: write to temp file failed");
+					}
+				}
+				ftruncate(2,0);
+				lseek(2,0,0);
+				lseek(tempfd,0,0);
+				buffer[sizeof(buffer)-1] = 0;
+				if( (m = read( tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
+					if( (t = strchr(buffer,'\n') ) ){
+						*t++ = 0;
+					} else {
+						t = buffer;
+					}
+					if( write(2,t, strlen(t)) < 0 ){
+						Errorcode = JABORT;
+						logerr_die( LOG_INFO,
+							"Open_log: write to log file failed");
+					}
+				}
+				while((m = read( tempfd, buffer, sizeof(buffer) ))>0){
+					if( write(2,buffer,m) < 0 ){
+						Errorcode = JABORT;
+						logerr_die( LOG_INFO,
+							"Open_log: write to log file failed");
+					}
+				}
+				close(tempfd);
 			}
 		} else {
 			DEBUG0("Open_log: cannot open log file '%s'", s );

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: printjob.h
  * PURPOSE: job printing support routines
- * "$Id: printjob.h,v 3.3 1997/12/17 19:34:56 papowell Exp $"
+ * "printjob.h,v 3.3 1997/12/17 19:34:56 papowell Exp"
  **************************************************************************/
 
 int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,

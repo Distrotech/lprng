@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: printcap.h
  * PURPOSE:
- * $Id: printcap.h,v 3.3 1997/12/16 15:06:46 papowell Exp $
+ * printcap.h,v 3.3 1997/12/16 15:06:46 papowell Exp
  **************************************************************************/
 
 #ifndef _PRINTCAP_H
@@ -87,6 +87,5 @@ void Clear_var_list( struct keywords *vars );
 void Set_var_list( char *name, struct keywords *vars, char **values,
 	struct file_entry *file_entry );
 int Expand_percent( char *s, char *next, char *end );
-void Check_parms( struct printcap_entry **pce );
 
 #endif

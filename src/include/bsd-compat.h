@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: bsd-compat.h
  * PURPOSE: bsd-compat.c functions
- * $Id: bsd-compat.h,v 3.5 1997/10/04 16:14:09 papowell Exp $
+ * bsd-compat.h,v 3.6 1998/03/24 02:43:22 papowell Exp
  **************************************************************************/
 
 #ifndef _BSD_COMPAT_H
@@ -37,7 +37,6 @@ void plp_sigpause( void );
 void plp_unblock_all_signals ( plp_block_mask *omask );
 
 /* perform safe string duplication, even with null pointers */
-char *safestrdup (const char *p);
 char *safexstrdup (const char *p, int extra );
 /* perform safe comparison, even with null pointers */
 int safestrcmp( const char *s1, const char *s2 );
@@ -46,6 +45,6 @@ int plp_usleep( int t );
 int plp_sleep( int t );
 int Get_max_servers( void );
 int plp_rand( int range );
-void Brk_check_size( void );
+char *Brk_check_size( void );
 
 #endif

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: timeout.h
  * PURPOSE: timeout support definitions
- * "$Id: timeout.h,v 3.2 1997/04/05 23:57:45 papowell Exp $"
+ * "timeout.h,v 3.2 1997/04/05 23:57:45 papowell Exp"
  **************************************************************************/
 
 #ifndef _TIMEOUT_H 

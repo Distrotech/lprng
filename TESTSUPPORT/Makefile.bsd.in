@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/Makefile
 # PURPOSE: install test version of LPD software
-# $Id: Makefile.bsd.in,v 1.2 1997/10/01 06:45:58 papowell Exp $
+# Makefile.in,v 3.6 1998/03/30 02:15:10 papowell Exp
 ########################################################################## 
 #
 # make all - will make the binaries, install them in ${TMP}
@@ -204,8 +204,17 @@ ${TMP}LPD/dbserver: ${SRC}/dbserver.sh
 ${TMP}LPD/clearlog: ${SRC}/clearlog
 	$(INSTALLCMD) -m 755 $> $@
 
-ci:
-	ci $(CI) -l -mUpdate -t-Initial `echo * | sed -e s/RCS// -e s/LPD//`
+CI=
+CO=-kv
+cifast ci:
+	checkin() { \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		yes |co $(CO) $$1; \
+	}; \
+	for i in *; do \
+		if test -f "$$i" ; then checkin $$i; fi; \
+	done;
 
 clean::
 	-rm -f *.o core

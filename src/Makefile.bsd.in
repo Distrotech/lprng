@@ -7,7 +7,7 @@
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.bsd.in,v 1.22 1998/01/12 20:29:05 papowell Exp $
+# Makefile.in,v 3.32 1998/03/30 01:53:46 papowell Exp
 ###########################################################################
 #
 # WARNING: This is a makefile for GNU Make or when modified by BSD Make
@@ -83,6 +83,8 @@ CF := @CFLAGS@ @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 # compiler to generate code
 #
 
+
+
 #### ****** TESTING AND SECURITY LOOPHOLE ******************************
 # Define TESTVERSION and GETENV to allow the LPD_CONFIG environment
 #  variable to be used as the name of a configuration file.  In non-testing
@@ -90,6 +92,13 @@ CF := @CFLAGS@ @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 #TESTVERSION=yes
 .ifdef TESTVERSION
 GETENV_CFLAGS = -DGETENV
+.endif
+
+#### ****** LPD_CONF PATHNAME *********
+# Set location of configuration file
+#
+.ifdef LPD_CONF_PATH
+GETENV_CFLAGS := -DLPD_CONF_PATH=\"$(LPD_CONF_PATH)\" $(GETENV_CFLAGS)
 .endif
 
 # the compiler optimisation/debugging flags you wish to use.
@@ -162,18 +171,11 @@ LDFLAGS    := -g $(LDFLAGS)
 #
 # ROOT_CFLAG=-DROOT_PERMS_TO_FILTER_SECURITY_LOOPHOLE
 
+
 #######
+# For your convenience, you can add extra flags to the compilation line
 #
-# Strict RFC1179 conformance - originate port in range 721 - 731
-#  uncomment the following line
-# STRICT_RFC1197=-DSTRICT_RFC1197
-# Add extra flags such as:
-# -DIGNORE_NOVELL_EXTRA_DATA
-#   This causes extra data sent from Novell LPD servers to be
-#   ignored.  Annoying, but not serious
-#
-#EXTRAS= -DIGNORE_NOVELL_EXTRA_DATA
-EXTRAS=
+EXTRAFLAGS=
 
 #**********************  End of Configurable Part ****************************
 #**************************** SYSTEM DEPENDENCIES **************************
@@ -189,7 +191,6 @@ SRCDIRS=${SRC}/common ${SRC}/LPD ${SRC}/LPQ ${SRC}/LPR \
 	${SRC}/LPRM ${SRC}/LPC ${SRC}/CHECKPC ${SRC}/LPBANNER ${SRC}/LPF \
 	${SRC}/LPRACCNT ${SRC}/MONITOR ${SRC}/AUTHENTICATE
 INCLUDE=.. ${SRC}/include
-EXTRA=${SRC}/TESTSUPPORT ${SRC}/UTILS
 
 .PATH: $(INCLUDE) $(SRCDIRS)
 INCS= $(INCLUDE:S/^/-I/g)
@@ -197,7 +198,7 @@ INCS= $(INCLUDE:S/^/-I/g)
 CFLAGS := $(CF) $(CCOPTFLAGS) -DHAVE_CONFIG_H $(INCS) \
 	${GETENV_CFLAGS} $(STTY_CFLAGS) $(STATFS_CFLAGS) $(RWSOCKETS_CFLAGS) \
 	$(LOCK_DEVS_CFLAGS) $(SETPROCTITLE_CFLAGS) $(LONG_STATUS_FORMAT) \
-	$(ROOT_CFLAG) $(STRICT_RFC1179) $(EXTRAS)
+	$(ROOT_CFLAG) $(EXTRAFLAGS)
 
 LIBLPR_OBJS = \
 	bsd-compat.o checkremote.o cleantext.o controlword.o \
@@ -366,11 +367,15 @@ tags TAGS:
 
 ###########################################################################
 
+CI=
+CO=-kv
+
 cifiles:
 	if [ ! -d RCS ] ; then mkdir RCS ; fi ;
 	checkin() { \
-		echo $$1 ; \
-		ci $(CI) -l -mUpdate -t-Initial $$1; \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
 	}; \
 	for i in *; do \
 		if [ -f "$$i" ] ; then \
@@ -380,10 +385,11 @@ cifiles:
 		fi; \
 	done;
 
-ci: cifiles
+cifast ci: cifiles
 	checkin() { \
-		echo $$1 ; \
-		ci $(CI) -l -mUpdate -t-Initial $$1; \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
 	}; \
 	for i in *; do \
 		if [ -d "$$i" ] ; then \

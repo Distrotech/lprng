@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: freespace.h
  * PURPOSE: find file system free space functions
- * $Id: freespace.h,v 3.1 1996/12/28 21:40:26 papowell Exp $
+ * freespace.h,v 3.1 1996/12/28 21:40:26 papowell Exp
  **************************************************************************/
 
 unsigned long Space_needed( char *min_space, struct dpathname *dpath );

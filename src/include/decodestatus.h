@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: decodestatus.h
  * PURPOSE: declare decode status routines
- * $Id: decodestatus.h,v 3.1 1996/12/28 21:40:25 papowell Exp $
+ * decodestatus.h,v 3.1 1996/12/28 21:40:25 papowell Exp
  **************************************************************************/
 
 const char *Sigstr (int n);

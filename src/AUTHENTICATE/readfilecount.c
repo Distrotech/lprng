@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: readfilecount.c,v 3.2 1997/09/18 19:45:41 papowell Exp $";
+"readfilecount.c,v 3.2 1997/09/18 19:45:41 papowell Exp";
 
 /*
  * readfilecount [-D]

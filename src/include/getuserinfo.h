@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: getuserinfo.h
  * PURPOSE: getuserinfo.c functions
- * $Id: getuserinfo.h,v 3.1 1996/12/28 21:40:28 papowell Exp $
+ * getuserinfo.h,v 3.1 1996/12/28 21:40:28 papowell Exp
  **************************************************************************/
 
 #ifndef _GETUSERINFO_H

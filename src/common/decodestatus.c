@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: decodestatus.c,v 3.8 1998/01/08 09:51:09 papowell Exp $";
+"decodestatus.c,v 3.9 1998/03/29 18:32:47 papowell Exp";
 #include "lp.h"
 #include "decodestatus.h"
 #include "errorcodes.h"
@@ -159,15 +159,19 @@ const char *Sigstr (int n)
     static char buf[40];
 	const char *s = 0;
 
+	if( n == 0 ){
+		return( "No signal");
+	}
 #ifdef HAVE_SYS_SIGLIST
     if (n < NSIG && n >= 0) {
 		s = sys_siglist[n];
 	}
 #else
+	{
 	int i;
-
 	for( i = 0; signals[i].str && signals[i].value != n; ++i );
 	s = signals[i].str;
+	}
 #endif
 	if( s == 0 ){
 		s = buf;
@@ -221,6 +225,8 @@ PAIR(JIGNORE),
 PAIR(JHOLD),
 PAIR(JNOSPOOL),
 PAIR(JNOPRINT),
+PAIR(JSIGNAL),
+PAIR(JFAILNORETRY),
 {0,0}
 };
 

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: waitchild.h
  * PURPOSE: waitchild.c functions
- * $Id: waitchild.h,v 3.4 1997/12/16 15:06:50 papowell Exp $
+ * waitchild.h,v 3.4 1997/12/16 15:06:50 papowell Exp
  **************************************************************************/
 
 #ifndef _WAITCHILD_H

@@ -13,7 +13,7 @@
 <P>In the following text, I will assume that your printer itself is
 working properly. I.e., you are able to send data to the printer in
 such a way that it responds by - well, printing the text :)
-<P>How to ensure this, is highly system-dependent, and falls outside the
+<P>How to ensure this is highly system-dependent and falls outside the
 scope of this document.
 However,  here are some hints.
 <H2><A NAME="ss3.1">3.1 Parallel Printers</A>
@@ -103,29 +103,29 @@ etc.
 <A NAME="fs"></A> 
 <A NAME="xc"></A> 
 <A NAME="xs"></A> 
-<A NAME="secconvert"></A> <H3>Converting BSD fc,fs,xc,xs To LPRng sy</H3>
+<A NAME="secconvert"></A> <H3>Converting BSD <CODE>fc,fs,xc,xs</CODE> To LPRng <CODE>sy</CODE></H3>
 
 <P>Justin Mason
 <CODE>&lt;jmason@iona.ie></CODE>
 and Updated by Patrick Powell
-<CODE>&lt;papowell@sdsu.edu></CODE>
+<CODE>&lt;papowell@sdsu.edu></CODE>:
 <P>One of the worst things about old LPDs is that they expected you
 to give it line characteristictics as octal numbers, using the
 fc,fs,xc,xs printcap parameters. There are a number of disadvantages
-to this, compared to using the "ty" parameter.
+to this, compared to using the <CODE>ty</CODE> parameter.
 <P>The sy format is portable, as it is supported on all UNIXes, rather
-than simply BSD-derived ones; it's also _much_ easier to understand
-than the fc,fs,xc,xs format -- compare the two:
+than simply BSD-derived ones; it's also <B>much</B> easier to understand
+than the <CODE>fc,fs,xc,xs</CODE> format -- compare the two:
 <PRE>
 # new format
     :sy=pass8 -parity tabs litout nl:
 # old format
     :fc#0000374:fs#0000003:xc#0:xs#0040040:
 </PRE>
-<P>Note, also, that "sy" uses the same symbolic names as the "stty"
+<P>Note, also, that <CODE>sy</CODE> uses the same symbolic names as the <CODE>stty</CODE>
 command, which is (relatively) well documented.
-<P>Anyway, assuming you have a set of printcaps which use the fc,fs,xc,xs
-method, you can convert them to "sy" strings using the following
+<P>Anyway, assuming you have a set of printcaps which use the <CODE>fc</CODE>,<CODE>fs</CODE>,<CODE>xc</CODE>,<CODE>xs</CODE>
+method, you can convert them to <CODE>sy</CODE> strings using the following
 table.
 <P>Each parameter is an octal number, composed by logical-or'ing the
 bits for the desired parameters together.  The bit patterns below
@@ -142,8 +142,8 @@ converts to the following sy string:
 </PRE>
 <P>Quite often, the resulting strings seem a little complicated, but
 usually they can be broken down using combination modes. See the
-printcap(5) manual page for details of which combination modes
-PLP supports.
+<CODE>printcap(5)</CODE> manual page for details of which combination modes
+LPRng supports.
 <P>In order to help you,  the 'xlate' program can be used to translate from the old
 to the new form.
 For example:
@@ -346,9 +346,9 @@ First,
 your printer may have built-in LPD server support.
 However,
 this may not function as expected.
-It has been observed that most of these builtin servers do not handle
+It has been observed that most of these builtin servers do not correctly handle
 large jobs or jobs with complex PJL, PCL, or PostScript with binary
-information well.
+information.
 <P>On the other hand,
 your printer may have a TCP/IP port that connects directly to the
 print engine.
@@ -360,7 +360,8 @@ this channel may provide status and other information during the printing
 process.
 You can use the
 <A HREF="http://www.l0pht.com/~weld/netcat/">netcat</A>
-utility by Hobbit can be used to simply send files directly to the printer.
+utility by Hobbit <CODE>&lt;Hobbit@avian.org&gt;</CODE>
+to send files directly to the printer.
 The simplest and easiest way to print a file to a network printer appears
 to be: <CODE> nc printer.ip.addr 9100 &lt; file </CODE>.
 <A NAME="installingprograms"></A> <HR>

@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: FAQ/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile,v 1.4 1998/01/12 20:29:47 papowell Exp $
+# Makefile.in,v 1.7 1998/03/30 02:37:07 papowell Exp
 ########################################################################## 
 
 # FAQ Makefile
@@ -41,7 +41,7 @@ $(DOC).ps: $(DOC).tex Makefile
 		'\nonstopmode\input{$(DOC).tex}'
 	dvips -q -t a4 -o $(DOC).ps $(DOC).dvi
 purge:
-	rm -f *.Bex *.aux *.dvi *.log *.toc
+	rm -f *.Bex *.aux *.log *.toc
 fixman:
 	cp $(DOC).ps ../../LPRng_DOC
 	sed 's,LPRng-HOWTO\.,lprng/&,' LPRng.html >/tmp/LPRng.html
@@ -60,10 +60,20 @@ update:
 # 
 #
 install:
+	cp *.ps *.dvi ../../LPRng_DOC
 
 	
 realclean mostlyclean distclean:: clean
 	rm -f Makefile
 
-ci:
-	ci $(CI) -l -mUpdate -t-Initial *.sgml Makefile.in Makefile
+CI=
+CO=-kv
+cifast ci:
+	checkin() { \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		yes |co $(CO) $$1; \
+	}; \
+	for i in  *.sgml Makefile.in Makefile; do \
+		checkin $$i; \
+	done;

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getqueue.c,v 3.14 1997/10/27 00:14:19 papowell Exp $";
+"getqueue.c,v 3.16 1998/03/29 18:32:49 papowell Exp";
 
 /***************************************************************************
 Commentary
@@ -42,6 +42,7 @@ pointers to this list,  but use indexes instead.
 #include "merge.h"
 #include "pathname.h"
 #include "permission.h"
+#include "decodestatus.h"
 /**** ENDINCLUDE ****/
 
 static struct malloc_list c_xfiles;
@@ -62,20 +63,22 @@ static int fcmp( const void *l, const void *r )
 {
 	struct control_file *lcf = *(struct control_file **)l,
 		*rcf = *(struct control_file **)r;
-	int c, i;
+	int c, i, pr, pl;
 	long rt = -1;
 	long lt = -1;
 	if( rcf->hold_info.priority_time ) rt = rcf->hold_info.priority_time;
 	if( lcf->hold_info.priority_time ) lt = lcf->hold_info.priority_time;
+	pr = rcf->priority; pl = lcf->priority;
+	if( Ignore_requested_user_priority ) pr = pl;
 
-	i =    (c = ((rcf->transfername[0] != 0) - (lcf->transfername[0] != 0 )))
+	i =    (c = ((rcf->hold_info.redirect[0] != 0) - (lcf->hold_info.redirect[0] != 0 )))
 		|| (c = ((lcf->error[0] != 0) - (rcf->error[0] != 0)))
 		|| (c = (lcf->flags - rcf->flags))
 		|| (c = (lcf->hold_info.remove_time - rcf->hold_info.remove_time))	/* oldest first */
 		|| (c = (lcf->hold_info.done_time - rcf->hold_info.done_time))	/* oldest first */
 		|| (c = (lcf->hold_info.held_class - rcf->hold_info.held_class))	/* oldest first */
 		|| (c = (lcf->hold_info.hold_time - rcf->hold_info.hold_time))	/* oldest first */
-		|| (c = (lcf->priority - rcf->priority))	/* lowest first */
+		|| (c = (pl - pr))	/* lowest first */
 		|| (c = - (lt - rt)) /* youngest first */
 		|| (c = (lcf->statb.st_ctime - rcf->statb.st_ctime)) /* oldest first */
 		|| (c = (lcf->number - rcf->number ));
@@ -145,7 +148,7 @@ void Getcontrolfile( char *pathname, char *file, struct dpathname *dpath,
 	/* read the control file into buffer */
 	len = cf->statb.st_size;
 	DEBUG4("Getcontrolfile: allocate control file buffer len %d", len );
-	cf->cf_info = add_buffer( &cf->control_file_image, len+1 );
+	cf->cf_info = add_buffer( &cf->control_file_image, len+1,__FILE__,__LINE__ );
 	for( i = 1, s = cf->cf_info;
 		len > 0 && (i = read( fd, s, len )) > 0;
 		len -= i, s += i );
@@ -177,6 +180,44 @@ void Getcontrolfile( char *pathname, char *file, struct dpathname *dpath,
  * 
  * Returns: 0 no error, non-zero - error
  ***************************************************************************/
+
+static struct malloc_list Lclines;
+
+static int Add_line_to_control_file( char *s, struct control_file *cf )
+{
+	int i, c;
+	if( *s == 0 )return(0);
+	for( i = 0; (c = s[i]); ++i ){
+		if( (!isprint(c) && !isspace(c)) || Is_meta(c) ){
+			if( Fix_bad_job ){
+				s[i] = '_';
+			} else {
+				plp_snprintf( cf->error, sizeof( cf->error),
+					"bad job line '%s'", s );
+				return(1);
+			}
+		}
+		if( isspace(c) ) s[i] = ' ';
+	}
+	c = s[0];
+	if( c == 'U' || c == 'N' || islower(c) ){
+		if(Lclines.count+1 >= Lclines.max ){
+			extend_malloc_list( &Lclines, sizeof( char *), 10,__FILE__,__LINE__ );
+		}
+		DEBUG4("Add_line_to_control_file: Lclines[%d] '%s'",Lclines.count, s );
+		Lclines.list[Lclines.count++] = s;
+		Lclines.list[Lclines.count] = 0;
+	} else {
+		if( cf->control_file_lines.count+1 >= cf->control_file_lines.max ){
+			extend_malloc_list( &cf->control_file_lines, sizeof( char *), 10,__FILE__,__LINE__ );
+		}
+		DEBUG4("Add_line_to_control_file: control[%d] '%s'",cf->control_file_lines.count, s );
+		cf->control_file_lines.list[cf->control_file_lines.count++] = s;
+		cf->control_file_lines.list[cf->control_file_lines.count] = 0;
+	}
+	return(0);
+}
+
 int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 {
 	char *s, *end;				/* ACME Pointers */
@@ -185,142 +226,68 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 	struct data_file *df = 0;	/* data file array */
 	int i, c, err;					/* ACME Integers */
 	int fd;						/* file descriptor */
-	int linecount;				/* number of lines in file */
-	int Nline = 0;			/* first N line in control file */
-
 	/* get the job number */
-
 	DEBUG4("Parse_cf: job '%s' '%s'", cf->original, cf->cf_info );
 	/* set up control file checks */
 	if( Check_format( CONTROL_FILE, cf->original, cf ) ){
-		plp_snprintf( cf->error, sizeof( cf->error),
-			"bad job filename format '%s'", cf->original );
+		char buffer[LINEBUFFER];
+		safestrncpy(buffer,cf->error);
+		plp_snprintf( cf->error, sizeof(cf->error),
+			_("file '%s' name problems - %s"),
+				cf->original, buffer );
 		goto error;
 	}
 
 	DEBUG4("Parse_cf: job number '%d', filehostname '%s'",
 		cf->number, cf->filehostname );
 
-	if( check_df ){
-		cf->jobsize = 0;
-	}
-	memset( cf->capoptions, 0, sizeof( cf->capoptions ) );
-	memset( cf->digitoptions, 0, sizeof( cf->digitoptions ) );
-	cf->data_file_list.count = 0;
+	Lclines.count = 0;
+	cf->control_file_lines.count = 0;
+	cf->error[0] = 0;
+	memset(cf->capoptions,0,sizeof(cf->capoptions));
+	memset(cf->digitoptions,0,sizeof(cf->digitoptions));
 
-	/* count the numbers of lines and datafile lines */
-	linecount = 0;
-	datafiles = 0;
-	s = cf->cf_info;
-	/* this is violent, but it will catch the metacharacters */
-	/* now we break up the file */
-	while( s && *s ){
-		if( islower( s[0] ) ) ++datafiles;
-		++linecount;
-		if( (s = strchr( s, '\n' )) ){
-			++s;
-		}
+	/* split up the file into lines */
+	for( s = cf->cf_info; s && *s && (end = strchr( s, '\n' )); s = end ){
+		if( end ) *end++ = 0;
+		if( Add_line_to_control_file( s, cf ) ) goto error;
 	}
-	++linecount; /* at end */
+	if( s && *s ){
+		/* last line did not have \n */
+		if( Add_line_to_control_file( s, cf ) ) goto error;
+	}
 
 	/* allocate storage for line and data files */
-	DEBUG4("Parse_cf: line count '%d', data files %d",
-		linecount, datafiles );
-	cf->control_file_lines.count = 0;
-	if( linecount >= cf->control_file_lines.max ){
-		extend_malloc_list( &cf->control_file_lines, sizeof( char *), linecount+1);
-	}
-	/* set up the data files - allow for some extras */
-	cf->data_file_list.count = 0;
-	if( datafiles+4 >= cf->data_file_list.max ){
-		extend_malloc_list(&cf->data_file_list, sizeof(df[0]), datafiles+4 );
-	}
-
-	/* check the line for bad characters */
-	lines = (char **)cf->control_file_lines.list;
-	for( s = cf->cf_info; s && *s && (end = strchr( s, '\n' ));
-		s = end, ++cf->control_file_lines.count ){
-		*end++ = 0;
-		/* check for printable chars */
-		lines[ cf->control_file_lines.count ] = s;
-		for( i = 0; (c = s[i]); ++i ){
-			if( !isprint(c) && !isspace(c) ){
-				if( Fix_bad_job ){
-					s[i] = ' ';
-				} else {
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"bad job line '%s'", s );
-					goto error;
-				}
-			}
+	DEBUG4("Parse_cf: line count '%d', data files lines %d",
+		cf->control_file_lines.count, Lclines.count );
+	extend_malloc_list( &cf->control_file_lines, sizeof( char *), Lclines.count+1,__FILE__,__LINE__ );
+	if(DEBUGL3){
+		lines = cf->control_file_lines.list;
+		logDebug("Parse_cf: control %d", cf->control_file_lines.count );
+		for(i = 0; i < cf->control_file_lines.count; ++i ){
+			logDebug("  [%d] '%s'", i , lines[i] );
 		}
+		lines = Lclines.list;
+		logDebug("Parse_cf: data %d", Lclines.count );
+		for(i = 0; i < Lclines.count; ++i ){
+			logDebug("  [%d] '%s'", i , lines[i] );
+		}
+	}
 
+	/* rescan the control file, parsing values */
+	lines = cf->control_file_lines.list;
+	for( i = 0; i < cf->control_file_lines.count; ++i ){
 		/* now parse the data file */
+		s = lines[i];
 		c = s[0];
 		if( isupper( c ) ){
-			if( c == 'N' ){
-				if( df && df->Ninfo[0] == 0 ){
-					safestrncpy( df->Ninfo, s );
-					lines[ cf->control_file_lines.count ] = df->Ninfo;
-					Nline = 0;
-				} else {
-					Nline = cf->control_file_lines.count;
-				}
-				continue;
+			if( cf->capoptions[ c - 'A' ] && !Fix_bad_job ){
+				plp_snprintf( cf->error, sizeof( cf->error),
+					"duplicate option '%s' in '%s'",
+					s, cf->transfername );
+				goto error;
 			}
-			if( c == 'U' ){
-				/* see if there is a data file list */
-				if( df == 0 ){
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"'%s' Unlink before data info in '%s'",
-						s, cf->transfername );
-					goto error;
-				}
-				if( Check_format( DATA_FILE, s+1, cf ) ){
-					/* vintage and broken LPR servers put in bad 'U' lines */
-					DEBUG3( "Parse_cf: Bad U line '%s", s );
-					if( Fix_bad_job ){
-						lines[ cf->control_file_lines.count ] = 0;
-						continue;
-					}
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"U (unlink) data file name format bad, line '%s' in %s",
-						s, cf->transfername );
-					goto error;
-				}
-				if( strcmp( s+1, df->original ) ){
-					DEBUG3( "Parse_cf: U line does not match '%s", s );
-					if( Fix_bad_job ){
-						lines[ cf->control_file_lines.count ] = 0;
-						continue;
-					}
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"U (unlink) does not match data file name, line '%s' in %s",
-						s, cf->transfername );
-					goto error;
-				}
-				if( df->Uinfo[0] ){
-					DEBUG3( "Parse_cf: multiple U (unlink) for same data file, line '%s' in %s",
-						s, cf->transfername );
-					lines[ cf->control_file_lines.count ] = 0;
-				} else {
-					lines[ cf->control_file_lines.count ] = df->Uinfo;
-					strncpy( df->Uinfo, s, sizeof( df->Uinfo ) );
-				}
-				continue;
-			}
-			if( cf->capoptions[ c - 'A' ] ){
-				if( Fix_bad_job ){
-					/* remove the duplicate line */
-					lines[ cf->control_file_lines.count ] = 0;
-					continue;
-				} else {
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"duplicate option '%s' in '%s'",
-						s, cf->transfername );
-					goto error;
-				}
-			}
+			DEBUG4("Parse_cf: cap option '%c'='%s'",c,s);
 			cf->capoptions[ c - 'A' ] = s;
 			if( c == 'A' ){
 				if( s[1] == 0 ){
@@ -329,91 +296,19 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 						cf->transfername );
 					goto error;
 				}
-				strncpy( cf->identifier, s, sizeof( cf->identifier ) );
-				cf->capoptions[ c - 'A' ] = cf->identifier;
-				lines[ cf->control_file_lines.count ] = cf->identifier;
 				cf->orig_identifier = s;
+				safestrncpy( cf->identifier, s);
+				cf->capoptions[ c - 'A' ] = cf->identifier;
+				lines[i] = cf->identifier;
 			}
 		} else if( isdigit( c ) ){
-			if( cf->digitoptions[ c - '0' ] ){
+			if( cf->digitoptions[ c - '0' ] && !Fix_bad_job ){
 				plp_snprintf( cf->error, sizeof( cf->error),
 					"duplicate option '%s' in '%s'",
 					s, cf->transfername );
 				goto error;
 			}
 			cf->digitoptions[ c - '0' ] = s;
-		} else if( islower( c ) ){
-			DEBUG3("Parse_cf: format '%c' data file '%s'", c, s+1 );
-			if( strchr( "aios", c )
-				/* || ( Formats_allowed && !strchr( Formats_allowed, c )) */ ){
-				plp_snprintf( cf->error, sizeof( cf->error),
-					"illegal data file format '%c' in '%s'", c, cf->transfername );
-				goto error;
-			}
-
-			/* check to see that the name has the format FdfXnnnHost*/
-			if( Check_format( DATA_FILE, s+1, cf ) ){
-				plp_snprintf( cf->error, sizeof( cf->error),
-					"bad data file name format '%s' in %s", s+1, cf->original );
-				goto error;
-			}
-			/* check for blank control file */
-			if( cf->control_info == 0 ){
-				if( cf->control_file_lines.count == 0 ){
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"no control information before '%s' in '%s'",
-						s, cf->transfername );
-					goto error;
-				}
-				cf->control_info = cf->control_file_lines.count;
-			}
-			/* if you have a previous data file entry, then
-			 *    adjust the line count
-			 *    check for copies of the same file
-			 */
-			if( df ){
-				df->copies = strcmp( df->transfername, s+1 ) != 0;
-			}
-			df = (void *)cf->data_file_list.list;
-			df = &df[cf->data_file_list.count++];
-			/* get the format and name of file */
-			memset( (void *)df, 0, sizeof( df[0] ) );
-			df->format = c;
-			df->copies = 1;
-			strncpy(df->transfername, s, sizeof(df->transfername) );
-			strncpy(df->original, s+1, sizeof(df->original) );
-			if( dpath ){
-				s = Add_path( dpath, s+1 );
-			} else {
-				s = s+1;
-			}
-			strncpy(df->openname, s, sizeof(df->openname) );
-			/* now you do not need to worry */
-			lines[ cf->control_file_lines.count ] = df->transfername;
-			if( Nline ){
-				safestrncpy( df->Ninfo, lines[ Nline ] );
-				lines[ Nline ] = df->Ninfo;
-			}
-			Nline = 0;
-			/* check to see if there is a data file */
-			if( Check_format( DATA_FILE, df->original, cf ) ){
-				plp_snprintf( cf->error, sizeof( cf->error),
-					"bad job datafile name format '%s'", df->original );
-				goto error;
-			}
-
-			if( check_df ){
-				DEBUG3("Parse_cf: checking data file '%s'", df->openname );
-				fd = Checkread( df->openname, &df->statb );
-				err = errno;
-				if( fd < 0 ){
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"cannot open '%s' - '%s'", df->openname, Errormsg(err) );
-					goto error;
-				}
-				cf->jobsize += df->statb.st_size;
-				close( fd );
-			}
 		} else if( c == '_' ){
 			/* we have authentication information - put it
 			 * into the control file
@@ -430,19 +325,135 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 			lines[ cf->control_file_lines.count ] = cf->auth_id;
 		}
 	}
-	lines[ cf->control_file_lines.count ] = 0;
 
-	/* check for last line not ending in New Line */
-	if( s && *s ){
-		plp_snprintf( cf->error, sizeof( cf->error),
-			"last line missing NL '%s'", s, cf->transfername );
-		goto error;
+	cf->control_info = cf->control_file_lines.count;
+	
+	/* set up the data files */
+	cf->data_file_list.count = 0;
+	if( Lclines.count >= cf->data_file_list.max ){
+		extend_malloc_list(&cf->data_file_list, sizeof(df[0]),
+			Lclines.count+1-cf->data_file_list.count,__FILE__,__LINE__  );
 	}
-	/* clean out metacharacters */
-	for( i = 0; i < cf->control_file_lines.count; ++i ){
-		Clean_meta( cf->control_file_lines.list[i] );
+	memset(cf->data_file_list.list, 0, sizeof(df[0])*cf->data_file_list.max );
+
+	/* rescan the data files lines, parsing values */
+	df = (void *)cf->data_file_list.list;
+	datafiles = 0;
+	lines = Lclines.list;
+	for( i = 0; i < Lclines.count; ++i ){
+		s = lines[i];
+		c = *s;
+		DEBUG3("Parse_cf: data '%c' '%s'", c, s );
+		if( c == 'N' ){
+			if( datafiles && df[datafiles-1].Ninfo[0] == 0 ){
+				DEBUG3("Parse_cf: Ninfo[%d] '%s'",datafiles-1, s );
+				safestrncpy( df[datafiles-1].Ninfo, s );
+			} else {
+				DEBUG3("Parse_cf: Ninfo[%d] '%s'",datafiles, s );
+				safestrncpy( df[datafiles].Ninfo, s );
+			}
+		} else if( c == 'U' ){
+			if( datafiles && df[datafiles-1].Uinfo[0] == 0 ){
+				DEBUG3("Parse_cf: Uinfo[%d] '%s'", datafiles-1,s);
+				safestrncpy( df[datafiles-1].Uinfo, s);
+			} else {
+				DEBUG3("Parse_cf: Uinfo[%d] '%s'", datafiles,s );
+				safestrncpy( df[datafiles].Uinfo, s);
+			}
+			if( Check_format( DATA_FILE, s+1, cf ) ){
+				char buffer[LINEBUFFER];
+				safestrncpy(buffer,cf->error);
+				plp_snprintf( cf->error, sizeof( cf->error),
+					"bad data file name format '%s' in %s - %s",
+					s+1, cf->original, cf->error );
+				goto error;
+			}
+		} else if( islower( c ) ){
+			DEBUG3("Parse_cf: format '%c' data file '%s'", c, s+1 );
+			safestrncpy( df[datafiles].cfline, s );
+			if( strchr( "aios", c )
+				/* || ( Formats_allowed && !strchr( Formats_allowed, c )) */ ){
+				plp_snprintf( cf->error, sizeof( cf->error),
+					"illegal data file format '%c' in '%s'", c, cf->transfername );
+				goto error;
+			}
+			/* check to see that the name has the format FdfXnnnHost*/
+			if( Check_format( DATA_FILE, s+1, cf ) ){
+				char buffer[LINEBUFFER];
+				safestrncpy(buffer,cf->error);
+				plp_snprintf( cf->error, sizeof( cf->error),
+					"bad data file name format '%s' in %s - %s",
+					s+1, cf->original, cf->error );
+				goto error;
+			}
+			/* if you have a previous data file entry, then
+			 *    adjust the line count
+			 *    check for copies of the same file
+			 */
+			df[datafiles].format = c;
+			strncpy(df[datafiles].cfline, s, sizeof(df[datafiles].cfline) );
+			strncpy(df[datafiles].original,s+1,sizeof(df[datafiles].original) );
+			if( dpath ){
+				s = Add_path( dpath, s+1 );
+			} else {
+				s = s+1;
+			}
+			strncpy(df[datafiles].openname,s,sizeof(df[datafiles].openname));
+			if( check_df ){
+				DEBUG3("Parse_cf: checking data file '%s'", df[datafiles].openname );
+				fd = Checkread( df[datafiles].openname, &df[datafiles].statb );
+				err = errno;
+				if( fd < 0 ){
+					plp_snprintf( cf->error, sizeof( cf->error),
+						"cannot open '%s' - '%s'", df[datafiles].openname, Errormsg(err) );
+					goto error;
+				}
+				cf->jobsize += df[datafiles].statb.st_size;
+				close( fd );
+			}
+			++datafiles;
+		}
+	}
+	cf->data_file_list.count = datafiles;
+
+	/* indicate which entry a job is a copy of.  Note that we assume
+	 * that the LAST entry in the file is used to record information.
+	 */
+	for( i = datafiles-1; i > 0; --i ){
+		int j;
+		if( !df[i].is_a_copy ){
+			s = df[i].cfline+1;
+			for( j = i-1; j >= 0; --j ){
+				if( !strcmp( df[j].cfline+1, s ) ){
+					df[j].is_a_copy = i;
+				}
+			}
+		}
 	}
 
+	if(DEBUGL3){
+		logDebug( "Parse_cf: data file count %d", datafiles);
+		for( i = 0; i < datafiles; ++i ){
+			logDebug( "  [%d] file '%s'", i, df[i].cfline );
+			logDebug( "  [%d] N '%s'", i, df[i].Ninfo );
+			logDebug( "  [%d] U '%s'", i, df[i].Uinfo );
+			logDebug( "  [%d] is_a_copy '%d'", i, df[i].is_a_copy );
+		}
+	}
+	
+	/* we need to fix up the control file with the right information.
+	 * parsing will simply restore it in a fairly simple manner
+	 */
+	for( i = 0;  i < datafiles; ++i ){
+		if( df[i].Ninfo[0] ){
+			cf->control_file_lines.list[cf->control_file_lines.count++] = df[i].Ninfo;
+		}
+		cf->control_file_lines.list[cf->control_file_lines.count++] = df[i].cfline;
+		if( df[i].Uinfo[0] ){
+			cf->control_file_lines.list[cf->control_file_lines.count++] = df[i].Uinfo;
+		}
+	}
+	cf->control_file_lines.list[cf->control_file_lines.count] = 0;
 
 	DEBUG4("Parse_cf: '%s', lines %d, datafiles %d",
 		cf->transfername, cf->control_file_lines.count, datafiles );
@@ -451,7 +462,6 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 	if( Make_identifier( cf ) ){
 		goto error;
 	}
-
 
 	if(DEBUGL4 ){
 		char buffer[LINEBUFFER];
@@ -491,12 +501,11 @@ void Extend_file_list( int count )
 			logDebug( "Extend_file: before [%d] = 0x%x", i, cfpp[i] );
 		}
 	}
-	cfp = (void *)add_buffer( &c_xfiles, size );
-	memset( cfp, 0, size );
+	cfp = (void *)add_buffer( &c_xfiles, size,__FILE__,__LINE__  );
 	/* now we expand the list */
 	max = C_files_list.max;
 	DEBUG3("Extend_file_list: C_files_list.max %d", max );
-	extend_malloc_list( &C_files_list, sizeof( cfpp[0] ), count );
+	extend_malloc_list( &C_files_list, sizeof( cfpp[0] ), count,__FILE__,__LINE__  );
 	cfpp = (void *)C_files_list.list;
 	for( i = 0; i < count ; ++i ){
 		cfpp[i+max] = &cfp[i];
@@ -696,26 +705,280 @@ int Fix_class_info( struct control_file *cf, char *classes )
 	return( result != 0);
 }
 
-/***************************************************************************
- * Job_count( int *held_files, int *printable jobs )
- *  Report the job statistics
- ***************************************************************************/
-void Job_count( int *hc, int *cnt )
+int Fix_data_file_info( struct control_file *cfp )
 {
-	struct control_file *cfp, **cfpp;	/* pointer to control file */
-	int i, count, hold_count;
+	int i, j, c, status;
+	char **lines;
+	struct data_file *jobfile;
+	int jobfilecount;
 
-	count = 0; hold_count = 0;
-	cfpp = (void *)C_files_list.list;
-	for( i = 0; i < C_files_list.count; ++i ){
-		cfp = cfpp[i];
-		if( cfp->hold_info.hold_time ){
-			++hold_count;
-			continue;
-		}
-		if( cfp->hold_info.not_printable ) continue;
-		++count;
+	jobfile = (void *)cfp->data_file_list.list;
+	jobfilecount = cfp->data_file_list.count;
+
+	status = 0;
+	/* reformat job names if they are totally screwed up */
+	if( cfp->name_format_error ){
+		/* we will brutally remake all of the names of the files */
+		/* first, we deal with the control file */
+		safestrncpy(cfp->filehostname, cfp->FROMHOST+1);
+		cfp->name_format_error = 0;
 	}
-	if( hc ) *hc = hold_count;
-	if( cnt ) *cnt = count;
+
+	plp_snprintf( cfp->transfername, sizeof(cfp->transfername),
+		"cf%c%0*d%s",cfp->priority,
+		cfp->number_len, cfp->number,cfp->filehostname);
+	DEBUGF(DRECV3)("Fix_data_file_info: control file '%s'",
+		cfp->transfername );
+
+	c = 'A';
+	
+	cfp->number_of_unique_data_files = 0;
+	for( i = 0; i < jobfilecount; ++i ){
+		if(!jobfile[i].is_a_copy){
+			++cfp->number_of_unique_data_files;
+			jobfile[i].cfline[3] = c;
+			plp_snprintf( jobfile[i].cfline+1,
+				sizeof(jobfile[i].cfline)-1,
+				"df%c%0*d%s",c,cfp->number_len,cfp->number,cfp->filehostname );
+			plp_snprintf( jobfile[i].Uinfo, sizeof(jobfile[i].Uinfo),
+				"U%s", jobfile[i].cfline+1 );
+			if( c == 'z' ){
+				plp_snprintf(cfp->error,sizeof(cfp->error),
+						"too many data files");
+				status = JFAIL;
+				goto error;
+			} else if( c == 'Z' ){
+				c = 'a';
+			} else {
+				++c;
+			}
+		}
+	}
+	/* now we make sure that the job information is propagated to
+	 * the right places */
+	for( i = jobfilecount; i >= 0 ; --i ){
+		if( (j = jobfile[i].is_a_copy) ){
+			safestrncpy( jobfile[i].cfline, jobfile[j].cfline );
+			jobfile[i].Uinfo[0] = 0;
+		}
+	}
+	/*
+	 * reformat the control file
+	 */
+
+	i = cfp->control_info;
+	for( j = 0; j < jobfilecount; ++j ){
+		if( jobfile[j].Uinfo[0] ) ++i;
+		i += 1; /* cfline */
+		if( jobfile[j].Ninfo[0] ) ++i;
+	}
+	/* find out how many extra lines you need */
+	i =  i + 1 - cfp->control_file_lines.max;
+	if( i > 0 ){
+		extend_malloc_list( &cfp->control_file_lines,
+			sizeof( char *), i,__FILE__,__LINE__  );
+	}
+
+	/* put the lines in */
+	i = cfp->control_info;
+	lines = (char **)cfp->control_file_lines.list;
+	for( j = 0; j < jobfilecount; ++j ){
+		lines[i++] = jobfile[j].cfline;
+		if( jobfile[j].Ninfo[0] ) lines[i++] = jobfile[j].Ninfo;
+		if( jobfile[j].Uinfo[0] ) lines[i++] = jobfile[j].Uinfo;
+	}
+	lines[i] = 0;
+	cfp->control_file_lines.count = i;
+
+error:
+	return( status );
+}
+
+struct destination *Destination_cfp( struct control_file *cfp, int i )
+{
+	struct destination *dest = 0;
+	if( i > 0 && i <= cfp->destination_list.count ){
+		dest = (void *)cfp->destination_list.list;
+		dest = &dest[i-1];
+	}
+	return( dest );
+}
+
+/***************************************************************************
+ * Check_printable()
+ * Check to see if the job is printable
+ ***************************************************************************/
+
+int Check_printable( struct control_file *cfp, struct destination *dest,
+	char *buffer, int len )
+{
+	int permission, not_printable;
+	struct perm_check perm_check;
+	char *s;
+
+	DEBUG0("Check_printable: '%s'", cfp->transfername );
+	memset( &perm_check, 0, sizeof(perm_check) );
+	buffer[0] = 0;
+	not_printable = 0;
+	/* check to see if it is being held or not printed */
+	/* cfp->hold_info.not_printable = 0; */
+	if( stat(cfp->transfername, &cfp->statb ) == -1 ){
+		plp_snprintf( buffer, len, _("job removed from queue") );
+	} else if( cfp->statb.st_size == 0 ){
+		plp_snprintf( buffer, len, _("zero length control file") );
+	} else if( cfp->flags ){
+		plp_snprintf( buffer, len, _("flag %d"), cfp->flags );
+	} else if( cfp->error[0] ){
+		plp_snprintf( buffer, len, _("error '%s'"), cfp->error );
+	} else if( cfp->hold_info.server > 0 ){
+		plp_snprintf( buffer, len, _("hold_info.server %d"), cfp->hold_info.server );
+	} else if( cfp->hold_info.hold_time ){
+		plp_snprintf( buffer, len, _("hold_info.hold_time %d"), cfp->hold_info.hold_time );
+	} else if( cfp->hold_info.remove_time ){
+		plp_snprintf( buffer, len, _("hold_info.remove_time %d"), cfp->hold_info.remove_time );
+	} else if( cfp->hold_info.done_time ){
+		plp_snprintf( buffer, len, _("hold_info.done_time %d"), cfp->hold_info.done_time );
+	} else if( cfp->hold_info.held_class ){
+		plp_snprintf( buffer, len, "hold_info.held_class %d",
+			cfp->hold_info.held_class );
+	} else if( dest ){
+		if( dest->error[0] ){
+			plp_snprintf( buffer, len, _("dest error '%s'"), dest->error );
+		} else if( dest->subserver >0 ){
+			plp_snprintf( buffer, len, _("dest subserver '%d'"), dest->subserver );
+		}
+	}
+	if( buffer[0] ) not_printable = JIGNORE;
+	if( not_printable == 0 ){
+		/*
+		 * check to see if you have permissions to print/process
+		 * the job
+		 */
+		memset( &perm_check, 0, sizeof( perm_check ) );
+		/* use the P or print code */
+		perm_check.service = 'P';
+		perm_check.printer = Printer;
+		if( cfp->LOGNAME && cfp->LOGNAME[1] ){
+			perm_check.user = cfp->LOGNAME+1;
+			perm_check.remoteuser = perm_check.user;
+		}
+
+		s = 0;
+		if( cfp->FROMHOST && cfp->FROMHOST[1] ){
+			s = Find_fqdn( &PermcheckHostIP, &cfp->FROMHOST[1], 0 );
+			DEBUG0("Check_printable: looking for '%s', found '%s'",
+				&cfp->FROMHOST[1], s );
+		} else if( cfp->filehostname[0] ){
+			s = Find_fqdn( &PermcheckHostIP, cfp->filehostname, 0 );
+			DEBUG0("Check_printable: looking for '%s', found '%s'",
+				cfp->filehostname, s );
+		}
+		if( s ){
+			perm_check.host = &PermcheckHostIP;
+			perm_check.remotehost = &PermcheckHostIP;
+		}
+
+		Init_perms_check();
+		if( (permission = Perms_check( &Perm_file, &perm_check, cfp )) == REJECT
+			|| (permission == 0
+				&& (permission = Perms_check(
+						&Local_perm_file, &perm_check, cfp )) == REJECT)
+			|| (permission == 0 && Last_default_perm == REJECT) ){
+			plp_snprintf( buffer, len,
+				_("no permission to print job %s"), cfp->identifier+1 );
+			/* cfp->hold_info.not_printable = */
+			not_printable = JREMOVE;
+		}
+	}
+	/*
+	if( dest == 0 ){
+		cfp->hold_info.not_printable = not_printable;
+	} else {
+		dest->not_printable = not_printable;
+	}
+	*/
+	DEBUG0("Check_printable: job '%s', dest '%s', status '%s' reason '%s'",
+		cfp->transfername, dest?dest->destination:"",
+			Server_status(not_printable), buffer );
+	return( not_printable );
+}
+
+/***************************************************************************
+ * int = JobPrintableStatus( cfp, dest )
+ *   Return the job printable status, setting the dest as a
+ *   side effect
+ ***************************************************************************/
+
+int Job_printable_status( struct control_file *cfp, struct destination **dp,
+	char *msg, int len)
+{
+	struct destination *dpp, *destination;	/* current destination */
+	int j, status, can_remove;
+
+	DEBUG0("Job_printable_status: checking '%s'%s, for printable",
+		cfp->transfername, (cfp->hold_info.routed_time ? " (routed)" : "") );
+
+	*dp = 0;
+	status = 0;
+	can_remove = 1;
+	dpp = (void *)cfp->destination_list.list;
+	destination = 0;
+
+	if( cfp->hold_info.routed_time == 0 ){
+		/* first we do non-routed jobs */
+		status = Check_printable(cfp, 0, msg, len );
+		DEBUG0("Job_printable_status: check printable '%s', result %s, '%s'",
+			cfp->transfername, Server_status(status), msg );
+	}  else {
+		/* now we check for routed jobs */
+		/* check to see if anything left */
+		for( j = 0;
+			destination == 0 && j < cfp->destination_list.count;
+			++j ){
+			destination = &dpp[j];
+			/* status will be JREMOVE or JIGNORE */
+			status = Check_printable( cfp, destination, msg, len );
+			DEBUG0(
+				"Job_printable_status: routed check printable '%s', status %s",
+				   cfp->transfername, Server_status(status) );
+			if( status == 0 ){
+				if( destination->done_time == 0 && destination->copies
+					&& destination->copy_done >= destination->copies ){
+					destination->done_time = time( (void *) 0 );
+				}
+				if( destination->done_time ){
+					destination = 0;
+				}
+			} else if( status == JREMOVE ){
+				/* the job is unprintable */
+				DEBUG0( "Job_printable_status: routed job unprintable '%s'",
+					cfp->transfername );
+				destination = 0;
+				break;
+			} else {
+				/* we ignore this destination - simply not printable */
+				DEBUG0("Job_printable_status: ignoring destination '%s'",
+					destination->destination );
+				destination = 0;
+				can_remove = 0;
+			}
+		}
+		/* if no destination, then we may be done or have an error */
+		if( destination == 0 ){
+			if( can_remove ){
+				if( cfp->orig_identifier[0] ){
+					strncpy( cfp->identifier, cfp->orig_identifier,
+						sizeof(cfp->identifier) );
+				}
+				DEBUG0( "Job_printable_status: job finished '%s' ID now '%s'",
+					cfp->transfername, cfp->identifier );
+				cfp->hold_info.done_time = time( (void *)0 );
+				status = JSUCC;
+			} else {
+				status = JIGNORE;
+			}
+		}
+	}
+	*dp = destination;
+	return( status );
 }

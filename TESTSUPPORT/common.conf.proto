@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/common.conf.proto
 # PURPOSE: include file for lpd.conf
-# $Id: common.conf.proto,v 3.1 1996/12/28 21:40:46 papowell Exp $
+# common.conf.proto,v 3.1 1996/12/28 21:40:46 papowell Exp
 ########################################################################## 
 originate_port 2000 3000
 lpd_port 4000

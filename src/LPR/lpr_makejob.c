@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_makejob.c,v 3.9 1997/09/18 19:45:50 papowell Exp $";
+"lpr_makejob.c,v 3.10 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "dump.h"
@@ -40,7 +40,7 @@ static int get_job_number(struct control_file *cfp );
 
 int Make_job( struct control_file *cfp )
 {
-	char nstr[LINEBUFFER];	/* information */
+	char nstr[LARGEBUFFER];	/* information */
 	struct keywords *keys;	/* keyword entry in the parameter list */
 	char *str;				/* buffer where we allocate stuff */
 	int n;
@@ -81,9 +81,9 @@ int Make_job( struct control_file *cfp )
 				continue;
 			}
 			if( isdigit( keys->flag)  ){
-				cfp->digitoptions[ keys->flag -'0' ] = Add_job_line( cfp, nstr, 0 );
+				cfp->digitoptions[ keys->flag -'0' ] = Add_job_line( cfp, nstr, 0,__FILE__,__LINE__  );
 			} else {
-				cfp->capoptions[ keys->flag - 'A' ] = Add_job_line( cfp, nstr, 0 );
+				cfp->capoptions[ keys->flag - 'A' ] = Add_job_line( cfp, nstr, 0,__FILE__,__LINE__  );
 			}
 			DEBUG3("Make_job: line [%d] key '%s', flag '%c' = '%s'",
 				cfp->control_file_lines.count, keys->keyword, keys->flag, nstr );

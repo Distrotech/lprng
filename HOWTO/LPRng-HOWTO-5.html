@@ -77,6 +77,8 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <CODE>
 <A HREF="#checkidle">check_idle</A></CODE></TD><TD>program used to check for idle printer</TD></TR><TR><TD>
 <CODE>
+<A HREF="#classinstatus">class_in_status</A></CODE></TD><TD>Show job class name in <CODE>lpq</CODE> status information</TD></TR><TR><TD>
+<CODE>
 <A HREF="#classnamelength">classname_length</A></CODE></TD><TD>Maximum length of classname argument (legacy requirement)</TD></TR><TR><TD>
 <CODE>
 <A HREF="#cm">cm</A></CODE></TD><TD>comment identifying printer (LPQ)</TD></TR><TR><TD>
@@ -135,6 +137,8 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-6.html#fo">fo</A></CODE></TD><TD>send form feed when device is opened</TD></TR><TR><TD>
 <CODE>
+<A HREF="#forcefqdnhostname">force_fqdn_hostname</A></CODE></TD><TD>force FQDN HOST value in control file</TD></TR><TR><TD>
+<CODE>
 <A HREF="#forcelocalhost">force_localhost</A></CODE></TD><TD>force clients to send all requests to localhost</TD></TR><TR><TD>
 <CODE>
 <A HREF="#forcequeuename">force_queuename</A></CODE></TD><TD>force use of this queuename if none provided</TD></TR><TR><TD>
@@ -154,6 +158,9 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <A HREF="LPRng-HOWTO-4.html#group">group</A></CODE></TD><TD>Effective Group ID (EGID) for SUID ROOT programs</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-6.html#hl">hl</A></CODE></TD><TD>Header (banner) last, at end of job</TD></TR><TR><TD>
+</TD><TD>Ignore control file and data file name format errors</TD></TR><TR><TD>
+<CODE>
+<A HREF="#ignorerequesteduserpriority">ignore_requested_user_priority</A></CODE></TD><TD>Ignore requested user priority</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-6.html#if">if</A></CODE></TD><TD>default (f, l) filter program</TD></TR><TR><TD>
 <CODE>
@@ -204,9 +211,13 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <CENTER><TABLE BORDER><TR><TD>
 <BR>
 <CODE>
+<A HREF="LPRng-HOWTO-6.html#mailfrom">mail_from</A></CODE></TD><TD>mail user from user name</TD></TR><TR><TD>
+<CODE>
 <A HREF="LPRng-HOWTO-6.html#mailoperatoronerror">mail_operator_on_error</A></CODE></TD><TD>mail to this operator on error</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-6.html#maxconnectinterval">max_connect_interval</A></CODE></TD><TD>maximum time between connection attempts</TD></TR><TR><TD>
+<CODE>
+<A HREF="LPRng-HOWTO-7.html#maxlogfilesize">max_log_file_size</A></CODE></TD><TD>maximum size (in K) of spool queue log file</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-6.html#maxserversactive">max_servers_active</A></CODE></TD><TD>maximum number of lpd queue servers that can be active</TD></TR><TR><TD>
 <CODE>
@@ -218,11 +229,15 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <CODE>
 <A HREF="#mi">mi</A></CODE></TD><TD>minimum space (Kb) to be left in spool filesystem</TD></TR><TR><TD>
 <CODE>
+<A HREF="LPRng-HOWTO-7.html#minlogfilesize">min_log_file_size</A></CODE></TD><TD>minimum size (in K) of spool queue log file</TD></TR><TR><TD>
+<CODE>
 <A HREF="LPRng-HOWTO-7.html#minstatussize">min_status_size</A></CODE></TD><TD>minimum size to reduce status file to</TD></TR><TR><TD>
 <CODE>
 <A HREF="#minfree">minfree</A></CODE></TD><TD>minimum amount of free space needed</TD></TR><TR><TD>
 <CODE>
 <A HREF="#ml">ml</A></CODE></TD><TD>minimum number of printable characters for printable check</TD></TR><TR><TD>
+<CODE>
+<A HREF="#ms">ms</A></CODE></TD><TD>stty options for serial lines (ms is an alias for sy)</TD></TR><TR><TD>
 <CODE>
 <A HREF="#mstimeresolution">ms_time_resolution</A></CODE></TD><TD>millisecond time resolution</TD></TR><TR><TD>
 <CODE>
@@ -263,6 +278,8 @@ Option</TD><TD>Meaning</TD></TR><TR><TD>
 <A HREF="LPRng-HOWTO-14.html#remotesupport">remote_support</A></CODE></TD><TD>operations allowed to remote host</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-12.html#remoteuser">remote_user</A></CODE></TD><TD>remote-queue machine (hostname) (with rm)</TD></TR><TR><TD>
+<CODE>
+<A HREF="#reportserveras">report_server_as</A></CODE></TD><TD>server name for status reports</TD></TR><TR><TD>
 <CODE>
 <A HREF="LPRng-HOWTO-14.html#retryeconnrefused">retry_econnrefused</A></CODE></TD><TD>Retry on connect ECONNREFUSED errors</TD></TR><TR><TD>
 <CODE>
@@ -411,7 +428,7 @@ lp1|printer
 </PRE>
 <P>I'll use this simple example to explain the basics of the LPRng
 printcap format.
-<P>Lines starting with a `#' sign are comments, and all
+<P>Lines starting with a <CODE>#</CODE> sign are comments, and all
 leading and trailing <EM>whitespace</EM>,
 i.e. - spaces, tabs, etc, are ignored.
 Empty lines are ignored as well.
@@ -441,11 +458,11 @@ Options and values are case sensitive;
 for example
 <CODE>Ts</CODE> and
 <CODE>ts</CODE> refer to different options.
-Numerical values are indicated by a `#'
-separator, while a `=' indicates a string value. Boolean switches
+Numerical values are indicated by a <CODE>#</CODE>
+separator, while a <CODE>=</CODE> indicates a string value. Boolean switches
 or flags are
 set TRUE if no value follows the keyword and FALSE by
-appending a `@'.
+appending a <CODE>@</CODE>.
 For example
 <CODE>sh</CODE>
 will set the
@@ -509,12 +526,14 @@ inhibit banner pages.</LI>
 
 <A NAME="br"></A> 
 <A NAME="sy"></A> 
+<A NAME="ms"></A> 
 <A NAME="ty"></A> <H2><A NAME="ss5.3">5.3 A serial printer queue</A>
 </H2>
 
 <P>Options used:
 <UL>
 <LI> <CODE>br#</CODE><EM>serial port bit rate</EM></LI>
+<LI> <CODE>ms=</CODE><EM>(alias for sy)</EM></LI>
 <LI> <CODE>sy=</CODE><EM>stty options for serial port configuration</EM></LI>
 <LI> <CODE>ty=</CODE><EM>(alias for sy)</EM></LI>
 </UL>
@@ -597,7 +616,7 @@ that the user could possibly use.
 <P>Imagine the problems that exist in a facility with literally thousands
 of printers,
 many of which are being added or removed from service on a daily basis.
-This would require the system administrators to either create spool directories
+This would require the system administrators to create spool directories
 on each host.
 The LPRng software eliminates these problems
 by allowing client programs to directly transfer jobs
@@ -636,13 +655,14 @@ Another problem is that they sometimes need to have
 <EM> aliases </EM> for their printer names,
 or want to be able to specify just the name of the printer
 and have the remote server for it supplied by the printing software.
-<P>This type of operation requires setting up an /etc/printcap file
+<P>This type of operation requires setting up an <CODE>/etc/printcap</CODE> file
 and using the printcap configuration information.
-Both the client programs (lpr, lpc, lprm, lpq)
-and the lpd daemon use the information in the /etc/printcap file
+Both the client programs (<CODE>lpr</CODE>, <CODE>lpc</CODE>, <CODE>lprm</CODE>,
+<CODE>lpq</CODE>)
+and the <CODE>lpd</CODE> daemon use the information in the <CODE>/etc/printcap</CODE> file
 to specify how they will process print jobs.
-While the same printcap file is used by both client programs and the lpd daemon,
-but will use different parts of the information.
+The same printcap file is used by both client programs and the lpd daemon,
+but each will use different parts of the information.
 <P>There are several possibilities for specifying network printers.
 <EM>I'm showing some different
 syntaxes for the entries here.
@@ -661,14 +681,14 @@ special:lp=lp@server%2000
 </PRE>
 <P>All the above printcap entries will make the lpr print client
 connect to the remote host
-<CODE>server</CODE>,
-and send the file to the <CODE> raw </CODE> printer.
+<CODE>server</CODE>
+and send the file to the <CODE>raw</CODE> printer.
 You can specify the remote printer and remote host using the
 <CODE>:rp</CODE>
 and
 <CODE>:rm</CODE>
 entries, or the LPRng extension <CODE>lp=rp@rm</CODE>.
-<P>Note that we don't need a spool directory for this kind of printers,
+<P>Note that we don't need a spool directory for this kind of printer,
 nor do we need to run <CODE>lpd</CODE> on the client host machine,
 as the job will be transferred directly to the remote host.
 <P>Many printers now come equipped with a network support card that
@@ -716,7 +736,7 @@ remote|Spool to localhost
 </PRE>
 <P>In the first method,
 we have the clients send jobs to the lp printer on the localhost;
-localhost is the 'cannonical' network name for the host on which the
+localhost is the 'canonical' network name for the host on which the
 program is running.
 The lpd server on the localhost will get the print job, store it in the
 spool directory <CODE>/usr/spool/lp</CODE> and then forward the job to the
@@ -739,9 +759,9 @@ and forces them to send the job to the localhost.
 The server will then send the job to the remote host.
 <P>The third method is useful when you want the print job to be modified
 <EM>en passant</EM> as it passes through the spool queue.
-The LPD server will see the
+See the
 <A HREF="#secfilter">Filters</A>
-discussions.
+discussion for details.
 <A NAME="secserver"></A> <H2><A NAME="ss5.7">5.7 Shared printcap files</A>
 </H2>
 
@@ -795,14 +815,14 @@ pr2:server:lp=/dev/lp:tc=.common
 which corresponds to the
 C Compiler Preprocessor (cpp)
 <CODE>#include</CODE> directive.
-Printcap entries starting with periods or underscores (<CODE>_</CODE>)
-are treated as dummy printcap information and can only be referenced
-by the <CODE>tc</CODE>.
+Printcap entries starting with periods, underscores (<CODE>_</CODE>), or
+<CODE>@</CODE> signs are treated as dummy printcap information and can only be
+referenced by the <CODE>tc</CODE>.
 <P>When the printcap information is read,
 the LPRng code will substitute the cannonical printer name for any
 <CODE>%P</CODE> tokens that it finds in the printcap.
 After processing the information in the printcap entry, the clients and
-lpd daemon will see the following:
+<CODE>lpd</CODE> daemon will see the following:
 <PRE>
 # clients
 pr1:lp=pr1@serverhost
@@ -815,8 +835,8 @@ pr1:lp=/dev/lp
   :if=/usr/local/sbin/lpf
   :mx#0:sh
 pr2:server:lp=/dev/lp:
-  :sd=/usr/local/lpd/pr1
-  :cm=Dumb printer pr1
+  :sd=/usr/local/lpd/pr2
+  :cm=Dumb printer pr2
   :lf=log:af=acct
   :if=/usr/local/sbin/lpf
   :mx#0:sh
@@ -903,8 +923,8 @@ are used to specify the remote host and printer to be used.
 These values can be extracted from a printcap entry,
 or supplied in the following manner.
 <OL>
-<LI>If the user program is not invoked with <CODE>-Pxxx</CODE> argument,
-then the <CODE>lp</CODE> option is assigned value <CODE>xxx</CODE>.</LI>
+<LI>If the user program is invoked with <CODE>-Pxxx</CODE> argument,
+then the <CODE>lp</CODE> option is assigned the value <CODE>xxx</CODE>.</LI>
 <LI>If no explicit value is specified and the PRINTER environment variable has
 value <CODE>xxx</CODE>,
 then the <CODE>lp</CODE> option is assigned value <CODE>xxx</CODE>.</LI>
@@ -951,9 +971,9 @@ There are several reasons for doing this: the filter programs or some
 of the fonts it needs might not be available on the server, or you
 want to minimize the system load.
 <P>LPRng supports this capability by indicating that a printer
-is actualy a
+is actually a
 <EM>bounce queue</EM>.
-The term comes from the notion that jobs will <EM> bounce </EM> through
+The term comes from the notion that jobs will <EM>bounce</EM> through
 this print queue,
 getting processed by the various facilities.
 The output, rather than going to a physical device,
@@ -983,7 +1003,7 @@ and hostname where the filtering will be done.
 This information is used by the lpr program to determine where to send
 the print job.</LI>
 <LI>After the lpd daemon on the bouncehost does the processing,
-and then the output is transmitted to the queue and hostname
+the output is then transmitted to the queue and hostname
 specified by the
 <CODE>bq</CODE>
 option.</LI>
@@ -1036,7 +1056,7 @@ transmitted to the queue <CODE>lp</CODE> on the server called
 </UL>
 <P>Some users would like to have all of the advantages of having
 the filtering and processing capabilities of a lpd daemon
-without needing to deal with actualy running a lpd daemon
+without needing to deal with actually running a lpd daemon
 on their system.
 By having the <CODE>lpr</CODE> program
 process the job by passing it through the various filters
@@ -1057,7 +1077,7 @@ specified filters and send the outputs of the filters to the remote printer
 for further processing.
 <P>In order to do filtering,  it may need to create some temporary files
 and run some programs.  By default,  the temporary files are
-created in the /tmp directory and the programs are run as user.
+created in the <CODE>/tmp</CODE> directory and the programs are run as user.
 Since no spool directory is used, the <CODE>sd</CODE> information is not
 needed.
 <A NAME="destinations"></A> 
@@ -1070,7 +1090,7 @@ needed.
 <LI> <CODE>destinations=</CODE><EM>destinations for jobs</EM></LI>
 <LI> <CODE>router=</CODE><EM>router program</EM></LI>
 </UL>
-<P>The LPD functionality bounce queue functionality has been extended
+<P>The LPD bounce queue functionality has been extended
 to allow a job to not only be passed through filters before sending
 to a remote destination,  but also to reroute the job to one or
 more destinations in a dynamic manner.  This is accomplished by having
@@ -1148,9 +1168,8 @@ as the main job id for control and/or selection operations.
 <CODE>destinations</CODE> entry specifies the possible set of
 destinations that the job can be sent to,
 and is for informational purposes only.
-In order for LPQ/LPRM to find the job once it has passed though LPD you
-it will
-use the list of printers in the
+In order for LPQ/LPRM to find the job once it has passed through LPD,
+LPQ/LPRM uses the list of printers in the
 <CODE>destinations</CODE>,
 and loop over all the names in the list looking for the "job" that you are interested in.
 If there is no
@@ -1219,9 +1238,8 @@ you can monitor your network printers activities.
 remote printers, Patrick Powell advises differently:
 <P>
 <BLOCKQUOTE>
-<P>I recommend that you use only a single protocol to send jobs to the printer
-at a time.
-If you can,  I also recommends that you use a print spooler and have only
+<P>I recommend that you use only a single protocol to send jobs to the printer.
+If you can,  I also recommend that you use a print spooler and have only
 a single host system send a job to the printer.
 <P>My best advice on connecting to network printers is not to use the
 the built-in LPD server,
@@ -1268,7 +1286,7 @@ printers (e.g., the DEClaser&nbsp;3500) use TCP port&nbsp;10001.
 
 <P>In a large site, you could have several equivalent printers, which
 will be used by many people. The reason for this is, of course, to
-increase the printer output, by enabling several jobs to be printed at
+increase the printer output by enabling several jobs to be printed at
 once.
 <P>LPRng supplies mechanisms to define a `virtual' printer for such a set
 of real printers. If properly set up, print jobs will be distributed
@@ -1288,10 +1306,10 @@ The main queue
 that will be sent jobs.
 These printers must have their spool queues on this LPD server.
 <P>Servers that are fed jobs have a
-<CODE>ss=mainqueue</CODE>
+<CODE>ss=</CODE><EM>mainqueue</EM>
 printcap entry.
 This informs the <CODE>lpd</CODE> server that the queue operates under the
-control of the mainqueue print queue,
+control of the <EM>mainqueue</EM> print queue,
 and is fed jobs from it.
 <P>During normal operation,
 when the <CODE>lpd</CODE> server has a job to print in the <EM>mainqueue</EM>,
@@ -1333,8 +1351,8 @@ laser2|pi2|Room 1359 LaserWriter #2
     :lp=/dev/laser2
     :tc=@commonlaser
 </PRE>
-<P>and so on for the other 4&nbsp;<CODE>laser?</CODE> queues.
-<P>This will forward a job from <CODE>laser</CODE> to <CODE>laser?</CODE>, once
+<P>and so on for the other 4 <CODE>laser</CODE><EM>N</EM> queues.
+<P>This will forward a job from <CODE>laser</CODE> to <CODE>laser</CODE><EM>N</EM>, once
 one of those queues is available. It will hold jobs in the
 ``<CODE>laser</CODE>'' queue until one of the other queues is empty.
 <P>Even though the queues are not meant for
@@ -1343,8 +1361,8 @@ people can print directly to individual queues.
 This allows a specific load sharing printer to be used.
 If you wanted to
 <EM>hide</EM> the load sharing printers,
-then you would simply remove the entries for them at
-the start of the printcap file.
+i.e. - not allow direct spooling to them,
+then you would simply remove the non-server entries from the printcap.
 <A NAME="checkidle"></A> <H3>Checking Busy Status of Server Queues</H3>
 
 <P>Options used:
@@ -1372,11 +1390,10 @@ JSUCC    0       Successful - printer is idle
 JABORT   non-zero Printer is not accepting jobs
 </PRE>
 <P>If the printer is accepting jobs but is temporarily busy,
-then the program should poll the printer until it becomes
-free,
-and only exit when it is available for use.
-If the printer is not accepting jobs, then the program should
-exit with a non-zero exit code. 
+the program should poll the printer until it becomes free,
+only exiting when it is available for use.
+If the printer is not accepting jobs, the program should exit with a non-zero
+exit code. 
 <P>The following is a sample printcap entry, showing how the <CODE>check_idle</CODE>
 facility can be used.
 <PRE>
@@ -1482,7 +1499,8 @@ sub checkstatus {
         ($remote,$port) = $remote =~ m/(.*)%(.*)/;
     }
     $port = 515 unless $port;
-    print STDERR "XX CHECK_REMOTE remote='$remote', port='$port', pr='$printer', op='$long'\n" if $debug;
+    print STDERR "XX CHECK_REMOTE remote='$remote',"
+        . " port='$port', pr='$printer', op='$long'\n" if $debug;
 
     $socket = getconnection( $remote, $port );
 
@@ -1637,15 +1655,16 @@ and
 configuration information (see
 <A HREF="LPRng-HOWTO-7.html#lpdconf">lpd.conf(5)</A>) specifies where client and server programs find printcap
 information.
-The client programs use printcap_path; lpd uses both printcap_path
-and lpd_printcap_path. All files are read and the printcap entries are
+The client programs use <CODE>printcap_path</CODE>; <CODE>lpd</CODE> uses both
+<CODE>printcap_path</CODE> and <CODE>lpd_printcap_path</CODE>. All files are read and
+the printcap entries are
 extracted in order from the files. Later printcap information overrides
 previous information in the files.
 <P>The common defaults for the printcap locations are:
 <PRE>
-printcap_path      /etc/printcap:/usr/etc/printcap:\
-                       /var/spool/lpd/printcap.HOSTNAME
-lpd_printcap_path /etc/lpd_printcap:/usr/etc/lpd_printcap
+printcap_path          /etc/printcap:/usr/etc/printcap:\
+                            /var/spool/lpd/printcap.HOSTNAME
+lpd_printcap_path      /etc/lpd_printcap:/usr/etc/lpd_printcap
 </PRE>
 <P>When the <CODE>lpd</CODE> server gets a printcap entry,
 if the printcap entry obtained has a spool directory and the
@@ -1684,25 +1703,29 @@ of the LPRng printcap structure.
 <LI>Lines ending with a \ indicate continuation to the next line.
 In practice,  the \ is replaced with space(s) when line joining is done.</LI>
 <LI>Blank lines and lines whose first nonwhitespace character
-is a # are ignored, except if it follows a continuation line.
+is a <CODE>#</CODE> are ignored, except if it follows a continuation line.
 (Which makes sense.)</LI>
 <LI>All leading and trailing whitespace on a line are removed.</LI>
 <LI>A printcap entry consists of a name, 0 or more aliases, and data entries.<BR>
-- name starts with an alphabetic character; dummy entries can start _, @ or .<BR>
-- alias starts with a | followed by the alias<BR>
-- fields or data entry starts with : followed by the entry</LI>
+- name starts with an alphabetic character; dummy entries can start <CODE>_</CODE>,
+<CODE>@</CODE> or <CODE>.</CODE><BR>
+- alias starts with a <CODE>|</CODE> followed by the alias<BR>
+- fields or data entry starts with <CODE>:</CODE> followed by the entry</LI>
 <LI>Field or data entry<BR>
-name - main or cannonical name for printcap entry<BR>
-|name - alias name for printcap entry<BR>
-:key   - set the key to ON  (1)<BR>
-:key@  - set the key to OFF (0)<BR>
-:key#nnn - set the key to nnn, where nnn follows C language conventions<BR>
-:key=string - set the key to the string value to end of line</LI>
-<LI>Printcap entries whose cannonical name starts with _, @, or . (period)
-(eg.- <CODE>@name</CODE>)
+<EM>name</EM> - main or cannonical name for printcap entry<BR>
+<CODE>|</CODE><EM>name</EM> - alias <EM>name</EM> for printcap entry<BR>
+<CODE>:</CODE><EM>key</EM>   - set the <EM>key</EM> to ON  (1)<BR>
+<CODE>:</CODE><EM>key</EM><CODE>@</CODE>  - set the <EM>key</EM> to OFF (0)<BR>
+<CODE>:</CODE><EM>key</EM><CODE>#</CODE><EM>nnn</EM> - set the <EM>key</EM>
+to <EM>nnn</EM>, where <EM>nnn</EM> follows C language conventions<BR>
+<CODE>:</CODE><EM>key</EM><CODE>=</CODE><EM>string</EM> - set the <EM>key</EM>
+to the string value to end of line</LI>
+<LI>Printcap entries whose cannonical name starts with <CODE>_</CODE>, <CODE>@</CODE>,
+or <CODE>.</CODE> (period)
+(eg.- <CODE>@</CODE><EM>name</EM>)
 are treated like dummy
-entries.  They can be referenced with :tc=entry:,  but will
-be ignored otherwise.</LI>
+entries.  They can be referenced with <CODE>:tc=</CODE><EM>entry</EM><CODE>:</CODE>,
+but will be ignored otherwise.</LI>
 <LI>The <CODE>tc=f1:tc=f2:...</CODE> acts similar to a file inclusion
 operator,
 but substitutes printcap entries.
@@ -1710,10 +1733,10 @@ The specified tc entries are logically append to the end of
 the current printcap entry,
 and the appended information will override the previous information.
 Note that you can
-have multiple :tc: entries.</LI>
-<LI>key=value.%X<BR>
+have multiple <CODE>:tc:</CODE> entries.</LI>
+<LI><EM>key</EM><CODE>=</CODE><EM>value.</EM><CODE>%</CODE><EM>X</EM><BR>
 a selected set of
-%X values are expanded when the printcap entry is used by
+<CODE>%</CODE><EM>X</EM> values are expanded when the printcap entry is used by
 the client or server program.
 The following values are expanded:<BR>
 P - printcap cannonical or main name<BR>
@@ -1736,7 +1759,7 @@ See
 <P>Printcap information is extracted in order from the printcap files,
 and later information for printcap entries overrides earlier ones.
 <P>The
-<CODE>%X</CODE> substitution is especially useful when most of the
+<CODE>%</CODE><EM>X</EM> substitution is especially useful when most of the
 information for a set of printers is common or identical.
 This can be placed in a printcap entry and referenced with the
 <CODE>tc</CODE> operator.
@@ -1901,12 +1924,12 @@ pr4|network
 </PRE>
 <H3>PC-NFS Print Spooler</H3>
 
-<P>If you are using PC-NFS to do print spooling,  then you have several
+<P>If you are using PC-NFS to do print spooling you have several
 security loopholes exposed.  You must modify the permissions on the
 spool directory to allow other users to access it and place jobs into
 the directory.  Printcap and other control information by default is
 placed in the spool directory, and can be easily modified by malicious
-users.  To reduce this risk, the :cd: (control directory) entry is used
+users.  To reduce this risk, the <CODE>:cd:</CODE> (control directory) entry is used
 to specify a directory to hold sensitive control information. For example
 <PRE>
 #/etc/lpd_printcap
@@ -1925,7 +1948,7 @@ and is the recommended way to support PC-NFS printing.
 </H2>
 
 <P>One very effective way to organize print spooling is to have a small
-number or print servers running a
+number of print servers running a
 <CODE>lpd</CODE> daemon,
 and to have all the other systems send their jobs directly to them.
 By using the above methods of specifying the printer and server host
@@ -1946,7 +1969,7 @@ for details.
 </H2>
 
 <P>In the
-lpd.conf
+<CODE>lpd.conf</CODE>
 file you can specify:
 <PRE>
 printcap_path=|program
@@ -2290,8 +2313,8 @@ Clearly,  if it is 0, none will be checked.
 <UL>
 <LI> <CODE>fd</CODE><EM>&nbsp;&nbsp;Forwarding off</EM></LI>
 </UL>
-<P>When the <CODE>fx</CODE> option is on (default is OFF),
-then the <CODE>lpd</CODE> server will not accept jobs whose host name
+<P>When the <CODE>fd</CODE> option is on (default is OFF),
+the <CODE>lpd</CODE> server will not accept jobs whose host name
 in the control file is not the same as one of the hostnames for the
 host which originates the connection.
 <P>This was a wimpy attempt to prevent job spoofing.
@@ -2303,9 +2326,8 @@ host which originates the connection.
 <LI> <CODE>rg=</CODE><EM>Restricted group list</EM></LI>
 </UL>
 <P>The <CODE>rg</CODE> value specifies a list of groups.
-If this value is present,
-then use of a printer or operation is restricted to only users in a
-particular group.
+If this value is present use of a printer or operation is restricted to only
+users in a particular group.
 <P>This was a wimpy attempt to do restrictions on print facilities.
 The -Ppr@host option overrides this check,
 unless the <CODE>rg</CODE> value is put in the LPRng defaults.
@@ -2351,10 +2373,9 @@ for an example.
 <LI> <CODE>fix_bad_job</CODE><EM>&nbsp;&nbsp;fix bad job</EM></LI>
 <LI> <CODE>safe_chars=</CODE><EM>additional safe characters for control file </EM></LI>
 </UL>
-<P>Most printer (or print server box) manufacturer totally ignore the
-details of the RFC1179 protocol,
-and simply accept the data files for printing,
-and disregard the control file <B>until they need to print a banner
+<P>Most printer (or print server box) manufacturers totally ignore the
+details of the RFC1179 protocol and simply accept the data files for printing,
+disregarding the control file <B>until they need to print a banner
 or provide status information</B>.
 <P>At this point,  you suddenly discover that all sorts of little details
 will cause horrible problems.
@@ -2376,6 +2397,17 @@ unexpected end of input
 <P>This is due to the fact that the 0xFF eight bit value is getting sign
 extended to a 16 bit value 0xFFFF,
 which just turns out to be -1, or the error indication from a read.
+<H3>OS/2</H3>
+
+<P>For various reasons,  some versions of the OS/2 <CODE>lpd</CODE>
+print spooler have decided to make the control file and data file names
+have different formats.
+This can cause <CODE>LPRng</CODE> to suspect that somebody is trying to
+clobber other users jobs,
+and it will normally reject such jobs.
+<P>In addition,
+the OS/2 spooler does not follow RFC1179 correctly,  and truncates
+the data and job file protocol exchange.
 <H3>Serious Security Loophole</H3>
 
 <P>Finally,
@@ -2420,10 +2452,8 @@ while the password file will magically vanish.
 
 <P>Several microprocessor operating systems have decided to use
 <EM>extended fonts</EM> for information in the control file.
-Needless to say,  while this is obnoxious,  it is not serious.
-However,
-it will cause problems when trying to print messages on consoles,
-etc.
+While this is obnoxious,  it is not serious.  It will cause problems when
+trying to print messages on consoles, etc.
 <P>In order to prevent such problems,
 LPRng ruthlessly purges all characters but
 upper and lower case letters,
@@ -2438,6 +2468,9 @@ If the
 then when a suspicious character is spotted the job processing is aborted.
 If it is 1 (true),
 then the characters are silently purged and job processing continues.
+In addition,
+if the names used for control and data files are bogus or poorly formed,
+then they are renamed to something sensible.
 <P>For some installations,
 the default set of safe characters may be overly restrictive.
 For example,
@@ -2446,7 +2479,7 @@ in the <CODE>J</CODE> line of the control file.
 The replacement of this character may cause other things to stop
 working.
 <P>The <CODE>safe_chars</CODE> option allows the user to specify an additional
-set of safe characters in the <CODE>lpd.conf</CODE> configuration files.
+set of safe characters in the <CODE>lpd.conf</CODE> configuration file(s).
 For example, <CODE>safe_chars=#"</CODE> would allow the
 <CODE>#</CODE>
 and
@@ -2476,7 +2509,7 @@ all the entries present in the file must be in an explicit order.
 causes LPR and LPD to reformat the control file,
 removing objectionable entries.
 The control file of a job being sent to
-a remote printer to have its control file entries restricted to
+a remote printer will have its control file entries restricted to
 letters in (and the same order) as  HPJCLIMWT1234.
 <P>However,
 there are some very odd commercial implementations that require
@@ -2496,7 +2529,7 @@ sent to the remote host.
 <P>The
 <CODE>control_filter</CODE>
 can rewrite the control file,
-modify and the names and formats of the data files,
+modify the names and formats of the data files,
 or perform other changes.
 Here is a small snip of PERL code that shows how to
 rewrite the control file:
@@ -2525,13 +2558,13 @@ See
 <P>Options used:
 <UL>
 <LI> <CODE>mc#</CODE><EM>maximum copies </EM></LI>
-<LI> <CODE>sc</CODE><EM>&nbsp;&nbsp;maximum copies </EM></LI>
+<LI> <CODE>sc</CODE><EM> suppress multiple copies </EM></LI>
 </UL>
 <P>The <CODE> mc</CODE> value specifies the maximum number of
 copies of a job that can be printed on a printer using the
 <CODE>lpr -Knn </CODE> or
 <CODE>lpr -#nn </CODE> option.
-<P>The <CODE>sc</CODE> cause LPR to reject requests to print multiple
+<P>The <CODE>sc</CODE> boolean cause LPR to reject requests to print multiple
 copies of a file.
 <A NAME="mi"></A> 
 <A NAME="minfree"></A> <H2><A NAME="ss5.25">5.25 The mi Minimum Spool Queue Space Option</A>
@@ -2605,14 +2638,15 @@ test the results.
 By using <CODE>use_info_cache@</CODE> in the configuration information,
 you can get immediate responses.
 Also, see
-<A HREF="LPRng-HOWTO-14.html#lpcreread"> &lt;tt>lpc reread&lt;/tt></A>
+<A HREF="LPRng-HOWTO-14.html#lpcreread">lpc reread</A>
 for another method.
 <A NAME="ipv6"></A> 
 <A NAME="lockfile"></A> 
 <A NAME="logfile"></A> 
 <A NAME="spooldirperms"></A> 
 <A NAME="spoolfileperms"></A> 
-<A NAME="spreadjobs"></A> <H2><A NAME="ss5.27">5.27 LPD Specific</A>
+<A NAME="spreadjobs"></A> 
+<A NAME="reportserveras"></A> <H2><A NAME="ss5.27">5.27 LPD Specific</A>
 </H2>
 
 <P>Options used:
@@ -2620,6 +2654,7 @@ for another method.
 <LI> <CODE>ipv6</CODE><EM>&nbsp;&nbsp;use IPV6 Network facilities </EM></LI>
 <LI> <CODE>lockfile=</CODE><EM>lpd server lock file</EM></LI>
 <LI> <CODE>logfile=</CODE><EM>lpd server log file</EM></LI>
+<LI> <CODE>report_server_as=</CODE><EM>server name for status reports</EM></LI>
 <LI> <CODE>spool_dir_perms#</CODE><EM>spool directory permissions </EM></LI>
 <LI> <CODE>spool_file_perms#</CODE><EM>spool file permissions </EM></LI>
 <LI> <CODE>spread_jobs#</CODE><EM>job number spread</EM></LI>
@@ -2644,6 +2679,11 @@ chose a new number in the range about the original job number.
 However,
 it is still preserved for legacy systems which still have problems with
 file locking.
+<P>The <CODE>report_server_as</CODE> option allows an administrator to
+masquerade a server with another name.
+This could be useful if various load sharing activities are
+being carried out,  or if there are problems reconfiguring DNS
+to cause the correct server name to be reported.
 <H2><A NAME="ss5.28">5.28 Legacy Compatibility</A>
 </H2>
 
@@ -2655,19 +2695,23 @@ legacy systems.
 <UL>
 <LI> <CODE>allow_duplicate_args</CODE><EM>&nbsp;&nbsp;allow lpr to have duplicate arguments </EM></LI>
 </UL>
-<P>Some users would like LPR's and LPRM's arguments to be 'cumlative', i.e. -
-<CODE>lpr -a x -a y </CODE>  should be identical to
-<CODE>lpr -a x</CODE>
+<P>Some users would like duplicate LPR and LPRM command line
+arguments to override earlier ones,
+i.e. -
+<CODE>lpr -a x -a y </CODE> should be equivalent to
+<CODE>lpr -a y</CODE>
 <P>The <CODE>allow_duplicate_args</CODE> option
 allows the various client programs to have duplicate arguments.
 The last specified argument on the command line will override
 previous values.
+<A NAME="classinstatus"></A> 
 <A NAME="classnamelength"></A> 
 <A NAME="breakclassnameprioritylink"></A> <H3>The break_classname_priority_link Option</H3>
 
 <P>Options used:
 <UL>
 <LI> <CODE>break_classname_priority_link</CODE><EM>&nbsp;&nbsp;classname and priority can differ</EM></LI>
+<LI> <CODE>class_in_status</CODE><EM>&nbsp;&nbsp;show class name in status</EM></LI>
 <LI> <CODE>classname_length#</CODE><EM>&nbsp;&nbsp;maximum length of classname in control file </EM></LI>
 </UL>
 <P>By default the class name and the job priority are identical.  The
@@ -2678,6 +2722,8 @@ specified separately from the priority.
 size specified by RFC1179 is 32 characters;  the
 <CODE>classname_length#nnn</CODE>
 (default 31) allows a longer classname (up to 127 characters) to be used.
+<P>Setting the <CODE>class_in_status</CODE> option causes the class name rather
+than priority to be displayed in the status information.
 <A NAME="reverselpqformat"></A> <H3>The reverse_lpq_format Option</H3>
 
 <P>Options used:
@@ -2725,14 +2771,31 @@ short_status_length#3
 <P>will cause hosts whose Fully Qualified Domain Name (FQDN) ends in
 <CODE>eng.com</CODE> or from subnet <CODE>130.192.0.0</CODE> to get only
 3 lines of detailed status returned.
+<A NAME="ignorerequesteduserpriority"></A> 
+<A NAME="forcefqdnhostname"></A> <H3>The ignore_requested_user_priority and force_fqdn_host Options</H3>
+
+<P>Options used:
+<UL>
+<LI><CODE>ignore_requested_user_priority</CODE><EM>prevent users from queue jumping</EM></LI>
+<LI><CODE>force_fqdn_hostname</CODE><EM>force FQDN hostname in control file</EM></LI>
+</UL>
+<P>Some students... um... users... will request a high priority for their job
+in order to jump the queue of waiting jobs.
+This option will cause the <CODE>lpd</CODE> server to ignore the
+requested user priority.
+However, the <CODE>topq</CODE> operation will still be effective.
+<P>Similarly,  some print spoolers do not put a FQDN host name in their control file.
+The <CODE>force_fqdn_hostname</CODE> flag will cause <CODE>lpd</CODE> to put a FQDN
+host name in.
+<P>
 <A NAME="co"></A> <H2><A NAME="ss5.29">5.29 Unused Legacy Printcap Options</A>
 </H2>
 
 <P>Options used:
 <UL>
-<LI><CODE>co</CODE><EM>Cost - passed to filters.</EM></LI>
+<LI><CODE>co</CODE>  <EM> Cost - passed to filters.</EM></LI>
 </UL>
-<P>The above options are retained only for
+<P>The above option is retained only for
 compatibility with legacy filter operation.
 See
 <A HREF="LPRng-HOWTO-6.html#filtercmd">Filter Command Line Flags</A>
@@ -2746,14 +2809,14 @@ i.e. - LPRng is almost totally backwards compatible with the old BSD printcaps.
 However, a lot of people have found out the hard way
 that LPRng is not completely compatible with BSD LPR.
 <P>For example,
-the <CODE>fc/fs/xc/xs</CODE> fields,
-with were used to set serial line configuration,
-are no longer supported.
-The flag bits and their meanings are totally implementation dependent,
-and highly unportable.
-Most UNIX systems now have use a stty compliant
-<CODE>ty</CODE> or <CODE>sy</CODE> entry. Both options
-are synonyms, and the value is a set of <B>stty(1)</B> commands.
+the <CODE>fc/fs/xc/xs</CODE> flag fields
+were used to specify serial line options and are no longer supported.
+The flag fields and their meanings are version and OS dependent
+and were not portable.
+We now use an <CODE> stty </CODE> commmand compatible
+<CODE>ty</CODE> or <CODE>sy</CODE> entry.
+Both options
+are synonyms, and the value is a set of <B>stty(1)</B> options.
 See
 <A HREF="LPRng-HOWTO-3.html#secconvert">Converting BSD fc,fs,xc,xs To LPRng sy</A>
 for details.

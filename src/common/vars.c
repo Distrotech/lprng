@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: vars.c,v 3.20 1998/01/12 20:29:26 papowell Exp $";
+"vars.c,v 3.22 1998/03/29 18:32:59 papowell Exp";
 
 /* force local definitions */
 #define EXTERN
@@ -106,6 +106,8 @@ struct keywords Pc_var_list[] = {
 { "check_for_nonprintable", FLAG_K, &Check_for_nonprintable,0,0,"1"},
    /* check for idle printer */
 { "check_idle", STRING_K, &Check_idle,0,0},
+   /* show classname in status display */
+{ "class_in_status", FLAG_K, &Class_in_status,0,0},
    /* Maximum length of classname argument (legacy requirement) */
 { "classname_length", INTEGER_K, &Classname_length,0,0,"#31"},
    /*  comment identifying printer (LPQ) */
@@ -113,7 +115,11 @@ struct keywords Pc_var_list[] = {
    /*  cost in dollars per thousand pages */
 { "co",  INTEGER_K,  &Cost_factor,0,0,"#20"},
    /* configuration file */
+#if !defined(LPD_CONF_PATH)
 { "config_file", STRING_K, &Config_file,1,0,"=/etc/lpd.conf:/usr/etc/lpd.conf"},
+#else
+{ "config_file", STRING_K, &Config_file,1,0,"=" LPD_CONF_PATH},
+#endif
    /* connection control for remote printers */
 { "connect_grace", INTEGER_K, &Connect_grace,0,0,"#0"},
    /* connection control for remote printers */
@@ -162,6 +168,8 @@ struct keywords Pc_var_list[] = {
 { "fix_bad_job", FLAG_K, &Fix_bad_job,0,0},
    /*  print a form feed when device is opened */
 { "fo",  FLAG_K,  &FF_on_open,0,0},
+   /* force FQDN HOST value in control file */
+{ "force_fqdn_hostname",  FLAG_K,  &Force_FQDN_hostname,0,0},
    /* force clients to send all requests to localhost */
 { "force_localhost",  FLAG_K,  &Force_localhost,0,0},
    /*  force use of this queuename if none provided */
@@ -184,7 +192,9 @@ struct keywords Pc_var_list[] = {
 { "hl",  FLAG_K,  &Banner_last,0,0},
    /*  filter command, run on a per-file basis */
 { "if",  STRING_K,  &IF_Filter,0,0},
-   /*  filter command, run on a per-file basis */
+   /*  ignore requested user priority */
+{ "ignore_requested_user_priority",  FLAG_K,  &Ignore_requested_user_priority,0,0},
+   /*  Running IPV6 */
 { "ipv6",  FLAG_K,  &IPV6Protocol,0,0},
 	/* keytab file location for kerberos, used by server */
 { "kerberos_keytab", STRING_K, &Kerberos_keytab,0,0,"=/etc/lpd.keytab"},
@@ -217,7 +227,7 @@ struct keywords Pc_var_list[] = {
    /*  device name or lp-pipe command to send output to */
 { "lp",  STRING_K,  &Lp_device,0,0},
    /* force a poll operation */
-{ "lpd_force_poll", FLAG_K, &Force_poll,0,0,"1"},
+{ "lpd_force_poll", FLAG_K, &Force_poll,0,0},
    /*  interval in secs between starting up all servers */
 { "lpd_poll_time",  INTEGER_K,  &Poll_time,0,0,"#600"},
    /* lpd port */
@@ -226,10 +236,14 @@ struct keywords Pc_var_list[] = {
 { "lpd_printcap_path", STRING_K, &Lpd_printcap_path,1,0,"=/etc/lpd_printcap:/usr/etc/lpd_printcap"},
    /* use lpr filtering as in bounce queue */
 { "lpr_bounce", FLAG_K, &Lpr_bounce,0,0},
+   /* from address to use in mail messages */
+{ "mail_from", STRING_K, &Mail_from,0,0},
    /* mail to this operator on error */
 { "mail_operator_on_error", STRING_K, &Mail_operator_on_error,0,0},
    /* maximum connection interval */
 { "max_connect_interval", INTEGER_K, &Max_connect_interval,0,0,"#60"},
+   /* maximum log file size in Kbytes */
+{ "max_log_file_size", INTEGER_K, &Max_log_file_size,0,0,"#1000"},
    /* maximum number of servers that can be active */
 { "max_servers_active", INTEGER_K, &Max_servers_active,1,0},
    /* maximum length of status line */
@@ -240,6 +254,8 @@ struct keywords Pc_var_list[] = {
 { "mc",  INTEGER_K,  &Max_copies,0,0,"#1"},
    /*  minimum space (Kb) to be left in spool filesystem */
 { "mi",  STRING_K,  &Minfree,0,0},
+   /* maximum log file size in Kbytes */
+{ "min_log_file_size", INTEGER_K, &Min_log_file_size,0,0},
    /* minimum size to reduce status file to */
 { "min_status_size", INTEGER_K, &Min_status_size,0,0},
    /* minimum amount of free space needed */
@@ -288,6 +304,8 @@ struct keywords Pc_var_list[] = {
 { "remote_support",  STRING_K,  &Remote_support,0,0,"=RMQVC"},
    /*  remote-user name for authentication */
 { "remote_user",  STRING_K,  &Remote_user,0,0},
+   /*  report server as this value for LPQ status */
+{ "report_server_as",  STRING_K,  &Report_server_as,0,0},
    /*  retry on ECONNREFUSED error */
 { "retry_econnrefused",  FLAG_K,  &Retry_ECONNREFUSED,0,0,"1"},
    /*  retry on NOLINK connection */
@@ -361,11 +379,13 @@ struct keywords Pc_var_list[] = {
    /*  stalled job timeout */
 { "stalled_time", INTEGER_K, &Stalled_time,0,0,"#120"},
    /*  stop processing queue on filter abort */
-{ "stop_on_abort",  FLAG_K,  &Stop_on_abort,0,0,"1"},
+{ "stop_on_abort",  FLAG_K,  &Stop_on_abort,0,0},
    /*  names of servers for queue (with ss) */
 { "sv",  STRING_K,  &Server_names,0,0},
    /*  stty commands to set output line characteristics */
 { "sy",  STRING_K,  &Stty_command,0,0},
+   /* delay closing socket until end of lpr operation */
+{ "sync_lpr", FLAG_K, &Sync_lpr,0,0},
    /* name of syslog device */
 { "syslog_device", STRING_K, &Syslog_device,1,0,"=/dev/console"},
    /*  trailer string to print when queue empties */
@@ -406,7 +426,6 @@ struct keywords Pc_var_list[] = {
 
 
 struct keywords Lpd_parms[] = {
-{ "Clean",  INTEGER_K , &Clean },
 { "Foreground",  INTEGER_K , &Foreground },
 { "FQDNHost",  STRING_K , &FQDNHost },
 { "FQDNRemote",  STRING_K , &FQDNRemote },

@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/dbserver.sh
 # PURPOSE: fake database server program
-# $Id: dbserver.sh,v 3.1 1996/12/28 21:40:46 papowell Exp $
+# dbserver.sh,v 3.1 1996/12/28 21:40:46 papowell Exp
 ########################################################################## 
 #
 # Idea: the LPD will send the name of a database entry to the

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_control.c,v 3.20 1998/01/18 00:10:32 papowell Exp papowell $";
+"lpd_control.c,v 3.21 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "control.h"
@@ -130,7 +130,7 @@ int Job_control( int *socket, char *input, int maxlen )
 			_("printer '%s' has illegal char '%c' in name"), name, *s );
 		goto error;
 	}
-	setproctitle( "lpd %s %s", Name, Printer );
+	proctitle( "lpd %s %s", Name, Printer );
 	Printer = name;
 	user = tokens[1].start;
 
@@ -390,7 +390,8 @@ void Do_queue_control( char *user, int action, int *socket,
 		if( Printer == 0 ) Printer = pname;
 		switch( action ){
 		case STATUs:
-			plp_snprintf( pr, sizeof(pr), "%s@%s", Printer, ShortHost );
+			plp_snprintf( pr, sizeof(pr), "%s@%s", Printer,
+				Report_server_as?Report_server_as:ShortHost );
 			if( status != 2 ){
 				plp_snprintf( msg, sizeof(msg), _("%-18s WARNING %s\n"),
 					pr, error );
@@ -398,7 +399,7 @@ void Do_queue_control( char *user, int action, int *socket,
 				if( RemotePrinter == 0 && RemoteHost == 0 ){
 					plp_snprintf( error, errorlen,
 						_(" printer %s@%s not in printcap"),
-						Printer, ShortHost );
+						Printer, Report_server_as?Report_server_as:ShortHost );
 				} else {
 					if( RemoteHost == 0 ) RemoteHost = Default_remote_host;
 					if( RemotePrinter == 0 ) RemotePrinter = Printer;
@@ -463,16 +464,18 @@ void Do_queue_control( char *user, int action, int *socket,
 
 	switch( action ){
 	case STOP: Printing_disabled = 1; break;
-	case START: Printing_disabled = 0; break;
+	case START: Printing_disabled = Printing_aborted = 0; break;
 	case DISABLE: Spooling_disabled = 1; break;
 	case ENABLE: Spooling_disabled = 0; break;
 	case ABORT: case KILL: break;
-	case UP: Printing_disabled = 0; Spooling_disabled = 0; break;
-	case DOWN: Printing_disabled = 1; Spooling_disabled = 1; break;
+	case UP: Printing_disabled = Printing_aborted = Spooling_disabled = 0; break;
+	case DOWN: Printing_disabled = Spooling_disabled = 1; break;
 	case HOLDALL: Hold_all = 1; break;
 	case NOHOLDALL: Hold_all = 0; break;
 
-	case HOLD: case REDO: case RELEASE: case TOPQ:
+	case RELEASE: case REDO: case TOPQ:
+		Printing_disabled = Printing_aborted = 0;
+	case HOLD:
 		if( Do_control_file( user, action, socket,
 			tokencount, tokens, error, errorlen ) ){
 			goto error;
@@ -654,6 +657,7 @@ void Do_queue_control( char *user, int action, int *socket,
 	case UP:		Action = _("enabled and started"); break;
 	case DOWN:		Action = _("disabled and stopped"); break;
 	case STOP:		Action = _("stopped"); break;
+	case RELEASE: case REDO: case TOPQ:
 	case START:		Action = _("started"); break;
 	case DISABLE:	Action = _("disabled"); break;
 	case ENABLE:	Action = _("enabled"); break;
@@ -783,12 +787,12 @@ next_destination:
 		switch( action ){
 		case HOLD:
 			if( destination ){
-				destination->hold = time( (void *)0 );
+				destination->hold_time = time( (void *)0 );
 			} else {
 				cfp->hold_info.hold_time = time( (void *)0 );
 				destination = (void *)cfp->destination_list.list;
 				for( j =0; j < cfp->destination_list.count; ++j ){
-					destination[j].hold = cfp->hold_info.hold_time;
+					destination[j].hold_time = cfp->hold_info.hold_time;
 				}
 				destination = 0;
 			}
@@ -797,12 +801,12 @@ next_destination:
 		case TOPQ: cfp->hold_info.priority_time = time( (void *)0 );
 			if( destination ){
 				cfp->hold_info.hold_time = 0;
-				destination->hold = 0;
+				destination->hold_time = 0;
 			} else {
 				cfp->hold_info.hold_time = 0;
 				destination = (void *)cfp->destination_list.list;
 				for( j =0; j < cfp->destination_list.count; ++j ){
-					destination[j].hold = 0;
+					destination[j].hold_time = 0;
 				}
 				destination = 0;
 			}
@@ -821,22 +825,22 @@ next_destination:
 			cfp->hold_info.attempt = 0;
 			if( action == REDO ){
 				cfp->hold_info.done_time = 0;
-				cfp->hold_info.not_printable = 0;
+				/* cfp->hold_info.not_printable = 0; */
 			}
 			if( destination ){
-				destination->hold = 0;
+				destination->hold_time = 0;
 				if( action == REDO ){
-					destination->done = 0;
+					destination->done_time = 0;
 					destination->copy_done = 0;
 				}
 			} else {
 				destination = (void *)cfp->destination_list.list;
 				for( j =0; j < cfp->destination_list.count; ++j ){
-					destination[j].hold = 0;
+					destination[j].hold_time = 0;
 					destination[j].attempt = 0;
 					destination[j].ignore = 0;
 					if( action == REDO ){
-						destination[j].done = 0;
+						destination[j].done_time = 0;
 						destination[j].copy_done = 0;
 					}
 				}
@@ -850,11 +854,11 @@ next_destination:
 		cfp->error[0] = 0;
 		if( destination ){
 			destination->error[0] = 0;
-			destination->done = 0;
+			destination->done_time = 0;
 		} else {
 			destination = (void *)cfp->destination_list.list;
 			for( j =0; j < cfp->destination_list.count; ++j ){
-				destination[j].done = 0;
+				destination[j].done_time = 0;
 				destination[j].error[0] = 0;
 			}
 			destination = 0;
@@ -890,6 +894,12 @@ int Do_control_lpq( char *user, int action, int *socket,
 	}
 
 	plp_snprintf( msg, sizeof(msg), "%c%s", i, Printer );
+	switch( action ){
+		case LPRM: 
+			safestrncat( msg, " " );
+			safestrncat( msg, user );
+			break;
+	}
 	for( i = 0; i < tokencount; ++i ){
 		safestrncat( msg, " " );
 		safestrncat( msg, tokens[i].start );
@@ -920,16 +930,32 @@ int Do_control_status( char *user, int action, int *socket,
 	char spooler[32];
 	char forward[LINEBUFFER];
 	int serverpid, unspoolerpid;	/* server and unspooler */
-	int fd;
+	int i, fd;
 	struct stat statb;
 	char *path;
 	int cnt, hold_cnt;
 	int control_status = 0;
+	struct control_file *cfp, **cfpp;	/* pointer to control file */
+	struct destination *dest;
 
 	DEBUG4("Do_control_status: total files %d, tokencount %d",
 		C_files_list.count, tokencount );
 
-	Job_count( &hold_cnt, &cnt );
+	cnt = 0;
+	hold_cnt = 0;
+	cfpp = (void *)C_files_list.list;
+	for( i = 0; i < C_files_list.count; ++i ){
+		cfp = cfpp[i];
+		if( cfp->hold_info.hold_time ){
+			++hold_cnt;
+		} else if( cfp->hold_info.server > 0 && kill(cfp->hold_info.server,0) == 0 ){
+			/* active */
+			++cnt;
+		} else if( Job_printable_status( cfp, &dest, msg, sizeof(msg) ) == 0 ){ 
+			++cnt;
+		}
+	}
+	DEBUG0( "Do_control_status: printable jobs %d, held jobs %d", cnt, hold_cnt );
 
 	/* now check to see if there is a server and unspooler process active */
 	path = Add_path( CDpathname, Printer );
@@ -963,7 +989,8 @@ int Do_control_status( char *user, int action, int *socket,
 	close(fd);
 
 
-	plp_snprintf( pr, sizeof(pr), "%s@%s", Printer, ShortHost );
+	plp_snprintf( pr, sizeof(pr), "%s@%s", Printer,
+		Report_server_as?Report_server_as:ShortHost );
 	pr_status[0] = 0;
 	if( Bounce_queue_dest ){
 		int len;
@@ -1011,7 +1038,7 @@ int Do_control_status( char *user, int action, int *socket,
 	plp_snprintf( msg, sizeof(msg),
 		status_header,
 		pr,
-		Printing_disabled? "disabled" : "enabled",
+		Printing_disabled?"disabled":(Printing_aborted?"aborted":"enabled"),
 		Spooling_disabled? "disabled" : "enabled",
 		count, server, spooler, forward, pr_status, Control_debug?Control_debug:"" );
 	trunc_str( msg );
@@ -1224,14 +1251,12 @@ int Do_control_printcap( struct printcap_entry *pc, int action, int *socket,
 
 int Do_control_defaultq( int *socket )
 {
-	struct printcap_entry *printcap_entry = 0;
 	char msg [LINEBUFFER];
 
 	Printer = 0;
 	/* get the default queue */
-	Get_printer( &printcap_entry );
-	plp_snprintf( msg, sizeof(msg), "%s\n",
-		Printer && printcap_entry ? Printer : "" );
+	Get_printer(0);
+	plp_snprintf( msg, sizeof(msg), "%s\n", Printer );
 	if ( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 
 	return(0);

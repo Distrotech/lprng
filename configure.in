@@ -1,8 +1,7 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
 dnl Patrick Powell Fri Jul  7 21:08:48 PDT 1995
-dnl $Id: configure.in,v 3.27 1998/01/12 20:29:02 papowell Exp $
-dnl  Original version from PLP4.0 Release
+dnl configure.in,v 3.30 1998/03/29 18:46:07 papowell Exp
 
 AC_INIT(Makefile.in)
 AC_CONFIG_AUX_DIR(.)
@@ -10,7 +9,7 @@ AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER(config.h)
 
 PACKAGE=LPRng
-VERSION=3.4.2
+VERSION=3.5.1
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -106,6 +105,9 @@ AC_DEFINE_UNQUOTED(ARCHITECTURE,"$target_cpu")
 LDCC="$CC"
 checklibs=
 case $target_os in
+	 linux* )
+		no_resolv_lib=yes;
+		;;
 	 bsdi* )
 		LDCC=shlicc
 		;;
@@ -135,6 +137,7 @@ case $target_os in
 			version=`expr $version \* 10 `;
 			echo "using version $version";
 		fi;
+		no_resolv_lib=yes;
 		AC_DEFINE_UNQUOTED(SOLARIS,$version)
 		;;
 	hpux* )
@@ -168,11 +171,6 @@ dnl this is done by using the checklibs variable
 
 if test -z "$checklibs"; then
 
-	dnl BIND library may be needed,  need to force this first
-	AC_CHECK_FUNC(gethostbyname2,name2=yes)
-	if test -z "$name2" ; then
-		AC_CHECK_LIB(resolv, gethostbyname2, [LIBS="$LIBS -lresolv"])
-	fi;
 
 	dnl BSDI uses this for setproctitle
 	AC_CHECK_LIB(util, setproctitle, [LIBS="$LIBS -lutil"])
@@ -200,6 +198,15 @@ if test -z "$checklibs"; then
 	AC_CHECK_LIB(sun, getpwnam, [LIBS="$LIBS -lsun"])
 	AC_CHECK_LIB(c_s, atoi, [LIBS="$LIBS -lc_s"])
 
+	dnl BIND library may be needed,  need to force this first
+	if test -z "$no_resolv_lib"; then
+	AC_CHECK_FUNC(inet_ntop,name2=yes)
+	if test -z "$name2" ; then
+		AC_CHECK_LIB(resolv, inet_ntop, [LIBS="$LIBS -lresolv";name2=yes])
+	fi;
+	AC_CHECK_FUNC(_res,[have_res=1])
+	fi
+
 	dnl Kerberos V
 	AC_CHECK_LIB(krb5, krb5_init_context,
 		[LIBS="$LIBS -lkrb5 -lcrypto -lcom_err"], , -lcrypto -lcom_err)
@@ -221,6 +228,10 @@ if test -z "$checklibs"; then
 	AC_CHECK_LIB(curses, tgetent, [LIBS="$LIBS -lcurses"; TERMLIB=yes])
 	fi;
 fi
+if test -n "$have_res"; then
+AC_DEFINE(HAVE_RES)
+fi;
+
 dnl **** end library checks
 
 dnl **** force libraries for some odd systems the the above did not find
@@ -276,7 +287,7 @@ AC_CHECK_FUNCS(innetgr killpg lockf mkstemp)
 AC_CHECK_FUNCS(mktemp openlog random rand seteuid setlocale setpgid setproctitle)
 AC_CHECK_FUNCS(setresuid setreuid setsid sigaction)
 AC_CHECK_FUNCS(sigprocmask siglongjmp socketpair strcasecmp)
-AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysinfo)
+AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysconf sysinfo)
 AC_CHECK_FUNCS(tcflush tcsetattr uname wait3 waitpid)
 
 if test ! "$ac_cv_func_setreuid" = yes -a ! "$ac_cv_func_seteuid" = yes -a ! "$ac_cv_func_setresuid" = yes; then
@@ -693,6 +704,58 @@ fi
 
 
 dnl ----------------------------------------------------------------------------
+
+dnl ----------------------------------------------------------------------------
+dnl tgetent definitions are missing
+dnl ----------------------------------------------------------------------------
+AC_MSG_CHECKING(for tgetent declaration)
+AC_CACHE_VAL(ac_cv_decl_tgetent_def,
+[AC_TRY_COMPILE([
+#ifdef HAVE_STDIO_H
+#include <stdio.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if defined(SOLARIS)
+#include <curses.h>
+#endif
+#ifdef HAVE_TERM_H
+#include <term.h>
+#endif
+#ifdef HAVE_TERMIO_H
+#include <termio.h>
+#endif
+#ifdef HAVE_TERMCAP_H
+#include <termcap.h>
+#endif
+],[printf("%d",tgetent);],
+ac_cv_decl_tgetent_def=yes, ac_cv_decl_tgetent_def=no)
+if test $ac_cv_decl_tgetent_def != yes; then
+	AC_TRY_COMPILE([
+	#ifdef HAVE_STDIO_H
+	#include <stdio.h>
+	#endif
+	#ifdef HAVE_STDLIB_H
+	#include <stdlib.h>
+	#endif
+	#ifdef HAVE_UNISTD_H
+	#include <unistd.h>
+	#endif
+	#ifdef HAVE_CURSES_H
+	#include <curses.h>
+	#endif],[printf("%d",tgetent);],
+	ac_cv_decl_tgetent_def=yes, ac_cv_decl_tgetent_def=no)
+fi
+])
+AC_MSG_RESULT($ac_cv_decl_tgetent_def)
+if test $ac_cv_decl_tgetent_def = yes; then
+    AC_DEFINE(HAVE_TGETENT_DEF)
+fi
+
 dnl tgetstr definitions are missing
 dnl ----------------------------------------------------------------------------
 AC_MSG_CHECKING(for tgetstr declaration)
@@ -707,9 +770,19 @@ AC_CACHE_VAL(ac_cv_decl_tgetstr_def,
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#if defined(SOLARIS)
+#include <curses.h>
+#endif
 #ifdef HAVE_TERM_H
 #include <term.h>
-#endif],[printf("%d",tgetstr);],
+#endif
+#ifdef HAVE_TERMIO_H
+#include <termio.h>
+#endif
+#ifdef HAVE_TERMCAP_H
+#include <termcap.h>
+#endif
+],[printf("%d",tgetstr);],
 ac_cv_decl_tgetstr_def=yes, ac_cv_decl_tgetstr_def=no)
 if test $ac_cv_decl_tgetstr_def != yes; then
 	AC_TRY_COMPILE([
@@ -878,7 +951,10 @@ test "$USE_NLS" = yes && LIBS="$LIBS -lintl"
 dnl ----------------- GCC Compilation ----------------------------------
 AC_OUTPUT(Makefile src/Makefile po/Makefile.in man/Makefile
  TESTSUPPORT/Makefile Makefile.bsd src/Makefile.bsd man/Makefile.bsd
- TESTSUPPORT/Makefile.bsd HOWTO/Makefile,
- cp po/Makefile.in po/Makefile
- cp po/Makefile.in po/Makefile.bsd
+ TESTSUPPORT/Makefile.bsd HOWTO/Makefile,[
+ for i in po/Makefile po/Makefile.bsd.in po/Makefile.bsd; do
+   if test -f $i; then chmod +w $i; fi;
+   cp po/Makefile.in $i;
+ done
+ ]
 )

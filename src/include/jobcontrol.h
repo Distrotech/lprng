@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: jobcontrol.h
  * PURPOSE: read and write the spool queue control file
- * $Id: jobcontrol.h,v 3.6 1997/12/16 15:06:42 papowell Exp $
+ * jobcontrol.h,v 3.6 1997/12/16 15:06:42 papowell Exp
  **************************************************************************/
 
 

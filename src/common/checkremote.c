@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: checkremote.c,v 3.9 1997/09/18 19:45:52 papowell Exp $";
+"checkremote.c,v 3.9 1997/09/18 19:45:52 papowell Exp";
 
 #include "lp.h"
 #include "checkremote.h"

@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: gethostinfo.c,v 3.16 1998/01/12 20:29:16 papowell Exp $";
+"gethostinfo.c,v 3.17 1998/03/24 02:43:22 papowell Exp";
 /********************************************************************
  * char *get_fqdn (char *shorthost)
  * get the fully-qualified domain name for a host.
@@ -178,21 +178,19 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 
 	/* make a copy of all of the names */
 	info->host_names.count = 0;
-	if( info->host_names.count+1 >= info->host_names.max ){
-		extend_malloc_list( &info->host_names, sizeof( list[0] ),
-			info->host_names.count+10 );
+	if( info->host_names.max == 0 ){
+		extend_malloc_list( &info->host_names, sizeof( list[0] ), 5,__FILE__,__LINE__ );
 	}
 	fqdn = 0;
-	s = strcpy( add_buffer( &info->host_names, strlen(host_ent->h_name)+1 ),
-			host_ent->h_name );
+	s = add_str( &info->host_names, host_ent->h_name,__FILE__,__LINE__ );
 	if( strchr( s, '.' ) ) fqdn = s;
 	for( list = host_ent->h_aliases; list && *list; ++list ){
-		s = strcpy( add_buffer( &info->host_names, strlen(*list)+1 ), *list );
+		s = add_str( &info->host_names, *list,__FILE__,__LINE__ );
 		if( fqdn == 0 && strchr( s, '.' ) ) fqdn = s;
 	}
-	if( info->host_names.count+1 >= info->host_names.max ){
+	if( info->host_names.count >= info->host_names.max ){
 		extend_malloc_list( &info->host_names, sizeof( list[0] ),
-			info->host_names.count+10 );
+			1,__FILE__,__LINE__  );
 	}
 	info->host_names.list[info->host_names.count] = 0;
 	if( fqdn == 0 ){
@@ -222,7 +220,7 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 
 	if( count > info->host_addr_list.max ){
 		extend_malloc_list( &info->host_addr_list, info->host_addrlength,
-			count+10 );
+			count+10,__FILE__,__LINE__  );
 	}
 	s = (void *)info->host_addr_list.list;
 	count = 0;
@@ -379,6 +377,7 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 		info->host_addr_list.count = 0;
 		if( info->host_addr_list.list ){
 			free( info->host_addr_list.list );
+			info->host_addr_list.list = 0;
 		}
 		memset( &info->host_addr_list, 0, sizeof(info->host_addr_list ));
 		info->host_addrtype = sin->sa_family;
@@ -386,7 +385,7 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 
 		/* put in the address information */
 		if( 1 > info->host_addr_list.max ){
-			extend_malloc_list( &info->host_addr_list, len, 1 );
+			extend_malloc_list( &info->host_addr_list, len, 1,__FILE__,__LINE__  );
 		}
 		s = (void *)info->host_addr_list.list;
 		memcpy( s, addr, len );

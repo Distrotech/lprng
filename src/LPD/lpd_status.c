@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_status.c,v 3.23 1998/01/18 00:10:32 papowell Exp papowell $";
+"lpd_status.c,v 3.25 1998/03/29 18:32:43 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -151,7 +151,7 @@ int Job_status( int *socket, char *input, int maxlen )
 	}
 
 	name = tokens[0].start;
-	setproctitle( "lpd %s '%s'", Name, name );
+	proctitle( "lpd %s '%s'", Name, name );
 	
 	if( (s = Clean_name( name )) ){
 		plp_snprintf( error, sizeof(error),
@@ -263,7 +263,7 @@ Remote_status(int *socket, int subserver, int displayformat, int tokencount,
       DEBUG3("Remote_status: finished status '%s'", orig_name );
     } else {
       if( tokencount+1 >= args.max ){
-	extend_malloc_list( &args, sizeof( char *), tokencount+1 );
+	extend_malloc_list( &args, sizeof( char *), tokencount+1,__FILE__,__LINE__  );
       }
       args.count = 0;
       list = (void *)args.list;
@@ -307,6 +307,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	struct server_info *server_info;
 	char *s, *host, *logname; /* ACME pointer for writing */
 	int i, j, status, len, count, hold_count;
+	char prbuf[LINEBUFFER];
 	char number[LINEBUFFER];		/* printable form of small integer */
 	int serverpid, unspoolerpid;	/* pid of server and unspooler */
 	int fd;					/* file descriptor for file */
@@ -370,7 +371,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	}
 	len = strlen(msg);
 	plp_snprintf( msg+len, sizeof(msg)-len, "%s@%s ",
-		Printer, ShortHost );
+		Printer, Report_server_as?Report_server_as:ShortHost );
 	if( strcmp( orig_name, Printer ) ){
 		len = strlen(msg);
 		plp_snprintf( msg+len, sizeof(msg)-len, _("(originally %s) "), orig_name );
@@ -390,7 +391,8 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 				len = strlen( msg );
 			}
 			plp_snprintf( msg+len, sizeof(msg)-len,
-				_(" - printer %s@%s not in printcap"), Printer, ShortHost );
+				_(" - printer %s@%s not in printcap"), Printer,
+					Report_server_as?Report_server_as:ShortHost );
 		} else {
 			if( host == 0 ) host = Default_remote_host;
 			if( pr == 0 ) pr = Printer;
@@ -450,16 +452,34 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	len = strlen( msg );
 	if( displayformat == REQ_VERBOSE ){
 		plp_snprintf( msg+len, sizeof(msg) - len,
-			_("\n Printing: %s\n Spooling: %s"),
+			_("\n Printing: %s\n Aborted: %s\n Spooling: %s"),
 				Printing_disabled?"no":"yes",
+				Printing_aborted?"no":"yes",
 				Spooling_disabled?"no":"yes");
 	} else {
-		if( Printing_disabled || Spooling_disabled ){
-			plp_snprintf( msg+len, sizeof(msg) - len,
-				" (%s%s%s)",
-				Printing_disabled?"printing disabled":"",
-				(Printing_disabled&&Spooling_disabled)?", ":"",
-				Spooling_disabled?"spooling disabled":"" );
+		int flag = 0;
+		if( Printing_disabled || Spooling_disabled || Printing_aborted ){
+			plp_snprintf( msg+len, sizeof(msg) - len, " (" );
+			len = strlen( msg );
+			if( Printing_disabled ){
+				plp_snprintf( msg+len, sizeof(msg) - len, "%s%s",
+					flag?", ":"", "printing disabled" );
+				flag = 1;
+				len = strlen( msg );
+			}
+			if( Printing_aborted ){
+				plp_snprintf( msg+len, sizeof(msg) - len, "%s%s",
+					flag?", ":"", "printing aborted" );
+				flag = 1;
+				len = strlen( msg );
+			}
+			if( Spooling_disabled ){
+				plp_snprintf( msg+len, sizeof(msg) - len, "%s%s",
+					flag?", ":"", "spooling disabled" );
+				len = strlen( msg );
+			}
+			plp_snprintf( msg+len, sizeof(msg) - len, ")" );
+			len = strlen( msg );
 		}
 	}
 	if( Bounce_queue_dest ){
@@ -561,7 +581,22 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 
 	/* set up the short format for folks */
 	cfpp = (void *)C_files_list.list;
-	Job_count( &hold_count, &count );
+	count = 0;
+	hold_count = 0;
+	cfpp = (void *)C_files_list.list;
+	for( i = 0; i < C_files_list.count; ++i ){
+		char dummy[LINEBUFFER];
+		struct destination *dest;
+		cfp = cfpp[i];
+		if( cfp->hold_info.hold_time ){
+			++hold_count;
+		} else if( cfp->hold_info.server > 0 && kill(cfp->hold_info.server,0) == 0 ){
+			/* active */
+			++count;
+		} else if( Job_printable_status( cfp, &dest, dummy, sizeof(dummy) ) == 0 ){ 
+			++count;
+		}
+	}
 
 	/* this gives a short 1 line format with minimum info */
 	if( displayformat == REQ_DSHORT ){
@@ -651,7 +686,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	if( bsize < len ){
 		if( buffer ) free( buffer );
 		bsize = len;
-		malloc_or_die( buffer, bsize+2 );
+		buffer = malloc_or_die(  bsize+2 );
 	}
 	path = Add2_path( CDpathname, "status.", Printer );
 	Print_status_info( socket, path, " Status", Status_lines );
@@ -744,6 +779,12 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 			}
 			++jobnumber;
 
+			if( Class_in_status && cfp->CLASSNAME
+				&& strlen(cfp->CLASSNAME)>2 ){
+				plp_snprintf( prbuf,sizeof(prbuf), "%s", cfp->CLASSNAME+1 );
+			} else {
+				plp_snprintf( prbuf,sizeof(prbuf), "%c",cfp->priority );
+			}
 			if( displayformat != REQ_VERBOSE ){
 				if( error[0] == 0 && cfp->JOBNAME ){
 					safestrncat( error, cfp->JOBNAME+1 );
@@ -756,14 +797,18 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 					cfp->destination_list.count, nodest );
 				/* do the number, owner, and job information */
 				{
-				char temp[LINEBUFFER];
-				plp_snprintf( temp, sizeof(temp),
-					"%-*s %s",
-					RANKW, number, cfp->identifier+1 );
+				int n;
 				plp_snprintf( msg, sizeof(msg),
-					"%-*s %-*c %*d %-*s",
-					RANKW+1+OWNERW, temp,
-					CLASSW,cfp->priority,
+					"%-*s %-*s",
+					RANKW, number, OWNERW, cfp->identifier+1 );
+				len = strlen(msg);
+				for( n =strlen(prbuf);
+					n > CLASSW && len > 2 && isspace(msg[len-1])
+					&& isspace(msg[len-2]);
+					--n, --len );
+				plp_snprintf( msg+len, sizeof(msg)-len,
+					"%-*s %*d %-*s",
+					CLASSW,prbuf,
 					JOBW,cfp->number,
 					FILEW, error );
 				}
@@ -839,11 +884,11 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 					plp_snprintf( error, sizeof(error), "->%s ",
 						d->destination );
 					DEBUG3("Get_queue_status: destination active '%d'",
-						d->server );
-					if( d->server > 0 && kill( d->server, 0 ) ){
-						d->server = 0;
+						d->subserver );
+					if( d->subserver > 0 && kill( d->subserver, 0 ) ){
+						d->subserver = 0;
 					}
-					if( d->server ) ++d->copy_done;
+					if( d->subserver ) ++d->copy_done;
 					if( d->copies > 1 ){
 						len = strlen( error );
 						plp_snprintf( error+len, sizeof(error)-len,
@@ -856,17 +901,24 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 						len = strlen( error );
 						plp_snprintf( error+len, sizeof( error )-len,
 							_("ERROR: %s"), d->error );
-					} else if( d->server ){
+					} else if( d->subserver ){
 						safestrncat( number, _("actv") );
-					} else if( d->hold ){
+					} else if( d->hold_time ){
 						safestrncat( number, _("hold") );
-					} else if( d->done ){
+					} else if( d->done_time ){
 						safestrncat( number, _("done") );
 					}
 					plp_snprintf( msg, sizeof(msg),
-						"%-*s %-*s %-*c %*d %-*s", RANKW, number, OWNERW,
-						d->identifier+1,CLASSW,cfp->priority,
-						JOBW,cfp->number,FILEW, error );
+						"%-*s %-*s", RANKW, number, OWNERW, d->identifier+1 );
+					len = strlen(msg);
+					{ int n;
+						for( n = strlen(prbuf);
+						n > CLASSW && len > 2 && isspace(msg[len-1])
+						  && isspace(msg[len-2]); --n, --len );
+					}
+					plp_snprintf( msg+len, sizeof(msg)-len,
+						"%-*s %*d %-*s",
+						CLASSW,prbuf, JOBW,cfp->number,FILEW, error );
 					if( d->error[0] == 0 ){
 						char sizestr[SIZEW+TIMEW+32];
 						int n;

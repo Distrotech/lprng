@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_rcvjob.c,v 3.21 1997/12/17 19:34:56 papowell Exp $";
+"lpd_rcvjob.c,v 3.23 1998/03/29 18:32:42 papowell Exp";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -127,7 +127,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 
 	/* clear error message */
 	if( Cfp_static == 0 ){
-		malloc_or_die( Cfp_static, sizeof(Cfp_static[0]) );
+		Cfp_static = malloc_or_die( sizeof(Cfp_static[0]) );
 		memset(Cfp_static, 0, sizeof( Cfp_static[0] ) );
 	}
 	Clear_control_file( Cfp_static );
@@ -141,6 +141,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 	DEBUGF(DRECV2)("Receive_job: doing '%s'", input );
 
 	strncpy( orig_name,input, sizeof( orig_name ) );
+	Queue_name = orig_name;
 
 	/* set up cleanup and do initialization */
 
@@ -152,7 +153,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 		ack = ACK_STOP_Q;	/* no retry, don't send again */
 		goto error;
 	}
-	setproctitle( "lpd %s '%s'", Name, orig_name );
+	proctitle( "lpd %s '%s'", Name, orig_name );
 	if( Setup_printer( orig_name, Cfp_static->error, sizeof(Cfp_static->error),
 		debug_vars, 0, (void *)0, &pc_entry ) ){
 		DEBUGF(DRECV2)("Receive_job: Setup_printer failed '%s'", Cfp_static->error );
@@ -190,18 +191,19 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 
 		DEBUGF(DRECV2)( "Receive_job: read from %s- status %d read %d bytes '%s'",
 				FQDNRemote, status, len, line );
-		if( status && len == 0 ){
-			DEBUGF(DRECV2)( "Receive_job: from %s- read 0", FQDNRemote );
+		if( len == 0 || status ){
+			DEBUGF(DRECV2)( "Receive_job: ending reading from remote" );
 			/* treat like normal closing of connection */
 			status = 0;
 			break;
 		}
 		trunc_str( line );
 		len = strlen( line );
-
 		if( len < 3 ){
+			DEBUGF(DRECV2)( "Receive_job: short line, ending reading from remote" );
+			/*
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				_("%s: bad file name format '%s'"), Printer, input );
+				_("%s: bad file name format '%s'"), Printer, line ); */
 			status = 0;
 			break;
 		}
@@ -229,7 +231,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 			Link_ack( ShortRemote, socket,
 				transfer_timeout,
 				0x100, 0 );
-			Link_close( socket );
+			if( !Sync_lpr ) Link_close( socket );
 			status = 0;
 			break;
 		}
@@ -246,7 +248,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 			 */
 			DEBUGF(DRECV1)("Receive_job: bad file transfer line '%s'",
 				line );
-			Link_close( socket );
+			if( !Sync_lpr) Link_close( socket );
 			status = 0;
 			break;
 		}
@@ -296,9 +298,11 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 		 */
 		status = Check_format( filetype, filename, Cfp_static );
 		if( status ){
+			char buffer[LINEBUFFER];
+			safestrncpy(buffer,Cfp_static->error);
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
-					Printer, filename );
+				_("%s: file '%s' name problems- %s"),
+					Printer, filename, buffer );
 			ack = ACK_FAIL;
 			goto error;
 		}
@@ -362,23 +366,11 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 			 */
 			if( Data_files.count+2 > Data_files.max ){
 				extend_malloc_list( &Data_files,
-					sizeof( struct data_file ), 10 );
+					sizeof( struct data_file ), 10,__FILE__,__LINE__  );
 			}
 			datafile = (void *)Data_files.list;
 			datafile = &datafile[Data_files.count++];
 			strncpy( datafile->original,filename,sizeof(datafile->original));
-
-			/* now we get the first 3 letters - dfX and append desired
-			 * job number */
-			strncpy( datafile->transfername, filename,
-				sizeof( datafile->transfername) );
-			plp_snprintf( datafile->transfername+3,
-				sizeof( datafile->transfername ) - 3, 
-				"%0*d%s", Cfp_static->number_len,
-				Cfp_static->number, Cfp_static->filehostname );
-			DEBUGF(DRECV3)("Receive_job: datafile original '%s', transfername '%s'",
-				datafile->original, datafile->transfername );
-
 			fd = Make_temp_fd( datafile->openname,
 				sizeof(datafile->openname) );
 			fn = datafile->openname;
@@ -416,7 +408,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 			goto error;
 		} else if( Check_space( file_len, Minfree, SDpathname ) ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				_("%s: insuffcient file space '%s'"), Printer, filename );
+				_("%s: insufficient file space '%s'"), Printer, filename );
 			ack = ACK_RETRY;
 			goto error;
 		}
@@ -505,7 +497,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 				goto error;
 			}
 			Cfp_static->cf_info = add_buffer( &Cfp_static->control_file_image,
-				Cfp_static->statb.st_size+1 );
+				Cfp_static->statb.st_size+1,__FILE__,__LINE__  );
 			len = Cfp_static->statb.st_size;
 			s = Cfp_static->cf_info;
 			for( i = 0; len > 0 && (i = read( fd, s, len )) > 0;
@@ -597,7 +589,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 		}
 	} while( status == 0 );
 
-	Link_close( socket );
+	if( !Sync_lpr ) Link_close( socket );
 
 	if( (status = Check_for_missing_files( Cfp_static, &Data_files,
 		orig_name, 0, &hold_fd, pc_entry ) ) ){
@@ -614,6 +606,7 @@ int Receive_job( int *socket, char *input, int maxlen, int transfer_timeout )
 	Clear_control_file( Cfp_static );
 	Cfp_static->remove_on_exit = 0;
 	close( hold_fd );
+	Link_close( socket );
 	Start_new_server();
 	cleanup(0);
 
@@ -685,7 +678,7 @@ int Receive_block_job( int *socket, char *input, int maxlen, int transfer_timeou
 
 	/* clear error message */
 	if( Cfp_static == 0 ){
-		malloc_or_die( Cfp_static, sizeof(Cfp_static[0]) );
+		Cfp_static = malloc_or_die( sizeof(Cfp_static[0]) );
 		memset(Cfp_static, 0, sizeof( Cfp_static[0] ) );
 	}
 	Clear_control_file( Cfp_static );
@@ -729,7 +722,7 @@ int Receive_block_job( int *socket, char *input, int maxlen, int transfer_timeou
 		goto error;
 	}
 
-	setproctitle( "lpd %s '%s'", Name, orig_name );
+	proctitle( "lpd %s '%s'", Name, orig_name );
 	if( Setup_printer( orig_name, Cfp_static->error, sizeof(Cfp_static->error),
 		debug_vars, 0, (void *)0, &pc_entry ) ){
 		DEBUGF(DRECV2)("Receive_block_job: Setup_printer failed '%s'",
@@ -755,9 +748,11 @@ int Receive_block_job( int *socket, char *input, int maxlen, int transfer_timeou
 	safestrncpy( Cfp_static->original, filename );
 	status = Check_format( CONTROL_FILE, filename, Cfp_static );
 	if( status ){
+		char buffer[LINEBUFFER];
+		safestrncpy(buffer,Cfp_static->error);
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
-				Printer, filename );
+			_("%s: file '%s' name problems- %s"),
+				Printer, filename, buffer );
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -817,7 +812,7 @@ int Receive_block_job( int *socket, char *input, int maxlen, int transfer_timeou
 		goto error;
 	} else if( Check_space( 2*file_len, Minfree, SDpathname ) ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			_("%s: insuffcient file space '%s'"), Printer, filename );
+			_("%s: insufficient file space '%s'"), Printer, filename );
 		ack = ACK_RETRY;
 		goto error;
 	}
@@ -881,12 +876,13 @@ int Receive_block_job( int *socket, char *input, int maxlen, int transfer_timeou
 		orig_name, 0, &hold_fd, pc_entry ) ) ){
 		goto error;
 	}
+	DEBUGF(DRECV3)( "Receive_block_job: finished receiving job");
 	Link_close( socket );
 	close( hold_fd );
 	Clear_control_file( Cfp_static );
 	Cfp_static->error[0] = 0;
 	Start_new_server();
-	return(0);
+	cleanup(0);
 
 error:
 	status = JREMOVE;
@@ -988,7 +984,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			 */
 			/* get the original name from the file */
 			cfp->cf_info = add_buffer( &cfp->control_file_image,
-				length+1 );
+				length+1,__FILE__,__LINE__  );
 			s = cfp->cf_info;
 			for(i = len = length;
 				len > 0 && (i = read( fd, s, len )) > 0;
@@ -1017,22 +1013,11 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			 */
 			if( Data_files.count+2 > Data_files.max ){
 				extend_malloc_list( &Data_files,
-					sizeof( struct data_file ), 10 );
+					sizeof( struct data_file ), 10,__FILE__,__LINE__  );
 			}
 			datafile = (void *)Data_files.list;
 			datafile = &datafile[Data_files.count++];
 			safestrncpy( datafile->original,name);
-
-			/* now we get the first 3 letters - dfX and append desired
-			 * job number */
-			safestrncpy( datafile->transfername, name );
-			plp_snprintf( datafile->transfername+3,
-				sizeof( datafile->transfername ) - 3, 
-				"%0*d%s", cfp->number_len,
-				cfp->number, cfp->filehostname );
-			DEBUGF(DRECV3)("Scan_block_file: datafile original '%s', transfername '%s'",
-				datafile->original, datafile->transfername );
-
 			datafd = Make_temp_fd( datafile->openname,
 				sizeof(datafile->openname) );
 			fn = datafile->openname;
@@ -1146,7 +1131,7 @@ int Check_for_missing_files( struct control_file *cfp,
 	struct data_file *jobfile;	/* job data file information */
 	struct data_file *datafile;	/* data file information */
 	int jobfilecount, datafilecount;
-	char *dfile, *jfile;
+	char *s, *dfile, *jfile;
 	char **lines;
 
 	DEBUGF(DRECV3)("Check_for_missing_files: Auth_from %d, authentication '%s'",
@@ -1173,102 +1158,6 @@ int Check_for_missing_files( struct control_file *cfp,
 		goto error;
 	}
 
-	/* check to see if the received data file
-	 * is in the job list.
-	 * 1. sort the received data files
-	 * 2. sort the job files
-	 * 3. run up the lists, checking to see if there are missing or
-	 *    duplicates
-	 */
-
-	jobfile = (void *)cfp->data_file_list.list;
-	datafile = (void *)data_files_list->list;
-	jobfilecount = cfp->data_file_list.count;
-	datafilecount = data_files_list->count;
-
-	/* sort the jobs that were sent and eliminate duplicates */
-	Mergesort( datafile, datafilecount, sizeof( datafile[0] ), dfcmp );
-	j = 0;
-	for( i = 0; i < datafilecount; ++i ){
-		datafile[i].d_flags = 0;
-		if( i == 0 ){
-			datafile[j++] = datafile[i];
-		} else {
-			jfile = datafile[i-1].original; 
-			dfile = datafile[i].original;
-			if( strcmp( jfile, dfile ) ){
-				datafile[j++] = datafile[i];
-			}
-		}
-	}
-	datafilecount = j;
-	for( i = 0; i < jobfilecount; ++i ){
-		jobfile[i].d_flags = 0;
-	}
-	for( i = 0; i < jobfilecount; ++i ){
-		jfile = jobfile[i].original;
-		found = 0;
-		for( j = 0; found == 0 && j < datafilecount; ++j ){
-			dfile = datafile[j].original;
-			DEBUGF(DRECV3)("Check_for_missing_files: jfile '%s', dfile '%s'",
-					jfile, dfile );
-			found = (strcmp( jfile, dfile ) == 0 );
-			/* we have two files with the same name.  We need
-			 * to copy the transfername and openname information
-			 * to the job file
-			 */
-			if( found ){
-				datafile[j].d_flags = 1;
-				DEBUGF(DRECV3)("Check_for_missing_files: same files");
-				strncpy( jobfile[i].transfername+1, datafile[j].transfername,
-					sizeof(jobfile[i].transfername)-1 );
-				strncpy( jobfile[i].Uinfo+1, datafile[j].transfername,
-					sizeof(jobfile[i].Uinfo)-1 );
-				safestrncpy( jobfile[i].openname, datafile[j].openname );
-				DEBUGF(DRECV3)("Check_for_missing_files: '%s' now '%s'",
-					jobfile[i].original, jobfile[i].transfername );
-			}
-		}
-		if( found == 0 ){
-			DEBUGF(DRECV3)("Check_for_missing_files: missing data file %s",
-				jfile);
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				_("missing data file '%s'"), jfile );
-			status = JFAIL;
-			goto error;
-		}
-	}
-	for( j = 0; j < datafilecount; ++j ){
-		if( datafile[j].d_flags == 0 ){
-			DEBUGF(DRECV3)("Check_for_missing_files: extra data file %s",
-				datafile[j].original);
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				_("extra data file '%s'"), datafile[j].original );
-			status = JFAIL;
-			goto error;
-		}
-		DEBUGF(DRECV3)("Check_for_missing_files: renameing '%s' to '%s'",
-				datafile[j].openname, datafile[j].transfername );
-		if( rename( datafile[j].openname,
-				datafile[j].transfername ) == -1 ){
-			plp_snprintf( cfp->error, sizeof( cfp->error ),
-				_("cannot rename '%s' to '%s' - %s"),
-				datafile[j].openname,
-				datafile[j].transfername, Errormsg(errno) );
-			status = JFAIL;
-			goto error;
-		}
-	}
-	DEBUGFC(DRECV3)dump_control_file("Check_for_missing_files: before writing control", cfp);
-
-	/*******************
-     * make sure that the user authentication information
-	 * is valid for the transfer.
-	 * Auth_from = 0 - none, should be none
-	 * Auth_from = 1 - client, put in by higher level
-	 * Auth_from = 2 - forwarded, should be some
-	 *******************/
-
 	if( Auth_from == 0 ){
 		if( cfp->auth_id[0] ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),
@@ -1288,26 +1177,176 @@ int Check_for_missing_files( struct control_file *cfp,
 	     * '_'auth_id@auth_host line in control file
 		 */
 		safestrncpy( templine, cfp->auth_id );
-		(void)Insert_job_line( cfp, templine, 0, 0);
+		(void)Insert_job_line( cfp, templine, 0, 0,__FILE__,__LINE__ );
 	} else if( Auth_from == 1 ){
 		char templine[LINEBUFFER];
 		plp_snprintf( templine, sizeof( templine ), "_%s", authentication );
-		(void)Insert_job_line( cfp, templine, 0, 0);
+		(void)Insert_job_line( cfp, templine, 0, 0,__FILE__,__LINE__ );
 	}
 
-	if( cfp->FROMHOST == 0 ){
+	if( cfp->FROMHOST == 0 || cfp->FROMHOST[1] == 0 ){
 		char qn[M_FROMHOST];
 		plp_snprintf( qn, sizeof(qn), "H%s", FQDNRemote );
 		DEBUGF(DRECV3)("Check_for_missing_files: printer '%s' adding '%s'", orig_name, qn );
-		cfp->FROMHOST = Insert_job_line( cfp, qn, 0, 0);
+		if( cfp->FROMHOST ) cfp->FROMHOST[0] = 0;
+		cfp->FROMHOST = Insert_job_line( cfp, qn, 0, 0,__FILE__,__LINE__ );
+		cfp->name_format_error = 1;
+	} else if( Force_FQDN_hostname && strchr(cfp->FROMHOST,'.') == 0){
+		char qn[M_FROMHOST];
+		/* Kludge!  Kludge!
+		 * The following code will assign the FQDN Domain
+		 * to be that of the Remote Host which is originating
+		 * the job.  This allows the server and the remote host to be
+		 * in different domains.
+		 */
+		s = strchr( FQDNRemote,'.');
+		plp_snprintf( qn, sizeof(qn), "H%s%s", cfp->FROMHOST+1, s );
+		DEBUGF(DRECV3)("Check_for_missing_files: printer '%s' adding '%s'", orig_name, qn );
+		/* clear out the existing data in the file */
+		if( cfp->FROMHOST ) cfp->FROMHOST[0] = 0;
+		cfp->FROMHOST = Insert_job_line( cfp, qn, 0, 0,__FILE__,__LINE__ );
+		cfp->name_format_error = 1;
 	}
 	if( Use_date && cfp->DATE == 0 ){
 		char qn[M_DATE];
 		plp_snprintf( qn, sizeof(qn), "D%s",
 			Time_str( 0, cfp->statb.st_ctime ) );
 		DEBUGF(DRECV3)("Check_for_missing_files: printer '%s' adding '%s'", orig_name, qn );
-		cfp->DATE = Insert_job_line( cfp, qn, 0, 0);
+		cfp->DATE = Insert_job_line( cfp, qn, 0, 0,__FILE__,__LINE__ );
 	}
+	DEBUGFC(DRECV3)dump_control_file("Check_for_missing_files: before QUEUENAME", cfp);
+	if( (Use_queuename || Force_queuename) &&
+		(cfp->QUEUENAME == 0 || cfp->QUEUENAME[0] == 0 || cfp->QUEUENAME[1] == 0) ){
+		char qn[M_QUEUENAME];
+		s = Force_queuename;
+		if( s == 0 || *s == 0 ) s = Queue_name;
+		if( s == 0 || *s == 0 ) s = Printer;
+		plp_snprintf(qn, sizeof(qn)-1, "Q%s", s );
+		DEBUGF(DRECV3)("Check_for_missing_files: printer '%s' adding '%s'", orig_name, qn );
+		if( cfp->QUEUENAME ) cfp->QUEUENAME[0] = 0;
+		cfp->QUEUENAME = Insert_job_line( cfp, qn, 0, 0,__FILE__,__LINE__ );
+	}
+
+	if( (status = Fix_data_file_info( cfp )) ) goto error;
+
+ 	jobfile = (void *)cfp->data_file_list.list;
+ 	datafile = (void *)data_files_list->list;
+ 	jobfilecount = cfp->data_file_list.count;
+ 	datafilecount = data_files_list->count;
+
+	/* check to see if the received data file
+	 * is in the job list.
+	 * 1. sort the received data files
+	 * 2. sort the job files
+	 * 3. run up the lists, checking to see if there are missing or
+	 *    duplicates
+	 */
+
+	DEBUGFC(DRECV3){
+		logDebug( "Check_for_missing_files: before purging");
+		logDebug( "  %d in control file", jobfilecount);
+		for( i = 0; i < jobfilecount; ++i ){
+			logDebug( "  [%d] original '%s', cfline '%s', open '%s'",
+				i, jobfile[i].original, jobfile[i].cfline, jobfile[i].openname );
+		}
+		logDebug( "  %d arrived", datafilecount);
+		for( i = 0; i < datafilecount; ++i ){
+			logDebug( "  [%d] original '%s', cfline '%s', open '%s'",
+				i, datafile[i].original, datafile[i].cfline, datafile[i].openname );
+		}
+	}
+
+	/* sort the jobs that were sent and eliminate duplicates */
+	Mergesort( datafile, datafilecount, sizeof( datafile[0] ), dfcmp );
+	j = 0;
+	for( i = 0; i < datafilecount; ++i ){
+		datafile[i].d_flags = 0;
+		if( i == 0 ){
+			datafile[j++] = datafile[i];
+		} else {
+			jfile = datafile[i-1].original; 
+			dfile = datafile[i].original;
+			if( strcmp( jfile, dfile ) ){
+				datafile[j++] = datafile[i];
+			}
+		}
+	}
+	datafilecount = j;
+
+	DEBUGFC(DRECV3){
+		logDebug( "Check_for_missing_files: after purging");
+		logDebug( "  %d in control file", jobfilecount);
+		for( i = 0; i < jobfilecount; ++i ){
+			logDebug( "  [%d] original '%s', cfline '%s', open '%s'",
+				i, jobfile[i].original, jobfile[i].cfline, jobfile[i].openname );
+		}
+		logDebug( "  %d arrived", datafilecount);
+		for( i = 0; i < datafilecount; ++i ){
+			logDebug( "  [%d] original '%s', cfline '%s', open '%s'",
+				i, datafile[i].original, datafile[i].cfline, datafile[i].openname );
+		}
+	}
+	for( i = 0; i < jobfilecount; ++i ){
+		jobfile[i].d_flags = 0;
+	}
+	for( i = 0; i < jobfilecount; ++i ){
+		/* skip over copies */
+		jfile = jobfile[i].original;
+		found = 0;
+		for( j = 0; found == 0 && j < datafilecount; ++j ){
+			dfile = datafile[j].original;
+			DEBUGF(DRECV3)("Check_for_missing_files: jfile '%s', dfile '%s'",
+					jfile, dfile );
+			found = (strcmp( jfile, dfile ) == 0 );
+			/* we have two files with the same name.  We need
+			 * to copy the transfername and openname information
+			 * to the job file
+			 */
+			if( found ) break;
+		}
+		if( found ){
+			datafile[j].d_flags = 1;
+			safestrncpy( datafile[j].cfline, jobfile[i].cfline );
+			safestrncpy( jobfile[i].openname, datafile[j].openname );
+		} else {
+			DEBUGF(DRECV3)("Check_for_missing_files: missing data file %s",
+				jfile);
+			plp_snprintf( cfp->error, sizeof(cfp->error),
+				_("missing data file '%s'"), jfile );
+			status = JFAIL;
+			goto error;
+		}
+	}
+	for( j = 0; j < datafilecount; ++j ){
+		if( datafile[j].d_flags == 0 ){
+			DEBUGF(DRECV3)("Check_for_missing_files: extra data file %s",
+				datafile[j].original);
+			plp_snprintf( cfp->error, sizeof(cfp->error),
+				_("extra data file '%s'"), datafile[j].original );
+			status = JFAIL;
+			goto error;
+		}
+		DEBUGF(DRECV3)("Check_for_missing_files: renaming '%s' to '%s'",
+				datafile[j].openname, datafile[j].cfline+1 );
+		if( rename( datafile[j].openname, datafile[j].cfline+1 ) == -1 ){
+			plp_snprintf( cfp->error, sizeof( cfp->error ),
+				_("cannot rename '%s' to '%s' - %s"),
+				datafile[j].openname,
+				datafile[j].cfline+1,
+				Errormsg(errno) );
+			status = JFAIL;
+			goto error;
+		}
+	}
+
+	/*******************
+     * make sure that the user authentication information
+	 * is valid for the transfer.
+	 * Auth_from = 0 - none, should be none
+	 * Auth_from = 1 - client, put in by higher level
+	 * Auth_from = 2 - forwarded, should be some
+	 *******************/
+
 	if( (Routing_filter || Use_identifier) && cfp->IDENTIFIER == 0 ){
 		if( Make_identifier( cfp ) ){
 			status = JFAIL;
@@ -1315,7 +1354,7 @@ int Check_for_missing_files( struct control_file *cfp,
 		}
 		DEBUGF(DRECV3)("Check_for_missing_files: printer '%s' adding '%s'",
 			orig_name, cfp->identifier+1 );
-		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 0, 0);
+		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 0, 0,__FILE__,__LINE__ );
 	}
 	if( Auto_hold || Hold_all ){
 		cfp->hold_info.hold_time = time( (void *)0 );
@@ -1335,10 +1374,11 @@ int Check_for_missing_files( struct control_file *cfp,
 		status = JFAIL;
 		goto error;
 	}
-
 	/*
 	 * now write out the control file
 	 */
+	
+	DEBUGFC(DRECV3)dump_control_file("Check_for_missing_files: before writing control", cfp);
 
 	lines = (char **)cfp->control_file_lines.list;
 	DEBUGF(DRECV3)("Check_for_missing_files: control file linecount '%d'",
@@ -1396,21 +1436,21 @@ error:
 		Remove_files( 0 );
 	} else {
 		Set_job_control( cfp, hold_fd );
-		cfp->hstatb.st_size = 0;
-		Get_job_control( cfp, hold_fd );
-		if( rename( cfp->openname, cfp->transfername ) == -1 ){
-			plp_snprintf( cfp->error, sizeof( cfp->error ),
-				_("cannot rename '%s' to '%s' - %s"),
-				cfp->openname, cfp->transfername, Errormsg(errno) );
-			status = JFAIL;
-			goto error;
-		}
 		setmessage( Cfp_static, "TRACE", "%s@%s: job arrived\n%s%s",
 			Printer, FQDNHost,
 			Copy_hf( &Cfp_static->control_file_lines,
 				&Cfp_static->control_file_print, "CONTROL=", " - " ),
 			Copy_hf( &Cfp_static->hold_file_lines,
 				&Cfp_static->hold_file_print, "HOLDFILE=", " - " ) );
+		if( rename( cfp->openname, cfp->transfername ) == -1 ){
+			plp_snprintf( cfp->error, sizeof( cfp->error ),
+				_("cannot rename '%s' to '%s' - %s"),
+				cfp->openname, cfp->transfername, Errormsg(errno) );
+			setmessage( Cfp_static, "TRACE", "%s@%s: %s",
+				Printer, FQDNHost, cfp->error );
+			status = JFAIL;
+			goto error;
+		}
 	}
 	return(status);
 }
@@ -1464,7 +1504,8 @@ int Do_perm_check( struct control_file *cfp )
 				&Perm_check, cfp ))==REJECT)
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			_("%s: no permission to accept job"), Printer );
+			_("%s: no permission to accept job from '%s@%s'"),
+			Printer, Perm_check.user, host );
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -1502,4 +1543,5 @@ void Start_new_server( void )
 	} else {
 		Do_queue_jobs( Printer );
 	}
+	cleanup(0);
 }

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getcnfginfo.c,v 3.6 1997/12/16 15:06:26 papowell Exp $";
+"getcnfginfo.c,v 3.7 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -132,7 +132,7 @@ void Get_config( char *names )
 			char *s;
 			DEBUGF(DDB2)("Get_config: file '%s', size %d",
 				path, statb.st_size );
-			strcpy( add_buffer( &Config_info.files, strlen(path)+1 ), path );
+			add_str( &Config_info.files, path,__FILE__,__LINE__ );
 			if( (s = Readprintcap( path, fd, &statb, &Config_info)) == 0 ){
 				log( LOG_ERR, "Error reading %s", path );
 			} else {

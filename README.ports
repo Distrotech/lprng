@@ -21,7 +21,7 @@ Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997),
 DEC:     ULTRIX, DEC Alpha
 AIX:     1.06
 FreeBSD: 2.0.5, 2.1.5
-AIX:  See the README.aix for detailed instructions
+AIX:  See LPRng-HOWTO for detailed instructions
 
 POSIX Compatible Systems:
    If your system is POSIX compatible,  then there should

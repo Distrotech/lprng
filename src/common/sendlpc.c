@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpc.c,v 3.10 1998/01/08 09:51:18 papowell Exp $";
+"sendlpc.c,v 3.10 1998/01/08 09:51:18 papowell Exp";
 
 #include "lp.h"
 #include "sendlpc.h"
@@ -78,7 +78,7 @@ void Send_lpcrequest(
 		/* second argument is the printer */
 		Printer = options[1];
 		/* Find the remote printer and host name */
-		RemotePrinter = RemoteHost = 0;
+		RemotePrinter = RemoteHost = Lp_device = 0;
 		Get_printer(0);
 		if((s = strchr( options[1], '@' ))) *s = 0;
 	}
@@ -131,7 +131,7 @@ void Send_lpcrequest(
 	}
 
 	DEBUG0("Send_lpcrequest: sending '%s'", line );
-	sock = Link_open( RemoteHost, connect_timeout, Localhost_connection() );
+	sock = Link_open( RemoteHost, connect_timeout );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,

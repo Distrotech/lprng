@@ -13,7 +13,7 @@
 #   Usage: cd source_directory;  makeinc *.o
 #  Note: you have to modify the -I. -I./include line
 #     if you change structure
-# $Id: makeinc,v 3.1 1996/12/28 21:40:52 papowell Exp $
+# makeinc,v 3.1 1996/12/28 21:40:52 papowell Exp
 ########################################################################## 
 for i in $* ; do
 	# echo $i

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: merge.c,v 3.2 1997/09/18 19:46:01 papowell Exp $";
+"merge.c,v 3.3 1998/03/24 02:43:22 papowell Exp";
 
 /*-
  * copyright (c) 1992, 1993
@@ -134,7 +134,7 @@ Mergesort(void *base, size_t nmemb, size_t size,
 	if (!(size % ISIZE) && !(((char *)base - (char *)0) % ISIZE))
 		iflag = 1;
 
-	malloc_or_die( list2, (nmemb * size + PSIZE));
+	list2 = malloc_or_die( (nmemb * size + PSIZE));
 
 	list1 = base;
 	setup(list1, list2, nmemb, size, cmp);

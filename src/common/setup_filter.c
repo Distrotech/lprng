@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setup_filter.c,v 3.20 1997/12/31 19:30:10 papowell Exp $";
+"setup_filter.c,v 3.22 1998/03/29 18:32:56 papowell Exp";
 
 /***************************************************************************
  *
@@ -610,7 +610,7 @@ int Setup_filter( int fmt, struct control_file *cf,
  * to filter writers. (however, filter writers still need to exercise
  * care, otherwise the "daemon" userid is vulnerable).
  ***************************************************************************/
-static char * add_str( char *s, char *e, char *s2)
+static char * add_strv( char *s, char *e, char *s2)
 {
 	int c;
 	if( s2 && s ){
@@ -723,8 +723,8 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 				}
 				break;
 		case 'd': str = Control_dir; break;
-		case 'e': 	if( data_file && (str = data_file->openname) == 0 ){
-						str = data_file->transfername;
+		case 'e': 	if( data_file && (str = data_file->openname)[0] == 0 ){
+						str = data_file->cfline+1;
 					}
 					break;
 		case 'f': if( data_file ) str = chop(data_file->Ninfo); break;
@@ -777,14 +777,14 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 		case STRING_K:
 			if( str && *str ){
 				if( prefix && notag == 0 ){
-					s = add_str( s, e, p );
+					s = add_strv( s, e, p );
 				}
 				if( space ){
-					s = add_str( s, e, " " );
+					s = add_strv( s, e, " " );
 				}
 				/* DEBUG4("Do_dollar: string '%s'", str ); */
 				if( noquote ){
-					s = add_str( s, e, str );
+					s = add_strv( s, e, str );
 				} else {
 					s = add_stropt( s, e, str );
 				}
@@ -792,10 +792,10 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 			break;
 		case INTEGER_K:
 			if( prefix && notag == 0 ){
-				s = add_str( s, e, p );
+				s = add_strv( s, e, p );
 			}
 			if( space ){
-				s = add_str( s, e, " " );
+				s = add_strv( s, e, " " );
 			}
 			if( noquote ){
 				s = add_num( s, e, n );
@@ -865,21 +865,15 @@ void setup_close_on_exec( int minfd )
 
 static void add_env( struct filter *filter, char *p )
 {
-	int i;
-	char *s;
-
 	DEBUG4("add_env: '%s'", p );
 	if( p ){
-		i = strlen(p);
-		s = add_buffer( &filter->env, i+1 );
-		strcpy( s, p );
-		p = s;
+		p = add_str( &filter->envp, p,__FILE__,__LINE__  );
+		if( filter->envp.count >= filter->envp.max ){
+			extend_malloc_list( &filter->envp, sizeof( char *),
+				filter->envp.count+10,__FILE__,__LINE__  );
+		}
+		filter->envp.list[filter->envp.count] = 0;
 	}
-	if( filter->envp.count+1 >= filter->envp.max ){
-		extend_malloc_list( &filter->envp, sizeof( char *),
-			filter->envp.count+100 );
-	}
-	filter->envp.list[filter->envp.count++] = p;
 }
 
 static void setup_envp(struct control_file *cf,
@@ -889,8 +883,7 @@ static void setup_envp(struct control_file *cf,
 	char line[LINEBUFFER];
 	char *s, *end, *value;
 
-	clear_malloc_list( &filter->env, 1 );
-	clear_malloc_list( &filter->envp, 0 );
+	clear_malloc_list( &filter->envp, 1 );
 
 	if( (pw = getpwuid( getuid())) == 0 ){
 		logerr_die( LOG_INFO, "setup_envp: getpwuid(%d) failed", getuid());
@@ -963,8 +956,6 @@ static void setup_envp(struct control_file *cf,
 		}
 	}
 
-	/* for null entry */
-	add_env( filter, 0 );
 	if(DEBUGL4 ){
 		int i;
 		logDebug( "setup_envp: environment" );
@@ -1126,12 +1117,12 @@ static int cmd_split( struct filter *filter )
 
 	if( filter->args.count+1 >= filter->args.max ){
 		extend_malloc_list( &filter->args, sizeof( char * ),
-		filter->args.count+25 );
+		filter->args.count+25,__FILE__,__LINE__  );
 	}
 	if( filter->cmd && *filter->cmd ){
 		/* duplicate string */
 		c = strlen(filter->cmd)+2;
-		malloc_or_die( filter->copy, c );
+		filter->copy = malloc_or_die(  c );
 		filter->copy[0] = 0;
 		strcpy( filter->copy+1, filter->cmd );
 		
@@ -1147,7 +1138,7 @@ static int cmd_split( struct filter *filter )
 			/* add an entry */
 			if( filter->args.count+1 >= filter->args.max ){
 				extend_malloc_list( &filter->args,
-					sizeof( char * ), 25 );
+					sizeof( char * ), 25,__FILE__,__LINE__  );
 			}
 			filter->args.list[filter->args.count++] = start = cmd;
 
@@ -1177,7 +1168,7 @@ static int cmd_split( struct filter *filter )
 		}
 	}
 	if( filter->args.count+1 >= filter->args.max ){
-		extend_malloc_list( &filter->args, sizeof( char * ), 10 );
+		extend_malloc_list( &filter->args, sizeof( char * ), 10,__FILE__,__LINE__  );
 	}
 	filter->args.list[filter->args.count] = 0;
 	return( 0 );
@@ -1335,10 +1326,10 @@ int Close_filter( struct control_file *cfp,
 #define XTLATE(J) case J-(JFAIL-1): n = J; break
 					XTLATE(JFAIL); XTLATE(JABORT); XTLATE(JREMOVE);
 					XTLATE(JACTIVE); XTLATE(JIGNORE); XTLATE(JHOLD);
-					XTLATE(JNOSPOOL); XTLATE(JNOPRINT);
+
 					case JFAIL: case JABORT: case JREMOVE:
 					case JIGNORE: case JHOLD: case JNOSPOOL:
-					case JNOPRINT:
+					case JNOPRINT: case JFAILNORETRY:
 						break;
 					default: n = JABORT;
 						break;
@@ -1416,7 +1407,7 @@ char *Filter_read( char *name, struct malloc_list *list, char *filter )
 			if( buffer == 0 ){
 				buffer_total = LARGEBUFFER + 1024;
 				list_index = list->count;
-				buffer = add_buffer( list, buffer_total );
+				buffer = add_buffer( list, buffer_total,__FILE__,__LINE__  );
 				buffers = (void *)list->list;
 				if( buffers[list_index] != buffer ){
 					fatal( LOG_ERR, "Filter_read: wrong buffer!" );

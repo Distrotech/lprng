@@ -45,7 +45,7 @@ take as much paranoid care as possible to avoid problems.
 <P>WHAT TO DO:<BR>
 When installing LPRng,  you will need to install the executables
 SUID root.
-In the src/Makefile,  you can remove the comment from the line
+In the <CODE>src/Makefile</CODE>,  you can remove the comment from the line
 <PRE>
 PERMS=SUID_ROOT_PERMS
 </PRE>
@@ -111,7 +111,7 @@ You can extend the range of ports used by LPRng by changing the
 originate_port=721 731
 </PRE>
 
-value in the defaults (src/common/defaults.c) file or in the lpd.conf
+value in the defaults (<CODE>LPRng/src/common/defaults.c</CODE>) file or in the <CODE>lpd.conf</CODE>
 file.  I recommend the following:
 <PRE>
 originate_port=512 1022
@@ -149,7 +149,7 @@ and then transferred to the remote printer.
 This is usually the case when some type of processing (filtering)
 is needed in order to print the job correctly.
 There are several methods that can be used to force this.
-Method 1: Explicit Printer Address
+<P>Method 1: Explicit Printer Address
 <P>You can force a job to be sent directly to the <CODE> pr </CODE>
 serviced by the LPD server on
 <CODE>host</CODE>
@@ -198,7 +198,7 @@ will print it on <CODE>/dev/lp</CODE>.
 <CODE>:rp:</CODE> (remote printer)
 and
 <CODE>:rm:</CODE> (remote machine) fields if they are present.
-Method 3: Force sending to server on <CODE>localhost</CODE>
+<P>Method 3: Force sending to server on <CODE>localhost</CODE>
 <P>The
 <CODE>force_localhost</CODE>
 printcap or configuration flag forces non-LPD applications to send all
@@ -224,7 +224,7 @@ server running on the local host.
 <P>This is a rather disconcerting problem,
 and usually occurs when sending jobs to either a network printer or
 a nonconforming
-<A HREF="#rfc1179">RFC1179</A>.
+<A HREF="#rfc1179">RFC1179</A>
 print spooler.
 For details about LPRng and RFC1179, see
 <A HREF="LPRng-HOWTO-13.html#rfc1179ref">RFC1179 and LPRng</A>,
@@ -234,8 +234,8 @@ about the job,  and one or more data files.  RFC1179 is silent on the
 order that jobs are sent;  however some implementations REQUIRE that
 the data files be sent first,  followed by the control file.
 <P>SOLUTION:
-<P>Set the 'send_data_first' flag in the printcap for the particular
-printer,  or in the lpd.conf configuration file.  This is:
+<P>Set the <CODE>send_data_first</CODE> flag in the printcap for the particular
+printer,  or in the <CODE>lpd.conf</CODE> configuration file.  This is:
 <PRE>
 :send_data_first:  (printcap)
 send_data_first    (lpd.conf)

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lockfile.c,v 3.5 1997/12/16 15:06:29 papowell Exp $";
+"lockfile.c,v 3.5 1997/12/16 15:06:29 papowell Exp";
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.

@@ -8,14 +8,17 @@
  ***************************************************************************
  * MODULE: getqueue.h
  * PURPOSE: getqueue.c functions
- * $Id: getqueue.h,v 3.2 1997/01/19 14:34:56 papowell Exp $
+ * getqueue.h,v 3.3 1998/03/29 18:33:04 papowell Exp
  **************************************************************************/
 
 #ifndef _GETQUEUE_H
 #define _GETQUEUE_H
 
-int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df );
-void Scan_queue( int check_df, int new_queue );
-void Job_count( int *hc, int *cnt );
+extern int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df );
+extern void Scan_queue( int check_df, int new_queue );
+extern int Fix_data_file_info( struct control_file *cfp );
+extern struct destination *Destination_cfp( struct control_file *cfp, int i );
+extern int Job_printable_status( struct control_file *cfp, struct destination **dp,
+	char *msg, int len);
 
 #endif

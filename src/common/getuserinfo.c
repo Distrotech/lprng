@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getuserinfo.c,v 3.3 1997/09/18 19:45:58 papowell Exp $";
+"getuserinfo.c,v 3.3 1997/09/18 19:45:58 papowell Exp";
 /********************************************************************
  * char *Get_user_information();
  *  get the user name

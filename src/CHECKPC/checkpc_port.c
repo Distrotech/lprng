@@ -10,7 +10,7 @@
  * PURPOSE: test portabile functionality
  **************************************************************************/
 
-static char *const _id = "$Id: checkpc_port.c,v 3.7 1997/12/16 15:06:17 papowell Exp $";
+static char *const _id = "checkpc_port.c,v 3.8 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -39,6 +39,7 @@ static char *const _id = "$Id: checkpc_port.c,v 3.7 1997/12/16 15:06:17 papowell
 
 void Test_port(int ruid, int euid, char *serial_line )
 {
+	FILE *tf;
 	int fds[2];
 	char line[LINEBUFFER];
 	char cmd[LINEBUFFER];
@@ -637,13 +638,25 @@ test_lockfd:
  ***************************************************************************/
 
 	fprintf( stdout, "checking if setting process info to 'XXYYZZ' works\n" );
-	setproctitle( "XXYYZZ" );
+	proctitle( "XXYYZZ" );
 	/* try simple test first */
-	i = system( "ps | grep 'XXYYZZ' | grep -v grep" );
-	if( i ){
-		i = system( "ps -f | grep 'XXYYZZ' | grep -v grep" );
+	i = 0;
+	if( (tf = popen( "ps | grep XXYYZZ | grep -v grep", "r" )) ){
+		while( fgets( line, sizeof(line), tf ) ){
+			printf( line );
+			++i;
+		}
+		fclose(tf);
 	}
-	if( i == 0 ){
+	
+	if( i == 0 && (tf = popen( "ps | grep XXYYZZ | grep -v grep", "r" )) ){
+		while( fgets( line, sizeof(line), tf ) ){
+			printf( line );
+			++i;
+		}
+		fclose(tf);
+	}
+	if( i ){
 		fprintf( stdout, "***** setproctitle works\n" );
 	} else {
 		fprintf( stdout, "***** setproctitle debugging aid unavailable (not a problem)\n" );

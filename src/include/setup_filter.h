@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: Setup_filter.h
  * PURPOSE: include file for setup_filter
- * $Id: setup_filter.h,v 3.5 1997/12/31 19:30:10 papowell Exp $
+ * setup_filter.h,v 3.5 1997/12/31 19:30:10 papowell Exp
  **************************************************************************/
 
 int Make_filter( int key,

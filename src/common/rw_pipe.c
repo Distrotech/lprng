@@ -10,7 +10,7 @@
  * PURPOSE: create a set of read/write pipe descriptors
  **************************************************************************/
 
-static char *const _id = "$Id: rw_pipe.c,v 3.5 1997/09/18 19:46:04 papowell Exp $";
+static char *const _id = "rw_pipe.c,v 3.5 1997/09/18 19:46:04 papowell Exp";
 
 #include "lp.h"
 #include "rw_pipe.h"

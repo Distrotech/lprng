@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: getprinter.h
  * PURPOSE: get printer name from printcap database
- * $Id: getprinter.h,v 3.3 1997/02/15 15:01:30 papowell Exp $
+ * getprinter.h,v 3.3 1997/02/15 15:01:30 papowell Exp
  **************************************************************************/
 
 
@@ -19,4 +19,4 @@
  * - check printer name for printer@remote; if not, get printcap entry
  *****************************************************************/
 void Get_printer( struct printcap_entry **pce );
-void Fix_remote_name( void );
+void Fix_remote_name( struct printcap_entry **pce );

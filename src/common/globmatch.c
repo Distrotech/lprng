@@ -10,7 +10,7 @@
  * PURPOSE: permform a glob type of match
  **************************************************************************/
 
-static char *const _id = "$Id: globmatch.c,v 3.5 1997/09/18 19:45:59 papowell Exp $";
+static char *const _id = "globmatch.c,v 3.5 1997/09/18 19:45:59 papowell Exp";
 
 #include "lp.h"
 #include "globmatch.h"

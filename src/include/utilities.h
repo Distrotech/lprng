@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: utilities.h
  * PURPOSE: declarations for utilities.c
- * $Id: utilities.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * utilities.h,v 3.2 1997/01/15 02:21:18 papowell Exp
  **************************************************************************/
 
 #ifndef _UTILITIES_H

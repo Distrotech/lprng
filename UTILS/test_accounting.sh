@@ -7,9 +7,9 @@ accounting.pl start 0<>accnt \
 -l66 -npapowell -sstatus -w80 -x0 -y0 accnt
 i=$$
 j=`expr $i + 1`
-echo "$i, $j";
-echo "start -b=$i" >>accnt;
-echo "end -b=$j" >>accnt;
+##echo "$i, $j";
+echo "start -p='$i'" >>accnt;
+echo "end -p='$j'" >>accnt;
 accounting.pl end 0<>accnt \
 -Atesting -CA -Ff -Hastart4.astart.com -J/tmp/hi -Lpapowell \
 -Tdebug=1 \

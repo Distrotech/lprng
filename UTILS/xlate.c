@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static char _id[] = "$Id: xlate.c,v 3.1 1996/12/28 21:40:53 papowell Exp $";
+static char _id[] = "xlate.c,v 3.1 1996/12/28 21:40:53 papowell Exp";
 
 struct bits{
 char *name;

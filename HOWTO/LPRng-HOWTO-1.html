@@ -47,8 +47,8 @@ on a LAN, or remotely. New (as compared to Berkeley LPR) features
 include: lightweight <CODE>lpr</CODE>, <CODE>lpc</CODE> and <CODE>lprm</CODE>
 programs; dynamic redirection of print queues; automatic job holding;
 highly verbose diagnostics; multiple printers per queue; and enhanced
-security (SUID not required in most environments (Sun/Solaris is an
-exception), improved file permissions, authorization checks, ...),
+security (SUID not required in most environments),
+improved file permissions, authorization checks, ...),
 etc.
 </BLOCKQUOTE>
 <P>Patrick Powell
@@ -113,6 +113,7 @@ most of these are now incorporated into the HOWTO document.
 <P>Current information
 about LPRng and the latest release
 can be found on the LPRng web page:
+<P>
 <A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A><P>There is also a mailing list at <CODE>lprng@iona.com</CODE>. To subscribe,
 send an email to <CODE>lprng-request@iona.com</CODE>. The body should contain
 only the word `subscribe'. To get off the list later on, repeat the
@@ -176,6 +177,7 @@ systems, as well as real time and network software.
 </H2>
 
 <P>Web Page:
+<P>
 <A HREF="http://www.astart.com/lprng.html">http://www.astart.com/lprng.html</A>
 <A NAME="secftp"></A> <H2><A NAME="ss1.7">1.7 FTP Sites</A>
 </H2>
@@ -183,19 +185,23 @@ systems, as well as real time and network software.
 <P>The software may be obtained from <BR>
 <A HREF="ftp://ftp.astart.com/pub/LPRng">ftp://ftp.astart.com/pub/LPRng</A>(Main site)<BR>
 <P>Mirrors:<BR>
-<A HREF="ftp://ftp.iona.ie/pub/plp/LPRng">ftp://ftp.iona.ie/pub/plp/LPRng</A>(IE)<BR>
-<A HREF="ftp://gwynne.cs.ualberta.ca/pub/LPRng">ftp://gwynne.cs.ualberta.ca/pub/LPRng</A>(Canada)<BR>
-<A HREF="ftp://ftp.informatik.unihamburg.de/pub/os/unix/utils/LPRng">ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng</A> (DE)<BR>
-<A HREF="ftp://ftp.unipaderborn.de/pub/unix/printer/plp/LPRng">ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng</A>(DE)<BR>
-<A HREF="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</A>(US)<BR>
-<A HREF="ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng">ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng</A>(AU/NZ)<BR>
-<A HREF="ftp://ftp.lps.ens.fr/pub/software/plp/LPRng">ftp://ftp.lps.ens.fr/pub/software/plp/LPRng</A>(FR)<BR>
-<A HREF="ftp://ftp.mono.org/pub/LPRng">ftp://ftp.mono.org/pub/LPRng</A>(UK)<BR>
+<A HREF="ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng">ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng</A> (AU)<BR>
+<A HREF="ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng">ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng</A> (AU/NZ)<BR>
+<A HREF="ftp://gwynne.cs.ualberta.ca/pub/LPRng">ftp://gwynne.cs.ualberta.ca/pub/LPRng</A> (CA)<BR>
+<A HREF="ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng">ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng</A> (DE)<BR>
+<A HREF="ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng">ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng</A> (DE)<BR>
+<A HREF="ftp://ftp.iona.ie/pub/plp/LPRng">ftp://ftp.iona.ie/pub/plp/LPRng</A> (IE)<BR>
+<A HREF="ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng">ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng</A> (NO)<BR>
+<A HREF="ftp://ftp.mono.org/pub/LPRng">ftp://ftp.mono.org/pub/LPRng</A> (UK)<BR>
+<A HREF="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng">ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng</A> (US)<BR>
+<A HREF="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</A> (US)<BR>
+<A HREF="ftp://ftp.iona.com/pub/plp/LPRng">ftp://ftp.iona.com/pub/plp/LPRng</A> (US)<BR>
+<A HREF="ftp://uiarchive.uiuc.edu/pub/packages/LPRng">ftp://uiarchive.uiuc.edu/pub/packages/LPRng</A> (US)<BR>
 <H2><A NAME="ss1.8">1.8 Mailing List</A>
 </H2>
 
 <P>To join the LPRng mailing list, please send mail to
-<A HREF="mailto: lprngrequest@iona.ie">lprng-request@iona.ie</A>with the word 'subscribe' in the BODY
+<A HREF="mailto: lprngrequest@iona.ie">lprng-request@iona.ie</A> with the word 'subscribe' in the BODY
 <A NAME="faqref"></A> <H2><A NAME="ss1.9">1.9 PGP Public Key</A>
 </H2>
 
@@ -205,7 +211,7 @@ Here is the key for validating the checksums:
 <PRE>
 Type Bits/KeyID    Date       User ID
 pub  1024/00D95C9D 1997/01/31 Patrick A. Powell &lt;papowell@astart.com>
-                              Patrick A. Powell &lt;papowell@sdsu.edu>
+                                                          Patrick A. Powell &lt;papowell@sdsu.edu>
 
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: 2.6.3i

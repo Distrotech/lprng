@@ -113,10 +113,10 @@ The following connections are established and terminated:<BR>
 <P>Now according to the RFC1179 rules and the TCP/IP protocol,
 we will have to wait until one of these connections terminates before we
 can make another.
-On the system originating system,
+On the originating system,
 if the TCP/IP implementation does timeouts on the originating port,
-we will have to wait for the timeout to elapse,
-and then we can make a new connection.
+we will have to wait for the timeout to elapse before we can make a new
+connection.
 Unfortunately,  there is no way to find out what the status of the port
 is,  so we will have to try them each in turn until we get
 a successful connection.
@@ -242,7 +242,7 @@ interval, say <CODE>connect_retry=120</CODE> (2 minutes).
 <P>After a connection has been established,
 a request can be sent to the <CODE>lpd</CODE>
 server.
-The request consists of a single octect indicating the request type,
+The request consists of a single octet indicating the request type,
 followed by the printer (or print queue) name, followed by
 a set of options for the request,
 followed by a LF (line feed) character.
@@ -342,10 +342,10 @@ Status</TD><TD>Purpose</TD></TR><TR><TD>
 \nnn</TD><TD>Rejected with error code</TD></TR><TR><TD>
 
 </TD></TR></TABLE></CENTER>
-<P>The reply is only a single octect.
+<P>The reply is only a single octet.
 Some defective implementations of RFC1179 send a LF after the octet,
-which makes life very difficult to deal with.
-LPRng makes efforts to detect these non-conforming RFC1179 systems
+which makes life very difficult.
+LPRng makes an effort to detect these non-conforming RFC1179 systems
 and will accept jobs from them.
 However,  it will not send jobs to them.
 <P>If LPRng sends a reject code, as an extension to RFC1179 it also
@@ -374,7 +374,7 @@ file of a job are transferred.
 <P>RFC1179 is silent on the following issues:
 <OL>
 <LI>When sending a job,
-do you send the control file first, followed by the data files,
+do you send the control file first, followed by the data file(s),
 or the data files first?</LI>
 <LI>When sending multiple jobs,
 can you send them on a single connection,
@@ -403,7 +403,7 @@ Some of the major problems with this format are as follows:
 can be in a queue.
 Strangely,  some systems generate far more than 1000 jobs a day,
 and need to archive them on a regular basis.
-The <CODE>longnumber</CODE> option can allows LPRng to use a 6 digit
+The <CODE>longnumber</CODE> option will allow LPRng to use a 6 digit
 job number for files in the print queue.</LI>
 <LI>The host name format is not specified.
 Some implementations consider that this is the short host name,
@@ -471,9 +471,9 @@ contents of the data file.
 <P>When 'piping' into the <CODE>lpr</CODE> program,
 this can be very useful as it eliminates the need to create temporary
 files on the senders host.
-The the <CODE>lpr -k</CODE> option for details.
+The <CODE>lpr -k</CODE> option for details.
 Note that some print spoolers do not use this interpretation,
-and this options should be used carefully.
+and this option should be used carefully.
 </LI>
 </OL>
 <H2><A NAME="ss14.5">14.5 Control File Contents</A>
@@ -614,7 +614,7 @@ In the control file, these are followed by the name of the data file
 to which they correspond.
 While in principle different data files in the control file can have
 different formats,
-this has not been implement in any known spooling system.
+this has not been implemented in any known spooling system.
 See
 <A HREF="LPRng-HOWTO-5.html#secfilter">Filters</A> for details on how the
 data file formats are used during the printing process.
@@ -659,7 +659,7 @@ The lpq requests have the format:
 \003printer user [id]* \n
 </PRE>
 <P>The <CODE>lpd</CODE> print server will search the specified print queue
-will remove any job whose ID, hostname, or user name information
+and remove any job whose ID, hostname, or user name information
 from the control file
 <CODE>A</CODE>,
 <CODE>H</CODE>,

@@ -17,7 +17,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: parse_debug.c,v 3.7 1997/10/04 16:14:09 papowell Exp $";
+"parse_debug.c,v 3.7 1997/10/04 16:14:09 papowell Exp";
 
 /*************************************************************
  * void Get_debug_parm(int argc, char *argv[], struct keywords *list)

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: setstatus.h
  * PURPOSE: setstatus.c functions
- * $Id: setstatus.h,v 3.2 1997/12/16 15:06:48 papowell Exp $
+ * setstatus.h,v 3.2 1997/12/16 15:06:48 papowell Exp
  **************************************************************************/
 
 #ifndef _SETSTATUS_H

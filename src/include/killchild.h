@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: killchild.h
  * PURPOSE: killchild.c functions
- * $Id: killchild.h,v 3.4 1997/10/15 04:06:28 papowell Exp $
+ * killchild.h,v 3.4 1997/10/15 04:06:28 papowell Exp
  **************************************************************************/
 
 #ifndef _KILLCHILD_H

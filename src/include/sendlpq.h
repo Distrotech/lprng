@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: sendstatus.h
  * PURPOSE: sendstatus.c functions
- * $Id: sendlpq.h,v 3.1 1996/12/28 21:40:35 papowell Exp $
+ * sendlpq.h,v 3.1 1996/12/28 21:40:35 papowell Exp
  **************************************************************************/
 
 #ifndef _SENDLPQ_H

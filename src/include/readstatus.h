@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: readstatus.h
  * PURPOSE: readstatus.c functions
- * $Id: readstatus.h,v 3.2 1997/12/17 19:34:56 papowell Exp $
+ * readstatus.h,v 3.2 1997/12/17 19:34:56 papowell Exp
  **************************************************************************/
 
 #ifndef _READSTATUS_H

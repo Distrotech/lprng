@@ -1,4 +1,7 @@
-#!/usr/contrib/bin/perl5
+#!/bin/sh
+perl5 -e '
+$date = `date`;
+print "# lpd.conf generated from $ARGV[0] on $date";
 while ( ($m = <>) &&  !( $m =~ m/START/) ){
 	;
 }
@@ -23,9 +26,10 @@ while ( ($m = <>) &&  !( $m =~ m/END/) ){
 			$m =~ s/ INTEGER_K 0/#0/;
 		}
 		print "# $m" . "\n";
-	} else {
+	} elsif( !($m =~ /^#/ ) ){
 		$m =~ s:^\s*/\*\s*::;
 		$m =~ s:\*/::;
 		print "# Purpose: $m" . "\n";
 	}
 }
+' $1

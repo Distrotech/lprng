@@ -18,12 +18,12 @@ filters interact.
 
 <P>Print filters are one of the most powerful tools in BSD-style printer
 systems.
-<P>In general UNIX terms, a filter is a program that takes its input
+<P>In general UNIX terms, a <EM>filter</EM> is a program that takes its input
 file(s), does something with it, and sends the result to its standard
 output. Most UNIX utilities are designed as filters.
 (But since you are a system manager, you should already know that :))
 <P>In the context of a BSD-style print spooler (and also LPRng), the term
-`filter' refers to a program that does processing on a file that is
+<EM>filter</EM> refers to a program that does processing on a file that is
 submitted to the printer. As such, it is a specific example of the
 general class of programs called `filters'.
 <P>Usually the
@@ -42,13 +42,13 @@ the following filters are supported.
 See the associated documentation for details.
 <UL>
 <LI> Distributed in the LPRng source distribution<BR>
-<A HREF="#lpf"> &lt;tt>lpf&lt;/tt></A>
+<A HREF="#lpf">lpf</A>
 a very simple CR/LF or passthrough filter.</LI>
 <LI> Distributed in the FILTERS_LPRng distribution:<BR>
-<A HREF="#ifhp">CTI-ifhp &lt;tt>ifhp&lt;/tt></A>
-HP PCL and PJL printer filters</LI>
+<A HREF="#ifhp">CTI-ifhp</A>
+HP PCL and PJL printer filters </LI>
 <LI>
-<A HREF="#psfilter">psfilter &lt;tt>psif&lt;/tt></A>
+<A HREF="#psfilter">psfilter</A>
 PostScript printer filter</LI>
 </UL>
 
@@ -74,14 +74,11 @@ The supported filters and other facilities are available from
 <P>LPRng has inherited a set of so-called `<B>print formats</B>' from its
 BSD ancestor.
 The format was originally used
-to specify the type of file that was being printed,
-and the
-<CODE>lpd </CODE>
+to specify the type of file that was being printed.  The
+<CODE>lpd</CODE> daemon
 would use the print format to select the required
 filter for processing the file.
-The
-de<CODE>f</CODE>ault format is
-<CODE>f</CODE>.
+<B>The default format is <CODE>f</CODE></B>.
 <P>The user can specify the format (i.e., the file type) by giving
 the appropriate option to <CODE>lpr</CODE>:
 <P>
@@ -163,7 +160,7 @@ The
 <CODE>of</CODE> filter is responsible for performing appropriate
 processing of this information and sending to the printer
 for action.
-<P>While the various file filters are invoked on a once per per print file basis,
+<P>While the various file filters are invoked on a once per print file basis,
 the
 <CODE>of</CODE>
 filter is invoked on a once per print job basis.
@@ -197,7 +194,7 @@ will perform other printing operations.
 the <CODE>of</CODE> will then be sent a
 <CODE>kill -CONT</CODE> signal.
 <P>This sequence will continue until all information has been printed,
-and then the of filter's STDIN will be closed.
+and then the <CODE>of</CODE> filter's STDIN will be closed.
 The filter will then perform whatever cleanup operations are needed,
 update accounting or other information,
 and exit.
@@ -220,7 +217,7 @@ and passing the result to the normal
 <P>The binary (or literal) format
 is indicated by format type
 <CODE>-l</CODE>.
-The <CODE>:if</CODE> filter.
+The <CODE>if</CODE> filter
 is used to process the file,
 and is invoked with the
 <CODE>-c</CODE>
@@ -285,7 +282,7 @@ UdfB002230astart4.astart.com
 <A NAME="connecttry"></A> 
 <A NAME="controlfilter"></A> 
 <A NAME="nb"></A> 
-<A NAME="servertmpdir"></A> <H3>Opening Output Device</H3>
+<A NAME="servertmpdir"></A> <H3>Opening the Output Device</H3>
 
 <P>Options used:
 <UL>
@@ -308,6 +305,8 @@ UdfB002230astart4.astart.com
 <LI> <CODE>of=</CODE><EM>of filter</EM></LI>
 <LI> <CODE>retry_econnrefused#</CODE><EM>&nbsp;&nbsp;Retry if open failed</EM></LI>
 <LI> <CODE>retry_nolink#</CODE><EM>&nbsp;&nbsp;Retry if open failed</EM></LI>
+<LI> <CODE>rm</CODE><EM>&nbsp;&nbsp;the remote machine to send the job to</EM></LI>
+<LI> <CODE>rp</CODE><EM>&nbsp;&nbsp;the remote print queue to send the job to</EM></LI>
 <LI> <CODE>rw</CODE><EM>&nbsp;&nbsp;device opened RW flag</EM></LI>
 <LI> <CODE>server_tmp_dir=</CODE><EM>temporary directory</EM></LI>
 </UL>
@@ -430,17 +429,16 @@ and examine the error code for action, as for the filters
 If it is a string,
 then it is interpreted, the escape sequences replaced with the appropriate
 information,  and written to the accounting file.</LI>
-<LI>If the <CODE>achk</CODE> (accounting check) flag is set,
-then the a line is read from the accounting filter af_fd file descriptor.
+<LI>If the <CODE>achk</CODE> (accounting check) flag is set, 
+a line is read from the accounting filter af_fd file descriptor.
 This line should be <CODE>accept</CODE>,
 otherwise the job processing terminates with a JFAIL indication.</LI>
-<LI>If the operation is a job transfer,
-then the operation proceeds as outlined in
+<LI>If the operation is a job transfer, the operation proceeds as outlined in
 <A HREF="LPRng-HOWTO-13.html#rfc1179ref">RFC1179</A>,
 and then the
 <A HREF="#normalterm">Normal Termination</A> operations are
 carried out.</LI>
-<LI>If the operation is a print operation,
+<LI>If the operation is a print operation
 and the
 <CODE>ld</CODE> (leader on open) value is provided,
 the string
@@ -654,14 +652,14 @@ rather than the
 <P>Options used:
 <UL>
 <LI> <CODE>fq</CODE><EM>&nbsp;&nbsp;Form Feed on Close</EM></LI>
-<LI> <CODE>la</CODE><EM>&nbsp;&nbsp;Form Feed on Close</EM></LI>
+<LI> <CODE>la</CODE><EM>&nbsp;&nbsp;Local Printer Accounting</EM></LI>
 <LI> <CODE>tr=</CODE><EM>Trailer on Close</EM></LI>
 <LI> <CODE>ae=</CODE><EM>Accounting at end</EM></LI>
 <LI> <CODE>save_when_done</CODE><EM>&nbsp;&nbsp;Save when done</EM></LI>
 </UL>
 <P>Sequence of Operations:
 <OL>
-<LI>If we are printing and the the <CODE>fq</CODE> flag is set and the
+<LI>If we are printing and the <CODE>fq</CODE> flag is set and the
 <CODE>sf</CODE> (suppress interfile FF) flag is set,
 then the
 <CODE>ff</CODE> (form feed) string
@@ -689,6 +687,7 @@ the job is removed.</LI>
 <A NAME="saveonerror"></A> 
 <A NAME="sendtry"></A> 
 <A NAME="sendfailureaction"></A> 
+<A NAME="mailfrom"></A> 
 <A NAME="mailoperatoronerror"></A> 
 <A NAME="sendmail"></A> 
 <A NAME="stoponabort"></A> 
@@ -697,6 +696,7 @@ the job is removed.</LI>
 
 <P>Options used:
 <UL>
+<LI> <CODE>mail_from=</CODE><EM>Mail from user name</EM></LI>
 <LI> <CODE>mail_operator_on_error=</CODE><EM>Mail to operator on error</EM></LI>
 <LI> <CODE>rt#</CODE><EM>&nbsp;&nbsp;Maximum Print or Transfer Attempts</EM></LI>
 <LI> <CODE>send_try#</CODE><EM>&nbsp;&nbsp;(alias for <CODE>rt</CODE></EM></LI>
@@ -711,7 +711,7 @@ the following sequence of events occurs:
 <LI>The job is marked as having an error during processing.</LI>
 <LI>The LPD server will attempt to kill all filters and other associated process
 by using a sequence of
-<CODE>kill -INT</CODE>
+<CODE>kill -INT</CODE>,
 <CODE>kill -QUIT</CODE>,
 and finally
 <CODE>kill -KILL</CODE> operations.</LI>
@@ -722,6 +722,9 @@ The <CODE>sendmail</CODE> option specifies the pathname of the
 mail addresses from its standard input.
 For example, <CODE>sendmail=/usr/sbin/sendmail -oi -t</CODE>
 is a commonly used set of options.</LI>
+<LI>The <CODE>mail_from</CODE> value specifies the user name used for
+mail origination.  If not specified, the default is to use the print spool
+queue or printer name.</LI>
 <LI>If there is a <CODE>send_failure_action</CODE> specified,
 then it is decoded and the corresponding action taken.
 If the value is
@@ -759,8 +762,8 @@ the <CODE>rt</CODE> value,
 then the job is retried.
 Between each attempt to transfer a job to a remote site.
 This pause will double after each attempt,
-reaching a maximum of max_connect_interval seconds.
-If max_connect_interval is 0, there is no limit on the interval value.</LI>
+reaching a maximum of <CODE>max_connect_interval</CODE> seconds.
+If <CODE>max_connect_interval</CODE> is 0, there is no limit on the interval value.</LI>
 </OL>
 
 <A NAME="lpdforcepoll"></A> 
@@ -840,10 +843,8 @@ The following procedure is used to run a filter program.
 <P>The sequence of operations to run a filter is as follows:
 <OL>
 <LI>The program must be specified with an absolute path name.</LI>
-<LI>By default,
-the program is run as either the user,
-if invoked from a client
-program such as lpr, lpc, etc.
+<LI>By default, the program is run as the user if invoked from a client
+program such as <CODE>lpr</CODE>, <CODE>lpc</CODE>, etc.
 If invoked from <CODE>lpd</CODE>,  it is run as the
 <CODE>server_user</CODE>
 user
@@ -875,7 +876,7 @@ to the program command line.</LI>
 the arguments determined by the value of the <CODE>bkf</CODE>
 (Berkeley LPD filter compatible flag) flag are added to the
 filter command line.
-If <CODE>bkf</CODE> is false, then the
+If <CODE>bkf</CODE> is false the
 <CODE>filter_options</CODE> are added for OF filters and
 <CODE>of_filter_options</CODE>
 are added for non-OF filters;
@@ -911,7 +912,7 @@ For the <CODE>of</CODE> filter,
 either the <CODE>of_filter_options</CODE>
 or <CODE>bk_of_filter_options</CODE> arguments will be added.</LI>
 <LI>The program arguments will then be scanned and interpreted.
-Arguments of the form <CODE>$letter</CODE> will be
+Arguments of the form <CODE>$</CODE><EM>letter</EM> will be
 translated into values from the
 print job control file and/or printcap entry.
 The letters have the following meaning:
@@ -930,7 +931,7 @@ Letter</TD><TD>TranslatedValue</TD></TR><TR><TD>
 <CODE>k </CODE></TD><TD>print job control file name</TD></TR><TR><TD>
 <CODE>l </CODE></TD><TD>printcap <CODE>pl</CODE> (page length)</TD></TR><TR><TD>
 <CODE>m </CODE></TD><TD>printcap <CODE>co</CODE></TD></TR><TR><TD>
-<CODE>n </CODE></TD><TD>use name (L info from control file)</TD></TR><TR><TD>
+<CODE>n </CODE></TD><TD>user name (L info from control file)</TD></TR><TR><TD>
 <CODE>p </CODE></TD><TD>remote printer (when processing for bounce queue)</TD></TR><TR><TD>
 <CODE>r </CODE></TD><TD>remote host (when processing for bounce queue)</TD></TR><TR><TD>
 <CODE>s </CODE></TD><TD>printcap <CODE>sf</CODE> (status file)</TD></TR><TR><TD>
@@ -966,7 +967,7 @@ The <CODE>$'x</CODE> does not quote the value.
 Combinations of the various flags are allowed.  For example,
 <CODE>$-x</CODE> would simply substitute the value for <CODE>x</CODE>,
 and then pass the whitespace separated components as individual arguments.
-This last form is useful for adding in addition flags on the command line.
+This last form is useful for adding in additional flags on the command line.
 </LI>
 <LI>The command line is parsed,
 metacharacters are ruthlessly stripped from all arguments and pathnames
@@ -1066,13 +1067,12 @@ access them.
 <CODE>if</CODE> or <CODE>of</CODE> filter.
 The filter will examine the format type passed by the <CODE>-F<EM>X</EM></CODE>
 command line argument,
-and if it is <CODE>o</CODE> (of filter) will perform as an
-<CODE>of</CODE> filter.
+and if it is <CODE>o</CODE> it will perform as an <CODE>of</CODE> filter.
 <P>Alternatively,
-the filter will check the filename in the pathnameby which is was invoked.
+the filter will check the filename in the pathname by which is was invoked.
 If the name has the substring <CODE>of</CODE> in the filename,
 then it assumes it is to act as an <CODE>of</CODE> filter.
-This allows symbolic links to be make to a common filter executable,
+This allows symbolic links to be made to a common filter executable,
 each of which corresponds to the filter name by which it is to be invoked.
 <P>When a filter is invoked,
 it is passed a large number of options,
@@ -1134,7 +1134,7 @@ a job on a bidirectional interface.
 Usually, though,
 it it necessary to force the printer to provide status in a reasonable format.
 <P>Some printers have the capability of printing either PCL or PostScript;
-some require special setup commands and some will <EM>autosensee</EM> which
+some require special setup commands and some will <EM>autosense</EM> which
 type of job is being printed.
 <P>If you are printing text,
 and not using a Page Description Language like PostScript or PCL,
@@ -1255,9 +1255,9 @@ lp:...
 </PRE>
 <P>The <CODE>ifhp</CODE> banner is generated in PCL,
 and uses the minimum PCL facilities.
-Since when you send a banner to an autosenseing printer you cause it to enter
-the requested mode,  the if filter (ifhp) will need to reset the printer
-to autosensee mode.  The ifhp filter automatically does this.
+Since when you send a banner to an autosensing printer you cause it to enter
+the requested mode, the <CODE>if</CODE> filter (<CODE>ifhp</CODE>) will need to reset
+the printer to autosense mode.  The <CODE>ifhp</CODE> filter automatically does this.
 <P>If you want very fancy banners,
 the
 <CODE>banner.sh</CODE> (PCL) and
@@ -1278,19 +1278,22 @@ error status definitions,
 and logged to the STDERR output of the filter.</LI>
 <LI>In addition to error messages,
 ongoing status messages are also produced.
-If the printcap entry has a <CODE>ps=statusfile</CODE> entry and the
-statusfile exists and is writeable,
+If the printcap entry has a <CODE>ps=</CODE><EM>statusfile</EM> entry and the
+<EM>statusfile</EM> exists and is writeable,
 then the error and status messages will be written to the log file.</LI>
 <LI>If the message concerns a serious matter or has been returned from the
 printer as an 'ALERT' in it,
 then the message can also be sent to a 'summaryfile'.
 This file can be either a file
 OR a UDP socket on a host. This is specified with the
--Tsummary=summaryfile option. For example
-ifhp -Tsummary=taco%3000 would send messages to UDP port 3000
+<CODE>-Tsummary=</CODE><EM>summaryfile</EM> option. For example,
+<PRE>
+        ifhp -Tsummary=taco%3000
+</PRE>
+ would send messages to UDP port 3000
 on host taco.</LI>
 <LI>If you do not want the filter to report status on its STDERR output,
-use the -Tquiet option to suppress this, or
+use the <CODE>-Tquiet</CODE> option to suppress this, or
 compile it with the -DQUIET option.</LI>
 </OL>
 
@@ -1408,7 +1411,7 @@ ifhp -Tdev=astart14%9100 -Tdebug=5 -Ttrue_eoj &lt;ellipse.ps
 </H2>
 
 <P>Source code:
-<A HREF="LPRng-HOWTO-1.html#secftp">LPRng Distribution, psfilter-&lt;em>version&lt;/em>.tgz</A><P>The
+<A HREF="LPRng-HOWTO-1.html#secftp">LPRng Distribution, psfilter-&lt;version>.tgz</A><P>The
 <CODE>psfilter</CODE> is similar to the CTI-ifhp
 filter in its operation and functionality.
 Its general operation and procedures are similar,
@@ -1477,7 +1480,7 @@ Option</TD><TD>Purpose</TD></TR><TR><TD>
 <CODE>CTI-ifhp</CODE> filter.
 See
 <A HREF="#ifhpaccounting">IFHP Accounting</A> for details.
-<P>Consult your printers PostScript Printer Description file
+<P>Consult your printer's PostScript Printer Description file
 to determine the PostScript script needed to do accounting.
 You may need to modify the default one supplied in the <CODE>psfilter</CODE>
 code.

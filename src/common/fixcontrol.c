@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: fixcontrol.c,v 3.14 1997/12/24 20:10:12 papowell Exp $";
+"fixcontrol.c,v 3.16 1998/03/29 18:32:48 papowell Exp";
 /********************************************************************
  * int Fix_control( struct control_file *cfp, char *order )
  *   fix the order of lines in the control file so that they
@@ -98,18 +98,30 @@ int ordercomp( const void *left, const void *right )
 	return( cmp );
 }
 
-int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry )
+/************************************************************************
+ * Fix_control:
+ *  Fix up the control file,  setting the various entries
+ *  to be compatible with transfer to the remote location
+ ************************************************************************/
+
+int Fix_control( struct control_file *cfp,
+	struct printcap_entry *printcap_entry )
 {
 	int i, cc, len;			/* ACME Integers and Counters, Inc */
 	char *line;			/* line in file */
 	char *s;			/* ACME Pointers and Chalkboards, Inc */
 	char **lines;		/* lines in file */
 	struct data_file *df = (void *)cfp->data_file_list.list;
-	int priority = cfp->priority;
+	struct destination *destination;
+	int number = cfp->number;
 
 	/* fix up priorty if overridden by routing */
-	if( Destination && Destination->priority ){
-		priority = Destination->priority;
+
+	destination = Destination_cfp( cfp, Destination_index );
+	if( destination ){
+		if( destination->priority ) cfp->priority = destination->priority;
+		cfp->number = cfp->number + destination->sequence_number +
+               destination->copy_done;
 	}
 
 	/* if no order supplied, don't check */
@@ -124,31 +136,14 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 		cfp->copynumber, Long_number, cfp->number_len );
 
 	if(DEBUGL3) dump_control_file( "Fix_control: before fixing", cfp );
-	if( (Backwards_compatible || Use_shorthost)
-		&& (s = strchr( cfp->filehostname, '.' )) ){
-		*s = 0;
+
+	if( (Backwards_compatible || Use_shorthost) ){
+		if( (s = strchr( cfp->filehostname, '.' )) ) *s = 0;
+		if( cfp->FROMHOST && (s = strchr( cfp->FROMHOST, '.' )) ) *s = 0;
 	}
 
-	cfp->number += cfp->copynumber;
-	plp_snprintf( cfp->transfername, sizeof(cfp->transfername),
-		"cf%c%0*d%s", priority, cfp->number_len,
-		cfp->number, cfp->filehostname );
-	/* we have to modify the transfer names
-	 * transfername has the format xdfBnnnnnhostname 
-	 *                             01234
-	 * We start rewriting at the 4th spot
-	 */
-	for( i = 0; i < cfp->data_file_list.count; ++i ){
-		plp_snprintf( df[i].transfername+4,
-			sizeof( df[i].transfername)-4,
-			"%0*d%s", cfp->number_len,
-			cfp->number, cfp->filehostname );
-		if( df[i].Uinfo[0] ){
-			plp_snprintf( df[i].Uinfo+4,
-				sizeof( df[i].Uinfo)-4,
-				"%0*d%s", cfp->number_len,
-				cfp->number, cfp->filehostname );
-		}
+	if( Fix_data_file_info( cfp ) ){
+		return(1);
 	}
 
 	/* if(DEBUGL3) dump_control_file( "Fix_control: data files fixed", cfp );*/
@@ -170,9 +165,9 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 	if( Use_identifier && cfp->IDENTIFIER == 0 ){
 		if( cfp->identifier[0] == 0 ){
 			Make_identifier( cfp );
-			DEBUG3("Fix_control: identifier '%s'", cfp->identifier );
+			DEBUG3("Fix_control: new identifier '%s'", cfp->identifier );
 		}
-		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 1, 0 );
+		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 1, 0,__FILE__,__LINE__ );
 		DEBUG3("Fix_control: adding IDENTIFIER '%s'", cfp->IDENTIFIER );
 	}
 	if( Use_date &&
@@ -180,25 +175,25 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 		char buffer[M_DATE];
 		plp_snprintf(buffer, sizeof(buffer)-1, "D%s",
 				Time_str( 0, cfp->statb.st_ctime ) );
-		cfp->DATE = Insert_job_line( cfp, buffer, 0, 0 );
+		cfp->DATE = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
 		DEBUG3("Fix_control: adding DATE '%s'", cfp->DATE );
 	}
 	if( (Use_queuename || Force_queuename) &&
-		(cfp->QUEUENAME == 0 || cfp->QUEUENAME[1] == 0) ){
+		(cfp->QUEUENAME == 0 || cfp->QUEUENAME[0] == 0 || cfp->QUEUENAME[1] == 0) ){
 		char buffer[M_QUEUENAME];
 		s = Force_queuename;
 		if( s == 0 || *s == 0 ) s = Queue_name;
 		if( s == 0 || *s == 0 ) s = Printer;
 		plp_snprintf(buffer, sizeof(buffer)-1, "Q%s", s );
-		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0 );
+		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
 		DEBUG3("Fix_control: adding QUEUENAME '%s'", cfp->QUEUENAME );
 	}
 
 	/* fix up the control file lines overrided by routing */
-	if( Destination ){
+	if( destination ){
 		DEBUG3("Fix_control: fixing destination information" );
-		lines = cfp->hold_file_lines.list+Destination->arg_start;
-		for( i = 0; i < Destination->arg_count; ++i ){
+		lines = cfp->hold_file_lines.list+destination->arg_start;
+		for( i = 0; i < destination->arg_count; ++i ){
 			line = lines[i];
 			if( line == 0 || *line == 0 ) continue;
 			DEBUG3("Fix_control: route info '%s'", line );
@@ -211,7 +206,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 				if( (s = cfp->capoptions[cc-'A']) ){
 					*s = 0;
 				}
-				cfp->capoptions[cc-'A'] = Insert_job_line( cfp, line, 0, 0 );
+				cfp->capoptions[cc-'A'] = Insert_job_line( cfp, line, 0, 0,__FILE__,__LINE__ );
 				DEBUG3("Fix_control: adding '%s'", cfp->capoptions[cc-'A']);
 			}
 		}
@@ -234,7 +229,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 				cfp->capoptions[cc-'A'] = 0;
 			continue;
 		}
-		if( Xlate_format && islower(cc) ){
+		if( islower(cc) && (Is_server || Lpr_bounce) && Xlate_format  ){
 			char *t = Xlate_format;
 			while( (t = strchr( t, cc )) ){
 				int len = t - Xlate_format;
@@ -276,7 +271,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 			dftemp = 0;
 		}
 		if( !Is_server && Lpr_bounce ){
-			malloc_or_die( dftemp, sizeof(dftemp[0])*df_count );
+			dftemp=malloc_or_die(  sizeof(dftemp[0])*df_count );
 			memcpy( dftemp, df, sizeof(dftemp[0])*df_count );
 		}
 		tempfd = Make_temp_fd( 0, 0 );
@@ -341,7 +336,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 
 		len = cfp->statb.st_size;
 		DEBUG3("Fix_control: allocate control file buffer len %d", len );
-		cfp->cf_info = add_buffer( &cfp->control_file_image, len+1 );
+		cfp->cf_info = add_buffer( &cfp->control_file_image, len+1,__FILE__,__LINE__ );
 		for( i = 1, s = cfp->cf_info;
 			len > 0 && (i = read( tempfd, s, len )) > 0;
 			len -= i, s += i );
@@ -384,7 +379,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 	++len;
 
 	if( len >= cfp->control_file_copy.max ){
-		extend_malloc_list( &cfp->control_file_copy, 1, len+100 );
+		extend_malloc_list( &cfp->control_file_copy,1,len+100,__FILE__,__LINE__);
 		cfp->control_file_copy.count = len;
 	}
 
@@ -400,6 +395,6 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 	s = (void *)cfp->control_file_copy.list;
 
 	DEBUG0("Fix_control: new control file '%s'", s );
-
+	cfp->number = number;
 	return( 0 );
 }

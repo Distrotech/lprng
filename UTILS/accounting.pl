@@ -1,5 +1,6 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 
+# accounting.pl,v 1.5 1998/03/29 20:27:25 papowell Exp
 # LPRng based accounting script.
 # stdin = R/W Accounting File
 # stdout = IO device
@@ -65,166 +66,84 @@
 #   for an END.  Once the END is located in the file,  then the
 #   file from that point on only needs to be updated,  if at all.
 # 
-#   do{
-#      bsize = bsize + incr;
-#      if bsize > total file size then bsize = total file size;
-#      buffer = bsize from end of file;
-#      while buffer has \nEND then
-#          find next \nEND in buffer.
-# 		 find end of the END line;
-#          bsize = location of end of END line;
-#      endwhile
-#   } while( bsize < total file size && END not found ){
-#   # at this point buffer consists of
-#   # (START(,end)*)* lines
-#   split buffer into lines;
-#   last_end = -1;
-#   first_start = 0;
-#   # the first start line should be 1
-#   while( first_start < linecount && line[first_start] != START ){
-# 	then you have problems;
-#     ++first_start;
-#   }
-#  # look for first START,nnn combination
-#   while( first_start+1 < linecount && line[first_start] == START ){
-#      ++first_start;
-#   }
-#   non_start = first_start+1;
-#   while( non_start+1 < linecount && line[non_start] != START ){
-#      ++non_start;
-#   }
-#  # found the first START,nnn combination,  now look for next one
-#   next_start = next_start+1;
-#   while( next_start+1 < linecount && line[next_start] == START ){
-#      ++next_start;
-#   }
-#   next_non_start = next_start+1;
-# 
-#   We now have:
-#     START <-first_start
-#     nnn1   <-first_start+1 
-#     nnn   <-non-start
-#     START*
-#     START <-next_start
-#     nnn2   <-next_start+1
-#   
-#   if next_start+1 < linecount
-#    pages = nnn2 - nnn1
-#     Insert END after non-start
-#    START,nnn1,...nnn,END -p=pages,START*,nnn2
-#    fixup = 1;
-#    NOTE: you can update the user accounting database at this point
-#     as well.
-#   endif
-#    first_start = next_start;
-# 
-#    and repeat while first_start < linecount;
-#    
-# if( fixup ){
-#    we fseek to bsize from end of the file
-#    write the new information to the file at this point
-# }
-#   
-# fseek to end of file;
-# 
-# if( starting ) then
-#   NOTE: you can check the user accounting database for permission
-#     to use the printer at this point.
-#    we write the new START record;
-# else if( ending ) then
-# 	we have the first_start entry already found.
-# 	we get the 'start/end' information from the file and
-# 	calculate the total page count.
-# 	we then write an END record
-#     NOTE: you can update the user accounting database at this point
-#      as well.
-# fi;
-#   
-
 # we get the arguments and options.  By default, first option
 # will be start or end
 #
 
-$JFAIL = 32;
-$JABORT = 33;
-$JREMOVE = 34;
-$JHOLD = 37;
-$debug = 0;
+# use strict;
 
-# print STDERR "XX ACCOUNTING " . join(" ",@ARGV) . "\n" if $debug;
-$end = "";
+my($JFAIL,$JABORT,$JREMOVE,$JHOLD);
+my($debug, $af_file, %opt,@af,$fix,$new);
+my($loc,$start_count,$action,$action_count,$pages);
+my($last_end,$time,$size,$bsize,$count,$buffer);
+my($first_start,$next_start,$first_non_start,$last_non_start);
+
+my($JFAIL) = 32;
+my($JABORT) = 33;
+my($JREMOVE) = 34;
+my($JHOLD) = 37;
+
+# print STDERR "XX:$0 ACCOUNTING " . join(" ",@ARGV) . "\n" if $debug;
+$action = "";
 if( @ARGV ){
-	$end = shift @ARGV;
+	$action = shift @ARGV;
 }
-if( $end eq "start" ){
-	$end = "START";
-} elsif( $end eq "end" ){
-	$end = "END";
-} elsif( $end eq "truncate" ){
-	$end = "TRUNCATE";
-} else {
-	print STDERR "$0: first option must be 'start', 'end' or 'truncate'\n";
+$action = uc($action);
+if( $action ne "START" && $action ne "END" && $action ne "TRUNCATE" ){
+	print STDERR "$0: first option must be 'START', 'END' or 'TRUNCATE'\n";
 	exit $JABORT;
 }
 
 # pull out the options
-for( $i = 0; $i < @ARGV; ++$i ){
-	$opt = $ARGV[$i];
-	# print STDERR "XX opt= $opt\n" if $debug;
-	if( $opt eq '-c' ){
-		$opt_c = 1;
-	} elsif( ($key, $value) = ($opt =~ /^-(.)(.*)/) ){
-		if( $value eq "" ){
-			$value = $ARGV[++$i];
-		}
-		${"opt_$key"} = $value;
-		# print STDERR "XX opt_$key = " . ${"opt_$key"} . "\n" if $debug;
-	} else {
-		$optind = $i;
-		last;
-	}
-}
-$af_file = $ARGV[$optind];
 
-if( defined($opt_T) and $opt_T =~ m/debug/ ){
+getopts( 'A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:T:S:U:V:W:X:Y:Z:'
+. 'a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:t:s:u:v:w:x:y:z:');
+
+if( @ARGV ){
+	$af_file = shift @ARGV;
+}
+$debug = 0;
+if( exists( $opt{T} ) && $opt{T} =~ m/debug/ ){
 	$debug = 1;
 }
 
 $time = time;
-print STDERR "XX $end A=$opt_A P=$opt_P n=$opt_n H=$opt_H D=$time\n" if $debug;
+print STDERR "XX:$0 $action A='$opt{A}' P='$opt{P}' n='$opt{n}' H='$opt{H}' D='$time'\n" if $debug;
 
-# reopen STDIN for R/W
-if( $end eq "TRUNCATE" ){
-	open( AF,"+<$af_file" ) or die "cannot open $af_file r/w - $!\n";
-} else {
-	open( AF,"+<&STDIN" ) or die "cannot reuse STDIN r/w - $!\n";
+# open af_file for R/W
+if( !$af_file ){
+	die "$0: no accounting file\n";
 }
+open( AF,"+<$af_file" ) or die "$0: cannot open $af_file r/w - $!\n";
 
 $size = -s AF;
-print STDERR "XX AF size $size\n" if $debug;
+print STDERR "XX:$0 AF size $size\n" if $debug;
 $bsize = 0;
 $last_end = -1;
+$buffer = "";
 do {
 	# 1k increments
 	$bsize = $bsize + 1024; 
 	$bsize = $size if( $bsize > $size );
-	print STDERR "XX bsize=$bsize\n" if $debug;
-	seek AF, -$bsize, 2 or die "seek of $bsize failed - $!\n";
-	$count = read AF, $buffer, $bsize;
-	if( !defined($count)){
-		die "read of $bsize failed - $!\n";
-	} elsif( $count != $bsize ){
-		die "read returned $count instead of $bsize\n";
+	print STDERR "XX:$0 bsize=$bsize\n" if $debug;
+	if( $size > 0 ){
+		seek AF, -$bsize, 2 or die "$0: seek of $bsize failed - $!\n";
+		$count = read AF, $buffer, $bsize;
+		if( !defined($count)){
+			die "$0: read of $bsize failed - $!\n";
+		} elsif( $count != $bsize ){
+			die "$0: read returned $count instead of $bsize\n";
+		}
+		print STDERR "XX:$0 read \nXX " . join( "\nXX ", split("\n",$buffer))."\n" if $debug;
 	}
-	print STDERR "XX read \nXX " . join( "\nXX ", split("\n",$buffer))."\n" if $debug;
 	$loc = rindex( $buffer, "\nEND");
-	print STDERR "XX loc=$loc\n" if $debug;
+	print STDERR "XX:$0 loc=$loc\n" if $debug;
 	if( $loc >= 0 ){
 		$last_end = index( $buffer, "\n", $loc+1 );
-		print STDERR "XX last_end=$last_end\n" if $debug;
+		print STDERR "XX:$0 last_end=$last_end\n" if $debug;
 		if( $last_end < 0 ){
-			print STDERR "XX bad END entry in file\n" if $debug;
-			seek AF, 0, 2 or die "seek to EOF failed\n";
+			print STDERR "XX:$0 bad END entry in file\n" if $debug;
+			seek AF, 0, 2 or die "$0: seek to EOF failed\n";
 			print AF "\n";
 		} else {
 			++$last_end;
@@ -234,20 +153,20 @@ do {
 	}
 } while ( $bsize < $size and $last_end < 0 );
 
-print STDERR "XX final bsize=$bsize, XX ". join("\nXX ",split("\n",$buffer))."\n" if $debug;
+print STDERR "XX:$0 final bsize=$bsize, XX ". join("\nXX ",split("\n",$buffer))."\n" if $debug;
 
 # truncate and exit with 0
-if( $end eq "TRUNCATE" ){
-	truncate AF, 0 or die "cannot truncate $af_file - $!\n";
-	seek AF, 0, 0 or die "cannot seek to start $af_file - $!\n";
-	print AF $buffer or die "cannot write to $af_file - $!\n";
-	close AF or die "cannot close $af_file - $!\n";
+if( $action eq "TRUNCATE" ){
+	truncate $af_file, 0 or die "$0: cannot truncate $af_file - $!\n";
+	seek AF, 0, 0 or die "$0: cannot seek to start $af_file - $!\n";
+	print AF $buffer or die "$0: cannot write to $af_file - $!\n";
+	close AF or die "$0: cannot close $af_file - $!\n";
 	exit 0;
 }
 
 @af = split( /\n/, $buffer );
 
-print STDERR "XX split \nXX ".join("\nXX ",@af)."\n" if $debug;
+print STDERR "XX:$0 split \nXX ".join("\nXX ",@af)."\n" if $debug;
 
 # case 0: [null]      - empty file   - go on
 # case 1: START+       - job aborted  - go on
@@ -255,108 +174,179 @@ print STDERR "XX split \nXX ".join("\nXX ",@af)."\n" if $debug;
 # case 4: START+,n,n,n,START+ - job aborted - go on
 # case 4: START+,n,n,n,START+,n,n - some printed - fix
 
-# START*,START,n+,START*,START,n     - fix
-#        ^                ^
-#        last start       next start
+# END*,START,n,START*,n     - fix
+#        ^   ^ ^      ^last non-start
+#        ^   ^ ^ next START
+#        ^   ^first non-start             ^
+#        first start
 #              
 $fix = 0;
 $first_start=0;
 while( $first_start < @af and $af[$first_start] !~ /^START/ ){
 	++$first_start;
 }
+$next_start=$first_start;
 while( $first_start < @af ){
 	while( $first_start+1 < @af and $af[$first_start+1] =~ /^START/ ){
 		++$first_start;
 	}
-	print STDERR "XX found first_start $first_start: $af[$first_start]\n" if $debug;
-	for( $non_start = $first_start+1;
-		$non_start+1 < @af and $af[$non_start+1] !~ /^START/;
-		++$non_start ){;}
-	last if( $non_start >= @af );
-	print STDERR "XX found non_start $non_start: $af[$non_start]\n" if $debug;
-	for( $next_start = $non_start+1;
-		$next_start+1 < @af and $af[$next_start+1] =~ /^START/;
-		++$next_start ){;}
-	last if( $next_start >= @af );
-	print STDERR "XX found next_start $next_start: $af[$next_start]\n" if $debug;
+	$new = $af[$first_start];
+	$new =~ s/^START//;
+	print STDERR "XX:$0 found first_start $first_start: $af[$first_start]\n" if $debug;
+	print STDERR "XX:$0 new '$new'\n" if $debug;
+	$first_non_start = $first_start+1;
+	$last_non_start = $first_non_start+0;
+	last if( $first_non_start >= @af );
+	print STDERR "XX:$0 LINE ". __LINE__.", first_non_start $first_non_start: $af[$first_non_start]\n" if $debug;
+	$next_start=$first_start;
+	while( ($next_start == $first_start) and ($last_non_start+1) < @af ){
+		if( $af[$last_non_start+1] !~ /^START/ ){
+			$last_non_start = $last_non_start+1;
+		} else {
+			$next_start = $last_non_start+1;
+		}
+	}
+	print STDERR "XX:$0 last_non_start $last_non_start: $af[$last_non_start]\n" if $debug;
+	print STDERR "XX:$0 LINE " . __LINE__ . " found next_start $next_start\n" if $debug;
 	# now we have either n or or no more lines
-	if( $next_start+1 < @af ){
-		($new) = $af[$first_start] =~ /START\s+(.*)/;
-		$fix = 1;
-		$pages = 0;
-		if( !(($start_count) = $af[$first_start+1] =~ /start.*-p=([0-9]+)/)){
-			print STDERR "Missing start count for $new\n";
-			push(@af,"END p=-1 $new\n");
-			$pages =-1;
+	if( $next_start != $first_start ){
+		while( ($next_start+1) < @af ){
+			if( $af[ $next_start+1 ] =~ /^START/ ){
+				$next_start = $next_start+1;
+			} else {
+				$last_non_start = $next_start+1;
+				last;
+			}
 		}
-		if( !(($end_count) = $af[$next_start+1] =~ /start.*-p=([0-9]+)/)){
-			print STDERR "Missing end count for $new\n";
-			push(@af,"END p=-1 $new\n");
-			$pages =-1;
-		}
-		$pages = $end_count - $start_count if $pages == 0;
-		print STDERR "XX start_count=$start_count, end_count=$end_count\n" if $debug;
-		splice(@af, $non_start+1, 0, "END p=$pages $new");
-		print STDERR "XX new AF \nXX ".join("\nXX ",@af)."\n" if $debug;
+	}
+	# at this point, we have first_start-> START line to be billed
+	#                        first_non_start-> starting count value
+    #                        last_non_start->  starting count value
+    #                         Bill = difference between two
+	$fix = 1;
+	$pages = 0;
+	$start_count = Get_count($af[$first_non_start]);
+	$action_count = Get_count($af[$last_non_start]);
+	print STDERR "XX:$0 start_count=$start_count, end_count=$action_count\n" if $debug;
+	$pages = $action_count - $start_count if $pages == 0;
+	print STDERR "XX:$0 LINE " .__LINE__." first_start=$first_start, next_start=$next_start\n" if $debug;
+	if( $first_start != $next_start ){
+		splice(@af, $next_start, 0, "END p=$pages $new");
+	} else {
+		push(@af, "END p=$pages $new" );
+	}
+	print STDERR "XX:$0 new AF \nXX ".join("\nXX ",@af)."\n" if $debug;
+	if( $first_start == $next_start ){
+		last;
 	}
 	$first_start = $next_start;
 }
 if( $fix ){
-	print STDERR "XX fixing at offset $bsize output to be \nXX ".join("\nXX ",@af)."\n" if $debug;
-	seek AF, -$bsize, 2 or die "seek to $bsize from EOF failed - $!\n";
+	print STDERR "XX:$0 fixing at offset $bsize output to be \nXX ".join("\nXX ",@af)."\n" if $debug;
+	seek AF, -$bsize, 2 or die "$0: seek to $bsize from EOF failed - $!\n";
 	foreach (@af ){
-		print AF "$_\n" or die "write failed - $!\n";
+		print AF "$_\n" or die "$0: write failed - $!\n";
 	}
 } else {
-	print STDERR "XX not fixing output\n" if $debug;
+	print STDERR "XX:$0 not fixing output\n" if $debug;
 }
-seek AF, 0 , 2 or die "seek to EOF failed - $!\n";
+if( $size > 0 ){
+	seek AF, 0 , 2 or die "$0: seek to EOF failed - $!\n";
+}
 
-if( $end eq "START" ){
+if( $action eq "START" ){
 	# this is where you can put in a test to see that the user
 	# has not exceeded his quota.  Return $JREMOVE if he has
 	# put in a marker for this job.
-	print STDERR "XX doing start\n" if $debug;
-	print AF "START A=$opt_A P=$opt_P n=$opt_n H=$opt_H D=$time\n"
-		or die "write failed - $!\n";
-} else {
-	$new = "A=$opt_A P=$opt_P n=$opt_n H=$opt_H";
-	if( $first_start >= @af ){
-		print STDERR "Missing START for $new\n";
-		print $AF "END p=-1 $new\n" or die "write failed - $!\n";
-		exit( $JABORT );
-	}
-	# check the last start for match
-	$new = "A=$opt_A P=$opt_P n=$opt_n H=$opt_H";
-	($old) = $af[$first_start] =~ /START\s+(.*)\s+D=.*/;
-	print STDERR "XX new='$new', old='$old'\n" if $debug;
-	if( $new ne $old ){
-		print STDERR "START does not match $new\n";
-		print AF "END p=-1 $new\n" or die "write failed - $!\n";
-		exit( $JABORT );
-	}
-	# we get the first and last count values from the file
-	if( !(($start_count) = $af[$first_start+1] =~ /start.*-p=([0-9]+)/)){
-		print STDERR "Missing start count for $new\n";
-		print AF "END p=-1 $new\n" or die "write failed - $!\n";
-		exit( $JABORT );
-	}
-	if( !(($end_count) = $af[@af-1] =~ /end.*-p=([0-9]+)/)){
-		print STDERR "Missing end count for $new\n";
-		print AF "END p=-1 $new\n" or die "write failed - $!\n";
-		exit( $JABORT );
-	}
-	print STDERR "XX start_count=$start_count, end_count=$end_count\n" if $debug;
-	$pages = $end_count - $start_count;
-	if( $pages < 0 ){
-		print STDERR "START $start_count END $end_count values inconsistent $new\n";
-		print AF "END p=-1 $new\n" or die "write failed - $!\n";
-		exit( $JABORT );
-	}
-	print STDERR "XX END p=$pages $new\n" if $debug;
-	print AF "END p=$pages $new\n" or die "write failed - $!\n";
+	print STDERR "XX:$0 doing start\n" if $debug;
+	print AF "START A='$opt{A}' P='$opt{P}' n='$opt{n}' H='$opt{H}' D='$time'\n"
+		or die "$0: write failed - $!\n";
 }
-close AF or die "cannot close AF - $!\n";
-close STDIN or die "cannot close STDIN - $!\n"; 
 
 exit 0;
+sub Get_count {
+	my ($str) = @_;
+	my (@vals, $pages);
+	$pages =-1;
+	@vals = split(" ", $str);
+	print STDERR "XX:$0 vals:\nXX ".join("\nXX ",@vals)."\n" if $debug;
+	foreach (@vals) {
+		print STDERR "XX:$0 testing '$_'\n" if $debug;
+		if( /^-p/ ){
+			print STDERR "XX:$0 found '$_'\n" if $debug;
+			($pages) = ($_ =~ m/(\d+)/);
+			print STDERR "XX:$0 pages '$pages'\n" if $debug;
+			return $pages;
+		}
+	}
+}
+
+#getopt - Process single-character switches with switch clustering
+#getopts - Process single-character switches with switch clustering
+#  use Getopt::Std;
+#  getopt('oDI');    # -o, -D & -I take arg.  Sets opt_* as a side effect.
+#  getopt('oDI', \%opts);    # -o, -D & -I take arg.  Values in %opts
+#  getopts('oif:');  # -o & -i are boolean flags, -f takes an argument
+#    # Sets opt_* as a side effect.
+#  getopts('oif:', \%opts);  # options as above. Values in %opts
+#
+#The getopt() functions processes single-character switches with switch
+#clustering.  Pass one argument which is a string containing all switches
+#that take an argument.  For each switch found, sets $opt_x (where x is the
+#switch name) to the value of the argument, or 1 if no argument.  Switches
+#which take an argument don't care whether there is a space between the
+#switch and the argument.
+#
+#For those of you who don't like additional variables being created, getopt()
+#and getopts() will also accept a hash reference as an optional second argument. 
+#Hash keys will be x (where x is the switch name) with key values the value of
+#the argument or 1 if no argument is specified.
+#
+#
+
+# Usage:
+#   getopts('a:bc');	# -a takes arg. -b & -c not. Sets opt_* as a
+#   getopts('a:bc',&%hash);	# -a takes arg. -b & -c not. %hash('char')
+#                           #as a side effect.
+
+sub getopts {
+    my($argumentative, $hash) = @_;
+    my(@args,$first,$rest,$pos);
+    my($errs) = 0;
+
+    @args = split( / */, $argumentative );
+    while(@ARGV && ($_ = $ARGV[0]) =~ /^-(.)(.*)/) {
+	($first,$rest) = ($1,$2);
+	$pos = index($argumentative,$first);
+	if($pos >= 0) {
+	    if(defined($args[$pos+1]) and ($args[$pos+1] eq ':')) {
+		shift(@ARGV);
+		if($rest eq '') {
+		    ++$errs unless @ARGV;
+		    $rest = shift(@ARGV);
+		}
+                $opt{$first} = $rest;
+	    }
+	    else {
+                  $opt{$first} = 1;
+		if($rest eq '') {
+		    shift(@ARGV);
+		}
+		else {
+		    $ARGV[0] = "-$rest";
+		}
+	    }
+	}
+	else {
+	    print STDERR "Unknown option: $first\n";
+	    ++$errs;
+	    if($rest ne '') {
+		$ARGV[0] = "-$rest";
+	    }
+	    else {
+		shift(@ARGV);
+	    }
+	}
+    }
+    $errs == 0;
+}

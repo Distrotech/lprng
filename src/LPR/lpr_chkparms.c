@@ -12,11 +12,12 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_chkparms.c,v 3.8 1997/09/18 19:45:49 papowell Exp $";
+"lpr_chkparms.c,v 3.8 1997/09/18 19:45:49 papowell Exp";
 
 #include "lp.h"
 #include "getuserinfo.h"
 #include "getprinter.h"
+#include "linksupport.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: termclear.h
  * PURPOSE:  declare terminal clearing functions
- * $Id: termclear.h,v 3.1 1996/12/28 21:40:37 papowell Exp $
+ * termclear.h,v 3.1 1996/12/28 21:40:37 papowell Exp
  **************************************************************************/
 void Term_clear(void);
 void Term_finish(void);

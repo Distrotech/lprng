@@ -53,7 +53,7 @@
  ***************************************************************************/
 
 static char *const _id =
-"$Id: getopt.c,v 3.3 1997/09/18 19:45:57 papowell Exp $";
+"getopt.c,v 3.4 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 /**** ENDINCLUDE ****/
@@ -83,7 +83,7 @@ Getopt (int argc, char *argv[], char *optstring)
 		char *basename;
 		/*
 		 * set up the Name variable for error messages
-		 * setproctitle will change this, so
+		 * proctitle will change this, so
 		 * make a copy.
 		 */
 		if( Name == 0 ){

@@ -23,7 +23,7 @@ We are going to simulate the LPD daemon using the basic facilities.
 
 */
 static char *const _id =
-"$Id: lpd.c,v 3.22 1997/12/24 20:10:12 papowell Exp $";
+"lpd.c,v 3.23 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -78,7 +78,7 @@ int main(int argc, char *argv[], char *envp[])
 	int timeout_encountered = 0;	/* we have a timeout */
 	int max_socks;		/* maximum number of sockets */
 	struct sockaddr sin;	/* the connection remote IP address */
-	int n, m;			/* ACME?  Hmmm... well, ok */
+	int n, m, started_process;	/* ACME?  Hmmm... well, ok */
 	int err;
  	time_t last_time;	/* time that last Start_all was done */
  	time_t this_time;	/* current time */
@@ -93,7 +93,7 @@ int main(int argc, char *argv[], char *envp[])
 	 * not started by root.  If it is started by root, it is
 	 * irrelevant
 	 */
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 
 	/* scan the argument list for a 'Debug' value */
@@ -191,16 +191,17 @@ int main(int argc, char *argv[], char *envp[])
 	Max_servers = Get_max_servers();
 	DEBUG0( "lpd: maximum servers %d", Max_servers );
 
-	DEBUGFC(DMEM1){ Brk_check_size(); }
+	DEBUGF(DMEM1)("lpd: memory allocation now %s",  Brk_check_size() );
 	/*
 	 * clean out the current queues
 	 */
-	Start_all();
  	last_time = time( (void *)0 );
 
 	Printer = 0;
 	Name = "MAIN";
-	setproctitle( "lpd %s", Name );
+	proctitle( "lpd %s", Name );
+
+	Start_all();
 
 	/* set up the wait activity */
 
@@ -216,62 +217,63 @@ int main(int argc, char *argv[], char *envp[])
 	 * start waiting for connections from processes
 	 */
 
+#if 0 && defined(DMALLOC)
+	Write_fd_str(dmalloc_outfile, "**** Before Main Loop\n");
+	dmalloc_log_unfreed();
+#endif
+	started_process = 0;
+	last_time = time( (void *)0 );
 	do{
-
-		while( (n = plp_waitpid( -1, &status, WNOHANG)) > 0 );
+		while( plp_waitpid( -1, &status, WNOHANG) > 0 );
 		/* we better see if we have enough servers left */
-		timeout = 0;
 		n = Countpid( 1 );
-		DEBUG0( "lpd: %d servers active of %d",
-			n, Max_servers );
-		DEBUGFC(DMEM1){ Brk_check_size(); }
-		/* we see if we need to start an idle server */
-		if( n >= Max_servers ){
-			DEBUG0( "lpd: too many servers, waiting for one to exit" );
-			n = plp_waitpid( -1, &status, 0);
-			DEBUG0( "lpd: pid %d exited", n );
-			continue;
+		DEBUG0( "lpd: %d servers active of %d", n, Max_servers );
+		DEBUGF(DMEM1)( "lpd: memory allocation now %s",  Brk_check_size() );
+		timeout = 0;
+		/* handle case when we are starting up a lot of servers */
+		if( n < Max_servers ){
+			started_process = Start_idle_server( Max_servers-n );
 		}
-		if( n < Max_servers
-			&& Start_idle_server( Max_servers - n ) == 0
-			&& Poll_time > 0 ){
-			/* we set up a timeout for idle conditions */
- 			this_time = time( (void *)0 );
+		/* handle case when we need to poll the queues again */
+		if( Poll_time > 0 ){
+			this_time = time( (void *)0 );
 			m = (this_time - last_time);
 			timeout_encountered = 0;
 			if( m >= Poll_time ){
-				m = Poll_time;
-				last_time = this_time;
 				timeout_encountered = 1;
-			} else {
-				m = Poll_time - m;
 			}
-			timeout = &timeval;
-			memset( &timeval, 0, sizeof(timeval) );
-			timeval.tv_sec = m;
-			DEBUG0( "lpd: timeout %d, timeout_encountered %d, force_poll %d",
-				m, timeout_encountered, Force_poll );
-			/* we have set up the timeout */
-			if( timeout_encountered ){
-				/* start them all */
+			memset(&timeval,0, sizeof(timeval));
+			timeval.tv_sec = Poll_time;
+			if( timeout_encountered && !started_process ){
+				/* start them all again */
 				Start_all();
+				last_time = this_time;
 				n = Countpid( 1 );
-				if( Start_idle_server( Max_servers - n ) == 0
-					&& Force_poll == 0 ){
-					DEBUG0( "lpd: no work, suppressing timeout" );
-					timeout = 0;
-				}
+				started_process = Start_idle_server( Max_servers-n );
+			}
+			if( started_process || Force_poll ){
+				DEBUG0( "lpd: setting timeout" );
+				timeout = &timeval;
+			} else {
+				DEBUG0( "lpd: no work, suppressing timeout" );
 			}
 		}
-		readfds = defreadfds;
 
-		Setup_waitpid_break(1);
 		/* deal with a problem where processes that have died
 		 * before the signal handler was installed will not be collected
 		 */
-		while( (n = plp_waitpid( -1, &status, WNOHANG)) > 0 );
+		while( plp_waitpid( -1, &status, WNOHANG) > 0 );
+		readfds = defreadfds;
+		n = Countpid( 1 );
+		/* do not accept incoming call if no worker available */
+		if( n >= Max_servers ){
+			FD_CLR( sock, &defreadfds );
+		}
 
-		DEBUG1( "lpd: starting select" );
+		started_process = 0;
+		DEBUG1( "lpd: starting select with timeout 0x%x, %d sec", timeout,
+			timeout?timeout->tv_sec:0);
+		Setup_waitpid_break(1);
 		m = select( max_socks,
 			FD_SET_FIX((fd_set *))&readfds,
 			FD_SET_FIX((fd_set *))0,
@@ -309,6 +311,7 @@ int main(int argc, char *argv[], char *envp[])
 
 			if( newsock >= 0 ){
 				Service_connection( &sin, sock, newsock );
+				started_process = 1;
 			} else {
 				errno = err;
 				logerr(LOG_INFO, _("lpd: accept on listening socket failed") );
@@ -316,6 +319,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		if( FD_ISSET( Lpd_pipe[0], &readfds ) ){
 			Service_printer( Lpd_pipe[0] );
+			started_process = 1;
 		}
 	}while( 1 );
 	cleanup(0);
@@ -467,7 +471,7 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 			Cfp_static )) == REJECT
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		DEBUG2("Service_connection: talk socket '%d' no connect perms", talk );
-		Write_fd_str( talk, _("no connect permissions\n") );
+		Write_fd_str( talk, _("\001no connect permissions\n") );
 		cleanup(0);
 	}
 	switch( input[0] ){
@@ -535,6 +539,11 @@ static void Read_pc(void)
 	DEBUG1( "Read_pc: starting" );
 	Free_printcap_information();
 	Free_perms( &Perm_file );
+	Free_perms( &Local_perm_file );
+#if defined(DMALLOC)
+	Write_fd_str(dmalloc_outfile, "**** After Freeing Memory in Read_pc\n");
+	dmalloc_log_unfreed();
+#endif
 	Get_all_printcap_entries();
 	Get_perms( "all", &Perm_file, Printer_perms_path );
 	DEBUG1( "Read_pc: done" );
@@ -555,7 +564,7 @@ void Service_printer( int talk )
 {
 	char *name, *s, *end;
 	char line[LINEBUFFER];
-	int n, len;
+	int n, len, pid;
 
 	/* get the line */
 
@@ -576,7 +585,7 @@ void Service_printer( int talk )
 				*s, name );
 			continue;
 		}
-		setproctitle( "lpd %s '%s'", "STARTING", name );
+		proctitle( "lpd %s '%s'", "STARTING", name );
 		/*
 		 * if we are starting 'all' then we need to start subprocesses
 		 */
@@ -584,12 +593,15 @@ void Service_printer( int talk )
 			/* we start all of them */
 			Start_all();
 		} else {
-			/* we will search the server list for a printer
-				with the appropriate name.  If we do not
-				find it,  then we will call Start_all()
-				to start everything instead
-			 */
-			Start_particular_server( name );
+			pid = dofork(1);
+			if( pid < 0 ){
+				logerr( LOG_INFO, _("Service_printer: dofork failed") );
+				break;
+			} else if( pid == 0 ){
+				/* child */
+				Do_queue_jobs( name );
+				cleanup(0);
+			}
 		}
 	}
 }

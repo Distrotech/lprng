@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: pr_support.c,v 3.18 1998/01/12 20:29:22 papowell Exp $";
+"pr_support.c,v 3.19 1998/03/24 02:43:22 papowell Exp";
 
 /***************************************************************************
  Commentary:
@@ -148,7 +148,7 @@ int Print_open( struct filter *filter,
 						device_fd = -1;
 					}
 				} else if( S_ISREG(statb.st_mode ) ){
-					if( Do_lock( device_fd, Lp_device, 1 ) <= 0 ){
+					if( Do_lock( device_fd, Lp_device, 1 ) < 0 ){
 						err = errno;
 						setstatus( cfp,
 							"Device '%s' is locked!", Lp_device );
@@ -160,7 +160,7 @@ int Print_open( struct filter *filter,
 			break;
 		default:
 			DEBUG1( "Print_open: doing link open '%s'", Lp_device );
-			device_fd = Link_open( Lp_device, timeout, 0);
+			device_fd = Link_open( Lp_device, timeout );
 			err = errno;
 			break;
 		}
@@ -177,6 +177,7 @@ int Print_open( struct filter *filter,
 				plp_sleep(n);
 			}
 		}
+		if( isatty(device_fd ) ) Do_stty( device_fd );
 	} while( device_fd < 0 );
 
 	filter->input = device_fd;

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: printcap.c,v 3.11 1997/12/20 21:16:26 papowell Exp $";
+"printcap.c,v 3.12 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -57,6 +57,8 @@ struct printcap_entry *Create_expanded_entry(
  *  struct printcap_entry data structure.  This is usually
  *  only the line count information
  ***************************************************************************/
+
+
 
 void Free_printcap_entry( struct printcap_entry *entry )
 {
@@ -257,7 +259,7 @@ void Getprintcap_pathlist( char *path, char *key, struct file_entry *raw )
 		switch( c ){
 		case '|':
 			DEBUGF(DDB2)("Getprintcap_pathlist: filter '%s'", path );
-			strcpy( add_buffer( &raw->filters, strlen(path)+1 ), path );
+			add_str( &raw->filters, path,__FILE__,__LINE__  );
 			break;
 
 		case '/':
@@ -270,7 +272,7 @@ void Getprintcap_pathlist( char *path, char *key, struct file_entry *raw )
 				char *s;
 				DEBUGF(DDB2)("Getprintcap_pathlist: file '%s', size %d",
 					path, statb.st_size );
-				strcpy( add_buffer( &raw->files, strlen(path)+1 ), path );
+				add_str( &raw->files, path,__FILE__,__LINE__  );
 				if( (s = Readprintcap( path, fd, &statb, raw)) == 0 ){
 					log( LOG_ERR, "Error reading %s", path );
 				} else {
@@ -315,7 +317,7 @@ char *Readprintcap( char *file, int fd, struct stat *statb,
 		/* malloc data structures */
 		
 		DEBUGF(DDB2)("Readprintcap: file '%s' size %d", file, statb->st_size );
-		begin = add_buffer( &raw->files, statb->st_size+1 );
+		begin = add_buffer( &raw->files, statb->st_size+1,__FILE__,__LINE__  );
 		DEBUGF(DDB2)("Readprintcap: buffer 0x%x", begin );
 
 		s = begin;
@@ -416,7 +418,7 @@ int Parse_pc_buffer( char *buffer, char *pathname,
 	/* allocate a line list and get the first entry */
 	if( line_list->count+1 >= line_list->max ){
 		extend_malloc_list( line_list, sizeof( lines[0]),
-			line_list->count+100);
+			line_list->count+100,__FILE__,__LINE__ );
 	}
 	lines = line_list->list;
 	first_line = line_list->count;
@@ -541,8 +543,7 @@ find_end:
 
 			}
 			DEBUGF(DDB2)("Parse_pc_buffer: file '%s', size %d", include_file, statb.st_size );
-			strcpy( add_buffer( &raw->files,
-				strlen(include_file)+1 ), include_file );
+			add_str( &raw->files, include_file,__FILE__,__LINE__  );
 			if( (include_info = Readprintcap( include_file,
 					fd, &statb, raw)) == 0 ){
 				logerr_die( LOG_ERR, "Error reading %s", include_file );
@@ -568,7 +569,7 @@ find_end:
 		/* get rid of short entries */
 		if( start == 0 || *start == 0 ) continue;
 		if( line_list->count+2 >= line_list->max ){
-			extend_malloc_list( line_list, sizeof( lines[0]),  100);
+			extend_malloc_list( line_list, sizeof( lines[0]),  100,__FILE__,__LINE__ );
 			lines = line_list->list;
 		}
 		lines[line_list->count++] = start;
@@ -604,7 +605,7 @@ struct printcap_entry *Parse_raw_printcap( int first_line_index, char *key,
 	/* allocate a line list and get the first entry */
 	if( printcap_list->count+1 >= printcap_list->max ){
 		extend_malloc_list( printcap_list, sizeof( printcaps[0]),
-			printcap_list->count+10);
+			printcap_list->count+10,__FILE__,__LINE__ );
 	}
 	printcaps = (void *)printcap_list->list;
 	pc = 0;
@@ -625,7 +626,7 @@ struct printcap_entry *Parse_raw_printcap( int first_line_index, char *key,
 				Fix_raw_pc( pc, path );
 			}
 			if( printcap_list->count+1 >= printcap_list->max ){
-				extend_malloc_list( printcap_list, sizeof( printcaps[0]), 10);
+				extend_malloc_list( printcap_list, sizeof( printcaps[0]), 10,__FILE__,__LINE__ );
 				printcaps = (void *)printcap_list->list;
 			}
 			/* get the next entry */
@@ -686,7 +687,7 @@ void Fix_raw_pc( struct printcap_entry *pc, char *path )
 	lines = pc->names;
 	if( pc->namecount+1 >= pc->namelines.max ){
 		extend_malloc_list( &pc->namelines, sizeof(lines[0]),
-			pc->namecount+10 );
+			pc->namecount+10,__FILE__,__LINE__  );
 	}
 	newlines = pc->namelines.list;
 	for( i = 0, j = 0; i < pc->namecount; ++i ){
@@ -704,7 +705,7 @@ void Fix_raw_pc( struct printcap_entry *pc, char *path )
 	pc->names = newlines;
 	lines = pc->options;
 	if( pc->optioncount+1 >= pc->lines.max ){
-		extend_malloc_list( &pc->lines, sizeof(lines[0]), pc->optioncount+10 );
+		extend_malloc_list( &pc->lines, sizeof(lines[0]), pc->optioncount+10,__FILE__,__LINE__  );
 	}
 	newlines = pc->lines.list;
 	for( i = 0, j = 0; i < pc->optioncount; ++i ){
@@ -1073,7 +1074,7 @@ char *Linearize_pc_list( struct printcap_entry *pc, char *parm_name )
 	if( len > buffer_len ){
 		if( buffer ) free(buffer);
 		buffer_len = len;
-		malloc_or_die( buffer, len );
+		buffer = malloc_or_die( len );
 	}
 	s = buffer;
 	s[0] = 0;
@@ -1113,7 +1114,7 @@ struct printcap_entry *Create_expanded_entry(
 
 	if( expanded_list->count+1 >= expanded_list->max ){
 		extend_malloc_list( expanded_list, sizeof(expanded[0]),
-		expanded_list->count+10 );
+		expanded_list->count+10,__FILE__,__LINE__  );
 	}
 	expanded = (void *)expanded_list->list;
 	expanded_pc = &expanded[expanded_list->count];
@@ -1173,7 +1174,7 @@ void Get_all_printcap_entries( void )
 	raw_list = &Raw_printcap_files.printcaps;
 	if( expanded_list->max <= raw_list->count ){
 		extend_malloc_list( expanded_list, sizeof( expanded[0]),
-			raw_list->count+10 );
+			raw_list->count+10,__FILE__,__LINE__  );
 	}
 	/* now we will scan the raw printcap database */
 	raw = (void *)raw_list->list;
@@ -1227,7 +1228,7 @@ void Get_all_printcap_entries( void )
 		}
 		++all_count;
 		if( All_list.max <= all_count ){
-			extend_malloc_list( &All_list, sizeof(s), all_count+1 );
+			extend_malloc_list( &All_list, sizeof(s), all_count+1,__FILE__,__LINE__  );
 		}
 		all_list = All_list.list;
 		All_list.count = 0;
@@ -1241,7 +1242,7 @@ void Get_all_printcap_entries( void )
 	} else {
 		DEBUGF(DDB3)("Get_all_printcap_entries: no all entry");
 		if( All_list.max <= expanded_list->count ){
-			extend_malloc_list( &All_list, sizeof(s), expanded_list->count+1 );
+			extend_malloc_list( &All_list, sizeof(s), expanded_list->count+1,__FILE__,__LINE__  );
 		}
 		all_list = All_list.list;
 		All_list.count = 0;
@@ -1384,7 +1385,7 @@ int Combine_options( char *name, struct printcap_entry *pc, char *key,
 					DEBUGF(DDB3)("Combine_options: globmatch '%s' to '%s'",
 					s, HostIP.fqdn );
 					not_found = 0;
-				} else {
+				} else if( !strchr( s, '*' ) ){
 					s = Find_fqdn( &LookupHostIP, s, 0 );
 					DEBUGF(DDB3)("Combine_options: fqdn '%s' to '%s'",
 						LookupHostIP.fqdn, HostIP.fqdn );
@@ -1407,7 +1408,7 @@ int Combine_options( char *name, struct printcap_entry *pc, char *key,
 			raw_pc->names, *raw_pc->names, raw_pc->optioncount );
 		if( merged_list.max <= max_count ){
 			extend_malloc_list( &merged_list, sizeof(merged_lines[0]),
-				 max_count+100);
+				 max_count+100,__FILE__,__LINE__ );
 		}
 		merged_list.count = 0;
 		merged_lines = merged_list.list;
@@ -1452,7 +1453,7 @@ int Combine_options( char *name, struct printcap_entry *pc, char *key,
 		/* now we have to put the merged list into the printcap */
 		if( pc->lines.max <= merged_count+1 ){
 			extend_malloc_list( &pc->lines, sizeof( merged_lines[0] ),
-				merged_count + 10 );
+				merged_count + 10,__FILE__,__LINE__  );
 		}
 		pc_lines = pc->lines.list;
 		for( i = 0; i < merged_count; ++i ){
@@ -1703,8 +1704,7 @@ void Expand_value( struct keywords *var_list, struct file_entry *file_entry )
 		DEBUGF(DDB3)("Expand_value: new value '%s'", copy );
 		if( changed ){
 			/* now we allocate a buffer entry */
-			s = add_buffer( &file_entry->expanded_str, strlen( copy )+1 );
-			strcpy( s, copy );
+			s = add_str( &file_entry->expanded_str, copy,__FILE__,__LINE__  );
 			((char **)var->variable)[0] = s;
 			DEBUGF(DDB3)("Expand_value: result '%s'", s );
 		} else {

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: checkpc_perm.c
  * PURPOSE: definitions of functions
- * $Id: checkpc_perm.h,v 3.1 1996/12/28 21:40:23 papowell Exp $
+ * checkpc_perm.h,v 3.1 1996/12/28 21:40:23 papowell Exp
  **************************************************************************/
 
 int check_file( struct dpathname *dpath, int fix, time_t t, int age, int rem );

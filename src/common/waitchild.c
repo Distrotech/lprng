@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 static char *const _id =
-"$Id: waitchild.c,v 3.10 1997/12/16 15:06:37 papowell Exp $";
+"waitchild.c,v 3.10 1997/12/16 15:06:37 papowell Exp";
 
 #include "lp.h"
 #include "decodestatus.h"

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.bsd.in,v 3.22 1998/01/08 09:52:27 papowell Exp $
+# Makefile.in,v 3.23 1998/03/29 19:39:21 papowell Exp
 ########################################################################## 
 
 #**************###########**************
@@ -65,7 +65,7 @@ realclean mostlyclean distclean: clean
 
 ###############################################################################
 
-ci: cifiles
+cifast ci: cifiles
 	for i in $(ALLDIRS); do \
 		if test ! -d $$i/RCS ; then \
 			mkdir $$i/RCS; \
@@ -73,59 +73,34 @@ ci: cifiles
 	done; \
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
 
+CI=
+CO=-kv
+
 cifiles: newmake
 	if test ! -d RCS ; then mkdir RCS; fi;
 	checkin() { \
-		ci $(CI) -l -mUpdate -t-Initial $$1; \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		yes |co $(CO) $$1; \
 	}; \
 	for i in *; do \
 		if test -f "$$i" ; then \
 			case "$$i" in  \
 			config.h.in ) checkin $$i;; \
 			config.* ) ;; \
+			configure ) ;; \
 			* ) checkin $$i ;; \
 			esac; \
 		fi; \
 	done;
 
 newmake:
-	for i in Makefile.bsd.in */Makefile.bsd.in ; do \
-		d=`dirname $$i`; b=`basename $$i .bsd.in`; c=$${d}/$${b}.in; \
+	for i in Makefile.in */Makefile.in ; do \
+		d=`dirname $$i`; b=`basename $$i .in`; c=$${d}/$${b}.bsd.in; \
 		sed -e '/^#GNU/,/^#/d' -e 's/^#BSD.//' -e 's/$$>/$$>/' \
-		 -e	's/^if/.if/' -e 's/^endif/.endif/' $$c >/tmp/Makefile.bsd.in; \
-		diff $$i /tmp/Makefile.bsd.in >/dev/null || cp /tmp/Makefile.bsd.in $$i;\
-	done
-
-cifast: newmake
-	if test ! -d RCS ; then mkdir RCS; fi;
-	find . -type f -newer VERSION -print \
-		| sed \
-			-e '/\.orig$$/d' \
-			-e '/core$$/d' \
-			-e '/RCS/d' \
-			-e '/\.o$$/d'  \
-			-e '/.*liblpr.a$$/d' \
-			-e '/.*checkpc$$/d' \
-			-e '/.*lpr$$/d' \
-			-e '/.*lpd$$/d' \
-			-e '/.*lpq$$/d' \
-			-e '/.*lprm$$/d' \
-			-e '/.*lpc$$/d' \
-			-e '/.*lpbanner$$/d' \
-			-e '/.*lpf$$/d' \
-			-e '/.*lpraccnt$$/d' \
-			-e '/.*monitor$$/d' \
-			-e '/.*server$$/d' \
-			-e '/.*client$$/d' \
-			-e '/.*old$$/d' \
-			-e '/.*line$$/d' \
-			-e '/.*auth$$/d' \
-			-e '/.*pgp$$/d' \
-		 >/tmp/list
-	echo VERSION >>/tmp/list
-	# cat /tmp/list
-	- ci $(CI) -l -mUpdate -t-Initial `cat /tmp/list`;
-	
+		 -e	's/^if/.if/' -e 's/^endif/.endif/' $$i >/tmp/Makefile.bsd.in; \
+		if test -f $$c ; then rm -f $$c; fi; cp /tmp/Makefile.bsd.in $$c;\
+		done
 
 ###############################################################################
 # Update the patch level when you make a new version
@@ -136,6 +111,10 @@ cifast: newmake
 ###############################################################################
 
 update:
+	for i in VERSION ./src/include/patchlevel.h configure.in configure; do \
+		rcs -l $$i; chmod +w $$i; \
+	done;
+
 	DIR=`pwd | sed 's,.*/,,' `; \
 		echo "#define PATCHLEVEL " \"$$DIR\" >./src/include/patchlevel.h; \
 		sleep 1; \
@@ -145,6 +124,7 @@ update:
 		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure.in >configure.in; \
 		cp configure /tmp/configure; \
 		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure >configure ;
+
 	(cd man; $(MAKE) update)
 	
 
@@ -189,6 +169,8 @@ dist_list:
 	echo '*.rej' >>/tmp/X
 	echo '*.tex' >>/tmp/X
 	echo '*.ps' >>/tmp/X
+	echo '*.dvi' >>/tmp/X
+	echo '*.log' >>/tmp/X
 	echo '?' >>/tmp/X
 	echo '*.o' >>/tmp/X
 	echo '*.a' >>/tmp/X

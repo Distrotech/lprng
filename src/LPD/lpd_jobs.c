@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_jobs.c,v 3.34 1998/01/18 00:10:32 papowell Exp papowell $";
+"lpd_jobs.c,v 3.36 1998/03/29 18:32:42 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -133,7 +133,6 @@ static int Decode_transfer_failure( int attempt, struct control_file *cfp,
 
 static int cmp_server( const void *l, const void *r );
 
-extern int Check_printable( struct control_file *cfp, struct destination *dest );
 extern char *Update_servers_status( struct malloc_list *servers );
 static char error[LINEBUFFER];
 
@@ -149,179 +148,127 @@ int Do_check_idle(struct printcap_entry *pc);
 /***************************************************************************
  * Start_all()
  *  This tries to start all the queue servers,  and is called by the
- *  LPD server.  It will run down the printcap list,  checking for
- *  servers;  when it finds a valid entry,  it will then fork a server.
- *  In order to avoid overwhelming the system with forks,  it waits
- *  a while between forks;  this gives the system a chance to do other
- *  work during startup.
+ *  LPD server.  It simply will reset the servers needed list
  ***************************************************************************/
 
-static struct malloc_list Servers_needed;
-
-static int Need_to_start( struct server_info *server );
-static int Server_next;
+int Server_next;
+int PipeSig[2];
+int Need_to_start( char *pr );
 
 int Start_all(void)
 {
-	int i, c;
-	struct printcap_entry *pc, *entries;
-	struct server_info *server;
-
-	/* we work our way down the printcap list, checking for
-		ones that have a spool queue */
-	/* note that we have already tried to get the 'all' list */
-	i = 0;
-	if( All_list.count ){
-		i = All_list.count;
-	} else if( Expanded_printcap_entries.count > 0 ){
-		i = Expanded_printcap_entries.count;
-	}
-	if( i > Servers_needed.max ){
-		extend_malloc_list( &Servers_needed, sizeof( server[0] ), i );
-	}
-	Servers_needed.count = 0;
-	server = (void *)Servers_needed.list;
 	Server_next = 0;
-	if( All_list.count ){
-		char **line_list;
-		DEBUG0("Start_all: using the All_list" );
-		line_list = All_list.list;
-		for( i = 0; i < All_list.count; ++i ){
-			Printer = line_list[i];
-			DEBUG0("Start_all: checking '%s'", Printer );
-			if( Need_to_start( &server[Servers_needed.count] ) ){
-				++Servers_needed.count;
-			}
-		}
-	} else if( Expanded_printcap_entries.count > 0 ){
-		DEBUG0("Start_all: using the printcap list" );
-		entries = (void *)Expanded_printcap_entries.list;
-		c = Expanded_printcap_entries.count;
-		for( i = 0; i < c; ++i ){
-			pc = &entries[i];
-			Printer = pc->names[0];
-			DEBUG0("Start_all: printcap entry [%d of %d] '%s'",
-				i, c,  Printer );
-			DEBUG0("Start_all: checking '%s'", Printer );
-			if( Need_to_start( &server[Servers_needed.count] ) ){
-				++Servers_needed.count;
-			}
-		}
-	}
-	Printer = 0;
-	if( DEBUGL0 ){
-		logDebug("Start_all: %d printers", Servers_needed.count );
-		for( i = 0; i < Servers_needed.count; ++i ){
-			logDebug("  [%d] '%s' need_to_start %d",
-				i, server[i].name, server[i].need_to_start );
-		}
-	}
-	return( Servers_needed.count );
+	return(1);
 }
-
 
 /***************************************************************************
- * int Need_to_start
- *  returns: 0 if no server needed, non-zero otherwise
+ * Start_idle_server( int max_to_be_started )
+ *  start up at most max_to_be_started idle servers
  ***************************************************************************/
-static int Need_to_start( struct server_info *server )
+
+int Start_idle_server( int max_to_be_started )
 {
-	struct printcap_entry *pc;
-	int  hc, cnt, jobcount;
-	char orig_name[LINEBUFFER];
-	char subservers[LINEBUFFER];
-	char *s, *end;
-	struct stat statb;
-	int serverpid, fd;
-	char *path;
+	int started = 0;
+	int status, list_max, pid, len, err, n, errfd, debuglevel, debugflag;
+ 	struct printcap_entry *entries;
+	char buffer[LINEBUFFER];
+	char *pr, *end;
 
-	pc = 0;
-	jobcount = 0;
-	safestrncpy( orig_name, Printer );
-	Printer = Find_printcap_entry( Printer, &pc );
-	if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
-		return(0);
+	/* we start up servers while we can */
+ 	if( All_list.count ){
+		list_max = All_list.count;
+	} else {
+		list_max = Expanded_printcap_entries.count;
 	}
-	error[0] = 0;
-	/* see if there are jobs */
-	if( Setup_printer( Printer, error, sizeof(error), 0, 1, 0, 0 ) ){
-		DEBUG0( "Need_to_start: bad queue info '%s' '%s'", Printer, error );
-		return(0);
-	}
-	if( Server_queue_name && *Server_queue_name ){
-		DEBUG0( "Need_to_start: '%s' is server for '%s'",
-			Printer, Server_queue_name );
-		return(0);
-	}
-
-	if( ! Printing_disabled ){
-		Job_count( &hc, &cnt );
-		jobcount += cnt;
-	}
-
-	/* now check to see if there is a server process active */
-	if( cnt > 0 ){
-		path = Add_path( CDpathname, Printer );
-		serverpid = 0;
-		if( (fd = Checkread( path, &statb ) ) >= 0 ){
-			serverpid = Read_pid( fd, (char *)0, 0 );
-			close( fd );
+	DEBUG0( "Start_idle_server: begin Server_next %d, max %d", Server_next, list_max );
+	if( Server_next >= list_max ) return(0);
+	while( Server_next < list_max && started < max_to_be_started ){
+		/* first, we make pipe */
+		if( pipe(PipeSig) == -1 ){
+			fatal( LOG_INFO, _("Start_idle_server: pipe failed!") );
 		}
-		DEBUG3("Need_to_start: server pid %d", serverpid );
-		if( serverpid > 0 && kill( serverpid, 0 ) ){
-			DEBUG3("Get_queue_status: server %d not active", serverpid );
-			serverpid = 0;
-		} /**/
-		if( serverpid ){
-			jobcount = 0;
-		}
-	}
-
-	DEBUG0( "Need_to_start: '%s' Printing Disabled %d, jobcount %d",
-		Printer, Printing_disabled, jobcount );
-
-	if( Server_names && *Server_names ){
-		safestrncpy( subservers, Server_names );
-		for( s = subservers; s && *s; s = end ){
-			while( isspace( *s ) ) ++s;
-			end = strpbrk( s, ";,\t " );
-			if( end ) *end++ = 0;
-			if( *s == 0 ) continue;
-			if( Setup_printer( s, error, sizeof(error), 0, 1, 0, 0 ) == 0 ){
-				if( !Printing_disabled ){
-					Job_count( &hc, &cnt );
-					/* now check to see if there is a server process active */
-					DEBUG0(
-					"Need_to_start: '%s' subserver, printing enabled, job count %d",
-						s, cnt );
-					if( cnt > 0 ){
-						path = Add_path( CDpathname, Printer );
-						serverpid = 0;
-						if( (fd = Checkread( path, &statb ) ) >= 0 ){
-							serverpid = Read_pid( fd, (char *)0, 0 );
-							close( fd );
-						}
-						DEBUG3("Need_to_start: server pid %d", serverpid );
-						if( serverpid > 0 && kill( serverpid, 0 ) ){
-							DEBUG3("Get_queue_status: server %d not active", serverpid );
-							serverpid = 0;
-						} /**/
-						if( serverpid == 0 ){
-							jobcount += cnt;
-						}
-					}
+		if( (pid = dofork(1)) < 0 ){
+			logerr( LOG_INFO, _("Start_idle_server: fork failed!") );
+			close(PipeSig[0]); PipeSig[0] = 0;
+			close(PipeSig[1]); PipeSig[1] = 0;
+			return( started );
+		} else if( pid == 0 ){
+			/* child process */
+			close(PipeSig[0]); PipeSig[0] = 0;
+			/* we save the error log FD */ 
+			errfd = dup(2);
+			debuglevel = Debug;
+			debugflag = DbgFlag;
+			if( All_list.count ){
+				char **line_list;
+				DEBUG0("Start_idle_server: using the All_list" );
+				line_list = All_list.list;
+				while( Server_next < All_list.count ){
+					pr = line_list[Server_next];
+					DEBUG0("Start_idle_server: checking '%s'", pr );
+					plp_snprintf(buffer,sizeof(buffer),"%d %s\n",Server_next, pr);
+					Write_fd_str(PipeSig[1],buffer);
+					Do_queue_jobs(pr);
+					dup2(errfd,2);
+					Debug = debuglevel;
+					DbgFlag = debugflag;
+					++Server_next;
+				}
+			} else {
+				DEBUG0("Start_idle_server: using the printcap list" );
+				entries = (void *)Expanded_printcap_entries.list;
+				while( Server_next < Expanded_printcap_entries.count ){
+					pr = entries[Server_next].names[0];
+					DEBUG0("Start_idle_server: checking '%s'", pr );
+					plp_snprintf(buffer,sizeof(buffer),"%d %s\n",Server_next, pr);
+					Write_fd_str(PipeSig[1],buffer);
+					Do_queue_jobs(pr);
+					Debug = debuglevel;
+					DbgFlag = debugflag;
+					dup2(errfd,2);
+					++Server_next;
 				}
 			}
+			plp_snprintf(buffer,sizeof(buffer),"%d\n",Server_next);
+			Write_fd_str(PipeSig[1],buffer);
+			close(PipeSig[1]); PipeSig[1] = 0;
+			cleanup(0);
 		}
+		close(PipeSig[1]); PipeSig[1] = 0;
+		DEBUG0( "Start_idle_server: created pid %d", pid );
+		buffer[0] = 0;
+		do{
+			errno = 0;
+			len = strlen(buffer);
+			status = read(PipeSig[0],buffer+len,sizeof(buffer)-1-len);
+			err = errno;
+			if( status >= 0 ) buffer[len+status] = 0;
+			DEBUG0( "Start_idle_server: read status %d, read '%s', errno '%s'",
+				status, &buffer[len],Errormsg(err) );
+			if( status <= 0 ){
+				++started;
+				++Server_next;
+				DEBUG0( "Start_idle_server: Server_next %d, started %d",
+					Server_next, started );
+				break;
+			}
+			/* we split up read line and record information */
+			while(( end = strchr(buffer,'\n') )){
+				*end++ = 0;
+				n = atoi(buffer);
+				if( n >= Server_next ) Server_next = n;
+				DEBUG0( "Start_idle_server: new Server_next %d", Server_next );
+				strcpy( buffer, end );
+			}
+		} while( Server_next < list_max && started < max_to_be_started );
+		close( PipeSig[0] ); PipeSig[0] = 0;
 	}
-	DEBUG0( "Need_to_start: '%s' final job count %d",
-		orig_name, jobcount );
-	safestrncpy( server->name, orig_name );
-	if( jobcount ){
-		server->need_to_start = 1;
-	}
-	return( 1 );
+	if( PipeSig[0] ){ close(PipeSig[0]); PipeSig[0] = 0; }
+	if( PipeSig[1] ){ close(PipeSig[1]); PipeSig[1] = 0; }
+	DEBUG0( "Start_idle_server: started %d printers", started );
+	return(started);
 }
+
 
 /***************************************************************************
  Do_queue_jobs( char *printer )
@@ -412,6 +359,11 @@ static void Sigusr2()
 	return;
 }
 
+
+/***************************************************************************
+ * Do_queue_jobs: process the job queue
+ ***************************************************************************/
+
 void Do_queue_jobs( char *name )
 {
 	int lockfd = -1;			/* lock file fd */
@@ -421,14 +373,12 @@ void Do_queue_jobs( char *name )
 	pid_t pid;					/* process id */
 	int unspoolerfd = -1;		/* server id */
 	struct control_file *cfp, **cfpp;	/* control file to process */
-	plp_status_t procstatus;
 	int status = 0;				/* status of the job */
 	int i, j, c;				/* AJAX! for integers */
 	char *pname, *strv, *end;	/* ACME, the very finest pointers */
 	int err = 0;
 	struct destination *destination = 0;	/* current destination */
 	struct destination *dpp;		/* list */
-	int can_remove;				/* can we remove this */
 	struct printcap_entry *pc;
 	char *newdest;				/* new destination */
 	int all_finished;			/* all servers done */
@@ -436,9 +386,10 @@ void Do_queue_jobs( char *name )
 	plp_block_mask omask;		/* signal mask */
 	static struct malloc_list servers;
 	struct server_info *server_info;	/* server information */
-	struct server_info *first_server;	/* server information */
+	struct server_info *first_server, *finished_server;
 	char orig_name[LINEBUFFER];
 	char buffer[LINEBUFFER];
+	int did_work = 0;				/* we did work */
 
 
 	subserver_for[0] = 0;
@@ -461,7 +412,7 @@ begin:
 	if( subserver_for[0] ){
 		Name = "(Subserver)";
 	}
-	setproctitle( "lpd %s '%s'", Name, Printer );
+	proctitle( "lpd %s '%s'", Name, Printer );
 
 	Errorcode = JABORT;
 	if( lockfd != -1 ){
@@ -474,8 +425,8 @@ begin:
 	pc = 0;
 	i = Setup_printer( orig_name, error, sizeof(error),
 		debug_vars, 0, &control_statb, &pc );
-	DEBUG0( "Do_queue_jobs: printer '%s', printing_disabled %d", Printer,
-		Printing_disabled );
+	DEBUG0( "Do_queue_jobs: printer '%s', pr_disabled %d, pr_aborted %d",
+		Printer, Printing_disabled, Printing_aborted );
 
 	if( i ){
 		if( i != 2 ){
@@ -483,6 +434,8 @@ begin:
 		} else {
 			DEBUG0( "Do_queue_jobs: '%s'", error );
 		}
+		/* see if we do checks */
+		if( PipeSig[1] ) return;
 		/* here we simply exit */
 		cleanup(0);
 	}
@@ -492,6 +445,7 @@ begin:
 	if( Server_queue_name && subserver_for[0] == 0 ){
 		DEBUG0("Do_queue_jobs: subserver started without server");
 		Errorcode = 0;
+		if( PipeSig[1] ) return;
 		cleanup( 0 );
 	}
 
@@ -499,6 +453,11 @@ begin:
 		if( Printing_disabled ){
 			Errorcode = JNOPRINT;
 			DEBUG0( "Do_queue_jobs: printing disabled" );
+			cleanup(0);
+		}
+		if( Printing_aborted ){
+			Errorcode = JNOPRINT;
+			DEBUG0( "Do_queue_jobs: printing aborted" );
 			cleanup(0);
 		}
 		if( Spooling_disabled ){
@@ -518,8 +477,12 @@ begin:
 	if( Do_lock( lockfd, pname, 0 ) < 0 ){
 		pid = Read_pid( lockfd, (char *)0, 0 );
 		DEBUG0( "Do_queue_jobs: server process '%d' may be active", pid );
-		if( pid > 0 ){
+		if( PipeSig[1] == 0 && pid > 0 ){
 			kill( pid, SIGUSR2 );
+		}
+		if( PipeSig[1] ){
+			DEBUG0("Do_queue_jobs: returning, active server" );
+			return;
 		}
 		Errorcode = 0;
 		cleanup(0);
@@ -551,8 +514,7 @@ begin:
 		}
 		dpp = (void *)cfp->destination_list.list;
 		for( j = 0; j < cfp->destination_list.count; ++j ){
-			if( dpp[j].server || dpp[j].subserver ){
-				dpp[j].server = 0;
+			if( dpp[j].subserver ){
 				dpp[j].subserver = 0;
 				update_status = 1;
 			}
@@ -603,6 +565,10 @@ begin:
 			}
 		}
 		if( (name = Update_servers_status( &servers )) ){
+			if( PipeSig[1] ){
+				close(PipeSig[1] );
+				PipeSig[1] = 0;
+			}
 			goto begin;
 		}
 		Printer = orig_name;
@@ -614,7 +580,7 @@ begin:
 		/* dummy one for our queue here */
 		servers.count = 0;
 		if( servers.max == 0 ){
-			extend_malloc_list( &servers, sizeof( server_info[0] ), 1 );
+			extend_malloc_list( &servers, sizeof( server_info[0] ), 1,__FILE__,__LINE__  );
 		}
 		server_info = (void *)servers.list;
 		first_server = &server_info[servers.count++];
@@ -622,8 +588,49 @@ begin:
 		first_server->initial = 1;
 	}
 
+	/*
+	 * Inform the waiting process that we are going to print
+	 * something
+	 */
+
+	cfp = 0;
+	destination = 0;
+	buffer[0] = 0;
+	for( i = 0; cfp == 0 &&  i < C_files_list.count; ++i ){
+		cfp = cfpp[i];
+		/* see if you can print it */
+		DEBUG0("Do_queue_jobs: checking '%s'%s, for printable",
+			cfp->transfername,
+			   (cfp->hold_info.routed_time ? " (routed)" : "") );
+		status = Job_printable_status( cfp, &destination, buffer, sizeof(buffer) );
+		if( status == JIGNORE ){
+			cfp = 0;
+		} else if( Printing_disabled || Printing_aborted ){
+			/* we allow removed or moved jobs to be processed */
+			if( status == JREMOVE || cfp->hold_info.redirect[0] ){
+				break;
+			}
+		}
+	}
+	DEBUG0("Do_queue_jobs: PipeSig[1] %d, cfp 0x%x, status '%s', '%s'",
+		PipeSig[1],cfp, Server_status(status), buffer );
+	if( PipeSig[1] ){
+		/* no work and no subservers then we are done another */
+		i = Countpid(0);
+		if( i == 0 && cfp == 0 ){
+			DEBUG0("Do_queue_jobs: returning" );
+			Write_pid( lockfd, 0, (char *)0 );
+			close( lockfd );
+			return;
+		}
+		/* we have work or we need to wait */
+		close(PipeSig[1]);
+		PipeSig[1] = 0;
+	}
+	DEBUG0("Do_queue_jobs: doing work" );
+
 	/* we now invoke the Check_idle operation */
-	if( Check_idle ){
+	if( Check_idle && !(Printing_disabled || Printing_aborted) ){
 		status = Do_check_idle(pc);
 		if( status ){
 			exit(status);
@@ -634,7 +641,8 @@ begin:
 		/* check for changes to spool control information */
 
 		DEBUG0( "Do_queue_jobs: MAIN LOOP" );
-		DEBUGFC(DMEM1){ Brk_check_size(); }
+		DEBUGF(DMEM1)( "Do_queue_jobs: memory allocation now %s",
+			Brk_check_size());
 		plp_block_all_signals( &omask );
 		update_status = Susr2;
 		Susr2 = 0;
@@ -645,14 +653,14 @@ begin:
 			Fix_update( debug_vars, 0 );
 			update_status = 1;
 		}
-		/*********************************************************************
-		 * We now start any subserver that needs it.  Note that we will
-		 *  fork and branch to the program start
-		 *******************************************************************/
+
 		/* get the first free server */
 		DEBUG0( "Do_queue_jobs: update_status %d", update_status );
 		first_server = 0;
+		finished_server = 0;
 		server_info = (void *)servers.list;
+
+		/* we may need to start subservers again */
 
 		if( update_status ){
 			if( Server_names && Server_names[0] ){
@@ -685,8 +693,8 @@ begin:
 
 		DEBUG0("Do_queue_jobs: first_server 0x%x, all_finished %d",
 			first_server, all_finished );
-		DEBUG0( "Do_queue_jobs: total_cf_files '%d', Printing_disabled %d",
-			C_files_list.count, Printing_disabled );
+		DEBUG0( "Do_queue_jobs: total_cf_files '%d', pr_disabled %d, pr_aborted %d",
+			C_files_list.count, Printing_disabled, Printing_aborted );
 		cfpp = (void *)C_files_list.list;
 		if(DEBUGL4){
 			for(i=0; i < C_files_list.count; ++i ){
@@ -697,82 +705,31 @@ begin:
 
 		cfp = 0;
 		destination = 0;
-		if( !Printing_disabled ) for( i = 0;
-			cfp == 0 &&  i < C_files_list.count; ++i ){
+		for( i = 0; cfp == 0 &&  i < C_files_list.count; ++i ){
 			cfp = cfpp[i];
-			destination = 0;
 			/* see if you can print it */
 			DEBUG0("Do_queue_jobs: checking '%s'%s, for printable",
 				cfp->transfername,
 			       (cfp->hold_info.routed_time ? " (routed)" : "") );
-			if( cfp->hold_info.routed_time == 0 ){
-				/* first we do non-routed jobs */
-				status = Check_printable(cfp, 0 );
-				DEBUG0("Do_queue_jobs: check printable '%s', result %s",
-					cfp->transfername, Server_status(status) );
-				if( status == JREMOVE ){
-					DEBUG0("Do_queue_jobs: removing '%s'", cfp->transfername );
-					goto done;
-				} else if( status ){
-					DEBUG0("Do_queue_jobs: ignoring '%s'", cfp->transfername );
-					cfp = 0;
-					status = 0;
-					continue;
+			status = Job_printable_status( cfp, &destination, buffer, sizeof(buffer) );
+			if( status == JREMOVE ){
+				/* we have a job to be removed from queue */
+				goto done;
+			} else if( status ){
+				cfp = 0;
+			} else if( cfp->hold_info.done_time ){
+				/* we have a completed job to be removed from queue */
+				goto done;
+			} else if( Printing_disabled || Printing_aborted ){
+				/* we allow Moved jobs to be processed */
+				if( cfp->hold_info.redirect[0] ){
+					break;
 				}
-			}  else {
-				/* now we check for routed jobs */
-				/* check to see if anything left */
-				can_remove = 1;
-				dpp = (void *)cfp->destination_list.list;
-				status = 0;
-				for( j = 0;
-					destination == 0 && j < cfp->destination_list.count;
-					++j ){
-					destination = &dpp[j];
-					/* status will be JREMOVE or JIGNORE */
-					status = Check_printable( cfp, destination );
-					DEBUG0(
-						"Do_queue_jobs: routed check printable '%s', status %s",
-					       cfp->transfername, Server_status(status) );
-					if( status == 0 ){
-						if( destination->done == 0 && destination->copies
-							&& destination->copy_done >= destination->copies ){
-							destination->done = time( (void *) 0 );
-						}
-						if( destination->done ){
-							destination = 0;
-						}
-					} else if( status == JREMOVE ){
-						/* the job is unprintable */
-						destination = 0;
-						DEBUG0( "Do_queue_jobs: routed job unprintable '%s'",
-							cfp->transfername );
-						goto done;
-					} else {
-						/* we ignore the job - simply not printable */
-					    DEBUG0("Do_queue_jobs: ignoring routed  '%s'",
-							cfp->transfername );
-						destination = 0;
-						can_remove = 0;
-					}
-				}
-				/* if no destination, then we may be done or have an error */
-				if( destination == 0 ){
-					if( can_remove ){
-						if( cfp->orig_identifier ){
-							strncpy( cfp->identifier, cfp->orig_identifier,
-								sizeof(cfp->identifier) );
-						}
-						DEBUG0( "Do_queue_jobs: job finished '%s' ID now '%s'",
-							cfp->transfername, cfp->identifier );
-						cfp->hold_info.done_time = time( (void *)0 );
-						status = JSUCC;
-						goto done;
-					}
-					/* if no destination, on to the next job */
-					cfp = 0;
-				}
+				cfp = 0;
 			}
+		}
+		if( destination ){
+			Destination_index = 1+ (destination - (struct destination *)(cfp->destination_list.list));
 		}
 
 		/*********************************************************
@@ -820,39 +777,10 @@ begin:
 			 * first, check to see if various non-server operations
 			 * are called for
 			 */
-			first_server->transfername[0] = 0;
 			newdest = 0;
 			cfp->hold_info.server = getpid();
 			cfp->hold_info.active_time = time((void *)0);
-			Destination = destination;
-			if( destination ){
-				/* set up the destination */
-				newdest = destination->destination;
-				strncpy( cfp->identifier, destination->identifier,
-					sizeof( cfp->identifier ) );
-				destination->server = getpid();
-				if( destination->copies ){
-					int len;
-					len = strlen( cfp->identifier );
-					plp_snprintf( cfp->identifier+len,
-						sizeof(cfp->identifier)-len,
-						"C%d", destination->copy_done+1 );
-				}
-				cfp->copynumber = destination->sequence_number;
-				DEBUG0( "Do_queue_jobs: destination id after '%s', ID '%s'",
-					cfp->identifier+1, cfp->IDENTIFIER );
-			} else if( cfp->hold_info.redirect[0] ){
-				newdest = cfp->hold_info.redirect;
-				DEBUG0( "Do_queue_jobs: redirect %s to %s",
-					cfp->transfername, newdest );
-			} else if( Forwarding ){
-				newdest = Forwarding;
-			} else if( Bounce_queue_dest ){
-				newdest = Bounce_queue_dest;
-				DEBUG0( "Do_queue_jobs: bounce queue %s to %s",
-					cfp->transfername, newdest );
-			}
-
+			safestrncpy( first_server->transfername, cfp->transfername );
 			/* do this so you do not print job file multiple times */
 			if( Set_job_control( cfp, 0) ){
 				/* you cannot update hold file!! */
@@ -864,100 +792,100 @@ begin:
 				status = JABORT;
 				goto done;
 			}
-			/* force us to reread hold file */
-			memset( &cfp->hstatb, 0 , sizeof(cfp->hstatb) );
-			if( newdest == 0 && first_server->name[0] ){
-				/*
-				 * we copy the job to the spool queue
-				 */
-				status = JSUCC;
-				setstatus( cfp, _("copying job '%s' to '%s'"),
-					cfp->identifier+1, first_server->name );
-				DEBUG0("Do_queue_jobs: copying job %s", cfp->transfername );
-				err = Copy_job( cfp, first_server );
-				DEBUG0("Do_queue_jobs: copy status %d", err );
-				if( err ){
-					plp_snprintf( cfp->error, sizeof(cfp->error),
-						_("error copying job to %s"),
-						first_server->spooldir.pathname ); 
-					first_server->status = JABORT;
-					continue;
+			/* fork the subserver and get its id  */
+			if( did_work == 0 ){
+				did_work = 1;
+				setstatus(0,_("server starting"));
+			}
+			if( Fork_subserver( first_server ) == 0 ){
+				pid = getpid();
+				DEBUG0( "Do_queue_jobs: daughter %d", pid );
+				Write_pid( unspoolerfd, pid, (char *)0 );
+				cfp->hold_info.subserver = pid;
+				(void) plp_signal (SIGUSR1,(plp_sigfunc_t)cleanup_USR1 );
+				(void) plp_signal (SIGHUP,(plp_sigfunc_t)cleanup_HUP );
+				(void) plp_signal (SIGINT,(plp_sigfunc_t)cleanup_INT );
+				Name = "(Worker)";
+				proctitle( "lpd %s '%s'", Name, Printer );
+				if( Destination_index ){
+					/* set up the destination */
+					destination = Destination_cfp(cfp,Destination_index);
+					newdest = destination->destination;
+					strncpy( cfp->identifier, destination->identifier,
+						sizeof( cfp->identifier ) );
+					destination->subserver = pid;
+					if( destination->copies ){
+						int len;
+						len = strlen( cfp->identifier );
+						plp_snprintf( cfp->identifier+len,
+							sizeof(cfp->identifier)-len,
+							"C%d", destination->copy_done+1 );
+					}
+					DEBUG0( "Do_queue_jobs: destination id '%s', ID '%s'",
+						cfp->identifier+1, cfp->IDENTIFIER );
+				} else if( cfp->hold_info.redirect[0] ){
+					newdest = cfp->hold_info.redirect;
+					DEBUG0( "Do_queue_jobs: redirect %s to %s",
+						cfp->transfername, newdest );
+				} else if( Forwarding ){
+					newdest = Forwarding;
+				} else if( Bounce_queue_dest ){
+					newdest = Bounce_queue_dest;
+					DEBUG0( "Do_queue_jobs: bounce queue %s to %s",
+						cfp->transfername, newdest );
 				}
+				if( Set_job_control( cfp, 0) ){
+					/* you cannot update hold file!! */
+					setstatus( cfp, _("cannot update hold file for '%s'"),
+						cfp->transfername );
+					log( LOG_ERR,
+						_("Do_queue_jobs: cannot update hold file for '%s'"), 
+						cfp->transfername );
+					Errorcode = JABORT;
+					cleanup(0);
+				}
+				if( newdest == 0 && first_server->name[0] ){
+					/*
+					 * we copy the job to the spool queue
+					 */
+					status = JSUCC;
+					setstatus( cfp, _("copying job '%s' to '%s'"),
+						cfp->identifier+1, first_server->name );
+					DEBUG0("Do_queue_jobs: copying job %s", cfp->transfername );
+					err = Copy_job( cfp, first_server );
+					DEBUG0("Do_queue_jobs: copy status %d", err );
+					if( err ){
+						plp_snprintf( cfp->error, sizeof(cfp->error),
+							_("error copying job to %s"),
+							first_server->spooldir.pathname ); 
+						first_server->status = JABORT;
+						continue;
+					}
+					setmessage(cfp,"TRACE","%s@%s: job copied to '%s'",
+						Printer,FQDNHost, first_server->name );
+					setstatus( cfp, _("copy done '%s' to '%s'"),
+						cfp->identifier+1, first_server->name );
 
-				setmessage(cfp,"TRACE","%s@%s: job copied to '%s'",
-					Printer,FQDNHost, first_server->name );
-				setstatus( cfp, _("copy done '%s' to '%s'"),
-					cfp->identifier+1, first_server->name );
-
-				/* fork the subserver and get its id  */
-				if( Fork_subserver( first_server ) == 0 ){
+					/* now restart as new print server */
 					name = first_server->name;
 					Printer = name;
-					DEBUG0("Do_queue_jobs: after fork"); 
+					DEBUG0("Do_queue_jobs: restarting as '%s'", Printer); 
 					goto begin;
-				}
-				/* we can now remove the job
-				 * note that this may not happen if there is an
-				 *	error and we have the save on error condition
-				 *  we will end up with a copy in the destination
-				 *  spool queue and the original spool queue.
-				 * On the other hand,  this will allow reprinting
-				 *  easily, so we might also be happy
-				 */
-				status = JSUCC;
-				goto copy_done;
-			} else {
-				/*
-				 * fork the process to do the actual dirty work
-				 * but first, write the control file so that the
-				 * active flag is set so that you do not try to reprint
-				 * the job
-				 */
-				safestrncpy( first_server->transfername, cfp->transfername );
-				if( Fork_subserver( first_server ) == 0 ){
-					Name = "(Worker)";
-					setproctitle( "lpd %s '%s'", Name, Printer );
-
+				} else {
 					/*
-					 * daughter process
+					 * The following code is implementing job handling as follows.
+					 *  if newdest has a value then
+					 *      newdest has format 'pr' or 'pr@host'
+					 *      if it is pr@host then we set RemotePrinter and RemoteHost
+					 *         else we set RemotePrinter, RemoteHost is then set
+					 *         to Default or FQDN of server
+					 *
+					 *  else we look at Lp_device
+					 *    - if have a :lp: entry,
+					 *      then this can be 'lp=pr@host' and if it is,
+					 *          we set the RemoteHost and
+					 *      RemotePrinter appropriately.
 					 */
-					pid = getpid();
-					DEBUG0( "Do_queue_jobs: daughter %d", pid );
-					Write_pid( unspoolerfd, pid, (char *)0 );
-					cfp->hold_info.subserver = pid;
-					(void) plp_signal (SIGUSR1,(plp_sigfunc_t)cleanup_USR1 );
-					(void) plp_signal (SIGHUP,(plp_sigfunc_t)cleanup_HUP );
-					(void) plp_signal (SIGINT,(plp_sigfunc_t)cleanup_INT );
-					(void) plp_signal (SIGQUIT,(plp_sigfunc_t)cleanup_QUIT );
-					(void) plp_signal (SIGTERM,(plp_sigfunc_t)cleanup_TERM );
-					DEBUG0( "Do_queue_jobs: printing '%s' to '%s'",
-						cfp->transfername, Printer );
-					if( destination ){
-						destination->subserver = pid;
-					}
-					if( Set_job_control( cfp, 0) ){
-						/* you cannot update hold file!! */
-						setstatus( cfp, _("cannot update hold file for '%s'"),
-							cfp->transfername );
-						log( LOG_ERR,
-							_("Do_queue_jobs: cannot update hold file for '%s'"), 
-							cfp->transfername );
-						Errorcode = JABORT;
-						cleanup(0);
-					}
-/*
- * The following code is implementing job handling as follows.
- *  if newdest has a value then
- *      newdest has format 'pr' or 'pr@host'
- *      if it is pr@host then we set RemotePrinter and RemoteHost
- *         else we set RemotePrinter, RemoteHost is then set
- *         to Default or FQDN of server
- *
- *  else we look at Lp_device
- *    - if have a :lp: entry,
- *      then this can be 'lp=pr@host' and if it is, we set the RemoteHost and
- *      RemotePrinter appropriately.
- */
 					if( newdest ){
 						RemoteHost = 0;
 						RemotePrinter = 0;
@@ -994,7 +922,7 @@ begin:
 						DEBUG0( "Do_queue_jobs: sending '%s' to '%s@%s'",
 							cfp->transfername, RemotePrinter, RemoteHost );
 						Name = "(Worker - Remote)";
-						setproctitle( "lpd %s '%s'", Name, Printer );
+						proctitle( "lpd %s '%s'", Name, Printer );
 						if( Remote_support
 							&& strchr( Remote_support, 'R' ) == 0 
 							&& strchr( Remote_support, 'r' ) == 0 ){
@@ -1009,17 +937,20 @@ begin:
 						DEBUG0( "Do_queue_jobs: printing '%s'",
 							cfp->transfername, Printer );
 						Name = "(Worker - Print)";
-						setproctitle( "lpd %s '%s'", Name, Printer );
+						proctitle( "lpd %s '%s'", Name, Printer );
 						status = Print_job( cfp, pc, Send_job_rw_timeout);
 					}
 					Errorcode = status;
 					cleanup(0);
-				} else if( first_server->pid < 0 ){
-					Errorcode = JABORT;
-					logerr_die( LOG_ERR,_("Do_queue_jobs: fork failed"));
 				}
+			} else if( first_server->pid < 0 ){
+				/* we should suspend operations for a bit */
+				first_server->pid = 0;
+				sleep(1);
+			} else {
+				DEBUG0("Do_queue_jobs: job '%s' server %d", cfp->identifier+1,
+					first_server->pid );
 			}
-			continue;
 		}
 
 		/*
@@ -1027,50 +958,104 @@ begin:
 		 */
 
 		DEBUG0( "Do_queue_jobs: waiting for subserver to finish" );
-		if( (first_server = Wait_for_subserver( &servers ) ) == 0 ){
+		if( (finished_server = Wait_for_subserver( &servers ) ) == 0 ){
 			continue;
 		}
 
 		/* now we extract the job information */
-		pid = first_server->pid;
-		first_server->pid = 0;
+		pid = finished_server->pid;
+		finished_server->pid = 0;
 		cfp = 0;
 		destination = 0;
-		DEBUG0( "Do_queue_jobs: subserver pid '%d' for '%s' finished",
-			pid, first_server->transfername );
-		status = first_server->status;
+		DEBUG0(
+"Do_queue_jobs: subserver pid '%d' for '%s' finished, status '%s', signal '%s'",
+			pid, finished_server->transfername,
+			Server_status(finished_server->status),
+			Sigstr(finished_server->sigval) );
+		status = finished_server->status;
 
-		if( first_server->transfername[0] ){
+		if( finished_server->transfername[0] ){
 			for( i = 0; i < C_files_list.count; ++i ){
 				if( strcmp( cfpp[i]->transfername,
-					first_server->transfername ) == 0 ){
+					finished_server->transfername ) == 0 ){
 					if( stat( cfpp[i]->transfername, &statb) == 0 ){
 						cfp = cfpp[i];
 					} else {
 						/* the job was removed */
-						first_server->status = JSUCC;
+						finished_server->status = JSUCC;
 					}
 					break;
 				}
 			}
-			if( cfp ){
-				struct destination *dpp;
+		}
 
-				/* force rereading the destination information */
-				memset( &cfp->hstatb, 0 , sizeof(cfp->hstatb) );
-				Get_job_control( cfp, 0 );
-				dpp = ((struct destination *)cfp->destination_list.list);
-				for( j = 0; j < cfp->destination_list.count; ++j ){
-					if( dpp[j].subserver == pid ){
-						destination = &dpp[j];
-						break;
-					}
-				}
-				DEBUG0(
-				"Do_queue_jobs: subserver pid '%d' for '%s' dest 0x%x '%s'",
-				pid, first_server->transfername, destination,
-				destination?destination->identifier:0 );
+		if( cfp == 0 ){
+			if( finished_server->status != JSIGNAL){
+				setstatus( cfp, _("subserver pid %d status '%s'"),
+					pid, Server_status(status));
+			} else {
+				setstatus( cfp, _("subserver pid %d status '%s', signal '%s'"),
+					pid,Server_status(status), Sigstr(finished_server->sigval));
 			}
+			DEBUG0("Do_queue_jobs: no status to update");
+			continue;
+		}
+
+		/* force rereading the destination information */
+		Get_job_control( cfp, 0 );
+		dpp = ((struct destination *)cfp->destination_list.list);
+		for( j = 0; j < cfp->destination_list.count; ++j ){
+			if( dpp[j].subserver == pid ){
+				destination = &dpp[j];
+				break;
+			}
+		}
+		DEBUG0(
+		"Do_queue_jobs: subserver pid '%d' for '%s' dest 0x%x '%s'",
+		pid, finished_server->transfername, destination,
+		destination?destination->identifier:0 );
+
+		if( destination ){
+			if( destination->error[0] == 0 && status == JSIGNAL ){
+				plp_snprintf( destination->error, sizeof(destination->error),
+					"subserver process %d died with signal '%s'",pid,
+					Sigstr( finished_server->sigval ) );
+			}
+			setstatus( cfp,
+			_("subserver status '%s' for '%s', destination '%s' copy %d %s"),
+				Server_status(status), cfp->identifier+1,
+				destination->identifier, destination->copy_done+1,
+				destination->error);
+		} else {
+			if( cfp->error[0] == 0 && status == JSIGNAL ){
+				plp_snprintf( cfp->error, sizeof(cfp->error),
+					"subserver process %d died with signal '%s'", pid,
+					Sigstr( finished_server->sigval ) );
+			}
+			setstatus( cfp, _("subserver status '%s' for '%s' %s"),
+				Server_status(status), cfp->identifier+1,cfp->error);
+		}
+		if( status == JSIGNAL ){
+			status = JABORT;
+		}
+
+		/* and now we allow the server to continue */
+		switch( status ){
+		case JABORT:
+			if( Stop_on_abort ){
+				Printing_aborted = 1;
+				Set_spool_control( 0, 0 );
+				setstatus( cfp, _("stopping printing on filter JABORT exit code") );
+				memset(&control_statb, 0, sizeof(control_statb) );
+			} else {
+				finished_server->status = 0;
+			}
+			break;
+		case JNOPRINT:
+			break;
+		default:
+			finished_server->status = 0;
+			break;
 		}
 
 done:
@@ -1078,14 +1063,8 @@ done:
 			DEBUG0("Do_queue_jobs: no status to update");
 			continue;
 		}
-		DEBUG0( "Do_queue_jobs: DONE- final status %d, '%s'",
-			status, Server_status(status) );
-		setstatus( cfp, _("subserver status '%s' for '%s'"),
-			Server_status(status), cfp->identifier+1);
-
-copy_done:
 		if( destination ){
-			destination->server = destination->subserver = 0;
+			destination->subserver = 0;
 		}
 		cfp->hold_info.server = cfp->hold_info.subserver = 0;
 		cfp->hold_info.active_time = 0;
@@ -1094,25 +1073,28 @@ copy_done:
 		switch( status ){
 		case JHOLD:
 			if( destination ){
-				destination->hold = time( (void *) 0 );
+				destination->hold_time = time( (void *) 0 );
 			} else {
 				cfp->hold_info.hold_time = time( (void *)0 );
+				cfp->hold_info.priority_time = 0;
 			}
 			Set_job_control( cfp, (void *)0);
-			status = JSUCC;
 			break;
 
 		case JSUCC:	/* successful, remove job */
 			if( destination ){
 				++destination->copy_done;
 				if( destination->copy_done >= destination->copies ){
-					destination->done = time( (void *) 0 );
+					destination->done_time = time( (void *) 0 );
 				}
 				Set_job_control( cfp, (void *)0);
 			} else {
 				cfp->hold_info.done_time = time( (void *)0 );
+				cfp->hold_info.priority_time = 0;
+				i = cfp->hold_info.redirect[0];
+				cfp->hold_info.redirect[0] = 0;
 				Set_job_control( cfp, (void *)0);
-				if( cfp->hold_info.redirect[0] ){
+				if( i ){
 					setmessage( cfp, "TRACE", "%s@%s: job moved", Printer, FQDNHost );
 				} else {
 					setmessage( cfp, "TRACE", "%s@%s: job printed", Printer, FQDNHost );
@@ -1120,18 +1102,17 @@ copy_done:
 				}
 				if( !Save_when_done ){
 					if( Remove_job( cfp ) ){
-						setstatus( cfp, _("could not remove job") );
+						setstatus( cfp, _("could not remove job '%s'"), cfp->identifier+1 );
 						status = JABORT;
 						Errorcode = JABORT;
 					} else {
-						setstatus( cfp, _("job removed") );
+						setstatus( cfp, _("job '%s' removed"), cfp->identifier+1 );
 					}
 				} else {
 					setmessage( cfp, "TRACE", "%s@%s: job NOT removed, save_when_done set",
 						Printer, FQDNHost );
 				}
 			}
-			status = JSUCC;
 			break;
 
 		case JFAIL:	/* failed, retry ?*/
@@ -1175,59 +1156,81 @@ copy_done:
 					if( Max_connect_interval && n > Max_connect_interval ){
 						n = Max_connect_interval;
 					}
-					setstatus( cfp, _("sleeping %d secs before retry, starting seep"), n );
+					setstatus( cfp,
+                       _("sleeping %d secs before retry, starting sleep"), n );
 					plp_sleep( n );
 				}
-				status = JSUCC;
 			} else {
 				goto done;
 			}
 			break;
 
 
-		default:
-			/* This is not good. You probably had a core dump */
-			if( destination ){
-				plp_snprintf( destination->error,
-					sizeof(destination->error),
-					"subserver pid %d died!!! %s",
-					pid, Decode_status( &procstatus ) );
-			} else {
-				plp_snprintf( cfp->error, sizeof(cfp->error),
-					"subserver pid %d died!!! %s",
-					pid, Decode_status( &procstatus ) );
-				setstatus( cfp, "%s", cfp->error );
-			}
+		case JNOPRINT:	/* no printing */
+			cfp->hold_info.priority_time = 0;
 			Set_job_control( cfp, (void *)0);
-			/* fall through to JABORT */
-		case JABORT:	/* abort, do not try again */
+			if( destination ){
+				if( destination->error[0] ){
+				setstatus( cfp, "job '%s', destination '%s', error '%s'",
+					cfp->identifier+1,destination->identifier+1,destination->error );
+				}
+			} else {
+				if( cfp->error[0] ){
+				setstatus( cfp, "job '%s' error '%s'",cfp->identifier+1, cfp->error );
+				}
+			}
+			setstatus( cfp, "job '%s' error 'JNOPRINT'",cfp->identifier+1 );
+			Printing_disabled = 1;
+			Set_spool_control( 0, 0 );
+			break;
+
+		case JFAILNORETRY:	/* do not try again */
+			cfp->hold_info.priority_time = 0;
 			if( destination ){
 				if( destination->error[0] == 0 ){
-					plp_snprintf( destination->error,
-					sizeof(destination->error),
-					_("aborting operations on destination '%s'"),
-						destination->identifier+1);
+					plp_snprintf( destination->error, sizeof(destination->error),
+						_("failed, no retry") );
 				}
 				Set_job_control( cfp, (void *)0);
-				setstatus( cfp, "%s", destination->error );
+				setstatus( cfp, "job '%s', destination '%s', error '%s'",
+					cfp->identifier+1,destination->identifier+1,destination->error );
 			} else {
 				if( cfp->error[0] == 0 ){
-					plp_snprintf( cfp->error,
-						sizeof(cfp->error),
-						_("aborting operations on job %s"),
-						cfp->identifier+1 );
+					plp_snprintf( cfp->error, sizeof(cfp->error), _("failed, no retry") );
 				}
 				Set_job_control( cfp, 0);
-				setstatus( cfp, "%s", cfp->error );
+				setstatus( cfp, "job '%s' error '%s'",cfp->identifier+1, cfp->error );
 				Sendmail_to_user( status, cfp, pc );
 			}
-			if( Stop_on_abort ){
-				status = JABORT;
-			} else {
-				if( !Save_on_error ){
-					Remove_job( cfp );
+			if( !Save_on_error ){
+				setstatus( cfp, _("removing job '%s'"), cfp->identifier+1 );
+				Remove_job( cfp );
+			}
+			break;
+
+		default:
+			/* fall through to JABORT */
+		case JABORT:	/* abort, do not try again */
+			cfp->hold_info.priority_time = 0;
+			if( destination ){
+				if( destination->error[0] == 0 ){
+					plp_snprintf( destination->error, sizeof(destination->error),
+						_("aborting operations") );
 				}
-				status = JSUCC;
+				Set_job_control( cfp, (void *)0);
+				setstatus( cfp, "job '%s', destination '%s', error '%s'",
+					cfp->identifier+1,destination->identifier+1,destination->error );
+			} else {
+				if( cfp->error[0] == 0 ){
+					plp_snprintf( cfp->error, sizeof(cfp->error), _("aborting operations") );
+				}
+				Set_job_control( cfp, 0);
+				setstatus( cfp, "job '%s' error '%s'",cfp->identifier+1, cfp->error );
+				Sendmail_to_user( status, cfp, pc );
+			}
+			if( !Save_on_error ){
+				setstatus( cfp, _("removing job '%s'"), cfp->identifier+1 );
+				Remove_job( cfp );
 			}
 			break;
 
@@ -1237,51 +1240,26 @@ copy_done:
 				if( destination->error[0] == 0 ){
 				plp_snprintf( destination->error,
 					sizeof(destination->error),
-					_("removing job due to failures") );
+					_("removing destination '%s'"), destination->identifier+1 );
 				}
-				destination->done = time( (void *)0 );
+				destination->done_time = time( (void *)0 );
 				Set_job_control( cfp, (void *)0);
 			} else {
 				/* get the error message */
 				if( cfp->error[0] == 0 ){
 					plp_snprintf( cfp->error,
 						sizeof(cfp->error),
-						_("removing job due to failures") );
+						_("removing job '%s'"), cfp->identifier+1 );
 				}
 				cfp->hold_info.done_time = time( (void *)0 );
 				Set_job_control( cfp, (void *)0);
 				Sendmail_to_user( status, cfp, pc );
 				if( !Save_on_error ){
+					setstatus( cfp, _("removing job '%s'"), cfp->identifier+1 );
 					Remove_job( cfp );
 				}
 			}
 			break;
-		}
-		if( first_server ) {
-		  first_server->status = status;
-		} else {
-		  /*
-		   * first_server can be null at this point if
-		   * 1) You use a routerfilter
-		   * 2) You use a controlfilter that rewrites the control file
-		   *
-		   * Say jobs 1, 2, and 3 arrive at once. Job 2 gets accepted first
-		   * so its process becomes the queue Server. Job 2 is then passed to
-		   * a Worker process which runs the controlfilter which changes the
-		   * controlfile. The Worker process finishes and Server regains control.
-		   * Because the job has been routed it is not removed at this point since
-		   * it may have other routes that haven't been processed yet.
-		   * We go back to the top of the dispatch loop and call Scan_queue
-		   * again. At this point job 2 is no longer at the top of the queue
-		   * (changed timestamp) so we fire off a Worker for job 1 (say).
-		   * We go back to the top again and try to find another job to process.
-		   * There is only one server for the printer (working on job 1) so
-		   * first_server is null but job 2 has no more unprocessed routes so
-		   * we "goto done" in order to remove the job. At this point there
-		   * is no server status to update (it was done earlier).
-		   */
-		  logerr( LOG_INFO,
-			  "Do_queue_jobs: Logic bug (non-fatal), first_server is null" );
 		}
 	}
 	Errorcode = 0;
@@ -1289,7 +1267,7 @@ copy_done:
 	/* now we write out the Server_order information */
 	/* update the server order in the spool control file */
 	if( Server_names && *Server_names ){
-		int len, fd;
+		int len;
 		buffer[0] = 0;
 		for( i = 0; i < servers.count; ++i ){
 			if( server_info[i].name == 0 ) continue;
@@ -1300,14 +1278,12 @@ copy_done:
 				server_info[i].name );
 		}
 		DEBUG3("Do_queue_jobs: final order '%s'", buffer );
-		fd = 0;
-		memset( &statb, 0, sizeof( statb ) );
-		(void)Get_spool_control( &statb, &fd );
 		Server_order = buffer;
-		Set_spool_control( &fd, 0 );
+		Set_spool_control( 0, 0 );
 	}
-	setstatus(0,_("server finished"));
-	return;
+	if( did_work ) setstatus(0,_("server finished"));
+	Errorcode = 0;
+	cleanup(0);
 }
 
 /***************************************************************************
@@ -1372,7 +1348,7 @@ static int Fork_subserver( struct server_info *server_info )
 	server_info->status = 0;	/* no status yet */
 	server_info->pid = dofork(1);
 	if( server_info->pid < 0 ){
-		logerr_die( LOG_ERR, _("Fork_subserver: fork failed") );
+		logerr( LOG_ERR, _("Fork_subserver: fork failed") );
 	}
 	return( server_info->pid );
 }
@@ -1396,7 +1372,7 @@ void Get_subserver_info( struct malloc_list *servers, char *snames)
 		++cnt;
 	}
 	if( cnt+1 >= servers->max ){
-		extend_malloc_list( servers, sizeof( server_info[0] ), cnt+1 );
+		extend_malloc_list( servers, sizeof( server_info[0] ), cnt+1,__FILE__,__LINE__  );
 	}
 	servers->count = 0;
 	server_info = (void *)servers->list;
@@ -1432,7 +1408,7 @@ void Get_subserver_info( struct malloc_list *servers, char *snames)
 static struct server_info *Wait_for_subserver( struct malloc_list *servers )
 {
 	pid_t pid;
-	int status, i;
+	int status, i, sigval = 0;
 	plp_status_t procstatus;
 	struct server_info *server_info = (void *)servers->list;
 	int err;				/* saved errno */
@@ -1460,7 +1436,6 @@ static struct server_info *Wait_for_subserver( struct malloc_list *servers )
 	}
 
 	/* we need to unblock block and wait for change */
-	procstatus = 0;
 	pid = plp_waitpid( -1, &procstatus, WNOHANG );
 	if( pid == 0 ){
 		Setup_waitpid_break(0);
@@ -1486,10 +1461,24 @@ static struct server_info *Wait_for_subserver( struct malloc_list *servers )
 		goto done;
 	} else if( pid ){
 		if( WIFSIGNALED( procstatus ) ){
-			status = WTERMSIG( procstatus );
-			DEBUG0("Wait_for_subservers: pid %d terminated by signal %d",
-				pid, WTERMSIG( procstatus ) );
-			status = JFAIL;
+			sigval = WTERMSIG( procstatus );
+			DEBUG0("Wait_for_subservers: pid %d terminated by signal '%s'",
+				pid, Sigstr( sigval ) );
+			switch( sigval ){
+			/* generated by the program */
+			case 0:
+			case SIGINT:
+			case SIGKILL:
+			case SIGQUIT:
+			case SIGTERM:
+			case SIGUSR1:
+			case SIGUSR2:
+				status = JFAIL;
+				break;
+			default:
+				status = JSIGNAL;
+				break;
+			}
 		} else {
 			status = WEXITSTATUS( procstatus );
 			if( status > 0 && status < 32 ) status += JFAIL-1;
@@ -1505,6 +1494,7 @@ static struct server_info *Wait_for_subserver( struct malloc_list *servers )
 					found->time = ++Finished_order;
 				}
 				found->status = status;
+				found->sigval = sigval;
 				DEBUG0( "Wait_for_subservers: server '%s' for '%s' finished",
 					found->name, server_info[i].transfername );
 			}
@@ -1596,6 +1586,7 @@ int link_or_copy( char *src, char *dest )
  *  When we do this copy,  we need to do the full job transfer protocol -
  *   1. check for duplicate job numbers
  *   2. rename the files if necessary
+ *   3. fix up the control file
  *  We do this to handle the problem when an error occurred during a job
  *  and the body is still there.
  ***************************************************************************/
@@ -1606,7 +1597,6 @@ static int Copy_job(struct control_file *cfp, struct server_info *server )
 	struct data_file *data_file;	/* data files in job */
 	struct stat statb;				/* status buffer */
 	char **lines, *src, *dest;	/* source and destination file */
-	char buffer[LINEBUFFER];	/* buffer for name */
 	struct control_file new_cfp;
 	int err = 0;
 	int hold_fd, fd;
@@ -1619,35 +1609,23 @@ static int Copy_job(struct control_file *cfp, struct server_info *server )
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR, "Copy_job: cannot create hold file" );
 	}
+	if( Fix_data_file_info( &new_cfp ) ){
+		Errorcode = JABORT;
+		fatal( LOG_ERR, "Copy_job: %s", new_cfp.error );
+	}
 	/* we now can do the setup of the process */
 	DEBUG0("Copy_job: printer '%s', job '%s' copying data files",
 		Printer, cfp->identifier+1 );
 	data_file = (void *)cfp->data_file_list.list;
 	for( i = 0; i < cfp->data_file_list.count; ++i ){
+		if( data_file[i].is_a_copy ) continue;
 		src = data_file[i].openname;
 		if( src[0] == 0 ) continue;
 		if( stat( src, &statb ) == -1 ){
 			Errorcode = JABORT;
 			logerr_die( LOG_ERR, _("Copy_job: cannot stat '%s'"), src );
 		}
-		/* we have to modify the transfer names
-		 * transfername has the format xdfBnnnnnhostname 
-		 *                             01234
-		 * We start rewriting at the 4th spot
-		 *
-		 * we will fix this up at end
-		 */
-		plp_snprintf( data_file[i].transfername+4,
-			sizeof( data_file[i].transfername )-4,
-			"%0*d%s", new_cfp.number_len,
-			new_cfp.number, cfp->filehostname );
-		if( data_file[i].Uinfo[0] ){
-			plp_snprintf( data_file[i].Uinfo+4,
-				sizeof( data_file[i].Uinfo)-4,
-				"%0*d%s", new_cfp.number_len,
-				new_cfp.number, cfp->filehostname );
-		}
-		dest = Add_path( &server->spooldir, data_file[i].transfername+1 );
+		dest = Add_path( &server->spooldir, data_file[i].cfline+1 );
 		DEBUG0("Copy_job: data file src '%s' dest '%s'", src, dest );
 		if( (err = link_or_copy( src, dest )) ){
 			Errorcode = JABORT;
@@ -1657,10 +1635,7 @@ static int Copy_job(struct control_file *cfp, struct server_info *server )
 	}
 
 	/* we now transfer the control file */
-	plp_snprintf( buffer, sizeof(buffer),
-		"cf%c%0*d%s", cfp->priority, new_cfp.number_len,
-		new_cfp.number, cfp->filehostname );
-	dest = Add_path( &server->spooldir, buffer );
+	dest = Add_path( &server->spooldir, new_cfp.transfername );
 	DEBUG0("Copy_job: control file src '%s' dest '%s'", cfp->transfername,
 		dest );
 	fd = Checkwrite( dest, &statb, 0, 1, 0 );
@@ -1693,19 +1668,10 @@ static int Copy_job(struct control_file *cfp, struct server_info *server )
 	DEBUG0("Copy_job: finished writing control file to '%s'", dest);
 	close( hold_fd );
 
-	data_file = (void *)cfp->data_file_list.list;
-	/* we now fix up job file */
-	for( i = 0; i < cfp->data_file_list.count; ++i ){
-		plp_snprintf( data_file[i].transfername+4,
-			sizeof( data_file[i].transfername )-4,
-			"%0*d%s", cfp->number_len,
-			cfp->number, cfp->filehostname );
-		if( data_file[i].Uinfo[0] ){
-			plp_snprintf( data_file[i].Uinfo+4,
-				sizeof( data_file[i].Uinfo)-4,
-				"%0*d%s", cfp->number_len,
-				cfp->number, cfp->filehostname );
-		}
+	/* restore information */
+	if( Fix_data_file_info( cfp ) ){
+		Errorcode = JABORT;
+		fatal( LOG_ERR, "Copy_job: %s", cfp->error );
 	}
 
 	setmessage(cfp,"TRACE","%s@%s: job copied to %s, id %d",
@@ -1792,106 +1758,6 @@ static int Decode_transfer_failure( int attempt, struct control_file *cfp,
 	return( status );
 }
 
-/***************************************************************************
- * Check_printable()
- * Check to see if the job is printable
- ***************************************************************************/
-
-int Check_printable( struct control_file *cfp, struct destination *dest )
-{
-	int permission, not_printable;
-	struct perm_check perm_check;
-	char buffer[LINEBUFFER];
-	char *s;
-
-	DEBUG0("Check_printable: '%s'", cfp->transfername );
-	memset( &perm_check, 0, sizeof(perm_check) );
-	buffer[0] = 0;
-	not_printable = 0;
-	/* check to see if it is being held or not printed */
-	cfp->hold_info.not_printable = 0;
-	if( stat(cfp->transfername, &cfp->statb ) == -1 ){
-		plp_snprintf( buffer, sizeof(buffer), _("job removed from queue") );
-	} else if( cfp->statb.st_size == 0 ){
-		plp_snprintf( buffer, sizeof(buffer), _("zero length control file") );
-	} else if( cfp->flags ){
-		plp_snprintf( buffer, sizeof(buffer), _("flag %d"), cfp->flags );
-	} else if( cfp->error[0] ){
-		plp_snprintf( buffer, sizeof(buffer), _("error '%s'"), cfp->error );
-	} else if( cfp->hold_info.server > 0
-		&& kill(cfp->hold_info.server, 0 ) == 0 ){
-		plp_snprintf( buffer, sizeof(buffer), _("hold_info.server %d"),
-			cfp->hold_info.server );
-	} else if( cfp->hold_info.hold_time ){
-		plp_snprintf( buffer, sizeof(buffer), _("hold_info.hold_time %d"), cfp->hold_info.hold_time );
-	} else if( cfp->hold_info.remove_time ){
-		plp_snprintf( buffer, sizeof(buffer), _("hold_info.remove_time %d"), cfp->hold_info.remove_time );
-	} else if( cfp->hold_info.done_time ){
-		plp_snprintf( buffer, sizeof(buffer), _("hold_info.done_time %d"), cfp->hold_info.done_time );
-	} else if( cfp->hold_info.held_class ){
-		plp_snprintf( buffer, sizeof(buffer), "hold_info.held_class %d",
-			cfp->hold_info.held_class );
-	} else if( dest ){
-		if( dest->error[0] ){
-			plp_snprintf( buffer, sizeof(buffer), _("dest error '%s'"), dest->error );
-		} else if( dest->server >0 && kill(dest->server, 0) == 0 ){
-			plp_snprintf( buffer, sizeof(buffer), _("dest server '%d'"), dest->server );
-		}
-	}
-	if( buffer[0] ) not_printable = JIGNORE;
-	if( dest == 0 ){
-		cfp->hold_info.not_printable = not_printable;
-	} else {
-		dest->not_printable = not_printable;
-	}
-	DEBUG0("Check_printable: job '%s', dest '%s', status '%s' reason '%s'",
-		cfp->transfername, dest?dest->destination:"",
-			Server_status(not_printable), buffer );
-	if( not_printable ) return( not_printable );
-
-	/*
-	 * check to see if you have permissions to print/process
-	 * the job
-	 */
-	memset( &perm_check, 0, sizeof( perm_check ) );
-	/* use the P or print code */
-	perm_check.service = 'P';
-	perm_check.printer = Printer;
-	if( cfp->LOGNAME && cfp->LOGNAME[1] ){
-		perm_check.user = cfp->LOGNAME+1;
-		perm_check.remoteuser = perm_check.user;
-	}
-
-	s = 0;
-	if( cfp->FROMHOST && cfp->FROMHOST[1] ){
-		s = Find_fqdn( &PermcheckHostIP, &cfp->FROMHOST[1], 0 );
-		DEBUG0("Check_printable: looking for '%s', found '%s'",
-			&cfp->FROMHOST[1], s );
-	} else if( cfp->filehostname[0] ){
-		s = Find_fqdn( &PermcheckHostIP, cfp->filehostname, 0 );
-		DEBUG0("Check_printable: looking for '%s', found '%s'",
-			cfp->filehostname, s );
-	}
-	if( s ){
-		perm_check.host = &PermcheckHostIP;
-		perm_check.remotehost = &PermcheckHostIP;
-	}
-
-	Init_perms_check();
-	if( (permission = Perms_check( &Perm_file, &perm_check, cfp )) == REJECT
-		|| (permission == 0
-			&& (permission = Perms_check(
-					&Local_perm_file, &perm_check, cfp )) == REJECT)
-		|| (permission == 0 && Last_default_perm == REJECT) ){
-		plp_snprintf( cfp->error, sizeof(cfp->error),
-			_("no permission to print job %s"), cfp->identifier+1 );
-		not_printable = cfp->hold_info.not_printable = JREMOVE;
-	}
-	DEBUG0("Check_printable: '%s' - permission checking result %s",
-		cfp->transfername, Server_status(cfp->hold_info.not_printable) );
-	return( not_printable );
-}
-
 static void dump_servers( char *title, struct malloc_list *servers )
 {
 	struct server_info *list, *entry;
@@ -1923,8 +1789,11 @@ static void dump_servers( char *title, struct malloc_list *servers )
 char *Update_servers_status( struct malloc_list *servers )
 {
 	int noprint;
-	int i, hc, cnt;		/* AJAX! for integers */
+	int i, j, count;		/* AJAX! for integers */
 	struct server_info *server_info;	/* server information */
+	struct control_file *cfp, **cfpp;	/* pointer to control file */
+	struct destination *dest;		/* destination */
+	char msg[LINEBUFFER];
 
 	server_info = (void *)servers->list;
 	for( i = 0; i < servers->count; ++i ){
@@ -1947,18 +1816,24 @@ char *Update_servers_status( struct malloc_list *servers )
 				Clear_path(SDpathname));
 			Init_path(&server_info[i].controldir,
 				Clear_path(CDpathname));
-			cnt = 0;
-			noprint = (Printing_disabled | Spooling_disabled);
+			count = 0;
+			noprint = (Printing_disabled || Printing_aborted || Spooling_disabled);
 			DEBUG0( "Update_servers_status: printing_disabled", noprint );
 			if( noprint ){
 				server_info[i].pid = -1;
 				continue;
 			}
-			/* get pathname of destination */
-			Job_count( &hc, &cnt );
+			count = 0;
+			cfpp = (void *)C_files_list.list;
+			for( j = 0; j < C_files_list.count; ++j ){
+				cfp = cfpp[j];
+				if( Job_printable_status( cfp, &dest, msg, sizeof(msg) ) == 0 ){ 
+					++count;
+				}
+			}
 			DEBUG0( "Update_servers_status: job count %d, Check_idle '%s'",
-				cnt, Check_idle );
-			if( cnt == 0 && Check_idle == 0 ){
+				count, Check_idle );
+			if( count == 0 && Check_idle == 0 ){
 				continue;
 			}
 			DEBUG0( "Update_servers_status: update - starting '%s'",
@@ -1966,87 +1841,10 @@ char *Update_servers_status( struct malloc_list *servers )
 			if( Fork_subserver( &server_info[i] ) == 0 ){
 				return(Printer);
 			}
-			/* sleep a short time */
-			plp_usleep( 10000 );
 		}
 	}
 	return(0);
 }
-
-
-/***************************************************************************
- * Start_particular_server( char *name )
- *  start up a particular server by setting the need_to_start flag
- ***************************************************************************/
-
-void Start_particular_server( char *name )
-{
-	int n;
-	struct server_info *server;
-
-	DEBUG0( "Start_particular_server: '%s'", name );
-	server = (void *)Servers_needed.list;
-	for( n = 0; server && n < Servers_needed.count; ++n ){
-		if( strcmp( name, server[n].name ) == 0 ){
-			server[n].need_to_start = 1;
-			return;
-		}
-	}
-	Start_all();
-}
-
-/***************************************************************************
- * Start_idle_server( int max_to_be_started )
- *  start up at most max_to_be_started idle servers
- ***************************************************************************/
-
-int Start_idle_server( int max_to_be_started )
-{
-	int i, cnt, pid;
-	int found;
-	int started = 0;
-	struct server_info *server = (void *)Servers_needed.list;
-
-	/* we start up servers while we can */
-	DEBUG0( "Start_idle_server: begin Server_next %d", Server_next );
-	for( i = 0, cnt = 0;
-		cnt < Servers_needed.count && i < max_to_be_started; ++i ){
-		found = 0;
-		for( ;cnt < Servers_needed.count;
-				++cnt, ++Server_next ){
-			if( Server_next >= Servers_needed.count ){
-				Server_next = 0;
-			}
-			DEBUG0(
-				"Start_idle_server: Server_next %d server '%s' need %d",
-				Server_next, server[Server_next].name,
-				server[Server_next].need_to_start );
-			if( server[Server_next].need_to_start ){
-				found = 1;
-				break;
-			}
-		}
-		if( found ){
-			/* we start the server */
-			DEBUG0( "Start_idle_server: starting server '%s'",
-				server[Server_next].name );
-				/* we can start up the process */
-			if( (pid = dofork(1)) < 0 ){
-				logerr( LOG_INFO, _("Start_idle_server: fork failed!") );
-				return( 1 );
-			} else if( pid == 0 ){
-				/* this is the daughter process */
-				Do_queue_jobs( server[Server_next].name );
-				cleanup(0);
-			}
-			DEBUG0( "Start_idle_server: started pid %d", pid );
-			++started;
-			server[Server_next].need_to_start = 0;
-		}
-	}
-	return( started );
-}
-
 
 /***************************************************************************
  * Do_check_idle()

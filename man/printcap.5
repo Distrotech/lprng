@@ -1,4 +1,4 @@
-.ds VE LPRng-3.4.2
+.ds VE LPRng-3.5.1
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -190,6 +190,8 @@ check_for_nonprintable	R	bool	true
 check_idle	D	str	NULL
 				program to use to check for idle printer conditions before
 				processing jobs.
+class_in_status	A	bool	false
+				lpq will report full class name when flag is set.
 classname_length	A	num	31
 				overrides the RFC1179 limitations on the control file
 				CLASS entry.  Default is 31 characters.
@@ -251,6 +253,8 @@ fix_bad_job	D	bool	false
 				or other common botches produced by various PC based
 				LPR clients.
 fo	D	bool	false	print a form feed when device is opened
+force_fqdn_hostname	A	bool	FALSE
+				Force a fully qualified host name in control file
 force_localhost	A	bool	FALSE
 				Forces the clients programs (lpr, lpc, etc.)
 				to send all print jobs and requests to the server running
@@ -270,6 +274,9 @@ fx	A	str	``flp''	valid output filter formats
 generate_banner	D	bool	false	force banner generation
 gf	D	str	NULL	graph data filter (plot (3X) format)
 hl	D	bool	false	print banner after job instead of before
+ignore_requested_user_priority	D	bool	false
+				Ignore the requested user priority when ordering jobs.
+				Prevents students... um... users from queue jumping.
 if	D	str	NULL	filter command, run on a per-file basis
 kerberos_*	D	str
 				Kerberos authentication support.  See KERBEROS.
@@ -310,10 +317,16 @@ lpd_printcap_path	D	str	(see source)
 				(configuration value only)
 lpr_bounce	R	bool	true
 				LPR will do bounce queue filtering.
+mail_from	D	str	NULL
+				specifies the user part of email From: address
 mail_operator_on_error	D	str	NULL
 				send mail to this user when LPD encounters printing error.
 max_connect_interval	A	num	60
 				maximum time between connection attempts
+max_log_file_size	D	num	0
+				maximum log file size in K bytes (0 is unlimited)
+				spool queue log file truncated to min_log_file_size
+				when value is nonzero and limited exceeded.
 max_servers_active	D	num	0
 				maximum servers that LPD will allow to be active at one
 				time.  0 selects the system default,  which is usually
@@ -323,6 +336,7 @@ max_status_size	D	num	10	maximum size (Kbytes) of status file
 mc	R	num	1	maximum copies allowed
 mi	D	str	0	minimum space (Kb), to be left in spool filesystem
 				You can also use nnnM for nnn megabytes. Alias for minfree
+min_log_file_size	D	num	0	minimum size (Kbytes) of log file
 min_status_size	D	num	2	minimum size (Kbytes) of status file
 minfree	D	str	0	alias for mi
 ml	R	num	32	minimum printable characters for printable check
@@ -374,6 +388,9 @@ remote_support	A	str	NULL
 				if non-null, specifies allowed operations to remote queue.
 				R=lpr, M=lprm, Q=lpq, V = lpq -v, C=lpc.  For example,
 				remote_support=RM would only allow LPR and LPRM operations.
+report_server_as	A	str	NULL
+				use the str value as the name of the server when reporting
+				LPQ or LPC status.
 retry_econnrefused	A	bool	true
 				if set, retry a connection to a remote system when an
 				ECONNREFUSED error is returned.
@@ -381,6 +398,14 @@ retry_nolink	D	bool	true
 				if LPD is sending a job or opening a device for
 				printing and the value is true, then the connection or
 				device open is repeated indefinately.
+return_short_status	D	str	NULL
+				Some legacy (non-LPRng) LPQ programs expect 'short' status
+				to be returned.  This option allows you to specify which hosts
+				will get it.  The value is a list of hosts and/or IPaddresses
+				and masks to which the LPD server will provide short status.
+				For example:  return_short_status=192.8.0.0/16 will make LPD
+				return short status to all requests from hosts in subnet
+				192.8.0.0.  (See short_status_length)
 reuse_addr	A	bool	false
 				if set, use SO_REUSEADDR on outgoing connection ports.
 				This reduces the problems with exhausting port numbers.
@@ -450,6 +475,11 @@ server_tmp_dir	D	str	/tmp
 server_user	D	str	daemon	server user name used in authentication operations
 sf	D	bool	false	suppress form feeds separating jobs
 sh	D	bool	false	suppress headers and/or banner page
+short_status_length	D	num	1
+				If the return_short_status value is used and has a match against
+				a requesting address, this amount of status is set by the
+				short_status_length option.  For most legacy systems a 1 is
+				suitable (1 line of status).
 socket_linger	A	num	10
 				if nonzero, forces a SO_LINGER operation to be done
 				on all TCP/IP connections.  This usually corrects a problem
@@ -464,6 +494,7 @@ stop_on_abort	D	bool	true
 				Stop processing queue when print filter aborts.
 sv	D	str	NULL	names of servers for queue (with ss)
 sy	D	str	NULL	alias for ty
+sync_lpr	D	bool	false	suppress socket close until end of lpr operation
 syslog_device	D	str	/dev/console
 					name of syslog device to use if no syslog facility
 tc	A	str	NULL	reference to a printcap entry to include as part of

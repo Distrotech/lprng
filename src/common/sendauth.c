@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendauth.c,v 3.9 1997/12/16 15:06:32 papowell Exp $";
+"sendauth.c,v 3.10 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "sendauth.h"
@@ -70,7 +70,7 @@ int Send_auth_command( char *printer, char *host, int *sock,
 
 	/* check to see if the Cfp_static is defined */
 	if( Cfp_static == 0 ){
-		malloc_or_die( Cfp_static, sizeof(Cfp_static[0]) );
+		Cfp_static = malloc_or_die( sizeof(Cfp_static[0]) );
 		memset(Cfp_static, 0, sizeof( Cfp_static[0] ) );
 	}
 
@@ -335,10 +335,7 @@ void Fix_auth()
 		change = Expand_percent( Server_user, copyname, copyname+sizeof(copyname)-2 );
 		if( change ){
 			if( (str = strchr( copyname, '.' )) ) *str = 0;
-			str = add_buffer( &Raw_printcap_files.expanded_str,
-				strlen( copyname ) + 1 );
-			strcpy( str, copyname );
-			Server_user = str;
+			Server_user = add_str( &Raw_printcap_files.expanded_str, copyname,__FILE__,__LINE__  );
 		}
 	}
 	if(Remote_user && strchr( Remote_user, '%' ) ){
@@ -346,10 +343,7 @@ void Fix_auth()
 		change = Expand_percent( Remote_user, copyname, copyname+sizeof(copyname)-2 );
 		if( change ){
 			if( (str = strchr( copyname, '.' )) ) *str = 0;
-			str = add_buffer( &Raw_printcap_files.expanded_str,
-				strlen( copyname ) + 1 );
-			strcpy( str, copyname );
-			Remote_user = str;
+			Remote_user = add_str( &Raw_printcap_files.expanded_str, copyname,__FILE__,__LINE__  );
 		}
 	}
 }

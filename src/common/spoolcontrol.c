@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: spoolcontrol.c,v 3.8 1997/12/16 15:06:35 papowell Exp $";
+"spoolcontrol.c,v 3.10 1998/03/29 18:32:57 papowell Exp";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -33,6 +33,7 @@ Set_spool_control()
 static struct keywords status_key[] = {
 	{ "printing_disabled", INTEGER_K, &Printing_disabled },
 	{ "spooling_disabled", INTEGER_K, &Spooling_disabled },
+	{ "printing_aborted", INTEGER_K, &Printing_aborted },
 	{ "debug", STRING_K, &Control_debug},
 	{ "redirect", STRING_K, &Forwarding},
 	{ "holdall", INTEGER_K, &Hold_all },
@@ -55,6 +56,7 @@ int Get_spool_control( struct stat *oldstatb, int *fdptr )
 
 	if( oldstatb && (stat(filename, &statb) == 0)
 		&& statb.st_mtime == oldstatb->st_mtime
+		&& statb.st_size == oldstatb->st_size
 #if defined(ST_MTIME_NSEC)
 		&& statb.ST_MTIME_NSEC == oldstatb->ST_MTIME_NSEC
 #endif
@@ -91,7 +93,7 @@ int Get_spool_control( struct stat *oldstatb, int *fdptr )
 	/* read in new status */
 	len = statb.st_size;
 	if( len + 1 >= save_status.max  ){
-		extend_malloc_list( &save_status, 1, len+1 );
+		extend_malloc_list( &save_status, 1, len+1,__FILE__,__LINE__  );
 	}
 	buffer = (void *)save_status.list;
 	for( i = 0, s = buffer;
@@ -175,11 +177,11 @@ int Get_spool_control( struct stat *oldstatb, int *fdptr )
  *    spooling_disabled 1/0
  ***************************************************************************/
 
-int Set_spool_control( int *fdptr, int forcechange )
+int Set_spool_control( int *fdptr )
 {
 	struct dpathname dpath;
-	struct stat statb, newstatb;
-	char buffer[SMALLBUFFER];
+	struct stat statb;
+	char buffer[LARGEBUFFER];
 	char *s, *t;
 	int i, fd, len;
 	
@@ -210,6 +212,7 @@ int Set_spool_control( int *fdptr, int forcechange )
 		}
 	}
 
+
 	s = Add2_path( CDpathname, "control.", Printer );
 	DEBUG4("Set_spool_control: file '%s', '%s'",s, buffer );
 
@@ -222,30 +225,30 @@ int Set_spool_control( int *fdptr, int forcechange )
 		}
 	} else {
 		fd = *fdptr;
+		if( fstat( fd, &statb ) < 0 ){
+			logerr_die( LOG_ERR, "Set_spool_control: fstat failed '%s'", s);
+		}
 	}
+
+	/* make file different length */
+	len = strlen(buffer);
+	if( len == statb.st_size ){
+		safestrncat( buffer, "\n" );
+		len = strlen(buffer);
+	}
+	if( len >= sizeof(buffer) - 4 ){
+		fatal( LOG_ERR,"Set_spool_control: control file too large");
+    }
+
 	if( ftruncate( fd, 0 ) < 0 ){
 		logerr( LOG_ERR,
 			"Set_spool_control: cannot truncate '%s'",s);
 	}
+	if( lseek( fd, 0, SEEK_SET ) < 0 ){
+		logerr( LOG_ERR,
+			"Set_spool_control: cannot fseek '%s'",s);
+	}
 	if( Write_fd_str( fd, buffer ) < 0 ){
-		Errorcode = JABORT;
-		logerr_die( LOG_ERR,
-			"Set_spool_control: cannot write '%s'",s);
-	}
-	if( fstat(fd, &newstatb)  ){
-		logerr_die( LOG_ERR,
-			"Set_spool_control: cannot stat '%s'",s);
-	}
-	if( forcechange && statb.st_mtime == newstatb.st_mtime
-		&& statb.st_size == newstatb.st_size
-#if defined(ST_MTIME_NSEC)
-		&& statb.ST_MTIME_NSEC == newstatb.ST_MTIME_NSEC
-#endif
-	){
-		DEBUG3("Set_spool_control: file '%s' no change, sleeping", s );
-		plp_sleep(1);
-	}
-	if( Write_fd_str( fd, "\n" ) < 0 ){
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR,
 			"Set_spool_control: cannot write '%s'",s);

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_sendmail.c,v 3.7 1997/12/16 15:06:21 papowell Exp $";
+"lpd_sendmail.c,v 3.7 1997/12/16 15:06:21 papowell Exp";
 #include "lp.h"
 #include "errorcodes.h"
 #include "fileopen.h"
@@ -67,7 +67,8 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	if( status != JSUCC && Mail_operator_on_error ){
 		fprintf( mail, "CC: %s\n", Mail_operator_on_error );
 	}
-	(void) fprintf( mail, "From: %s@%s\n", Printer, FQDNHost );
+	(void) fprintf( mail, "From: %s@%s\n",
+		Mail_from ? Mail_from : Printer, FQDNHost );
 	(void) fprintf( mail, "Subject: %s@%s job %s\n\n",
 		Printer, FQDNHost, cfp->transfername );
 

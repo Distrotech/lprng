@@ -52,7 +52,7 @@ The struct glyph{} array is the set of glyphs for each character.
  ***************************************************************************/
 
 static char *const _id =
-"$Id: lpbanner_fnt.c,v 3.2 1997/09/18 19:45:43 papowell Exp $";
+"lpbanner_fnt.c,v 3.2 1997/09/18 19:45:43 papowell Exp";
 
 #include "lpbanner.h"
 

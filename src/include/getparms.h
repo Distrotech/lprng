@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: getparms.h
  * PURPOSE: getparms.c functions
- * $Id: getparms.h,v 3.1 1996/12/28 21:40:27 papowell Exp $
+ * getparms.h,v 3.1 1996/12/28 21:40:27 papowell Exp
  **************************************************************************/
 
 #ifndef _GETPARMS_H

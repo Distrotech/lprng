@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 	}
 	file = argv[optind++];
 
-	if( Kerberos_keytab == 0 ) Kerberos_keytab = "/etc/lpd.keytab";
+	if( Kerberos_keytab == 0 ) Kerberos_keytab = ETCSTR "/lpd.keytab";
 	if( Kerberos_service == 0 ) Kerberos_service = "lpr";
 	if( port == 0 ){
 		fprintf( stderr, "bad port specified\n" );

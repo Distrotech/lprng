@@ -119,6 +119,9 @@
 /* Define if you have a openlog prototype.  */
 #undef HAVE_OPENLOG_DEF
 
+/* Define if _res defined */
+#undef HAVE_RES
+
 /* Define if system calls automatically restart after interruption
    by a signal.  */
 #undef HAVE_RESTARTABLE_SYSCALLS
@@ -179,6 +182,9 @@
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
+
+/* Define if tgetent() has definition  */
+#undef HAVE_TGETENT_DEF
 
 /* Define if tgetstr() has definition  */
 #undef HAVE_TGETSTR_DEF

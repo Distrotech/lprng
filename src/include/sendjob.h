@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: sendjob.h
  * PURPOSE: declare Send_job fucntions
- * $Id: sendjob.h,v 3.4 1998/01/08 09:51:29 papowell Exp $
+ * sendjob.h,v 3.4 1998/01/08 09:51:29 papowell Exp
  **************************************************************************/
 
 int Send_job( char *printer, char *host, struct control_file *cf,

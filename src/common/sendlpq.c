@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpq.c,v 3.10 1998/01/08 09:51:18 papowell Exp $";
+"sendlpq.c,v 3.10 1998/01/08 09:51:18 papowell Exp";
 
 #include "lp.h"
 #include "sendlpq.h"
@@ -105,7 +105,7 @@ void Send_lpqrequest( char *printer,	/* name of printer */
 			goto error;
 		}
 	}
-	sock = Link_open( host, connect_timeout, Localhost_connection() );
+	sock = Link_open( host, connect_timeout );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,
@@ -137,11 +137,11 @@ void Send_lpqrequest( char *printer,	/* name of printer */
 	} else if( (Is_server && Auth_from && Forward_auth )
 		|| (!Is_server && (Use_auth || Use_auth_flag)) ){
 		DEBUG3("Send_lpqrequest: using authentication" );
-		status = Send_auth_command( RemotePrinter, RemoteHost, &sock,
+		status = Send_auth_command( RemotePrinter, host, &sock,
 			transfer_timeout, line, output );
 	} else {
 		DEBUG3("Send_lpqrequest: sending '%s'", line );
-		status = Link_send( RemoteHost, &sock, transfer_timeout,
+		status = Link_send( host, &sock, transfer_timeout,
 			line, strlen(line), 0 );
 		if( status ){
 			s = line;

@@ -61,10 +61,11 @@ environment variable, etc.
 #include "setuid.h"
 #include "decodestatus.h"
 #include "permission.h"
+#include "linksupport.h"
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpc.c,v 3.14 1997/12/20 21:16:26 papowell Exp $";
+"lpc.c,v 3.15 1998/03/24 02:43:22 papowell Exp";
 
 /***************************************************************************
  * main()
@@ -86,13 +87,12 @@ int main(int argc, char *argv[], char *envp[])
 	char msg[ LINEBUFFER ];
 	char orig_msg[ LINEBUFFER ];
 	int action;
-	struct printcap_entry *printcap_entry = 0;
 
 	/*
 	 * set up the user state
 	 */
 	Interactive = 1;
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 
 	/* set signal handlers */
@@ -114,7 +114,7 @@ int main(int argc, char *argv[], char *envp[])
 	Get_parms(argc, argv);      /* scan input args */
 
 	/* get the printer name */
-	Get_printer(&printcap_entry);
+	Get_printer(0);
 	if( RemoteHost == 0 ){
 		Diemsg( _("No remote host specified") );
 	}

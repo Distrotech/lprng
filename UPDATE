@@ -1,4 +1,17 @@
 #!/usr/contrib/bin/perl5
+use Getopt::Std;
+$| = 1;
+getopts("cd");
+$no_checkin = 0;
+$no_dist = 0;
+if( $opt_c ){
+	print "no checkin\n";
+	$no_checkin = 1;
+}
+if( $opt_d ){
+	print "no distribution\n";
+	$no_dist = 1;
+}
 ($newvernum, $oldvernum) = @ARGV;
 ($dir) = `pwd`;
 chomp $dir;
@@ -20,26 +33,34 @@ print "prog $prog, name $name, ver $ver, newprog $newprog, oldprog $oldprog, new
 
 @err = `rm -f $path/$name-*gz*`;
 # check in current version
-print "doing gmake cifast\n";
-# `gmake cifast 2>&1 1>/dev/tty`;
-@err = `gmake cifast`;
-if( $? ){
-	die "gmake cifast failed - @err $!\n";
+if( !$no_checkin ){
+	print "doing gmake cifast\n";
+	`gmake cifast 2>&1`;
+	@err = `gmake cifast`;
+	if( $? ){
+		die "gmake cifast failed - @err $!\n";
+	}
 }
 # make a distribution
-print "doing gmake dist\n";
-# `gmake dist 2>&1 1>/dev/tty`;
-@err = `gmake dist`;
-if( $? ){
-	die "gmake dist failed - @err $!\n";
+if( !$no_dist ){
+	print "doing gmake dist\n";
+	`gmake dist 2>&1`;
+	@err = `gmake dist`;
+	if( $? ){
+		die "gmake dist failed - @err $!\n";
+	}
 }
 if( ! -d "$path/OLD" ){
 	mkdir "$path/OLD",0755 or die "cannot make $path/OLD - $!\n";
 }
 @err = `cp $path/$prog.tgz $path/OLD `;
 if( $? ){ die "cp $path/$prog.tgz $path/OLD failed - $!\n"; }
-print "doing: cd $path/OLD; tar zxf $prog.tgz >/dev/tty\n";
-@err = `cd $path/OLD; tar zxf $prog.tgz >/dev/tty`;
+if( -d "$path/OLD/$prog" ){
+	@err = ` rm -rf $path/OLD/$prog `;
+	if( $? ){ die "remove of $path/OLD/$prog failed - $!\n"; }
+}
+print "doing: cd $path/OLD; tar zxf $prog.tgz\n";
+@err = `cd $path/OLD; tar zxf $prog.tgz`;
 if( $? ){ die "untar OLD failed - $!\n"; }
 $patch="$name-$oldvernum-$ver.patch";
 @err = `rm -f $path/$patch $path/$patch.gz`;
@@ -79,7 +100,7 @@ if( -l "$path/$name" ){
 if( $? ){ die "ln -s $newprog $name failed - @err $!\n"; }
 
 # make new version
-`gmake update 2>&1 1>/dev/tty`;
+`gmake update 2>&1 `;
 if( $? ){
 	die "gmake update failed - $!\n";
 }

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: bsd-compat.c,v 3.7 1997/10/04 16:14:09 papowell Exp $";
+"bsd-compat.c,v 3.8 1998/03/24 02:43:22 papowell Exp";
 
 /*******************************************************************
  * Some stuff for Solaris and other SVR4 impls; emulate BSD sm'tics.
@@ -202,6 +202,18 @@ int strncasecmp (const char *s1, const char *s2, int len )
 }
 #endif
 
+#if !defined(DMALLOC)
+void *malloc_or_die( size_t size )
+{
+	void *p;
+	p = malloc(size);
+	if( p == 0 ){
+		logerr( LOG_ERR, "malloc of %d failed", size );
+		abort();
+	}
+	return( p );
+}
+
 /*
  * duplicate a string safely, generate an error message
  */
@@ -210,9 +222,10 @@ char *safestrdup (const char *p)
 {
 	char *new;
 
-	malloc_or_die( new, strlen (p) + 1 );
+	new = malloc_or_die( strlen (p) + 1 );
 	return strcpy( new, p );
 }
+#endif
 /*
  * duplicate a string safely, generate an error message
  * add some extra character space to allow for extensions
@@ -222,7 +235,7 @@ char *safexstrdup (const char *p, int extra )
 {
 	char *new;
 
-	malloc_or_die( new, strlen (p) + 1 + extra );
+	new = malloc_or_die( strlen (p) + 1 + extra );
 	return strcpy( new, p );
 }
 
@@ -285,23 +298,34 @@ int plp_sleep( int i )
 
 int Get_max_servers( void )
 {
-#if defined(CHILD_MAX)
-	int n = CHILD_MAX;	/* We need some sort of limit here */
-#else
-	int n = 20;	/* We need some sort of limit here */
-#endif
+	int n = 0;	/* We need some sort of limit here */
 
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NPROC)
 	struct rlimit pcount;
 	if( getrlimit(RLIMIT_NPROC, &pcount) == -1 ){
-		fatal( LOG_ERR, "get_max_processes: getrlimit failed" );
+		fatal( LOG_ERR, "Get_max_servers: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
+	DEBUG0("Get_max_servers: getrlimit returns %d", n );
+#endif
+#if defined(HAVE_SYSCONF) && defined(_SC_CHILD_MAX)
+	if( n == 0 && (n = sysconf(_SC_CHILD_MAX)) < 0 ){
+		fatal( LOG_ERR, "Get_max_servers: sysconf failed" );
+	}
+	DEBUG0("Get_max_servers: sysconf returns %d", n );
 #endif
 	n = n/2;
-	if( Max_servers_active && Max_servers_active < n ){
-		n = Max_servers_active;
+	if( n == 0
+		||(Max_servers>0 && Max_servers_active < n) ) n = Max_servers_active;
+	if( n == 0 ){
+#if defined(CHILD_MAX)
+		n = CHILD_MAX/2;
+#else
+		n = 20;	/* We need some sort of limit here */
+#endif
 	}
+
+	DEBUG0("Get_max_servers: returning %d", n );
 	return( n );
 }
 
@@ -342,14 +366,16 @@ int plp_rand( int range )
 	return( r );
 }
 
-void Brk_check_size( void )
+char *Brk_check_size( void )
 {
+	static char b[128];
 	char *s = sbrk(0);
 	int   v = s - Top_of_mem;
 	if( Top_of_mem == 0 ){
-		logDebug("BRK: initial value 0x%x", s );
+		plp_snprintf(b, sizeof(b), "BRK: initial value 0x%x", s );
 	} else {
-		logDebug("BRK: new value 0x%x, increment %d", s, v );
+		plp_snprintf(b, sizeof(b), "BRK: new value 0x%x, increment %d", s, v );
 	}
 	Top_of_mem = s;
+	return(b);
 }

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setupauth.c,v 3.3 1997/12/16 15:06:17 papowell Exp $";
+"setupauth.c,v 3.3 1997/12/16 15:06:17 papowell Exp";
 /**********************************************************************
  * Setup secure test
  *  setup_secure 'command 1' 'command 2'

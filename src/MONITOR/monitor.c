@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: monitor.c,v 3.5 1997/12/24 20:10:12 papowell Exp $";
+"monitor.c,v 3.6 1998/03/29 18:32:46 papowell Exp";
 
 #include "lp.h"
 /**** ENDINCLUDE ****/
@@ -53,7 +53,7 @@ int tcp_open( int port );
 extern int Link_setreuse( int sock );
 const char * Errormsg ( int err );
 
-char buffer[1024];
+char buffer[10240];
 int use_tcp;
 int use_udp;
 int port_num = 2001;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[] )
 	char *portname;
 	struct servent *servent;
 	prog = argv[0];
-	while( (n = Getopt(argc, argv, "dt")) != EOF ){
+	while( (n = Getopt(argc, argv, "ut")) != EOF ){
 		switch(n){
 		default: usage(); break;
 		case 'u': use_udp = 1; break;

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: lpbanner.h
  * PURPOSE: lpbanner program declarations
- * "$Id: lpbanner.h,v 3.1 1996/12/28 21:40:30 papowell Exp $"
+ * "lpbanner.h,v 3.1 1996/12/28 21:40:30 papowell Exp"
  **************************************************************************/
 
 #ifndef _LP_BANNER_

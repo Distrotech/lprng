@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: permission.h
  * PURPOSE: permission file parsing
- * $Id: permission.h,v 3.7 1997/12/24 20:10:12 papowell Exp $
+ * permission.h,v 3.7 1997/12/24 20:10:12 papowell Exp
  **************************************************************************/
 
 #ifndef _PERMISSION_H

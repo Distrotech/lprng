@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: printjob.c,v 3.22 1998/01/12 20:29:23 papowell Exp $";
+"printjob.c,v 3.24 1998/03/29 18:32:53 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -29,6 +29,7 @@ static char *const _id =
 #include "setstatus.h"
 #include "setup_filter.h"
 #include "waitchild.h"
+#include "getqueue.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -116,6 +117,7 @@ static int Fix_str( char **copy, char *str );
 int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 	int transfer_timeout )
 {
+	char filtername[32];
 	int FF_len;				/* FF information length */
 	static char *FF_str;	/* FF information converted format */
 	int leader_len;			/* leader */
@@ -133,9 +135,11 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 	char *id;				/* id for job */
 	int attempt;			/* job attempt */
 	char file_name[LINEBUFFER];		/* use for identification */
+	struct destination *destination;
 
 	Cfp_static = cfp;
 
+	destination = Destination_cfp(cfp, Destination_index );
 	id = cfp->identifier+1;
 	if( *id == 0 ) id = cfp->transfername;
 	DEBUG1("Print_job: '%s', Use_queuename %d", id, Use_queuename );
@@ -147,13 +151,13 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		if( s == 0 || *s == 0 ) s = Queue_name;
 		if( s == 0 || *s == 0 ) s = Printer;
 		plp_snprintf( buffer, sizeof(buffer), "Q%s", s );
-		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0);
+		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
 	}
 	if( Use_date && cfp->DATE == 0 ){
 		char buffer[M_DATE];
 		plp_snprintf( buffer, sizeof(buffer), "D%s",
 			Time_str( 0, cfp->statb.st_ctime ) );
-		cfp->DATE = Insert_job_line( cfp, buffer, 0, 0);
+		cfp->DATE = Insert_job_line( cfp, buffer, 0, 0,__FILE__,__LINE__ );
 	}
 	if( Use_identifier && cfp->IDENTIFIER == 0 ){
 		if( Make_identifier( cfp ) ){
@@ -162,7 +166,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 			Errorcode = JABORT;
 			cleanup(0);
 		}
-		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 1, 0);
+		cfp->IDENTIFIER = Insert_job_line( cfp, cfp->identifier, 1, 0,__FILE__,__LINE__ );
 	}
 
 	/* we will not try to do anything fancy on exit except kill filters */
@@ -196,8 +200,8 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 	 * }
 	 */
 
-	if(Destination){
-		attempt = Destination->attempt;
+	if(destination){
+		attempt = destination->attempt;
 	} else {
 		attempt = cfp->hold_info.attempt;
 	}
@@ -211,6 +215,26 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 	DEBUG3("Print_job: device fd %d, pid %d",
 		Device_fd_info.input, Device_fd_info.pid );
 	Errorcode = JABORT;
+
+	/*
+	 * do accounting at start
+	 */
+	DEBUG2("Print_job: Accounting_start '%s', Local_accounting %d'",
+		Accounting_start, Local_accounting );
+	if( Accounting_start && Local_accounting ){
+		setstatus(cfp,"accounting at start '%s'", id);
+		i = Do_accounting( 0, Accounting_start, cfp,
+			transfer_timeout, printcap_entry, Device_fd_info.input );
+		if( i ){
+			setstatus(cfp,"accounting failed at start '%s' - %s", id, Server_status(i) );
+			if( i != JFAIL && i != JABORT && i != JREMOVE ){
+				i = JFAIL;
+			}
+			Errorcode = i;
+			cleanup( 0 );
+		}
+	}
+
 	if( OF_Filter ){
 		/* we need to create an OF filter */
 		if( Make_filter( 'o', cfp, &OF_fd_info, OF_Filter, 0, 0,
@@ -230,26 +254,6 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		}
 		cleanup(0);
 	}
-
-	/*
-	 * do accounting at start
-	 */
-	DEBUG2("Print_job: Accounting_start '%s', Local_accounting %d'",
-		Accounting_start, Local_accounting );
-	if( Accounting_start && Local_accounting ){
-		setstatus(cfp,"accounting at start '%s'", id);
-		i = Do_accounting( 0, Accounting_start, cfp,
-			transfer_timeout, printcap_entry, OF_fd_info.input );
-		if( i ){
-			setstatus(cfp,"accounting failed at start '%s' - %s", id, Server_status(i) );
-			if( i != JFAIL && i != JABORT && i != JREMOVE ){
-				i = JFAIL;
-			}
-			Errorcode = i;
-			cleanup( 0 );
-		}
-	}
-
 	/* Leader_on_open -> of_fd; */
 	if( leader_len ){
 		setstatus(cfp,"printing '%s', sending leader",id);
@@ -365,7 +369,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		if( data_file->Ninfo[0] ){
 			safestrncpy(file_name, data_file->Ninfo+1);
 		} else {
-			safestrncpy(file_name, data_file->transfername+1);
+			safestrncpy(file_name, data_file->cfline+1);
 		}
 		if( i && !No_FF_separator && FF_len ){
 			/* FF separator -> of_fd; */
@@ -405,6 +409,8 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		 * check if PR is to be used
 		 */
 		c = data_file->format;
+		DEBUG2( "Print_job: data file format '%c', IF_Filter '%s'",
+			data_file->format, IF_Filter );
 		if( 'p' == c ){
 			char pr_filter[SMALLBUFFER];
 			char banner_temp[SMALLBUFFER];
@@ -458,12 +464,14 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		 * now we check to see if there is an input filter
 		 */
 		filter = 0;
+		strcpy(filtername,"if");
 		switch( c ){
 		case 'p': case 'f': case 'l':
 			filter = IF_Filter;
 			c = 'f';
 			break;
 		default:
+			filtername[0] = c;
 			filter = Find_filter( c, printcap_entry );
 			if( filter == 0 ){
 				Errorcode = JREMOVE;
@@ -499,11 +507,10 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		(void)close(fd);
 		fd = -1;
 		/* close Xf */
- 		if( err == 0 && (XF_fd_info.input != Device_fd_info.input) ){
+ 		if( err == 0 && filter ){
  		    err = Close_filter( cfp, &XF_fd_info, 
-				transfer_timeout,
-				"printer (IF)");
-			DEBUG2( "Print_job: close Xf status %d", n );
+				transfer_timeout, filtername );
+			DEBUG2( "Print_job: Close_filter exit status %d", err );
  		}
 		/* exit with either the filter status or the copy status */
   		if( err ){
@@ -606,6 +613,22 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 
 
 	/*
+	 * close the OF Filters
+	 */
+	if( OF_fd_info.pid > 0 ){
+		setstatus(cfp,"printing '%s', closing OF filter",id);
+		n = Close_filter( cfp, &OF_fd_info, 
+			transfer_timeout,
+			"printer (OF)" );
+		if( n ){
+			DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
+			Set_job_control( cfp, (void *)0 );
+			Errorcode = n;
+			cleanup( 0 );
+		}
+	}
+
+	/*
 	 * do accounting at end
 	 */
 	if( Accounting_end && Local_accounting ){
@@ -613,7 +636,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 		DEBUG3( "Print_job: accounting at end" );
 		i = Do_accounting( 1, Accounting_end, cfp, 
 			transfer_timeout,
-			printcap_entry, OF_fd_info.input );
+			printcap_entry, Device_fd_info.input );
 		if( i ){
 			setstatus(cfp,"accounting failed at end '%s'", id);
 			DEBUG3( "Print_job: accounting at end FAILED, status 0x%x", i );
@@ -624,33 +647,18 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
 			cleanup(0);
 		}
 	}
-
-	/*
-	 * close( of_fd );
-	 */
 	setstatus(cfp,"printing '%s', closing device",id);
-	n = Close_filter( cfp, &OF_fd_info, 
+	n = Close_filter( cfp, &Device_fd_info, 
 		transfer_timeout,
-		"printer (OF)" );
+		"printer (LP device)" );
 	if( n ){
-		DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
 		Set_job_control( cfp, (void *)0 );
+		DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
 		Errorcode = n;
 		cleanup( 0 );
 	}
-	if( Device_fd_info.pid ){
-		n = Close_filter( cfp, &Device_fd_info, 
-			transfer_timeout,
-			"printer (LP)" );
-		if( n ){
-			Set_job_control( cfp, (void *)0 );
-			DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
-			Errorcode = n;
-			cleanup( 0 );
-		}
-	}
 
-	/* close them out */
+	/* close everything now */
 	Print_close( cfp, -1 );
 
 	Errorcode = JSUCC;
@@ -729,7 +737,7 @@ int Print_banner(
 	/*
 	 * print the banner
 	 */
-	DEBUG2( "Printer_banner: banner_printer '%s'", banner_printer );
+	DEBUG2( "Print_banner: banner_printer '%s'", banner_printer );
 
 	/* make short banner look like BSD-style( Sun, etc.) short banner.
 	 * 
@@ -740,7 +748,7 @@ int Print_banner(
 	if( Banner_line == 0 ){
 		Banner_line = "";
 	}
-	DEBUG2( "Printer_banner: raw banner '%s'", Banner_line );
+	DEBUG2( "Print_banner: raw banner '%s'", Banner_line );
 	ep = bline + sizeof(bline) - 2;
 	ep = Expand_command( cfp, bline, ep, Banner_line, 'f', (void *)0 );
 	if( strchr( bline, '\\' ) ){
@@ -748,7 +756,7 @@ int Print_banner(
 	} else {
 		safestrncat(bline, "\n");
 	}
-	DEBUG2( "Printer_banner: expanded banner '%s'", bline );
+	DEBUG2( "Print_banner: expanded banner '%s'", bline );
 
 
  	if( !Short_banner && banner_printer && *banner_printer ){
@@ -763,7 +771,7 @@ int Print_banner(
 		Pr_fd_info.pid = 0;
 	}
 
-	DEBUG2( "Printer_banner: writing short banner '%s'", bline );
+	DEBUG2( "Print_banner: writing short banner '%s'", bline );
 	if( Write_fd_str( Pr_fd_info.input, bline ) < 0 ){
 		logerr( LOG_INFO, "banner: write to banner printer failed");
 		Errorcode = JFAIL;
@@ -826,7 +834,7 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 		oldport = Destination_port;
 		DEBUG2("Setup_accounting: opening connection to %s port %d", buffer, i );
 		Destination_port = i;
-		while( (n = Link_open(buffer,Connect_timeout,0)) < 0
+		while( (n = Link_open(buffer,Connect_timeout)) < 0
 			&& Retry_NOLINK ){
 			err = errno;
 			setstatus(cfp,"cannot open connection to accounting server '%s' - '%s', sleeping %d",
@@ -855,6 +863,7 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 		if( n > 0 ){
 			Af_fd_info.input = Accounting_port = n;
 		}
+		DEBUG2("Setup_accounting: fd %d", n );
 	}
 	errno = err;
 }
@@ -867,7 +876,7 @@ int Do_accounting( int end, char *command, struct control_file *cfp,
 	char buffer[SMALLBUFFER];
 	char *id;				/* id for job */
 
-	DEBUG2("Do_accounting: %s", command );
+	DEBUG2("Do_accounting: command '%s'", command );
 	if( command ) while( isspace( *command ) ) ++command;
 	if( Is_server == 0 || command == 0 || *command == 0 ){
 		return(0);
@@ -880,11 +889,12 @@ int Do_accounting( int end, char *command, struct control_file *cfp,
 	if( *command == '|' ){
 		if( As_fd_info.pid > 0 ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"conflict in accounting - af and additional accounting required" );
+				"conflict in accounting - af and as or ae both filters" );
 			err = JABORT;
-		} else if( Make_filter( 'f', cfp, &As_fd_info, command, 0, 0,
-			filter_out, printcap_entry, (void *)0, Accounting_port,
-			Logger_destination != 0, 0 ) ){
+		} else if( Make_filter( 'f', cfp, &As_fd_info, command, 0,
+			1, filter_out,
+			printcap_entry, (void *)0,
+			Accounting_port, Logger_destination != 0, Accounting_port ) ){
 			err = JABORT;
 		} else {
 			err = Close_filter( 0, &As_fd_info, timeout, "accounting" );

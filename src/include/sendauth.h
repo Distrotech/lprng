@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: sendauth.h
  * PURPOSE: sendauth.c functions
- * $Id: sendauth.h,v 3.2 1997/01/19 14:34:56 papowell Exp $
+ * sendauth.h,v 3.2 1997/01/19 14:34:56 papowell Exp
  **************************************************************************/
 
 #ifndef _SENDAUTH_H

@@ -22,7 +22,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: errormsg.c,v 3.5 1997/10/15 04:06:28 papowell Exp $";
+"errormsg.c,v 3.6 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "errormsg.h"
@@ -75,21 +75,25 @@ const char * Errormsg ( int err )
 {
     const char *cp;
 
+	if( err == 0 ){
+		cp = "No Error";
+	} else {
 #if defined(HAVE_STRERROR)
-	cp = strerror(err);
+		cp = strerror(err);
 #else
 # if defined(HAVE_SYS_ERRLIST)
-    if (err >= 0 && err < num_errors) {
-		cp = sys_errlist[err];
-    } else
+		if (err >= 0 && err < num_errors) {
+			cp = sys_errlist[err];
+		} else
 # endif
-	{
-		static char msgbuf[32];     /* holds "errno=%d". */
-		/* SAFE use of sprintf */
-		(void) sprintf (msgbuf, "errno=%d", err);
-		cp = msgbuf;
-    }
+		{
+			static char msgbuf[32];     /* holds "errno=%d". */
+			/* SAFE use of sprintf */
+			(void) sprintf (msgbuf, "errno=%d", err);
+			cp = msgbuf;
+		}
 #endif
+	}
     return (cp);
 }
 
@@ -496,14 +500,3 @@ void logDebug (va_alist) va_dcl
     VA_END;
 }
 
-/*
- * Malloc_failed error message
- */
-
-void Malloc_failed( unsigned size )
-{
-	int err = errno;
-	logerr( LOG_ERR, "malloc of %d failed", size );
-	errno = err;
-	cleanup (0);
-}

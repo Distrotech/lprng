@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: removejob.h
  * PURPOSE: removejob.c functions
- * $Id: removejob.h,v 3.1 1996/12/28 21:40:33 papowell Exp $
+ * removejob.h,v 3.1 1996/12/28 21:40:33 papowell Exp
  **************************************************************************/
 
 #ifndef _REMOVEJOB_H

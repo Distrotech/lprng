@@ -10,7 +10,7 @@
  * PURPOSE: define a set of configuration parameters used by all
  *  modules.
  *
- * "$Id: getcnfginfo.h,v 3.2 1997/12/16 15:06:40 papowell Exp $";
+ * "getcnfginfo.h,v 3.2 1997/12/16 15:06:40 papowell Exp";
  **************************************************************************/
 #ifndef _GETCNFGINFO_H
 #define _GETCNFGINFO_H

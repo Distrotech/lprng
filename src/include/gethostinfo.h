@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: gethostinfo.h
  * PURPOSE: gethostinfo.c functions
- * $Id: gethostinfo.h,v 3.3 1997/01/22 23:09:32 papowell Exp $
+ * gethostinfo.h,v 3.3 1997/01/22 23:09:32 papowell Exp
  **************************************************************************/
 
 #ifndef _GETHOSTINFO_H

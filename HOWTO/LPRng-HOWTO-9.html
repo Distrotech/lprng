@@ -87,15 +87,31 @@ the <CODE>lpd</CODE> server obtains and sets up the following information:
 then the IP address (REMOTEIP)
 port (PORT) of the source of the connection and
 FQDN of the remote host (REMOTEHOST) are obtained
-and the indicated values are set.</LI>
+and the indicated values are set.
+To be specific,
+the IP address of the remote host is obtained using
+<CODE>getpeername()</CODE>.
+The <CODE>gethostbyaddr()</CODE> is used to look up the
+host's fully qualified domain name,
+which is then assigned to the REMOTEHOST value.
+The REMOTEIP value is the
+<EM>set</EM> or <EM>list</EM> of IP addresses that could be
+used by this host.
+This is possible in the IPV6 environment.</LI>
 <LI>If the request contains the name of the user,
 then REMOTEUSER is assigned the name.</LI>
 <LI>If the request contains the name of the printer,
 then PRINTER is assigned the name.</LI>
 <LI>If a print job is being printed,
-then the USER, HOST, and PRINTER are set to the
+then the USER, HOST, IP, and PRINTER are set to the
 user name, host, and printer information in the control file for the
-print job.</LI>
+print job.
+To be specific,
+the HOST entry in the control file is used by
+<CODE>gethostbyname()</CODE> to get the fully qualified domain name of the host.
+The IP value is assigned a 
+<EM>set</EM> or <EM>list</EM> of IP addresses that could be
+used by this host.</LI>
 <LI>If one of the optional authentication methods is being used,
 (see
 <A HREF="LPRng-HOWTO-11.html#authref">Authentication and Encryption</A>),
@@ -124,13 +140,13 @@ REMOTEUSER and PRINTER
 will be defined.
 A further check is performed to determine if the service request would
 be accepted.
-<P>While when performing a service activity and a particular job is to
+<P>When performing a service activity and a particular job is to
 be acted on,
 the
 USER, HOST, and other control file information will be available,
 and a further check can be performed.
 <P>If a rule is specified and the particular value is not defined,
-then a rull will fail to match.
+then a rule will fail to match.
 <H2><A NAME="ss9.3">9.3 Match Procedure</A>
 </H2>
 
@@ -157,17 +173,22 @@ standard <CODE>nn.nn.nn.nn</CODE> format.
 The mask must be either an integer number
 corresponding to the number of significant bits,
 or in the standard <CODE>nn.nn.nn.nn</CODE> format.
-The two addresses are compared by doing
+Addresses are compared by doing
 <PRE>
 ( IPaddr XOR IP ) AND mask
 </PRE>
 
 <P>If the result is 0, then a match results.
+Note that there may be one or more addresses being checked for;
+this can occur when a host may have multiple IP addresses assigned to it.
 </LI>
 <LI>integer range match.
 The pattern has the form <CODE>low-high</CODE>,
 where low and high are integer numbers.
 The match succeeds if the value is in the specified range.</LI>
+<LI>Same IP Address Match.
+This compares two lists of IP addresses;
+a match is found when there is one or more common addresses.</LI>
 </OL>
 <H3>DEFAULT</H3>
 
@@ -242,10 +263,10 @@ information in the print job control file.
 <P>Match type: GLOB
 <P>The REMOTEUSER information is taken from the user information sent
 with a service request.
-<P>Note that one of the deficiencies of
+<P>Note that one of the flaws of
 <A HREF="LPRng-HOWTO-2.html#rfc1179">RFC1179</A>
 is that an LPQ (print status)
-request does provide a REMOTEUSER name.
+request does not provide a REMOTEUSER name.
 <H3>HOST</H3>
 
 <P>Match type: GLOB
@@ -270,32 +291,42 @@ The match succeeds if it is in the specified range.
 <P>The IP information is obtained by doing a DNS lookup on the
 H (host) information in the control file.
 If there is no host information, the IP address is undefined.
+Note that for a single host name there may be multiple IP addresses;
+address matches are performed against the list of addresses and succeeds
+if there is one or more individual address matches.
 <H3>REMOTEIP</H3>
 
 <P>Match type: IPaddr
 <P>The REMOTEIP information is the IP address of the host making the
 service request.
+Note that the REMOTEIP value is obtained by using the
+<CODE>gethostbyaddr</CODE> lookup to obtain the DNS information for the
+remote host.  This information may include multiple IP addresses;
+address matches are performed against the list of addresses and succeeds
+if there is one or more individual address matches.
 <H3>SAMEUSER</H3>
 
 <P>Match type: exact string match
 <P>Both the REMOTEUSER and USER information must be present and identical.
 <H3>SAMEHOST</H3>
 
-<P>Match type: exact string match on IP addresses
-<P>One of the IP addresses found when doing a gethostbyname() lookup for
-both HOST and REMOTEHOST must be identical.
+<P>Match type: Same IP Address
+<P>The REMOTEHOST and HOST address lists are checked;
+if there is a common value the match succeeds.
 <H3>SERVER</H3>
 
-<P>Match type: exact string match on IP addresses
-<P>One of the IP addresses of the <CODE>lpd</CODE> server host
-and REMOTEHOST must be identical,
-or REMOTEHOST must be <CODE>localhost</CODE>.
+<P>Match type: Same IP Address
+<P>One of the REMOTEHOST addresses 
+must be the same as one of the addresses of the <CODE>lpd</CODE> server host,
+or must be one of the addresses found by looking up the <CODE>localhost</CODE>
+name using <CODE>gethostbyname()</CODE>.
 <H3>FORWARD</H3>
 
-<P>Match type: exact string match
-<P>Both the REMOTEHOST and HOST information must be present and different.
-<P>This is usually the case when the <CODE>lpd</CODE> server is acting to
-forward jobs from a server to a remote printer.
+<P>Match type: Address Match
+<P>The list of REMOTEHOST and HOST addresses must not have a common entry.
+This is identical to NOT SAMEHOST.
+This is usually the case when a remote <CODE>lpd</CODE> server is forwarding
+jobs to the <CODE>lpd</CODE> server.
 <H3>GROUP</H3>
 
 <P>Match type: modified GLOB
@@ -380,7 +411,7 @@ The default value is:
 <PRE>
 perms_path=/etc/lpd.perms:/usr/etc/lpd.perms
 </PRE>
-<P>In addition the
+<P>In addition, the
 <CODE>xu</CODE>
 (extra permissions file) specifies an additional per-printer
 permissions file to be used when checking permissions for a particular printer.

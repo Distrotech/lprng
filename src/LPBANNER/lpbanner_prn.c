@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpbanner_prn.c,v 3.2 1997/09/18 19:45:43 papowell Exp $";
+"lpbanner_prn.c,v 3.2 1997/09/18 19:45:43 papowell Exp";
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"

@@ -85,7 +85,7 @@ The job is being processed for printing or transfer to another queue.</LI>
 <LI>Pending.
 Jobs which can be printed but are not active.</LI>
 <LI>Error.
-Jobs which have encountered and error during printing.
+Jobs which have encountered an error during printing.
 The
 <CODE>lpc release</CODE>
 and
@@ -154,10 +154,12 @@ debug</TD><TD>debugging options</TD><TD>debugging and tracing</TD></TR><TR><TD>
 
 </TD></TR></TABLE></CENTER>
 <P>The <CODE>printing_disabled</CODE> and <CODE>spooling_disabled</CODE>
-are managed using the <CODE>lpc</CODE> start, stop, enable and disable
+are managed using the <CODE>lpc start</CODE>, <CODE>lpc stop</CODE>,
+<CODE>lpc enable</CODE> and <CODE>lpc disable</CODE>
 commands.
 Similary,
-<CODE>holdall</CODE> is enabled and disabled by holdall and noholdall
+<CODE>holdall</CODE> is enabled and disabled by <CODE>holdall</CODE> and
+<CODE>noholdall</CODE>
 commands respectively.
 When holdall is enabled,
 jobs placed in the print queue will be held until they are explicitly
@@ -190,12 +192,16 @@ This facility is for diagnostic purposes only.
 <A NAME="ps"></A> 
 <A NAME="maxstatusline"></A> 
 <A NAME="maxstatussize"></A> 
-<A NAME="minstatussize"></A> <H2><A NAME="ss7.5">7.5 Log and Status Files</A>
+<A NAME="minstatussize"></A> 
+<A NAME="maxlogfilesize"></A> 
+<A NAME="minlogfilesize"></A> <H2><A NAME="ss7.5">7.5 Log and Status Files</A>
 </H2>
 
 <P>
 <UL>
 <LI> <CODE>lf=</CODE><EM>log file name (default: log)</EM></LI>
+<LI> <CODE>max_log_file_size#</CODE><EM>&nbsp;&nbsp;maximum log file size (Kbytes)</EM></LI>
+<LI> <CODE>min_log_file_size#</CODE><EM>&nbsp;&nbsp;minimum log file size (Kbytes)</EM></LI>
 <LI> <CODE>max_status_line#</CODE><EM>&nbsp;&nbsp;maximum status line length (characters) </EM></LI>
 <LI> <CODE>max_status_size#</CODE><EM>&nbsp;&nbsp;maximum status file size (Kbytes)</EM></LI>
 <LI> <CODE>min_status_size#</CODE><EM>&nbsp;&nbsp;minimum status file size (Kbytes)</EM></LI>
@@ -212,8 +218,24 @@ The
 <CODE>max_status_size</CODE> configuration or printcap option
 sets the maximum size (in Kbytes) of the status file;
 if the file exceeds this,  only the last
-<CODE>min_status_size</CODE> bytes or 25% (default if not specified)
+<CODE>min_status_size</CODE> bytes
+or 25% of the maximum size (default if not specified)
 will be preserved.
+<P>Similarly,
+the server logs its operations in the log file specified by the
+<CODE>lf</CODE> (log file) option (default is <CODE>lf=log</CODE>).
+The <CODE>max_log_file_size</CODE>
+value
+(default 0)
+specifies the maximum length
+of the log file in Kbytes.
+If this value is non-zero,
+then the log file is truncated to
+<CODE>min_log_file_size</CODE> bytes
+or 25% of the maximum file size.
+Again, the last portion of the log file is preserved.
+If the <CODE>max_log_file_size</CODE> value is 0,
+then the log file grows without limit.
 <P>Some filters require an additional filter status file
 that they use for recording additional filter status or
 other operational information.
@@ -328,11 +350,11 @@ control file.
 <P>By convention,
 LPRng uses the X of the control file name to set a priority for the
 job.
-A job with format
-<CODE>cfA</CODE>
+A job with control file name
+<CODE>cfA...</CODE>
 will have <EM>lower</EM> format
 than a job with format
-<CODE>cfB</CODE>,
+<CODE>cfB...</CODE>,
 and so forth.
 The <CODE>lpr</CODE> program uses the first letter of the class name
 or an explicit priority indication to set the letter value.
@@ -359,7 +381,8 @@ key [value]
 </PRE>
 <P>The following is an example of a hold file:
 <PRE>
-active 0
+server 0
+subserver 0
 attempt 3
 error cannot open printer
 hold 0
@@ -368,9 +391,11 @@ remove 0
 routed 0
 </PRE>
 <P>The
-<CODE>active</CODE>
-entry records the process ID of the server process that is printing
-the job.
+<CODE>server</CODE>
+and
+<CODE>subserver</CODE>
+entry records the process ID of the server process
+and the subserver process that is printing the job.
 The
 <CODE>attempt</CODE>
 field records the total number of attempts to print the job.
@@ -400,7 +425,7 @@ field is used to indicate that there is routing information present in
 the hold file,
 and that special handling is needed.
 The routing information is provided by a
-<A HREF="LPRng-HOWTO-5.html#routing">routing filter</A>
+<A HREF="LPRng-HOWTO-5.html#routing">routing filter</A>.
 The information is recorded by information in the hold file.
 The following is an example of routing information:
 <P>

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setuid.c,v 3.4 1997/09/18 19:46:05 papowell Exp $";
+"setuid.c,v 3.4 1997/09/18 19:46:05 papowell Exp";
 /*
  * setuid.c:
  * routines to manipulate user-ids securely (and hopefully, portably).

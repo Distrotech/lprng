@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: permissions.c,v 3.13 1997/12/24 20:10:12 papowell Exp $";
+"permissions.c,v 3.14 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -160,8 +160,8 @@ static int Read_perms( struct perm_file *perms, char *file, int fd,
 	/* malloc data structures */
 
 	DEBUGF(DDB3)("Read_perm: file '%s' size %d", file, statb->st_size );
-	strcpy( add_buffer( &perms->files, strlen(file)+1 ), file );
-	begin = add_buffer( &perms->files, statb->st_size+1 );
+	add_str( &perms->files, file,__FILE__,__LINE__  );
+	begin = add_buffer( &perms->files, statb->st_size+1,__FILE__,__LINE__ );
 	DEBUGF(DDB3)("Read_perms: buffer 0x%x", begin );
 
 	s = begin;
@@ -192,7 +192,7 @@ int Filter_perms( char *name, struct perm_file *perms, char *filter )
 	int error = 1;
 
 	DEBUGF(DDB1)("Filter_perms: filter '%s'", filter );
-	strcpy( add_buffer( &perms->filters, strlen(filter)+1), filter );
+	add_str( &perms->filters, filter,__FILE__,__LINE__ );
 	buffer = Filter_read( name, &perms->filters, filter );
 	if( buffer ){
 		error = parse_perms( perms, filter, buffer );
@@ -269,12 +269,12 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 
 	DEBUGF(DDB2)("parse_perms: file '%s'", file );
 	if( perms->lines.max == 0 ){
-		extend_malloc_list( &perms->lines, sizeof( permline[0] ), 100 );
+		extend_malloc_list( &perms->lines, sizeof( permline[0] ), 100,__FILE__,__LINE__ );
 	}
 	permlines = (void *)perms->lines.list;
 
 	if( perms->values.max == 0 ){
-		extend_malloc_list( &perms->values, sizeof( permval[0] ), 10 );
+		extend_malloc_list( &perms->values, sizeof( permval[0] ), 10,__FILE__,__LINE__ );
 	}
 	if( perms->values.count == 0 ){
 		memset( permlines, 0, sizeof(permlines[0]) );
@@ -284,7 +284,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 
 	/* set the first entry in the list to 0 */
 	if( perms->list.max == 0 ){
-		extend_malloc_list( &perms->list,sizeof(char *), 10);
+		extend_malloc_list( &perms->list,sizeof(char *), 10,__FILE__,__LINE__ );
 	}
 	permlist = (void *)perms->list.list;
 	if( perms->list.count == 0 ){
@@ -328,7 +328,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 		/* now take this entry and split it up into fields */
 		DEBUGF(DDB3)( "parse_perms: count %d, line '%s'", perms->lines.count,start );
 		if( perms->lines.count+1 >= perms->lines.max ){
-			extend_malloc_list( &perms->lines, sizeof( permline[0] ), 10 );
+			extend_malloc_list( &perms->lines, sizeof( permline[0] ), 10,__FILE__,__LINE__ );
 			permlines = (void *)perms->lines.list;
 		}
 		permline = &permlines[perms->lines.count++];
@@ -346,7 +346,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 			if( c == '#' ) break;
 			/* put each field in a perm entry */
 			if( perms->values.count+1 >= perms->values.max ){
-				extend_malloc_list( &perms->values,sizeof(permval[0]),10);
+				extend_malloc_list( &perms->values,sizeof(permval[0]),10,__FILE__,__LINE__ );
 				permvals = (void *)perms->values.list;
 			}
 			permval = &permvals[perms->values.count++];
@@ -387,7 +387,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 				if( c == 0 ) continue;
 
 				if( perms->list.count+1 >= perms->list.max ){
-					extend_malloc_list( &perms->list,sizeof(char *),100);
+					extend_malloc_list( &perms->list,sizeof(char *),100,__FILE__,__LINE__ );
 					permlist = (void *)perms->list.list;
 				}
 				list = &permlist[perms->list.count++];
@@ -396,7 +396,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 			}
 			if( permval->list ){
 				if( perms->list.count+1 >= perms->list.max ){
-					extend_malloc_list( &perms->list,sizeof(char *),100);
+					extend_malloc_list( &perms->list,sizeof(char *),100,__FILE__,__LINE__ );
 					permlist = (void *)perms->list.list;
 				}
 				list = &permlist[perms->list.count++];
@@ -405,7 +405,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 		}
 		if( permline->list ){
 			if( perms->values.count+1 >= perms->values.max ){
-				extend_malloc_list( &perms->values,sizeof(permval[0]),10);
+				extend_malloc_list( &perms->values,sizeof(permval[0]),10,__FILE__,__LINE__ );
 				permvals = (void *)perms->values.list;
 			}
 			permval = &permvals[perms->values.count++];
@@ -645,6 +645,7 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 					break;
 				case CONTROLLINE:
 					/* check to see if we have control line */
+					m = 1;
 					DEBUGF(DDB3)("Perms_check: CONTROLLINE %s", val[j].token);
 					if( cf == 0 ){
 						m = 1;
@@ -994,16 +995,15 @@ static int match_ip( struct perm_val *val, struct host_information *host,
 int Match_ipaddr_value( char *str, struct host_information *host )
 {
 	int result = 1;
-	char *end;
-	static char *buffer;
+	char *end, *buffer = 0;
 	DEBUGF(DDB2)("Match_ipaddr_value: str '%s'", str);
 	if( str && *str ){
-		if( buffer ) free(buffer);
 		buffer = safestrdup( str );
-		for( str = buffer; str; str = end ){
+		for( str = buffer; result && str; str = end ){
 			while( isspace( *str ) ) ++str;
 			end = strpbrk( str, ",; \t");
 			if( end ) *end++ = 0;
+			if( *str == 0 ) continue;
 			if( *str == '@' ) {	/* look up host in netgroup */
 #ifdef HAVE_INNETGR
 				result = !innetgr( str+1, host->fqdn, NULL, NULL );
@@ -1015,8 +1015,8 @@ int Match_ipaddr_value( char *str, struct host_information *host )
 				if( result ) result = ipmatch( str, host );
 			}
 			DEBUGF(DDB2)("Match_ipaddr_value: checked '%s', result %d", str, result);
-			if( result == 0 ) break;
 		}
+		free(buffer);
 	}
 	DEBUGF(DDB2)("Match_ipaddr_value: result %d, on name '%s'", result, str);
 	return( result );

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: UTILS/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile.in,v 3.3 1997/05/06 15:26:21 papowell Exp $
+# Makefile.in,v 3.7 1998/03/30 01:54:50 papowell Exp
 ########################################################################## 
 
 # Manual pages installation Makefile.
@@ -30,18 +30,29 @@ all:
 
 .PHONY: all clean install ci install.zman
 
+CI=
+CO=-kv
 update:
-	VER=`cat ${SRC}/../VERSION`; \
-	for i in *.[0-9]; do \
-			sed -e "s/^.ds VE.*/.ds VE $$VER/" ./$$i >/tmp/$$i; \
-			cp /tmp/$$i ./$$i; \
-	done
+	- for i in *.[0-9]; do \
+		rcs -l ./$$i; \
+		ci $(CI) -l -mUpdate -t-Initial ./$$i; \
+	done;
 
+	- VER=`cat ${SRC}/../VERSION`; \
+	  for i in *.[0-9]; do \
+		sed -e "s/^.ds VE.*/.ds VE $$VER/" ./$$i >/tmp/$$i; \
+		cp /tmp/$$i ./$$i; \
+	done;
+
+	- for i in *.[0-9]; do \
+		ci $(CI) -mUpdate -t-Initial ./$$i; \
+		yes | co $(CO) ./$$i; \
+	done
 
 # Standard man install target.
 #
 install:
-	${SRC}/mkinstalldirs $(MAN)/man1 $(MAN)/man5 $(MAN)/man8
+	-${SRC}/mkinstalldirs $(MAN)/man1 $(MAN)/man5 $(MAN)/man8
 	cd ${SRC}; for i in *.1; do $(MANINSTCMD) $$i $(MAN)/man1/$$i$(MANEXT); done
 	cd ${SRC}; for i in *.5; do $(MANINSTCMD) $$i $(MAN)/man5/$$i$(MANEXT); done
 	cd ${SRC}; for i in *.8; do $(MANINSTCMD) $$i $(MAN)/man8/$$i$(MANEXT); done
@@ -68,5 +79,13 @@ clean::
 
 TAGS info:
 
-ci:
-	ci $(CI) -l -mUpdate -t-Initial *.[0-9] Makefile.in Makefile
+cifast ci:
+	if test ! -d RCS ; then mkdir RCS; fi;
+	checkin() { \
+		rcs -l $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		yes |co $(CO) $$1; \
+	}; \
+	for i in *.[0-9] Makefile.in Makefile; do \
+		checkin $$i; \
+	done;

@@ -10,7 +10,7 @@
  * PURPOSE:
  **************************************************************************/
 
-static char *const _id = "$Id: freespace.c,v 3.4 1997/12/24 20:10:12 papowell Exp $";
+static char *const _id = "freespace.c,v 3.4 1997/12/24 20:10:12 papowell Exp";
 
 /***************************************************************************
  * Check_space()
@@ -53,24 +53,24 @@ extern int statfs(const char *, struct statfs *);
 #  define plp_statfs(path,buf) statvfs(path,buf)
 #  define plp_struct_statfs struct statvfs
 #  define statfs(path, buf) statvfs(path, buf)
-#  define plp_fs_free_bytes(f) (f.f_bavail * f.f_bsize)
+#  define plp_fs_free_bytes(f) ((double)f.f_bavail * (double)f.f_bsize)
 # endif
 
 # if USE_STATFS_TYPE == ULTRIX_STATFS
 #  define plp_statfs(path,buf) statfs(path,buf)
 #  define plp_struct_statfs struct fs_data
-#  define plp_fs_free_bytes(f) (f.fd_bfree * f.fd_bsize)
+#  define plp_fs_free_bytes(f) ((double)f.fd_bfree * (double)f.fd_bsize)
 # endif
 
 # if USE_STATFS_TYPE ==  SVR3_STATFS
 #  define plp_struct_statfs struct statfs
-#  define plp_fs_free_bytes(f) (f.f_bfree * f.f_bsize)
+#  define plp_fs_free_bytes(f) ((double)f.f_bfree * (double)f.f_bsize)
 #  define plp_statfs(path,buf) statfs(path,buf,sizeof(struct statfs),0)
 # endif
 
 # if USE_STATFS_TYPE == STATFS
 #  define plp_struct_statfs struct statfs
-#  define plp_fs_free_bytes(f) (f.f_bavail * f.f_bsize)
+#  define plp_fs_free_bytes(f) ((double)f.f_bavail * (double)f.f_bsize)
 #  define plp_statfs(path,buf) statfs(path,buf)
 # endif
 

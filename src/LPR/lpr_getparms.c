@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_getparms.c,v 3.9 1997/10/27 00:14:19 papowell Exp $";
+"lpr_getparms.c,v 3.10 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "getparms.h"
@@ -28,7 +28,7 @@ static char *const _id =
 
 void usage(void);
 
-static char Zopts_val[LINEBUFFER];
+static char Zopts_val[SMALLBUFFER];
 static char format_stat[2];
 
 char LPR_optstr[]    /* LPR options */
@@ -64,7 +64,7 @@ void Get_parms(int argc, char *argv[] )
 					break;
 		case 'p':	break;	/* ignore notification */
 		case 'r':	break;	/* ignore this option */
-		case 's':	Verbose = 0; break;	/* suppress messages flag */
+		case 's':	Verbose = 0; Silent = 1; break;	/* suppress messages flag */
 		case 'w':	break;	/* no writing of message */
 		case 'd':	Printer = Optarg; /* destination */
 					break;
@@ -89,7 +89,7 @@ void Get_parms(int argc, char *argv[] )
 					} else {
 						/* pass as Zopts */
 						if( Zopts_val[0] ){
-							safestrncat( Zopts_val, " " );
+							safestrncat( Zopts_val, "," );
 						}
 						safestrncat( Zopts_val, Optarg );
 						Zopts = Zopts_val;
@@ -105,7 +105,7 @@ void Get_parms(int argc, char *argv[] )
 		case 'y':
 					/* pass as Zopts */
 					if( Zopts_val[0] ){
-						safestrncat( Zopts_val, " " );
+						safestrncat( Zopts_val, "," );
 					}
 					safestrncat( Zopts_val, Optarg );
 					Zopts = Zopts_val;
@@ -197,7 +197,11 @@ void Get_parms(int argc, char *argv[] )
 			++Verbose;
 		    break;
 		case 'Z':
-		    Check_str_dup( option, &Zopts, Optarg, 0);
+			if( Zopts_val[0] ){
+				safestrncat( Zopts_val, "," );
+			}
+			safestrncat( Zopts_val, Optarg );
+			Zopts = Zopts_val;
 		    break;
 		case 'l':
 		case 'b':
@@ -299,7 +303,6 @@ usage summary: %s [ -Pprinter[@host] ] [-(K|#)copies] [-Cclass][-Jinfo]\n\
  -V          - Verbose information during spooling\n\
  -Z filteroptions - options to pass to filter\n\
    default job format -Ff\n\
- A filename of the form '-' will read from stdin.\n\
  PRINTER environment variable is default printer.\n");
 
 char *LP_msg = N_("\
@@ -330,7 +333,6 @@ usage summary: %s [ -c ] [ -m ] [ -p ] [ -s ] [ -w ] [ -d dest ]\n\
  -T content  - (passed as -Z content)\n\
  -w          - (write message on completion - ignored)\n\
  -y mode     - (passed as -Z mode)\n\
- A filename of the form '-' will read from stdin.\n\
  LPDEST, then PRINTER environment variables are default printer.\n");
 
 void usage(void)

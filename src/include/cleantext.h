@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: cleantext.h
  * PURPOSE: cleantext.c functions
- * $Id: cleantext.h,v 3.1 1996/12/28 21:40:24 papowell Exp $
+ * cleantext.h,v 3.1 1996/12/28 21:40:24 papowell Exp
  **************************************************************************/
 
 #ifndef _CLEANTEXT_H

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpraccnt.c,v 3.3 1997/09/18 19:45:50 papowell Exp $";
+"lpraccnt.c,v 3.3 1997/09/18 19:45:50 papowell Exp";
 /*
  * Monitor for Accounting Information
  *  Opens a tcp socket and waits for data to be sent to it.

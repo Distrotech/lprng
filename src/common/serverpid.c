@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: serverpid.c,v 3.3 1997/09/18 19:46:05 papowell Exp $";
+"serverpid.c,v 3.4 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "serverpid.h"
@@ -56,6 +56,9 @@ void Write_pid( int fd, int pid, char *str )
 	if( ftruncate( fd, 0 ) ){
 		logerr_die( LOG_ERR, "Write_pid: ftruncate failed" );
 	}
+	if( lseek( fd, 0, SEEK_SET ) < 0 ){
+		logerr_die( LOG_ERR, "Write_pid: lseek failed" );
+	}
 	DEBUG1( "Write_pid: pid %d, '%s'", pid, str );
 
 	if( str ){
@@ -63,7 +66,6 @@ void Write_pid( int fd, int pid, char *str )
 	} else {
 		plp_snprintf( line, sizeof(line), "%d\n", pid );
 	}
-	DEBUG1( "Write_pid: '%s'", line );
 	if( Write_fd_str( fd, line ) < 0 ){
 		logerr_die( LOG_ERR, "Write_pid: write failed" );
 	}

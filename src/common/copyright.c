@@ -15,7 +15,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: copyright.c,v 3.3 1997/09/18 19:45:52 papowell Exp $";
+"copyright.c,v 3.4 1998/03/24 02:43:22 papowell Exp";
 
 char *Copyright[] = {
 "LPRng version " PATCHLEVEL "",
@@ -51,7 +51,7 @@ char *Copyright[] = {
 "",
 "        COPYRIGHT NOTICES",
 "",
-"Copyright (c) 1986-1997 Patrick Powell",
+"Copyright (c) 1986-1998 Patrick Powell",
 ""
 "THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND",
 "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE",
@@ -65,13 +65,12 @@ char *Copyright[] = {
 "OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF",
 "SUCH DAMAGE.",
 "",
-"Copyright 1988-1997, Patrick Powell, San Diego, CA.",
-"All rights reserved.",
+"Copyright 1986-1998, Patrick Powell, San Diego, CA.",
+"    All rights reserved.",
+"The following notice is included to satisfy the requirements of the",
+"  BSD 4.4 Software Distribution.",
 "",
-"This code is derived from software contributed to Berkeley by",
-"Chris Torek.",
-"",
-" Copyright (c) 1988 The Regents of the University of California.",
+"Copyright (c) 1988 The Regents of the University of California.",
 " All rights reserved.",
 "",
 "Redistribution and use in source and binary forms, with or without",

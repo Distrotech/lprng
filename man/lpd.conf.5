@@ -1,4 +1,4 @@
-.ds VE LPRng-3.4.2
+.ds VE LPRng-3.5.1
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -167,27 +167,6 @@ languages would often be classed as ``non_printable''.
 .TP
 \fBclient_auth_command\fR (defaults: "")
 The default authorization command for a client to use.
-.TP
-\fBclient_config_file\fR (default:
-/etc/lpd.conf: /etc/lpd_client.conf: 
-/usr/etc/lpd.conf: /usr/etc/lpd_client.conf:
-/usr/spool/lpd/lpd.conf: /usr/spool/lpd/lpd_client.conf)
-The location of configuration information for a client program
-such as
-.I lpr
-.I lpc, 
-.I lpq, 
-.I lprm, 
-etc.
-This is a (punctuation separated) list of files or filters
-which are searched sequentially for configuration information.
-The information in each entry files overrides the defaults and previous information.
-See
-.I server_config_file
-for server information,
-and
-.I "FILTERS"
-below for details.
 .TP
 \fBconnect_grace\fR (default: 0 seconds)
 The time to pause before opening a new connection to a printer.
@@ -582,11 +561,6 @@ The message will contain the \fBTo:\fR, \fBFrom:\fR,
 .TP
 \fBserver_auth_command\fR (default: "")
 The authentication program to be used by the server.
-.TP
-\fBserver_config_file\fR (default:
-/etc/lpd.conf:
-/usr/etc/lpd.conf: /usr/spool/lpd.conf.%h)
-The location of configuration information for the lpd server.
 .TP
 \fBserver_tmp_dir\fR (default: /tmp)
 Temporary dir for the server.

@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlprm.c,v 3.9 1998/01/08 09:51:18 papowell Exp $";
+"sendlprm.c,v 3.9 1998/01/08 09:51:18 papowell Exp";
 
 #include "lp.h"
 #include "sendlprm.h"
@@ -92,12 +92,12 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 		}
 		return;
 	}
-	sock = Link_open( host, connect_timeout, Localhost_connection() );
+	sock = Link_open( host, connect_timeout );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,
 			"cannot open connection to `%s@%s' - %s",
-			Printer, RemoteHost, Errormsg(err) );
+			Printer, host, Errormsg(err) );
 		setstatus( NORMAL, line );
 		if( Interactive ){
 			strcat(line, "\n" );
@@ -129,11 +129,11 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 		Link_close( &sock );
 	} else if( Use_auth || Use_auth_flag ){
 		DEBUG3("Send_lprmrequest: using authentication" );
-		status = Send_auth_command( RemotePrinter, RemoteHost, &sock,
+		status = Send_auth_command( RemotePrinter, host, &sock,
 			transfer_timeout, line, output );
 	} else {
 		DEBUG3("Send_lprmrequest: sending '%s'", line );
-		status = Link_send( RemoteHost, &sock, transfer_timeout,
+		status = Link_send( host, &sock, transfer_timeout,
 			line, strlen(line), 0 );
 	}
 	Read_status_info( Printer, 0, sock, host, output, transfer_timeout );

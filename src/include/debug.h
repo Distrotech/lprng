@@ -10,7 +10,7 @@
  * PURPOSE: define parsing and other information for debug option
  *  handling.
  *
- * $Id: debug.h,v 3.4 1997/10/04 16:14:09 papowell Exp $
+ * debug.h,v 3.4 1997/10/04 16:14:09 papowell Exp
  **************************************************************************/
 
 /****************************************

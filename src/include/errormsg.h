@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: errormsg.h
  * PURPOSE: identifies error message information, see errormsg.c
- * $Id: errormsg.h,v 3.1 1996/12/28 21:40:26 papowell Exp $
+ * errormsg.h,v 3.1 1996/12/28 21:40:26 papowell Exp
  **************************************************************************/
 
 #ifndef _ERRORMSG_H

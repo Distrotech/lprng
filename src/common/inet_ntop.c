@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: inet_ntop.c,v 1.5 1997/09/18 19:45:59 papowell Exp $";
+"inet_ntop.c,v 1.6 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 
@@ -57,8 +57,8 @@ int inet_pton( int family, const char *strptr, void *addr )
  * strptr = string where to place
  * len    = length
  ***************************************************************************/
-char *inet_ntop( int family, const void *addr,
-	char *str, int len )
+const char *inet_ntop( int family, const void *addr,
+	char *str, size_t len )
 {
 	char *s;
 	if( family != AF_INET ){

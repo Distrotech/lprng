@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getprinter.c,v 3.10 1997/09/18 19:45:58 papowell Exp $";
+"getprinter.c,v 3.10 1997/09/18 19:45:58 papowell Exp";
 
 #include "lp.h"
 #include "getprinter.h"
@@ -39,11 +39,9 @@ Get_printer()
 	a primary name of the form printer@host will be detected as the
 	destination.  Sigh...
  ***************************************************************************/
-void Get_printer( struct printcap_entry **pcv )
+void Get_printer( struct printcap_entry **pce )
 {
 	char *s;
-	struct printcap_entry *pc = 0;
-
 
 	DEBUG0("Get_printer: original printer '%s'", Printer );
 	if( Printer == 0 ){
@@ -66,15 +64,11 @@ void Get_printer( struct printcap_entry **pcv )
 	}
 
 	/* now we try getting the printcap entry */
-	Queue_name = safestrdup( Printer );
-	if( (s = Get_printer_vars( Printer, &pc )) ){
-		Printer = s;
-		Expand_value( Pc_var_list, &Raw_printcap_files );
-	}
-	Fix_remote_name();
+	Fix_remote_name( pce );
+	DEBUG0("Get_printer: printer now '%s', Is_server %d, Force_localhost %d",
+		Printer, Is_server, Force_localhost );
 
 	if(DEBUGL1)dump_parms("Get_printer",Pc_var_list);
-	if( pcv ) *pcv = pc;
 }
 
 /***************************************************************************
@@ -82,7 +76,7 @@ void Get_printer( struct printcap_entry **pcv )
  *  - check the printer name for printer@remote and fix it up
  *    set RemoteHost and RemotePrinter
  ***************************************************************************/
-void Fix_remote_name( void )
+void Fix_remote_name( struct printcap_entry **pce )
 {
 	static char *sdup;
 	static char *pdup;
@@ -112,7 +106,7 @@ void Fix_remote_name( void )
 		Lp_device = pdup;
 	} else if( (s = strchr( Printer, '@' ))  ){
 		Lp_device = pdup;
-	} else if( (s = Get_printer_vars( Printer, (void *)0 )) ){
+	} else if( (s = Get_printer_vars( Printer, pce )) ){
 		Printer = s;
 		Expand_value( Pc_var_list, &Raw_printcap_files );
 	}
@@ -132,6 +126,9 @@ void Fix_remote_name( void )
 		} else if( FQDNHost && *FQDNHost ){
 			RemoteHost = FQDNHost;
 		}
+	}
+	if( !Is_server && Force_localhost ){
+		RemoteHost = Localhost;
 	}
 
 	DEBUG0(

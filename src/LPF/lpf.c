@@ -21,7 +21,7 @@
  ***************************************************************************/
 #ifndef lint
 static char *const _id =
-	"$Id: lpf.c,v 3.4 1997/12/16 15:06:21 papowell Exp $";
+	"lpf.c,v 3.4 1997/12/16 15:06:21 papowell Exp";
 #endif
 
 /***************************************************************************
@@ -98,7 +98,6 @@ static char *const _id =
  * -Tcrlf  - turns LF to CRLF off
  * -TX     - puts character X at end of each line.
  *
- * verbose   - echo to a log file
  *
  *	The functions fatal(), logerr(), and logerr_die() can be used to report
  *	status. The variable errorcode can be set by the user before calling
@@ -179,7 +178,7 @@ XX ** NO VARARGS ** XX
 int errorcode;
 char *name;		/* name of filter */
 /* set from flags */
-int debug, verbose, width, length, xwidth, ylength, literal, indent;
+int debug, width, length, xwidth, ylength, literal, indent;
 char *zopts, *class, *job, *login, *accntname, *host, *accntfile, *format;
 char *printer, *controlfile, *bnrname, *comment;
 char *queuename, *errorfile;
@@ -422,19 +421,20 @@ void getargs( int argc, char *argv[], char *envp[] )
 		switch(c){
 			case 'C': class = optarg; break; 
 			case 'E': errorfile = optarg; break;
-			case 'D': debug = atoi( optarg ); break;
 			case 'T':
 					for( s = optarg; s && *s; s = end ){
 						end = strchr( s, ',' );
 						if( end ){
 							*end++ = 0;
 						}
-						while( isspace( *s ) ) ++s;
 						if( !strcasecmp( s, "crlf" ) ){
 							crlf = 1;
 						}
+						if( !strcasecmp( s, "debug" ) ){
+							debug = 1;
+						}
 					}
-					break; 
+					break;
 			case 'F': format = optarg; break; 
 			case 'J': job = optarg; break; 
 			case 'K': controlfile = optarg; break; 
@@ -449,7 +449,6 @@ void getargs( int argc, char *argv[], char *envp[] )
 			case 'l': length = atoi( optarg ); break; 
 			case 'n': login = optarg; break; 
 			case 's': statusfile = optarg; break; 
-			case 'v': verbose = atoi( optarg ); break; 
 			case 'w': width = atoi( optarg ); break; 
 			case 'x': xwidth = atoi( optarg ); break; 
 			case 'y': ylength = atoi( optarg ); break;
@@ -472,7 +471,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 			}
 		}
 	}
-	if( verbose || debug ){
+	if( debug ){
 		fprintf(stderr, "%s command: ", name );
 		for( i = 0; i < argc; ++i ){
 			fprintf(stderr, "%s ", argv[i] );
@@ -482,24 +481,25 @@ void getargs( int argc, char *argv[], char *envp[] )
 	}
 	if( debug ){
 		fprintf(stderr, "FILTER decoded options: " );
-		fprintf(stderr,"login '%s'\n", login? login : "null" );
-		fprintf(stderr,"host '%s'\n", host? host : "null" );
+		fprintf(stderr,"accntfile '%s'\n", accntfile? accntfile : "null" );
+		fprintf(stderr,"accntname '%s'\n", accntname? accntname : "null" );
 		fprintf(stderr,"class '%s'\n", class? class : "null" );
+		fprintf(stderr,"errorfile '%s'\n", errorfile? errorfile : "null" );
 		fprintf(stderr,"format '%s'\n", format? format : "null" );
+		fprintf(stderr,"host '%s'\n", host? host : "null" );
+		fprintf(stderr,"indent, %d\n", indent);
 		fprintf(stderr,"job '%s'\n", job? job : "null" );
+		fprintf(stderr,"length, %d\n", length);
+		fprintf(stderr,"literal, %d\n", literal);
+		fprintf(stderr,"login '%s'\n", login? login : "null" );
 		fprintf(stderr,"printer '%s'\n", printer? printer : "null" );
 		fprintf(stderr,"queuename '%s'\n", queuename? queuename : "null" );
-		fprintf(stderr,"accntname '%s'\n", accntname? accntname : "null" );
-		fprintf(stderr,"zopts '%s'\n", zopts? zopts : "null" );
-		fprintf(stderr,"literal, %d\n", literal);
-		fprintf(stderr,"indent, %d\n", indent);
-		fprintf(stderr,"length, %d\n", length);
+		fprintf(stderr,"statusfile '%s'\n", statusfile? statusfile : "null" );
 		fprintf(stderr,"width, %d\n", width);
 		fprintf(stderr,"xwidth, %d\n", xwidth);
 		fprintf(stderr,"ylength, %d\n", ylength);
-		fprintf(stderr,"accntfile '%s'\n", accntfile? accntfile : "null" );
-		fprintf(stderr,"errorfile '%s'\n", errorfile? errorfile : "null" );
-		fprintf(stderr,"statusfile '%s'\n", statusfile? statusfile : "null" );
+		fprintf(stderr,"zopts '%s'\n", zopts? zopts : "null" );
+
 		fprintf(stderr, "FILTER environment: " );
 		for( i = 0; (arg = envp[i]); ++i ){
 			fprintf(stderr,"%s\n", arg );

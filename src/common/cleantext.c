@@ -20,7 +20,7 @@
 
 
 static char *const _id =
-"$Id: cleantext.c,v 3.4 1997/12/24 20:10:12 papowell Exp $";
+"cleantext.c,v 3.6 1998/03/29 18:32:47 papowell Exp";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -91,15 +91,49 @@ int Check_format( int type, char *name, struct control_file *cfp )
 
 	DEBUG4("Check_format: type %d, name '%s'", type, name ); 
 	switch( type ){
-		case DATA_FILE: if( name[0] != 'd' ) goto error; break;
-		case CONTROL_FILE: if( name[0] != 'c' ) goto error; break;
-		default: goto error;
+		case DATA_FILE: if( name[0] != 'd' ){
+				plp_snprintf(cfp->error, sizeof(cfp->error),
+					"data file does not start with 'd' - '%s'",
+					name );
+				cfp->name_format_error = 1;
+				DEBUG1("Check_format: %s", cfp->error ); 
+				if(!Fix_bad_job) goto error;
+			}
+			break;
+		case CONTROL_FILE: if( name[0] != 'c' ){
+				plp_snprintf(cfp->error, sizeof(cfp->error),
+					"control file does not start with 'd' - '%s'",
+					name );
+				cfp->name_format_error = 1;
+				DEBUG1("Check_format: %s", cfp->error ); 
+				if(!Fix_bad_job) goto error;
+			}
+			break;
+		default:
+			plp_snprintf(cfp->error, sizeof(cfp->error),
+				"bad file type '%c' - '%s' ", type,
+				name );
+			cfp->name_format_error = 1;
+			DEBUG1("Check_format: %s", cfp->error ); 
+			goto error;
 	}
 	/* check for second letter */
 	if( name[1] != 'f' ){
-		goto error; 
+		plp_snprintf(cfp->error, sizeof(cfp->error),
+			"second letter must be f not '%c' - '%s' ", name[1],
+				name );
+		cfp->name_format_error = 1;
+		DEBUG1("Check_format: %s", cfp->error ); 
+		if(!Fix_bad_job) goto error;
 	}
-	if( !isalpha( name[2] ) ) goto error;
+	if( !isalpha( name[2] ) ){
+		plp_snprintf(cfp->error, sizeof(cfp->error),
+			"third letter must be letter not '%c' - '%s' ", name[2],
+				name );
+		cfp->name_format_error = 1;
+		DEBUG1("Check_format: %s", cfp->error ); 
+		goto error;
+	}
 	if( type == CONTROL_FILE ){
 		cfp->priority = name[2];
 	}
@@ -108,43 +142,67 @@ int Check_format( int type, char *name, struct control_file *cfp )
 	c = t - s;
 	/* check on length of number */
 	if( cfp->recvd_number_len == 0 ){
-		if( c < 3 || c > 6 ) goto error;
+		if( c < 3 || c > 6 ){
+			plp_snprintf(cfp->error, sizeof(cfp->error),
+				"id number length out of bounds '%s' ",
+					name );
+			goto error;
+		}
 		cfp->number = n;
 		cfp->recvd_number = n;
 		cfp->recvd_number_len = c;
 		strncpy(cfp->filehostname, t, sizeof( cfp->filehostname ) );
-		if( Clean_name(t) ) goto error;
 		/* fix up job number so it is in correct range */
-		Fix_job_number( cfp );
-	} else {
-			if( cfp->recvd_number != n
-			|| cfp->recvd_number_len != c ){
-				DEBUG4("Check_format: number disagreement" ); 
+		if( Clean_name(cfp->filehostname) ){
+			plp_snprintf(cfp->error, sizeof(cfp->error),
+				"bad hostname '%s' - '%s' ", cfp->filehostname,
+					name );
+			cfp->name_format_error = 1;
+			DEBUG1("Check_format: %s", cfp->error ); 
+			if(!Fix_bad_job) goto error;
 			goto error;
 		}
-		if( strcmp( t, cfp->filehostname ) ){
-			int tlen, clen, len;
-			/* now we have to decide if we have a problem with
-			 * short and long file names.  First, see if the
-			 * shortest part is the same
-			 */
-			tlen = strlen(t);
-			len = clen = strlen(cfp->filehostname);
-			if( tlen < len ) len = tlen;
-			if( strncmp( t, cfp->filehostname, len ) ){
-				DEBUG4("Check_format: name disagreement" ); 
-				goto error;
-			}
+		Fix_job_number( cfp );
+	}
+	if( cfp->recvd_number != n
+		|| cfp->recvd_number_len != c ){
+		plp_snprintf(cfp->error, sizeof(cfp->error),
+			"received file id number not '%d' - '%s' ", n,
+				name );
+		cfp->name_format_error = 1;
+		DEBUG1("Check_format: %s", cfp->error ); 
+		if(!Fix_bad_job) goto error;
+	} else if( strcmp( t, cfp->filehostname ) ){
+		int tlen, clen, len;
+		/* now we have to decide if we have a problem with
+		 * short and long file names.  First, see if the
+		 * shortest part is the same
+		 */
+		tlen = strlen(t);
+		len = clen = strlen(cfp->filehostname);
+		if( tlen < len ) len = tlen;
+		if( strncmp( t, cfp->filehostname, len ) ){
+			plp_snprintf(cfp->error, sizeof(cfp->error),
+				"host name '%s' not '%s' - '%s'", t, cfp->filehostname,
+					name );
+			cfp->name_format_error = 1;
+			DEBUG1("Check_format: %s", cfp->error ); 
+			if(!Fix_bad_job) goto error;
+		} else if( ((c = cfp->filehostname[len]) && c != '.' )
+		  || ((c = t[len]) && c != '.' ) ){
 			/* now we know the prefixes are the same - see if they
 			 * end at the dot point
 			 */
-			if( ((c = cfp->filehostname[len]) && c != '.' )
-			  || ((c = t[len]) && c != '.' ) ){
-				DEBUG4("Check_format: name truncation" ); 
-				goto error;
-			}
+			plp_snprintf(cfp->error, sizeof(cfp->error),
+				"host name '%s' not '%s' - '%s'", t, cfp->filehostname,
+					name );
+			cfp->name_format_error = 1;
+			DEBUG1("Check_format: %s", cfp->error ); 
+			if(!Fix_bad_job) goto error;
 		}
 	}
+	/* clear out error message */
+	cfp->error[0] = 0;
 	err = 0;
 
 error:

@@ -10,7 +10,7 @@
  * PURPOSE: kill and create children
  **************************************************************************/
 
-static char *const _id = "$Id: killchild.c,v 3.19 1997/12/16 15:06:28 papowell Exp $";
+static char *const _id = "killchild.c,v 3.20 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "decodestatus.h"
@@ -164,7 +164,7 @@ int dofork( int new_process_group )
 	} else if( pid != -1 ){
 		if( prgrps.count+1 >= prgrps.max ){
 			extend_malloc_list( &prgrps, sizeof( struct pinfo),
-				prgrps.count+10 );
+				prgrps.count+10,__FILE__,__LINE__  );
 		}
 		p = (void *)prgrps.list;
 		for( i = 0; i < prgrps.count; ++i ){

@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getparms.c,v 3.3 1997/10/27 00:14:19 papowell Exp $";
+"getparms.c,v 3.3 1997/10/27 00:14:19 papowell Exp";
 
 #include "lp.h"
 #include "getparms.h"

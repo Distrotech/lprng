@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendjob.c,v 3.22 1998/01/08 09:51:17 papowell Exp $";
+"sendjob.c,v 3.24 1998/03/29 18:32:54 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -106,7 +106,7 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 	int transfer_timeout, struct printcap_entry *printcap_entry )
 {
 	int sock = -1;		/* socket to use */
-	int i, j, n, errcount = 0;	/* AJAX Integers (ACME on strike) */
+	int i, n, errcount = 0;	/* AJAX Integers (ACME on strike) */
 	int status = 0;	/* status of transfer */
 	char msg[LINEBUFFER];
 	char bannerpath[MAXPATHLEN];
@@ -121,64 +121,45 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 
 	/* now we have a banner, is it at start or end? */
 	if( Generate_banner && (Is_server || Lpr_bounce ) ){
-		s = 0;
 		DEBUG2( "Send_job: Banner_start '%s', Banner_printer '%s'",
 			Banner_start, Banner_printer );
-		s = Banner_start;
-		if( s == 0 ) s = Banner_printer;
+		s = Banner_printer;
+		if( s == 0 ) s = Banner_start;
 		if( s ){
 			tempfd = Make_temp_fd( bannerpath, sizeof(bannerpath) );
+
 			DEBUG2( "Send_job: banner path '%s'", bannerpath );
+
+			/* fix up the control file */
+			if( cfp->data_file_list.count+1 >= cfp->data_file_list.max ){
+				extend_malloc_list(&cfp->data_file_list, sizeof(df[0]),
+					1,__FILE__,__LINE__);
+			}
+			dfp = (void *)cfp->data_file_list.list;
+			if( Banner_last ){
+				df = &dfp[cfp->data_file_list.count];
+			} else {
+				for(i=cfp->data_file_list.count; i > 0; --i ){
+					dfp[i] = dfp[i-1];
+				}
+				df = &dfp[0];
+			}
+			++cfp->data_file_list.count;
+			memset(df,0,sizeof(df[0]));
+
+			/* add control file line */
+			safestrncpy( df->Ninfo, "N(banner)" );
+			plp_snprintf(df->cfline, sizeof(df->cfline),
+				"fdfA%0*d%s", cfp->number_len, cfp->number, cfp->filehostname );
+			safestrncpy( df->openname, bannerpath );
 			if( Print_banner( s, cfp, 0, tempfd, 0, 0, printcap_entry ) ){
 				Errorcode = JABORT;
 				fatal( LOG_INFO, "Send_job: banner generation failed" );
 			}
-			if( cfp->data_file_list.count >= cfp->data_file_list.max ){
-				Errorcode = JABORT;
-				fatal( LOG_INFO, "Send_job: no space in data file list for banner" );
-			}
-			if( cfp->data_file_list.count >= 52 ){
-				Errorcode = JABORT;
-				fatal( LOG_INFO, "Send_job: banner and more than 52 jobs" );
-			}
-			dfp = (void *)cfp->data_file_list.list;
-			/* get the job number */
-			n = 0;
-			for( j = 'z'; n == 0 && j >= 'a'; --j ){
-				n = j;
-				for( i = 0; n && i < cfp->data_file_list.count; ++i ){
-					df = &dfp[i];
-					/* we get the transfername of the file */
-					s = df->transfername;
-					DEBUG2("Send_job: banner and transfername '%s'", s );
-					/* transfername has format dfNxxxx, N is [2] */
-					if( n == s[2] ) n = 0;
-				}
-			}
-			DEBUG2("Send_job: banner key is '%c'", n );
-			/* copy the first data file to the last one */
-			df = &dfp[cfp->data_file_list.count++];
-			df[0] = dfp[0];
-			/* now we fix up the entries */
-			safestrncpy( df->Ninfo, "N(banner)" );
-			/* we fix up transfer name */
-			df->transfername[3] = n;
-			if( df->Uinfo[0] ) df->Uinfo[3] = n;
-			safestrncpy(df->openname, bannerpath );
-			/* now we insert the various lines */
-			if( Banner_last ){
-				Add_job_line(cfp, df->transfername, 0 );
-				Add_job_line(cfp, df->Ninfo, 0 );
-				Add_job_line(cfp, df->Uinfo, 0 );
-			} else {
-				Insert_job_line(cfp, df->Uinfo, 0, cfp->control_info);
-				Insert_job_line(cfp, df->Ninfo, 0, cfp->control_info);
-				Insert_job_line(cfp, df->transfername, 0, cfp->control_info);
-				cfp->flags |=  LAST_DATA_FILE_FIRST;
-			}
 			if( fstat( tempfd, &df->statb ) < 0 ){
-				Errorcode = JABORT;
-				logerr_die( LOG_INFO, "Send_job: fstat tempfd failed" );
+				logerr_die( LOG_INFO,
+					"Send_job: fstat of temp file '%s' failed",
+					df->openname );
 			}
 			close(tempfd);
 		}
@@ -186,8 +167,12 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 
 	/* fix up the control file */
 	if( Fix_control( cfp, printcap_entry ) ){
-		/* NOTE: we are brutal - we need to reread the control file */
-		DEBUG3("Send_job: rereading control file '%s'", cfp->openname );
+		Errorcode = JABORT;
+		if( cfp->error[0] ){
+			fatal( LOG_INFO, "Send_job: %s", cfp->error );
+		} else {
+			fatal( LOG_INFO, "Send_job: Fix_control failed" );
+		}
 	}
 
 	/*
@@ -230,11 +215,7 @@ retry_connect:
 	}
 
 	errno = 0;
-	/* we use localhost connection when try_localhost flag set;
-	 * we force it when we have Force_localhost
-	 */
-	sock = Link_open( host,connect_timeout,
-				Localhost_connection());
+	sock = Link_open( host, connect_timeout );
 	err = errno;
 	DEBUG4("Send_job: socket %d", sock );
 	if( sock < 0 ){
@@ -306,7 +287,7 @@ retry_connect:
 		}
 		setstatus( cfp, "done job '%s' transfer to %s@%s",
 			id, printer, host );
-		if( Is_server == 0 && LP_mode ){
+		if( Is_server == 0 && LP_mode && !Silent ){
 			id = cfp->identifier;
 			if( id[0] ){
 				plp_snprintf( msg,sizeof(msg)-1,"request id is %s\n", id+1 );
@@ -495,15 +476,14 @@ send_data:
 		}
 		df = &df[order];
 		DEBUG3(
-	"Send_files: [%d] transfer '%s', open '%s', fd %d, size %d, copies %d",
-		order, df->transfername+1, df->openname, df->fd, df->statb.st_size,
-		df->copies );
-		if( df->copies == 0 ) continue;	/* we do not send this file */
+	"Send_files: [%d] cfline '%s', openname '%s', fd %d, size %d, is_a_copy %d",
+		order, df->cfline, df->openname, df->fd, df->statb.st_size,
+		df->is_a_copy );
+		if( df->is_a_copy ) continue;	/* we do not send this file */
 		if( (DbgTest & 0x01) && count == 0 ){
 			DEBUG0("Send_files: DgbTest flag 0x01 set! skip first file" );
 			continue;
 		}
-		DEBUG3( "Send_files: openname '%s', fd %d", df->openname, df->fd );
 		fd = df->fd;
 		if( df->d_flags & PIPE_FLAG ){
 			DEBUG3( "Send_files: file '%s' open already, fd %d",
@@ -617,9 +597,9 @@ send_data:
 		 * send the data file name line
 		 */
 		plp_snprintf( line, sizeof(line), "%c%d %s\n",
-				DATA_FILE, size, df->transfername+1 );
+				DATA_FILE, size == -1? 0 : size, df->cfline+1 );
 		if( block_fd == 0 ){
-			setstatus( cfp, "sending file '%s' to %s@%s", df->transfername+1,
+			setstatus( cfp, "sending file '%s' to %s@%s", df->cfline+1,
 				printer, host );
 			DEBUG3("Send_files: data file line '%s'", line );
 			errno = 0;
@@ -656,16 +636,16 @@ send_data:
 					"Send_files: error '%s' sending data file '%s' to %s@%s",
 					Link_err_str( status ), df->openname, printer, host );
 				setstatus( cfp, "error sending '%s' to %s@%s",
-					df->transfername+1, printer, host );
+					df->cfline+1, printer, host );
 			} else {
 				setstatus( cfp, "completed '%s' to %s@%s",
-					df->transfername+1, printer, host );
+					df->cfline+1, printer, host );
 			}
 		} else {
 			int total;
 			int len;
 
-			write_file = df->transfername+1;
+			write_file = df->cfline+1;
 			if( Write_fd_str( block_fd, line ) < 0 ){
 				goto write_error;
 			}

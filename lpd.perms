@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms,v 3.6 1997/12/20 21:16:26 papowell Exp $
+# lpd.perms,v 3.7 1998/03/24 02:43:22 papowell Exp
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -67,13 +67,28 @@
 ##   SA= IP of source of request = IP of server host
 ## 
 ## Match: S = string with wild card, IP = IPaddress[/netmask],
-##   N = low[-high] number range, V = exact value match.
+##   N = low[-high] number range, V= matching or compatible values
 ## SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
 ##    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
 ##    'C' - lpc spool control request; 'S' - lpc spool status request
 ## NOTE: when printing (P action), the remote and job check values
 ##   (i.e. - RUSR, JUSR) are identical.
 ## 
+## 
+## The SAMEHOST match checks to see that one (or more) of the
+##  IP addresses of the host originating the request are the
+##  same as one or more of the IP addresses of the host whose
+##  hostname appears in the control file.
+## The SERVER match checks to see if one (or more) of the
+##  IP addresses of the host originating the request are the
+##  same as one or more of the IP addresses of the server or
+##  match the localhost's  IP address.  Note that in IPV6, there may
+##  be multiple IP addresses for a single host.
+## The FORWARD checks to see that all of the IP addresses of the
+##  IP addresses of the host originating the request are not the
+##  same as one or more of the IP addresses of the host whose
+##  hostname appears in the control file.  This is equivalent to
+##  NOT SAMEHOST
 ## 
 ## The  special key letter=patterns searches the control file
 ## line starting with the (upper case) letter, and is usually
@@ -104,7 +119,7 @@
 ##      Match is done by converting to 32 bit x, y, and IP value and using:
 ##         success = ((x ^ IP ) & y) == 0   (C language notation)
 ##     i.e.- only bits where mask is non-zero are used in comparison.
-##     For example - IP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+##     For example - REMOTEIP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
 ##          
 ## N = numerical range  -  low-high integer range.
 ##      Format: low[-high]
@@ -129,7 +144,7 @@
 ## 
 ## #Reject connections from hosts not on subnet 130.191.0.0
 ## # or Engineering pc's
-##   REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
+##   REJECT SERVICE=X NOT REMOTEIP=130.191.0.0/255.255.0.0
 ##   REJECT SERVICE=X NOT REMOTEHOST=engpc*
 ## 
 ## #Do not allow anybody but root or papowell on

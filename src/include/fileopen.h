@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: fileopen.h
  * PURPOSE: fileopen.c functions
- * $Id: fileopen.h,v 3.3 1997/02/25 04:50:25 papowell Exp $
+ * fileopen.h,v 3.3 1997/02/25 04:50:25 papowell Exp
  **************************************************************************/
 
 #ifndef _FILEOPEN_H

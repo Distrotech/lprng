@@ -10,7 +10,7 @@
  * PURPOSE: perform system dependent initialization
  **************************************************************************/
 
-static char *const _id = "$Id: initialize.c,v 3.10 1997/10/27 00:14:19 papowell Exp $";
+static char *const _id = "initialize.c,v 3.11 1998/03/29 21:11:10 papowell Exp";
 
 #include "lp.h"
 #include "initialize.h"
@@ -46,9 +46,10 @@ static char *const _id = "$Id: initialize.c,v 3.10 1997/10/27 00:14:19 papowell 
  * This should NOT do any network operations
  ***************************************************************************/
 
-void Initialize( char *argv[] )
+void Initialize(int argc,  char *argv[], char *envp[] )
 {
 	if( !Init_done ){
+		initsetproctitle( argc, argv, envp );
 		Init_done = 1;
 		Name = "UNKNOWN";
 		if( argv && argv[0] ){
@@ -66,6 +67,11 @@ void Initialize( char *argv[] )
 		set42sig();
 #endif
 
+#if defined(DMALLOC)
+		malloc(1);
+		dmalloc_outfile = 2;
+		dmalloc_log_heap_map();
+#endif
 		/* set suid information */
 		To_user();
 
@@ -79,6 +85,7 @@ void Initialize( char *argv[] )
 		bindtextdomain (PACKAGE, LOCALEDIR);
 		textdomain (PACKAGE);
 #endif
+
 
 		/*
 			open /dev/null on fd 0, 1, 2 if neccessary
@@ -95,7 +102,7 @@ void Initialize( char *argv[] )
 		}
 		if( Interactive ){
 			if( Cfp_static == 0 ){
-				malloc_or_die( Cfp_static, sizeof( Cfp_static[0] ) );
+				Cfp_static=malloc_or_die(  sizeof( Cfp_static[0] ) );
 				memset( Cfp_static, 0, sizeof( Cfp_static[0] ) );
 			}
 			Cfp_static->remove_on_exit = 1;
@@ -150,7 +157,7 @@ void Setup_configuration()
 #if defined(IN6_ADDR)
 	if( IPV6Protocol ){
 		AF_Protocol = AF_INET6;
-#if defined(HAVE_RESOLV_H) && defined(RES_USE_INET6)
+#if defined(HAVE_RESOLV_H) && defined(RES_USE_INET6) && defined(HAVE_RES)
 		_res.options |= RES_USE_INET6;
 #endif
 	} else {

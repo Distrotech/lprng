@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/printer_perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms.proto,v 3.2 1997/12/20 21:16:26 papowell Exp $
+# lpd.perms.proto,v 3.2 1997/12/20 21:16:26 papowell Exp
 ########################################################################## 
 # Printer permissions data base
 #

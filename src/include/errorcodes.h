@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: errorcode.h
  * PURPOSE: filter error return codes
- * "$Id: errorcodes.h,v 3.2 1997/01/27 20:04:24 papowell Exp $"
+ * "errorcodes.h,v 3.3 1998/03/29 18:33:01 papowell Exp"
  **************************************************************************/
 
 /*
@@ -28,3 +28,5 @@
 #define JHOLD    37    /* hold this job */
 #define JNOSPOOL 38    /* no spooling to this queue */
 #define JNOPRINT 39    /* no printing from this queue  */
+#define JSIGNAL  40    /* killed by unrecognized signal */
+#define JFAILNORETRY  41 /* no retry on failure */

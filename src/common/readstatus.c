@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: readstatus.c,v 3.8 1997/12/17 19:34:56 papowell Exp $";
+"readstatus.c,v 3.9 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "readstatus.h"
@@ -132,29 +132,20 @@ int   last_len;
 
 static int Save_line( char *line, int output )
 {
-	int index, len;
+	int index;
 	char **buffer;
 
 	if( Longformat ){
-		if( status_lines.count + 1 >= status_lines.max ){
+		if( status_lines.count + 2 >= status_lines.max ){
 			extend_malloc_list( &status_lines, sizeof(buffer[0]),
-			status_list.count+100 );
+			10,__FILE__,__LINE__  );
 		}
 		buffer = (void *)status_lines.list;
 		DEBUG1("Save_line: status_lines buff 0x%x, count %d, max %d",
 			buffer, status_lines.count, status_lines.max );
 		index = status_lines.count;
 		if( line ){
-			len = strlen( line );
-			if( len + 1 > last_len ){
-				last_len = LARGEBUFFER;
-				while( last_len <= len ) last_len += LARGEBUFFER;
-				last_buffer = add_buffer( &status_list, last_len );
-			}
-			strcpy( last_buffer, line );
-			line = last_buffer;
-			last_buffer += len + 1;
-			last_len -= len + 1;
+			line = add_str( &status_list, line,__FILE__,__LINE__  );
 			buffer[status_lines.count++] = line;
 		}
 		buffer[status_lines.count] = 0;
@@ -211,8 +202,8 @@ static int pr_count;
 static int Analyze( char *line, int index, struct malloc_list *status )
 {
 	char msg[LINEBUFFER];
-	char *fieldptr[LINEBUFFER+1];
-	char **fields;
+	char *field[LINEBUFFER+1];
+	char **fields = &field[0];
 	int fieldcount, i, j, c, colon, len;
 	char *s, *t, *end;
 	char copy[LINEBUFFER];
@@ -220,7 +211,7 @@ static int Analyze( char *line, int index, struct malloc_list *status )
 
 	fieldcount = 0;
 	colon = 0;
-	fields = fieldptr;
+	fields[0] = 0;
 	if( line ){
 		safestrncpy( copy, line );
 		for( s = copy;s && *s; s = end ){
@@ -229,9 +220,9 @@ static int Analyze( char *line, int index, struct malloc_list *status )
 			end = strpbrk( s, " \t\n" );
 			if( end ) *end++ = 0;
 			fields[fieldcount++] = s;
+			fields[fieldcount] = 0;
 		}
 	}
-	fields[fieldcount] = 0;
 	if( (s = fields[0]) ){
 		for( i = 0; colon == 0 && (t = colonkey[i].keyword); ++i ){
 			if( strcmp(s, t ) == 0 ){
@@ -474,7 +465,7 @@ int Pr_status_check( char *name )
 	if( name[0] ){
 		if( pr_sent.count+2 >= pr_sent.max ){
 			extend_malloc_list( &pr_sent, sizeof( list[0] ),
-			pr_sent.count+10 );
+			pr_sent.count+10,__FILE__,__LINE__  );
 		}
 		list = pr_sent.list;
 		for( i = 0; i < pr_sent.count; ++i ){

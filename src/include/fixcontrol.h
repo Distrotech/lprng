@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: fixcontrol.h
  * PURPOSE: fixcontrol.c functions
- * $Id: fixcontrol.h,v 3.2 1997/01/29 03:04:39 papowell Exp $
+ * fixcontrol.h,v 3.2 1997/01/29 03:04:39 papowell Exp
  **************************************************************************/
 
 #ifndef _FIXCONTROL_H

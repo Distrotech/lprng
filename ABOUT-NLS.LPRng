@@ -7,6 +7,7 @@ Thu Mar 13 10:59:37 PST 1997
   ***** Lines starting with * indicate that this procedure is
   ***** different than the usual ones used with gettext in
   ***** other distributions.
+ABOUT-NLS.LPRng,v 1.2 1998/03/29 18:49:32 papowell Exp
 
   If you wish to use the gettext and internationalization features,
 you will have to do the following.

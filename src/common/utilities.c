@@ -10,7 +10,7 @@
  * PURPOSE: basic set of utilities
  **************************************************************************/
 
-static char *const _id = "$Id: utilities.c,v 3.5 1997/09/18 19:46:07 papowell Exp $";
+static char *const _id = "utilities.c,v 3.5 1997/09/18 19:46:07 papowell Exp";
 
 #include "lp.h"
 #include "utilities.h"

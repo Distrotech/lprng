@@ -8,6 +8,6 @@
  ***************************************************************************
  * MODULE: globmatch.h
  * PURPOSE: glob pattern matching
- * $Id: globmatch.h,v 3.1 1996/12/28 21:40:28 papowell Exp $
+ * globmatch.h,v 3.1 1996/12/28 21:40:28 papowell Exp
  **************************************************************************/
 int Globmatch( char *pattern, char *str );

@@ -1,5 +1,5 @@
 #!/bin/sh
-# '$Id: testauth,v 3.3 1997/12/16 15:06:17 papowell Exp $'
+# 'testauth,v 3.3 1997/12/16 15:06:17 papowell Exp'
 USER=${USER:-`whomai`};
 SHELL=/bin/sh
 SETUPAUTH=/tmp/setupauth

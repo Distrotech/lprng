@@ -21,7 +21,7 @@ for a complete list of configuration variables and their effects.
 <H2><A NAME="ss8.1">8.1 Configuration File Format</A>
 </H2>
 
-<P>The LPRng distribution contains an template <CODE>lpd.conf</CODE> file
+<P>The LPRng distribution contains a template <CODE>lpd.conf</CODE> file
 which can be installed as
 <CODE>/etc/lpd.conf</CODE>.
 The configuration file has the following format:
@@ -89,7 +89,7 @@ The STDIN will be attached to <CODE>/dev/null</CODE>,
 the configuration information should be written to STDOUT,
 and STDERR will be attached to the appropriate log file or error output.
 <P>To change any of the <CODE>config_file</CODE> specifications,
-the the <CODE>LPRng/src/common/default.c</CODE>
+the the <CODE>LPRng/src/common/vars.c</CODE>
 file will need to be modified and the LPRng software recompiled.
 <P>In addition,
 LPRng has a special <EM>debug</EM> mode.

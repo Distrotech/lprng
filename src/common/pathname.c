@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: pathname.c,v 3.2 1997/09/18 19:46:01 papowell Exp $";
+"pathname.c,v 3.2 1997/09/18 19:46:01 papowell Exp";
 
 #include "lp.h"
 #include "pathname.h"

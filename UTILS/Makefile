@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: UTILS/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile,v 3.1 1996/12/28 21:40:50 papowell Exp $
+# Makefile,v 3.3 1998/03/30 02:33:23 papowell Exp
 ########################################################################## 
 
 .PHONY: all clean ci install realclean mostlyclean distclean
@@ -16,9 +16,13 @@
 all clean install realclean mostlyclean distclean:
 	echo done
 
-ci:
+CI=
+CO=-kv
+
+cifast ci:
 	checkin() { \
-		ci $(CI) -l -mUpdate -t-Initial $$1; \
+		ci $(CI) -mUpdate -t-Initial $$1; \
+		co $(CO) $$1; \
 	}; \
 	for i in *; do \
 		echo $$i ; \

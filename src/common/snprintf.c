@@ -13,7 +13,7 @@
 #include "lp.h"
 /**** ENDINCLUDE ****/
 
-static char *const _id = "$Id: snprintf.c,v 3.3 1997/09/18 19:46:06 papowell Exp $";
+static char *const _id = "snprintf.c,v 3.3 1997/09/18 19:46:06 papowell Exp";
 
 /*
  * dopr(): poor man's version of doprintf

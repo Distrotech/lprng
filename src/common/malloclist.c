@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: malloclist.c,v 3.6 1997/09/18 19:46:01 papowell Exp $";
+"malloclist.c,v 3.7 1998/03/24 02:43:22 papowell Exp";
 #include "lp.h"
 #include "malloclist.h"
 /**** ENDINCLUDE ****/
@@ -20,8 +20,8 @@ static char *const _id =
  * extend_malloc_list( struct malloc_list *buffers, int element )
  *   add more entries to the array in the list
  ***************************************************************************/
-
-void extend_malloc_list( struct malloc_list *buffers, int element, int incr )
+void extend_malloc_list( struct malloc_list *buffers, int element, int incr,
+	char *file, int line)
 {
 	int size, orig;
 	char *s;
@@ -47,26 +47,22 @@ void extend_malloc_list( struct malloc_list *buffers, int element, int incr )
 		if( size == 0 ){
 			fatal( LOG_ERR, "extend_malloc_list: malloc of 0!!" );
 		}
-		s = malloc( size );
-		if( s == 0 ){
-			logerr_die( LOG_ERR,
-				"extend_malloc_list: malloc %d failed", size );
-		}
+		s = (void *)malloc_or_die( size );
 		buffers->size = element;
 	}
 	buffers->list = (void *)s;
 	memset( s+orig, 0, size-orig );
-	DEBUG4( "extend_malloc_list: list 0x%x, count %d, max %d, element %d",
-		buffers->list, buffers->count, buffers->max, element );
+	DEBUG4( "extend_malloc_list: file %s, line %d- alloc 0x%x, buf 0x%x",
+		file, line, s, buffers);
 }
 
 /***************************************************************************
  * add_buffer( pcf, size )
- *  add a new entry to the printcap file list
+ *  add a new entry to the malloc list
  * return pointer to start of size byte area in memory
  ***************************************************************************/
 
-char *add_buffer( struct malloc_list *buffers, int len )
+char *add_buffer( struct malloc_list *buffers, int len, char *file, int ln )
 { 
 	char *s;
 
@@ -74,30 +70,57 @@ char *add_buffer( struct malloc_list *buffers, int len )
 	DEBUG4( "add_buffer: 0x%x before list 0x%x, count %d, max %d, len %d",
 		buffers,
 		buffers->list, buffers->count, buffers->max, len );
-	if( buffers->count+1 >= buffers->max ){
-		extend_malloc_list( buffers, sizeof( buffers->list[0] ),
-			buffers->count+10 );
+	if( buffers->count+2 >= buffers->max ){
+		extend_malloc_list( buffers, sizeof( buffers->list[0] ), 10, file, ln );
 	}
-
 	/* malloc data structures */
 	if( len == 0 ){
 		fatal( LOG_ERR, "add_buffer: malloc of 0!!" );
 	}
-	s = malloc( len );
-	if( s == 0 ){
-		logerr_die( LOG_ERR, "add_buffer: malloc %d failed", len );
-	}
-	s[0] = 0;
-	s[len-1] = 0;
+	s = malloc_or_die( len );
+	memset(s,0,len);
 
 	buffers->list[buffers->count] = s;
 	++buffers->count;
-	DEBUG4( "add_buffer: 0x%x after list 0x%x, count %d, max %d, allocated 0x%x, len %d",
-		buffers,
-		buffers->list, buffers->count, buffers->max, s, len );
+	buffers->list[buffers->count] = 0;
+	DEBUG4( "add_buffer: file '%s', line %d, alloc 0x%x, len %d, buf 0x%x, list 0x%x, count %d, max %d",
+		file, ln, s, len, buffers,
+		buffers->list, buffers->count, buffers->max, s);
 	return( s );
 }
 
+
+/***************************************************************************
+ * add_buffer( pcf, size )
+ *  add a string entry to the malloc list
+ * return pointer to start of size byte area in memory
+ ***************************************************************************/
+
+char *add_str( struct malloc_list *buffers, char *str, char *file, int ln )
+{ 
+	char *s;
+	int len = strlen(str)+1;
+
+	/* extend the list information */
+	DEBUG4( "add_str: 0x%x before list 0x%x, count %d, max %d, len %d",
+		buffers,
+		buffers->list, buffers->count, buffers->max, len );
+	if( buffers->count+2 >= buffers->max ){
+		extend_malloc_list( buffers, sizeof( buffers->list[0] ), 10, file, ln );
+	}
+
+	/* malloc data structures */
+	s = malloc_or_die( len );
+	strcpy(s,str);
+
+	buffers->list[buffers->count] = s;
+	++buffers->count;
+	buffers->list[buffers->count] = 0;
+	DEBUG4( "add_str: file '%s', line %d, alloc 0x%x, str '%s', len %d, buf 0x%x, list 0x%x, count %d, max %d",
+		file, ln, s, s, len, buffers,
+		buffers->list, buffers->count, buffers->max, s);
+	return( s );
+}
 
 /***************************************************************************
  * clear_malloc_list( struct malloc_list *buffers, int free_list )
@@ -117,6 +140,11 @@ void clear_malloc_list( struct malloc_list *buffers, int free_list )
 			free( buffers->list[i] );
 			buffers->list[i] = 0;
 		}
+	}
+	if( buffers->list ){
+		free(buffers->list);
+		buffers->list = 0;
+		buffers->max = 0;
 	}
 	buffers->count = 0;
 }
@@ -153,57 +181,52 @@ void Clear_control_file( struct control_file *cf )
 	cf->destination_list = f.destination_list;
 }
 
-char *Add_job_line( struct control_file *cf, char *str, int nodup )
+char *Add_job_line( struct control_file *cf, char *str, int nodup,
+	char *file, int ln )
 {
-	char **lines, *buffer;
+	char **lines;
+	if( nodup == 0 ){
+		str = add_str( &cf->control_file_image, str, file,ln );
+	}
 	if( cf->control_file_lines.count+2 >= cf->control_file_lines.max ){
-		extend_malloc_list( &cf->control_file_lines, sizeof( char * ), 100 );
+		extend_malloc_list( &cf->control_file_lines, sizeof( char * ),
+			10, file, ln );
 	}
 	lines = (void *)cf->control_file_lines.list;
-	if( nodup == 0 ){
-		buffer = add_buffer( &cf->control_file_image, strlen(str)+1 );
-		strcpy( buffer, str );
-		str = buffer;
-	}
 	lines[ cf->control_file_lines.count++ ] = str;
 	lines[ cf->control_file_lines.count ] = 0;
 	return( str );
 }
 
 /***************************************************************************
- * char *Prefix_job_line( struct control_file *cf, char *str, int nodup )
- *  put the job line at the start of the control file
- *  nodup = 1 - do not make a copy
- ***************************************************************************/
-/***************************************************************************
  * Insert_job_line( struct control_file *cf, int char *str, int nodup,
  *          int position )
- *  insert a line into the job file at the indicated position, moving rest down
+ *  insert a line into the job control file at the indicated position, moving rest down
  *  nodup = 1 - do not make a copy
  ***************************************************************************/
 
-char *Insert_job_line( struct control_file *cf, char *str, int nodup, int position )
+char *Insert_job_line( struct control_file *cf, char *str, int nodup,
+	int position, char *file, int ln )
 {
 	int i;
-	char **lines, *buffer;
+	char **lines;
 
 	/* extend if if necessary */
-	++cf->control_file_lines.count;
-	if( cf->control_file_lines.count+1 >= cf->control_file_lines.max ){
-		extend_malloc_list( &cf->control_file_lines, sizeof( char * ), 100 );
+	if( cf->control_file_lines.count+2 >= cf->control_file_lines.max ){
+		extend_malloc_list( &cf->control_file_lines, sizeof( char * ),
+			10, file, ln );
 	}
 	lines = (void *)cf->control_file_lines.list;
-	/* copy down one position - now lines.count is terminating NULL pointer */
-	for( i = cf->control_file_lines.count; i != position; --i ){
+	/* copy down one position - now lines.count is last pointer */
+	for( i = cf->control_file_lines.count; i > position; --i ){
 		lines[i] = lines[i-1];
 	}
 	if( nodup == 0 ){
-		buffer = add_buffer( &cf->control_file_image, strlen(str)+1 );
-		strcpy( buffer, str );
-		lines[ position ] = buffer;
-	} else {
-		lines[ position ] = str;
-		buffer = str;
+		str = add_str( &cf->control_file_image, str, file,ln );
 	}
-	return( buffer );
+	lines[ position ] = str;
+	++cf->control_file_lines.count;
+	lines[cf->control_file_lines.count] = 0;
+	++cf->control_info;
+	return( str );
 }

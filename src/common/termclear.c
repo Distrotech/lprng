@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *	 papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: termclear.c,v 3.3 1997/09/18 19:46:07 papowell Exp $";
+"termclear.c,v 3.5 1998/03/29 18:32:58 papowell Exp";
 
 #include "lp.h"
 #include "termclear.h"
@@ -42,17 +42,6 @@ static char *const _id =
 #endif
 
 #if defined(HAVE_TERMCAP_H) || defined(HAVE_CURSES_H) || defined(HAVE_TERM_H)
-static int tinit_done;
-static char *TE_string;
-static char *CL_string;
-
-/*
- * Michael Haardt: stop users from overwriting buffer.
- * this won't stop them, but it'll make it harder.
- */
-static char bp[2048];
-static char xp[2048];
-static char *area = xp;
 
 /*
  * Patrick Powell Fri Aug 11 23:04:11 PDT 1995
@@ -60,13 +49,13 @@ static char *area = xp;
  *  portablilty is sooooo hard to do.
  * 
  * SUNOS: 4.1.1-4.1.3 - termcap(1) man page
- *      tputs(cp, affcnt, outc)
- *      register char *cp;
- *      int affcnt;
- *      int (*outc)();
+ *	  tputs(cp, affcnt, outc)
+ *	  register char *cp;
+ *	  int affcnt;
+ *	  int (*outc)();
  * 
  * BSD-4.4 + - man page
- *      tputs(register char *cp, int affcnt, int (*outc)());
+ *	  tputs(register char *cp, int affcnt, int (*outc)());
  * 
  * BSD-4.4 /usr/include/curses.h
  * 	int  tputs (char *, int, void (*)(int));
@@ -94,8 +83,11 @@ static char *area = xp;
 #define PPUTS_VALTYPE char
 #endif
 
-#if !defined(HAVE_TGETSTR_DEF)
+#if !defined(HAVE_TGETSTR_DEF) && !defined(IS_LINUX)
 char *tgetstr(char *id, char **area);
+#endif
+#if !defined(HAVE_TGETENT_DEF) && !defined(IS_LINUX)
+int tgetent(char *buf, char *name);
 #endif
 
 static PPUTS_RETTYPE pputs(PPUTS_VALTYPE c)
@@ -104,32 +96,47 @@ static PPUTS_RETTYPE pputs(PPUTS_VALTYPE c)
 	return PPUTS_RETVAL(c);
 }
 
+static int tinit_done;
+static char *TE_string;
+static char *CL_string;
+static char *bp, *xp, *area, *sp, *ti;
+#define MS 10240
+#define CH 1024
+
 void Term_clear(void)
 {
-    char *sp,*ti;
-
+	int i;
 	DEBUG0("Term_clear");
-    if (tinit_done == 0) 
-    {
-        tinit_done = 1;
-        if (isatty (0) && (sp = getenv ("TERM")) != (char*)0) 
-        {
-            if (tgetent (bp, sp) > 0) 
-            {
-                if ((ti=tgetstr ("ti", &area))!=(char*)0) tputs(ti,0,pputs);
-                TE_string = tgetstr ("te", &area);
-                CL_string = tgetstr ("cl", &area);
-            }
-        }
-    }
-    if (CL_string) tputs (CL_string, 0, pputs);
-    fflush(stdout);
+	if (tinit_done == 0) {
+		tinit_done = 1;
+		if (isatty (0) && (sp = getenv ("TERM")) != (char*)0){
+			bp = malloc_or_die(MS);
+			xp = malloc_or_die(MS);
+			((int *)(&bp[MS-CH]))[0] = getpid();
+			((int *)(&xp[MS-CH]))[0] = getpid();
+			area = xp;
+			if (tgetent (bp, sp) > 0){
+				ti=tgetstr("ti", &area);
+				TE_string = tgetstr ("te", &area);
+				CL_string = tgetstr ("cl", &area);
+				/* check for nasty things */
+				if( ((int *)(&bp[MS-CH]))[0] != getpid()) abort();
+				if( ((int *)(&xp[MS-CH]))[0] != getpid()) abort();
+				for( i = MS-CH+sizeof(int); i < MS; ++i ){
+					if( xp[i] ) abort();
+				}
+			}
+		}
+		if(ti)tputs(ti, 0, pputs);
+	}
+	if (CL_string) tputs (CL_string, 0, pputs);
+	fflush(stdout);
 }
 
 void Term_finish(void)
 {
-    if (TE_string) tputs (TE_string, 0, pputs);
-    fflush(stdout);
+	if (TE_string) tputs (TE_string, 0, pputs);
+	fflush(stdout);
 }
 
 #else

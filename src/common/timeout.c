@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: timeout.c,v 3.5 1997/09/18 19:46:07 papowell Exp $";
+"timeout.c,v 3.5 1997/09/18 19:46:07 papowell Exp";
 
 #include "lp.h"
 #include "timeout.h"

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/printcap.proto
 # PURPOSE: printcap prototype
-# $Id: printcap.proto,v 3.2 1997/01/24 20:27:06 papowell Exp $
+# printcap.proto,v 3.2 1997/01/24 20:27:06 papowell Exp
 ########################################################################## 
 #
 # This is a set of printcap entries used for testing and an example of the

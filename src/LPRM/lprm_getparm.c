@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lprm_getparm.c,v 3.6 1997/10/10 03:04:15 papowell Exp $";
+"lprm_getparm.c,v 3.6 1997/10/10 03:04:15 papowell Exp";
 
 #include "lp.h"
 #include "patchlevel.h"

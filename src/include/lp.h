@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: lp.h
  * PURPOSE: general type definitions that are used by all LPX facilities.
- * $Id: lp.h,v 3.30 1998/01/18 00:10:32 papowell Exp papowell $
+ * lp.h,v 3.32 1998/03/29 18:33:06 papowell Exp
  **************************************************************************/
 
 #ifndef _LP_H_
@@ -62,12 +62,15 @@ int vplp_snprintf ();
 #endif
 
 
+void initsetproctitle(int argc, char *argv[], char *envp[]);
 /* VARARGS3 */
 #if !defined(HAVE_SETPROCTITLE) || !defined(HAVE_SETPROCTITLE_DEF)
 #  ifdef HAVE_STDARGS
 void setproctitle( const char *fmt, ... );
+void proctitle( const char *fmt, ... );
 #  else
 void setproctitle();
+void proctitle();
 #  endif
 #endif
 
@@ -149,6 +152,7 @@ EXTERN char *Orig_printer;	/* Printer name for logging */
 EXTERN char *Queue_name;	/* Queue name used for spooling */
 EXTERN char *Forwarding;	/* Forwarding to remote host */
 EXTERN char *Classes;		/* Classes for printing */
+EXTERN int Class_in_status;	/* Show class in status information */
 EXTERN int Destination_port;	/* Destination port for connection */
 EXTERN char *Server_order;	/* order servers should be used in */
 EXTERN int Max_servers;		/* max servers currently active */
@@ -317,7 +321,7 @@ EXTERN struct malloc_list C_files_list;
 
 struct data_file {
 	char openname[MAXPATHLEN];		/* full pathname of datafile */
-	char transfername[LINEBUFFER];	/* transfername of data file - short */
+	char cfline[LINEBUFFER];	/* control file line */
 	char original[LINEBUFFER];	/* original name of data file - short */
 	char Ninfo[LINEBUFFER];	/* 'N' Option information: userfile, (stdin) */
 	char Uinfo[LINEBUFFER];	/* 'U' Option information */
@@ -327,7 +331,7 @@ struct data_file {
 	int d_flags;			/* flags */
 	int found;			/* job found in control file and sent */
 #define PIPE_FLAG		0x01	/* pipe */
-	int copies;			/* if non-zero, this is the transfered copy */
+	int is_a_copy;		/* if non-zero, this is a copy */
 	off_t offset;		/* offset from the start of the block format file */
 	off_t length;		/* length file */
 };
@@ -335,16 +339,16 @@ struct data_file {
 
 struct hold_file {
 	int  attempt;			/* number of print attempts */
-	int  not_printable;		/* printable status */
+	/* int  not_printable;	/ * printable status */
 	int  held_class;		/* held class for printing */
-	long priority_time;		/* priority time */
-	long hold_time;			/* hold time */
-	long remove_time;		/* removal time */
-	long done_time;			/* finished time */
-	long routed_time;		/* routed to destinations */
-	long active_time;		/* time started printing */
+	time_t priority_time;		/* priority time */
+	time_t hold_time;			/* hold time */
+	time_t remove_time;		/* removal time */
+	time_t done_time;			/* finished time */
+	time_t routed_time;		/* routed to destinations */
+	time_t active_time;		/* time started printing */
 	int  server;			/* pid of server if it is active */
-	int  subserver;			/* pid of server if it is active */
+	int  subserver;			/* pid of subserver if it is active */
 	char redirect[LINEBUFFER];	/* redirection */
 };
 
@@ -359,10 +363,12 @@ struct control_file {
 	int  recvd_number_len;	/* original digits of number of job */
 	int  jobsize;			/* size of job in bytes */
 	int  copynumber;		/* copy number */
+	int  number_of_unique_data_files;	/* we count this */
+	int  name_format_error;	/* name format error in job */
 	char filehostname[LINEBUFFER];	/* hostname part of the control file name */
 	struct stat statb;		/* stat of control file information */ 
 	char hold_file[MAXPATHLEN];	/* full pathname of hold file */
-	struct stat hstatb;		/* stat of hold file information */ 
+	/* struct stat hstatb;		/ * stat of hold file information */ 
 	int priority;			/* priority from the job ID */
 	int flags;				/* flags used to indicate an error or status */
 #define LAST_DATA_FILE_FIRST 0x2
@@ -410,14 +416,13 @@ struct destination {
 	int copies;						/* number of copies */
 	int copy_done;					/* copies done */
 	int status;						/* status of copy */
-	int hold;						/* held */
-	int server;						/* server */
+	time_t hold_time;				/* held */
 	int subserver;					/* subserver */
-	int done;						/* done */
+	time_t done_time;				/* done */
 	int attempt;					/* attempt */
 	int ignore;						/* ignore */
 	int sequence_number;			/* sequence number to add to job */
-	int not_printable;
+	/* int not_printable;			/ * not printable flag */
 	int priority;					/* new priority from control file */
 };
 
@@ -586,6 +591,7 @@ struct file_entry {
 
 EXTERN int Printing_disabled;	/* No printing */
 EXTERN int Spooling_disabled;	/* No spooling */
+EXTERN int Printing_aborted;	/* Printing_aborted */
 
 
 /*****************************************************************
@@ -603,7 +609,6 @@ struct filter {
 	char *copy;		/* copy of command string - malloc */
 	struct dpathname exec_path;	/* pathname */
 	struct malloc_list args;		/* argument list */
-	struct malloc_list env;			/* environment variables */
 	struct malloc_list envp;		/* pointers */
 };
 
@@ -616,6 +621,7 @@ struct filter {
 EXTERN int Errorcode;		/* Exit code for an error */
 EXTERN int Interactive;		/* Interactive or Server mode */
 EXTERN int Verbose;			/* Verbose logging mode */
+EXTERN int Silent;			/* lp -s option */
 EXTERN int Echo_on_fd;		/* Echo Error on fd */
 EXTERN int Syslog_fd;		/* syslog device if no syslog() facility */
 EXTERN int Status_fd;		/* status file file descriptor */
@@ -625,11 +631,17 @@ EXTERN int Logger_fd, Mail_fd; /* logger and mail sockets */
  * Routing Support
  *****************************************************************/
 
-EXTERN struct destination *Destination;	/* Destination for routing */
+EXTERN int Destination_index;	/* Destination for routing */
 
-#define malloc_or_die(x,y)  if (((x) = malloc((unsigned) y)) == 0) { \
-	Malloc_failed((unsigned)y); \
-}
+#if defined(DMALLOC)
+#	define malloc_or_die(size) malloc(size)
+#   define MALLOC_FUNC_CHECK 1
+#	define safestrdup(size) strdup(size)
+extern int dmalloc_outfile;
+#else
+	void *malloc_or_die( size_t size );
+	char *safestrdup (const char *p);
+#endif
 
 #define roundup_2(x,y) ((x+((1<<y)-1))&~((1<<y)-1))
 
@@ -643,9 +655,10 @@ struct server_info{
     pid_t pid;          /* pid of server processes */ 
 	int need_to_start;	/* does it need to start */
     int status;         /* last exit status of the server process */
+	int sigval;			/* signal value that killed it */
     int initial;        /* 1 = initial c leanup server */
 	int printing_disabled;	/* printing disabled */
-    unsigned long time; /* time it terminated */ 
+    time_t time; /* time it terminated */ 
 	char transfername[LINEBUFFER];	/* transfername of file */
 	struct dpathname spooldir;	/* spool directory */
 	struct dpathname controldir;	/* control directory */
@@ -716,6 +729,7 @@ EXTERN char* Destinations; /* printers that a route filter may return and we sho
 EXTERN int Direct_read;	/* filter reads directly from a file */
 EXTERN int FF_on_close; /* print a form feed when device is closed */
 EXTERN int FF_on_open; /* print a form feed when device is opened */
+EXTERN int Force_FQDN_hostname; /* force FQDN Host name in control file */
 EXTERN char* Force_queuename; /* force the use of this queue name */
 EXTERN int Force_poll; /* force polling job queues */
 EXTERN char* Form_feed; /* string to send for a form feed */
@@ -725,6 +739,7 @@ EXTERN int Fix_bad_job; /* if true, try to fix bad job files */
 EXTERN int Full_time; /* full or complete time format in messages */
 EXTERN int Generate_banner; /* generate a banner when sending to remote */
 EXTERN int Hold_all;	 /* hold all jobs */
+EXTERN int Ignore_requested_user_priority;	 /* ignore requested user priority */
 EXTERN char* IF_Filter; /* filter command, run on a per-file basis */
 EXTERN char* Leader_on_open; /* leader string printed on printer open */
 EXTERN int Local_accounting; /* write local printer accounting (if af is set) */
@@ -736,8 +751,10 @@ EXTERN int Long_number; /* long job number (6 digits) */
 EXTERN char* Lp_device; /* device name or lp-pipe command to send output to */
 EXTERN int Max_copies; /* maximum copies allowed */
 EXTERN int Max_job_size; /* maximum job size (1Kb blocks, 0 = unlimited) */
+EXTERN int Max_log_file_size;	/* maximum log file size */
 EXTERN int Max_status_line; /* maximum status line size */
 EXTERN int Min_printable_count; /* minimum printable characters for printable check */
+EXTERN int Min_log_file_size;	/* minimum log file size */
 EXTERN char* Minfree; /* minimum space (Kb) to be left in spool filesystem */
 EXTERN int NFS_spool_dir; /* spool dir is on an NFS file system (see rm, rp) */
 EXTERN char* New_debug; /* debug level set for queue handler */
@@ -753,6 +770,7 @@ EXTERN char* Pr_program; /* pr program for p format */
 EXTERN int Read_write; /* open the printer for reading and writing */
 EXTERN char* RemoteHost; /* remote-queue machine (hostname) (with rm) */
 EXTERN char* RemotePrinter; /* remote-queue printer name (with rp) */
+EXTERN char* Report_server_as; /* report server name as this value */
 EXTERN int Reuse_addr; /* set SO_REUSEADDR on outgoing ports */
 EXTERN int Retry_ECONNREFUSED; /* retry on ECONNREFUSED  */
 EXTERN int Retry_NOLINK; /* retry on link connection failure */
@@ -777,10 +795,12 @@ EXTERN int Stop_on_abort; /* stop when job aborts */
 EXTERN char* Stty_command; /* stty commands to set output line characteristics */
 EXTERN int Suppress_copies; /* suppress multiple copies */
 EXTERN int Suppress_header; /* suppress headers and/or banner page */
+EXTERN int Sync_lpr; /* delay socket close until end of lpr operation */
 EXTERN char* Trailer_on_close; /* trailer string to print when queue empties */
 EXTERN int Use_date;		/* put date in control file */
 EXTERN int Use_queuename;	/* put queuename in control file */
 EXTERN int Use_identifier;	/* put identifier in control file */
+EXTERN int Use_host_fqdn;	/* make the HOST information in control file FQDN */
 EXTERN int Use_shorthost;	/* Use short hostname in control file information */
 EXTERN char* Use_auth;		/* clients use authentication */
 EXTERN int Use_auth_flag;	/* clients forcing authentication */
@@ -817,6 +837,7 @@ EXTERN char * Lockfile;
 EXTERN char * Logfile;
 EXTERN char * Lpd_port;
 EXTERN char * Lpd_printcap_path;
+EXTERN char * Mail_from;
 EXTERN char * Mail_operator_on_error;
 EXTERN int Max_status_size;
 EXTERN int Min_status_size;
@@ -886,7 +907,6 @@ EXTERN int DevNullFD;	/* DevNull File descriptor */
 EXTERN char *FQDNRemote;    /* FQDN of Remote host */
 EXTERN char *ShortRemote;   /* Short form of Remote host */
 EXTERN int Foreground;      /* Run lpd in foreground */
-EXTERN int Clean;           /* clean out the queues */
 EXTERN int Server_pid;      /* PID of server */
 EXTERN int Lpd_pipe[2];     /* connection between jobs */
 EXTERN int Clear_scr;       /* clear screen */
@@ -982,5 +1002,9 @@ void Do_queue_jobs( char *name );
 void Sendmail_to_user( int status, struct control_file *cfp,
     struct printcap_entry *pc );
 void Start_new_server( void );
+
+#if defined(DMALLOC)
+# include <dmalloc.h>
+#endif
 
 #endif

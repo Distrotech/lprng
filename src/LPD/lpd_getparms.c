@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_getparms.c,v 3.5 1997/10/10 03:04:15 papowell Exp $";
+"lpd_getparms.c,v 3.5 1997/10/10 03:04:15 papowell Exp";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -26,7 +26,7 @@ void usage(void);
  ***************************************************************************/
 
 char *msg = N_("\
-usage: %s [-FVci] [-D dbg] [-L log]\n\
+usage: %s [-FV] [-D dbg] [-L log]\n\
  Options\n\
  -D dbg      - set debug level and flags\n\
                  Example: -D10,remote=5\n\
@@ -35,7 +35,6 @@ usage: %s [-FVci] [-D dbg] [-L log]\n\
                Example: -D10,remote=5\n\
  -L logfile  - append log information to logfile\n\
  -P printer  - start up single printer (test mode)\n\
- -i          - specify if started by INETD\n\
  -V          - show version info\n");
 
 void Get_parms(int argc, char *argv[] )
@@ -48,7 +47,6 @@ void Get_parms(int argc, char *argv[] )
 		case 'L': Logfile = Optarg; break;
 		case 'F': Foreground = 1; Logfile = "-"; break;
 		case 'P': Printer = Optarg; break;
-		case 'c': Clean = 1; break;
 		default:
 			usage();
 			break;

@@ -91,10 +91,11 @@ root: 2nd                                [job 031taco]
 #include "malloclist.h"
 #include "readstatus.h"
 #include "permission.h"
+#include "linksupport.h"
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpq.c,v 3.19 1997/12/24 20:10:12 papowell Exp $";
+"lpq.c,v 3.20 1998/03/24 02:43:22 papowell Exp";
 
 
 
@@ -115,7 +116,6 @@ int main(int argc, char *argv[], char *envp[])
 	struct stat statb;
 	char **list;
 	char orig_name[LINEBUFFER];
-	struct printcap_entry *printcap_entry = 0;
 
 	/*
 	 * set up the user state
@@ -124,7 +124,7 @@ int main(int argc, char *argv[], char *envp[])
 	Longformat = 1;
 	Displayformat = REQ_DLONG;
 	orig_name[0] = 0;
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 
 	/* set signal handlers */
@@ -149,7 +149,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	/* check to see if you have the default */
 	if( Lp_default ){
-		Get_printer( &printcap_entry );
+		Get_printer(0);
 		plp_snprintf( msg, sizeof(msg),
 		_("system default destination: %s\n"), Printer );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
@@ -174,7 +174,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( All_list.count == 0 ){
 			Get_all_printcap_entries();
 			Printer = "all";
-			Get_printer(&printcap_entry);
+			Get_printer(0);
 		}
 		if(DEBUGL0){
 			logDebug("lpq: All_list.count %d", All_list.count );
@@ -188,7 +188,7 @@ int main(int argc, char *argv[], char *envp[])
 		DEBUG0(
 "lpq: before Get_printer: Printer '%s', RemotePrinter '%s', RemoteHost '%s'",
 			Printer, RemotePrinter, RemoteHost );
-		Get_printer(&printcap_entry);
+		Get_printer(0);
 		if( *orig_name == 0 ) safestrncpy( orig_name, Printer );
 	}
 	DEBUG0("lpq: Printer %s, RemotePrinter %s, RemoteHost %s",
@@ -231,8 +231,10 @@ int main(int argc, char *argv[], char *envp[])
 				if( strchr( Printer, '@' ) ){
 					Lp_device = Printer;
 					Check_remotehost();
+				} else if( Force_localhost ){
+					RemoteHost = Localhost;
 				}
-				if( RemoteHost == 0 || *RemoteHost == 0 ){
+				if( RemoteHost == 0 || *RemoteHost == 0){
 					if( Default_remote_host && *Default_remote_host ){
 						RemoteHost = Default_remote_host;
 					} else if( FQDNHost && *FQDNHost ){
@@ -259,6 +261,13 @@ int main(int argc, char *argv[], char *envp[])
 						"cannot use printer - not in privileged group\n" );
 					continue;
 				}
+				if (LP_mode && Lp_summary && Longformat) { /* lpstat -v */
+					if (RemotePrinter)
+					  plp_snprintf(msg,sizeof(msg),_("system for %s: %s\n"), Printer, RemoteHost);
+					else
+					  plp_snprintf(msg,sizeof(msg),_("device for %s: /dev/null\n"), Printer);
+					if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+				} else
 				Send_lpqrequest(
 					RemotePrinter?RemotePrinter:Printer,
 					RemoteHost, Displayformat, &argv[Optind],
@@ -284,6 +293,16 @@ int main(int argc, char *argv[], char *envp[])
 				if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 				}
 			}
+			if (LP_mode && Lp_summary && Longformat) { /* lpstat -v */
+				lenp = strlen( RemotePrinter );
+				lenr = strlen( orig_name );
+				if( lenp > lenr ) lenp = lenr;
+				if (RemotePrinter && strncmp(RemotePrinter,orig_name, lenp))
+				  plp_snprintf(msg,sizeof(msg),_("system for %s: %s\n"), orig_name, RemoteHost);
+				else
+				  plp_snprintf(msg,sizeof(msg),_("device for %s: /dev/null\n"), Printer);
+				if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+			} else
 			Send_lpqrequest(
 				RemotePrinter?RemotePrinter:Printer,
 				RemoteHost, Displayformat, &argv[Optind],
@@ -321,7 +340,7 @@ static void Extract_pr( struct malloc_list *list, struct malloc_list *all )
 
 	DEBUG0("Extract_pr: count %d", list->count );
 	if( list->count+1 >= all->max ){
-		extend_malloc_list( all, sizeof( arg_list[0] ), list->count+1 );
+		extend_malloc_list( all, sizeof( arg_list[0] ), list->count+1,__FILE__,__LINE__ );
 	}
 	arg_list = list->list;
 	all_list = all->list;

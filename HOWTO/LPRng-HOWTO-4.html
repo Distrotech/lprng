@@ -31,7 +31,9 @@ and <CODE>/etc/printcap</CODE> files.
 all the LPRng executables are installed in
 <CODE>/usr/local/bin</CODE>,
 which differs from other UNIX lpr systems,
-which scatter them in various hidden and arcane locations.
+which scatter them in various hidden and arcane locations.  Note that the
+original printing system executables will need to be renamed or removed after
+installing LPRng.
 <P>The
 <CODE>
 <A HREF="LPRng-HOWTO-7.html#lpdconf">/etc/lpd.conf</A></CODE>
@@ -47,11 +49,6 @@ In fact,  the default
 file contains the printer database information.
 This information can override the defaults in
 <CODE>/etc/lpd.conf</CODE>
-<P>By default,
-the LPRng executables are installed in
-<CODE>/usr/local/bin</CODE>.
-Note that the BSD LPD executables are located in various places and will
-need to be removed and renamed.
 <H2><A NAME="ss4.2">4.2 Source Code and Installation</A>
 </H2>
 
@@ -157,8 +154,8 @@ for specific installation help (if any).
 <P>Don't be too impatient. Take your time to completely read through this
 HOWTO. Things will be a lot easier when you first set up the
 configuration files, and then start the new lpd.
-<P>During the course of this steps, you will have to change some files.
-Whatever you do: keep a copy of the original files!
+<P>During the course of these steps, you will have to change some files.
+Be sure to keep a copy of the original file(s)!
 <H3>Removing Existing Facilities</H3>
 
 <P>Here is a summary and some scripts
@@ -167,12 +164,12 @@ running the server.
 <OL>
 <LI>Kill off the old server.
 <PRE>
-BSD:
+BSD or Linux:
   ps -aux |grep lpd
   kill (pid of lpd server)
-System V or Linux:
-  ps -ea |grep lpd
-  kill (pid of lpd server)
+System V:
+  ps -ea |grep lpsched
+  kill (pid of lpsched server)
 </PRE>
 </LI>
 <LI>You should remove or rename the existing print system executables.
@@ -193,8 +190,8 @@ ln -s /usr/local/bin/lpd /usr/libexec/lpd
 <LI>Try starting and running <CODE>lpd</CODE> before permanently installing it.
 You should do the next steps as <B>root</B>.
 <PRE>
-/usr/local/bin/lpd;    # start up LPD
-lpq;    # test it with LPQ
+/usr/local/bin/lpd;                # start up LPD
+lpq;                               # test it with LPQ
 </PRE>
 </LI>
 </OL>
@@ -203,9 +200,13 @@ lpq;    # test it with LPQ
 
 <P>Don't forget to modify your system print startup files,
 i.e. - the <CODE>/etc/rc</CODE> file in most BSD based UNIX systems,
-or those in <CODE>/etc/init.d</CODE> on System V and Linux.
+or those in <CODE>/etc/init.d</CODE> or <CODE>/sbin/init.d</CODE> on System V and Linux.
 You will need to have them reference the LPRng <CODE>lpd</CODE>
-and not the original system executable.
+and not the original system executable.  For systems that use the System V
+run-level scripts, you will also likely need to install a symbolic link in the
+default system run-level directory (perhaps <CODE>/etc/rc3.d</CODE> or
+<CODE>/sbin/rc3.d</CODE>) pointing to the master copy of the startup script in the
+<CODE>init.d</CODE> directory.
 <P>Here is the core of a typical UNIX SystemV or LINUX startup file
 that can be used to start up and shut down the server.
 Note that you will most likely need to modify the
@@ -243,7 +244,7 @@ programs.
 It is almost impossible to modify their operation to use the
 LPRng <CODE>lpr</CODE> or <CODE>lpq</CODE> programs,
 as they depend on various return codes and information.
-<P>Here is Patrick Powell's comments on this:
+<P>Here are Patrick Powell's comments on this:
 <BLOCKQUOTE>
 After fighting with LP simulation,  I finally decided to make the
 interface part of the LPR/LPQ package.  If LPR is invoked as LP,
@@ -269,7 +270,7 @@ These man pages should be installed to replace the normal
 lp, etc, man pages.
 <P>For some purposes,  the rather rugged <CODE>lpstat</CODE>
 simulation provided by this method does not work.
-<A HREF="mailto:garrett@qualcomm.com">Garrett D'Amore &lt;tt>&lt;garrett@qualcomm.com&gt;&lt;/tt></A>
+<A HREF="mailto:garrett@qualcomm.com">Garrett D'Amore &lt;garrett@qualcomm.com&gt;</A>
 has written some much improved versions;
 take a look at
 <A HREF="http://people.qualcomm.com/garrett/">http://people.qualcomm.com/garrett/</A>
@@ -304,7 +305,7 @@ This effectively closes several possible security loopholes.
 To install the executables as non-setuid,
 the distribution <CODE>src/Makefile</CODE>
 must have the following lines commented out,
-and then LPRng reinstalled:
+and then LPRng must be reinstalled:
 <PRE>
 edit src/Makefile
    # comment out the next line to have LPRng installed non-setuid
@@ -317,7 +318,8 @@ make install
 
 <P>The following are a set of suggestions and recommendations for
 specific systems.
-<A NAME="solarisinstall"></A> <H3>Solaris 2.4, 2.5, 2.6</H3>
+<A NAME="solarisinstall"></A> <H2><A NAME="ss4.7">4.7 Solaris 2.4, 2.5, 2.6</A>
+</H2>
 
 <P>The Sun Solaris operating system is derived from the System V UNIX
 baseline.
@@ -358,44 +360,52 @@ printer stream tcp nowait root /usr/lib/print/in.lpd in.lpd
 </PRE>
 
 <P>and remove it if it is present.
-You will need signal the <CODE>inetd</CODE> process to reread the
-configuration file.
-This is usually done using a <CODE>kill -HUP pid</CODE> command,
-where <CODE>pid</CODE> is the <CODE>inetd</CODE> process id.
 </LI>
-<LI>If you don't want to reboot, you may need to use the nlsadmin(1M)
-command to remove the network listeners on your printer port.  Even
-after doing an lpshut, there is still a little devil hanging on.
-For instance, on our systems it looked like so:
-<PRE>
-# nlsadmin -v tcp
-lpd  \x00020203000000000000000000000000  ENABLED  \
-  NORPC  root  NOMODULES  /var/spool/lp/fifos/listenBSD  #  
-0  \x00020ACE000000000000000000000000  ENABLED    \
-  NORPC  root  NOMODULES  /usr/lib/saf/nlps_server  #  
-lp  NOADDR  ENABLED  NORPC  root  NOMODULES \
-  /var/spool/lp/fifos/listenS5  #  
-</PRE>
-
-To remove them do:
-<PRE>
-# nlsadmin -r lpd tcp
-# nlsadmin -r lp tcp
-</PRE>
-</LI>
-<LI>You can then start lpd by typing
-<PRE>
-# /etc/init.d/lp start
-</PRE>
-</LI>
+<LI><EM>Reboot</EM>.
+Don't try to be fancy and kill off processes,
+use the <EM>nlsadmin</EM> command,
+or other insanity.
+This is brutal,  but appears to be necessary in order to ensure
+that the networking support is set up correctly.</LI>
+<LI>When the system restarts, try using <CODE>lpq</CODE>
+to check to see if the <CODE>lpd</CODE> server is active.</LI>
 </OL>
-<H3>Solaris, Newsprint and FrameMaker</H3>
+<P>James P. Dugal <CODE>&lt;jpd@usl.ed&gt;</CODE> has also makde the following
+suggestions as well.
+<PRE>
+From: "Dugal James P." &lt;jpd@usl.edu>
+To: lprng@iona.com
+Subject: Re: [LPRng] start up trouble
+
+Here are some more tips for Solaris:
+
+1. If /var/spool/cron/crontabs/lp exists, remove it.
+
+In fact, we actually test if /etc/init.d/lp exists on any newly-installed
+system, and if so, we issue these commands:
+        /etc/init.d/lp stop
+        /usr/sbin/pkgrm -n SUNWpsu
+        /usr/sbin/pkgrm -n SUNWscplp
+        /usr/sbin/pkgrm -n SUNWpcu
+        /usr/sbin/pkgrm -n SUNWpsr
+        /usr/sbin/pkgrm -n SUNWpcr
+        /bin/rm -f /var/spool/cron/crontabs/lp
+
+Regards,
+-- James Dugal, N5KNX           Internet: jpd@usl.edu
+Associate Director              Ham packet: n5knx@k5arh.#lft.la.usa.noam
+Computing Support Services      US Mail: PO Box 42770  Lafayette, LA  70504
+University of Southwestern LA.  Tel. 318-482-6417       U.S.A.
+</PRE>
+<P>
+<H2><A NAME="ss4.8">4.8 Solaris, Newsprint and FrameMaker</A>
+</H2>
 
 <P>The following is a guide to using LPRng and
 Sun Microsystems Newsprint by
 Christopher Hylands, Ptolemy Project Manager
 of the University of California.
-<P>The Sun Newsprint printer is actualy
+<P>The Sun Newsprint printer is actually
 an OEM version of the  Textronix PhaserII;
 Sun Microsystems appears to have dropped support for Newsprint,
 and the recommended migration path is to buy a PostScript printer.
@@ -492,9 +502,10 @@ cxh@eecs.berkeley.edu                 US Mail: 558 Cory Hall #1770
 ph: (510)643-9841 fax:(510)642-2739       Berkeley, CA 94720-1770
 home: (510)526-4010 (if busy -4068)       (Office: 493 Cory)
 </PRE>
-<H3>Linux</H3>
+<H2><A NAME="ss4.9">4.9 Linux</A>
+</H2>
 
-<P>At the time of writing (Jan 1998),
+<P>At the time of this writing (Jan 1998),
 the three major Linux
 distributions (Slackware, Red Hat and Debian) carry an older version
 of LPRng. Users of those systems should download the
@@ -535,10 +546,11 @@ deactivate the existing print support.
 See 
 <A HREF="#printcapref">/etc/printcap Print Spool Database File</A>
 for details.
-<H3>AIX</H3>
+<H2><A NAME="ss4.10">4.10 AIX</A>
+</H2>
 
 <P>This information was supplied by
-<A HREF="mailto:nitschke@math.unihamburg.de">Dirk Nitschke,</A>
+<A HREF="mailto:nitschke@math.unihamburg.de">Dirk Nitschke</A>,
 as of August 1997,
 and describes how to install the LPRng package on a workstation
 running AIX 4.1.x and possibly 3.x.x as well.
@@ -637,18 +649,20 @@ chdev</CODE>.
 <CODE>/usr/bin</CODE>. Do not remove <CODE>enq</CODE> and friends if
 you want to use the general queueing facility.
 <P>Now you can start your new <CODE>lpd</CODE>.
-<H2><A NAME="ss4.7">4.7 Appletalk Support</A>
+<H2><A NAME="ss4.11">4.11 Appletalk Support</A>
 </H2>
 
 <P>Netatalk is used to communicate from TCP/IP to
 Appletalk printers and vice versa.
 The netalk distribution FAQ is at:
+<P>
 <A HREF="http://www.umich.edu/~rsug/netatalk">http://www.umich.edu/~rsug/netatalk</A><P>There are two issues with using netatalk.  The first issue
 has to do with printing to LPRng-served printers from Macs.
 The second issue has to do with printing from LPRng to
 network printers that speak AppleTalk.
 <P>
-<H3>Apple to LPRng Printing</H3>
+<H2><A NAME="ss4.12">4.12 Apple to LPRng Printing</A>
+</H2>
 
 <P>After you have installed and gotten netatalk working,
 you can use the following configuration file to print
@@ -670,15 +684,17 @@ Your 32 Character Printer Name:\
 Edan Idzerda    &lt;edan@mtu.edu>
 System Administrator -- Michigan Technological University, Houghton MI USA
 </PRE>
-<H3>LPRng to Appletalk Printing</H3>
+<H2><A NAME="ss4.13">4.13 LPRng to Appletalk Printing</A>
+</H2>
 
-<P>The netatalk package comes with a PostScript filter called psf.  After
-compilation, it is in (e.g.) netatalk-1.4b2/etc/psf and will be installed
-in (e.g.) /usr/local/atalk/etc/.  After installation, there will also
-be a directory /usr/local/atalk/etc/filters that contains ifpap, ofpap,
-et al.  These are just symlinks to psf, and psf will do the appropriate
+<P>The netatalk package comes with a PostScript filter called <CODE>psf</CODE>.  After
+compilation, it is in (e.g.) <CODE>netatalk-1.4b2/etc/psf</CODE> and will be installed
+in (e.g.) <CODE>/usr/local/atalk/etc/</CODE>.  After installation, there will also
+be a directory <CODE>/usr/local/atalk/etc/filters</CODE> that contains
+<CODE>ifpap</CODE>, <CODE>ofpap</CODE>,
+et al.  These are just symlinks to <CODE>psf</CODE>, and <CODE>psf</CODE> will do the appropriate
 thing based on how it was invoked.  If there's a 'pap' in the name,
-psf uses AppleTalk to talk to the printer.  See psf(8) for more information.
+<CODE>psf</CODE> uses AppleTalk to talk to the printer.  See psf(8) for more information.
 <P>A printcap entry for a network printer looks like the following:
 <PRE>
 dave|Dave's 32 Character Printer Name:\
@@ -692,7 +708,7 @@ dave|Dave's 32 Character Printer Name:\
 <P>There are three caveats to using netatalk this way.
 <OL>
 <LI>The first is that
-psf (i.e., the filters) need to run as root.  You can accomplish this
+<CODE>psf</CODE> (i.e., the filters) needs to run as root.  You can accomplish this
 in one of two ways.  The first is to uncomment the following line in
 src/Makefile and recompile:
 <PRE>
@@ -704,13 +720,13 @@ src/Makefile and recompile:
     :if=ROOT /usr/local/atalk/etc/filters/ifpap:\
     :of=ROOT /usr/local/atalk/etc/filters/ofpap:\
 </PRE>
-<P>The alternative is to make psf setuid root.  To minimize the risk,
-you may want to make psf executable only by group daemon.  (I haven't
-tested the first option.  I'm currently using the second option.)
+<P>The alternative is to make <CODE>psf</CODE> setuid root.  To minimize the risk,
+you may want to make <CODE>psf</CODE> executable only by group <CODE>daemon</CODE>.
+(I haven't tested the first option.  I'm currently using the second option.)
 <P>
 </LI>
-<LI>The second caveat is that each network printer needs a .paprc in its
-spool directory.  For instance, /var/spool/dave/.paprc looks like this:
+<LI>The second caveat is that each network printer needs a <CODE>.paprc</CODE> in its
+spool directory.  For instance, <CODE>/var/spool/dave/.paprc</CODE> looks like this:
 <PRE>
 Dave's 32 Character Printer Name:LaserWriter@Your AppleTalk Zone
 </PRE>
@@ -719,9 +735,9 @@ Dave's 32 Character Printer Name:LaserWriter@Your AppleTalk Zone
 <P>
 </LI>
 <LI>The third caveat concerns the lp line in the printcap entry.  For a
-single printer, this can be /dev/null.  If the host spools to more
-than one AppleTalk printer, you shouldn't use /dev/null for lp.  You
-should use mknod to create a null device for each printer.  See psf(8).</LI>
+single printer, this can be <CODE>/dev/null</CODE>.  If the host spools to more
+than one AppleTalk printer, you shouldn't use <CODE>/dev/null</CODE> for lp.  You
+should use <CODE>mknod</CODE> to create a null device for each printer.  See psf(8).</LI>
 </OL>
 
 <PRE>
@@ -729,7 +745,7 @@ Chad Mynhier &lt;mynhier@cs.utk.edu>
 Lab Engineer, CS Department        
 University of Tennessee, Knoxville                   
 </PRE>
-<H2><A NAME="ss4.8">4.8 SAMBA Support</A>
+<H2><A NAME="ss4.14">4.14 SAMBA Support</A>
 </H2>
 
 <P>From the
@@ -862,12 +878,13 @@ eval `cat $config_file`
 #) | cat > /dev/null
 </PRE>
 
-<A NAME="printspec"></A> <H2><A NAME="ss4.9">4.9 Printer Specific notes</A>
+<A NAME="printspec"></A> <H2><A NAME="ss4.15">4.15 Printer Specific notes</A>
 </H2>
 
 <P>This is a small collection of miscellaneous notes about printers
 and applications.
-<H3>HP Deskjet</H3>
+<H2><A NAME="ss4.16">4.16 HP Deskjet</A>
+</H2>
 
 <P>
 <PRE>
@@ -908,7 +925,8 @@ Institute of Technology
 RWTH Aachen
 D 52056 Aachen, Germany
 </PRE>
-<H3>HP Deskjet 1600CM</H3>
+<H2><A NAME="ss4.17">4.17 HP Deskjet 1600CM</A>
+</H2>
 
 <P>The following printcap entry was posted by
 Olaf Lotzkat (Sysadm), Faculty of Computer Science, TU Dresden, Germany
@@ -917,22 +935,318 @@ Olaf Lotzkat (Sysadm), Faculty of Computer Science, TU Dresden, Germany
 # HP DeskJet 1600CM
 tinte|:
     :lp=dj1600cm%9100:
-    :mx#0:
-    :rw:
-    :sf:
-    :ps=status:
-    :af=acct:
-    :lf=log:
-    :fx=flpv:
+    :mx#0:rw:sf:
+    :ps=status:af=acct:lf=log:sd=/lpspool/tinte:fx=flpv:
     :if=/usr/local/lib/filters/ifhp \
      -Tpagecount=off,forcepagecount=on,infostatus=off,sync=off:
     :of=/usr/local/lib/filters/ofhp \
      -Tpagecount=off,forcepagecount=on,infostatus=off,sync=off,banner=off:
     :vf=/usr/local/lib/filters/ifhp -c:
     :bp=/usr/local/lib/filters/psbanner:
-    :sd=/lpspool/tinte:
 </PRE>
-<H3>Duplex Printing</H3>
+<H2><A NAME="ss4.18">4.18 Lexmark Printers</A>
+</H2>
+
+<P>Some Lexmark printers do not send
+<EM>end of job</EM> status back unless configured
+to do so.
+Here is what is needed to force this.
+<PRE>
+Date: Wed, 21 Jan 1998 18:25:50 -0600 (CST)
+From: Matt White &lt;whitem@bofh.usask.ca>
+To: lprng@iona.com
+Subject: Re: [LPRng] CTI-ifhp with Lexmark Optra N printer
+
+On Wed, 21 Jan 1998, Simon Greaves wrote:
+
+> Apologies in advance if this is way off mark, but we've been evaluating a
+> commercial print charging package (Geomica) which works by talking to the
+> printer in what I think is a similar way to the ifhp filters. Lexmarks are
+> currently a big headache because they seem to fail to return the message
+> that they have finished printing which screws things up somewhat. In our
+> case, it is believed to be a problem with the Lexmark firmware which they
+> are looking into. 
+
+There is a fix for that...it is originally from the Lexmark 4039 series,
+but it still works on the Optra S 1650 machines that we have (and should
+work on the rest of the optra line).  Just send this little chunk of
+postscript to the printer once:
+
+-----------snip----------
+%! Postscript utility file to set the 4039 printer into synchronous mode
+serverdict begin 0 exitserver
+statusdict begin true setenginesync end
+-----------snip----------
+
+Basically, it causes the printer to wait until it is finished printing
+before actually reporting that it is done.  I've got 3 Optra S printers
+running with ifhp right now with no extra options (just defaults).
+ 
+---------------------------------------------------------------------
+- Matt White                         whitem@arts.usask.ca           -
+- Network Technical Support          http://arts.usask.ca/~whitem   -
+- College of Arts &amp; Science          University of Saskatchewan     -
+---------------------------------------------------------------------
+</PRE>
+<P>
+<H2><A NAME="ss4.19">4.19 Tektronix P450 and Family</A>
+</H2>
+
+<P>The Tektronix P450 has a very odd network interface.
+You can open a TCP (stream) connection to port 9100 and send a file to be
+printed on the connection.
+<P>When a UDP datagram is sent to UDP Port 9101,
+the printer resonds with status information.
+This apparently is the poor man's SNMP,
+but I digress.
+Here is a clever implementation of a filter that handles this printer.
+<PRE>
+From: Russ Thacher &lt;thacher@brl.uiuc.edu>
+To: lprng@iona.com
+Subject: Re: [LPRng] Tektronix P450 &amp; psfilter
+
+Having only limited success with the psfilter UDP status port option, and
+not satisfied with the overall slowness of sending print jobs out via
+AppleShare with CAP, I (we) decided to roll our own filter for the Phaser
+450 that speaks AppSocket (sending on TCP 9100, monitoring UDP 9101),
+grabs reliable page counts and can tell the Phaser to switch to
+transparency mode based upon LPRng queue alias ('qq' printcap option).
+
+Here's out printcap entry for the Phaser 450, using our filter:
+
+# Tektronix Phaser 450-2
+phaser450-2|phaser450-2t|phaser440|phaser440t
+   :lp=/dev/null:qq
+   :af=acct:lf=log:fx=flpv:sh:mx#0:ps=status
+   :if=/usr/local/lib/filters/phaserif
+   :sd=/var/spool/lpd/phaser450-2
+   :xu=/usr/local/etc/perms.highcolor
+
+Attached is the Perl filter I wrote that has been very slightly modified
+since its inception by Al Marquardt.  It's written with Solaris in mind
+and is perhaps a little crude, but it works quite well for us.  Feel free
+to modify/use it in any way you like- direct any and all comments to Al
+Marquardt (almar@uiuc.edu).
+
+--
+Russ Thacher
+Systems Administrator, UIUC Bioacoustics Research Lab
+
+-------------- Filter -----------------
+#!/usr/local/bin/perl5
+
+use Getopt::Std;
+use Socket;
+use Sys::Hostname;
+
+pop @ARGV;
+
+# Get all the filter options LPRng knows
+
+getopts('a:b:cd:e:f:h:i:j:k:l:m:n:p:r:s:t:w:x:y:F:P:S:C:H:A:J:L:Q:');
+
+# set default exit status (JFAIL)
+
+$! = 1;
+
+# Set default error messages
+
+$udpsockerr = "ERROR: Cannot establish UDP socket: $!\n";
+$udpbinderr = "ERROR: Cannot bind to UDP socket: $!\n";
+$udpsenderr = "ERROR: Cannot send UDP status request: !$\n";
+$udprecverr = "ERROR: Cannot receive UDP status report: !$\n";
+$tcpsockerr = "ERROR: Cannot establish TCP socket: $!\n";
+$tcpconnecterr = "ERROR: Cannot connect to TCP socket: $!\n";
+$tcpcloseerr = "ERROR: Cannot close TCP socket: $!\n";
+
+# Get current time/date
+
+@MONTHS = ( "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" );
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$month = $MONTHS[$mon];
+if (length($sec)  == 1)  { $sec = "0$sec" }
+if (length($min)  == 1)  { $min = "0$min" }
+if (length($hour) == 1)  { $hour= "0$hour" }
+if (length($mday) == 1)  { $mday= " $mday" }
+
+$datestamp = "$month $mday $hour:$min:$sec";
+
+# Write a 'job begin' line to printer log file
+
+print STDERR "START: job number $opt_j (dfile: $opt_e) for $opt_n\@$opt_h on $opt_P at $datestamp\n";
+
+# Setup network info for printers
+
+$phaser4501 = 'phaser450-1';
+$phaser4502 = 'phaser440';
+
+$udpport = '9101';
+$tcpport = '9100';
+
+# Setting up UDP socket info so we can get status reports from phasers...
+
+$myip = gethostbyname(hostname());
+
+$udpproto = getprotobyname('udp');
+$myudppaddr = sockaddr_in(0, $myip);
+
+if ($opt_P eq 'phaser450-1') {
+  $printip = inet_aton($phaser4501);
+}
+elsif ($opt_P eq 'phaser450-2') {
+  $printip = inet_aton($phaser4502);
+}
+
+$printudppaddr = sockaddr_in($udpport, $printip);     
+
+socket(UDPSOCK, PF_INET, SOCK_DGRAM, $udpproto) or die $udpsockerr;
+bind(UDPSOCK, $myudppaddr) or die $udpbinderr;
+
+# Setting up TCP socket info so we can send jobs to the printer
+# and read pagecounts
+
+$tcpproto = getprotobyname('tcp');
+$mytcppaddr = sockaddr_in(0, $myip);
+$printtcppaddr = sockaddr_in($tcpport, $printip);
+socket(TCPSOCK, PF_INET, SOCK_STREAM, $tcpproto) or die $tcpsockerr;
+setsockopt(TCPSOCK, SOL_SOCKET, SO_KEEPALIVE, 0);
+setsockopt(TCPSOCK, SOL_SOCKET, SO_LINGER, 0);     
+
+# Before any printing check to be sure printer is idle
+# If it's not, check every 5 seconds until it is 
+
+defined(send(UDPSOCK, "\r\n", 0, $printudppaddr)) or die $udpsenderr;
+$udpout = "";
+($printudppaddr = recv(UDPSOCK, $udpout, 100, 0)) or die $udprecverr;
+$realudpout = unpack("a*", $udpout);
+
+while ($realudpout ne 'status: idle') {
+  print STDERR "$opt_P not at idle status.  Cannot start print job.\n";
+  defined(send(UDPSOCK, "\r\n", 0, $printudppaddr)) or die $udpsenderr;
+  $udpout = "";
+  ($printudppaddr = recv(UDPSOCK, $udpout, 100, 0)) or die $udprecverr;
+  $realudpout = unpack("a*", $udpout);
+  sleep 5;
+}
+
+# Get the initial page count
+
+connect(TCPSOCK, $printtcppaddr) or die $tcpconnecterr;
+select TCPSOCK;
+$| = 1;
+select STDOUT;
+print TCPSOCK "%!\n";
+print TCPSOCK "(%%\[ pagecount: )print statusdict /pagecount get exec ";
+print TCPSOCK "(                )cvs print ";
+print TCPSOCK "( \]%%) = flush\n";
+$tcpout = &lt;TCPSOCK>;
+if ($tcpout =~ /%%\[ pagecount:.*/) {
+  @tcparray = split /\s/, $tcpout;
+  $pagecount1 = $tcparray[2];
+}
+
+# Get current time/date (again, this time for the accounting file)
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$month = $MONTHS[$mon];
+if (length($sec)  == 1)  { $sec = "0$sec" }
+if (length($min)  == 1)  { $min = "0$min" }
+if (length($hour) == 1)  { $hour= "0$hour" }
+if (length($mday) == 1)  { $mday= " $mday" }
+
+$datestamp = "$month $mday $hour:$min:$sec";
+
+# open LPRng accounting file
+
+if( defined( $opt_a ) &amp;&amp; $opt_a &amp;&amp; open ACCT, ">>$opt_a" ){
+print ACCT "DEBUG: printer return string= $tcpout";
+print ACCT "start  -p'$pagecount1' -q'$opt_j' -J'$opt_J' -k'$opt_k' -n'$opt_n' -h'$opt_h' -P'$opt_P' -F'$opt_F' -t'$datestamp'\n";  
+close ACCT;
+}
+
+# Start shoving data out to printer
+
+# Set print/transparency by queue name
+
+if ($opt_Q =~ /.*t/) {
+  print TCPSOCK "%!\n";
+  print TCPSOCK "mark\n";
+  print TCPSOCK "{\n";
+  print TCPSOCK " 3 dict begin\n";
+  print TCPSOCK " /MediaType null def\n";
+  print TCPSOCK " /MediaColor (Transparent) def\n";
+  print TCPSOCK " currentdict end setpagedevice\n";
+  print TCPSOCK "} stopped cleartomark\n";
+} 
+
+# Shove the rest of the data file out to the printer
+
+while ($line = &lt;STDIN>) {
+  print TCPSOCK $line;
+}
+
+close TCPSOCK or die $tcpcloseerr;
+
+# Listen for 'status:idle' from printer- this signifies that job is done and
+# we can ask printer for page count
+# we wait until 'status:idle' is received- retrying every 3 seconds
+
+$realudpout = "";
+
+while ($realudpout ne 'status: idle') {
+  defined(send(UDPSOCK, "\r\n", 0, $printudppaddr)) or die $udpsenderr;
+  $udpout = "";
+  ($printudppaddr = recv(UDPSOCK, $udpout, 100, 0)) or die $udprecverr;
+  $realudpout = unpack("a*", $udpout);
+  sleep 2;
+}
+
+# Now we're ready to grab the final page count from the printer
+
+socket(TCPSOCK, PF_INET, SOCK_STREAM, $tcpproto) or die $tcpsockerr;
+connect(TCPSOCK, $printtcppaddr) or die $tcpconnecterr;
+
+print TCPSOCK "%!\n";
+print TCPSOCK "(%%\[ pagecount: )print statusdict /pagecount get exec ";
+print TCPSOCK "(                )cvs print ";
+print TCPSOCK "( \]%%) = flush\n";
+$tcpout = &lt;TCPSOCK>;
+if ($tcpout =~ /%%\[ pagecount:.*/) {
+  @tcparray = split /\s/, $tcpout;
+  $pagecount2 = $tcparray[2];
+}
+
+close TCPSOCK or die $tcpcloseerr;
+
+# Get date/time again
+
+($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$month = $MONTHS[$mon];
+if (length($sec)  == 1)  { $sec = "0$sec" }
+if (length($min)  == 1)  { $min = "0$min" }
+if (length($hour) == 1)  { $hour= "0$hour" }
+if (length($mday) == 1)  { $mday= " $mday" }
+
+$datestamp = "$month $mday $hour:$min:$sec";
+
+# Update accounting file upon close
+
+$pages = $pagecount2 - $pagecount1; 
+
+if( defined( $opt_a ) &amp;&amp; $opt_a &amp;&amp; open ACCT, ">>$opt_a" ){
+print ACCT "DEBUG: printer return string= $tcpout";
+print ACCT "end  -b'$pages' -p'$pagecount2' -q'$opt_j' -J'$opt_J' -k'$opt_k' -n'$opt_n' -h'$opt_h' -P'$opt_P' -F'o' -t'$datestamp'\n";
+close ACCT;
+}
+
+# Write a 'Job End' line to the printer log
+
+print STDERR "END: job number $opt_j (dfile: $opt_e) for $opt_n\@$opt_h on $opt_P at $datestamp\n\n";
+</PRE>
+<P>
+<H2><A NAME="ss4.20">4.20 Duplex Printing</A>
+</H2>
 
 <P>Duplex printing is when you print on both sides of a page.
 Some printers which do duplex printing require that you
@@ -971,7 +1285,7 @@ this appears to be the only way to do it.
 <BLOCKQUOTE>
 <EM>Patrick Powell</EM>
 </BLOCKQUOTE>
-<H2><A NAME="ss4.10">4.10 TESTVERSION  and Portability Testing</A>
+<H2><A NAME="ss4.21">4.21 TESTVERSION  and Portability Testing</A>
 </H2>
 
 <P>The LPRng code has the ability to run as non-setuid software,

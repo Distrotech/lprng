@@ -17,7 +17,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc_perm.c,v 3.6 1997/12/31 19:30:10 papowell Exp $";
+"checkpc_perm.c,v 3.6 1997/12/31 19:30:10 papowell Exp";
 
 /***************************************************************************
  Commentary

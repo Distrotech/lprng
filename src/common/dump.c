@@ -10,7 +10,7 @@
  * PURPOSE: dump various data structures
  **************************************************************************/
 
-static char *const _id = "$Id: dump.c,v 3.10 1998/01/18 00:10:32 papowell Exp papowell $";
+static char *const _id = "dump.c,v 3.12 1998/03/29 18:32:47 papowell Exp";
 
 #include "lp.h"
 #include "permission.h"
@@ -88,11 +88,11 @@ void dump_data_file( char *title,  struct data_file *list )
 {
 	if( title ) logDebug( "*** %s ***", title );
 	if( list ){
-		logDebug( "original '%s' openname '%s', transfername '%s'",
-			list->original, list->openname, list->transfername );
+		logDebug( "original '%s' openname '%s', cfline '%s'",
+			list->original, list->openname, list->cfline );
 		logDebug( "  N '%s', U '%s'", list->Ninfo, list->Uinfo );
-		logDebug( "  fd %d, found %d, copies %d",
-			list->fd, list->found, list->copies );
+		logDebug( "  fd %d, found %d, is_a_copy %d",
+			list->fd, list->found, list->is_a_copy );
 	}
 }
 void dump_data_file_list( char *title,  struct data_file *list, int count )
@@ -149,16 +149,20 @@ void dump_control_file( char *title,  struct control_file *cf )
 			cf->hold_info.attempt, cf->control_info, cf->control_file_lines.count );
 		logDebug( "  auth_id '%s', forward_id '%s'",
 			cf->auth_id, cf->forward_id );
+		logDebug( "  identifier [0x%x] '%s', orig_identifier '%s'",
+			cf->identifier, cf->identifier, cf->orig_identifier );
 		count = cf->control_file_lines.count;
 		line = (void *)cf->control_file_lines.list;
 		for( i = 0; i < count; ++i ){
-			logDebug( "line [%d] '%s'", i, line[i] );
+			logDebug( "line [%d] 0x%x='%s'", i, line[i], line[i] );
 		}
+		logDebug( "CapOptions" );
 		for( i = 0; i < 26; ++i ){
 			if( cf->capoptions[i] ){
-				logDebug( "option[%c] '%s'", i+'A', cf->capoptions[i] );
+				logDebug( "option[%c] 0x%x='%s'", i+'A', cf->capoptions[i],cf->capoptions[i] );
 			}
 		}
+		logDebug( "DigitOptions" );
 		for( i = 0; i < 10; ++i ){
 			if( cf->digitoptions[i] ){
 				logDebug( "option[%c] '%s'", i+'0', cf->digitoptions[i] );
@@ -168,7 +172,7 @@ void dump_control_file( char *title,  struct control_file *cf )
 		logDebug(" hold file lines %d", count );
 		line = (void *)cf->hold_file_lines.list;
 		for( i = 0; i < count; ++i ){
-			logDebug( "line [%d] '%s'", i, line[i] );
+			logDebug( "line [%d] 0x%x='%s'", i, line[i], line[i] );
 		}
 		if( cf->destination_list.count ){
 			struct destination *destination, *d;
@@ -182,9 +186,9 @@ void dump_control_file( char *title,  struct control_file *cf )
 				logDebug( "  error='%s'",
 					d->error);
 				logDebug(
-			"  done %d, copies=%d, copy_done=%d, status=%d, server=%d, subserver=%d seq %d",
-					d->done,d->copies, d->copy_done, d->status, d->server, d->subserver,
-					d->sequence_number );
+			"  done %d, hold %d, copies=%d, copy_done=%d, status=%d, subserver=%d seq %d",
+					(int)(d->done_time),(int)(d->hold_time),d->copies,
+					d->copy_done, d->status, d->subserver, d->sequence_number );
 				logDebug( "  priority='%c'",
 					d->priority );
 				logDebug( "  arg_start=%d, arg_count=%d",

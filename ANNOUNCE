@@ -6,15 +6,18 @@ The software may be obtained from
    ftp://ftp.astart.com/pub/LPRng  (Main site)
 
 Mirrors:
-   ftp://ftp.mono.org/pub/LPRng                                    (UK)
-   ftp://ftp.iona.ie/pub/plp/LPRng                                 (IE)
-   ftp://ftp.cs.umn.edu/pub/LPRng                                  (US)
-   ftp://gwynne.cs.ualberta.ca/pub/LPRng                       (Canada)
-   ftp://ftp.math.informatik.uni-hamburg.de/pub/os/unix/utils/plp/LPRng (DE)
-   ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng           (DE)
-   ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng                    (AU/NZ)
-   ftp://ftp.lps.ens.fr/pub/software/plp/LPRng                     (FR)
-
+    ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng (AU)
+    ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng          (AU/NZ)
+    ftp://gwynne.cs.ualberta.ca/pub/LPRng             (CA)
+    ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng  (DE)
+    ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng (DE)
+    ftp://ftp.iona.ie/pub/plp/LPRng                   (IE)
+    ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng       (NO)
+    ftp://ftp.mono.org/pub/LPRng                      (UK)
+    ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng  (US)
+    ftp://ftp.cs.umn.edu/pub/LPRng                    (US)
+    ftp://ftp.iona.com/pub/plp/LPRng                  (US)
+    ftp://uiarchive.uiuc.edu/pub/packages/LPRng       (US)
 
 To join the LPRng mailing list,  please send mail to
   lprng-request@iona.ie with the word 'subscribe' in the BODY

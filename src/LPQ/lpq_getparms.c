@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpq_getparms.c,v 3.11 1997/10/10 03:04:15 papowell Exp $";
+"lpq_getparms.c,v 3.12 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -26,7 +26,7 @@ static void Add_to( struct malloc_list *val, char *arg )
 	char **list;
 
 	if( val->count + 2 >= val->max ){
-		extend_malloc_list( val, sizeof( list[0] ), 100 );
+		extend_malloc_list( val, sizeof( list[0] ), 100,__FILE__,__LINE__ );
 	}
 	list = val->list;
 	if( arg && *arg ){
@@ -39,7 +39,7 @@ static void Add_to( struct malloc_list *val, char *arg )
 				*end++ = 0;
 			}
 			if( val->count + 2 >= val->max ){
-				extend_malloc_list( val, sizeof( list[0] ), 100 );
+				extend_malloc_list( val, sizeof( list[0] ), 100,__FILE__,__LINE__ );
 				list = val->list;
 			}
 			list[val->count++] = s;
@@ -60,7 +60,7 @@ void usage(void);
 char LPQ_optstr[]    /* LPQ options */
  = "AD:P:Vaclst:v" ;
 char LPSTAT_optstr[]	/* LPSTAT options */
- =	"AdrRsta:c:f:lo:p:D:P:S:u:v";
+ =	"AdrRsta:c:f:lo:p:D:P:S:u:v:";
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -168,9 +168,16 @@ void Get_parms(int argc, char *argv[] )
 		case 'v': /* option v */
 			Lp_summary = 1;
 			Lp_status = 1;
+			if( Optarg == 0 ){
+				Add_to( &Lp_pr_list, "all" );
+			} else {
+				Add_to( &Lp_pr_list, Optarg );
+			}
 			break;
 		default: usage(); break;
 		}
+#if 0
+		/* jpd@usl.edu ... bypass this so 'lpstat -v' works for CDE init */
 		if( Optind == argc ){
 /*			Lp_status = 1; */
 			name = getenv( "LOGNAME" );
@@ -182,6 +189,7 @@ void Get_parms(int argc, char *argv[] )
 			}
 			Add_to( &Lp_pr_list, name );
 		}
+#endif
 		while( Optind < argc ){
 			Lp_status = 1;
 			Add_to( &Lp_pr_list, argv[Optind++] );

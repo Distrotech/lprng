@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_cpyfiles.c,v 3.12 1997/10/27 00:14:19 papowell Exp $";
+"lpr_cpyfiles.c,v 3.14 1998/03/29 18:32:45 papowell Exp";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -39,7 +39,7 @@ off_t Copy_stdin( struct control_file *cfp )
 	int i, c;			/* The all-seeing i */
 	struct data_file *df, *dfp;
 	char buffer[LARGEBUFFER];
-	char *str;
+	/*char *str; */
 
 
 	/* we get the temporary directory for these operations */
@@ -50,16 +50,17 @@ off_t Copy_stdin( struct control_file *cfp )
 	did_stdin = 1;
 
 	/* OK, now we can set up the information */
-	i = 3+Copies; /* overestimate just incase, but 1 less than other places */
+	i = Copies+1; /* overestimate just incase, but 1 less than other places */
 	if( cfp->data_file_list.count+ i > cfp->data_file_list.max ){
-		extend_malloc_list( &cfp->data_file_list, sizeof( df[0] ), i );
+		extend_malloc_list( &cfp->data_file_list, sizeof(df[0]), i,__FILE__,__LINE__  );
 	}
 	dfp = (void *)cfp->data_file_list.list;
 	df = &dfp[cfp->data_file_list.count];
-	if( cfp->data_file_list.count < 26 ){
-		c = 'A'+cfp->data_file_list.count;
-	} else {
-		c = 'a'+cfp->data_file_list.count-26;
+	c = 'A' + cfp->number_of_unique_data_files++;
+	if( c > 'Z' ) c += 'a' - 'A';
+	if( c > 'z' ){
+		Errorcode = JABORT;
+		fatal( LOG_INFO, "too many data files" );
 	}
 	for( i = 0; i < Copies; ++i ){
 		df = &dfp[cfp->data_file_list.count++];
@@ -70,21 +71,13 @@ off_t Copy_stdin( struct control_file *cfp )
 		   Nfile\n         (strlen(datafile->file)+2
 		 */
 		df->format = *Format;
-		plp_snprintf( df->transfername, sizeof(df->transfername),
+		plp_snprintf( df->cfline, sizeof(df->cfline),
 			"%cdf%c%0*d%s", *Format, c, cfp->number_len, cfp->number, FQDNHost );
-		str = Add_job_line( cfp, df->transfername, 1 );
-		DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 		plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", "(stdin)" );
-		str = Add_job_line( cfp, df->Ninfo, 1 );
-		DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 	}
-
 	/* we simply set up the filter and return */
-	df->copies = Copies;
-	safestrncpy( df->Uinfo, df->transfername );
+	safestrncpy( df->Uinfo, df->cfline );
 	df->Uinfo[0] = 'U';
-	str = Add_job_line( cfp, df->Uinfo, 1 );
-	DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 
 	if( Secure != 0 ){
 		df->d_flags |= PIPE_FLAG;
@@ -136,10 +129,10 @@ off_t Check_files( struct control_file *cfp, char **files, int filecount )
 {
 	off_t size = 0;
 	int i, j, c, fd, printable;
-	struct data_file *df, *dfp;
+	struct data_file *df = 0, *dfp;
 	struct stat statb;
 	int err;
-	char *str;
+	/*char *str;*/
 
 	if( filecount == 0 ){
 		return( size );
@@ -147,16 +140,17 @@ off_t Check_files( struct control_file *cfp, char **files, int filecount )
 
 	/* preallocate enough space so that things are not moved around by realloc */
 	if( Copies == 0 ) Copies = 1;
-	i = filecount*Copies + 4;	/* overestimate just in case */
-	if( filecount > 0 && cfp->data_file_list.count+i > cfp->data_file_list.max ){
-		extend_malloc_list( &cfp->data_file_list, sizeof( df[0] ), i );
+	i = filecount*Copies + 1;	/* overestimate just in case */
+	if( i+1 > cfp->data_file_list.max ){
+		extend_malloc_list( &cfp->data_file_list, sizeof( df[0] ), i+1,__FILE__,__LINE__  );
 	}
 
 	/* OK, now we can set up the information */
+	dfp = (void *)cfp->data_file_list.list;
 	for( i = 0; i < filecount; ++i){
 		DEBUG2( "Check_files: doing '%s'", files[i] );
 		if( strcmp( files[i], "-" ) == 0 ){
-			Copy_stdin( cfp );		
+			Copy_stdin( cfp );
 			continue;
 		}
 		fd = Checkread( files[i], &statb );
@@ -169,16 +163,12 @@ off_t Check_files( struct control_file *cfp, char **files, int filecount )
 		close( fd );
 		if( printable > 0 ){
 			DEBUG3( "Check_files: printing '%s'", files[i] );
-			if( cfp->data_file_list.count+Copies >= cfp->data_file_list.max ){
-				Diemsg(_("Check_files: you did not allocate enough space for files"));
-			}
 			size += statb.st_size*Copies;
-			dfp = (void *)cfp->data_file_list.list;
-			df = &dfp[cfp->data_file_list.count];
-			if( cfp->data_file_list.count < 26 ){
-				c = 'A'+cfp->data_file_list.count;
-			} else {
-				c = 'a'+cfp->data_file_list.count-26;
+			c = 'A' + cfp->number_of_unique_data_files++;
+			if( c > 'Z' ) c += 'a' - 'Z';
+			if( c > 'z' ){
+				Errorcode = JABORT;
+				fatal( LOG_INFO, "too many data files" );
 			}
 			for( j = 0; j < Copies; ++j ){
 				df = &dfp[cfp->data_file_list.count++];
@@ -189,21 +179,16 @@ off_t Check_files( struct control_file *cfp, char **files, int filecount )
 				   Nfile\n         (strlen(datafile->file)+2
 				 */
 				df->format = *Format;
-				plp_snprintf( df->transfername, sizeof(df->transfername),
+				plp_snprintf( df->cfline, sizeof(df->cfline),
 					"%cdf%c%0*d%s", *Format, c, cfp->number_len, cfp->number, FQDNHost );
-				str = Add_job_line( cfp, df->transfername, 1 );
-				DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 				df->statb = statb;
-				strncpy( df->openname,files[i],sizeof(df->openname));
+				safestrncpy( df->openname,files[i]);
 				plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", files[i] );
-				str = Add_job_line( cfp, df->Ninfo, 1 );
-				DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+				df->is_a_copy = 1;
 			}
-			df->copies = Copies;
-			safestrncpy( df->Uinfo, df->transfername );
+			df->is_a_copy = 0;
+			safestrncpy( df->Uinfo, df->cfline );
 			df->Uinfo[0] = 'U';
-			str = Add_job_line( cfp, df->Uinfo, 1 );
-			DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 		}
 	}
 	DEBUG3( "Check_files: size %d", size );
@@ -285,7 +270,7 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
  * Patrick Powell Wed Apr 12 19:58:58 PDT 1995
  ***************************************************************************/
 
-#ifdef HAVE_A_OUT_H
+#if defined(HAVE_A_OUT_H) && !defined(_AIX41)
 #include <a.out.h>
 #endif
 

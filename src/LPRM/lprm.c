@@ -10,7 +10,7 @@
  * PURPOSE:
  **************************************************************************/
 static char *const _id =
-"$Id: lprm.c,v 3.13 1997/12/20 21:16:26 papowell Exp $";
+"lprm.c,v 3.14 1998/03/24 02:43:22 papowell Exp";
 
 /***************************************************************************
  * SYNOPSIS
@@ -44,6 +44,7 @@ information display and parameters.
 #include "printcap.h"
 #include "checkremote.h"
 #include "permission.h"
+#include "linksupport.h"
 /**** ENDINCLUDE ****/
 
 
@@ -57,14 +58,13 @@ extern void usage(void);
 
 int main(int argc, char *argv[], char *envp[])
 {
-	struct printcap_entry *printcap_entry = 0;
 	char **list;
 	int i;
 	/*
 	 * set up the user state
 	 */
 	Interactive = 1;
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 
 	/* set signal handlers */
@@ -84,7 +84,7 @@ int main(int argc, char *argv[], char *envp[])
 	/*if( argc  - Optind <= 0 ) usage(); */
 
 	/* now look for the printcap entry */
-	Get_printer(&printcap_entry);
+	Get_printer(0);
 	if( All_printers || (Printer && strcmp(Printer,"all") == 0 ) ){
 		Get_all_printcap_entries();
 		Printer = "all";
@@ -116,6 +116,8 @@ int main(int argc, char *argv[], char *envp[])
 			if( strchr( Printer, '@' ) ){
 				Lp_device = Printer;
 				Check_remotehost();
+			} else if( Force_localhost ){
+				RemoteHost = Localhost;
 			}
 			if( RemoteHost == 0 || *RemoteHost == 0 ){
 				if( Default_remote_host && *Default_remote_host ){

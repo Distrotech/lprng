@@ -27,7 +27,7 @@ all-no:
 
 install installcheck uninstall check mostlyclean clean:
 
-ci:
+cifast ci:
 
 distclean:
 .NOEXPORT:

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: jobcontrol.c,v 3.20 1998/01/18 00:10:32 papowell Exp papowell $";
+"jobcontrol.c,v 3.22 1998/03/29 18:32:50 papowell Exp";
 
 #include "lp.h"
 #include "jobcontrol.h"
@@ -170,39 +170,10 @@ int Get_job_control( struct control_file *cfp, int *fdptr )
 
 	/* at this point you have an open (possibly locked) hold file */
 
-	DEBUG3(
-"Get_job_control: file '%s', new( st_ino 0x%x, st_mtime 0x%x, st_size 0x%x",
-		hold_file, (int)statb.st_ino, (int)statb.st_mtime, (int)statb.st_size );
-	DEBUG3(
-"Get_job_control: file '%s', old( st_ino 0x%x, st_mtime 0x%x, st_size 0x%x",
-		hold_file, (int)cfp->hstatb.st_ino, (int)cfp->hstatb.st_mtime,
-		(int)cfp->hstatb.st_size );
-#if defined(ST_MTIME_NSEC)
-	DEBUG3(
-"Get_job_control: file '%s', old( st_mtime_nsec 0x%x), new( st_mtime_nsec 0x%x )",
-		hold_file, cfp->hstatb.ST_MTIME_NSEC, statb.ST_MTIME_NSEC);
-#endif
-	if( fd > 0 && cfp->hstatb.st_size > 0
-		&& cfp->hstatb.st_ino != 0
-		&& cfp->hstatb.st_ino == statb.st_ino
-		&& cfp->hstatb.st_mtime == statb.st_mtime
-		&& cfp->hstatb.st_size == statb.st_size
-#if defined(ST_MTIME_NSEC)
-		&& cfp->hstatb.ST_MTIME_NSEC == statb.ST_MTIME_NSEC
-#endif
-		){
-		DEBUG3("Get_job_control: holdfile not changed" );
-		if( fdptr == 0 ){
-			close(fd);
-		}
-		return( 0 );
-	}
-
 	/* update the hold information */
 	if( Auto_hold || Hold_all ){
 		cfp->hold_info.hold_time = time( (void *)0 );
 	}
-	cfp->hstatb = statb;
 
 	/* get the hold file information */
 	if( (buffer = (void *)cfp->hold_file_info) ){
@@ -212,7 +183,7 @@ int Get_job_control( struct control_file *cfp, int *fdptr )
 
 	/* allocate a buffer to hold the file */
 	len = statb.st_size;
-	malloc_or_die( buffer, len+1 );
+	buffer = malloc_or_die( len+1 );
 	cfp->hold_file_info = buffer;
 	DEBUG4("Get_job_control: buffer 0x%x, file len %d", buffer, len );
 
@@ -242,7 +213,7 @@ int Get_job_control( struct control_file *cfp, int *fdptr )
 	cfp->hold_file_lines.count = 0;
 	if( cfp->hold_file_lines.max == 0 ){
 		extend_malloc_list( &cfp->hold_file_lines,
-			sizeof( char *), 100 );
+			sizeof( char *), 100,__FILE__,__LINE__  );
 	}
 	list = cfp->hold_file_lines.list;
 	for( s = buffer; s && *s; s = end ){
@@ -257,7 +228,7 @@ int Get_job_control( struct control_file *cfp, int *fdptr )
 		if( *s == 0 ) continue;
 
 		if( cfp->hold_file_lines.count+1 >= cfp->hold_file_lines.max ){
-			extend_malloc_list( &cfp->hold_file_lines,sizeof(list[0]),100);
+			extend_malloc_list( &cfp->hold_file_lines,sizeof(list[0]),100,__FILE__,__LINE__ );
 			list = cfp->hold_file_lines.list;
 		}
 		list[cfp->hold_file_lines.count++] = s;
@@ -386,7 +357,7 @@ static void get_destination( struct control_file *cfp )
 	/* extend the list if necessary */
 	if( cfp->destination_list.max == 0 ){
 		extend_malloc_list( &cfp->destination_list,
-			sizeof( struct destination), 10 );
+			sizeof( struct destination), 5,__FILE__,__LINE__  );
 	}
 	destinationp = (void *)cfp->destination_list.list;
 	d = &destinationp[cfp->destination_list.count];
@@ -407,13 +378,13 @@ static void get_destination( struct control_file *cfp )
 		if( t == 0 ){
 			t = s + strlen(s);
 		}
-		strncpy( id, s, t - s );
+		safestrncpy( id, s );
 		id[ t - s ] = 0;
-		DEBUG3("get_destination: checking '%s'='%s'", id, t );
+		while( isspace( *t ) ) ++t;
+		/*DEBUG3("get_destination: checking '%s'='%s'", id, t );*/
 		key = Find_key( status_key, status_key_len, id );
 		if( key ){
-			while( isspace( *t ) ) ++t;
-			DEBUG3("get_destination: found key '%s'='%s'", key->keyword, t );
+			/*DEBUG3("get_destination: found key '%s'='%s'", key->keyword, t );*/
 			switch( key->maxval ){
 			default: break;
 			case ROUTE: break;
@@ -424,28 +395,22 @@ static void get_destination( struct control_file *cfp )
 			case DEST: safestrncpy( d->destination,t); break;
 			case ERROR: safestrncpy( d->error,t); break;
 			case PRIORITY: if( isupper(t[0]) ) d->priority = t[0]; break;
-			case COPIES: d->copies = atoi( t );
-				DEBUG3("get_destination: copies '%s'->%d", t, d->copies );
-				break;
+			case COPIES: d->copies = atoi( t ); break;
 			case COPY_DONE: d->copy_done = atoi( t ); break;
 			case STATUs: d->status = atoi( t ); break;
-			case SERVEr: d->server = atoi( t ); break;
 			case SUBSERVER: d->subserver = atoi( t ); break;
-			case DONE: d->done = atoi( t ); break;
-			case HOLD: d->hold = atoi( t ); break;
+			case DONE: d->done_time = atoi( t ); break;
+			case HOLD: d->hold_time = atoi( t ); break;
 			case ATTEMPT: d->attempt = atoi( t ); break;
 			case SEQUENCE: d->sequence_number = atoi( t ); break;
 			case END:
 				/* watch out for the no destination */
 				d->arg_start = dest_start;
 				d->arg_count = i - dest_start;
-				DEBUG3("get_destination: dest '%s', copies now %d",
-					d->destination, d->copies );
-				if( d->destination[0] &&
-					++cfp->destination_list.count >=
-						cfp->destination_list.max ){
+				if( d->destination[0]
+					&& ++cfp->destination_list.count >= cfp->destination_list.max ){
 					extend_malloc_list( &cfp->destination_list,
-						sizeof( struct destination), 10 );
+						sizeof( struct destination), 5,__FILE__,__LINE__  );
 				}
 				destinationp = (void *)cfp->destination_list.list;
 				d = &destinationp[cfp->destination_list.count];
@@ -512,6 +477,22 @@ static void write_route_char( int fd, char *header, int val, char *file )
 }
 
 
+
+/***************************************************************************
+ * char *Fix_error_time( str, len )
+ *  Fix up the string so that it ends up with , at time
+ ***************************************************************************/
+
+char *Fix_error_time( char *str, int len )
+{
+	int n;
+	if( str[0] && !strstr(str,", at ") ){
+		for( n = strlen( str ); --n >= 0 && isspace(str[n]); str[n] = 0 );
+		n = strlen( str );
+		plp_snprintf( str+n, len-n, ", at %s", Time_str( 1, 0) );
+	}
+	return( str );
+}
 /***************************************************************************
  * Set_job_control( struct control_file, int *fd )
  *	Lock the job control file from the spool directory and
@@ -519,9 +500,10 @@ static void write_route_char( int fd, char *header, int val, char *file )
  * Returns: 0
  ***************************************************************************/
 
+
 int Set_job_control( struct control_file *cfp, int *fdptr )
 {
-	struct stat statb, tstatb;
+	struct stat statb;
 	char buffer[SMALLBUFFER];
 	char *s, *t, *hold_file;
 	char **lines;
@@ -541,25 +523,10 @@ int Set_job_control( struct control_file *cfp, int *fdptr )
 	DEBUG2("Set_job_control: hold file '%s', temp '%s'",
 		hold_file, temp_hold_file );
 
-	do {
-		/* we try to get exclusive access to the temp file */
-		fd = Lockf(temp_hold_file, &statb );
-		DEBUG2("Set_job_control: locked '%s', fd %d", temp_hold_file, fd );
-		/* now we stat the file and check to see that we have locked
-			the same file */
-		if( stat( temp_hold_file, &tstatb ) < 0
-				|| statb.st_ino != tstatb.st_ino
-				|| statb.st_mtime != statb.st_mtime
-				|| statb.st_size != statb.st_size
-#if defined(ST_MTIME_NSEC)
-				|| statb.ST_MTIME_NSEC != statb.ST_MTIME_NSEC
-#endif
-		){
-			DEBUG2("Set_job_control: not exclusive" );
-			close(fd);
-			fd = -1;
-		}
-	} while( fd < 0 );
+	/* we try to get exclusive access to the temp file */
+	fd = Lockf(temp_hold_file, &statb );
+	DEBUG2("Set_job_control: locked '%s', fd %d", temp_hold_file, fd );
+
 	if( ftruncate( fd, 0 ) < 0 ){
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR,
@@ -580,8 +547,8 @@ int Set_job_control( struct control_file *cfp, int *fdptr )
 		case DONE:		value = cfp->hold_info.done_time; break;
 		case ROUTED:	value = cfp->hold_info.routed_time; break;
 		case ATTEMPT:	value = cfp->hold_info.attempt; break;
-		case REDIRECT:	t = cfp->hold_info.redirect; if(t==0) t=""; break;
-		case ERROR:		t = cfp->error; if(t==0) t="";break;
+		case REDIRECT:	t = cfp->hold_info.redirect; break;
+		case ERROR:		t = Fix_error_time(cfp->error,sizeof(cfp->error)); break;
 		default: continue;
 		}
 		buffer[0] = 0;
@@ -604,15 +571,15 @@ int Set_job_control( struct control_file *cfp, int *fdptr )
 			if( d->destination[0] == 0 ) continue;
 			write_route_str( fd, "dest", d->destination, temp_hold_file );
 			write_route_str( fd, "ident", d->identifier+1, temp_hold_file );
-			write_route_str( fd, "error", d->error, temp_hold_file );
+			write_route_str( fd, "error",
+				Fix_error_time(d->error,sizeof(d->error)), temp_hold_file );
 			write_route_int( fd, "copies", d->copies, temp_hold_file );
 			write_route_int( fd, "copy_done", d->copy_done, temp_hold_file );
 			write_route_int( fd, "status", d->status, temp_hold_file );
-			write_route_int( fd, "server", d->server, temp_hold_file );
 			write_route_int( fd, "subserver", d->subserver, temp_hold_file );
 			write_route_int( fd, "attempt", d->attempt, temp_hold_file );
-			write_route_int( fd, "done", d->done, temp_hold_file );
-			write_route_int( fd, "hold", d->hold, temp_hold_file );
+			write_route_int( fd, "done", d->done_time, temp_hold_file );
+			write_route_int( fd, "hold", d->hold_time, temp_hold_file );
 			write_route_int( fd, "sequence", d->sequence_number, temp_hold_file );
 			if( d->priority){
 				write_route_char( fd, "priority", d->priority, temp_hold_file );
@@ -640,43 +607,14 @@ int Set_job_control( struct control_file *cfp, int *fdptr )
 		logerr_die(LOG_ERR, "Set_job_control: rename '%s' to '%s' failed",
 			temp_hold_file, hold_file );
 	}
-	if(DEBUGL3){
-		if( lseek( fd, 0, SEEK_SET ) < 0 ){
-			Errorcode = JABORT;
-			logerr_die(LOG_ERR, "Set_job_control: lseek '%s'failed",
-				temp_hold_file );
-		}
-		logDebug("Set_job_control: new file");
-		value = 0;
-		s = 0;
-		for( j = 0, i = 0;
-			(i = read( fd, buffer+j, sizeof(buffer)-1-j)) > 0; ){
-			/* we have read into the buffer */
-			buffer[i+j] = 0;
-			for( s = buffer; *s; s = t ){
-				t = strchr( s, '\n' );
-				if( t ){
-					*t++ = 0;
-				} else {
-					break;
-				}
-				logDebug( "  [%2d] '%s'", value++, s );
-			}
-			for( j = 0; (buffer[j] = s[j]); ++j );
-		}
-		if( s && *s ){
-			logDebug( "  [%2d] LAST '%s'", value++, s );
-		}
-	}
 	if( fdptr ){
 		close( *fdptr );
 		*fdptr = fd;
 	} else {
 		close( fd );
 	}
-	/* force a reread of the control file */
-	memset( &cfp->hstatb, 0, sizeof( cfp->hstatb ) );
-	/* force a reread of the control file */
+	/* reread the control file */
+	Get_job_control( cfp, fdptr );
 	return( 0 );
 }
 
@@ -754,7 +692,7 @@ int Get_route( struct control_file *cfp, int fd, struct printcap_entry *pc_entry
 
 	len = statb.st_size;
 	DEBUG3("Get_route: router output len %d", len );
-	malloc_or_die( cfp->hold_file_info, len+1 );
+	cfp->hold_file_info = malloc_or_die( len+1 );
 	buffer = cfp->hold_file_info;
 	for( i = 1, s = buffer;
 		len > 0 && (i = read( temp_fd, s, len )) > 0;
@@ -774,9 +712,10 @@ int Get_route( struct control_file *cfp, int fd, struct printcap_entry *pc_entry
 	cfp->destination_info_start = 0;
 
 	/* count the lines and allocate buffer for them */
-	for( i = 1, s = buffer; (s = strchr(s+1, '\n')); ++i);
-	if( cfp->hold_file_lines.max <= i ){
-		extend_malloc_list( &cfp->hold_file_lines, sizeof( char *), i + 10 );
+	for( i = 1, s = buffer; (s = strchr(s, '\n')); ++s, ++i);
+	if( i >= cfp->hold_file_lines.max ){
+		extend_malloc_list( &cfp->hold_file_lines, sizeof( char *),
+			i - cfp->hold_file_lines.max,__FILE__,__LINE__  );
 	}
 	list = cfp->hold_file_lines.list;
 	for( s = buffer; s && *s; s = end ){
@@ -794,7 +733,7 @@ int Get_route( struct control_file *cfp, int fd, struct printcap_entry *pc_entry
 	get_destination( cfp );
 	if(DEBUGL3 ) dump_control_file( "Get_route- after get_destination", cfp );
 	if( cfp->destination_list.count > 0 ){
-		sequence = 0;
+		sequence = 1;
 		cfp->hold_info.routed_time = time( (void *)0 );
 		destinationp = (void *)cfp->destination_list.list;
 		for( i = 0; i < cfp->destination_list.count; ++i ){
@@ -820,7 +759,7 @@ int Get_route( struct control_file *cfp, int fd, struct printcap_entry *pc_entry
 
 	len = cfp->statb.st_size;
 	DEBUG3("Get_route: allocate control file buffer len %d", len );
-	cfp->cf_info = add_buffer( &cfp->control_file_image, len+1 );
+	cfp->cf_info = add_buffer( &cfp->control_file_image, len+1,__FILE__,__LINE__  );
 	for( i = 1, s = cfp->cf_info;
 		len > 0 && (i = read( fd, s, len )) > 0;
 		len -= i, s += i );
@@ -886,7 +825,7 @@ char *Copy_hf( struct malloc_list *data, struct malloc_list *copy,
 				free( buffer );
 			}
 			/* now we allocate a buffer */
-			malloc_or_die( buffer, len );
+			buffer = malloc_or_die( len );
 			buffer_len = len;
 			copy->max = len;
 			copy->list = (void *)buffer;

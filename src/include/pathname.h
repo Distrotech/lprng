@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: pathname.h
  * PURPOSE: pathname.c functions
- * $Id: pathname.h,v 3.1 1996/12/28 21:40:31 papowell Exp $
+ * pathname.h,v 3.1 1996/12/28 21:40:31 papowell Exp
  **************************************************************************/
 
 #ifndef _PATHNAME_H

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: removeoneline.c,v 3.2 1997/09/18 19:45:41 papowell Exp $";
+"removeoneline.c,v 3.2 1997/09/18 19:45:41 papowell Exp";
 /*
  * removeoneline [file]
  *   - reads file which should have the form:

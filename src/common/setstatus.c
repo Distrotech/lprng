@@ -20,7 +20,7 @@
  *
  *	Mon Aug  7 20:49:45 PDT 1995 Patrick Powell
  ***************************************************************************/
-static char *const _id = "$Id: setstatus.c,v 3.14 1998/01/08 09:51:19 papowell Exp $";
+static char *const _id = "setstatus.c,v 3.16 1998/03/29 18:32:55 papowell Exp";
 
 #include "lp.h"
 #include "setstatus.h"
@@ -43,7 +43,7 @@ static int setup_logger_fd( char *destination, char **saved_host,
 static void set_msg_b( void )
 {
 	msg_b_len = LARGEBUFFER;
-	malloc_or_die( msg_b, msg_b_len+16 );
+	msg_b = malloc_or_die( msg_b_len+16 );
 }
 
 /*
@@ -60,12 +60,10 @@ void setstatus (va_alist) va_dcl
     struct control_file *cfp;
     char *fmt;
 #endif
-	static char *save;
-	static int size, minsize;
-	char *s, *str;
-	int len, l;
+	int size, minsize;
+	char *s, buffer[10*1024];
+	int len, l, tempfd;
 	struct stat statb;
-	static struct dpathname dpath;
 	char *path, *at_time = 0;
 	char *msg;
     VA_LOCAL_DECL
@@ -104,70 +102,79 @@ void setstatus (va_alist) va_dcl
 		Time_str(1,0) );
 
 	/* append new status to end of old */
-
 	if( CDpathname == 0 || CDpathname->pathname[0] == 0
 		|| Printer == 0 || *Printer == 0 || fmt == 0 ){
 		goto done;
 	}
 
-	if( Status_fd == 0 ) Status_fd = -1;
-	if( Status_fd > 0 && fstat( Status_fd, &statb ) < 0 ){
-		path = dpath.pathname;
-		logerr( LOG_ERR, "setstatus: cannot stat '%s'", path );
-		close( Status_fd );
-		Status_fd = -1;
-	}
-	if( Status_fd < 0 ){
+	if( Status_fd <= 0 ){
 		size = Max_status_size * 1024;
-		if( Min_status_size ){
-			minsize = Min_status_size * 1024;
-		} else {
+		minsize = Min_status_size * 1024;
+		if( Min_status_size <= 0 ){
 			minsize = size / 4;
 		}
 		if( minsize > size ){
 			minsize = size;
 		}
-		if( save ){
-			free( save );
-		}
-		malloc_or_die( save, minsize+1 );
-		save[minsize] = 0;
-		
-		dpath = *CDpathname;
-		path = Add2_path( &dpath, "status.", Printer );
-		Status_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
+		path = Add2_path( CDpathname, "status.", Printer );
 		DEBUG4("setstatus: status file '%s'", path);
+		Status_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( Status_fd < 0 ){
 			logerr_die( LOG_ERR, "setstatus: cannot open '%s'", path );
 		}
+		DEBUG4("setstatus: file '%s', size %d", path, statb.st_size );
+		if( size > 0 && statb.st_size > size ){
+			/* we truncate it */
+			tempfd = Make_temp_fd(0,0);
+			if( tempfd < 0 ){
+				Errorcode = JABORT;
+				logerr_die( LOG_ERR, "setstatus: cannot open temp file" );
+			}
+			DEBUG4("setstatus: truncating '%s'", path );
+			if( lseek( Status_fd, statb.st_size-minsize, SEEK_SET ) < 0 ){
+				logerr_die( LOG_ERR,
+					"setstatus: cannot seek '%s'", path );
+			}
+			while( (l = read( Status_fd, buffer, sizeof(buffer) ) ) > 0 ){
+				if( write( tempfd, buffer, l) < 0 ){
+					logerr_die( LOG_ERR,
+						"setstatus: cannot write tempfile" );
+				}
+			}
+			if( ftruncate( Status_fd, 0 ) < 0 ){
+				logerr_die( LOG_ERR, "setstatus: cannot truncate '%s'",
+					path );
+			}
+			if( lseek( Status_fd, 0, SEEK_SET ) < 0 ){
+				logerr_die( LOG_ERR,
+					"setstatus: cannot seek '%s'", path );
+			}
+			if( lseek( tempfd, 0, SEEK_SET ) < 0 ){
+				logerr_die( LOG_ERR,
+					"setstatus: cannot seek tempfile", path );
+			}
+			if( (l = read( tempfd, buffer, sizeof(buffer)-1 ) ) > 0 ){
+				buffer[sizeof(buffer)-1] = 0;
+				if( (s = strchr(buffer,'\n')) ){
+					*s++ = 0;
+				} else {
+					s = buffer;
+				}
+				if( write( Status_fd, s, strlen(s)) < 0 ){
+					logerr_die( LOG_ERR,
+						"setstatus: cannot write file '%s'",path );
+				}
+			}
+			while( (l = read( tempfd, buffer, sizeof(buffer) ) ) > 0 ){
+				if( write( Status_fd, buffer, l) < 0 ){
+					logerr_die( LOG_ERR,
+						"setstatus: cannot write file '%s'",path );
+				}
+			}
+			close( tempfd );
+		}
 	}
-	path = dpath.pathname;
-	/*DEBUG4("setstatus: file '%s', size %d", path, statb.st_size ); */
-	str = 0;
-	if( size > 0 && statb.st_size > size ){
-		/* we truncate it */
-		DEBUG4("setstatus: truncating '%s'", path );
-		if( lseek( Status_fd, statb.st_size-minsize, SEEK_SET ) < 0 ){
-			logerr_die( LOG_ERR, "setstatus: cannot seek '%s'", path );
-		}
-		for( len = minsize, str = save;
-			len > 0 && (l = read( Status_fd, str, len ) ) > 0;
-			str += l, len -= l );
-		*str = 0;
-		if( (s = strchr( save, '\n' )) ){
-			str = s+1;
-		} else {
-			str = save;
-		}
-		*str = 0;
-		if( ftruncate( Status_fd, 0 ) < 0 ){
-			logerr_die( LOG_ERR, "setstatus: cannot truncate '%s'",
-				path );
-		}
-	}
-
-	if( (str && Write_fd_str( Status_fd, str ) < 0 )
-			|| Write_fd_str( Status_fd, msg ) < 0 ){
+	if( Write_fd_str( Status_fd, msg ) < 0 ){
 		logerr_die( LOG_ERR, "setstatus: write to status file failed" );
 	}
 done:
@@ -199,8 +206,13 @@ static void put_header( struct control_file *cfp, char *header )
 	if( msg_b == 0 ) set_msg_b();
 	msg_b[0] = 0;
 	if( cfp ){
-		(void) plp_snprintf( msg_b, msg_b_len,
-			"IDENTIFIER %s\n", cfp->identifier+1 );
+		if( cfp->orig_identifier ){
+			(void) plp_snprintf( msg_b, msg_b_len,
+				"IDENTIFIER %s\n", cfp->orig_identifier+1 );
+		} else {
+			(void) plp_snprintf( msg_b, msg_b_len,
+				"IDENTIFIER %s\n", cfp->identifier+1 );
+		}
 		len = strlen(msg_b);
 		plp_snprintf( msg_b+len, msg_b_len-len,
 			"JOBNUMBER %d\n", cfp->number );
@@ -210,6 +222,13 @@ static void put_header( struct control_file *cfp, char *header )
 		plp_snprintf( msg_b+len, msg_b_len-len, "PRINTER %s@%s\n",
 			Printer, FQDNHost );
 	}
+	if( Destination_index && cfp ){
+		len = strlen(msg_b);
+		plp_snprintf( msg_b+len, msg_b_len-len, "DESTINATION_IDENTIFIER %s\n",
+			cfp->identifier+1 );
+	}
+	len = strlen(msg_b);
+	plp_snprintf( msg_b+len, msg_b_len-len, "PROCESS %d\n", getpid() );
 	len = strlen(msg_b);
 	(void) plp_snprintf( msg_b+len, msg_b_len-len,
 		"AT %s\n", Time_str(0,0));
@@ -247,8 +266,6 @@ static int prot_num, port_num;
 
 void send_to_logger( struct control_file *cfp, char *msg )
 {
-	DEBUG3( "send_to_logger: server %d, dest '%s', olddest '%s',fd %d,msg '%s'",
-		Is_server, Logger_destination, saved_host, Logger_fd, msg );
 	if( !Is_server  ) return;
 	if( msg == 0 ){
 		if( Logger_fd > 0 ){
@@ -262,6 +279,9 @@ void send_to_logger( struct control_file *cfp, char *msg )
 		return;
 	}
 	if( msg[0] == 0 ) return;
+
+	DEBUG3( "send_to_logger: server %d, dest '%s', olddest '%s',fd %d,msg '%s'",
+		Is_server, Logger_destination, saved_host, Logger_fd, msg );
 
 	Logger_fd = setup_logger_fd( Logger_destination, &saved_host, Logger_fd );
 	if( cfp && Allow_user_logging && hostport( cfp->MAILNAME) ){
@@ -415,7 +435,7 @@ static int setup_logger_fd( char *destination, char **saved_host,
 		}
 		DEBUG3("setup_logger_fd: host '%s', port %d, protocol %d",
 			host, port_num, prot_num );
-		logger_fd = Link_open_type(host, 10, port_num, prot_num, 0 );
+		logger_fd = Link_open_type(host, 10, port_num, prot_num );
 		DEBUG3("setup_logger_fd: logger_fd '%d'", logger_fd );
 
 		if( logger_fd > 0 && prot_num == SOCK_STREAM ){

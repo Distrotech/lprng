@@ -22,7 +22,7 @@
  *    Justin Mason <jmason@iona.ie> especially.  Some of the things
  *    that you have to do to get portability are truely bizzare.
  *
- * $Id: portable.h,v 3.13 1997/12/24 20:10:12 papowell Exp $
+ * portable.h,v 3.14 1998/03/24 02:43:22 papowell Exp
  **************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -652,7 +652,7 @@ typedef int plp_block_mask;
 int inet_pton( int family, const char *strptr, void *addr );
 #endif
 #if !defined(HAVE_INET_NTOP)
-char *inet_ntop( int family, const void *addr, char *strptr, int len );
+const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 #endif
 
 /**********************************************************************
@@ -708,7 +708,6 @@ extern int long strtol( char *str, char **ptr, int base );
 extern int strftime(char *buf, int bufsize, const char *fmt, struct tm *tm);
 extern void syslog(int, const char *, ...);
 extern int system( const char *str );
-extern int tgetent( char *buffer, const char *name );
 extern time_t time( time_t *t );
 extern int tolower( int );
 extern int toupper( int );
@@ -743,7 +742,6 @@ extern int openlog( const char *ident, int logopt, int facility );
 #endif
 
 #ifdef IS_AIX32
-extern int tgetent(char *, char *);
 #if !defined(HAVE_OPENLOG_DEF)
 void openlog(const char *, int, int);
 void syslog(int, const char *, ...);

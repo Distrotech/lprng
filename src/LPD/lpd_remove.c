@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_remove.c,v 3.16 1998/01/18 00:10:32 papowell Exp papowell $";
+"lpd_remove.c,v 3.17 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "printcap.h"
@@ -105,7 +105,7 @@ int Job_remove( int *socket, char *input, int maxlen )
 		goto error;
 	}
 	Printer = name;
-	setproctitle( "lpd %s '%s'", Name, name );
+	proctitle( "lpd %s '%s'", Name, name );
 
 	user = tokens[1].start;
 
@@ -227,7 +227,7 @@ Remote_remove(int *socket, int tokencount,
       DEBUG3("Remote_remove: finished removal %s", orig_name );
     } else {
       if( tokencount+1 >= args.max ){
-	extend_malloc_list( &args, sizeof( char *), tokencount+1 );
+	extend_malloc_list( &args, sizeof( char *), tokencount+1,__FILE__,__LINE__  );
       }
       args.count = 0;
       list = (void *)args.list;
@@ -291,7 +291,7 @@ void Get_queue_remove( char *user, char *name, int *socket,
 
 	strcpy( error, _("??? odd error???") );
 	Errorcode = 0;
-	setproctitle( "lpd %s '%s'", Name, name );
+	proctitle( "lpd %s '%s'", Name, name );
 	if( Setup_printer( name, error, sizeof(error),
 		debug_vars, 1, (void *)0, (void *)0) ){
 		DEBUG3("Get_queue_remove: %s", error );
@@ -449,7 +449,7 @@ next_destination:
 			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 			plp_snprintf( destination->error, sizeof( destination->error ),
 				_("entry deleted") );
-			destination->done = time( (void *)0 );
+			destination->done_time = time( (void *)0 );
 			Set_job_control( cfp, (void *)0 );
 			goto next_destination;
 		}

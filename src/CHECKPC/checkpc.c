@@ -28,7 +28,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc.c,v 3.13 1997/12/31 19:30:10 papowell Exp $";
+"checkpc.c,v 3.15 1998/03/29 18:32:40 papowell Exp";
 
 char checkpc_optstr[] = "ac:flp:rst:A:CD:PT:V";
 
@@ -59,7 +59,7 @@ void Make_write_file( struct dpathname *dpathname,
 
 /* pathnames of the spool directory (sd) and control directory (cd) */
 
-int main( int argc, char *argv[] )
+int main( int argc, char *argv[], char *envp[] )
 {
 	int i, c;
 	char line[LINEBUFFER];
@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
 	Interactive = 1;
 	Is_server = 1;
 
-	Initialize(argv);
+	Initialize(argc, argv, envp);
 
 	umask( 0 );
 	/* set up the uid state */
@@ -317,17 +317,17 @@ void Scan_printer( char *name, char *error, int errorlen )
 		To_root();
 		Make_files( CDpathname, Printer );
 
-		s = Clear_path( CDpathname );
 		if( Check_perms( CDpathname, 0, Age, Remove ) ){
+			s = Clear_path( CDpathname );
 			logDebug( " Need to fix '%s' files, control dir '%s'",
 				Printer, s);
 			if( Fix ){
 				Check_perms( CDpathname, Fix, Age, Remove );
 			}
 		}
-		s = Clear_path( SDpathname );
 		if( SDpathname != CDpathname &&
 			 Check_perms( SDpathname, Fix, Age, Fix ) > 1 ){
+			s = Clear_path( SDpathname );
 			logDebug( "Cannot check '%s' files, spool dir '%s'",
 				Printer, s );
 			return;
@@ -402,7 +402,7 @@ void Scan_printer( char *name, char *error, int errorlen )
 void Make_write_file( struct dpathname *dpathname,
 	int flag, char *name, char *printer )
 {
-	int fd;
+	int fd, len;
 	struct stat statb;
 	struct dpathname dp = *dpathname;
 	char *s;
@@ -414,6 +414,8 @@ void Make_write_file( struct dpathname *dpathname,
 	if( name[0] == '/' ){
 		Init_path(&dp, name );
 		s = dp.pathname;
+		len = strlen(s)-1;
+		if( s[len] == '/' ) s[len] = 0;
 	} else {
 		s = Add2_path( &dp, name, printer );
 	}
@@ -575,7 +577,7 @@ void Clean_log( int trunc, char *type, struct dpathname *dpath, char *logfile )
 				if( buffer ) free(buffer);
 				buffer = 0;
 				buflen = len+1;
-				malloc_or_die( buffer, buflen );
+				buffer = malloc_or_die( buflen );
 			}
 			/* seek to the end of the file - trunc */
 			if( lseek( fd,  -len, SEEK_END ) < 0 ){

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: fileopen.c,v 3.10 1997/12/16 15:06:25 papowell Exp $";
+"fileopen.c,v 3.12 1998/03/29 18:32:48 papowell Exp";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -192,37 +192,28 @@ char *Init_tempfile( void )
 	struct stat statb;
 
 	if( Tempfile == 0 ){
-		malloc_or_die( Tempfile, sizeof( Tempfile[0] ) );
+		Tempfile = malloc_or_die( sizeof( Tempfile[0] ) );
 	}
 	memset(Tempfile, 0, sizeof( Tempfile[0]) );
 
-	/* if we have the openname set, we use this for base */
 	if( Is_server ){
-		if( SDpathname ){
+		if( CDpathname ){
+			dir = Clear_path( CDpathname );
+		}
+		if( dir == 0 && SDpathname ){
 			dir = Clear_path( SDpathname );
 		}
-		if( dir == 0 || stat( dir, &statb ) ||
-			!S_ISDIR(statb.st_mode) ){
-			dir = 0;
-		}
-		if( dir == 0 || *dir == 0 ){
+		if( dir == 0 ){
 			dir = Server_tmp_dir;
-		}
-		if( dir == 0 || stat( dir, &statb ) ||
-			!S_ISDIR(statb.st_mode) ){
-			fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
 		}
 	} else {
 		dir = getenv( "LPR_TMP" );
+		if( dir == 0 || *dir == 0 ){
+			dir = Default_tmp_dir;
+		}
 	}
-	if( dir == 0 || *dir == 0 ){
-		dir = Default_tmp_dir;
-	}
-	if( dir == 0 || *dir == 0 ){
-		dir = "/tmp";
-	}
-	if( dir == 0 || stat( dir, &statb ) ||
-		!S_ISDIR(statb.st_mode) ){
+	if( dir == 0 || stat( dir, &statb ) != 0
+		|| !S_ISDIR(statb.st_mode) ){
 		fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
 	}
 	Init_path( Tempfile, dir );
@@ -365,7 +356,9 @@ void Remove_files( void *nv )
 		data = (void *)Data_files.list;
 		for( i = 0; i < Data_files.count; ++i ){
 			unlinkf( data[i].openname );
-			unlinkf( data[i].transfername );
+			if( data[i].cfline[0] ){
+				unlinkf( data[i].cfline+1 );
+			}
 		}
 		unlinkf( Cfp_static->openname );
 		unlinkf( Cfp_static->transfername );

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_secure.c,v 3.13 1997/12/17 19:34:56 papowell Exp $";
+"lpd_secure.c,v 3.14 1998/03/24 02:43:22 papowell Exp";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -75,7 +75,7 @@ int Receive_secure( int *socket, char *input, int maxlen, int transfer_timeout )
 #endif
 
 	if( Cfp_static == 0 ){
-		malloc_or_die( Cfp_static, sizeof(Cfp_static[0]) );
+		Cfp_static = malloc_or_die( sizeof(Cfp_static[0]) );
 		memset(Cfp_static, 0, sizeof( Cfp_static[0] ) );
 	}
 	Clear_control_file( Cfp_static );
@@ -130,7 +130,7 @@ int Receive_secure( int *socket, char *input, int maxlen, int transfer_timeout )
 		goto error;
 	}
 	Name = "Receive_secure";
-	setproctitle( "lpd %s '%s'", Name, orig_name );
+	proctitle( "lpd %s '%s'", Name, orig_name );
 
 	/* set up cleanup and do initialization */
 	register_exit( Remove_files, 0 );
@@ -180,9 +180,11 @@ int Receive_secure( int *socket, char *input, int maxlen, int transfer_timeout )
 		safestrncpy( Cfp_static->original, filename );
 		status = Check_format( CONTROL_FILE, filename, Cfp_static );
 		if( status ){
+			char buffer[LINEBUFFER];
+			safestrncpy(buffer,Cfp_static->error);
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
-					Printer, filename );
+				_("%s: file '%s' name problems - %s"),
+					Printer, filename, buffer );
 			ack = ACK_FAIL;
 			goto error;
 		}
