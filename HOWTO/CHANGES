@@ -1,3 +1,13 @@
+Version LPRng-3.8.15 - Sun Aug 11 13:11:48 PDT 2002
+  
+  Remove_done_jobs
+    - checks to see if the INCOMING flag is set BEFORE
+    it checks to see if there is an error and only checks
+    for the data files if the ERROR or DONE flags are set.
+    This removes a race condition.  It was bloody obvious
+    when I looked at it... I wonder why I did not see it
+    before?
+
 Version LPRng-3.8.14 - Tue Aug  6 09:14:06 PDT 2002
 
   man page fixes.

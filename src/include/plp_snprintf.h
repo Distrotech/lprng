@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: plp_snprintf.h,v 1.36 2002/08/06 19:14:16 papowell Exp $
+ * $Id: plp_snprintf.h,v 1.37 2002/08/12 00:01:47 papowell Exp $
  ***************************************************************************/
 
 

@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 6 Aug 2002 (For LPRng-3.8.14)</subtitle>
+<subtitle> 11 Aug 2002 (For LPRng-3.8.15)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-751-2435</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.35 2002/08/06 19:14:17 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.36 2002/08/12 00:01:48 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.36 2002/08/06 19:14:13 papowell Exp $";
+"$Id: getqueue.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
 
 
 /***************************************************************************
@@ -1416,6 +1416,8 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	buffer[0] = 0;
 	if( job->info.count == 0 ){
 		SNPRINTF(buffer,sizeof(buffer)) "removed" );
+	} else if( Find_flag_value(&job->info,INCOMING_TIME,Value_sep) ){
+		SNPRINTF(buffer,sizeof(buffer)) "incoming" );
 	} else if( (error = Find_flag_value(&job->info,ERROR_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "error" );
 	} else if( Find_flag_value(&job->info,HOLD_TIME,Value_sep) ){
@@ -1423,8 +1425,6 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 		held = 1;
 	} else if( Find_flag_value(&job->info,REMOVE_TIME,Value_sep) ){
 		SNPRINTF(buffer,sizeof(buffer)) "remove" );
-	} else if( Find_flag_value(&job->info,INCOMING_TIME,Value_sep) ){
-		SNPRINTF(buffer,sizeof(buffer)) "incoming" );
 	} else if( (done = Find_flag_value(&job->info,DONE_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "done" );
 	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))

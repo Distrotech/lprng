@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.36 2002/08/06 19:14:15 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.37 2002/08/12 00:01:44 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -2865,7 +2865,7 @@ int Remove_done_jobs( void )
 	char *id;
 	time_t tm, when;
 	int removed = 0;
-	int job_index, pid, printable, held, move, error, done, i, number;
+	int job_index, pid, printable, held, move, error, done, i, number, incoming;
 	struct line_list info;
 	char tval[SMALLBUFFER];
 
@@ -2883,26 +2883,26 @@ int Remove_done_jobs( void )
 		DEBUG3("Remove_done_jobs: done_jobs - job_index [%d] '%s'", job_index,
 			Sort_order.list[job_index] );
 		Get_hold_file( &job, Sort_order.list[job_index] );
-		Setup_cf_info( &job, 0 );
 		if(DEBUGL4)Dump_job("Remove_done_jobs: done_jobs - job ",&job);
 		if( job.info.count == 0 ) continue;
-		/* get printable status */
+		/* get status from hold file */
 		done = Find_flag_value(&job.info,DONE_TIME,Value_sep);
 		error = Find_flag_value(&job.info,ERROR_TIME,Value_sep);
-		DEBUG3("Remove_done_jobs: done 0x%x, error 0x%x", done, error );
+		incoming = Find_flag_value(&job.info,INCOMING_TIME,Value_sep);
+		DEBUG3("Remove_done_jobs: done 0x%x, error 0x%x, incoming 0x%x",
+			done, error, incoming );
 		/* check to see if active */
+		if( incoming || !(error || done) ) continue;
 		if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) && kill( pid, 0 ) == 0 ){
 			DEBUG3("Remove_done_jobs: [%d] active %d", job_index, pid );
 			continue;
 		}
-
-
-		if( !(error || done) ) continue;
 		id = Make_identifier(&job);
 		if( Done_jobs_max_age_DYN > 0
 			&& ( (error && (tm - error) > Done_jobs_max_age_DYN)
 			   || (done && (tm - done) > Done_jobs_max_age_DYN) ) ){
 			setstatus( &job, _("job '%s' removed- status expired"), id );
+			/* Setup_cf_info( &job, 0 ); */
 			Remove_job( &job );
 			removed = 1;
 			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
@@ -2913,7 +2913,7 @@ int Remove_done_jobs( void )
 			SNPRINTF(tval,sizeof(tval)) "0x%08x,%c,%s",
 				done?done:error, done?'D':'E', id );
 			while( (s = safestrchr(tval,'=')) ) *s = '_';
-			Set_flag_value(&info,tval, job_index );
+			Set_flag_value(&info, tval, job_index );
 		}
 	}
 
@@ -2927,11 +2927,11 @@ int Remove_done_jobs( void )
 		job_index = atoi(s);
 		Free_job(&job);
 		Get_hold_file( &job, Sort_order.list[job_index] );
-		Setup_cf_info( &job, 0 );
 		id = Make_identifier(&job);
 		DEBUG1( "Remove_done_jobs: [%d] entry %s, job_index %d",
 			i, info.list[i], job_index );
 		setstatus( &job, _("job '%s' removed"), id );
+		Setup_cf_info( &job, 0 );
 		Remove_job( &job );
 		removed = 1;
 		free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;

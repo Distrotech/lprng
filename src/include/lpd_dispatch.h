@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_dispatch.h,v 1.36 2002/08/06 19:14:16 papowell Exp $
+ * $Id: lpd_dispatch.h,v 1.37 2002/08/12 00:01:46 papowell Exp $
  ***************************************************************************/
 
 
