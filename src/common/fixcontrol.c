@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: fixcontrol.c,v 3.7 1997/01/30 21:15:20 papowell Exp $";
+"$Id: fixcontrol.c,v 3.9 1997/02/25 04:50:25 papowell Exp $";
 /********************************************************************
  * int Fix_control( struct control_file *cfp, char *order )
  *   fix the order of lines in the control file so that they
@@ -112,7 +112,8 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 		cfp->copynumber, Long_number, cfp->number_len );
 
 	if(DEBUGL3) dump_control_file( "Fix_control: before fixing", cfp );
-	if( Use_shorthost && (s = strchr( cfp->filehostname, '.' )) ){
+	if( (Backwards_compatible || Use_shorthost)
+		&& (s = strchr( cfp->filehostname, '.' )) ){
 		*s = 0;
 	}
 
@@ -277,7 +278,7 @@ int Fix_control( struct control_file *cfp, struct printcap_entry *printcap_entry
 		struct stat statb;
 
 		DEBUG3("Fix_control: control filter '%s'", Control_filter );
-		tempfd = Make_temp_fd( cfp, 0, 0 );
+		tempfd = Make_temp_fd( 0, 0 );
 		if( ftruncate( tempfd, 0 ) < 0 ){
 			Errorcode = JFAIL;
 			logerr_die( LOG_INFO,

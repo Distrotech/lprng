@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_secure.c,v 3.6 1997/01/31 22:13:09 papowell Exp $";
+"$Id: lpd_secure.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -102,7 +102,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 	fields[max_fields] = 0;
 	if( max_fields < 4 || max_fields > 5 ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"bad command line '%s'", input );
+			_("bad command line '%s'"), input );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		goto error;
 	}
@@ -122,7 +122,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 	filename = fields[4];
 	if( Clean_name( orig_name ) ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"bad command '%s'", input );
+			_("bad command '%s'"), input );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		goto error;
 	}
@@ -144,7 +144,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 	if( Server_authentication_command == 0
 		|| *Server_authentication_command == 0 ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"secure command not supported", input );
+			_("secure command not supported"), input );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		goto error;
 	}
@@ -164,7 +164,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 			Spooling_disabled );
 		if( Spooling_disabled ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: spooling disabled", Printer );
+				_("%s: spooling disabled"), Printer );
 			ack = ACK_RETRY;	/* retry */
 			goto error;
 		}
@@ -178,7 +178,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		status = Check_format( CONTROL_FILE, filename, Cfp_static );
 		if( status ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: file '%s' name format not [cd]f[A-Za-z]NNNhost",
+				_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
 					Printer, filename );
 			ack = ACK_FAIL;
 			goto error;
@@ -188,7 +188,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		 * get the non colliding job number
 		 */
 
-		if( (ack = Fixup_job_number( Cfp_static )) ){
+		if( (ack = Find_non_colliding_job_number( Cfp_static )) ){
 			goto error;
 		}
 
@@ -205,26 +205,33 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		strncpy( Cfp_static->openname,
 			Add_path( SDpathname, Cfp_static->transfername ),
 			sizeof( Cfp_static->openname ) );
-		
-		safestrncpy( tempfilename, Init_tempfile( Cfp_static ) );
-		err = errno;
 	} else {
 		Setup_printer( orig_name, Cfp_static->error,
 			sizeof(Cfp_static->error), debug_vars, !DEBUGFSET(DAUTH1), (void *)0,
 			&pc_entry );
-		safestrncpy( tempfilename, Init_tempfile( Cfp_static ) );
 	}
 
 	status = Link_ack( ShortRemote, socket, Send_timeout, 0x100, 0 );
 	if( status ){
 		ack = ACK_RETRY;
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: Receive_secure: sending ACK 0 failed", Printer );
+			_("%s: Receive_secure: sending ACK 0 failed"), Printer );
 		goto error;
 	}
 	if( Server_user == 0 || *Server_user == 0 ){
 		Server_user = Daemon_user;
 	}
+	/* make tempfile */
+	temp_fd = Make_temp_fd( tempfilename, sizeof(tempfilename) );
+	if( temp_fd < 0 ){
+		err = errno;
+		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
+			_("Receive_secure: cannot create temp file") );
+		status = JFAIL;
+		goto error;
+	}
+	close( temp_fd );
+	temp_fd = -1;
 
 #if defined(HAVE_KRB5_H)
 	if( use_kerberos ){
@@ -254,11 +261,11 @@ int Receive_secure( int *socket, char *input, int maxlen )
 
 		if( pipe(pipe_fd) <  0 ){
 			Errorcode = JFAIL;
-			logerr_die( LOG_INFO, "Send_files: pipe failed" );
+			logerr_die( LOG_INFO, _("Send_files: pipe failed") );
 		};
 		if( pipe(report_fd) <  0 ){
 			Errorcode = JFAIL;
-			logerr_die( LOG_INFO, "Send_files: pipe failed" );
+			logerr_die( LOG_INFO, _("Send_files: pipe failed") );
 		}
 		i = 0;
 		fd[i++] = *socket;
@@ -267,8 +274,10 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		fd[i++] = report_fd[0];
 
 		/* create the secure process */
-		Make_passthrough( &Passthrough_receive, tempbuf, fd, 4,
-			0, Cfp_static, pc_entry );
+		if( Make_passthrough( &Passthrough_receive, tempbuf, fd, 4,
+			0, Cfp_static, pc_entry ) < 0 ){
+			goto error;
+		}
 		/* set up closing */
 		Passthrough_receive.input = *socket;
 		Passthrough_receive.output = report_fd[1];
@@ -284,7 +293,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		if( len <= 0 ){
 			status = JFAIL;
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"Receive_secure: transfer process failed" );
+				_("Receive_secure: transfer process failed") );
 			goto error;
 		}
 
@@ -299,7 +308,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		if( dup2( report_fd[1], *socket ) == -1 ){
 			err = errno;
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"Receive_secure: dup of %d to %d failed - %s",
+				_("Receive_secure: dup of %d to %d failed - %s"),
 				report_fd[1], *socket, Errormsg(err));
 			status = JFAIL;
 			goto error;
@@ -308,20 +317,18 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		report_fd[1] = -1;
 	}
 
-	/* extract jobs */
-	temp_fd = Checkwrite( tempfilename, &statb, O_RDWR, 1, 0 );
-	if( temp_fd < 0 ){
+	if( (temp_fd = Checkwrite(tempfilename, &statb, O_RDWR, 0, 0 ) ) < 0 ){
 		err = errno;
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"Receive_secure: open of '%s' - %s", tempfilename,
-			Errormsg(err));
+			_("Receive_secure: reopen of '%s' failed - %s"),
+			tempfilename, Errormsg(err));
 		status = JFAIL;
 		goto error;
 	}
 	if( lseek( temp_fd, 0, SEEK_SET ) < 0 ){
 		err = errno;
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"Receive_secure: reopen of temp_fd failed - %s",
+			_("Receive_secure: lseek of temp_fd failed - %s"),
 			Errormsg(err));
 		status = JFAIL;
 		goto error;
@@ -338,7 +345,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		} else {
 			if( Cfp_static->auth_id[0] == 0 ){
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"Receive_secure: authenication missing in forwarded job");
+					_("Receive_secure: authenication missing in forwarded job"));
 				status = JFAIL;
 				goto error;
 			}
@@ -358,7 +365,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		/* now we process the job */
 
 		status = Check_for_missing_files( Cfp_static, &Data_files,
-			temp_fd, orig_name, authentication );
+			temp_fd, tempfilename, orig_name, authentication );
 
 	} else {
 		/* we read the command */
@@ -368,13 +375,20 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		char *command;
 		char *forward = 0;
 
+		if( fstat( temp_fd, &statb ) == -1 ){
+			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
+				"Receive_secure: fstat of '%s' failed - %s",
+				tempfilename, Errormsg(errno) );
+			status = JFAIL;
+			goto error;
+		}
 		size = statb.st_size;
 		len = statb.st_size;
 		DEBUGF(DRECV1)("Receive_secure: file '%s' size '%d'",
 			tempfilename, len );
 		if( size >= sizeof(buffer) ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"Receive_secure: command file too large" );
+				_("Receive_secure: command file too large") );
 			status = JFAIL;
 			goto error;
 		}
@@ -386,7 +400,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		if( i <= 0 ){
 			err = errno;
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"Receive_secure: read of temp_fd failed - %s",
+				_("Receive_secure: read of temp_fd failed - %s"),
 				Errormsg(err));
 			status = JFAIL;
 			goto error;
@@ -406,7 +420,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 				*s++ = 0;
 				if( *s ){
 					plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-						"Receive_secure: wrong number of lines in file" );
+						_("Receive_secure: wrong number of lines in file") );
 					status = JFAIL;
 					goto error;
 				}
@@ -416,14 +430,14 @@ int Receive_secure( int *socket, char *input, int maxlen )
 			Auth_from, command, forward );
 		if( Auth_from == 2 && forward == 0 ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"Receive_secure: missing forwarded authentication" );
+				_("Receive_secure: missing forwarded authentication") );
 			status = JFAIL;
 			goto error;
 		}
 		if( forward ){
 			if( Auth_from != 2 ){
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"Receive_secure: forward information and not from server" );
+					_("Receive_secure: forward information and not from server") );
 				status = JFAIL;
 				goto error;
 			}
@@ -448,7 +462,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		switch( command[0] ){
 		default:
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"Receive_secure: bad request line '%s'", command );
+				_("Receive_secure: bad request line '%s'"), command );
 			status = JFAIL;
 			goto error;
 			break;
@@ -462,7 +476,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 				|| (permission == 0 && Last_default_perm == REJECT) ){
 				
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"Receive_secure: no permission to start printer %s",
+					_("Receive_secure: no permission to start printer %s"),
 					command+1 );
 				goto error;
 			}

@@ -1,0 +1,36 @@
+***************
+*** 440,454 ****
+  			Cfp_static )) == REJECT
+  		|| (permission == 0 && Last_default_perm == REJECT) ){
+  		DEBUG2("Service_connection: talk socket '%d' no connect perms", talk );
+  	Write_fd_str( talk, "no connect permissions\n" );
+  		cleanup(0);
+  	}
+  	switch( input[0] ){
+- 		case REQ_START:
+  		default:
+! 			fatal( LOG_INFO, "Service_connection: bad request line '\\%d'%s'",
+  				input[0], input+1 );
+  			break;
+  		case REQ_RECV:
+  			Receive_job( &talk, input, sizeof(input) );
+  			break;
+--- 440,457 ----
+  			Cfp_static )) == REJECT
+  		|| (permission == 0 && Last_default_perm == REJECT) ){
+  		DEBUG2("Service_connection: talk socket '%d' no connect perms", talk );
+  	Write_fd_str( talk, _("no connect permissions\n") );
+  		cleanup(0);
+  	}
+  	switch( input[0] ){
+  		default:
+! 			fatal( LOG_INFO, _("Service_connection: bad request line '\\%d'%s'"),
+  				input[0], input+1 );
+  			break;
++ 		case REQ_START:
++ 			/* simply send a 0 ACK and close connection - NOOP */
++ 			Write_fd_len( talk, "", 1 );
++ 			break;
+  		case REQ_RECV:
+  			Receive_job( &talk, input, sizeof(input) );
+  			break;

@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpc_getparms.c,v 3.1 1996/12/28 21:40:00 papowell Exp $";
+"$Id: lpc_getparms.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -46,50 +46,48 @@ void Get_parms(int argc, char *argv[] )
 			usage();
 		}
 	}
-	if( Verbose > 0 ) fprintf( stdout, "Version %s\n", PATCHLEVEL );
+	if( Verbose > 0 ) fprintf( stdout, _("Version %s\n"), PATCHLEVEL );
 	if( Verbose > 1 ) Printlist( Copyright, stdout );
 }
 
-char *msg[] = {
-	"usage: %s [-A] [-Ddebuglevel] [-Pprinter] [-V] [command]",
-	" with no commands, reads from stdin"
-	"  -A           - use authentication",
-	"  -Pprinter    - specify printer",
-	"  -V           - increase information verbosity",
-	"  -Ddebuglevel - debug level",
-	" commands:",
-	" abort   (printer[@host] | all)  - stop server",
-	" disable (printer[@host] | all)  - disable queueing",
-	" debug   (printer[@host] | all) debugparms - set debug level for printer",
-	" enable  (printer[@host] | all)  - enable  queueing",
-	" hold    (printer[@host] | all) (name[@host] | job | all)* - hold job",
-	" holdall (printer[@host] | all)  - hold all jobs on",
-	" kill    (printer[@host] | all)  - stop and restart server",
-	" lpd [HUP]  - get LPD PID, signal it to reread printcap and configuration",
-	" lpq (printer[@host] | all) (name[@host] | job | all)*     - invoke LPQ",
-	" lprm (printer[@host] | all) (name[@host]|host|job| all)*  - invoke LPRM",
-	" move printer (user|jobid)* target - move jobs to new queue",
-	" noholdall (printer[@host] | all)  - hold all jobs off",
-	" printcap (printer[@host] | all) - report printcap values",
-	" quit                            - exit LPC",
-	" redirect (printer[@host] | all) (printer@host | off )*    - redirect jobs",
-	" release  (printer[@host] | all) (name[@host] | job | all)* - release job",
-	" reread                          - LPD reread database information",
-	" start   (printer[@host] | all)  - start printing",
-	" status  (printer[@host] | all)  - status of printers",
-	" stop    (printer[@host] | all)  - stop  printing",
-	" topq    (printer[@host] | all) (name[@host] | job | all)* - reorder job",
-	0
-};
+char *msg = N_("\
+usage: %s [-A] [-Ddebuglevel] [-Pprinter] [-V] [command]\n\
+ with no commands, reads from stdin\n\
+  -A           - use authentication\n\
+  -Pprinter    - specify printer\n\
+  -V           - increase information verbosity\n\
+  -Ddebuglevel - debug level\n\
+ commands:\n\
+ abort   (printer[@host] | all)  - stop server\n\
+ disable (printer[@host] | all)  - disable queueing\n\
+ debug   (printer[@host] | all) debugparms - set debug level for printer\n\
+ enable  (printer[@host] | all)  - enable  queueing\n\
+ hold    (printer[@host] | all) (name[@host] | job | all)* - hold job\n\
+ holdall (printer[@host] | all)  - hold all jobs on\n\
+ kill    (printer[@host] | all)  - stop and restart server\n\
+ lpd [HUP]  - get LPD PID, signal it to reread printcap and configuration\n\
+ lpq (printer[@host] | all) (name[@host] | job | all)*     - invoke LPQ\n\
+ lprm (printer[@host] | all) (name[@host]|host|job| all)*  - invoke LPRM\n\
+ move printer (user|jobid)* target - move jobs to new queue\n\
+ noholdall (printer[@host] | all)  - hold all jobs off\n\
+ printcap (printer[@host] | all) - report printcap values\n\
+ quit                            - exit LPC\n\
+ redirect (printer[@host] | all) (printer@host | off )*    - redirect jobs\n\
+ release  (printer[@host] | all) (name[@host] | job | all)* - release job\n\
+ reread                          - LPD reread database information\n\
+ start   (printer[@host] | all)  - start printing\n\
+ status  (printer[@host] | all)  - status of printers\n\
+ stop    (printer[@host] | all)  - stop  printing\n\
+ topq    (printer[@host] | all) (name[@host] | job | all)* - reorder job\n");
 
 void usage(void)
 {
-	Printlist(msg, stderr);
+	fputs (_(msg), stderr);
 	exit(1);
 }
 
 void use_msg(void)
 {
-	Printlist(msg, stdout);
+	fputs (_(msg), stdout);
 	fflush(stdout);
 }

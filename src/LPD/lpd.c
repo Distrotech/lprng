@@ -23,12 +23,13 @@ We are going to simulate the LPD daemon using the basic facilities.
 
 */
 static char *const _id =
-"$Id: lpd.c,v 3.8 1997/01/31 22:13:07 papowell Exp $";
+"$Id: lpd.c,v 3.12 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
 #include "fileopen.h"
 #include "gethostinfo.h"
+#include "decodestatus.h"
 #include "initialize.h"
 #include "killchild.h"
 #include "linksupport.h"
@@ -37,6 +38,7 @@ static char *const _id =
 #include "setstatus.h"
 #include "waitchild.h"
 #include "krb5_auth.h"
+#include "cleantext.h"
 /**** ENDINCLUDE ****/
 
 static void Service_connection( struct sockaddr *sin, int listen, int talk );
@@ -44,7 +46,7 @@ static void Read_pc(void);
 static void Set_lpd_pid(void);
 static int Get_lpd_pid(void);
 int Setuplog(char *logfile, int sock);
-void Service_printer( int listen, int talk );
+void Service_printer( int talk );
 
 
 char LPD_optstr[] 	/* LPD options */
@@ -72,12 +74,14 @@ int main(int argc, char *argv[], char *envp[])
 	int status;			/* status of operation */
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
+	struct timeval timeval, *timeout;
 	int max_socks;		/* maximum number of sockets */
 	struct sockaddr sin;	/* the connection remote IP address */
 	pid_t result;		/* process termination information */
 	int l;				/* ACME?  Hmmm... well, ok */
 	int err;
-	int max_servers;	/* maximum number of servers allowed */
+	time_t last_time;	/* time that last Start_all was done */
+	time_t this_time;	/* current time */
 
 	Is_server = 1;	/* we are the LPD server */
 
@@ -98,7 +102,6 @@ int main(int argc, char *argv[], char *envp[])
 	Get_parms(argc, argv);      /* scan input args */
 
 	/* set signal handlers */
-	(void) plp_signal (SIGPIPE, (plp_sigfunc_t)SIG_IGN);
 	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Read_pc);
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
@@ -124,7 +127,7 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	if( Lockfile == 0 ){
-		logerr_die( LOG_INFO, "No LPD lockfile specified!" );
+		logerr_die( LOG_INFO, _("No LPD lockfile specified!") );
 	}
 
 	/*
@@ -138,10 +141,10 @@ int main(int argc, char *argv[], char *envp[])
 		 */
 		pid = Get_lpd_pid();
 		if( pid > 0 ){
-			Diemsg( "Another print spooler is using TCP printer port, possibly lpd process '%d'",
+			Diemsg( _("Another print spooler is using TCP printer port, possibly lpd process '%d'"),
 				pid );
 		} else {
-			Diemsg( "Another print spooler is using TCP printer port" );
+			Diemsg( _("Another print spooler is using TCP printer port") );
 		}
 	}
 
@@ -153,7 +156,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	if( !Foreground ){
 		if( (pid = dofork()) < 0 ){
-			logerr_die( LOG_ERR, "lpd: main() dofork failed" );
+			logerr_die( LOG_ERR, _("lpd: main() dofork failed") );
 		} else if( pid ){
 			exit(0);
 		}
@@ -178,20 +181,21 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* establish the pipes for low level processes to use */
 	if( pipe( Lpd_pipe ) ){
-		logerr_die( LOG_ERR, "lpd: pipe call failed" );
+		logerr_die( LOG_ERR, _("lpd: pipe call failed") );
 	}
 
 	/* open a connection to logger */
 	send_to_logger( 0 );
 
 	/* get the maximum number of servers allowed */
-	max_servers = Get_max_servers();
-	DEBUG0( "lpd: maximum servers %d", max_servers );
+	Max_servers = Get_max_servers();
+	DEBUG0( "lpd: maximum servers %d", Max_servers );
 
 	/*
 	 * clean out the current queues
 	 */
 	Start_all();
+	last_time = time( (void *)0 );
 
 	Printer = 0;
 	Name = "LPD";
@@ -218,33 +222,55 @@ int main(int argc, char *argv[], char *envp[])
 
 			n = Countpid();
 			block = WNOHANG;
-			if( n > max_servers ){
+			if( n > Max_servers ){
 				block = 0;
 			}
-			DEBUG0( "lpd: %d servers active, %s",
-				n, block?"WNOHANG":"not blocking" );
+			DEBUG0( "lpd: %d servers active of %d, %s",
+				n, Max_servers, block?"WNOHANG":"not blocking" );
 			while( (result = plp_waitpid( -1, &status, block )) > 0 ){
 				err = errno;
 				DEBUG0( "lpd: server process pid %d exited", result );
 			}
 			err = errno;
 			n = Countpid();
-			DEBUG0( "lpd: now %d servers active", n );
-			if( n > max_servers ) continue;
+			DEBUG0( "lpd: now %d servers of %d active", n, Max_servers );
+			if( n > Max_servers ) continue;
+		}
+		if( Poll_time > 0 ){
+			this_time = time( (void *)0 );
+			l = this_time - last_time;
+			if( l >= Poll_time ){
+				Start_all();
+				last_time = time( (void *)0 );
+				memset( &timeval, 0, sizeof(timeval) );
+				timeval.tv_sec = Poll_time;
+				continue;
+			} else {
+				timeout = &timeval;
+				memset( &timeval, 0, sizeof(timeval) );
+				timeval.tv_sec = Poll_time - l;
+			}
+			DEBUG0( "lpd: poll time %d, %d until next",
+				Poll_time, (int)timeval.tv_sec );
+		} else {
+			DEBUG0( "lpd: no poll time" );
+			timeout = 0;
 		}
 		readfds = defreadfds;
 
 		DEBUG1( "lpd: starting select" );
+		Setup_waitpid_break();
 		l = select( max_socks,
 			FD_SET_FIX((fd_set *))&readfds,
 			FD_SET_FIX((fd_set *))0,
-			FD_SET_FIX((fd_set *))0, (void *)0 );
+			FD_SET_FIX((fd_set *))0, timeout );
 		err = errno;
+		Setup_waitpid();
 		DEBUG1( "lpd: select returned %d, error '%s'", l, Errormsg(err) );
 		if( l < 0 ){
 			if( err != EINTR ){
 				errno = err;
-				logerr_die( LOG_ERR, "lpd: select error!");
+				logerr_die( LOG_ERR, _("lpd: select error!"));
 				break;
 			}
 			continue;
@@ -263,11 +289,11 @@ int main(int argc, char *argv[], char *envp[])
 				Service_connection( &sin, sock, newsock );
 			} else {
 				errno = err;
-				logerr(LOG_INFO, "lpd: accept on listening socket failed" );
+				logerr(LOG_INFO, _("lpd: accept on listening socket failed") );
 			}
 		}
 		if( FD_ISSET( Lpd_pipe[0], &readfds ) ){
-			Service_printer( sock, Lpd_pipe[0] );
+			Service_printer( Lpd_pipe[0] );
 		}
 	}while( 1 );
 	exit(0);
@@ -294,17 +320,17 @@ int Setuplog(char *logfile, int sock)
 		sock = dup(sock);
 	}
 	if( sock < 0 ){
-		logerr_die( LOG_CRIT, "Setuplog: dup of %d failed", sock );
+		logerr_die( LOG_CRIT, _("Setuplog: dup of %d failed"), sock );
 	}
     /*
      * set stdin, stdout to /dev/null
      */
 	if ((fd = open("/dev/null", O_RDWR, Spool_file_perms)) < 0) {
-	    logerr_die(LOG_ERR, "Setuplog: open /dev/null failed");
+	    logerr_die(LOG_ERR, _("Setuplog: open /dev/null failed"));
 	}
 	close( 0 ); close( 1 );
 	if( dup2( fd, 0 ) < 0 || dup2( fd, 1 ) < 0 ){
-		logerr_die (LOG_CRIT, "Setuplog: dup2 failed");
+		logerr_die (LOG_CRIT, _("Setuplog: dup2 failed"));
 	}
 	close(fd);
 	DEBUG3 ("Setuplog: log file '%s'", logfile?logfile:"<NULL>");
@@ -326,7 +352,7 @@ int Setuplog(char *logfile, int sock)
 		DEBUG3 ("Setuplog: log file '%s' fd '%d'", logfile, fd);
 		if (fd != 2 ){
 			if( dup2 (fd, 2) < 0) {
-				logerr_die (LOG_CRIT, "Setuplog: dup2 of %d failed", fd );
+				logerr_die (LOG_CRIT, _("Setuplog: dup2 of %d failed"), fd );
 			}
 			(void) close (fd);
 		}
@@ -356,7 +382,7 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 
 	pid = dofork();
 	if( pid < 0 ){
-		logerr( LOG_INFO, "Service_connection: dofork failed" );
+		logerr( LOG_INFO, _("Service_connection: dofork failed") );
 	}
 	if( pid ){
 		/*
@@ -374,7 +400,6 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 
 	/* get the remote name and set up the various checks */
 	Perm_check.addr = sin;
-	Perm_check.port =  ntohs(port);
 	Get_remote_hostbyaddr( &RemoteHostIP, sin );
 	Perm_check.remotehost  =  &RemoteHostIP;
 	Perm_check.host = &RemoteHostIP;
@@ -385,10 +410,10 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 	status = Link_line_read(ShortRemote,&talk,Send_timeout,input,&len);
 	DEBUG0( "Request '%s'", input );
 	if( status ){
-		logerr_die( LOG_INFO, "Service_connection: cannot read request" );
+		logerr_die( LOG_INFO, _("Service_connection: cannot read request") );
 	}
 	if( len < 3 ){
-		fatal( LOG_INFO, "Service_connection: bad request line '%s'", input );
+		fatal( LOG_INFO, _("Service_connection: bad request line '%s'"), input );
 	}
 
 	if( sin->sa_family == AF_INET ){
@@ -398,10 +423,11 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 		port = ((struct sockaddr_in6 *)sin)->sin6_port;
 #endif
 	} else {
-		fatal( LOG_INFO, "Service_connection: bad protocol family '%d'", sin->sa_family );
+		fatal( LOG_INFO, _("Service_connection: bad protocol family '%d'"), sin->sa_family );
 	}
 	DEBUG2("Service_connection: socket %d, ip '%s' port %d", talk,
 		inet_ntop_sockaddr( sin, buffer, sizeof(buffer) ), ntohs( port ) );
+	Perm_check.port =  ntohs(port);
 
 	/* see if you need to reread the printcap and permissions information */
 	if( !Use_info_cache ){
@@ -414,14 +440,17 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 			Cfp_static )) == REJECT
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		DEBUG2("Service_connection: talk socket '%d' no connect perms", talk );
-		Write_fd_str( talk, "no connect permissions\n" );
+		Write_fd_str( talk, _("no connect permissions\n") );
 		cleanup(0);
 	}
 	switch( input[0] ){
-		case REQ_START:
 		default:
-			fatal( LOG_INFO, "Service_connection: bad request line '\\%d'%s'",
+			fatal( LOG_INFO, _("Service_connection: bad request line '\\%d'%s'"),
 				input[0], input+1 );
+			break;
+		case REQ_START:
+			/* simply send a 0 ACK and close connection - NOOP */
+			Write_fd_len( talk, "", 1 );
 			break;
 		case REQ_RECV:
 			Receive_job( &talk, input, sizeof(input) );
@@ -470,7 +499,7 @@ static void Read_pc(void)
 
 
 /***************************************************************************
- * Service_printer( int listen, int talk )
+ * Service_printer( int talk )
  *  Read the printer to be started from the talk socket
  * 1. fork a connection
  * 2. Mother:  close talk and return
@@ -479,43 +508,58 @@ static void Read_pc(void)
  *
  ***************************************************************************/
 
-void Service_printer( int listen, int talk )
+void Service_printer( int talk )
 {
 	int pid;		/* PID of the server process */
+	char *name, *s, *end;
 	char line[LINEBUFFER];
-	int len;
+	int n, len;
 
 	/* get the line */
 
-	line[0] = 0;
-	len = read( talk, line, sizeof( line )-1 );
-	if( len >= 0 ) line[len] = 0;
-	DEBUG3("Service_printer: line len %d, read '%s'", len, line );
+	for( len = 0; len < sizeof(line)-1 && (n = read(talk, &line[len],1)) > 0;++len ){
+		if( line[len] == '\n' ) break;
+	}
+	line[len] = 0;
+	DEBUG0("Service_printer: line len %d, read '%s'", len, line );
 	if( len <= 0 ){
 		return;
 	}
-
-	/* NOW we fork - this cuts down on processes created */
-	pid = dofork();
-	if( pid < 0 ){
-		logerr( LOG_INFO, "Service_printer: dofork failed" );
+	/* process the list of names on the command line */
+	for( name = line+1; name && *name; name = end ){
+		end = strpbrk( name, ",; \t" );
+		if( end ) *end++ = 0;
+		if( (s = Clean_name( name )) ){
+			DEBUG0( "Service_printer: bad printer name '%s'", name );
+			continue;
+		}
+		setproctitle( "lpd %s '%s'", Name, name );
+		/*
+		 * if we are starting 'all' then we need to start subprocesses
+		 */
+		if( strcmp( name, "all" ) == 0){
+			/* we start all of them */
+			Start_all();
+		} else {
+			/* Call the routine to actually do the work */
+			plp_status_t status;
+			n = Countpid();
+			DEBUG0( "Service_printer: %d servers of %d active",
+				n, Max_servers );
+			while( n > Max_servers ){
+				n = plp_waitpid( -1, &status, 0 );
+				DEBUG0( "Service_printer: pid %d exited '%s'",
+					n, Decode_status( &status ) );
+				n = Countpid();
+			}
+			if( (pid = dofork()) < 0 ){
+				logerr_die( LOG_ERR, _("lpd: dofork failed") );
+			} else if( pid == 0 ){
+				Do_queue_jobs( name );
+				cleanup(0);
+			}
+		}
 	}
-	if( pid < 0 || pid > 0 ){
-		return;
-	}
-	/*
-	 * daughter process 
-	 * - close the sockets
-	 */
-	(void) plp_signal (SIGHUP, cleanup );
-	close( listen ); listen = -1;
-	close( talk ); talk = -1;
-
-	/*
-	 * we now service the requested printer
-	 */
-	Process_jobs( 0, line, len );
-	exit(0);
 }
 
 /***************************************************************************
@@ -548,7 +592,7 @@ static void Set_lpd_pid(void)
 	plp_snprintf( path, sizeof(path)-1, "%s.%s", Lockfile, Lpd_port );
 	lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 	if( lockfd < 0 ){
-		logerr_die( LOG_ERR, "lpd: Cannot open '%s'", Lockfile );
+		logerr_die( LOG_ERR, _("lpd: Cannot open '%s'"), Lockfile );
 	} else {
 		/* we write our PID */
 		Server_pid = getpid();

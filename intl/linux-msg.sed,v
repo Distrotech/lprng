@@ -1,0 +1,26 @@
+head	1.1;
+access;
+symbols;
+locks
+	papowell:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	97.03.24.00.45.58;	author papowell;	state Exp;
+branches;
+next	;
+
+
+desc
+@Initial
+@
+
+
+1.1
+log
+@Update
+@
+text
+@# dummy sed script to make things happy
+@

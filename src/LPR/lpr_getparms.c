@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_getparms.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+"$Id: lpr_getparms.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "getparms.h"
@@ -44,7 +44,6 @@ void Get_parms(int argc, char *argv[] )
 	/* check to see if we simulate (poorly) the LP options */
 	if( name && strcmp( name, "lp" ) == 0 ){
 		LP_mode = 1;
-		Verbose = 1;
 		while( (option = Getopt( argc, argv,
 			"Acmprswd:D:f:H:n:o:P:q:S:t:T:y:" )) != EOF )
 		switch( option ){
@@ -54,7 +53,7 @@ void Get_parms(int argc, char *argv[] )
 					Setup_mailaddress = 1;
 					Mailname = getenv( "USER" );
 					if( Mailname == 0 ){
-						Diemsg( "USER environment variable undefined" );
+						Diemsg( _("USER environment variable undefined") );
 					}
 					break;
 		case 'p':	break;	/* ignore notification */
@@ -71,7 +70,7 @@ void Get_parms(int argc, char *argv[] )
 					break;
 		case 'n':	Copies = atoi( Optarg );	/* copies */
 					if( Copies <= 0 ){
-						Diemsg( "-ncopies -number of copies must be greater than 0\n");
+						Diemsg( _("-ncopies -number of copies must be greater than 0\n"));
 					}
 					break;
 		case 'o':	if( strcasecmp( Optarg, "nobanner" ) == 0 ){
@@ -95,7 +94,7 @@ void Get_parms(int argc, char *argv[] )
 					if(Priority < 'A' ) Priority = 'A';
 					break;
 		/* pass these as Zopts */
-		case 'S':	
+		case 'S':
 		case 'T':
 		case 'y':
 					/* pass as Zopts */
@@ -137,10 +136,10 @@ void Get_parms(int argc, char *argv[] )
 		        Dienoarg( option);
 		    }
 		    if( strlen (Optarg) != 1 ){
-		        Diemsg( "bad -F format string '%s'\n", Optarg);
+		        Diemsg( _("bad -F format string '%s'\n"), Optarg);
 		    }
 		    if( Format ){
-		        Diemsg( "duplicate format specification -F%s\n", Optarg);
+		        Diemsg( _("duplicate format specification -F%s\n"), Optarg);
 		    } else {
 		        Format = Optarg;
 		    }
@@ -152,7 +151,7 @@ void Get_parms(int argc, char *argv[] )
 		case '#':
 		    Check_int_dup( option, &Copies, Optarg, 0);
 			if( Copies <= 0 ){
-		        Diemsg( "-Kcopies -number of copies must be greater than 0\n");
+		        Diemsg( _("-Kcopies -number of copies must be greater than 0\n"));
 			}
 		    break;
 		case 'N':
@@ -163,7 +162,7 @@ void Get_parms(int argc, char *argv[] )
 		        Check_str_dup( option, &Printer, Optarg, 0);
 		    }
 		    if( !Optarg || !*Optarg ){
-		        Diemsg( "missing printer name in -P option\n");
+		        Diemsg( _("missing printer name in -P option\n"));
 		    }
 		    Printer = Optarg;
 		    break;
@@ -203,11 +202,11 @@ void Get_parms(int argc, char *argv[] )
 		     * -m Mailname
 		     */
 			if( Setup_mailaddress ){
-				Diemsg( "duplicate option %c", option);
+				Diemsg( _("duplicate option %c"), option);
 			}
 			Setup_mailaddress = 1;
 			if( Optarg[0] == '-' ){
-				Diemsg( "Missing mail name" );
+				Diemsg( _("Missing mail name") );
 			} else {
 				Mailname = Optarg;
 			}
@@ -221,7 +220,7 @@ void Get_parms(int argc, char *argv[] )
 		case 't':
 		case 'v':
 		    if( Format ){
-		        Diemsg( "duplicate format specification -%c\n", option);
+		        Diemsg( _("duplicate format specification -%c\n"), option);
 		    } else {
 				static char dummy[2] = " ";
 				dummy[0] = option;
@@ -252,81 +251,79 @@ void Get_parms(int argc, char *argv[] )
 	Filecount = argc - Optind;
 	Files = &argv[Optind];
 	if( Verbose > 0 ){
-		fprintf( stdout, "LPRng Version %s Copyright 1988-1997\n",PATCHLEVEL );
-		fprintf( stdout, "  Patrick Powell, San Diego, <papowell@sdsu.edu>\n" );
-		fprintf( stdout, "  Use -VV to see Copyright details\n");
+		fprintf( stdout, _("LPRng Version %s Copyright 1988-1997\n"),PATCHLEVEL );
+		fprintf( stdout, _("  Patrick Powell, San Diego, <papowell@sdsu.edu>\n") );
+		fprintf( stdout, _("  Use -VV to see Copyright details\n"));
 	}
 	if( Verbose > 1 ) Printlist( Copyright, stdout );
 }
 
 
-char *LPR_msg[] = {
-"usage summary: %s [ -Pprinter[@host] ] [-(K|#)copies] [-Cclass][-Jinfo]",
-"   [-Raccountname] [-m mailaddr] [-Ttitle] [-i indent]",
-"   [-wnum ][ -Zoptions ] [ -Uuser ] [ -Fformat ] [ -bhkr ]",
-"   [-Ddebugopt ] [ filenames ...  ]",
-" -b,l        - binary or literal format",
-" -Cclass  - job class",
-" -F format   - job format filter",
-"   -c,d,f,g,l,m,p,t,v are also format specifications",
-" -h          - no header or banner page",
-" -i indent   - indentation",
-" -Jinfo   - banner and job information",
-" -k          - non seKure filter operation, create temp file for input",
-" -K copies, -# copies   - number of copies",
-" -m mailaddr - mail error status to mailaddr",
-" -Pprinter[@host] - printer on host (default environment variable PRINTER)",
-" -r          - remove named files after spooling",
-" -w width    - width to use",
-" -Q          - put 'queuename' in control file",
-" -Raccntname - accounting information",
-" -T title    - title for 'pr' (-p) formatting",
-" -U username - override user name (restricted)",
-" -V          - Verbose information during spooling",
-" -Z filteroptions - options to pass to filter",
-"   default job format -Ff",
-" A filename of the form '-' will read from stdin.",
-" PRINTER environment variable is default printer.",
-0
-};
-char *LP_msg[] = {
-"usage summary: %s [ -c ] [ -m ] [ -p ] [ -s ] [ -w ] [ -d dest ]",
-"  [ -f form-name [ -d any ] ] [ -H special-handling ]",
-"  [ -n number ] [ -o option ] [ -P page-list ]",
-"  [ -q priority-level ] [ -S character-set [ -d any ] ]",
-"  [ -S print-wheel [ -d any ] ] [ -t title ]",
-"  [ -T content-type [ -r ] ] [ -y mode-list ]",
-"  [ file...  ]",
-" lp simulator using LPRng,  functionality may differ slightly",
-" -A          - use authenticated transfer",
-" -c          - (make copy before printing - ignored)",
-" -d printer  - destination printer",
-" -D debugflags  - debugging flags",
-" -f formname - first letter used as job format",
-" -H handling - (passed as -Z handling)",
-" -m          - mail sent to $USER on completion",
-" -n copies   - number of copies",
-" -o option     nobanner, width recognized",
-"               (others passed as -Z option)",
-" -P pagelist - (print page list - ignored)",
-" -p          - (notification on completion - ignored)",
-" -q          - priority - 0 -> Z (highest), 25 -> A (lowest)",
-" -s          - (suppress messages - ignored)",
-" -S charset  - (passed as -Z charset)",
-" -t title    - job title",
-" -T content  - (passed as -Z content)",
-" -w          - (write message on completion - ignored)",
-" -y mode     - (passed as -Z mode)",
-" A filename of the form '-' will read from stdin.",
-" LPDEST, then PRINTER environment variables are default printer.",
-0
-};
+char *LPR_msg = N_("\
+usage summary: %s [ -Pprinter[@host] ] [-(K|#)copies] [-Cclass][-Jinfo]\n\
+   [-Raccountname] [-m mailaddr] [-Ttitle] [-i indent]\n\
+   [-wnum ][ -Zoptions ] [ -Uuser ] [ -Fformat ] [ -bhkr ]\n\
+   [-Ddebugopt ] [ filenames ...  ]\n\
+ -b,l        - binary or literal format\n\
+ -Cclass  - job class\n\
+ -F format   - job format filter\n\
+   -c,d,f,g,l,m,p,t,v are also format specifications\n\
+ -h          - no header or banner page\n\
+ -i indent   - indentation\n\
+ -Jinfo   - banner and job information\n\
+ -k          - non seKure filter operation, create temp file for input\n\
+ -K copies, -# copies   - number of copies\n\
+ -m mailaddr - mail error status to mailaddr\n\
+ -Pprinter[@host] - printer on host (default environment variable PRINTER)\n\
+ -r          - remove named files after spooling\n\
+ -w width    - width to use\n\
+ -Q          - put 'queuename' in control file\n\
+ -Raccntname - accounting information\n\
+ -T title    - title for 'pr' (-p) formatting\n\
+ -U username - override user name (restricted)\n\
+ -V          - Verbose information during spooling\n\
+ -Z filteroptions - options to pass to filter\n\
+   default job format -Ff\n\
+ A filename of the form '-' will read from stdin.\n\
+ PRINTER environment variable is default printer.\n");
+
+char *LP_msg = N_("\
+usage summary: %s [ -c ] [ -m ] [ -p ] [ -s ] [ -w ] [ -d dest ]\n\
+  [ -f form-name [ -d any ] ] [ -H special-handling ]\n\
+  [ -n number ] [ -o option ] [ -P page-list ]\n\
+  [ -q priority-level ] [ -S character-set [ -d any ] ]\n\
+  [ -S print-wheel [ -d any ] ] [ -t title ]\n\
+  [ -T content-type [ -r ] ] [ -y mode-list ]\n\
+  [ file...  ]\n\
+ lp simulator using LPRng,  functionality may differ slightly\n\
+ -A          - use authenticated transfer\n\
+ -c          - (make copy before printing - ignored)\n\
+ -d printer  - destination printer\n\
+ -D debugflags  - debugging flags\n\
+ -f formname - first letter used as job format\n\
+ -H handling - (passed as -Z handling)\n\
+ -m          - mail sent to $USER on completion\n\
+ -n copies   - number of copies\n\
+ -o option     nobanner, width recognized\n\
+               (others passed as -Z option)\n\
+ -P pagelist - (print page list - ignored)\n\
+ -p          - (notification on completion - ignored)\n\
+ -q          - priority - 0 -> Z (highest), 25 -> A (lowest)\n\
+ -s          - (suppress messages - ignored)\n\
+ -S charset  - (passed as -Z charset)\n\
+ -t title    - job title\n\
+ -T content  - (passed as -Z content)\n\
+ -w          - (write message on completion - ignored)\n\
+ -y mode     - (passed as -Z mode)\n\
+ A filename of the form '-' will read from stdin.\n\
+ LPDEST, then PRINTER environment variables are default printer.\n");
+
 void usage(void)
 {
 	if(LP_mode ){
-		Printlist( LP_msg, stderr );
+		fputs ( _(LP_msg), stderr );
 	} else {
-		Printlist( LPR_msg, stderr );
+		fputs ( _(LPR_msg), stderr );
 	}
 	exit(1);
 }

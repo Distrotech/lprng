@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: removejob.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
+"$Id: removejob.c,v 3.5 1997/02/25 04:50:25 papowell Exp $";
 
 #include "lp.h"
 #include "removejob.h"
@@ -67,7 +67,7 @@ int Remove_job( struct control_file *cfp )
 
 	df = (void *)cfp->data_file_list.list;
 	for( i = 0; i < cfp->data_file_list.count; ++i ){
-		fail |= Remove_file( df->openname );
+		fail |= Remove_file( df[i].openname );
 	}
 	fail |= Remove_file( cfp->openname );
 	fail |= Remove_file( cfp->hold_file );

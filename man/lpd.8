@@ -1,4 +1,4 @@
-.ds VE LPRng-3.1.2
+.ds VE LPRng-3.2.1
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -20,7 +20,7 @@
 .\}
 ..
 .ig
-$Id: lpd.8,v 3.8 1997/01/31 22:42:36 papowell Exp $
+$Id: lpd.8,v 3.15 1997/03/05 04:40:04 papowell Exp papowell $
 ..
 .SH NAME
 lpd \- line printer daemon
@@ -104,6 +104,13 @@ The same action is taken when sent a
 command by the
 .IR lpc (1)
 program.
+At an interveral specified by
+the
+.I poll_time
+configuration variable,
+.I lpd
+will check for spool queues with jobs and no printing activity,
+and start printing.
 .PP
 LPD access control is provided by two means:
 the pathnames or programs specified by the
@@ -189,7 +196,7 @@ If a system has the
 .I netgroups
 capability,
 a group name starting with a
-\f(CW@\fP
+\f(CW@\fR
 will be treated as a netgroup name,
 and current user name from the job file will bechecked to see if
 it is in the group.
@@ -230,7 +237,7 @@ REMOTEGROUP	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
 REMOTEIP	IP	RIP	RIP	JIP	RIP	RIP	RIP
 CONTROLLINE	S	-	CL	CL	CL	CL	CL
 PRINTER	S	-	PR	PR	PR	PR	PR
-FORWARD	V	-	-	SA	-	SA	SA	SA
+FORWARD	V	-	SA	-	-	SA	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
@@ -390,6 +397,14 @@ field set to the support host name.
 An alternative would be to specify the spool directories (sd and cd fields) in the
 shared information,
 and to put the printer specific information in a printcap file.
+.PP
+In addition to the
+.I oh
+flag,
+the
+.I server
+flag indicates that this entry is for a the LPD server only.
+This can be used to simplify the management of client and server entries.
 .PP
 The printcap information is obtained in the following order.
 All programs use the contents of the configuration
@@ -1103,14 +1118,14 @@ b	Job size, i.e.- total data file size, in bytes
 c	if binary (format 'l') expands to -c
 d	Control directory
 e	job data file
-f	original print file name 
+f	original print file name (control file N field)
 h	Control file hostname
 i	Control file indent (I) field
 j	job number from control file name
 k	Control file name
 l	printcap Page length (pl) value
 m	printcap Cost factor (co) value
-n	Control file user name (P) field
+n	Control file user logname (P) field
 p	Remote Printer name for forwarded jobs
 r	Remote Host name for forwarded jobs
 s	printer Status file (ps) value
@@ -1171,6 +1186,39 @@ The JABORT indicates serious problems and will cause printing operations
 on the job to stop until restarted by operator intervention.
 The JREMOVE status indicates problems,
 and the job should be removed from the spool queue.
+.PP
+The environment variables for filters are highly restricted,
+due to the possibility for abuse by users.
+The following variables are set:
+.IP "USER and LOGNAME" 5
+user name or daemon name.
+.IP "LOGDIR" 5
+home directory of user or daemon.
+.IP PATH 5
+from the
+.I filter_path
+configuration variable.
+.IP LD_LIBRARY_PATH 5
+from the
+.I filter_ld_path
+configuration variable.
+.IP SHELL 5
+set to
+.I /bin/sh
+.IP IFS 5
+set to blank and tab.
+.IP TZ 5
+the TZ environment variable.
+.IP SPOOL_DIR 5
+the spool directory for the printer
+.IP CONTROL_DIR 5
+the control directory for the printer
+.IP PRINTCAP_ENTRY 5
+the printcap entry for the printer
+.IP CONTROL 5
+the control file for the print job
+.IP "pass_env environment variables" 5
+Values of environment variables listed in the pass_env configuration variable.
 .SH ACCOUNTING
 .PP
 The LPRng software provides several methods of performing accounting.

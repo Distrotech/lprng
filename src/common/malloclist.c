@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: malloclist.c,v 3.4 1997/01/29 03:04:39 papowell Exp $";
+"$Id: malloclist.c,v 3.5 1997/02/04 22:01:49 papowell Exp papowell $";
 #include "lp.h"
 #include "malloclist.h"
 /**** ENDINCLUDE ****/
@@ -154,18 +154,21 @@ void Clear_control_file( struct control_file *cf )
 	cf->destination_list = f.destination_list;
 }
 
-char *Add_job_line( struct control_file *cf, char *str )
+char *Add_job_line( struct control_file *cf, char *str, int nodup )
 {
 	char **lines, *buffer;
 	if( cf->control_file_lines.count+2 >= cf->control_file_lines.max ){
 		extend_malloc_list( &cf->control_file_lines, sizeof( char * ), 100 );
 	}
 	lines = (void *)cf->control_file_lines.list;
-	buffer = add_buffer( &cf->control_file_image, strlen(str)+1 );
-	strcpy( buffer, str );
-	lines[ cf->control_file_lines.count++ ] = buffer;
+	if( nodup == 0 ){
+		buffer = add_buffer( &cf->control_file_image, strlen(str)+1 );
+		strcpy( buffer, str );
+		str = buffer;
+	}
+	lines[ cf->control_file_lines.count++ ] = str;
 	lines[ cf->control_file_lines.count ] = 0;
-	return( buffer );
+	return( str );
 }
 
 /***************************************************************************

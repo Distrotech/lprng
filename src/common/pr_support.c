@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: pr_support.c,v 3.7 1997/01/30 21:15:20 papowell Exp $";
+"$Id: pr_support.c,v 3.10 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /***************************************************************************
  Commentary:
@@ -84,7 +84,7 @@ int Print_open( struct filter *filter,
 		fatal(LOG_ERR, "Print_open: printer '%s' missing Lp_device value",
 			Printer );
 	}
-	if( (s = strchr( Lp_device, '%' )) ){
+	if( Lp_device[0] != '|' && (s = strchr( Lp_device, '%' )) ){
 		/* we have a host%port form */
 		*s++ = 0;
 		end = s;
@@ -102,7 +102,7 @@ int Print_open( struct filter *filter,
 	if (grace) {
 		setstatus( cfp, "Waiting Grace period '%s' : '%d'",
 			Lp_device, grace);
-		sleep(grace);
+		plp_sleep(grace);
 	}
 
 	/* set flag for closing on timeout */
@@ -174,7 +174,7 @@ int Print_open( struct filter *filter,
 			if( (max_try == 0 || attempt < max_try) && interval > 0 ){
 				setstatus( cfp, "Cannot open '%s' - '%s', sleeping %d",
 					Lp_device, Errormsg( err), interval );
-				sleep( interval );
+				plp_sleep( interval );
 			} else {
 				break;
 			}
@@ -273,20 +273,15 @@ void Print_abort( void )
 	/* be gentle at first */
 	Print_close(-1);
 	while(1){
-		plp_usleep(100000);
 		DEBUG1( "Print_abort: gathering children" );
 		do{
 			status = 0;
-			result = plp_waitpid( -1, &status, WNOHANG );
+			result = plp_waitpid_timeout( 10, -1, &status, 0 );
 			err = errno;
 			DEBUG1( "Print_abort: result %d, status 0x%x", result, status );
 		} while( result > 0 );
-		if( (result == -1 ) ){
-			if( err == ECHILD ){
-				break;
-			} else if( err == EINTR ){
-				continue;
-			}
+		if( (result == -1 ) && err == ECHILD ){
+			break;
 		}
 		DEBUG4( "Print_abort: step %d, killing", step, status );
 		switch( step++ ){
@@ -429,9 +424,10 @@ int Print_copy( struct control_file *cfp, int fd, struct stat *statb,
 			return( JFAIL);
 		}
 		total += in;
-		t = (int)(100*quanta*((double)(total)/statb->st_size))/quanta;
+		t = (int)(quanta*((double)(total)/statb->st_size));
 		if( t != oldfraction ){
 			oldfraction = t;
+			t = (100*t)/quanta;
 			setstatus( cfp, "printed %d percent of %d bytes of %s",
 				t,(int)(statb->st_size), file_name); 
 		}

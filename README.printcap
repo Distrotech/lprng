@@ -5,6 +5,8 @@
           Updated: Wed Nov 13 16:53:57 PST 1996
           Updated: Tue Nov 26 20:37:41 PST 1996
           Updated: Sun Dec 15 07:57:44 PST 1996
+          Updated: Wed Feb  5 05:58:33 PST 1997
+          Updated: Wed Feb 12 16:34:00 PST 1997
 
 The LPRng software uses a greatly simplified set of printcap
 conventions.  This document shows the format as well as some examples
@@ -49,19 +51,19 @@ as shown below.
         :lp=pr2@taco.sdsu.edu
     pr3|laserjet
         :lp=pr3@taco.sdsu.edu
-	@common|common code for printers
-		:if=/bin/filter
-		:of=/bin/filter
-	@morecommon|show the configuration expansion
-		:sd=/var/spool/lpd/%P
-		
-	realpr:tc=@common:tc=@morecommon
+    @common|common code for printers
+        :if=/bin/filter
+        :of=/bin/filter
+    @morecommon|show the configuration expansion
+        :sd=/var/spool/lpd/%P
+        
+    realpr:tc=@common:tc=@morecommon
 
 A careful study of the above example will discover the following
 features of the LPRng printcap structure.
 
 @name - these entries are 'placeholders' for use with the 'tc='
-	function.  Any printer name starting with a punctuation character
+    function.  Any printer name starting with a punctuation character
     is treated as a placeholder for information.
 tc=f1:tc=f2:...
     The tc entries are treated as though they were located at the end
@@ -70,7 +72,7 @@ tc=f1:tc=f2:...
     you can have multiple :tc: entries.
 key=value.%X
     the %X is expanded when the printcap entry is used by the 
-	client or server program.  This allows common information to
+    client or server program.  This allows common information to
     be placed in a dummy printcap entry.  The following keys
     are currently defined; check the Keyletter array in the
     src/vars.c for a complete set for the current release.
@@ -92,8 +94,13 @@ MODIFIED OR ADDITIONAL PRINTCAP FILE -
 
 PRINTCAP OH FIELD
 
-   You can restrict a printcap entry to a specfic host by using the
-   'oh=hostname' field.  For example, the distributed or shared
+   You can restrict a printcap entry to a specfic host or hosts by using the
+   'oh=pattern,pattern,...' field.  The oh value is a list of glob
+   style patterns or IP host addresses.  The patterns are matched
+   against the host's fully qualified domain name,  and the IP address
+   is checked to see if it is one of hosts.
+
+   For example, the distributed or shared
    printcap database could have the following format.
 
     #parallel attched DUMB printer
@@ -104,13 +111,34 @@ PRINTCAP OH FIELD
         :oh=taco.sdsu.edu
         :sd=/usr/spool/pr1
         :lp=/dev/tty1
+    pr2:oh=*lab1*,*lab2*:lp=pr1@taco.sdsu.edu
+    pr2:oh=*lab3*:lp=pr2@burrito.sdsu.edu
 
-    The first pr1 entry would be seen and used by all hosts, and the
-    second by the server.  The second lp entry would override the first
-    one,  and the LPD server would send jobs to the output device.  The
-    lp entry overrides rm and rh entries.  Client programs running on the
-    server host would send their requests to the LPD server on the same 
-    host.
+   The first pr1 entry would be seen and used by all hosts, and the
+   second only by the server on taco.  The second lp entry would
+   override the first one,  and the LPD server would send jobs to
+   the output device.  The lp entry overrides rm and rh entries.
+   Client programs running on the server host would send their
+   requests to the LPD server on the same host.
+
+   The next two entries show how the glob pattern match can be used
+   to select the printer a particular host can use.  Hosts with
+   lab1 or lab2 in their fully qualified domain name will use pr1
+   and those with lab3 will use pr2 on another server.
+
+PRINTCAP SERVER FIELD
+
+   You can use the 'server' flag to indicate that a particular printcap
+   entry is for use by the LPD server only.  This allows printcap files of the
+   following form:
+
+   #seen by clients and server
+   pr:lp=pr@host
+
+   # used only by LPD server, overrides previous entry
+   pr:lp=/dev/xx
+     :sd=/usr/spool/pr
+     ....
 
 SPOOL (CONTROL) DIRECTORY PRINTCAP FILE
 
@@ -145,8 +173,8 @@ following conventions.
     - alias starts with a | followed by the alias
     - data entry starts with : followed by the entry
 5. Printcap names starting with punctuation are treated like dummy
-	entries.  They can be referenced with :tc=entry:,  but will
-	be ignored otherwise.
+    entries.  They can be referenced with :tc=entry:,  but will
+    be ignored otherwise.
 6. The :tc=name: entry acts like an inclusion facility,
     and performs its action at the END of the current printcap entry.
     You may have multiple :tc=name: entries.
@@ -233,7 +261,7 @@ pr2|postscript - psof will expand short banner
     # only allow the following formats
     :fx=flpv
     # filters
-	:tc=@filter
+    :tc=@filter
 
 #serial attached PostScript printer with user created banner
 pr2|postscript - psof will expand short banner

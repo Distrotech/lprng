@@ -1,14 +1,14 @@
  ***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
+ * Copyright 1988-1997 Patrick Powell, San Diego, CA
  *     papowell@sdsu.edu
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: README
  * PURPOSE: Overview of Software
- * $Id: README,v 3.1 1997/01/22 23:15:27 papowell Exp $
+ * $Id: README,v 3.2 1997/02/15 15:01:30 papowell Exp papowell $
  **************************************************************************/
 
 
@@ -16,34 +16,44 @@
                  LPRng - An Enhanced Printer Spooler
                   Patrick Powell <papowell@sdsu.edu>
 
-The  LPRng  software  is an enhanced, extended, and portable  version
-of the Berkeley LPR software.  While providing  the  same general
-functionality, the implementation  is  completely new and provides
-support for the  following  features:  lightweight  (no  databases
-needed)  lpr, lpc, and lprm programs; dynamic redirection  of  print
-queues; automatic job holding; highly verbose  diagnostics; multiple
-printers serving a single  queue;  client  programs  do not need to
-run SUID root;  greatly enhanced security checks; and a greatly
-improved permission and authorization mechanism.
+The  LPRng  software  is an enhanced, extended, and portable
+implementation of the Berkeley LPR print spooler functionality.
+While providing the same interface and meeting RFC1179 requirements,
+the implementation  is  completely new and provides support for
+the  following  features:  lightweight  (no  databases needed) lpr,
+lpc, and lprm programs; dynamic redirection  of  print queues;
+automatic job holding; highly verbose  diagnostics; multiple printers
+serving a single  queue;  client  programs  do not need to run SUID
+root;  greatly enhanced security checks; and a greatly improved
+permission and authorization mechanism.
 
-The source software compiles and runs on a wide variety of systems, and
-is compatible with most PC and MAC based print spoolers that use the
-LPR interface.
+The source software compiles and runs on a wide variety of UNIX
+systems, and is compatible with other print spoolers and network
+printers that use the LPR interface and meet RFC1179 requirements.
 
-The package comes with filters for PostScript and HP printers, as well
-as the usual 'dumb' printers.  Note that the filters supplied for the
-HP printers do accounting,  and were developed to be used in an
-Educational Environment,  where avoiding accounting procedures is quite
-prevalent.
+The package comes with filters for PostScript and HP printers, as
+well as the usual 'dumb' printers.  Note that the PostScript and
+HP filters do page counting and produce accounting information
+accounting.  In addition, there are a wide variety of other filters
+that can do page formatting, and produce banner pages.
 
-In addition,  there are simulation scripts for the UNIX SVR4 lp and
-lpstat commands that provide basic functionality for systems which
-require this interface.
+For users that require compatibility with the SVR4 lp and lpstat
+interface, lpr and lpq will simulate this interface, eliminating
+the need for another print spooler package.  In addition,  a
+publically available  PCNFSD server is distributed with LPRng, and
+interfaces with the PC/DOS/Windows based NFS style print spoolers.
+
+For users that require secure and/or authenticated printing support,
+LPRng supports Kerberos V and/or PGP authentication methods.
+Additional authentication support is extremely simple to add.
+
+
+Web Page:
+   http://dickory.sdsu.edu/lprng.html
 
 The software may be obtained from
    ftp://dickory.sdsu.edu/pub/LPRng  (Main site)
-   ftp://ftp.iona.ie/pub/plp/LPRng
-   ftp://ftp.cs.umn.edu/pub/plp/LPRng
+   ftp://ftp.iona.ie/pub/plp/LPRng ftp://ftp.cs.umn.edu/pub/plp/LPRng
    ftp://gwynne.cs.ualberta.ca/pub/LPRng
    ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/plp/LPRng
    ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng
@@ -52,17 +62,14 @@ The software may be obtained from
    ftp://ftp.lps.ens.fr/pub/software/plp/LPRng
 
 
-To join the LPRng/PLP mailing list,  please send mail to
-  plp-request@iona.ie
-with the word 'subscribe' in the BODY
+To join the LPRng mailing list,  please send mail to
+  lprng-request@iona.ie with the word 'subscribe' in the BODY
 
 Patrick Powell
 
---
-Prof. Patrick Powell
+-- Patrick Powell
 Dept. Electrical and Computer Engineering,
-San Diego State University,
-San Diego, CA 92182-1309
+San Diego State University, San Diego, CA 92182-1309
 Office (619) 594-7796; Lab (619) 594-7578 FAX (619) 594-7577
 email: papowell@sdsu.edu
 

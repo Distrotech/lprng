@@ -51,7 +51,6 @@ char *argv[];
 	}
 	host = argv[optind++];
 	file = argv[optind++];
-    (void) signal(SIGPIPE, SIG_IGN);	/* so we do not die */
 
     /* clear out the structure first */
     (void) memset((char *)&sin, 0, sizeof(sin));

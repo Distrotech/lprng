@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendauth.c,v 3.6 1997/01/27 20:04:16 papowell Exp $";
+"$Id: sendauth.c,v 3.7 1997/02/25 04:50:25 papowell Exp $";
 
 #include "lp.h"
 #include "sendauth.h"
@@ -86,7 +86,7 @@ int Send_auth_command( char *printer, char *host, int *sock,
 	}
 
 	/* make temp file */
-	tempfd = Make_temp_fd( Cfp_static, tempfilename, sizeof(tempfilename) );
+	tempfd = Make_temp_fd( tempfilename, sizeof(tempfilename) );
 	if( tempfd <= 0 ){
 		err = errno;
 		Errorcode = JFAIL;
@@ -169,6 +169,9 @@ int Send_auth_transfer(int logtransfer, char *printer, char *host,
 		key = 'F';
 	} else {
 		user = Logname;
+		if( Remote_user == 0 || *Remote_user == 0 ){
+			Remote_user = Server_user; /* default to the server user */
+		}
 		key = 'C';
 	}
 	if( user == 0 || *user == 0 ){
@@ -182,16 +185,17 @@ int Send_auth_transfer(int logtransfer, char *printer, char *host,
 	}
 	if( Remote_user == 0 || *Remote_user == 0 ){
 		Remote_user = Daemon_user; /* default to the daemon user */
-		if( Remote_user == 0 || *Remote_user == 0 ){
-			Errorcode = JFAIL;
-			fatal( LOG_ERR, "Send_auth_transfer: missing user or server id" );
-		}
+	}
+	if( Remote_user == 0 || *Remote_user == 0 ){
+		Errorcode = JFAIL;
+		fatal( LOG_ERR, "Send_auth_transfer: missing user or server id" );
 	}
 	if( strpbrk( Remote_user, " \t\n") || Find_meta( Remote_user )  ){
 		Errorcode = JFAIL;
 		fatal( LOG_ERR, "Send_auth_transfer: remote_user has bad format '%s'",
 				Remote_user );
 	}
+	DEBUG1("Send_auth_transfer: after Server_user '%s', Remote_user '%s'", Server_user, Remote_user);
 
 	/* now we have the copy, we need to send the control message */
 	if( fstat( tempfd, &statb ) ){
@@ -284,8 +288,11 @@ int Send_auth_transfer(int logtransfer, char *printer, char *host,
 	fd_list[i++] = pipe_fd[1];
 	fd_list[i++] = 0;
 
-	Make_passthrough( &Passthrough_send, tempbuf, fd_list, i,
-		0, Cfp_static, printcap_entry );
+	if( Make_passthrough( &Passthrough_send, tempbuf, fd_list, i,
+		0, Cfp_static, printcap_entry ) < 0 ){
+		Errorcode = JFAIL;
+		fatal( LOG_ERR,"Send_auth_transfer: %s", Cfp_static->error );
+	}
 
 	close( pipe_fd[1] );
 	/* now we wait for the status */

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 #if 0
-"$Id: checkremote.h,v 3.1 1996/12/28 21:40:24 papowell Exp $";
+"$Id: checkremote.h,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
 #endif
 
 /***************************************************************************
@@ -20,4 +20,5 @@ Checkremotehost()
 
  ***************************************************************************/
 
-void Check_remotehost( int checkloop );
+void Check_remotehost( void );
+int Check_loop( void );

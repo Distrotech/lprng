@@ -48,6 +48,10 @@
 /* Define if you have <dirent.h>.  */
 #undef DIRENT
 
+/* Define to 1 if NLS is requested.  */
+#undef ENABLE_NLS
+
+
 /* Define to the type of elements in the array set by `getgroups'.
    Usually this is either `int' or `gid_t'.  */
 #undef GETGROUPS_T
@@ -66,9 +70,12 @@
 
 /* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
 #undef HAVE_ALLOCA_H
- 
+
 /* Define if you have a broken TIOCEXCL (IRIX 5) */
 #undef HAVE_BROKEN_TIOCEXCL
+
+/* Define as 1 if you have catgets and don't want to use GNU gettext.  */
+#undef HAVE_CATGETS
 
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
@@ -88,8 +95,14 @@
 /* Define if you have to use getpgrp(0) to get process group */
 #undef HAVE_GETPGRP_0
 
+/* Define as 1 if you have gettext and don't want to use GNU gettext.  */
+#undef HAVE_GETTEXT
+
 /* Define if you have innetgr() defined in include file */
 #undef HAVE_INNETGR_DEF
+
+/* Define if your locale.h file contains LC_MESSAGES.  */
+#undef HAVE_LC_MESSAGES
 
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE
@@ -118,6 +131,9 @@
 
 /* Define if your struct stat has st_blocks.  */
 #undef HAVE_ST_BLOCKS
+
+/* Define to 1 if stpcpy function is available.  */
+#undef HAVE_STPCPY
 
 /* Define if you have the strcoll function and it is properly defined.  */
 #undef HAVE_STRCOLL
@@ -204,6 +220,9 @@
 /* Define if int is 16 bits instead of 32.  */
 #undef INT_16_BITS
 
+/* IRIX */
+#undef IRIX
+
 /* Define if long int is 64 bits.  */
 #undef LONG_64_BITS
 
@@ -238,6 +257,9 @@
 
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
+
+/* Define to the name of the distribution.  */
+#undef PACKAGE
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef pid_t
@@ -338,6 +360,9 @@
 
 /* Define if you do not have <strings.h>, index, bzero, etc..  */
 #undef USG
+
+/* Define to the version of the distribution.  */
+#undef VERSION
 
 /* Define vfork as fork if vfork does not work.  */
 #undef vfork

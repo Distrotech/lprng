@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: checkremote.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+"$Id: checkremote.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "checkremote.h"
@@ -26,23 +26,29 @@ Checkremotehost()
 
  ***************************************************************************/
 
-void Check_remotehost( int checkloop )
+void Check_remotehost( void )
 {
 	char *s, *end;
-	static char *rdup;
 
-	DEBUG3("Check_remotehost: checkloop %d, Lp '%s'",
-		checkloop, Lp_device );
+	DEBUG3("Check_remotehost: before RemotePrinter '%s', RemoteHost '%s',  Lp '%s'",
+		RemotePrinter, RemoteHost, Lp_device );
 	Destination_port = 0;
-	if( Lp_device && (s = strchr(Lp_device,'@'))){
-		if( rdup ){
-			free(rdup);
-			rdup = 0;
-		}
-		rdup = safestrdup( Lp_device );
-		/* we pick up the remote printer and host */
-		RemotePrinter = rdup;
-		if( (s = strchr( rdup, '@' )) ){
+	if( Lp_device ){
+		if( (Lp_device[0] == '|') ){
+			if( Is_server ){
+				RemotePrinter = 0;
+				RemoteHost = 0;
+			}
+		} else if( strchr(Lp_device,'@') ){
+			/* we have printer@host[%port] */
+			static char *rdup;
+			if( rdup ){
+				free(rdup);
+				rdup = 0;
+			}
+			rdup = safestrdup( Lp_device );
+			RemotePrinter = rdup;
+			s = strchr( rdup, '@' );
 			*s++ = 0;
 			RemoteHost = s;
 			if( *RemoteHost == 0 ){
@@ -54,8 +60,8 @@ void Check_remotehost( int checkloop )
 				*s++ = 0;
 				end = s;
 				Destination_port = strtol( s, &end, 10 );
-				if( ((end - s) != strlen( s )) || Destination_port < 0 ){
-				fatal( LOG_ERR,
+				if( end == s || *end != 0 || Destination_port <= 0 ){
+					fatal( LOG_ERR,
 					"Check_remotehost: 'lp' entry has bad port number '%s'",
 						Lp_device );
 				}
@@ -64,30 +70,29 @@ void Check_remotehost( int checkloop )
 	}
 	DEBUG3("Check_remotehost: RemoteHost '%s', RemotePrinter '%s'",
 		RemoteHost, RemotePrinter );
+}
+
+int Check_loop( void )
+{
+	int checkloop = 0;
+
 	/*
-	 * Prevent loops by clearing RemoteHost and RemotePrinter if they
-	 * point at us.
+	 * Detect loops by seeing if RemoteHost and RemotePrinter
+	 * are the same as the Printer and current host
 	 */
-	if( checkloop ){
-		if( RemoteHost ){
-			FQDNRemote = Find_fqdn(&RemoteHostIP, RemoteHost, 0 );
-			DEBUG3("Check_remotehost: checkloop RemoteHost '%s', FQDNHost '%s'",
-				FQDNRemote, FQDNHost);
+	if( RemoteHost && RemotePrinter ){
+		checkloop = 1;
+		FQDNRemote = Find_fqdn(&RemoteHostIP, RemoteHost, 0 );
+		DEBUG3("Check_remotehost: checkloop RemoteHost '%s', FQDNHost '%s'",
+			FQDNRemote, FQDNHost);
+		if( FQDNRemote ){
+			checkloop = !Same_host( &RemoteHostIP, &HostIP );
 		}
-		if( checkloop && FQDNRemote ){
-			checkloop = !strcmp( FQDNRemote, FQDNHost );
-		}
-		if( checkloop && RemotePrinter && Printer ){
+		if( Printer && checkloop ){
 			checkloop = !strcmp( RemotePrinter, Printer );
 		}
-		if( checkloop ){
-			RemoteHost = 0;
-			RemotePrinter = 0;
-		}
 	}
-	if( RemoteHost && RemotePrinter == 0 ){
-		RemotePrinter = Printer;
-	}
-	DEBUG3("Check_remotehost: loop %d, RemoteHost '%s', RemotePrinter '%s'",
+	DEBUG3("Check_loop: loop %d, RemoteHost '%s', RemotePrinter '%s'",
 		checkloop, RemoteHost, RemotePrinter );
+	return( checkloop );
 }

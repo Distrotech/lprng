@@ -10,7 +10,7 @@
  * PURPOSE: permform a glob type of match
  **************************************************************************/
 
-static char *const _id = "$Id: globmatch.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
+static char *const _id = "$Id: globmatch.c,v 3.4 1997/02/04 21:41:05 papowell Exp $";
 
 #include "lp.h"
 #include "globmatch.h"
@@ -23,7 +23,7 @@ static int glob_pattern( char *pattern, char *str )
 	char *glob;
 	char pairs[3];
 
-	DEBUG4("glob_pattern: pattern '%s' to '%s'\n", pattern, str );
+	DEBUG4("glob_pattern: pattern '%s' to '%s'", pattern, str );
 	result =  strcasecmp( pattern, str );
 	/* now we do walk through pattern */ 
 	if( result && (glob = strchr( pattern, '*' )) ){
@@ -70,11 +70,11 @@ int Globmatch( char *pattern, char *str )
 	int result;
 
 	/* try simple test first: string compare */
-	DEBUG4("Globmatch: pattern '%s' to '%s'\n", pattern, str );
+	DEBUG4("Globmatch: pattern '%s' to '%s'", pattern, str );
 	if( pattern && strcasecmp( pattern, "NULL" ) == 0 ) pattern = "";
 	if( pattern == 0 ) pattern = "";
 	if( str == 0 ) str = "";
 	result = glob_pattern( pattern, str );
-	DEBUG4("Globmatch: '%s' to '%s' result %d\n", pattern, str, result );
+	DEBUG4("Globmatch: '%s' to '%s' result %d", pattern, str, result );
 	return( result );
 }

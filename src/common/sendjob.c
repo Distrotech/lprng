@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendjob.c,v 3.7 1997/01/30 21:15:20 papowell Exp $";
+"$Id: sendjob.c,v 3.13 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -136,7 +136,7 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 		if( s == 0 ) s = Banner_printer;
 		if( s == 0 ) s = Default_banner_printer;
 		if( s ){
-			tempfd = Make_temp_fd( cfp, bannerpath, sizeof(bannerpath) );
+			tempfd = Make_temp_fd( bannerpath, sizeof(bannerpath) );
 			DEBUG2( "Send_job: banner path '%s'", bannerpath );
 			if( Print_banner( s, cfp, 0, tempfd, 0, 0, printcap_entry ) ){
 				Errorcode = JABORT;
@@ -201,7 +201,7 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 	} else {
 		++id;
 	}
-	if( printcap_entry && Accounting_remote ){
+	if( Is_server && printcap_entry && Accounting_remote ){
 		Setup_accounting( cfp, printcap_entry );
 		if( Accounting_start ){
 			i = Do_accounting( 0, Accounting_start, cfp, Send_timeout, printcap_entry, 0 );
@@ -234,7 +234,7 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 			setstatus( cfp,
 			"sending job '%s' to '%s@%s', connect attempt %d failed, sleeping %d",
 				id, printer, host, attempt, n );
-			sleep( n );
+			plp_sleep( n );
 			n += connect_interval;
 			if( n > 60 ) n = 60;
 		}
@@ -298,7 +298,7 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 	} else {
 		DEBUG4("Send_job: printcap_entry 0x%x, end %d, file %s, remote %d",
 			printcap_entry, Accounting_end, Accounting_file, Accounting_remote );
-		if( printcap_entry && Accounting_remote ){
+		if( Is_server && printcap_entry && Accounting_remote ){
 			i = Do_accounting( 1, Accounting_end, cfp, Send_timeout, printcap_entry, 0 );
 			if( i ){
 				Errorcode = i;
@@ -307,6 +307,15 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 		}
 		setstatus( cfp, "done job '%s' transfer to %s@%s",
 			id, printer, host );
+		if( Is_server == 0 && LP_mode ){
+			id = cfp->identifier;
+			if( id[0] ){
+				plp_snprintf( msg,sizeof(msg)-1,"request id is %s\n", id+1 );
+			} else {
+				plp_snprintf( msg,sizeof(msg)-1,"request id is %d\n", cfp->number );
+			}
+			Write_fd_str(1, msg );
+		}
 	}
 	/* remove temp files */
 	Remove_tempfiles();
@@ -490,6 +499,7 @@ send_data:
 	"Send_files: [%d] transfer '%s', open '%s', fd %d, size %d, copies %d",
 		order, df->transfername+1, df->openname, df->fd, df->statb.st_size,
 		df->copies );
+		if( df->copies == 0 ) continue;	/* we do not send this file */
 		if( (DbgTest & 0x01) && count == 0 ){
 			DEBUG0("Send_files: DgbTest flag 0x01 set! skip first file" );
 			continue;
@@ -501,7 +511,7 @@ send_data:
 				df->openname, fd );
 			/* ignore the status on LSEEK - we may have a pipe or fd */
 			size = -1;
-		} else if( df->openname ){
+		} else if( df->openname[0] ){
 			DEBUG3("Send_files: opening file '%s'", df->openname );
 			/*
 			 * open file as user; we should be running as user
@@ -731,7 +741,7 @@ static int Bounce_filter( struct control_file *cfp,
 	/* hook filter up to the device file descriptor */
 	if( filter ){
 		if( tempfd <= 0 ){
-			tempfd = Make_temp_fd( cfp, 0, 0 );
+			tempfd = Make_temp_fd( 0, 0 );
 		}
 		if( ftruncate( tempfd, 0 ) < 0 ){
 			err = errno;
@@ -744,18 +754,21 @@ static int Bounce_filter( struct control_file *cfp,
 			0,	/* RW pipe */
 			tempfd, /* dup to fd 1 */
 			printcap_entry, /* printcap information */
-			data_file, Accounting_port, Logger_destination != 0, 0 ) ){
+			data_file, Accounting_port, Logger_destination != 0,
+				Direct_read?fd:0 ) ){
 			setstatus( cfp, "%s", cfp->error );
 			cleanup(0);
 		}
 		/* at this point you have a filter, which is taking input
 			from XF_fd_info.input; pass input file through it */
-		while( (in = read(fd, tempbuf, sizeof(tempbuf)) ) > 0 ){
-			Write_fd_len( XF_fd_info.input, tempbuf, in );
+		if( Direct_read == 0 ){
+			while( (in = read(fd, tempbuf, sizeof(tempbuf)) ) > 0 ){
+				Write_fd_len( XF_fd_info.input, tempbuf, in );
+			}
 		}
-		if( Close_filter( &XF_fd_info, Send_timeout, "bounce queue" ) ){
-			err = errno;
-			Errorcode = JFAIL;
+		Errorcode = Close_filter( &XF_fd_info,
+			Send_timeout, "bounce queue" );
+		if( Errorcode ){
 			logerr_die( LOG_INFO,
 				"Bounce_filter: error closing bounce queue filter" );
 		}
@@ -822,7 +835,7 @@ int Send_block( char *host, char *printer,
 	} else {
 		++id;
 	}
-	tempfd = Make_temp_fd( cfp, 0, 0 );
+	tempfd = Make_temp_fd( 0, 0 );
 	if( tempfd < 0 ){
 		err = errno;
 		Errorcode = JFAIL;
@@ -934,7 +947,7 @@ int Send_secure_block( char *host, char *printer,
 		"Send_secure_block: missing job authentication");
 	}
 
-	tempfd = Make_temp_fd( cfp, tempfilename, sizeof(tempfilename) );
+	tempfd = Make_temp_fd( tempfilename, sizeof(tempfilename) );
 	if( tempfd <= 0 ){
 		err = errno;
 		Errorcode = JFAIL;

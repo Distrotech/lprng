@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: termclear.c,v 3.1 1996/12/28 21:40:22 papowell Exp $";
+"$Id: termclear.c,v 3.2 1997/02/15 15:01:30 papowell Exp papowell $";
 
 #include "lp.h"
 #include "termclear.h"
@@ -21,11 +21,15 @@ static char *const _id =
 # include <termios.h>
 #endif
 
-/* terminfo has a termcap emulation */
-#ifdef HAVE_CURSES_H
-# include <curses.h>
+#ifdef HAVE_NCURSES_H
+# include <ncurses.h>
+#else
+# ifdef HAVE_CURSES_H
+#   include <curses.h>
+# endif
 #endif
 
+/* terminfo has a termcap emulation */
 #if defined(HAVE_TERMCAP_H) && !defined(__FreeBSD__) && !defined(__linux__)
 # include <termcap.h>
 #endif

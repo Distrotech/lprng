@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: default.c,v 3.5 1997/01/29 03:04:39 papowell Exp $";
+"$Id: default.c,v 3.6 1997/02/17 02:31:27 papowell Exp papowell $";
 
 char *Default_configuration[] = {
 "ae=jobend $H $n $P $k $b $t",
@@ -79,6 +79,7 @@ char *Default_configuration[] = {
 "originate_port=721 731",
 "pass_env=PGPPASS,PGPPATH",
 "pl#66",
+"poll_time#600",
 "pr=/bin/pr",
 "printcap_path=/etc/printcap:/usr/etc/printcap:/var/spool/lpd/printcap.%h",
 "printer_perms_path=/etc/lpd.perms:/usr/etc/lpd.perms:/var/spool/lpd/lpd.perms.%h",

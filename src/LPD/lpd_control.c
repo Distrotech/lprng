@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_control.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpd_control.c,v 3.11 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "control.h"
@@ -99,7 +99,7 @@ int Job_control( int *socket, char *input, int maxlen )
 
 	if( tokencount < 3 ){
 		plp_snprintf( error, sizeof(error),
-			"bad control command '%s'", input );
+			_("bad control command '%s'"), input );
 		goto error;
 	}
 
@@ -124,7 +124,7 @@ int Job_control( int *socket, char *input, int maxlen )
 
 	if( (s = Clean_name( name )) ){
 		plp_snprintf( error, sizeof(error),
-			"printer '%s' has illegal char '%c' in name", name, *s );
+			_("printer '%s' has illegal char '%c' in name"), name, *s );
 		goto error;
 	}
 	setproctitle( "lpd %s %s", Name, Printer );
@@ -135,7 +135,7 @@ int Job_control( int *socket, char *input, int maxlen )
 	action = Get_controlword( s );
 	if( action == 0 ){
 		plp_snprintf( error, sizeof(error),
-			"%s: unknown control request '%s'", Printer, s );
+			_("%s: unknown control request '%s'"), Printer, s );
 		goto error;
 	}
 
@@ -161,10 +161,10 @@ int Job_control( int *socket, char *input, int maxlen )
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		if( Perm_check.service == 'S' ){
 			plp_snprintf( error, sizeof(error),
-				"%s: no permission to get status", Printer );
+				_("%s: no permission to get status"), Printer );
 		} else {
 			plp_snprintf( error, sizeof(error),
-				"%s: no permission to control queue", Printer );
+				_("%s: no permission to control queue"), Printer );
 		}
 		goto error;
 	}
@@ -183,8 +183,9 @@ int Job_control( int *socket, char *input, int maxlen )
 			}
 			goto done;
 		case STATUS:
+			/* we put out a space at the start to make PCNFSD happy */
 			plp_snprintf( error, sizeof(error), status_header,
-				"Printer", "Printing", "Spooling", "Jobs",
+				" Printer", "Printing", "Spooling", "Jobs",
 				"Server", "Slave", "Redirect", "Status/Debug","" );
 			safestrncat(error,"\n");
 			if( Write_fd_str( *socket, error ) < 0 ) cleanup(0);
@@ -215,7 +216,7 @@ int Job_control( int *socket, char *input, int maxlen )
 			/* we have Nprinter user move jobid* target */
 			if( tokencount < 5 ){
 				plp_snprintf( error, sizeof(error),
-					"Use: MOVE printer (user|jobid)* target" );
+					_("Use: MOVE printer (user|jobid)* target") );
 				goto error;
 			}
 			break;
@@ -227,7 +228,7 @@ done:
 	return(0);
 
 error:
-	log( LOG_INFO, "Job_control: error '%s'", error );
+	log( LOG_INFO, _("Job_control: error '%s'"), error );
 	DEBUG2("Job_control: error msg '%s'", error );
 	safestrncat(error,"\n");
 	if( Write_fd_str( *socket, error ) < 0 ) cleanup(0);
@@ -337,18 +338,18 @@ void Do_queue_control( char *user, int action, int *socket,
 		case STATUS:
 			plp_snprintf( pr, sizeof(pr), "%s@%s", Printer, ShortHost );
 			if( status != 2 ){
-				plp_snprintf( msg, sizeof(msg), "%-18s WARNING %s\n",
+				plp_snprintf( msg, sizeof(msg), _("%-18s WARNING %s\n"),
 					pr, error );
 			} else {
 				if( RemotePrinter == 0 && RemoteHost == 0 ){
 					plp_snprintf( error, errorlen,
-						" lookup loop! remote printer is %s@%s",
+						_(" printer %s@%s not in printcap"),
 						Printer, ShortHost );
 				} else {
 					if( RemoteHost == 0 ) RemoteHost = Default_remote_host;
 					if( RemotePrinter == 0 ) RemotePrinter = Printer;
 					plp_snprintf( error, errorlen,
-						" no spooling, forwarding directly to %s@%s",
+						_(" no spooling, forwarding directly to %s@%s"),
 						RemotePrinter, RemoteHost );
 				}
 				plp_snprintf( msg, sizeof(msg), "%-18s %s\n",
@@ -378,10 +379,10 @@ void Do_queue_control( char *user, int action, int *socket,
 		 ){
 		if( Perm_check.service == 'S' ){
 			plp_snprintf( error, sizeof(error),
-				"%s: no permission to get status", Printer );
+				_("%s: no permission to get status"), Printer );
 		} else {
 			plp_snprintf( error, sizeof(error),
-				"%s: no permission to control queue", Printer );
+				_("%s: no permission to control queue"), Printer );
 		}
 		goto error;
 	}
@@ -412,7 +413,7 @@ void Do_queue_control( char *user, int action, int *socket,
 		if( strlen( Redirect_str ) >=
 			sizeof( ((struct control_file *)0)->hold_info.redirect ) - 2 ){
 			plp_snprintf( error, errorlen,
-				"%s: destination printer too long '%s'",
+				_("%s: destination printer too long '%s'"),
 				Printer, Redirect_str );
 			goto error;
 		}
@@ -458,7 +459,7 @@ void Do_queue_control( char *user, int action, int *socket,
 		break;
 		
 	default:
-		plp_snprintf( error, errorlen, "not implemented yet" );
+		plp_snprintf( error, errorlen, _("not implemented yet") );
 		goto error;
 	}
 
@@ -486,17 +487,22 @@ void Do_queue_control( char *user, int action, int *socket,
 		}
 		DEBUG4("Do_queue_control: server pid %d", serverpid );
 		if( serverpid > 0 ){
-			if( kill( serverpid, SIGINT ) ){
-				DEBUG4("Do_queue_control: server %d not active", serverpid );
+			char msg[LINEBUFFER];
+			DEBUG4("Do_queue_control: kill(pid %d, SIGINT)", serverpid );
+			if( kill( serverpid, SIGINT ) == 0 ){
+				plp_snprintf(msg,sizeof(msg),_("killing server PID %d\n"),
+					serverpid );
+				Write_fd_str(*socket,msg);
+				plp_sleep(2);
+				while( kill( serverpid, SIGINT ) == 0 ){
+					DEBUG4("Do_queue_control: server %d still active",
+						serverpid );
+					plp_sleep(2);
+				}
 			}
 			serverpid = 0;
 		}
 		break;
-	}
-
-	/* wait for the server to die, then restart it */
-	if( action == KILL ){
-		sleep(1);
 	}
 
 	/* start the server if necessary */
@@ -517,24 +523,24 @@ void Do_queue_control( char *user, int action, int *socket,
 		}
 		DEBUG3("Do_queue_control: sending '%s' to LPD", line );
 		if( Write_fd_str( Lpd_pipe[1], line ) < 0 ){
-			logerr_die( LOG_ERR, "Do_queue_control: write to pipe '%d' failed",
+			logerr_die( LOG_ERR, _("Do_queue_control: write to pipe '%d' failed"),
 				Lpd_pipe[1] );
 		}
 	}
 
 	switch( action ){
 	case STATUS:	Action = 0; break; /* no message */
-	case UP:		Action = "enabled and started"; break;
-	case DOWN:		Action = "disabled and stopped"; break;
-	case STOP:		Action = "stopped"; break;
-	case START:		Action = "started"; break;
-	case DISABLE:	Action = "disabled"; break;
-	case ENABLE:	Action = "enabled"; break;
-	case REDIRECT:	Action = "redirected"; break;
-	case HOLDALL:	Action = "holdall on"; break;
-	case NOHOLDALL:	Action = "holdall off"; break;
-	case MOVE:		Action = "move done"; break;
-	case CLAss:		Action = "class updated"; break;
+	case UP:		Action = _("enabled and started"); break;
+	case DOWN:		Action = _("disabled and stopped"); break;
+	case STOP:		Action = _("stopped"); break;
+	case START:		Action = _("started"); break;
+	case DISABLE:	Action = _("disabled"); break;
+	case ENABLE:	Action = _("enabled"); break;
+	case REDIRECT:	Action = _("redirected"); break;
+	case HOLDALL:	Action = _("holdall on"); break;
+	case NOHOLDALL:	Action = _("holdall off"); break;
+	case MOVE:		Action = _("move done"); break;
+	case CLAss:		Action = _("class updated"); break;
 	}
 	if( Action ){
 		plp_snprintf( line, sizeof(line), "%s %s\n", Printer, Action );
@@ -614,9 +620,9 @@ next_destination:
 		DEBUG4("Do_control_file: selected '%s', id '%s', destination '%s'",
 			cfp->transfername, cfp->identifier+1, destination->destination );
 		/* we report this job being selected */
-		plp_snprintf( msg, sizeof(msg), "selected '%s'", cfp->identifier+1 );
+		plp_snprintf( msg, sizeof(msg), _("selected '%s'"), cfp->identifier+1 );
 		if( destination ){
-			plp_snprintf( msg, sizeof(msg), "selected '%s'", destination->identifier+1 );
+			plp_snprintf( msg, sizeof(msg), _("selected '%s'"), destination->identifier+1 );
 		}
 		safestrncat(msg,"\n");
 		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
@@ -767,8 +773,8 @@ int Do_control_status( char *user, int action, int *socket,
 	if( serverpid > 0 ){
 		if( kill( serverpid, 0 ) < 0 ){
 			DEBUG4("Get_queue_status: server %d not active", serverpid );
+			serverpid = 0;
 		}
-		serverpid = 0;
 	} /**/
 
 	path = Add2_path( CDpathname, "unspooler.", Printer );
@@ -782,8 +788,8 @@ int Do_control_status( char *user, int action, int *socket,
 	if( unspoolerpid > 0 ){
 		if( kill( unspoolerpid, 0 ) < 0 ){
 			DEBUG4("Get_queue_status: unspooler %d not active", unspoolerpid );
+			unspoolerpid = 0;
 		}
-		unspoolerpid = 0;
 	} /**/
 	close(fd);
 
@@ -809,7 +815,7 @@ int Do_control_status( char *user, int action, int *socket,
 			strncat( pr_status, " ", sizeof(pr_status) );
 		}
 		len = strlen(pr_status);
-		plp_snprintf( pr_status+len, sizeof(pr_status)-len, "holdall" );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, _("holdall") );
 	}
 	if( Auto_hold ){
 		int len;
@@ -819,7 +825,7 @@ int Do_control_status( char *user, int action, int *socket,
 			strncat( pr_status, " ", sizeof(pr_status) );
 		}
 		len = strlen(pr_status);
-		plp_snprintf( pr_status+len, sizeof(pr_status)-len, "autohold" );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, _("autohold") );
 	}
 	if( control_status ) strncat( pr_status, ") ", sizeof(pr_status) );
 	plp_snprintf( count, sizeof(count), "%d", cnt );
@@ -878,7 +884,7 @@ int Do_control_redirect( char *user, int action, int *socket,
 		} else {
 			if( strpbrk( s, ":; \t;" ) ){
 				plp_snprintf( error, errorlen,
-					"forward format is printer@host, not '%s'", s );
+					_("forward format is printer@host, not '%s'"), s );
 				goto error;
 			}
 			Forwarding = s;
@@ -886,15 +892,15 @@ int Do_control_redirect( char *user, int action, int *socket,
 		break;
 
 	default:
-		strncpy( error, "too many arguments", errorlen );
+		strncpy( error, _("too many arguments"), errorlen );
 		goto error;
 	}
 
 	if( Forwarding ){
-		plp_snprintf( forward, sizeof(forward), "forwarding to '%s'",
+		plp_snprintf( forward, sizeof(forward), _("forwarding to '%s'"),
 			Forwarding );
 	} else {
-		plp_snprintf( forward, sizeof(forward), "forwarding off" );
+		plp_snprintf( forward, sizeof(forward), _("forwarding off") );
 	}
 
 	if( forward[0] ){
@@ -943,15 +949,15 @@ int Do_control_class( char *user, int action, int *socket,
 		break;
 
 	default:
-		strncpy( error, "too many arguments", errorlen );
+		strncpy( error, _("too many arguments"), errorlen );
 		goto error;
 	}
 
 	if( Classes ){
-		plp_snprintf( forward, sizeof(forward), "classes printed '%s'",
+		plp_snprintf( forward, sizeof(forward), _("classes printed '%s'"),
 			Classes );
 	} else {
-		plp_snprintf( forward, sizeof(forward), "all classes printed" );
+		plp_snprintf( forward, sizeof(forward), _("all classes printed") );
 	}
 
 	if( forward[0] ){
@@ -999,16 +1005,16 @@ int Do_control_debug( char *user, int action, int *socket,
 		break;
 
 	default:
-		strncpy( error, "too many arguments", errorlen );
+		strncpy( error, _("too many arguments"), errorlen );
 		goto error;
 	}
 
 	if( Control_debug ){
 		plp_snprintf( debugging, sizeof(debugging),
-			"debugging override set to '%s'",
+			_("debugging override set to '%s'"),
 			Control_debug );
 	} else {
-		plp_snprintf( debugging, sizeof(debugging), "debugging override off" );
+		plp_snprintf( debugging, sizeof(debugging), _("debugging override off") );
 	}
 
 	if( debugging[0] ){
@@ -1043,24 +1049,24 @@ int Do_control_lpd( char *user, int action, int *socket,
 	switch( tokencount ){
 	case -1:
 	case 0:
-		plp_snprintf( lpd, sizeof(lpd), "Server PID %d\n", Server_pid );
+		plp_snprintf( lpd, sizeof(lpd), _("Server PID %d\n"), Server_pid );
 		break;
 
 	case 1:
 		if( Server_pid > 0 ){
 			if( kill( Server_pid, SIGHUP ) == 0 ){
 				plp_snprintf( lpd, sizeof(lpd),
-					"Server PID %d sent SIGHUP\n", Server_pid );
+					_("Server PID %d sent SIGHUP\n"), Server_pid );
 			} else {
 				plp_snprintf( lpd, sizeof(lpd),
-					"Server PID %d, SIGHUP failed %s\n",
+					_("Server PID %d, SIGHUP failed %s\n"),
 					Server_pid, Errormsg( errno ) );
 			}
 		}
 		break;
 
 	default:
-		strncpy( error, "too many arguments", errorlen );
+		strncpy( error, _("too many arguments"), errorlen );
 		goto error;
 	}
 

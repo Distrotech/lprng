@@ -12,11 +12,12 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_makejob.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpr_makejob.c,v 3.8 1997/02/04 22:01:49 papowell Exp papowell $";
 
 #include "lp.h"
 #include "dump.h"
 #include "malloclist.h"
+#include "fixcontrol.h"
 /**** ENDINCLUDE ****/
 
 
@@ -37,13 +38,13 @@ static char *const _id =
  **************************************************************************/
 static int get_job_number(struct control_file *cfp );
 
-void Make_job( struct control_file *cfp )
+int Make_job( struct control_file *cfp )
 {
 	char nstr[LINEBUFFER];	/* information */
 	struct keywords *keys;	/* keyword entry in the parameter list */
 	char *str;				/* buffer where we allocate stuff */
-	int i, j, c, n;			/* ACME Connectors and Variables, Inc. */
-	struct data_file *data_file;	/* data file entry */
+	int n;
+	int job_size;
 
 	/*
 	 * first we get the job name
@@ -80,9 +81,9 @@ void Make_job( struct control_file *cfp )
 				continue;
 			}
 			if( isdigit( keys->flag)  ){
-				cfp->digitoptions[ keys->flag -'0' ] = Add_job_line( cfp, nstr );
+				cfp->digitoptions[ keys->flag -'0' ] = Add_job_line( cfp, nstr, 0 );
 			} else {
-				cfp->capoptions[ keys->flag - 'A' ] = Add_job_line( cfp, nstr );
+				cfp->capoptions[ keys->flag - 'A' ] = Add_job_line( cfp, nstr, 0 );
 			}
 			DEBUG3("Make_job: line [%d] key '%s', flag '%c' = '%s'",
 				cfp->control_file_lines.count, keys->keyword, keys->flag, nstr );
@@ -98,51 +99,20 @@ void Make_job( struct control_file *cfp )
      * 0123456...
 	 * - fix up the format specifier
      */
-	for( i = 0; i < cfp->data_file_list.count; ++i ){
-		data_file = (void *)cfp->data_file_list.list;
-		data_file = &data_file[i];
 
-		if( i < 26 ){
-			c = 'A'+i;
-		} else {
-			c = 'a'+ i - 26;
-		}
-		/* each data file entry is:
-           FdfNNNhost\n    (namelen+1)
-           UdfNNNhost\n    (namelen+1)
-		   Nfile\n         (strlen(datafile->file)+2
-		 */
-		plp_snprintf( data_file->transfername, sizeof(data_file->transfername),
-			"%cdf%c%0*d%s", *Format, c, cfp->number_len, cfp->number, FQDNHost );
-		/* put in the 'UdfXNNNHost' line */
-		safestrncpy( data_file->Uinfo, data_file->transfername );
-		data_file->Uinfo[0] = 'U';
-		data_file->format = *Format;
-
+	/*
+	 * copy from standard in?
+	 */
+	if (Filecount == 0) {
+		job_size = Copy_stdin( Cfp_static );
+	} else {
 		/*
-		 * put out:  fdfAnnnHOST
-		 *           N...
-		 * as many times as needed
+		 * check to see that the input files are printable
 		 */
-
-		if( data_file->copies == 0 ){
-			data_file->copies = 1;
-		}
-		for(j = 0; j < data_file->copies; ++j ){
-			str = Add_job_line( cfp, data_file->transfername );
-			DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
-			if( data_file->Ninfo[0] ){
-				str = Add_job_line( cfp, data_file->Ninfo );
-				DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
-			}
-		}
-		str = Add_job_line( cfp, data_file->Uinfo );
-		DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+		job_size = Check_files( Cfp_static, Files, Filecount );
 	}
-	DEBUG3("Make_job: line count %d, control_info %d",
-		cfp->control_file_lines.count, cfp->control_info );
-
 	if(DEBUGL3) dump_control_file( "Make_job - result", cfp );
+	return( job_size );
 }
 
 /**************************************************************************

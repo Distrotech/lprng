@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: decodestatus.c,v 3.4 1997/01/29 03:22:18 papowell Exp $";
+"$Id: decodestatus.c,v 3.5 1997/02/05 23:05:11 papowell Exp papowell $";
 #include "lp.h"
 #include "decodestatus.h"
 #include "errorcodes.h"
@@ -28,17 +28,6 @@ struct signame {
 };
 #undef PAIR
 #define PAIR(X) { #X , X }
-
-#if !defined(HAVE_SYS_SIGLIST) && defined(HAVE__SYS_SIGLIST)
-#   define sys_siglist _sys_siglist
-#   undef NSIG
-#   define NSIG _sys_siglistn
-#   define HAVE_SYS_SIGLIST
-#endif
-
-#if defined(HAVE__SYS_SIGLIST_DEF) && !defined(HAVE_SYS_SIGLIST_DEF)
-#   define HAVE_SYS_SIGLIST_DEF
-#endif
 
 #if !defined(HAVE_SYS_SIGLIST)
 struct signame signals[] = {

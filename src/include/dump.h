@@ -8,12 +8,13 @@
  ***************************************************************************
  * MODULE: dump.h
  * PURPOSE: dump.c functions
- * $Id: dump.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * $Id: dump.h,v 3.3 1997/02/04 23:34:23 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _DUMP_H
 #define _DUMP_H
 
+#include "permission.h"
 
 /**********************************************************************
  *dump_params( char *title, struct keywords *k );
@@ -74,4 +75,8 @@ void dump_filter( char *title,  struct filter *filter );
 
 void dump_host_information( char *title,  struct host_information *info );
 
+void dump_perm_file( char *title,  struct perm_file *perms );
+void dump_perm_check( char *title,  struct perm_check *check );
+void dump_perm_check( char *title,  struct perm_check *check );
+void dump_perm_line( char *title, struct perm_line *line, struct perm_file *perms);
 #endif

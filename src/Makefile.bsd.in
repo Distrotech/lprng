@@ -7,7 +7,7 @@
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.bsd.in,v 1.10 1997/01/31 22:30:36 papowell Exp $
+# $Id: Makefile.bsd.in,v 1.15 1997/03/24 00:45:58 papowell Exp papowell $
 ###########################################################################
 #
 # WARNING: This is a makefile for GNU Make or when modified by BSD Make
@@ -21,7 +21,6 @@
 # If these paths are /usr/lib, /usr/ucb etc., make sure you
 # have backup copies of the system version!
 #
-PREFIX =     @prefix@
 #
 # These are automatically sedded in by the "configure" script, but you
 # may need to change them if you're on a strange version of UNIX.
@@ -59,7 +58,18 @@ SRC=@srcdir@
 @SET_MAKE@
 LDCC=@LDCC@
 
-CF := @CFLAGS@ @DEFS@
+# where executables are installed
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+localedir = $(prefix)/@DATADIRNAME@/locale
+INSTALL_BIN =     @exec_prefix@/bin
+# where daemons are installed: lpd
+#INSTALL_LIB =     @prefix@/lib
+INSTALL_LIB =     @prefix@/bin
+# where maintenance commands are installed: checkpc, setstatus
+INSTALL_MAINT =   @exec_prefix@/bin
+
+CF := @CFLAGS@ @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 
 #********************** End of configure modifiable settings ************
 
@@ -76,15 +86,6 @@ CF := @CFLAGS@ @DEFS@
 .ifdef TESTVERSION
 GETENV_CFLAGS = -DGETENV
 .endif
-
-# where executables are installed
-INSTALL_BIN =     $(PREFIX)/bin
-
-# where daemons are installed: lpd
-INSTALL_LIB =     $(PREFIX)/bin
-
-# where maintenance commands are installed: pac, checkpc, setstatus
-INSTALL_MAINT =   $(PREFIX)/bin
 
 # the compiler optimisation/debugging flags you wish to use.
 # These are in addition to the CCFLAGS and LDFLAGS
@@ -289,7 +290,7 @@ lp:
 ###########################################################################
 # 
 NORM_PERMS=      0755
-SUID_ROOT_PERMS= 04755 -oroot
+SUID_ROOT_PERMS= 04755 -o root
 PERMS=$(NORM_PERMS)
 #PERMS=$(SUID_ROOT_PERMS)
 ###########################################################################

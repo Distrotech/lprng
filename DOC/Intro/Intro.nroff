@@ -8,7 +8,7 @@
 .\" ***************************************************************************
 .\" * MODULE: README
 .\" * PURPOSE: Overview of Software
-.\" * $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.\" * $Id: Intro.nroff,v 3.7 1997/02/19 23:16:46 papowell Exp papowell $
 .\" **************************************************************************/
 .\"
 .\"Uses the NROFF tmac.usenix macros
@@ -1009,7 +1009,7 @@ and
 a greatly improved permission and authorization mechanism.
 .br
 .EA                     \" end abstract, start paper
-.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.7 1997/02/19 23:16:46 papowell Exp papowell $
 .SH                     \" (.NH maps to .SH)
 Introduction
 .PP
@@ -1357,7 +1357,7 @@ filter processes which interface to the printer hardware.
 The data files are passed through the filters to the
 actual printer.
 .if \nt=0 .so Intro.f2
-.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.7 1997/02/19 23:16:46 papowell Exp papowell $
 .SH
 Configuration Information
 .PP
@@ -1516,7 +1516,7 @@ it is possible to use the
 .T include
 facility to read additional configuration files.
 This facility may be removed in later releases of the LPRng software.
-.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.7 1997/02/19 23:16:46 papowell Exp papowell $
 .SH
 Printcap Information
 .PP
@@ -1552,16 +1552,16 @@ p2
 # remote printer alternative
 p3:rp=p3:rm=host
 # connect to port 2000
-p4:2000%host
+p4:lp=host%2000
 # all entry (lpq -a)
 all:all=p1,p2,p3
 .DE
 .FG "Figure 3a" "Client Printcap Examples
 .F2
 .PP
-A printcap entry consists of a primary name
-followed by an optional set of aliases,
-followed by an optional set of variable tag names and values.
+A printcap entry consists of a primary name,
+an optional set of aliases,
+and a set of variable tag names and values.
 The primary name is the name by which the printer is referred to in
 error messages and status information.
 The
@@ -1772,7 +1772,7 @@ HESIOD,
 DBII,
 Sybase,
 and other databases can be supported in the same manner.
-.\" $Id: Intro.nroff,v 3.5 1997/01/27 20:04:57 papowell Exp $
+.\" $Id: Intro.nroff,v 3.7 1997/02/19 23:16:46 papowell Exp papowell $
 .PP
 The actual printcap expansion algorithm is as follows.
 The list of printcap files specified by the configuration database
@@ -2759,7 +2759,7 @@ suppresses the key flag.
 \f(CW$-'\fIkey\fR expands to \f(CWX\fP
 .in -5n
 .fi
-.lp
+.LP
 The
 .T $c
 key should be used only for printing filters.
@@ -2800,7 +2800,7 @@ Upper Case Character
 	control file	Corresponding control file field
 .in -5n
 .fi
-.lp
+.LP
 If there is no corresponding value for any of these keys,
 the result is a null (empty) string.
 The substitution formats allow the user to
@@ -2818,19 +2818,111 @@ compatible with most
 .I vintage
 printer filters.
 .PP
-In addition to the command line options
-filters have the
-.T PRINTCAP, 
-.T CONTROL_FILE ,
+The environment variables for filters are highly restricted,
+due to the possibility for abuse by users.
+The following variables are set:
+.IP "USER and LOGNAME" 5
+user name or daemon name.
+.IP "LOGDIR" 5
+home directory of user or daemon.
+.IP PATH 5
+from the
+.I filter_path
+configuration variable.
+.IP LD_LIBRARY_PATH 5
+from the
+.I filter_ld_path
+configuration variable.
+.IP SHELL 5
+set to
+.I /bin/sh
+.IP IFS 5
+set to blank and tab.
+.IP TZ 5
+the TZ environment variable.
+.IP SPOOL_DIR 5
+the spool directory for the printer
+.IP CONTROL_DIR 5
+the control directory for the printer
+.IP PRINTCAP 5
+the printcap entry for the printer
+.IP CONTROL 5
+the control file for the print job
+.IP "pass_env environment variables" 5
+Values of environment variables listed in the pass_env configuration variable.
+.SH ACCOUNTING
+.PP
+The LPRng software provides several methods of performing accounting.
+The printcap
+af
+(accounting field),
+as and ae (accounting start and end),
 and
-.T DATA_FILE
-environment variables set to the
-printcap information,
-control file contents,
-and data file name being printed.
-This allows filters to use information in the
-control file or printcap entries with a minimum
-amount of effort.
+achk (accounting check)
+provide a basic set of facilities.
+The
+af field specifies a file,
+filter,
+or TCP network connection to an accounting server.
+If af has the form
+.ft CW
+|filter
+.ft R
+or
+.ft CW
+|-$ filter
+.ft R
+then a filter will be started and all accounting information will
+be sent to the filter.
+The first form passes the filter the command line options specified by the
+filter_options configuration variable and the second suppresses option passing.
+If af has the form
+.ft CW
+host%port
+.ft R
+then a TCP connection will be opened to the port on the specified host
+and accounting information sent there.
+All other forms will be treated as a pathname relative to the
+queue spool directory.
+.PP
+When af specifies a filter or network connection and the
+achk flag is set,
+then after writting the initial accounting information (see as printcap field below)
+the server will wait for a reply of the form
+ACCEPT from the filter or server.
+If not received,
+the job will not be printed.
+.PP
+The as (accounting start) and ae (accounting end) fields can specify
+a string to be printed or a filter.
+Options in the string will be expanded as for filters,
+and the strings printed to either the accounting information destination.
+If the as field specifies a filter,
+then the print server will wait for the filter to exit
+before printing the job.
+If the exit status is 0 (successful),
+the job will be printed.
+A non-zero JREMOVE status will remove the job,
+while any other status will terminate queue printing operations.
+After printing the job,
+the ae filter will be started and the server will wait for it to complete
+before printing the next job.
+.PP
+The as and ae filters will have STDOUT set to the printing device and or filter,
+and the STDERR set to the error log file for the print queue,
+and fild descriptor 3 set to the destination specified by the
+af field.
+.PP
+As a convenience, all format filters for printing will be
+started with file descriptor 3 set to the destination
+(file or filter)
+specified by the printcap af field.
+This allows special filters which can query devices for
+page counts to pass their information directly to an accounting
+program.
+The descriptor will READ/WRITE,
+allowing filters to query the accounting program and/or update
+the information directly.
 .PP
 By convention filters read input from
 .T stdin ,

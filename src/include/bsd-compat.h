@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: bsd-compat.h
  * PURPOSE: bsd-compat.c functions
- * $Id: bsd-compat.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * $Id: bsd-compat.h,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _BSD_COMPAT_H
@@ -43,6 +43,7 @@ char *safexstrdup (const char *p, int extra );
 int safestrcmp( const char *s1, const char *s2 );
 /* usleep using select() */
 int plp_usleep( int t );
+int plp_sleep( int t );
 int Get_max_servers( void );
 
 #endif

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getprinter.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: getprinter.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "getprinter.h"
@@ -49,8 +49,7 @@ void Get_printer( struct printcap_entry **pcv )
 	if( Printer == 0 ){
 		Printer = getenv( "PRINTER" );
 		/* Sigh... some folks want one for Solaris, one for LPRng... ok */
-		s = getenv( "NGPRINTER" );
-		if( s ) Printer = s;
+		if( (s = getenv( "NGPRINTER" )) ) Printer = s;
 	}
 
 	/* see if there is something in the printcap file */
@@ -67,9 +66,11 @@ void Get_printer( struct printcap_entry **pcv )
 
 	/* now we try getting the printcap entry */
 	Queue_name = safestrdup( Printer );
-	s = Get_printer_vars( Printer, &pc );
-	if( s ) Printer = s;
-	Fix_remote_name( 0 );
+	if( (s = Get_printer_vars( Printer, &pc )) ){
+		Printer = s;
+		Expand_value( Pc_var_list, &Raw_printcap_files );
+	}
+	Fix_remote_name();
 
 	if(DEBUGL1)dump_parms("Get_printer",Pc_var_list);
 	if( pcv ) *pcv = pc;
@@ -80,7 +81,7 @@ void Get_printer( struct printcap_entry **pcv )
  *  - check the printer name for printer@remote and fix it up
  *    set RemoteHost and RemotePrinter
  ***************************************************************************/
-void Fix_remote_name( int cyclecheck )
+void Fix_remote_name( void )
 {
 	static char *sdup;
 	static char *pdup;
@@ -108,30 +109,28 @@ void Fix_remote_name( int cyclecheck )
 		*s++ = 0;
 		Printer = Queue_name;
 		Lp_device = pdup;
-		Check_remotehost( cyclecheck );
 	} else if( (s = strchr( Printer, '@' ))  ){
 		Lp_device = pdup;
-		Check_remotehost( cyclecheck );
-	} else {
-		s = Get_printer_vars( Printer, (void *)0 );
-		if( s ){
-			Printer = s;
-			Check_remotehost( cyclecheck );
-		}
+	} else if( (s = Get_printer_vars( Printer, (void *)0 )) ){
+		Printer = s;
+		Expand_value( Pc_var_list, &Raw_printcap_files );
 	}
 
-	if( RemotePrinter && (RemoteHost == 0 || *RemoteHost == 0) ){
+	/* extract the RemoteHost if in the Lp_device */
+	if( Lp_device && strchr( Lp_device, '@' ) ){
+		Check_remotehost();
+	}
+
+	if( RemotePrinter == 0 ){
+		RemotePrinter = Printer;
+	}
+	if( RemoteHost == 0 || *RemoteHost == 0 ){
 		RemoteHost = 0;
 		if( Default_remote_host && *Default_remote_host ){
 			RemoteHost = Default_remote_host;
 		} else if( FQDNHost && *FQDNHost ){
 			RemoteHost = FQDNHost;
 		}
-	}
-
-	if( RemoteHost && strlen(RemoteHost) > 64 ){
-		fatal( LOG_ERR, "Fix_remote_name: RemoteHost too long '%s'",
-			RemoteHost );
 	}
 
 	DEBUG0(

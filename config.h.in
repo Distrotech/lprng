@@ -7,14 +7,30 @@
 #undef _ALL_SOURCE
 #endif
 
+/* Define if using alloca.c.  */
+#undef C_ALLOCA
+
 /* Define to empty if the keyword does not work.  */
 #undef const
+
+/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
+   This function is required for alloca.c support on those systems.  */
+#undef CRAY_STACKSEG_END
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef gid_t
 
+/* Define if you have alloca, as a function or macro.  */
+#undef HAVE_ALLOCA
+
+/* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
+#undef HAVE_ALLOCA_H
+
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
+
+/* Define if you have a working `mmap' system call.  */
+#undef HAVE_MMAP
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
@@ -53,6 +69,15 @@
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 #undef size_t
 
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+ STACK_DIRECTION > 0 => grows toward higher addresses
+ STACK_DIRECTION < 0 => grows toward lower addresses
+ STACK_DIRECTION = 0 => direction of growth unknown
+ */
+#undef STACK_DIRECTION
+
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
@@ -78,15 +103,33 @@
 /* Define if using ARCHITECTURE  */
 #undef ARCHITECTURE
 
+/* Define if using alloca.c.  */
+#undef C_ALLOCA
+
 /* Define to empty if the keyword does not work.  */
 #undef const
+
+/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
+   This function is required for alloca.c support on those systems.  */
+#undef CRAY_STACKSEG_END
+
+/* Define to 1 if NLS is requested.  */
+#undef ENABLE_NLS
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef gid_t
 
- 
+/* Define if you have alloca, as a function or macro.  */
+#undef HAVE_ALLOCA
+
+/* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
+#undef HAVE_ALLOCA_H
+
 /* Define if you have a broken TIOCEXCL (IRIX 5) */
 #undef HAVE_BROKEN_TIOCEXCL
+
+/* Define as 1 if you have catgets and don't want to use GNU gettext.  */
+#undef HAVE_CATGETS
 
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
@@ -100,8 +143,17 @@
 /* Define if you have to use getpgrp(0) to get process group */
 #undef HAVE_GETPGRP_0
 
+/* Define as 1 if you have gettext and don't want to use GNU gettext.  */
+#undef HAVE_GETTEXT
+
 /* Define if you have innetgr() defined in include file */
 #undef HAVE_INNETGR_DEF
+
+/* Define if your locale.h file contains LC_MESSAGES.  */
+#undef HAVE_LC_MESSAGES
+
+/* Define if you have a working `mmap' system call.  */
+#undef HAVE_MMAP
 
 /* Define if you have a openlog prototype.  */
 #undef HAVE_OPENLOG_DEF
@@ -111,6 +163,9 @@
 
 /* Define if you do have setproctitle() defined */
 #undef HAVE_SETPROCTITLE_DEF
+
+/* Define to 1 if stpcpy function is available.  */
+#undef HAVE_STPCPY
 
 /* Define if we have a BSD-ish struct exec in <a.out.h> */
 #undef HAVE_STRUCT_EXEC
@@ -130,14 +185,8 @@
 /* Define if sys_siglist has the signal strings. */
 #undef HAVE_SYS_SIGLIST
 
-/* Define if _sys_siglist has the signal strings. */
-#undef HAVE__SYS_SIGLIST
-
 /* Define if sys_siglist is defined in unistd.h include file */
 #undef HAVE_SYS_SIGLIST_DEF
-
-/* Define if sys_siglist has the signal strings. */
-#undef HAVE__SYS_SIGLIST_DEF
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
@@ -169,6 +218,9 @@
 /* Define as __inline if that's what the C compiler calls it.  */
 #undef inline
 
+/* IRIX */
+#undef IRIX
+
 /* Define if on MINIX.  */
 #undef _MINIX
 
@@ -177,6 +229,9 @@
 
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
+
+/* Define to the name of the distribution.  */
+#undef PACKAGE
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef pid_t
@@ -196,6 +251,15 @@
 
 /* Define on SUN Solaris */
 #undef SOLARIS
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+ STACK_DIRECTION > 0 => grows toward higher addresses
+ STACK_DIRECTION < 0 => grows toward lower addresses
+ STACK_DIRECTION = 0 => direction of growth unknown
+ */
+#undef STACK_DIRECTION
 
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
@@ -230,17 +294,35 @@
 /* Define if we are to use the termios structure and TCGETS. */
 #undef USE_TERMIOS
 
+/* Define to the version of the distribution.  */
+#undef VERSION
+
 /* Define vfork as fork if vfork does not work.  */
 #undef vfork
 
+/* Define if you have the __argz_count function.  */
+#undef HAVE___ARGZ_COUNT
+
+/* Define if you have the __argz_next function.  */
+#undef HAVE___ARGZ_NEXT
+
+/* Define if you have the __argz_stringify function.  */
+#undef HAVE___ARGZ_STRINGIFY
+
 /* Define if you have the cfsetispeed function.  */
 #undef HAVE_CFSETISPEED
+
+/* Define if you have the dcgettext function.  */
+#undef HAVE_DCGETTEXT
 
 /* Define if you have the fcntl function.  */
 #undef HAVE_FCNTL
 
 /* Define if you have the flock function.  */
 #undef HAVE_FLOCK
+
+/* Define if you have the getcwd function.  */
+#undef HAVE_GETCWD
 
 /* Define if you have the getdtablesize function.  */
 #undef HAVE_GETDTABLESIZE
@@ -250,6 +332,9 @@
 
 /* Define if you have the gethostname function.  */
 #undef HAVE_GETHOSTNAME
+
+/* Define if you have the getpagesize function.  */
+#undef HAVE_GETPAGESIZE
 
 /* Define if you have the getrlimit function.  */
 #undef HAVE_GETRLIMIT
@@ -278,11 +363,23 @@
 /* Define if you have the mktemp function.  */
 #undef HAVE_MKTEMP
 
+/* Define if you have the munmap function.  */
+#undef HAVE_MUNMAP
+
 /* Define if you have the openlog function.  */
 #undef HAVE_OPENLOG
 
+/* Define if you have the putenv function.  */
+#undef HAVE_PUTENV
+
+/* Define if you have the setenv function.  */
+#undef HAVE_SETENV
+
 /* Define if you have the seteuid function.  */
 #undef HAVE_SETEUID
+
+/* Define if you have the setlocale function.  */
+#undef HAVE_SETLOCALE
 
 /* Define if you have the setpgid function.  */
 #undef HAVE_SETPGID
@@ -310,6 +407,9 @@
 
 /* Define if you have the socketpair function.  */
 #undef HAVE_SOCKETPAIR
+
+/* Define if you have the stpcpy function.  */
+#undef HAVE_STPCPY
 
 /* Define if you have the strcasecmp function.  */
 #undef HAVE_STRCASECMP
@@ -355,6 +455,9 @@
 
 /* Define if you have the <ar.h> header file.  */
 #undef HAVE_AR_H
+
+/* Define if you have the <argz.h> header file.  */
+#undef HAVE_ARGZ_H
 
 /* Define if you have the <arpa/inet.h> header file.  */
 #undef HAVE_ARPA_INET_H
@@ -413,6 +516,9 @@
 /* Define if you have the <memory.h> header file.  */
 #undef HAVE_MEMORY_H
 
+/* Define if you have the <ncurses.h> header file.  */
+#undef HAVE_NCURSES_H
+
 /* Define if you have the <ndir.h> header file.  */
 #undef HAVE_NDIR_H
 
@@ -421,6 +527,9 @@
 
 /* Define if you have the <netinet/in.h> header file.  */
 #undef HAVE_NETINET_IN_H
+
+/* Define if you have the <nl_types.h> header file.  */
+#undef HAVE_NL_TYPES_H
 
 /* Define if you have the <nlist.h> header file.  */
 #undef HAVE_NLIST_H
@@ -569,8 +678,14 @@
 /* Define if you have the <utsname.h> header file.  */
 #undef HAVE_UTSNAME_H
 
+/* Define if you have the <values.h> header file.  */
+#undef HAVE_VALUES_H
+
 /* Define if you have the <varargs.h> header file.  */
 #undef HAVE_VARARGS_H
 
 /* Define if you have the <vmparam.h> header file.  */
 #undef HAVE_VMPARAM_H
+
+/* Define if you have the i library (-li).  */
+#undef HAVE_LIBI

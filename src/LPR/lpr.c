@@ -219,7 +219,7 @@ certainly will get a duplicate.
 */
 
 static char *const _id =
-"$Id: lpr.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpr.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "dump.h"
@@ -267,8 +267,6 @@ int main(int argc, char *argv[], char *envp[])
 	Initialize();
 
 	/* set signal handlers */
-	(void) plp_signal (SIGPIPE, SIG_IGN);
-	(void) plp_signal (SIGCHLD, SIG_IGN);
 	(void) plp_signal (SIGHUP, cleanup);
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
@@ -291,28 +289,13 @@ int main(int argc, char *argv[], char *envp[])
 	if(DEBUGL4 ) dump_parms("LPR Vars after checking parms",Lpr_parms);
 
 	/*
-	 * copy from standard in?
-	 */
-	if (Filecount == 0) {
-		job_size = Copy_stdin( Cfp_static );
-	} else {
-		/*
-		 * check to see that the input files are printable
-		 */
-		job_size = Check_files( Cfp_static, Files, Filecount );
-	}
-	if( job_size == 0 ){
-		Errorcode = 1;
-		Diemsg ("nothing to print");
-	}
-
-	/* print the jobs in the file */
-	if(DEBUGL4 ) dump_control_file( "LPR files", Cfp_static );
-
-	/*
 	 * Fix the rest of the control File
 	 */
-	Make_job( Cfp_static );
+	job_size = Make_job( Cfp_static );
+	if( job_size == 0 ){
+		Errorcode = 1;
+		Diemsg (_("nothing to print"));
+	}
 
 	/* Send job to the LPD server for the printer */
 
@@ -330,7 +313,7 @@ int main(int argc, char *argv[], char *envp[])
 		To_user();
 		for( i = 0; i < Filecount; ++i ){
 			if( unlink( Files[i] ) == -1 ){
-				Warnmsg("Error unlinking '%s' - %s",
+				Warnmsg(_("Error unlinking '%s' - %s"),
 					Files[i], Errormsg( errno ) );
 
 			}

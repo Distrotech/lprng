@@ -1,4 +1,4 @@
-.ds VE LPRng-3.1.2
+.ds VE LPRng-3.2.1
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -71,6 +71,23 @@ then the entry may be referenced using the
 .I tc
 capability, but is ignored otherwise.
 This allows common printcap information to be placed in a single entry.
+.LP
+The special printcap entry
+.I oh
+(i.e. - only this host) may be used to select a printcap entry for
+use by one or more hosts.
+The oh entry can be a list of one or more host names or glob type of
+patterns.
+These patterns are first applied to the host's fully qualified domain name,
+and then used to to a lookup of an IP address.
+If either the glob match or the host has a matching IP address then the
+printcap entry is selected for use.
+In addition,
+the
+.I server
+flag indicates that only the LPD server is to use this printcap entry.
+This allows client and server printcap information be to be segragated
+in a simple manner.
 .LP
 The following is a list of the keywords currently used by the LPRng software.
 Many of these keywords are used only by the
@@ -170,6 +187,10 @@ ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
 fo	D	bool	false	print a form feed when device is opened
 fq	D	bool	false	print a form feed when device is closed
 fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
+force_queuename	A	str	NULL
+				When :qq: flag or use_queuename configuration is enabled,
+				specifies the queuename to be used for control file Q
+				information.
 forward_auth	D	str	NULL
 				server to server authentication type
 fx	A	str	``flp''	valid output filter formats
@@ -192,7 +213,8 @@ lp	D	str	NULL	device name or pipe to send output to
 lpr_bounce	R	bool	false
 				LPR will do bounce queue filtering.
 mc	R	num	1	maximum copies allowed
-mi	D	num	0	minimum space (Kb) to be left in spool filesystem
+mi	D	str	0	minimum space (Kb), to be left in spool filesystem
+				You can also use nnnM for nnn megabytes.
 ml	R	num	32	minimum printable characters for printable check
 mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
 nb	D	num	0	if non-zero, do a nonblocking open on lp device
@@ -203,7 +225,9 @@ of	D	str	NULL	output filter, run once for all output
 				(used for banner printing, form feeds between files)
 oh	A	str	NULL	Specific printcap entry for host;
 				(printcap entry ignored unless IP address of host and
-				entry value match.  Value can be a list of hosts)
+				entry value match.  Entry is used first to do glob
+				style match against the host's fully qualified domain name,
+				and then interpreted as a general IP address)
 pl	D	num	66	page length (in lines)
 pr	D	str	``/bin/pr''	pr program for p format
 ps	A	str	''status''	printer status file name
@@ -250,6 +274,7 @@ send_timeout	D	num	6000
 				printer or remote host (0 is infinite timeout)
 send_try		alias for rt - numbers of times to try sending
 				or printing a job. 0 is infinite.
+server	A	bool	false	printcap entry for server only
 server_auth_command	A	str	NULL
 				authentication command for server program
 sf	D	bool	false	suppress form feeds separating jobs
@@ -356,7 +381,8 @@ lf	D	str	``log''	error and debugging log file (LPD)
 longnumber	D	bool	false
 				use 6 digit job numbers
 mc	R	num	1	maximum copies allowed
-mi	D	num	0	minimum space (Kb) to be left in spool filesystem
+mi	D	str	0	minimum space (Kb) to be left in spool filesystem
+				You can also use nnnM for nnn megabytes.
 ml	R	num	32	minimum printable characters for printable check
 mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
 ps	A	str	''status''	printer status file name
@@ -427,11 +453,14 @@ forward_auth	D	str	NULL
 				server to server authentication type, e.g. pgp, kerberos
 use_auth	D	str	NULL
 				client to server authentication type, e.g. pgp, kerberos
-oh	D	str	NULL	Specific printcap entry for host.
+oh	D	str	NULL	Specific printcap entry for host. See above.
+server	A	bool	false	printcap entry for server only
 server_auth_command	D	str	NULL
 				authentication command for server to use.
 tc	A	str	NULL	reference to a printcap entry to include as part of
 				the current entry.
+force_queuename	A	str	NULL
+				See above.
 user_auth_command	R	str	NULL
 				authentication command for user (client program)
 logger_destination	D	str	NULL

@@ -28,7 +28,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc.c,v 3.4 1997/01/25 17:54:49 papowell Exp $";
+"$Id: checkpc.c,v 3.6 1997/03/24 00:45:58 papowell Exp papowell $";
 
 char checkpc_optstr[] = "ac:flp:rst:A:CD:PT:V";
 
@@ -78,13 +78,12 @@ int main( int argc, char *argv[] )
 
 	Initialize();
 
-	To_root();
 	umask( 0 );
 	/* set up the uid state */
 	ruid = getuid();
 	euid = geteuid();
-	if( euid != 0 ){
-		Warnmsg("Not running as root - you may not be able to check permissions");
+	if( ruid != 0 ){
+		Warnmsg("RUID not root - you may not be able to check permissions");
 	}
 
     /* scan the argument list for a 'Debug' value */
@@ -123,6 +122,8 @@ int main( int argc, char *argv[] )
 	if( Test ){
 		Test_port( ruid, euid, serial_line );
 	}
+
+	To_root();
 
 	if( Verbose ){
 		logDebug( "LPRng version " PATCHLEVEL );
@@ -250,7 +251,7 @@ void Scan_printer( char *name, char *error, int errorlen )
 	if(DEBUGL0 ){
 		logDebug( "Printcap variable values for '%s'", Printer );
 		dump_parms( 0, Pc_var_list );
-		s = Linearize_pc_list( pc_entry, "PRINTCAP=" );
+		s = Linearize_pc_list( pc_entry, "PRINTCAP_ENTRY=" );
 		logDebug( "Linearized List %s", s );
 	}
 

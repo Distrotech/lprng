@@ -1,0 +1,52 @@
+From majordomo-owner@iona.com Fri Feb  7 10:56:03 1997
+Received: from dublin.iona.ie (root@operation.dublin.iona.ie [192.122.221.5]) by dickory.sdsu.edu (8.8.3/8.8.2) with ESMTP id KAA17778 for <papowell@dickory.SDSU.Edu>; Fri, 7 Feb 1997 10:55:56 -0800 (PST)
+Received: (majordom@localhost) by dublin.iona.ie (8.7.5/jm-1.01) id IAA17240 for plp-outgoing; Fri, 7 Feb 1997 08:49:05 GMT
+Received: from Campino.Informatik.RWTH-Aachen.DE (campino.Informatik.RWTH-Aachen.DE [137.226.116.240]) by dublin.iona.ie (8.7.5/jm-1.01) with ESMTP id IAA17235 for <lprng@iona.com>; Fri, 7 Feb 1997 08:49:01 GMT
+Received: from igpm.rwth-aachen.de (numa1.igpm.RWTH-Aachen.DE [134.130.161.64]) by Campino.Informatik.RWTH-Aachen.DE (RBI-Z-5/8.6.12)
+	with SMTP id JAA00299; Fri, 7 Feb 1997 09:55:30 +0100 (MET)
+Received: (from jarausch@localhost) by igpm.rwth-aachen.de (950413.SGI.8.6.12/950213.SGI.AUTOCF) id JAA20842; Fri, 7 Feb 1997 09:55:14 +0100
+Date: Fri, 7 Feb 1997 09:55:14 +0100
+From: jarausch@igpm.rwth-aachen.de (Helmut Jarausch)
+Subject: Re: Using gs (ghostscript) as a filter? 
+To: lprng@iona.com
+Cc: Rick Gaine <rgaine@nbcs.rutgers.edu>
+Message-Id: <jarausch-970207095514.A1E1137@numa1>
+X-Mailer: TkMail 4.0beta8
+In-Reply-To: <Pine.GSO.3.94.970206154649.1651A-100000@toolbox.rutgers.edu> 
+Sender: majordomo-owner@iona.com
+Precedence: bulk
+Reply-To: lprng@iona.com
+Status: RO
+
+>> 
+>> Hello All:
+>> 
+>> I would like to use LPRng 3.1.4 with an HP LaserJet 4P.  I'd like to be
+>> able to use gs to convert PostScript files so that I can print them on my
+>> HP 4P.  Can I do this with LPRng?  If so, could someone semd me a printcap
+>> entry?  I'd appreciate it.  I am not sure how I will be cconnecting the
+>> printer yet, but I am thinking either serial or network.  Probally serial
+>> though.  Thanks for any help.
+
+This works for my Deskjet
+
+djps
+        :cm=Local Deskjet(Ghostscript)
+        :sd=/var/spool/djps:sf:sh:mx#0
+        :lp=/dev/plp
+        :if=/usr/LOCAL/bin/LPRng/ps_to_deskjet:
+
+
+and this is the script /usr/LOCAL/bin/LPRng/ps_to_deskjet
+
+#!/bin/sh
+nice -19 /usr/LOCAL/bin/gs -sDEVICE=cdj550 -sPAPERSIZE=a4 -sOutputFile=- -q -r300 - 
+
+
+
+--
+Helmut Jarausch
+Lehrstuhl f. Numerische Mathematik
+Institute of Technology
+RWTH Aachen
+D 52056 Aachen, Germany

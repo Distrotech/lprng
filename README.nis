@@ -2,18 +2,18 @@ Patrick Powell Mon Aug 28 15:06:57 PDT 1995
 
 How to set up NIS for LPRng use
 
-This note is based on material sent to the plp@iona.ie mailing list by 
+This note is based on material sent to the lprng@iona.ie mailing list by 
 Paul Haldane <paul@ucs.ed.ac.uk>.  I have edited this information
 and added the necessary comments in the script.  Note that the
 [  ] entries are actuall [<space><tab>] that some mailers will
 neatly remove;  you will have to edit them back in.
 
  # From: Paul Haldane <paul@ucs.ed.ac.uk>
- # To: plp@iona.ie
+ # To: lprng@iona.ie
  # Subject: Re: Problem using plp with NIS
  # Sender: majordomo-owner@iona.ie
  # Precedence: bulk
- # Reply-To: plp@iona.ie
+ # Reply-To: lprng@iona.ie
  # Status: RO
  # 
  # 
@@ -92,7 +92,7 @@ ypmatch "$key" printcap.byname
 
  Date: Wed, 11 Sep 1996 00:11:02 +0200
  From: Sven Rudolph <sr1@os.inf.tu-dresden.de>
- To: plp@iona.ie
+ To: lprng@iona.ie
  Subject: Using :oh=server: with NIS
 
  When I use the oh feature in a cluster-wide printcap two entries for

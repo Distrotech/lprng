@@ -10,7 +10,7 @@
  * PURPOSE: perform system dependent initialization
  **************************************************************************/
 
-static char *const _id = "$Id: initialize.c,v 3.4 1997/01/24 20:27:06 papowell Exp $";
+static char *const _id = "$Id: initialize.c,v 3.7 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -52,6 +52,7 @@ void Initialize( void )
 		Init_done = 1;
 		/* set the umask so that you create safe files */
 		umask( 0177 );
+		(void)signal( SIGPIPE, SIG_IGN );
 #ifdef IS_AUX
 		/********************************************
 		 * Apparently this needs to be done for AUX
@@ -60,13 +61,21 @@ void Initialize( void )
 		setcompat (COMPAT_BSDPROT);
 		set42sig();
 #endif
-		
+
 		/* set suid information */
 		To_user();
 
-#if defined(HAVE_LOCALE_H)
+#if HAVE_LOCALE_H
 		setlocale(LC_CTYPE, "");
 #endif
+#if ENABLE_NLS
+#if HAVE_LOCALE_H
+		setlocale(LC_MESSAGES, "");
+#endif
+		bindtextdomain (PACKAGE, LOCALEDIR);
+		textdomain (PACKAGE);
+#endif
+
 		/* prepare to catch dead children */
 		Setup_waitpid();
 
@@ -122,7 +131,7 @@ void Setup_configuration()
 
     DEBUG0("Setup_configuration: Configuration file '%s'", config_file );
 
-	/* 
+	/*
 	 * Testing magic:
 	 * if we are running SUID
 	 *   We have set our RUID to root and EUID daemon
@@ -134,6 +143,7 @@ void Setup_configuration()
 	 * Daemon UID == 0, then we run as the user which started LPD.
 	 */
 
+    Get_local_host();
 	if( config_file ) Get_config( config_file );
 
 	/* we now know if we are using IPV4 or IPV6 from configuration */
@@ -148,10 +158,12 @@ void Setup_configuration()
 	}
 #endif
 
-	Reset_daemonuid();
-	DEBUG0( "DaemonUID %d", DaemonUID );
 	if( Is_server ){
-		Setdaemon_group();
+		Reset_daemonuid();
+		DEBUG0( "DaemonUID %d", DaemonUID );
+		if( Is_server ){
+			Setdaemon_group();
+		}
 	}
 
 	/* get the fully qualified domain name of host and the
@@ -162,7 +174,6 @@ void Setup_configuration()
 		NOTE: on PCs this will be the IP address
 	*/
 
-    Get_local_host();
 	Logname = Get_user_information();
 	if( Localhost ==0 || *Localhost == 0
 		|| Find_fqdn( &LocalhostIP, Localhost, 0 ) == 0 ){

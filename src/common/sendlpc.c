@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpc.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+"$Id: sendlpc.c,v 3.4 1997/02/19 23:16:46 papowell Exp papowell $";
 
 #include "lp.h"
 #include "sendlpc.h"
@@ -73,16 +73,13 @@ void Send_lpcrequest(
 		return;
 	}
 
-	if( argc > 1 && action != LPD && action != REREAD && action != PRINTCAP ){
+	Queue_name = 0;
+	if( argc > 1 && action != LPD && action != REREAD ){
 		/* second argument is the printer */
 		Printer = options[1];
-		RemoteHost = 0;
-		RemotePrinter = 0;
 		/* Find the remote printer and host name */
-		Fix_remote_name(0);
-		if( RemotePrinter ){
-			options[1] = RemotePrinter;
-		}
+		Get_printer(0);
+		if((s = strchr( options[1], '@' ))) *s = 0;
 	}
 
 	if( RemoteHost == 0 || *RemoteHost == 0 ){

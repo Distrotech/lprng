@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_status.c,v 3.7 1997/01/27 22:28:04 papowell Exp $";
+"$Id: lpd_status.c,v 3.14 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -31,6 +31,7 @@ static char *const _id =
 #include "setup_filter.h"
 #include "setupprinter.h"
 #include "utilities.h"
+#include "checkremote.h"
 
 /**** ENDINCLUDE ****/
 
@@ -110,7 +111,7 @@ int Job_status( int *socket, char *input, int maxlen )
 
 	if( tokencount == 0 ){
 		plp_snprintf( error, sizeof(error),
-			"missing printer name");
+			_("missing printer name"));
 		goto error;
 	}
 
@@ -123,7 +124,7 @@ int Job_status( int *socket, char *input, int maxlen )
 	
 	if( (s = Clean_name( name )) ){
 		plp_snprintf( error, sizeof(error),
-			"printer '%s' has illegal char '%c' in name", name, *s );
+			_("printer '%s' has illegal char '%c' in name"), name, *s );
 		goto error;
 	}
 
@@ -135,7 +136,7 @@ int Job_status( int *socket, char *input, int maxlen )
 			Cfp_static )) == REJECT
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		plp_snprintf( error, sizeof(error),
-			"%s: no permission to show status", Printer );
+			_("%s: no permission to show status"), Printer );
 		goto error;
 	}
 
@@ -151,7 +152,7 @@ int Job_status( int *socket, char *input, int maxlen )
 		if( All_list.count ){
 			char **line_list;
 			struct printcap_entry *entry;
-			DEBUG4("Job_status: using the All_list" );
+			DEBUG3("Job_status: using the All_list" );
 			line_list = All_list.list;
 			for( i = 0; i < All_list.count; ++i ){
 				char orig_name[LINEBUFFER];
@@ -171,13 +172,13 @@ int Job_status( int *socket, char *input, int maxlen )
 			}
 		} else if( Expanded_printcap_entries.count > 0 ){
 			struct printcap_entry *entries, *entry;
-			DEBUG4("checkpc: using the printcap list" );
+			DEBUG3("checkpc: using the printcap list" );
 			entries = (void *)Expanded_printcap_entries.list;
 			c = Expanded_printcap_entries.count;
 			for( i = 0; i < c; ++i ){
 				entry = &entries[i];
 				Printer = entry->names[0];
-				DEBUG4("Job_status: printcap entry [%d of %d] '%s'",
+				DEBUG3("Job_status: printcap entry [%d of %d] '%s'",
 					i, c,  Printer );
 				if( Printer == 0 || *Printer == 0 || ispunct( *Printer ) ){
 					continue;
@@ -192,7 +193,7 @@ int Job_status( int *socket, char *input, int maxlen )
 	return(0);
 
 error:
-	log( LOG_INFO, "Job_status: error '%s'", error );
+	log( LOG_INFO, _("Job_status: error '%s'"), error );
 	DEBUG2("Job_status: error msg '%s'", error );
 	i = strlen(error);
 	if( i >= sizeof(error) ){
@@ -273,7 +274,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 				&Perm_check, Cfp_static )) == REJECT)
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		plp_snprintf( error, sizeof(error),
-			"%s: no permission to list jobs", Printer );
+			_("%s: no permission to list jobs"), Printer );
 		goto error;
 	}
 
@@ -295,7 +296,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		Printer, ShortHost );
 	if( strcmp( orig_name, Printer ) ){
 		len = strlen(msg);
-		plp_snprintf( msg+len, sizeof(msg)-len, "(originally %s) ", orig_name );
+		plp_snprintf( msg+len, sizeof(msg)-len, _("(originally %s) "), orig_name );
 	}
 
 	if( status ){
@@ -308,20 +309,20 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		len = strlen( msg );
 		if( pr == 0 && host == 0 ){
 			if( displayformat == REQ_VERBOSE ){
-				safestrncat( msg, "\n Error: " );
+				safestrncat( msg, _("\n Error: ") );
 				len = strlen( msg );
 			}
 			plp_snprintf( msg+len, sizeof(msg)-len,
-				"lookup loop! remote printer is %s@%s", Printer, ShortHost );
+				_(" printer %s@%s not in printcap"), Printer, ShortHost );
 		} else {
 			if( host == 0 ) host = Default_remote_host;
 			if( pr == 0 ) pr = Printer;
 			if( displayformat == REQ_VERBOSE ){
 				plp_snprintf( msg+len, sizeof(msg)-len,
-					"\n Forwarding_only: %s@%s", pr, host );
+					_("\n Forwarding_only: %s@%s"), pr, host );
 			} else {
 				plp_snprintf( msg+len, sizeof(msg)-len,
-					" (forwarding to %s@%s)", pr, host );
+					_(" (forwarding to %s@%s)"), pr, host );
 			}
 		}
 		safestrncat( msg, "\n" );
@@ -332,21 +333,21 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 
 	/* get the spool entries */
 	Scan_queue( 1, 1 );
-	DEBUG4("Get_queue_status: total files %d", C_files_list.count );
+	DEBUG3("Get_queue_status: total files %d", C_files_list.count );
 	error[0] = 0;
 
 	DEBUG3("Get_queue_status: RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
 		RemoteHost, RemotePrinter, Lp_device );
-	if( RemoteHost ){
+	if( RemoteHost && RemotePrinter ){
 		len = strlen( msg );
 		if( displayformat == REQ_VERBOSE ){
 			plp_snprintf( msg+len, sizeof(msg)-len,
-				"\n %s: %s@%s\n",
+				"\n %s: %s@%s",
 					Forwarding?"Forwarding":"Destination",
-					RemotePrinter, RemoteHost );
+			RemotePrinter, RemoteHost );
 		} else {
 			plp_snprintf( msg+len, sizeof(msg)-len,
-				"(dest %s@%s)", RemotePrinter, RemoteHost );
+				_("(dest %s@%s)"), RemotePrinter, RemoteHost );
 		}
 	}
 
@@ -360,7 +361,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		if( s ){
 			len = strlen( msg );
 			if( displayformat == REQ_VERBOSE ){
-				plp_snprintf( msg+len, sizeof(msg) - len, "\n Comment: %s", s );
+				plp_snprintf( msg+len, sizeof(msg) - len, _("\n Comment: %s"), s );
 			} else {
 				plp_snprintf( msg+len, sizeof(msg) - len, " '%s'", s );
 			}
@@ -372,7 +373,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	len = strlen( msg );
 	if( displayformat == REQ_VERBOSE ){
 		plp_snprintf( msg+len, sizeof(msg) - len,
-			"\n Printing: %s\n Spooling: %s",
+			_("\n Printing: %s\n Spooling: %s"),
 				Printing_disabled?"no":"yes",
 				Spooling_disabled?"no":"yes");
 	} else {
@@ -388,15 +389,15 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		len = strlen( msg );
 		if( displayformat == REQ_VERBOSE ){
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				"\n Bounce_queue: %s", Bounce_queue_dest );
+				_("\n Bounce_queue: %s"), Bounce_queue_dest );
 			if( Routing_filter ){
 				len = strlen( msg );
 				plp_snprintf( msg+len, sizeof(msg) - len,
-					"\n Routing_filter: %s", Routing_filter );
+					_("\n Routing_filter: %s"), Routing_filter );
 			}
 		} else {
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				" (%sbounce to %s)",
+				_(" (%sbounce to %s)"),
 				Routing_filter?"routed/":"", Bounce_queue_dest );
 		}
 	}
@@ -409,7 +410,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 
 	if( Server_names ){
 		if( subserver ){
-			plp_snprintf( error, sizeof(error), "%s is already a subserver!",
+			plp_snprintf( error, sizeof(error), _("%s is already a subserver!"),
 				Printer );
 			goto error;
 		}
@@ -417,10 +418,10 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		len = strlen( msg );
 		if( displayformat == REQ_VERBOSE ){
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				"\n Subservers: " );
+				_("\n Subservers: ") );
 		} else {
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				" (subservers" );
+				_(" (subservers") );
 		}
 		server_info = (void *)servers.list;
 		for( i = 0; i < servers.count; ++i ){
@@ -436,10 +437,10 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		len = strlen( msg );
 		if( displayformat == REQ_VERBOSE ){
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				"\n Serving: %s", Server_queue_name );
+				_("\n Serving: %s"), Server_queue_name );
 		} else {
 			plp_snprintf( msg+len, sizeof(msg) - len,
-				" (serving %s)", Server_queue_name );
+				_(" (serving %s)"), Server_queue_name );
 		}
 	}
 
@@ -450,7 +451,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	/* this gives a short 1 line format with minimum info */
 	if( displayformat == REQ_DSHORT ){
 		len = strlen( msg );
-		plp_snprintf( msg+len, sizeof(msg) - len, " %d job%s\n",
+		plp_snprintf( msg+len, sizeof(msg) - len, _(" %d job%s\n"),
 			count, (count == 1)?"":"s" );
 	} else {
 		safestrncat( msg, "\n" );
@@ -467,9 +468,9 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		serverpid = Read_pid( fd, (char *)0, 0 );
 		close( fd );
 	}
-	DEBUG4("Get_queue_status: server pid %d", serverpid );
+	DEBUG3("Get_queue_status: server pid %d", serverpid );
 	if( serverpid > 0 && kill( serverpid, 0 ) ){
-		DEBUG4("Get_queue_status: server %d not active", serverpid );
+		DEBUG3("Get_queue_status: server %d not active", serverpid );
 		serverpid = 0;
 	} /**/
 
@@ -480,32 +481,32 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		close( fd );
 	}
 
-	DEBUG4("Get_queue_status: unspooler pid %d", unspoolerpid );
+	DEBUG3("Get_queue_status: unspooler pid %d", unspoolerpid );
 	if( unspoolerpid > 0 && kill( unspoolerpid, 0 ) ){
-		DEBUG4("Get_queue_status: unspooler %d not active", unspoolerpid );
+		DEBUG3("Get_queue_status: unspooler %d not active", unspoolerpid );
 		unspoolerpid = 0;
 	} /**/
 
 	if( count == 0 ){
-		safestrncpy( msg, " Queue: no printable jobs in queue\n" );
+		safestrncpy( msg, _(" Queue: no printable jobs in queue\n") );
 	} else {
 		/* check to see if there are files and no spooler */
-		plp_snprintf( msg, sizeof(msg), " Queue: %d printable job%s\n",
+		plp_snprintf( msg, sizeof(msg), _(" Queue: %d printable job%s\n"),
 			count, count > 1 ? "s" : "" );
 	}
 	if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 	if( hold_count ){
 		plp_snprintf( msg, sizeof(msg), 
-		"  Holding: %d held jobs in queue\n", hold_count );
+		_("  Holding: %d held jobs in queue\n"), hold_count );
 		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 	}
 
 	msg[0] = 0;
 	if( count && serverpid == 0 ){
-		safestrncpy(msg, " Server: no server active" );
+		safestrncpy(msg, _(" Server: no server active") );
 	} else if( serverpid ){
 		len = strlen(msg);
-		plp_snprintf( msg+len, sizeof(msg)-len, " Server: pid %d active",
+		plp_snprintf( msg+len, sizeof(msg)-len, _(" Server: pid %d active"),
 			serverpid );
 	}
 	if( unspoolerpid ){
@@ -513,7 +514,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 			safestrncat( msg, (displayformat == REQ_VERBOSE )?", ":"\n");
 		}
 		len = strlen(msg);
-		plp_snprintf( msg+len, sizeof(msg)-len, " Unspooler: pid %d active",
+		plp_snprintf( msg+len, sizeof(msg)-len, _(" Unspooler: pid %d active"),
 			unspoolerpid );
 	}
 	if( msg[0] ){
@@ -522,14 +523,14 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	}
 
 	if( Classes ){
-		plp_snprintf( msg, sizeof(msg), " Classes: %s\n", Classes );
+		plp_snprintf( msg, sizeof(msg), _(" Classes: %s\n"), Classes );
 		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 	}
 
 	/*
 	 * get the last status of the spooler
 	 */
-	DEBUG4("Get_queue_status: Max_status_size '%d'", Max_status_size );
+	DEBUG3("Get_queue_status: Max_status_size '%d'", Max_status_size );
 	if( Max_status_size <= 0 ) Max_status_size = 1;
 	len = Max_status_size*1024;
 	if( bsize < len ){
@@ -546,7 +547,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		} else {
 			path = Add_path( SDpathname, Status_file );
 		}
-		Print_status_info( socket, path, " Filter_status" );
+		Print_status_info( socket, path, _(" Filter_status") );
 	}
 
 	if( C_files_list.count > 0 ){
@@ -565,7 +566,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 		for( i = 0; i < C_files_list.count; ++i ){
 			cfp = cfpp[i];
 
-			DEBUG4("Get_queue_status: job name '%s' id '%s'",
+			DEBUG3("Get_queue_status: job name '%s' id '%s'",
 				cfp->original, cfp->identifier+1 );
 
 			/*
@@ -578,7 +579,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 				for( j = 0; select && j < tokencount; ++j ){
 					select = Patselect( &tokens[j], cfp, &destination );
 				}
-				DEBUG4("Get_queue_status: job name '%s' select '%d'",
+				DEBUG3("Get_queue_status: job name '%s' select '%d'",
 					select );
 				if( !select ) continue;
 			}
@@ -588,11 +589,19 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 			/* we report this jobs status */
 
 			number[0] = 0;
+			error[0] = 0;
 			if( cfp->error[0] ){
 				strcpy( number, "error" );
 				plp_snprintf( error, sizeof( error ),
 					"ERROR: %s", cfp->error );
 				nodest = 1;
+			} else if( cfp->statb.st_size == 0 ){
+				/* ignore zero length control files */
+				continue;
+			} else if( cfp->hold_info.receiver > 0
+				&& kill( cfp->hold_info.receiver, 0 ) == 0 ){
+				/* ignore jobs being transferred */
+				continue;
 			} else if( cfp->hold_info.hold_time ){
 				strcpy( number, "hold" );
 				nodest = 1;
@@ -609,7 +618,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 				strcpy( number, "active" );
 				nodest = -1;
 			} else if( cfp->hold_info.redirect[0] ){
-				plp_snprintf( number, sizeof(number), "redirect->%s",
+				plp_snprintf( number, sizeof(number), _("redirect->%s"),
 					cfp->hold_info.redirect );
 				nodest = 1;
 			} else {
@@ -619,15 +628,14 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 			++jobnumber;
 
 			if( displayformat != REQ_VERBOSE ){
-				error[0] = 0;
-				if( cfp->JOBNAME ){
+				if( error[0] == 0 && cfp->JOBNAME ){
 					safestrncat( error, cfp->JOBNAME+1 );
 				}
 				host = cfp->FROMHOST?cfp->FROMHOST+1:"???";
 				if( (s = strchr( host, '.' )) ) *s = 0;
 				logname = cfp->LOGNAME?cfp->LOGNAME+1:"???";
 
-				DEBUG4("Get_queue_status: destination count '%d', nodest %d",
+				DEBUG3("Get_queue_status: destination count '%d', nodest %d",
 					cfp->destination_list.count, nodest );
 				/* do the number, owner, and job information */
 				plp_snprintf( msg, sizeof(msg),
@@ -650,32 +658,33 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
 			} else {
 				plp_snprintf( header, sizeof(header),
-					" Job: %s",
+					_(" Job: %s"),
 					cfp->identifier[1]?cfp->identifier+1: cfp->transfername );
-				plp_snprintf( msg, sizeof(msg), "%s status= %s\n",
+				plp_snprintf( msg, sizeof(msg), _("%s status= %s\n"),
 					header, number );
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
-				plp_snprintf( msg, sizeof(msg), "%s size= %s\n",
+				plp_snprintf( msg, sizeof(msg), _("%s size= %d\n"),
 					header, cfp->jobsize );
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
-				plp_snprintf( msg, sizeof(msg), "%s time= %s\n",
+				plp_snprintf( msg, sizeof(msg), _("%s time= %s\n"),
 					header, Time_str( 1, cfp->statb.st_ctime ) );
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
 				if( cfp->error[0] ){
-					plp_snprintf( msg, sizeof(msg), "%s error= %s\n",
+					plp_snprintf( msg, sizeof(msg), _("%s error= %s\n"),
 							header, cfp->error );
 					if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
 				}
-				plp_snprintf( msg, sizeof(msg), "%s CONTROL=\n", header );
+				plp_snprintf( msg, sizeof(msg), _("%s CONTROL=\n"), header );
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
 				s = Copy_hf( &cfp->control_file_lines,
 						&cfp->control_file_print, 0, " - " );
 				if( Write_fd_str( *socket, s ) < 0 ) cleanup( 0 );
-				plp_snprintf( msg, sizeof(msg), "%s HOLDFILE=\n", header );
+				plp_snprintf( msg, sizeof(msg), _("%s HOLDFILE=\n"), header );
 				if( Write_fd_str( *socket, msg ) < 0 ) cleanup( 0 );
 				s = Copy_hf( &cfp->hold_file_lines, &cfp->hold_file_print,
 						0, " - " );
-				if( Write_fd_str( *socket, s ) < 0 ) cleanup( 0 );
+				DEBUG1("Get_queue_status: hold file '%s'", s );
+				if( s && Write_fd_str( *socket, s ) < 0 ) cleanup( 0 );
 				continue;
 			}
 	
@@ -687,7 +696,7 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 					error[0] = 0;
 					plp_snprintf( error, sizeof(error), "->%s ",
 						d->destination );
-					DEBUG4("Get_queue_status: destination active '%d'",
+					DEBUG3("Get_queue_status: destination active '%d'",
 						d->active );
 					if( d->active > 0 && kill( d->active, 0 ) ){
 						d->active = 0;
@@ -696,21 +705,21 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 					if( d->copies > 1 ){
 						len = strlen( error );
 						plp_snprintf( error+len, sizeof(error)-len,
-							"<cpy %d/%d> ",
+							_("<cpy %d/%d> "),
 							d->copy_done, d->copies );
 					}
 					safestrncpy( number, " -" );
 					if( d->error[0] ){
-						safestrncat( number, "rterror" );
+						safestrncat( number, _("rterror") );
 						len = strlen( error );
 						plp_snprintf( error+len, sizeof( error )-len,
-							"ERROR: %s", d->error );
+							_("ERROR: %s"), d->error );
 					} else if( d->active ){
-						safestrncat( number, "actv" );
+						safestrncat( number, _("actv") );
 					} else if( d->hold ){
-						safestrncat( number, "hold" );
+						safestrncat( number, _("hold") );
 					} else if( d->done ){
-						safestrncat( number, "done" );
+						safestrncat( number, _("done") );
 					}
 					plp_snprintf( msg, sizeof(msg),
 						"%-*s %-*s %-*c %*d %-*s",
@@ -736,17 +745,6 @@ static void Get_queue_status( char *name, int *socket, int displayformat,
 	}
 
 remote:
-
-	if( RemoteHost == 0 && Bounce_queue_dest ){
-		DEBUG3("Get_queue_status: getting bouncequeue dest status '%s'", 
-			Bounce_queue_dest);
-		if( (s = strchr( Bounce_queue_dest, '@' )) ){
-			RemotePrinter = Bounce_queue_dest;
-			*s = 0;
-			RemoteHost = s+1;
-		} 
-	}
-
 	if( Server_names && !subserver ){
 		server_info = (void *)servers.list;
 		subserver = 1;
@@ -761,13 +759,45 @@ remote:
 		if( servers.list ) free( servers.list );
 		memset( &servers, 0, sizeof( servers ) );
 		subserver = 0;
-	} else if( RemoteHost ){
+		RemoteHost = RemotePrinter = 0;
+	} else if( Bounce_queue_dest ){
+		DEBUG3("Get_queue_status: getting bouncequeue dest status '%s'", 
+			Bounce_queue_dest);
+		RemoteHost = 0;
+		RemotePrinter = 0;
+		if( strchr( Bounce_queue_dest, '@' ) ){
+			Lp_device = Bounce_queue_dest;
+			Check_remotehost();
+			if( Check_loop() ){ 
+				plp_snprintf( error, sizeof(error),
+				"printer '%s' loop to bounce queue '%s'", Bounce_queue_dest );
+			}
+		}
+		if( RemotePrinter == 0 ){
+			RemotePrinter = Bounce_queue_dest;
+		}
+	} else if( Lp_device &&
+		(Lp_device[0] == '|' || strchr( Lp_device, '@' ) == 0) ){
+			/* if lp=pr@host then we have already set rm:rp
+			 * else if lp!=pr@host then we do not want to go to remote host
+			 * else if we have :rm:rp: only, and this is pointing to us,
+			 * then we have a loop
+			 */
+		RemoteHost = RemotePrinter = 0;
+	}
+	if( RemotePrinter && RemoteHost == 0 ){
+		RemoteHost = Default_remote_host;
+		if( RemoteHost == 0 ){
+			RemoteHost = FQDNHost;;
+		}
+	}
+	if( RemoteHost && RemotePrinter ){
 		static struct malloc_list args;
 		char **list;
 
 		if( subserver ){
 			plp_snprintf( error, sizeof(error),
-				"printer '%s' cannot be remote and subserver", RemotePrinter );
+				_("printer '%s' cannot be remote and subserver"), RemotePrinter );
 			goto error;
 		}
 		/* see if on the same host */
@@ -800,9 +830,9 @@ remote:
 	return;
 
 error:
-	log( LOG_INFO, "Get_queue_status: error '%s'", error );
+	log( LOG_INFO, _("Get_queue_status: error '%s'"), error );
 	DEBUG2("Get_queue_status: error msg '%s'", error );
-	safestrncpy( header, " ERROR: " );
+	safestrncpy( header, _(" ERROR: ") );
 	safestrncat( header, error );
 	safestrncat( header, "\n" );
 	if( Write_fd_str( *socket, header ) < 0 ) cleanup(0);
@@ -824,7 +854,7 @@ static void Print_status_info( int *socket, char *path, char *header )
 		if( statb.st_size > bsize ){
 			off = statb.st_size - bsize;
 			if( lseek( fd, off, SEEK_SET ) < 0 ){
-				logerr_die( LOG_ERR, "setstatus: cannot seek '%s'", path );
+				logerr_die( LOG_ERR, _("setstatus: cannot seek '%s'"), path );
 			}
 		}
 		for( len = bsize, s = buffer;
@@ -843,8 +873,7 @@ static void Print_status_info( int *socket, char *path, char *header )
 		 * print out only the last complete lines
 		 */
 		while( s && *s ){
-			endbuffer = strchr( s, '\n' );
-			*endbuffer++ = 0;
+			if( (endbuffer = strchr( s, '\n' )) ) *endbuffer++ = 0;
 			plp_snprintf( line, sizeof(line)-2, "%s: %s", header, s );
 			DEBUG2("Print_status_info: '%s'", line );
 			/* this is safe */

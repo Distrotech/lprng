@@ -10,9 +10,10 @@
  * PURPOSE: dump various data structures
  **************************************************************************/
 
-static char *const _id = "$Id: dump.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
+static char *const _id = "$Id: dump.c,v 3.6 1997/02/05 18:55:02 papowell Exp papowell $";
 
 #include "lp.h"
+#include "permission.h"
 #include "dump.h"
 /**** ENDINCLUDE ****/
 
@@ -156,6 +157,12 @@ void dump_control_file( char *title,  struct control_file *cf )
 				logDebug( "option[%c] '%s'", i+'0', cf->digitoptions[i] );
 			}
 		}
+		count = cf->hold_file_lines.count;
+		logDebug(" hold file lines %d", count );
+		line = (void *)cf->hold_file_lines.list;
+		for( i = 0; i < count; ++i ){
+			logDebug( "line [%d] '%s'", i, line[i] );
+		}
 		if( cf->destination_list.count ){
 			struct destination *destination, *d;
 			char **lines;
@@ -230,7 +237,7 @@ void dump_host_information( char *title,  struct host_information *info )
 	int i, j;
 	char **list;
 	unsigned char *s;
-	if( title ) logDebug( "*** %s ***", title );
+	if( title ) logDebug( "*** %s (0x%x) ***", title, info );
 	if( info ){
 		logDebug( "info name count %d", info->host_names.count );
 		list = info->host_names.list;
@@ -254,3 +261,73 @@ void dump_host_information( char *title,  struct host_information *info )
 		}
 	}
 }
+
+/***************************************************************************
+ * dump_perm_file( char *title, struct perm_file *cf )
+ ***************************************************************************/
+
+void dump_perm_val( char *title, struct perm_val *val,
+	struct perm_file *perms)
+{
+	int i;
+	char **list = perms->list.list;
+	if( val ){
+		logDebug( "%s key %d, token '%s', list %d",
+			title?title:"", val->key, val->token, val->list );
+		for( i = val->list; list[i]; ++i ){
+			logDebug( "   option [%2d] '%s'", i, list[i] );
+		}
+	}
+}
+
+
+void dump_perm_line( char *title, struct perm_line *line,
+	struct perm_file *perms)
+{
+	struct perm_val *values = (void *)perms->values.list;
+	int i;
+
+	logDebug( "%s - perm line 0x%x, flag %d, list %d", title?title:"",
+		line, line->flag, line->list );
+	for( i = line->list; values[i].token; ++i ){
+		char buffer[64];
+		plp_snprintf( buffer, sizeof(buffer),
+			"  entry [%2d]", i );
+		dump_perm_val( buffer, &values[i], perms );
+	}
+}
+
+void dump_perm_file( char *title,  struct perm_file *perms )
+{
+	int i;
+	char buff[32];
+	struct perm_line *line;
+
+	if( title ) logDebug( "*** perm_file %s ***", title );
+	if( perms ){
+		line = (void *)perms->lines.list;
+		for( i = 0; i < perms->lines.count; ++i ){
+			plp_snprintf( buff, sizeof(buff), "[%d] ", i );
+			dump_perm_line( buff, &line[i], perms );
+		}
+	}
+}
+
+
+/***************************************************************************
+ * dump_perm_check( char *title, struct perm_check *check )
+ * Dump perm_check information
+ ***************************************************************************/
+
+void dump_perm_check( char *title,  struct perm_check *check )
+{
+	if( title ) logDebug( "*** perm_check %s ***", title );
+	if( check ){
+		logDebug(
+		"  user '%s', rmtuser '%s', printer '%s', service '%c'",
+		check->user, check->remoteuser, check->printer, check->service );
+		dump_host_information( "  host", check->host );
+		dump_host_information( "  remotehost", check->remotehost );
+	}
+}
+

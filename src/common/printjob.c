@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: printjob.c,v 3.8 1997/02/02 15:44:39 papowell Exp papowell $";
+"$Id: printjob.c,v 3.13 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -144,7 +144,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry )
 		s = Force_queuename;
 		if( s == 0 || *s == 0 ) s = Queue_name;
 		if( s == 0 || *s == 0 ) s = Printer;
-		plp_snprintf( buffer, sizeof(buffer), "Q%s", Printer );
+		plp_snprintf( buffer, sizeof(buffer), "Q%s", s );
 		cfp->QUEUENAME = Insert_job_line( cfp, buffer, 0, 0);
 	}
 	if( Use_date && cfp->DATE == 0 ){
@@ -232,6 +232,8 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry )
 	/*
 	 * do accounting at start
 	 */
+	DEBUG2("Print_job: Accounting_start '%s', Local_accounting %d'",
+		Accounting_start, Local_accounting );
 	if( Accounting_start && Local_accounting ){
 		setstatus(cfp,"accounting at start '%s'", id);
 		i = Do_accounting( 0, Accounting_start, cfp, Send_timeout, printcap_entry, OF_fd_info.input );
@@ -415,7 +417,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry )
 			if( cfp->PRTITLE ) safestrncat( pr_filter, " -h $-T" );
 			/* we need to open a file and process the job */
 			/* make a temp file */
-			pfd = Make_temp_fd( cfp, banner_temp, sizeof(banner_temp) );
+			pfd = Make_temp_fd( banner_temp, sizeof(banner_temp) );
 			DEBUG3( "Print_job: pr temp file '%s', fd %d", banner_temp, pfd );
 			if( ftruncate( pfd, 0 )  < 0 ){
 				Errorcode = JABORT;
@@ -480,7 +482,7 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry )
 		}
 		/* send job to printer - we get the error status of filter if any */
 		n = 0;
-		if( Direct_read == 0 ){
+		if( Direct_read == 0 || filter == 0 ){
 			err = Print_copy(cfp, fd, &data_file->statb, &XF_fd_info,
 				Send_timeout, 1, file_name);
 		}
@@ -620,6 +622,14 @@ int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry )
 		Errorcode = n;
 		cleanup( 0 );
 	}
+	if( Device_fd_info.pid ){
+		n = Close_filter( &Device_fd_info, Send_timeout, "printer (LP)" );
+		if( n ){
+			DEBUG3( "Print_job: close OF filter FAILED, status 0x%x", n );
+			Errorcode = n;
+			cleanup( 0 );
+		}
+	}
 
 	/* close them out */
 	Print_close( -1 );
@@ -641,17 +651,16 @@ static int Fix_str( char **copy, char *str )
 	int len, c;
 	char *s, *t, *end;
 
-	if( *copy ){
+	if( copy && *copy ){
 		free( *copy );
 		*copy = 0;
 	}
 	DEBUG3("Fix_str: '%s'", str );
-	if( str && *str ){
-		*copy = safestrdup(str);
-	} else {
-		return(0);
+	s = str;
+	if( str && copy ){
+		*copy = s = safestrdup(str);
 	}
-	for( len = 0, s = *copy, t = str; t && *t && (c = (s[len] = *t++)); ++len ){
+	for( len = 0, t = str; t && *t && (c = (s[len] = *t++)); ++len ){
 		/* DEBUG3("Fix_str: char '%c', len %d", c, len ); */
 		if( c == '\\' && (c = *t) != '\\' ){
 			/* check for \nnn */
@@ -675,7 +684,7 @@ static int Fix_str( char **copy, char *str )
 			}
 		}
 	}
-	s[len] = 0;
+	if( s ) s[len] = 0;
 	DEBUG3( "Fix_str: str '%s' -> '%s', len %d", str, s, len );
 	return( len );
 }
@@ -715,10 +724,12 @@ int Print_banner(
 	DEBUG2( "Printer_banner: raw banner '%s'", Banner_line );
 	ep = bline + sizeof(bline) - 2;
 	ep = Expand_command( cfp, bline, ep, Banner_line, 'f', (void *)0 );
-	i = strlen(bline);
+	if( strchr( bline, '\\' ) ){
+		Fix_str( 0, bline );
+	} else {
+		safestrncat(bline, "\n");
+	}
 	DEBUG2( "Printer_banner: expanded banner '%s'", bline );
-	bline[i++] = '\n';
-	bline[i++] = 0;
 
 
  	if( !Short_banner && banner_printer && *banner_printer ){
@@ -764,18 +775,20 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 	int oldport, i, n;
 	struct stat statb;
 	char *s;
+	char buffer[LINEBUFFER];
 
 	DEBUG2("Setup_accounting: '%s'", Accounting_file);
-	s = Accounting_file;
-	if( s == 0 || *s == 0 ) return;
+	if( Is_server == 0 || Accounting_file == 0 || *Accounting_file == 0 ) return;
+	safestrncpy( buffer, Accounting_file );
+	s = buffer;
 	if( s[0] == '|' ){
 		/* first try to make the filter */
-		Accounting_file = 0;
 		if( Make_filter( 'f', cfp, &Af_fd_info, s, 0, 0,
 			0, printcap_entry, (void *)0, 0, Logger_destination != 0, 0 ) ){
 			setstatus( cfp, "%s", cfp->error );
 			cleanup(0);
 		}
+		Accounting_file = 0;
 		Accounting_port = Af_fd_info.input;
 	} else if( (s = strchr( s, '%' )) ){
 		/* now try to open a connection to a server */
@@ -785,7 +798,7 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 		}
 		if( s == 0 || i <= 0 ){
 			logerr( LOG_ERR,
-				"Setup_accounting: bad Accounting server info '%s'", Accounting_file );
+				"Setup_accounting: bad accounting server info '%s'", Accounting_file );
 			plp_snprintf( cfp->error, sizeof(cfp->error),
 				"bad accounting server '%s'", Accounting_file );
 			Set_job_control( cfp, (void *)0, 0 );
@@ -794,13 +807,12 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 		}
 		*s = 0;
 		oldport = Destination_port;
+		DEBUG2("Setup_accounting: opening connection to %s port %d", buffer, i );
 		Destination_port = i;
-		DEBUG2("Setup_accounting: opening connection to %s port %d", Accounting_file, i );
-		n = Link_open( Accounting_file, Connect_try, Connect_timeout );
-		DEBUG2("Setup_accounting: socket %d", Accounting_port );
-		*s = '%';
+		n = Link_open( buffer, Connect_try, Connect_timeout );
 		Destination_port = oldport;
-		if( n < 0 ){
+		DEBUG2("Setup_accounting: socket %d", n );
+		if( n <= 0 ){
 			const char *t;
 			i = errno;
 			t = Errormsg(errno);
@@ -816,8 +828,8 @@ void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap
 			Errorcode= JFAIL;
 			cleanup( 0 );
 		}
-		Af_fd_info.input = Accounting_port = n;
 		Accounting_file = 0;
+		Af_fd_info.input = Accounting_port = n;
 	} else {
 		n = Checkwrite( Accounting_file, &statb, 0, 0, 0 );
 		if( n > 0 ){
@@ -834,31 +846,33 @@ int Do_accounting( int end, char *command, struct control_file *cfp,
 	char buffer[SMALLBUFFER];
 	char *id;				/* id for job */
 
+	DEBUG2("Do_accounting: %s", command );
+	if( command ) while( isspace( *command ) ) ++command;
+	if( Is_server == 0 || command == 0 || *command == 0 ){
+		return(0);
+	}
+
 	id = cfp->identifier+1;
 	if( *id == 0 ) id = cfp->transfername;
 
-	if( command ) while( isspace( *command ) ) ++command;
-
-	DEBUG2("Do_accounting: %s", command );
-
 	err = JSUCC;
-	if( command == 0 ){
-		;
-	} else if( *command == '|' ){
-		if( Make_filter( 'f', cfp, &As_fd_info, command, 0, 0,
+	if( *command == '|' ){
+		if( As_fd_info.pid > 0 ){
+			plp_snprintf( cfp->error, sizeof(cfp->error),
+				"conflict in accounting - af and additional accounting required" );
+			err = JABORT;
+		} else if( Make_filter( 'f', cfp, &As_fd_info, command, 0, 0,
 			filter_out, printcap_entry, (void *)0, Accounting_port,
 			Logger_destination != 0, 0 ) ){
-			setstatus( cfp, "%s", cfp->error );
-			cleanup(0);
-		}
-		err = Close_filter( &As_fd_info, timeout, "accounting" );
-		DEBUG2("Do_accounting: filter exit status %s", Server_status(err) );
-		if( err ){
-			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"accounting check at %s failed - status %s", end?"end":"start",
-				Server_status( err ) );
-			setstatus( cfp,  cfp->error );
-			Set_job_control( cfp, (void *)0, 0 );
+			err = JABORT;
+		} else {
+			err = Close_filter( &As_fd_info, timeout, "accounting" );
+			DEBUG2("Do_accounting: filter exit status %s", Server_status(err) );
+			if( err ){
+				plp_snprintf( cfp->error, sizeof(cfp->error),
+					"accounting check at %s failed - status %s", end?"end":"start",
+					Server_status( err ) );
+			}
 		}
 	} else if( Accounting_port > 0 ){
 		/* now we have to expand the string */
@@ -874,7 +888,6 @@ int Do_accounting( int end, char *command, struct control_file *cfp,
 			plp_snprintf( cfp->error, sizeof(cfp->error),
 				"accounting write failed" );
 			err = JFAIL;
-			Set_job_control( cfp, (void *)0, 0 );
 		} else if( Accounting_check ){
 			static char accept[] = "accept";
 			i = sizeof(buffer) - 1;
@@ -886,16 +899,19 @@ int Do_accounting( int end, char *command, struct control_file *cfp,
 				plp_snprintf( cfp->error, sizeof( cfp->error ),
 					"read failed from accounting server" );
 				err = JFAIL;
-				Set_job_control( cfp, (void *)0, 0 );
 			} else if( strncasecmp( buffer, accept, sizeof(accept)-1 ) ){
 				logerr( LOG_ERR,
 					"Do_accounting: accounting check failed '%s'", buffer );
 				plp_snprintf( cfp->error, sizeof(cfp->error),
 					"accounting check failed '%s'", buffer );
 				err = JFAIL;
-				Set_job_control( cfp, (void *)0, 0 );
 			}
 		}
+	}
+	if( err ){
+		Errorcode = err;
+		setstatus( cfp,  cfp->error );
+		Set_job_control( cfp, (void *)0, 0 );
 	}
 	return( err );
 }

@@ -8,20 +8,214 @@
 ###########################################################################
 # MODULE: Changes
 # PURPOSE: Record Changes
-# $Id: CHANGES,v 3.7 1997/02/02 15:44:39 papowell Exp papowell $
-########################################################################## 
+# $Id: CHANGES,v 3.20 1997/03/24 00:45:58 papowell Exp papowell $
+###########################################################################
+Release LPRng 3-1-13
+    Changed sleep() calls to plp_sleep(), which uses select mechanism,
+      to avoid interactions with SIGALRM signal handler in Linux.
+    In the waitchild() code,  the signal(SIGCHLD,SIG_IGN) caused
+      some systems to automatically perform a 'wait()' on child
+	  processes.  The SIG_DFL only ignored the signal, and the
+      waitpid() would then succeed.  Note that this action is implied
+      by the POSIX standard wording for _exit().
+    The code for job queue scanning will not report 0 length
+      control files as errors until they are older than an hour.
+	The LPD/lpq_status() now ignores jobs being transferred,
+      and does not report their status.
+    LPD/lpd_rcvjob() now allows multiple jobs to be transferred on a single
+      connection.  This is a violation of RFC1179 but it is now done.
+	Expanded \xx entries in Banner line, so that very strange
+      filters that insisted on these characters would get them.
+      If a banner line had these characters,  a \n is not appended.
+    Bounce queue destinations no longer have to be printer@host,
+      they can just be printer.  The default destination is the
+      server host.
+    CHECKPC/checkpc.c - To_root() interferred with Test_code();
+      reordered code.
+      (Reported by: Todd Rannow <rannow@msc.edu>)
+	common/check_remotehost() - added checks for Is_server, moved some
+	  tests into LPD/lpd_status.c, LPD/lpd_remove.c
+	  (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
+    Solaris 2.4 LPD server insists on sending REQ_START messages -
+      and gets peeved when it gets an error.  Now messages are NOOPs.
+      (Reported and fix suggested by: Jussi Eloranta <eloranta@voimax.voima.jkl.fi>)
+	Read_fd_len_timeout() closed fd on timeout - this was not correct behaviour.
+      (Reported by: Todd Rannow <rannow@msc.edu>)
+	Clients (LPR, LPQ, LPC) were not expanding printcap %P, %H, etc., entries.
+	  (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
 
+Release LPRng 3-1-12
+    Check_remote modifications exposed logic error in various places-
+      need checks for both RemotePrinter and RemoteHost, not just
+      RemoteHost.
+
+Release LPRng 3-1-11
+    Missing check for Is_server in Check_remote() caused clients to
+      not connect to LPD server.
+
+Release LPRng 3-1-10
+    LPR/lpr_cpyfiles() did not handle multiple copies of stdin
+      correctly.
+      (Reported and fixed by: Jens Thiel <thielj@uran.informatik.uni-bonn.)
+    LPR and clients updated hold files.  Added checks for Is_server in the
+      appropriate places.
+      (Reported by: Lee Muh Hwa <cceleemh@dolphin.cc.nus.sg>)
+    Problem with bad printer name detection.
+	  (Reported and fixed by: Martin Pahl <pahl@tnt.uni-hannover.de>)
+    setstatus() was not sending STATUS information to the logger.
+      (Reported by: Chao-Wen Young <kiki@eng.dowjones.com>)
+    Bad non-existent printer,  printcap file misconfiguration code.
+      (Reported and fixed by: Dirk Nitschke <ms3a512@math.uni-hamburg.de>)
+    Documentation and man page editting - minor corrections, missing entries.
+      (Comments and patches by: Florian La Roche <florian@knorke.saar.de>)
+
+Release LPRng 3-1-9
+    lpq -v format modified so Destination was printed correctly.
+    Remove_job() did not remove all the data files or hold files.
+    dofork() did not zero Tempfile->pathlen.
+    LPR/lpr_cpyfiles() did not preallocate the job file array,
+      leading to problems when realloc() was called.
+    printcap(5) and lpd.conf(5) man page cleanup.
+      (Done by: Florian La Roche <florian@knorke.saar.de>)
+
+Release LPRng 3-1-8
+    Print_job() did not use correct queue name.
+    Man Pages did not get right version number.
+    force_queuename not in printcap(5) man page.
+      (Reported by: Guy Geens <guy.geens@elis.rug.ac.be>)
+    In LPC, Queue_name is not NULL when getprinter() is called.
+      (Reported by: Jussi Eloranta <eloranta@voimax.voima.jkl.fi>)
+    The filter environment variable PRINTCAP_ENTRY now holds the
+      printcap entry for the printer.  In conflict with some filters
+      using PRINTCAP to hold the pathname of the /etc/printcap file.
+      (Reported by: Guy Geens <guy.geens@elis.rug.ac.be>)
+    waitchild() had an alternate wait3 implementation that turns
+      out to be broken on some systems.  Force use of the waitpid()
+      version.
+
+Release LPRng 3-1-7
+  New Functionality: poll_time configuration variable
+    There is a small, but almost impossible to eliminate, race condition
+    when a job is put into a busy queue.  If the server process checks to
+    see if there is work to be done, and the job is put into the queue
+    after that point,  then there is a possiblity that the server may
+    exit with a job in the queue.  This can be solved by using semaphores,
+    locks, etc., but is almost impossible to do in a portable and efficient
+    manner. The 'poll_time#nnn' configuration entry has been added to
+    allow the administrator to specify an interval at which the queues
+    can be periodically checked for unprinted jobs.
+    The default poll_time value is 6000, i.e. - 10 minutes.
+
+  Bug Fixes:
+    printcap.5 documents :mi: (spool directory space needed) as number
+      but it is a string.  Fixed documentation.
+      (Reported by: Jeff Bacon <bacon@twinight.org>)
+    Install.txt, Install.ps - lp=host%port misdocumented.
+      (Reported by: Jeff Bacon <bacon@twinight.org>)
+    printjob.c - check to see if there is a filter; if not, shove
+      file directly out.
+      (Reported by: Guy Geens <guy@abacus.elis.rug.ac.be>)
+    src/Makefile - SUID_ROOT_PERMS= 04755 -oroot should be -o root
+      (Reported by: Dave Goldhammer <Dave.Goldhammer@Colorado.EDU>)
+    POSIX uses LOGNAME environment variable - check this first, then
+      USER for user information.
+      (Suggested by: Todd C. Miller <Todd.Miller@cs.colorado.edu>)
+    lpc now allows printer@host specification.
+      (Reported by: Doug White <dwhite@gdi.uoregon.edu>)
+    printer queue loop detection algorithm modified
+      The code to detect print queue loops was too agressive, and gave
+      false warnings about print queue loops. Now only checks for explicit
+      loops.
+      (Reported by: Yuji Shinozaki <yuji@cs.duke.edu>)
+    Start_all() code did not check for a limit on the number of processes
+      that would be started by the server.
+
+Release LPRng 3-1-6
+  Bug Fixes:
+    The :direct_read: flag now works for bounce queues.  Tested with aps
+      filter.  The aps filter distribution of globals/GLOBALS.sh has been
+      modified to have defaults for various options that allows even a
+      (possibly) misconfigured filter to produce some sort of output
+      instead of dying with a strange error message.
+    setstatus() was not putting \n on end of lines, but only when used
+      on Solaris 4.1.4 with Sun's ACC compiler.  Compiler bug.  Rather
+      than fix the compiler,  we (hopefully) modify the code.
+      (Reported by: Reinhard Zierke <zierke@informatik.uni-hamburg.de>)
+    LPSTAT simulation:
+      Progress reporting too coarse.
+      lpstat -s too verbose.
+      lp now reports 'request id is ....'
+      (Reported by: David Livingstone <davidl@scdes.cn.ca>)
+
+Release LPRng 3-1-5
+
+  New Functionality: PCNFSD compatibility
+    PCNFSD - Public Domain version,  from Geoff Arnold (Geoff.Arnold@Sun.COM,
+      geoff@East.Sun.COM).  Assumes that LPC will return list of
+      printers,  indented one space.  (Fixed).
+      Added README.pcnfsd as a guideline for users.
+    LPRM now says 'dequeueing' (yech!) instead of 'removing' to make it
+      consistent with lprm and PCNFSD implementations.
+    PCNFSD distribution put into LPRng collection.
+
+  Bug Fixes:
+    cleanup() was causing early exits due to use of killpg();
+      commands such as lpq |more would not work correctly.
+      Fix was to suppress top level process from killing itself.
+    autoconf bizzarness - src/Makefile.in now has ${prefix} entries
+      to match the INSTALL documentation.  You can now do
+      make prefix=xxx and software will be installed in xxx/bin
+      Default directories made to conform with existing LPRng ones,
+      not Linux/GNU ones.
+    LPD/lpd_jobs: when a job is aborted, the return status is
+      clobbered.  Now it is not clobbered.
+
+
+Release LPRng 3-1-4
+
+  New Functionality - :oh: entry does globmatch on FQDN host name.
+    The :oh=*val*: entry can now be used to do matching on the
+    FQDN host name.  This allows such things as defining classes
+    of printers, i.e.:
+      lp:oh=*lab1*:lp=pr1@server
+      lp:oh=*lab2*:lp=pr2@server
+    (Inspired by: Nathan Neulinger <nneul@umr.edu>)
+
+  Bug Fixes:
+    Debugging stuff added to Is_printable();  LPR/lpr.c and company had
+      the control file generation fixed up so that lpr -K worked correctly
+      when taking input from stdin; also when using it with lpr_bounce.
+      (Reported by: Andrew Leahy <A.Leahy@st.nepean.uws.edu.au>)
+    autoconf Version 2-12 has a bug and was not generating configuration
+      files correctly;  fixed this and now the --exec_prefix option
+      appears to work correctly.  To regenerate configure from configure.in,
+      the following acgeneral.m4 file lines must be changed:
+          .... original .....
+          test "x$prefix" = xNONE && prefix=$ac_default_prefix
+          # Let make expand exec_prefix.
+          test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+
+          .... correct ......
+          test "x$prefix" = xNONE && prefix=$ac_default_prefix
+          # Let make expand exec_prefix.
+          test "x$exec_prefix" = xNONE && exec_prefix="${prefix}"
+    Permissions checking in Is_printable() was erroneous.
+      (Reported by: Dirk Nitschke <ms3a512@math.uni-hamburg.de>)
+    Find_non_colliding_job_number() did not check to see if job priority
+      was available, and was generating bogus hold file names.  This only
+      occurs when data files are sent first.
+ 
 Release LPRng 3-1-3
 
   New Functionality - Kerberos authentication uses encryption
-	 Send encrypted and authenticated information by default.
-	   (Greateful thanks to: Ken Hornstein <kenh@cmf.nrl.navy.mil>)
+     Send encrypted and authenticated information by default.
+       (Greateful thanks to: Ken Hornstein <kenh@cmf.nrl.navy.mil>)
 
   Bug Fixes:
-	Fix_str(): missing null pointer check
+    Fix_str(): missing null pointer check
       (Reported by: Christian Kuehnke" <Christian.Kuehnke@arbi.Informatik.Uni-Oldenburg.DE>)
 
-	
+    
 
 Release LPRng 3-1-2
 
@@ -57,10 +251,10 @@ Release LPRng 3-1-2
     for their control files.  See README.bouncequeues for details.
 
   New Functionality - generating banner pages for remote printers:
-	The :generate_banner: printcap option will now generate a banner
+    The :generate_banner: printcap option will now generate a banner
     page for remote print jobs and/or when using LPR and :lpr_bounce:
     is set.  The banner is generated by the banner printer specified
-	by :bp: or the default banner printer.  If the :hl: (header or
+    by :bp: or the default banner printer.  If the :hl: (header or
     banner last) flag is set, it will be the last part of the job printed.
 
   New Functionality - spreading job numbers to avoid collisions:
@@ -77,27 +271,27 @@ Release LPRng 3-1-2
     fixcontrol.c - badly formatted DEBUG message.
         (Reported by: Reinhard Zierke <zierke@informatik.uni-hamburg.de>)
     configure - cray-unicos is now just unicos in the system targets.
-	   In addition, HAVE_SYS_SIGLIST botches have been fixed.
-	fix_create_dir() segment faulted
-		(Reported by: Reinhard Zierke <zierke@informatik.uni-hamburg.de>)
-	LINUX has undocumented (and in my opinion broken) gethostbyname()
-		and gethostbyaddr() interactions.  The code that does lookup
-		now performs extremely picky checks, copies, etc., to avoid
-		problems with this.
-		(Reported by: just about every LINUX user...)
-	Makefile: install was missing a value.
-		(Reported by: Doug White <dwhite@gdi.uoregon.edu>)
-	:bk: (Backwards compatible) now forces short job names and
-		short job numbers as well.
-	LPC - lpq command now takes the last printer specified as its default.
-		(Suggested by: Jeff Bacon <bacon@twinight.org>)
-	IRIX and UNICOS compilation mods.
-		(Suggested by: Paul Burry <rpburry@magi.com>)
-	Aborted LPR caused 0 length files to be left in spool directory
-	Multiple copies and routing interact
-		(Andrew Leahy <A.Leahy@st.nepean.uws.edu.au>)
-	config.sub now recognizes i686 as a proper machine type.
-		(Reported by: Michel Robitaille <robitail@IRO.UMontreal.CA>)
+       In addition, HAVE_SYS_SIGLIST botches have been fixed.
+    fix_create_dir() segment faulted
+        (Reported by: Reinhard Zierke <zierke@informatik.uni-hamburg.de>)
+    LINUX has undocumented (and in my opinion broken) gethostbyname()
+        and gethostbyaddr() interactions.  The code that does lookup
+        now performs extremely picky checks, copies, etc., to avoid
+        problems with this.
+        (Reported by: just about every LINUX user...)
+    Makefile: install was missing a value.
+        (Reported by: Doug White <dwhite@gdi.uoregon.edu>)
+    :bk: (Backwards compatible) now forces short job names and
+        short job numbers as well.
+    LPC - lpq command now takes the last printer specified as its default.
+        (Suggested by: Jeff Bacon <bacon@twinight.org>)
+    IRIX and UNICOS compilation mods.
+        (Suggested by: Paul Burry <rpburry@magi.com>)
+    Aborted LPR caused 0 length files to be left in spool directory
+    Multiple copies and routing interact
+        (Andrew Leahy <A.Leahy@st.nepean.uws.edu.au>)
+    config.sub now recognizes i686 as a proper machine type.
+        (Reported by: Michel Robitaille <robitail@IRO.UMontreal.CA>)
 
 Release LPRng 3-1-1
 

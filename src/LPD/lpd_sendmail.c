@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_sendmail.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
+"$Id: lpd_sendmail.c,v 3.4 1997/03/24 00:45:58 papowell Exp papowell $";
 #include "lp.h"
 #include "errorcodes.h"
 #include "fileopen.h"
@@ -58,7 +58,7 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 
 	mail = fdopen( Pr_fd_info.input, "a+" );
 	if( mail == 0 ){
-		logerr_die( LOG_ERR, "Sendmail: fdopen failed" );
+		logerr_die( LOG_ERR, _("Sendmail: fdopen failed") );
 	}
 
 	(void) fprintf( mail, "To: %s\n", cfp->MAILNAME+1 );
@@ -70,25 +70,25 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 		Printer, FQDNHost, cfp->transfername );
 
 	/* now do the message */
-	(void) fprintf( mail, "printer %s job %s", Printer, cfp->transfername );
+	(void) fprintf( mail, _("printer %s job %s"), Printer, cfp->transfername );
 	if( cfp->JOBNAME ){
 		(void) fprintf( mail, " (%s)", cfp->JOBNAME+1 );
 	}
 	switch( status) {
 	case JSUCC:
-		(void) fprintf( mail, " was successful.\n");
+		(void) fprintf( mail, _(" was successful.\n"));
 		break;
 
 	case JFAIL:
-		(void) fprintf( mail, " failed, and retry count was exceeded.\n" );
+		(void) fprintf( mail, _(" failed, and retry count was exceeded.\n") );
 		break;
 
 	case JABORT:
-		(void) fprintf( mail, " failed and could not be retried.\n" );
+		(void) fprintf( mail, _(" failed and could not be retried.\n") );
 		break;
 
 	default:
-		(void) fprintf( mail, " died a horrible death.\n");
+		(void) fprintf( mail, _(" died a horrible death.\n"));
 		break;
 	}
 
@@ -102,13 +102,13 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 
 		sfile = fdopen( fd, "r" );
 		if( sfile == 0 ){
-			logerr_die( LOG_ERR, "Sendmail: fdopen failed" );
+			logerr_die( LOG_ERR, _("Sendmail: fdopen failed") );
 		}
 		/*
 		 * we read the file,writing each line out
 		 */
 		while( fgets( msg, sizeof(msg), sfile ) ){
-			fprintf( mail, "   Status: %s", msg );
+			fprintf( mail, _("   Status: %s"), msg );
 		}
 		fclose( sfile );
 	}

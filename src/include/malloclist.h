@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: malloclist.h
  * PURPOSE: malloclist.c functions
- * $Id: malloclist.h,v 3.2 1997/01/29 03:04:39 papowell Exp $
+ * $Id: malloclist.h,v 3.3 1997/02/04 22:01:49 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _MALLOCLIST_H
@@ -43,7 +43,7 @@ void clear_malloc_list( struct malloc_list *buffers, int free_list );
  */
 void Clear_control_file( struct control_file *cf );
 
-char *Add_job_line( struct control_file *cf, char *str );
+char *Add_job_line( struct control_file *cf, char *str, int nodup );
 
 char *Insert_job_line( struct control_file *cf, char *str, int nodup, int position );
 

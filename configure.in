@@ -2,13 +2,22 @@ dnl process this file with GNU autoconf to produce a configure script.
 dnl
 dnl jmason 23 dec 94 -- fixed union wait and sys_errlist checks
 dnl Patrick Powell Fri Jul  7 21:08:48 PDT 1995
-dnl $Id: configure.in,v 3.9 1997/01/31 22:13:00 papowell Exp $
+dnl $Id: configure.in,v 3.14 1997/03/24 00:45:58 papowell Exp papowell $
 dnl  Original version from PLP4.0 Release
 
 AC_INIT(Makefile.in)
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER(config.h)
+
+PACKAGE=LPRng
+VERSION=3.1.10
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
+ALL_LINGUAS="fr"
+
 AC_PREFIX_DEFAULT(/usr/local)
 AC_SUBST(INSTALL)
 AC_SUBST(INSTALL_MAN)
@@ -65,16 +74,16 @@ case $target_os in
 		LIBS="$LIBS -lcurses"
 		;;
 	 irix5* )
+		checklibs=no
 		AC_DEFINE(HAVE_BROKEN_TIOCEXCL)
 		AC_DEFINE(SVR4)
 		AC_DEFINE_UNQUOTED(IRIX,$version)
 		LIBS="$LIBS -lcurses"
-		checklibs=no
 		;;
 	 irix* )
+		checklibs=no
 		AC_DEFINE_UNQUOTED(IRIX,$version)
 		LIBS="$LIBS -ltermcap"
-		checklibs=no
 		;;
 	solaris* )
 		AC_DEFINE(SVR4)
@@ -139,7 +148,11 @@ if test -z "$checklibs"; then
 	dnl termcap and termlib are both included, but this is not
 	dnl supposed to be the case - only one will get resolved
 	TERMLIB=
+	dnl first we check for LINUX
+	AC_CHECK_LIB(ncurses, tgetent, [LIBS="$LIBS -lncurses"; TERMLIB=yes])
+	if test -z "$TERMLIB" ; then
 	AC_CHECK_LIB(termlib, tgetent, [LIBS="$LIBS -ltermlib"; TERMLIB=yes])
+	fi;
 	if test -z "$TERMLIB" ; then
 	AC_CHECK_LIB(termcap, tgetent, [LIBS="$LIBS -ltermcap"; TERMLIB=yes])
 	fi;
@@ -147,7 +160,14 @@ if test -z "$checklibs"; then
 	AC_CHECK_LIB(curses, tgetent, [LIBS="$LIBS -lcurses"; TERMLIB=yes])
 	fi;
 fi
-dnl **** end library checks 
+dnl **** end library checks
+
+dnl **** force libraries for some odd systems the the above did not find
+case $target_os in
+	 mips-sni* )
+		LIBS="$LIBS -lcurses";
+		;;
+esac
 
 AC_C_CONST
 AC_C_INLINE
@@ -172,7 +192,8 @@ AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADERS(a.out.h a_out.h aouthdr.h ar.h arpa/inet.h arpa/nameser.h)
 AC_CHECK_HEADERS(assert.h com_err.h compat.h ctype.h curses.h dirent.h)
 AC_CHECK_HEADERS(errno.h exechdr.h fcntl.h filehdr.h grp.h krb5.h)
-AC_CHECK_HEADERS(limits.h locale.h machine/vmparam.h malloc.h memory.h ndir.h)
+AC_CHECK_HEADERS(limits.h locale.h machine/vmparam.h malloc.h memory.h)
+AC_CHECK_HEADERS(ncurses.h ndir.h)
 AC_CHECK_HEADERS(netdb.h netinet/in.h nlist.h pwd.h reloc.h resolv.h)
 AC_CHECK_HEADERS(setjmp.h sgs.h sgtty.h signal.h stab.h stdarg.h)
 AC_CHECK_HEADERS(stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h)
@@ -190,7 +211,7 @@ dnl function checks:
 AC_CHECK_FUNCS(cfsetispeed fcntl flock gethostbyname2 getdtablesize)
 AC_CHECK_FUNCS(gethostname getrlimit inet_aton inet_ntop inet_pton)
 AC_CHECK_FUNCS(innetgr killpg lockf mkstemp)
-AC_CHECK_FUNCS(mktemp openlog seteuid setpgid setproctitle)
+AC_CHECK_FUNCS(mktemp openlog seteuid setlocale setpgid setproctitle)
 AC_CHECK_FUNCS(setresuid setreuid setsid sigaction)
 AC_CHECK_FUNCS(sigprocmask sigsetjmp socketpair strcasecmp)
 AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysinfo)
@@ -483,20 +504,11 @@ if test $ac_cv_decl_sys_siglist = yes; then
 	AC_DEFINE(HAVE_SYS_SIGLIST)
 fi
 
-AC_MSG_CHECKING(for _sys_siglist array)
-AC_CACHE_VAL(ac_cv_decl__sys_siglist,
-[AC_TRY_LINK(,[extern char *_sys_siglist[]; printf("%s",_sys_siglist[0]);],
-	ac_cv_decl__sys_siglist=yes, ac_cv_decl__sys_siglist=no)
-])
-AC_MSG_RESULT($ac_cv_decl__sys_siglist)
-if test $ac_cv_decl__sys_siglist = yes; then
-	AC_DEFINE(HAVE__SYS_SIGLIST)
-fi
-
 AC_MSG_CHECKING(for sys_siglist declaration)
 AC_CACHE_VAL(ac_cv_decl_sys_siglist_def,
 [AC_TRY_COMPILE([
 #include <stdio.h>
+#include <sys/types.h>
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -511,28 +523,9 @@ if test $ac_cv_decl_sys_siglist_def = yes; then
     AC_DEFINE(HAVE_SYS_SIGLIST_DEF)
 fi
 
-
-AC_MSG_CHECKING(for _sys_siglist declaration)
-AC_CACHE_VAL(ac_cv_decl__sys_siglist_def,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <signal.h>],[printf("%s",_sys_siglist[0]);],
-ac_cv_decl__sys_siglist_def=yes, ac_cv_decl__sys_siglist_def=no)
-])
-AC_MSG_RESULT($ac_cv_decl__sys_siglist_def)
-if test $ac_cv_decl__sys_siglist_def = yes; then
-    AC_DEFINE(HAVE__SYS_SIGLIST_DEF)
-fi
-
 dnl ----------------------------------------------------------------------------
 dnl check to see if you have getpgrp(0) or getpgrp()
-dnl 
+dnl
 dnl POSIX `getpgrp(void)'  define HAVE_GETPGRP_0
 dnl BSD   `getpgrp(int)' - takes 0 as argument
 dnl                        define HAVE_GETPGRP_0 0
@@ -588,7 +581,7 @@ dnl the trick.
 AC_MSG_CHECKING(for obsolete union wait compatibility)
 AC_CACHE_VAL(ac_cv_unionwait,
 [
-AC_TRY_COMPILE([#include <sys/types.h> 
+AC_TRY_COMPILE([#include <sys/types.h>
 #include <sys/wait.h>], [union wait x;WIFEXITED(x);],
 ac_cv_unionwait=yes, ac_cv_unionwait=no)
 ])
@@ -799,5 +792,11 @@ AC_MSG_CHECKING(for shell)
 SHELL=/bin/sh
 AC_MSG_RESULT(using $SHELL (FORCED))
 
+dnl ----------------- Option for enabling GNU gettext --------------------
+AM_GNU_GETTEXT
+test "$USE_NLS" = yes && LIBS="$LIBS -lintl"
+
 dnl ----------------- GCC Compilation ----------------------------------
-AC_OUTPUT(Makefile src/Makefile man/Makefile TESTSUPPORT/Makefile Makefile.bsd src/Makefile.bsd )
+AC_OUTPUT(Makefile src/Makefile po/Makefile.in man/Makefile TESTSUPPORT/Makefile
+ Makefile.bsd src/Makefile.bsd man/Makefile.bsd TESTSUPPORT/Makefile.bsd,
+ sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile)

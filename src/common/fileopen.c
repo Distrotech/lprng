@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: fileopen.c,v 3.7 1997/02/02 15:44:39 papowell Exp papowell $";
+"$Id: fileopen.c,v 3.8 1997/02/25 04:50:25 papowell Exp $";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -172,7 +172,7 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
 }
 
 /***************************************************************************
- * Make_temp_fd( struct control_file *cfp )
+ * Make_temp_fd( char *name, int namelen )
  * 1. we can call this repeatedly,  and it will make
  *    different temporary files.
  * 2. we NEVER modify the temporary file name - up to the first '.'
@@ -183,7 +183,7 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
 
 static int Tempcount;
 
-char *Init_tempfile( struct control_file *cfp )
+char *Init_tempfile( void )
 {
 	char *dir = 0;
 	int len;
@@ -195,52 +195,45 @@ char *Init_tempfile( struct control_file *cfp )
 	memset(Tempfile, 0, sizeof( Tempfile[0]) );
 
 	/* if we have the openname set, we use this for base */
-	if( cfp && cfp->openname[0] ){
-		Init_path( Tempfile, cfp->openname );
-		if( Tempfile->pathlen ){
-			--Tempfile->pathlen;
+	if( Is_server ){
+		if( SDpathname ){
+			dir = Clear_path( SDpathname );
 		}
-	} else {
-		if( Is_server ){
-			if( SDpathname ){
-				dir = Clear_path( SDpathname );
-			}
-			if( dir == 0 || stat( dir, &statb ) ||
-				!S_ISDIR(statb.st_mode) ){
-				dir = 0;
-			}
-			if( dir == 0 || *dir == 0 ){
-				dir = Server_tmp_dir;
-			}
-			if( dir == 0 || stat( dir, &statb ) ||
-				!S_ISDIR(statb.st_mode) ){
-				fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
-			}
-		} else {
-			dir = getenv( "LPR_TMP" );
+		if( dir == 0 || stat( dir, &statb ) ||
+			!S_ISDIR(statb.st_mode) ){
+			dir = 0;
 		}
 		if( dir == 0 || *dir == 0 ){
-			dir = Default_tmp_dir;
-		}
-		if( dir == 0 || *dir == 0 ){
-			dir = "/tmp";
+			dir = Server_tmp_dir;
 		}
 		if( dir == 0 || stat( dir, &statb ) ||
 			!S_ISDIR(statb.st_mode) ){
 			fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
 		}
-		Init_path( Tempfile, dir );
-		len = Tempfile->pathlen;
-		plp_snprintf( Tempfile->pathname+len, sizeof(Tempfile->pathname)-len,
-			"bfA%03d", getpid() );
-		Tempfile->pathlen = strlen( Tempfile->pathname );
+	} else {
+		dir = getenv( "LPR_TMP" );
 	}
+	if( dir == 0 || *dir == 0 ){
+		dir = Default_tmp_dir;
+	}
+	if( dir == 0 || *dir == 0 ){
+		dir = "/tmp";
+	}
+	if( dir == 0 || stat( dir, &statb ) ||
+		!S_ISDIR(statb.st_mode) ){
+		fatal( LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
+	}
+	Init_path( Tempfile, dir );
+	len = Tempfile->pathlen;
+	plp_snprintf( Tempfile->pathname+len, sizeof(Tempfile->pathname)-len,
+		"bfA%03d", getpid() );
+	Tempfile->pathlen = strlen( Tempfile->pathname );
 	dir = Clear_path(Tempfile);
 	DEBUG3("Init_tempfile: temp file '%s'", dir );
 	return(dir);
 }
 
-int Make_temp_fd( struct control_file *cfp, char *temppath, int templen )
+int Make_temp_fd( char *temppath, int templen )
 {
 	int tempfd = -1;
 	int len;
@@ -250,7 +243,7 @@ int Make_temp_fd( struct control_file *cfp, char *temppath, int templen )
 
 	register_exit( (exit_ret)Remove_tempfiles, 0 );
 	if( Tempfile == 0 || Tempfile->pathname[0] == 0){
-		Init_tempfile( cfp );
+		Init_tempfile();
 	}
 	while( tempfd <= 0 ){
 		safestrncpy( pathname, Clear_path( Tempfile ) );
@@ -259,7 +252,8 @@ int Make_temp_fd( struct control_file *cfp, char *temppath, int templen )
 		if( temppath ) strncpy( temppath, pathname, templen );
 		DEBUG0("Make_temp_fd: trying '%s'", pathname );
 		tempfd = Lockf( pathname, &lock, &create, &statb);
-		DEBUG0("Make_temp_fd: tempfd %d, create %d, lock %d", tempfd, create, lock );
+		DEBUG0("Make_temp_fd: tempfd %d, create %d, lock %d",
+				tempfd, create, lock );
 		if( tempfd > 0 && (create == 0 || lock == 0) ){
 			close(tempfd);
 			tempfd = -1;

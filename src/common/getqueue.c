@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getqueue.c,v 3.4 1997/01/29 03:04:39 papowell Exp $";
+"$Id: getqueue.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /***************************************************************************
 Commentary
@@ -123,7 +123,7 @@ void Getcontrolfile( char *pathname, char *file, struct dpathname *dpath,
 		int age;
 
 		/* ignore zero length control files */
-		strcpy( cf->error, "zero length control file" );
+		/* strcpy( cf->error, "zero length control file" ); */
 		/* check to see if the file is older than 1 hour */
 
 		t = time( (time_t *)0 );
@@ -343,13 +343,14 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 			 *    check for copies of the same file
 			 */
 			if( df ){
-				df->copies = !strcmp( df->transfername, s+1 );
+				df->copies = strcmp( df->transfername, s+1 ) != 0;
 			}
 			df = (void *)cf->data_file_list.list;
 			df = &df[cf->data_file_list.count++];
 			/* get the format and name of file */
 			memset( (void *)df, 0, sizeof( df[0] ) );
 			df->format = c;
+			df->copies = 1;
 			strncpy(df->transfername, s, sizeof(df->transfername) );
 			strncpy(df->original, s+1, sizeof(df->original) );
 			s = Add_path( dpath, s+1 );
@@ -572,7 +573,7 @@ void Scan_queue( int check_df, int new_queue )
 			cfp = cfpp[free_entry];
 			Getcontrolfile( pathname, d->d_name, SDpathname, fd,
 				&statb, check_df, cfp );
-			Get_job_control( cfp, (void *)0 );
+			Get_job_control( cfp, 0 );
 		} else {
 			cfp = cfpp[i];
 		}

@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpq_getparms.c,v 3.5 1997/01/22 15:13:27 papowell Exp $";
+"$Id: lpq_getparms.c,v 3.7 1997/03/05 04:40:04 papowell Exp papowell $";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -70,6 +70,7 @@ void Get_parms(int argc, char *argv[] )
 	/* check to see if we simulate (poorly) the LP options */
 	if( name && strcmp( name, "lpstat" ) == 0 ){
 		LP_mode = 1;
+		Opterr = 0;
 		while ((option = Getopt (argc, argv,
 			"AdrRsta:c:f:lo:p:D:P:S:u:v" )) != EOF)
 		switch(option){
@@ -137,6 +138,7 @@ void Get_parms(int argc, char *argv[] )
 			Lp_summary = 1;
 			Lp_status = 1;
 			Longformat = 0;
+			Displayformat = REQ_DSHORT;
 			break;
 		case 't': /* option t */
 			All_printers = 1;
@@ -165,9 +167,12 @@ void Get_parms(int argc, char *argv[] )
 		}
 		if( Optind == argc ){
 			Lp_status = 1;
-			name = getenv( "USER" );
+			name = getenv( "LOGNAME" );
 			if( name == 0 ){
-				Diemsg( "USER environment variable not set");
+				name = getenv( "USER" );
+			}
+			if( name == 0 ){
+				Diemsg( "LOGNAME and USER environment variable not set");
 			}
 			Add_to( &Lp_pr_list, name );
 		}
@@ -185,7 +190,7 @@ void Get_parms(int argc, char *argv[] )
 			Lp_sched, Lp_default, Lp_status, Lp_showjobs, Lp_accepting );
 			logDebug( "Lp_pr_list.count %d", Lp_pr_list.count );
 			for( i = 0; i < Lp_pr_list.count; ++i ){
-				logDebug( "[%d] '%s'\n", i, list[i] );
+				logDebug( "[%d] '%s'", i, list[i] );
 			}
 		}
 	} else while ((option = Getopt (argc, argv, LPQ_optstr )) != EOF) {
@@ -218,39 +223,39 @@ void Get_parms(int argc, char *argv[] )
 }
 
 char *lpq_msg[] = {
-	"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]",
-	"  -a           - all printers",
-	"  -A           - use authentication",
-	"  -c           - clear screen before update",
-	"  -l           - increase (lengthen) detailed status information",
-	"                 additional l flags add more detail.",
-	"  -Ddebuglevel - debug level",
-	"  -Pprinter    - specify printer",
-	"  -s           - short (summary) format",
-	"  -tsleeptime  - sleeptime between updates",
-	"  -V           - print version information",
+"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]
+  -a           - all printers
+  -A           - use authentication
+  -c           - clear screen before update
+  -l           - increase (lengthen) detailed status information
+                 additional l flags add more detail.
+  -Ddebuglevel - debug level
+  -Pprinter    - specify printer
+  -s           - short (summary) format
+  -tsleeptime  - sleeptime between updates
+  -V           - print version information",
 	0
 };
 
 char *lpstat_msg[] = {
-"usage: %s [-d] [-r] [-R] [-s] [-t] [-a [list]]",
-"  [-c [list]] [-f [list] [-l]] [-o [list]]",
-"  [-p [list]] [-P] [-S [list]] [list]",
-"  [-u [login-ID-list]] [-v [list]]",
-" list is a list of print queues",
-" -a [list] destination status *",
-" -c [list] class status *",
-" -f [list] forms status *",
-" -o [list] job or printer status *",
-" -p [list] printer status *",
-" -P        paper types - ignored",
-" -r        scheduler status",
-" -s        summary status information - short format",
-" -S [list] character set - ignored",
-" -t        all status information - long format",
-" -u [joblist] job status information",
-" -v [list] printer mapping *",
-" * - long status format produced",
+"usage: %s [-d] [-r] [-R] [-s] [-t] [-a [list]]
+  [-c [list]] [-f [list] [-l]] [-o [list]]
+  [-p [list]] [-P] [-S [list]] [list]
+  [-u [login-ID-list]] [-v [list]]
+ list is a list of print queues
+ -a [list] destination status *
+ -c [list] class status *
+ -f [list] forms status *
+ -o [list] job or printer status *
+ -p [list] printer status *
+ -P        paper types - ignored
+ -r        scheduler status
+ -s        summary status information - short format
+ -S [list] character set - ignored
+ -t        all status information - long format
+ -u [joblist] job status information
+ -v [list] printer mapping *
+ * - long status format produced",
 0
 };
 

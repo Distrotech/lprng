@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: link_support.c,v 3.4 1997/01/22 23:06:12 papowell Exp $";
+"$Id: link_support.c,v 3.5 1997/02/04 21:41:05 papowell Exp papowell $";
 
 /***************************************************************************
  * MODULE: Link_support.c
@@ -989,7 +989,7 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	int err;					/* error */
 
 	len = i = status = cnt = 0;	/* shut up GCC */
-	DEBUGF(DNW4) ("Link_file_read: reading %d from '%s' on %d",
+	DEBUGF(DNW1) ("Link_file_read: reading %d from '%s' on %d",
 		*count, host, *socket );
 	/* check for valid socket */
 	if(*socket < 0) {
@@ -1003,26 +1003,26 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	/* do the read */
 	len = *count;
 	while( status == 0 && len > 0 ){
-		DEBUGF(DNW3)("Link_file_read: doing data read" );
+		DEBUGF(DNW2)("Link_file_read: doing data read" );
 		l = sizeof(str);
 		if( l > len ) l = len;
 		i = Read_fd_len_timeout( readtimeout, *socket, str, l );
 		err = errno;
 		if( Alarm_timed_out ){
-			DEBUGF(DNW4)( "Link_file_read: read from '%s' timed out", host);
+			DEBUGF(DNW2)( "Link_file_read: read from '%s' timed out", host);
 			status = LINK_TRANSFER_FAIL;
 		} else if( i > 0 ){
-			DEBUGF(DNW4)("Link_file_read: len %d, readlen %d, read %d", len, l, i );
+			DEBUGF(DNW2)("Link_file_read: len %d, readlen %d, read %d", len, l, i );
 			len -= i;
 			cnt = Write_fd_len_timeout(writetimeout, fd, str, i );
 			err = errno;
 			if( Alarm_timed_out || cnt < 0 ){
-				DEBUGF(DNW4)( "Link_file_read: write %d to fd %d failed - %s",
+				DEBUGF(DNW2)( "Link_file_read: write %d to fd %d failed - %s",
 					i, fd, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL; 
 			}
 		} else {
-			DEBUGF(DNW4)("Link_file_read: read from '%s' failed - %s",
+			DEBUGF(DNW2)("Link_file_read: read from '%s' failed - %s",
 				host, Errormsg(err) );
 			status = LINK_TRANSFER_FAIL;
 		}
@@ -1030,15 +1030,15 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	*count -= len;
 
 	if( status == 0 && ack ){
-		DEBUGF(DNW3)("Link_file_read: doing ACK read" );
+		DEBUGF(DNW2)("Link_file_read: doing ACK read" );
 		i = Read_fd_len_timeout(readtimeout, *socket, str, 1 );
 		err = errno;
 
 		if( Alarm_timed_out ){
-			DEBUGF(DNW4)( "Link_file_read: ack read from '%s' timed out", host);
+			DEBUGF(DNW2)( "Link_file_read: ack read from '%s' timed out", host);
 			status = LINK_TRANSFER_FAIL;
 		} else if( i > 0 ){
-			DEBUGF(DNW4)("Link_file_read: ACK read count %d value %d", i, *str );
+			DEBUGF(DNW2)("Link_file_read: ACK read count %d value %d", i, *str );
 			*ack = *str;
 			if( *ack ){
 				DEBUGF(DNW2)( "Link_file_read: nonzero ack '%d'", *ack );
@@ -1072,7 +1072,7 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 		Link_close( socket );
 	}
 
-	DEBUGF(DNW4)("Link_file_read: status %d", status );
+	DEBUGF(DNW2)("Link_file_read: status %d", status );
 	return( status );
 }
 

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: timeout.c,v 3.2 1997/01/15 02:21:18 papowell Exp $";
+"$Id: timeout.c,v 3.3 1997/03/04 21:18:29 papowell Exp papowell $";
 
 #include "lp.h"
 #include "timeout.h"
@@ -75,7 +75,7 @@ int Set_timeout_alarm( int timeout, int *socket )
 
 	if( timeout > 0 ){
 		Timeout_pending = timeout;
-		plp_signal(SIGALRM, timeout_alarm);
+		plp_signal_break(SIGALRM, timeout_alarm);
 		alarm (timeout);
 	}
 	errno = err;

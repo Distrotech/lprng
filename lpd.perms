@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/printer_perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms,v 3.1 1997/01/22 23:15:38 papowell Exp $
+# $Id: lpd.perms,v 3.2 1997/02/05 18:55:02 papowell Exp papowell $
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -47,7 +47,7 @@
 ## REMOTEIP     IP    RIP     RIP   JIP    RIP  RIP   RIP
 ## CONTROLLINE  S     -       CL    CL     CL   CL    CL
 ## PRINTER      S     -       PR    PR     PR   PR    PR
-## FORWARD      V     -       -     SA     -    SA    SA
+## FORWARD      V     -       SA    -      -    SA    SA
 ## SAMEHOST     V     -       SA    -      SA   SA    SA
 ## SAMEUSER     V     -       -     -      SU   SU    SU
 ## SERVER       V     -       SV    -      SV   SV    SV

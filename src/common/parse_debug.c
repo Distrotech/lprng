@@ -17,7 +17,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: parse_debug.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
+"$Id: parse_debug.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /*************************************************************
  * void Get_debug_parm(int argc, char *argv[], struct keywords *list)
@@ -86,7 +86,7 @@ void Get_debug_parm(int argc, char *argv[], char *optstr,
 				Parse_debug (Optarg, list, 1 );
 			} else {
 				if( Interactive ){
-					fprintf(stderr, "-D missing option");
+					fprintf(stderr, "-D missing option\n");
 				}
 				Errorcode = JABORT;
 				cleanup(0);

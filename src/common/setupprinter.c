@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setupprinter.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
+"$Id: setupprinter.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -108,8 +108,9 @@ int Setup_printer( char *name,
 	DEBUG2("Setup_printer: RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
 		RemoteHost, RemotePrinter, Lp_device );
 
-	Check_remotehost(1);
-
+	if( Lp_device && strchr( Lp_device, '@' ) ){
+		Check_remotehost();
+	}
 
 	if( Spool_dir && *Spool_dir ){
 		s = Expand_path( SDpathname, Spool_dir );
@@ -205,9 +206,14 @@ void Fix_update( struct keywords *debug_list, int info_only )
 	RemoteHost = Orig_RemoteHost;
 	RemotePrinter = Orig_RemotePrinter;
 	if( Forwarding && *Forwarding ){
-		Lp_device = Forwarding;
+		if( strchr( Forwarding, '@' ) ){
+			Lp_device = Forwarding;
+			Check_remotehost();
+		} else {
+			RemotePrinter = Forwarding;
+			RemoteHost = 0;
+		}
 	}
-	Check_remotehost(1);
 #if !defined(NODEBUG)
 	if( !info_only && Control_debug && *Control_debug && debug_list ){
 		DEBUG0("Fix_update: new debug level %s", Control_debug );

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: permissions.c,v 3.5 1997/02/02 15:44:39 papowell Exp papowell $";
+"$Id: permissions.c,v 3.6 1997/02/04 23:34:23 papowell Exp papowell $";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -405,75 +405,6 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 	}
 	return( status );
 }
-
-/***************************************************************************
- * dump_perm_file( char *title, struct perm_file *cf )
- ***************************************************************************/
-
-void dump_perm_val( char *title, struct perm_val *val,
-	struct perm_file *perms)
-{
-	int i;
-	char **list = perms->list.list;
-	if( val ){
-		logDebug( "%s key %d, token '%s', list %d",
-			title?title:"", val->key, val->token, val->list );
-		for( i = val->list; list[i]; ++i ){
-			logDebug( "   option [%2d] '%s'", i, list[i] );
-		}
-	}
-}
-
-
-void dump_perm_line( char *title, struct perm_line *line,
-	struct perm_file *perms)
-{
-	struct perm_val *values = (void *)perms->values.list;
-	int i;
-
-	logDebug( "%s - perm line 0x%x, flag %d, list %d", title?title:"",
-		line, line->flag, line->list );
-	for( i = line->list; values[i].token; ++i ){
-		char buffer[64];
-		plp_snprintf( buffer, sizeof(buffer),
-			"  entry [%2d]", i );
-		dump_perm_val( buffer, &values[i], perms );
-	}
-}
-
-void dump_perm_file( char *title,  struct perm_file *perms )
-{
-	int i;
-	char buff[32];
-	struct perm_line *line;
-
-	if( title ) logDebug( "*** perm_file %s ***", title );
-	if( perms ){
-		line = (void *)perms->lines.list;
-		for( i = 0; i < perms->lines.count; ++i ){
-			plp_snprintf( buff, sizeof(buff), "[%d] ", i );
-			dump_perm_line( buff, &line[i], perms );
-		}
-	}
-}
-
-/***************************************************************************
- * dump_perm_check( char *title, struct perm_check *check )
- * Dump perm_check information
- ***************************************************************************/
-
-void dump_perm_check( char *title,  struct perm_check *check )
-{
-	if( title ) logDebug( "*** perm_check %s ***", title );
-	if( check ){
-		logDebug(
-		"  user '%s', rmtuser '%s', printer '%s', service '%c'",
-		check->user, check->remoteuser, check->printer, check->service );
-		dump_host_information( "  host", check->host );
-		dump_host_information( "  remotehost", check->remotehost );
-	}
-}
-
 /***************************************************************************
  * Perms_check( struct perm_file *perms, struct perm_check );
  * - run down the list of permissions

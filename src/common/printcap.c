@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: printcap.c,v 3.3 1997/01/29 03:04:39 papowell Exp $";
+"$Id: printcap.c,v 3.7 1997/03/03 19:46:51 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -43,9 +43,9 @@ struct printcap_entry *Parse_raw_printcap( int first_line, char *key,
 	char *path, struct file_entry *raw );
 void Fix_raw_pc( struct printcap_entry *pc, char *path );
 char **Get_pc_option_entry( char *str, struct printcap_entry *pc );
-int Combine_options( char *name, struct printcap_entry *pc, char *key,
+extern int Combine_options( char *name, struct printcap_entry *pc, char *key,
 	int start_index );
-int Filterprintcap( char *name, char *key, int *start_index,
+extern int Filterprintcap( char *name, char *key, int *start_index,
 	struct file_entry *raw, int break_on_line );
 struct printcap_entry *Create_expanded_entry(
 	struct printcap_entry *entry, char *key, int start_index );
@@ -811,7 +811,7 @@ char **Get_pc_option_entry( char *str, struct printcap_entry *pc )
 		c = strncmp( s, str, len );
 		if( c == 0 ){
 			/* if we have punctuation, then we are ok */
-			if( s[len] == 0 || ispunct(s[len]) ){
+			if( (c = s[len]) == 0 || isspace(c) || strchr( "@=#", c ) ){
 				DEBUGF(DDB4)("Get_pc_option_entry: found [%d]->'%s'",
 					i, s );
 				return( &options[i] );
@@ -1300,12 +1300,11 @@ int pc_cmp( char *left, char *right )
  * void Combine_options( char *name, struct printcap_entry *pc )
  *  1. scan the raw printcap entries for ones with matching
  *     primary name
- *  2. if the name is the same,  then merge the printcap options
- *     with the current options.
+ *  2. if a 'oh' entry, then we check to see if we use it. We check the
+ *     glob match of the FQDN host name, or the short host form
+ *  3. merge the printcap options with the current options.
  *  3. if a 'tc=' entry is now in the options,  then scan for the
- *     tc= entry options, and do the same merge and scan.  Note that
- *  4. if a 'oh' entry, then we check to see if we use it. We check the
- *     IP address against our host IP address
+ *     tc= entry options, and do the same merge and scan.
  ***************************************************************************/
 
 int Combine_options( char *name, struct printcap_entry *pc, char *key,
@@ -1325,6 +1324,9 @@ int Combine_options( char *name, struct printcap_entry *pc, char *key,
 	int diff;
 	char **tc_line;
 	int found = 0;
+	char ohname[SMALLBUFFER];
+	char *end;
+
 
 	DEBUGF(DDB2)(
 		"Combine_options: start- name '%s', pc '%s', key %d, start_index %d nesting %d",
@@ -1351,19 +1353,50 @@ int Combine_options( char *name, struct printcap_entry *pc, char *key,
 			continue;
 		}
 		/*
+		 * check for 'server' flag
+		 */
+		if( (s = Get_pc_option_value( "server", raw_pc )) ){
+			DEBUGF(DDB3)("Combine_options: printcap server flag '%s',  server %d",
+				s, Is_server );
+			if( Is_server == 0 ) continue;
+		}
+		/*
 		 * check for 'oh' entry
 		 */
 		if( (s = Get_pc_option_value( "oh", raw_pc )) ){
 			/* get the IP address */
-			DEBUGF(DDB3)("Combine_options: oh entry '%s'", s );
 			if( *s != '=' ){
 				fatal( LOG_ERR, "Combine_options: '%s' bad printcap :oh: entry",
 					raw_pc->names[0] );
 			}
 			++s;
-			while( isspace(*s) ) ++s;
-			if( Find_fqdn( &LookupHostIP, s, 0 ) == 0
-				|| Same_host( &LookupHostIP, &HostIP ) != 0 ){
+			safestrncpy( ohname, s );
+			DEBUGF(DDB3)("Combine_options: oh entry '%s', fqdn '%s'",
+				ohname, HostIP.fqdn );
+			for( not_found = 1, s = ohname; not_found && s && *s; s = end ){
+				while( isspace(*s) ) ++s;
+				end = strpbrk(s, " \t,;" );
+				if( end ){
+					*end++ = 0;
+				}
+				/* we do a globmatch on the host's fqdn, then try IP addresses */
+				DEBUGF(DDB3)("Combine_options: checking '%s'", s );
+				if( Globmatch( s, HostIP.fqdn ) == 0 ){
+					DEBUGF(DDB3)("Combine_options: globmatch '%s' to '%s'",
+					s, HostIP.fqdn );
+					not_found = 0;
+				} else {
+					s = Find_fqdn( &LookupHostIP, s, 0 );
+					DEBUGF(DDB3)("Combine_options: fqdn '%s' to '%s'",
+						LookupHostIP.fqdn, HostIP.fqdn );
+					if( Same_host( &LookupHostIP, &HostIP ) == 0 ){
+						DEBUGF(DDB3)("Combine_options: same host" );
+						not_found = 0;
+					}
+				}
+			}
+			if( not_found ){
+				DEBUGF(DDB3)("Combine_options: not using this entry" );
 				continue;
 			}
 		}
@@ -1578,15 +1611,14 @@ char *Find_printcap_entry( char *name, struct printcap_entry **pc_found )
 		pc = 0;
 		name = 0;
 	} else {
+		char *s;
 		DEBUGF(DDB1)("Find_printcap_entry: looking for '%s', found '%s'",
 			name, pc->names[0] );
 		DEBUGFC(DDB2)dump_printcap_entry("Find_printcap_entry", pc );
 		name = pc->names[0];
-		if( Find_meta(name) ){
-			fatal( LOG_ERR, "Find_printcap_entry: name '%s' has meta character",
-				name );
-			name = 0;
-			pc = 0;
+		if( (s = Find_meta(name)) ){
+			fatal( LOG_ERR, "Find_printcap_entry: name '%s' has meta character '%c'",
+				name, *s );
 		}
 	}
 	if( pc_found ) *pc_found = pc;

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_cpyfiles.c,v 3.4 1997/01/29 03:04:39 papowell Exp $";
+"$Id: lpr_cpyfiles.c,v 3.10 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -32,34 +32,60 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
 
 static int did_stdin;
 
-off_t Copy_stdin( struct control_file *cf )
+off_t Copy_stdin( struct control_file *cfp )
 {
 	int fd, count;
 	off_t size = 0;
-	int i;			/* The all-seeing i */
-	struct data_file *df;
+	int i, c;			/* The all-seeing i */
+	struct data_file *df, *dfp;
 	char buffer[LARGEBUFFER];
+	char *str;
 
 
 	/* we get the temporary directory for these operations */
-	DEBUG2( "Copy_stdin: file count %d", cf->data_file_list.count );
+	DEBUG2( "Copy_stdin: file count %d", cfp->data_file_list.count );
 	if( did_stdin ){
-		Diemsg( "You have already specified STDIN in the job list" );
+		Diemsg( _("You have already specified STDIN in the job list") );
 	}
 	did_stdin = 1;
 
 	/* OK, now we can set up the information */
-	if( cf->data_file_list.count+4 >= cf->data_file_list.max ){
-		extend_malloc_list( &cf->data_file_list, sizeof( df[0] ), 10 );
+	i = 3+Copies; /* overestimate just incase, but 1 less than other places */
+	if( cfp->data_file_list.count+ i > cfp->data_file_list.max ){
+		extend_malloc_list( &cfp->data_file_list, sizeof( df[0] ), i );
 	}
-	df = (void *)cf->data_file_list.list;
-	df = &df[cf->data_file_list.count++];
-
-	plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", "(stdin)" );
-	df->fd = 0;
-	df->copies = Copies;
+	dfp = (void *)cfp->data_file_list.list;
+	df = &dfp[cfp->data_file_list.count];
+	if( cfp->data_file_list.count < 26 ){
+		c = 'A'+cfp->data_file_list.count;
+	} else {
+		c = 'A'-26+cfp->data_file_list.count;
+	}
+	for( i = 0; i < Copies; ++i ){
+		df = &dfp[cfp->data_file_list.count++];
+		memset( df, 0, sizeof(df[0]) );
+		/* each data file entry is:
+           FdfNNNhost\n    (namelen+1)
+           UdfNNNhost\n    (namelen+1)
+		   Nfile\n         (strlen(datafile->file)+2
+		 */
+		df->format = *Format;
+		plp_snprintf( df->transfername, sizeof(df->transfername),
+			"%cdf%c%0*d%s", *Format, c, cfp->number_len, cfp->number, FQDNHost );
+		str = Add_job_line( cfp, df->transfername, 1 );
+		DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+		plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", "(stdin)" );
+		str = Add_job_line( cfp, df->Ninfo, 1 );
+		DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+	}
 
 	/* we simply set up the filter and return */
+	df->copies = Copies;
+	safestrncpy( df->Uinfo, df->transfername );
+	df->Uinfo[0] = 'U';
+	str = Add_job_line( cfp, df->Uinfo, 1 );
+	DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+
 	if( Secure != 0 ){
 		df->flags |= PIPE_FLAG;
 		df->fd = dup( 0 );
@@ -68,33 +94,33 @@ off_t Copy_stdin( struct control_file *cf )
 		return( size );
 	}
 
-	fd = Make_temp_fd( cf, buffer, sizeof(buffer) );
+	fd = Make_temp_fd( buffer, sizeof(buffer) );
 
 	if( fd < 0 ){
-		logerr_die( LOG_INFO, "Make_temp_fd failed" );
+		logerr_die( LOG_INFO, _("Make_temp_fd failed") );
 	} else if( fd == 0 ){
-		Diemsg( "You have closed STDIN! cannot pipe from a closed connection");
+		Diemsg( _("You have closed STDIN! cannot pipe from a closed connection"));
 	}
 	safestrncpy( df->openname, buffer );
 	DEBUG1("Temporary file '%s', fd %d", df->openname, fd );
 	/* now we copy standard input into the file until we get EOF */
-	i = 1;
 	size = 0;
 	while( (count = read( 0, buffer, sizeof(buffer))) > 0 ){
 		if( Write_fd_len( fd, buffer, count ) < 0 ){
 			Errorcode = JABORT;
-			logerr_die( LOG_INFO, "Copy_stdin: write to temp file failed");
+			logerr_die( LOG_INFO, _("Copy_stdin: write to temp file failed"));
 		}
 		size += count;
 	}
 	if( fstat( fd, &df->statb ) < 0 ){
-		logerr_die( LOG_INFO, "Copy_stdin: fstat '%s' failed", df->openname);
+		logerr_die( LOG_INFO, _("Copy_stdin: fstat '%s' failed"), df->openname);
 	}
 	if( !Check_lpr_printable(df->Ninfo+1, fd, &df[0].statb, *Format)){
 		return( 0 );
 	}
-	DEBUG3( "Copy_Stdin: Tempfile '%s' size %d ", Tempfile, size );
-	return( size );
+	close(fd);
+	DEBUG3( "Copy_Stdin: Tempfile '%s' size %d, copies %d", Tempfile, size, Copies );
+	return( size*Copies );
 }
 
 /***************************************************************************
@@ -106,45 +132,78 @@ off_t Copy_stdin( struct control_file *cf )
  * 5. Put information in the data_file{} entry
  ***************************************************************************/
 
-off_t Check_files( struct control_file *cf, char **files, int filecount )
+off_t Check_files( struct control_file *cfp, char **files, int filecount )
 {
 	off_t size = 0;
-	int i, fd, printable;
-	struct data_file *df;
+	int i, j, c, fd, printable;
+	struct data_file *df, *dfp;
 	struct stat statb;
 	int err;
+	char *str;
 
 	if( filecount == 0 ){
 		return( size );
+	}
+
+	/* preallocate enough space so that things are not moved around by realloc */
+	if( Copies == 0 ) Copies = 1;
+	i = filecount*Copies + 4;	/* overestimate just in case */
+	if( filecount > 0 && cfp->data_file_list.count+i > cfp->data_file_list.max ){
+		extend_malloc_list( &cfp->data_file_list, sizeof( df[0] ), i );
 	}
 
 	/* OK, now we can set up the information */
 	for( i = 0; i < filecount; ++i){
 		DEBUG2( "Check_files: doing '%s'", files[i] );
 		if( strcmp( files[i], "-" ) == 0 ){
-			Copy_stdin( cf );		
+			Copy_stdin( cfp );		
 			continue;
 		}
 		fd = Checkread( files[i], &statb );
 		err = errno;
 		if( fd < 0 ){
-			Warnmsg( "Cannot open file '%s', %s", files[i], Errormsg( err ) );
+			Warnmsg( _("Cannot open file '%s', %s"), files[i], Errormsg( err ) );
 			continue;
 		}
 		printable = Check_lpr_printable( files[i], fd, &statb, *Format );
 		close( fd );
 		if( printable > 0 ){
 			DEBUG3( "Check_files: printing '%s'", files[i] );
-			if( cf->data_file_list.count+4 >= cf->data_file_list.max ){
-				extend_malloc_list( &cf->data_file_list, sizeof( df[0] ), 10 );
+			if( cfp->data_file_list.count+Copies >= cfp->data_file_list.max ){
+				Diemsg(_("Check_files: you did not allocate enough space for files"));
 			}
-			df = (void *)cf->data_file_list.list;
-			df = &df[cf->data_file_list.count++];
 			size += statb.st_size*Copies;
-			df->statb = statb;
-			strncpy( df->openname,files[i],sizeof(df->openname));
-			plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", files[i] );
+			dfp = (void *)cfp->data_file_list.list;
+			df = &dfp[cfp->data_file_list.count];
+			if( cfp->data_file_list.count < 26 ){
+				c = 'A'+cfp->data_file_list.count;
+			} else {
+				c = 'A'-26+cfp->data_file_list.count;
+			}
+			for( j = 0; j < Copies; ++j ){
+				df = &dfp[cfp->data_file_list.count++];
+				memset( df, 0, sizeof(df[0]) );
+				/* each data file entry is:
+				   FdfNNNhost\n    (namelen+1)
+				   UdfNNNhost\n    (namelen+1)
+				   Nfile\n         (strlen(datafile->file)+2
+				 */
+				df->format = *Format;
+				plp_snprintf( df->transfername, sizeof(df->transfername),
+					"%cdf%c%0*d%s", *Format, c, cfp->number_len, cfp->number, FQDNHost );
+				str = Add_job_line( cfp, df->transfername, 1 );
+				DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+				df->statb = statb;
+				strncpy( df->openname,files[i],sizeof(df->openname));
+				plp_snprintf( df->Ninfo, sizeof( df->Ninfo), "N%s", files[i] );
+				str = Add_job_line( cfp, df->Ninfo, 1 );
+				DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
+			}
 			df->copies = Copies;
+			safestrncpy( df->Uinfo, df->transfername );
+			df->Uinfo[0] = 'U';
+			str = Add_job_line( cfp, df->Uinfo, 1 );
+			DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 		}
 	}
 	DEBUG3( "Check_files: size %d", size );
@@ -167,7 +226,7 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
     char buf[LINEBUFFER];
     int n, i, c;                /* Acme Integers, Inc. */
     int printable = 0;
-	char *err = "cannot print '%s': %s";
+	char *err = _("cannot print '%s': %s");
 
 	/*
 	 * Do an LSEEK on the file, i.e.- see to the start
@@ -175,12 +234,12 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
 	 */
 	lseek( fd, 0, 0 );
     if(!S_ISREG( statb->st_mode )) {
-		Diemsg(err, file, "not a regular file");
+		Diemsg(err, file, _("not a regular file"));
     } if(statb->st_size == 0) {
 		/* empty file */
 		printable = -1;
     } else if ((n = read (fd, buf, sizeof(buf))) <= 0) {
-        Diemsg (err, file, "cannot read it");
+        Diemsg (err, file, _("cannot read it"));
     } else if (format != 'p' && format != 'f' ){
         printable = 1;
     } else if( Check_for_nonprintable == 0 ) {
@@ -189,16 +248,18 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
          */
         printable = 1;
     } else if (is_exec ( buf, n)) {
-        Diemsg (err, file, "executable program");
+        Diemsg (err, file, _("executable program"));
     } else if (is_arch ( buf, n)) {
-        Diemsg (err, file, "archive file");
+        Diemsg (err, file, _("archive file"));
     } else {
         printable = 1;
 		for (i = 0; printable && i < n; ++i) {
 			c = ((unsigned char *)buf)[i];
-			if( !isprint( c ) && !isspace( c ) ) printable = 0;
+			/* we allow backspace */
+			if( !isprint( c ) && !isspace( c )
+				&& c != 0x08 && c != 0x1B ) printable = 0;
 		}
-		if( !printable ) Diemsg (err, file, "unprintable file");
+		if( !printable ) Diemsg (err, file, _("unprintable file"));
     }
     return(printable);
 }

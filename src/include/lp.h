@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: lp.h
  * PURPOSE: general type definitions that are used by all LPX facilities.
- * $Id: lp.h,v 3.10 1997/01/30 21:15:20 papowell Exp $
+ * $Id: lp.h,v 3.15 1997/03/24 00:45:58 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _LP_H_
@@ -26,6 +26,22 @@
 /*****************************************************************
  * Global variables and routines that will be common to all programs
  *****************************************************************/
+
+/*****************************************************
+ * Internationalisation of messages, using GNU gettext
+ *****************************************************/
+
+#if HAVE_LOCALE_H
+# include <locale.h>
+#endif
+
+#if ENABLE_NLS
+# include <libintl.h>
+# define _(Text) gettext (Text)
+#else
+# define _(Text) Text
+#endif
+#define N_(Text) Text
 
 /*****************************************************************
  * strncpy/strncat(s1,s2,len)
@@ -134,15 +150,16 @@ EXTERN char *Forwarding;	/* Forwarding to remote host */
 EXTERN char *Classes;		/* Classes for printing */
 EXTERN int Destination_port;	/* Destination port for connection */
 EXTERN char *Server_order;	/* order servers should be used in */
+EXTERN int Max_servers;		/* max servers currently active */
 EXTERN int Max_servers_active;	/* maximum number of servers active */
 EXTERN int IPV6Protocol;	/* IPV4 or IPV6 protocol */
 extern int AF_Protocol;		/* AF protocol */
-EXTERN int Signal_server;	/* send a signal to the server */
 EXTERN char* Kerberos_service;	/* kerberos service */
 EXTERN char* Kerberos_keytab;	/* kerberos keytab file */
 EXTERN char* Kerberos_life;	/* kerberos lifetime */
 EXTERN char* Kerberos_renew;	/* kerberos newal time */
 EXTERN char* Kerberos_server_principle;	/* kerberos server principle */
+EXTERN int Poll_time;		/* time in secs between starting up all servers */
 
 /*****************************************************************
  * Command line options and Debugging information
@@ -306,7 +323,7 @@ struct data_file {
 	int flags;			/* flags */
 	int found;			/* job found in control file and sent */
 #define PIPE_FLAG		0x01	/* pipe */
-	int copies;			/* if non-zero, there are more copies of this entry */
+	int copies;			/* if non-zero, this is the transfered copy */
 	off_t offset;		/* offset from the start of the block format file */
 	off_t length;		/* length file */
 };
@@ -338,7 +355,6 @@ struct control_file {
 	int  jobsize;			/* size of job in bytes */
 	int  copynumber;		/* copy number */
 	char filehostname[LINEBUFFER];	/* hostname part of the control file name */
-	char realhostname[LINEBUFFER];	/* hostname in the control file */
 	struct stat statb;		/* stat of control file information */ 
 	char hold_file[MAXPATHLEN];	/* full pathname of hold file */
 	struct stat hstatb;		/* stat of hold file information */ 
@@ -915,14 +931,14 @@ int Job_control( int *socket, char *input, int maxlen );
 void Get_parms(int argc,char *argv[]);
 off_t Copy_stdin( struct control_file *cf );    /* copy stdin to a file */
 off_t Check_files( struct control_file *cf,  char **files, int filecount );
-void Make_job( struct control_file *cf );
+int Make_job( struct control_file *cf );
 void Process_jobs( int *socket, char *input, int maxlen );
 void Start_all( void );
-int Fixup_job_number( struct control_file *cfp );
+int Find_non_colliding_job_number( struct control_file *cfp );
 int Scan_block_file( int fd, struct control_file *cfp );
 int Check_for_missing_files( struct control_file *cfp,
-	struct malloc_list *data_files_list, int temp_fd, char *orig_name,
-	char *authentication );
+	struct malloc_list *data_files_list, int temp_fd, char *cf_name,
+	char *orig_name, char *authentication );
 int Do_perm_check( struct control_file *cfp );
 void Do_queue_jobs( char *name );
 void Sendmail_to_user( int status, struct control_file *cfp,

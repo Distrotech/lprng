@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: permission.h
  * PURPOSE: permission file parsing
- * $Id: permission.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * $Id: permission.h,v 3.3 1997/02/04 23:34:23 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _PERMISSION_H
@@ -117,8 +117,6 @@ EXTERN struct perm_file Perm_queue;
 EXTERN struct perm_check Perm_check;
 EXTERN int Last_default_perm;	/* last default permission */
 
-void dump_perm_file( char *title,  struct perm_file *perms );
-void dump_perm_check( char *title,  struct perm_check *check );
 char *perm_str( int val );
 void Get_perms( char *name, struct perm_file *perms, char *path );
 int Filter_perms( char *name, struct perm_file *perms, char *filter );

@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: gethostinfo.c,v 3.8 1997/01/30 21:15:20 papowell Exp $";
+"$Id: gethostinfo.c,v 3.10 1997/02/09 00:25:44 papowell Exp papowell $";
 /********************************************************************
  * char *get_fqdn (char *shorthost)
  * get the fully-qualified domain name for a host.
@@ -96,7 +96,7 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 #endif
 	}
 	if( host_ent == 0 ){
-		DEBUGF(DNW1)( "Find_fqdn: no entry for host '%s'", shorthost );
+		DEBUG0( "Find_fqdn: no entry for host '%s'", shorthost );
 		return( 0 );
 	}
 	/* sigh... */
@@ -131,19 +131,17 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 	if( fqdn == 0 ){
 		char buffer[64];
 		struct sockaddr temp_sockaddr;
+		/* this will fit as sockaddr contains subfields */
 		memcpy( &temp_sockaddr, *host_ent->h_addr_list, host_ent->h_length );
-		DEBUGF(DNW3)(
-		"Find_fqdn: using gethostbyaddr for host '%s', addr '%s'",
-		host_ent->h_name, inet_ntop( host_ent->h_addrtype,
+		DEBUG0("Find_fqdn: using gethostbyaddr for host '%s', addr '%s'",
+			host_ent->h_name, inet_ntop( host_ent->h_addrtype,
 			*host_ent->h_addr_list, buffer, sizeof(buffer)) );
 		host_ent = gethostbyaddr( (void *)&temp_sockaddr,
 			host_ent->h_length, host_ent->h_addrtype );
 		if( host_ent ){
 			/* sigh... */
 			Check_for_dns_hack(host_ent);
-
-			DEBUGF(DNW3)(
-			"Find_fqdn: gethostbyaddr found host '%s', addr '%s'",
+			DEBUG1("Find_fqdn: gethostbyaddr found host '%s', addr '%s'",
 				host_ent->h_name,
 				inet_ntop( host_ent->h_addrtype,
 				*host_ent->h_addr_list, buffer,
@@ -154,14 +152,16 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 				fqdn = strchr( *list, '.' );
 			}
 		}
-	}
-	/* we have to do the lookup AGAIN */
-	if( host_ent == 0 ){
+		/* we have to do the lookup AGAIN */
 #if defined(HAVE_GETHOSTBYNAME2)
 		host_ent = gethostbyname2( shorthost, AF_Protocol );
 #else
 		host_ent = gethostbyname( shorthost );
 #endif
+		if( host_ent == 0 ){
+			fatal( LOG_ERR, "Find_fqdn: 2nd search failed for host '%s'",
+				shorthost );
+		}
 		/* sigh... */
 		Check_for_dns_hack(host_ent);
 	}
@@ -221,9 +221,9 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 		s += host_ent->h_length;
 	}
 	info->host_addr_list.count = count;
-	DEBUGFC(DNW3) dump_host_information( "Find_fqdn", info );
+	if(DEBUGL1) dump_host_information( "Find_fqdn", info );
 
-	DEBUGF(DNW3) ("Find_fqdn '%s': returning '%s'", shorthost, fqdn );
+	DEBUG0("Find_fqdn '%s': returning '%s'", shorthost, fqdn );
 	return(fqdn);
 }
 
@@ -253,7 +253,7 @@ int gethostname( char *nbuf, long nsiz )
 {
 	int i;
 	i = sysinfo(SI_HOSTNAME,nbuf, nsiz );
-	DEBUGF(DNW3) ("gethostname: using sysinfo '%s'", nbuf );
+	DEBUG0("gethostname: using sysinfo '%s'", nbuf );
 	return( i );
 }
 #  else
@@ -317,13 +317,13 @@ void Get_local_host( void )
 		fatal( LOG_ERR, "Get_local_fqdn: no host name" );
 	}
 	fqdn = Find_fqdn( &HostIP, host, 0 );
-	DEBUGF(DNW3) ("Get_local_host: fqdn=%s", fqdn);
+	DEBUG0("Get_local_host: fqdn=%s", fqdn);
 	if( fqdn == 0 ){
 		fatal( LOG_ERR, "Get_local_host: hostname '%s' bad", host );
 	}
 	FQDNHost = HostIP.fqdn;
 	ShortHost = HostIP.shorthost;
-	DEBUGF(DNW3) ("Get_local_host: ShortHost=%s, FQDNHost=%s",
+	DEBUG0("Get_local_host: ShortHost=%s, FQDNHost=%s",
 		ShortHost, FQDNHost);
 }
 
@@ -341,13 +341,11 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 	int len = 0; 
 	char *fqdn = 0;
 	char *s;
+	char buffer[64];
 
 	FQDNRemote = ShortRemote = 0;
-	DEBUGFC(DNW3){
-		char buffer[64];
-		logDebug("Get_remote_hostbyaddr: %s",
-			inet_ntop_sockaddr( sin, buffer, sizeof(buffer) ) );
-	}
+	DEBUG0("Get_remote_hostbyaddr: %s",
+		inet_ntop_sockaddr( sin, buffer, sizeof(buffer) ) );
 	if( sin->sa_family == AF_INET ){
 		addr = &((struct sockaddr_in *)sin)->sin_addr;
 		len = sizeof( ((struct sockaddr_in *)sin)->sin_addr );
@@ -388,10 +386,10 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 		info->host_addr_list.count = 1;
 		fqdn = info->shorthost;
 	}
-	DEBUGF(DNW3)("Get_remote_hostbyaddr: %s", fqdn );
+	DEBUG0("Get_remote_hostbyaddr: %s", fqdn );
 	FQDNRemote = info->fqdn;
 	ShortRemote = info->shorthost;
-	DEBUGFC(DNW3) dump_host_information( "Find_fqdn", info );
+	if(DEBUGL1) dump_host_information( "Find_fqdn", info );
 	return( fqdn );
 }
 

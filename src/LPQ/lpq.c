@@ -93,7 +93,7 @@ root: 2nd                                [job 031taco]
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpq.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpq.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
 
 
 char LPQ_optstr[]    /* LPQ options */
@@ -129,7 +129,6 @@ int main(int argc, char *argv[], char *envp[])
 
 
 	/* set signal handlers */
-	(void) plp_signal (SIGPIPE, cleanup);
 	(void) plp_signal (SIGHUP, cleanup);
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
@@ -150,13 +149,13 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* fake the lpstat information */
 	if( Lp_sched ){
-		if( Write_fd_str( 1, "scheduler is running\n" ) < 0 ) cleanup(0);
+		if( Write_fd_str( 1, _("scheduler is running\n") ) < 0 ) cleanup(0);
 	}
 	/* check to see if you have the default */
 	if( Lp_default ){
 		Get_printer( &printcap_entry );
 		plp_snprintf( msg, sizeof(msg),
-		"system default destination: %s\n", Printer );
+		_("system default destination: %s\n"), Printer );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 	}
 	if( LP_mode && (Lp_accepting == 0)
@@ -182,22 +181,25 @@ int main(int argc, char *argv[], char *envp[])
 		}
 	} else {
 		if( *orig_name ) Printer = orig_name;
+		DEBUG0(
+"lpq: before Get_printer: Printer '%s', RemotePrinter '%s', RemoteHost '%s'",
+			Printer, RemotePrinter, RemoteHost );
 		Get_printer(&printcap_entry);
 		if( *orig_name == 0 ) safestrncpy( orig_name, Printer );
 	}
-	if( RemoteHost == 0 || *RemoteHost == 0 ){
-		RemoteHost = 0;
-		if( Default_remote_host && *Default_remote_host ){
-			RemoteHost = Default_remote_host;
-		} else if( FQDNHost && *FQDNHost ){
+	DEBUG0("lpq: Printer %s, RemotePrinter %s, RemoteHost %s",
+		Printer, RemotePrinter, RemoteHost );
+	if( RemoteHost == 0 ){
+		RemoteHost = Default_remote_host;
+		if( RemoteHost == 0 ){
 			RemoteHost = FQDNHost;
 		}
 	}
-	if( RemoteHost == 0 ){
-		Diemsg( "No remote host specified" );
-	}
-	if( RemotePrinter == 0 || *RemotePrinter == 0 ){
+	if( RemotePrinter == 0 ){
 		RemotePrinter = Printer;
+	}
+	if( RemoteHost == 0 ){
+		Diemsg( _("No remote host specified") );
 	}
 
 	DEBUG0("lpq: Printer '%s', All_printers %d, All_list.count %d",
@@ -217,12 +219,15 @@ int main(int argc, char *argv[], char *envp[])
 		if( All_printers && All_list.count ){
 			list = All_list.list;
 			for( i = 0; i < All_list.count; ++i ){
-				RemoteHost = RemotePrinter = 0;
-				Printer = Lp_device = list[i];
+				RemoteHost = RemotePrinter = Lp_device = 0;
+				Printer = list[i];
 				DEBUG0("LPQ: Printer [%d of %d] '%s'",
 					i, All_list.count, Printer );
 				safestrncpy( orig_name, Printer );
-				Check_remotehost(1);
+				if( strchr( Printer, '@' ) ){
+					Lp_device = Printer;
+					Check_remotehost();
+				}
 				if( RemoteHost == 0 || *RemoteHost == 0 ){
 					if( Default_remote_host && *Default_remote_host ){
 						RemoteHost = Default_remote_host;
@@ -232,7 +237,7 @@ int main(int argc, char *argv[], char *envp[])
 				}
 				if( LP_mode == 0 && Displayformat != REQ_DSHORT
 					&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
-					plp_snprintf( msg, sizeof(msg), "Printer: %s is %s@%s\n",
+					plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
 						Printer, RemotePrinter, RemoteHost );
 					DEBUG0("Do_all_printers: '%s'",msg);
 					/* write as long as you can */
@@ -246,10 +251,10 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		} else {
 			DEBUG0("lpq: remoteprinter '%s', remote host '%s'",
-				RemotePrinter?RemotePrinter:"NULL STRING", RemoteHost );
+				RemotePrinter, RemoteHost );
 			if( LP_mode == 0 && Displayformat != REQ_DSHORT
 				&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
-				plp_snprintf( msg, sizeof(msg), "Printer: %s is %s@%s\n",
+				plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
 					Printer, RemotePrinter, RemoteHost );
 				if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 			}
@@ -261,7 +266,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		Remove_tempfiles();
 		if( Interval > 0 ){
-			sleep( Interval );
+			plp_sleep( Interval );
 		}
 		/* we check to make sure that nobody killed the output */
 	} while( Interval > 0 && (fstat( 1, &statb ) == 0) );
@@ -284,9 +289,11 @@ static void Extract_pr( struct malloc_list *list, struct malloc_list *all )
 	char **arg_list;
 	char **all_list;
 	int i, j, k;
+	char *host;
 	char *name;
 	int allflag = 0;
 
+	DEBUG0("Extract_pr: count %d", list->count );
 	if( list->count+1 >= all->max ){
 		extend_malloc_list( all, sizeof( arg_list[0] ), list->count+1 );
 	}
@@ -294,8 +301,16 @@ static void Extract_pr( struct malloc_list *list, struct malloc_list *all )
 	all_list = all->list;
 	for( i = j = k = 0; i < list->count; ++i ){
 		arg_list[j] = name = arg_list[i];
-		if( strcmp( name, "all" ) == 0 ) allflag = 1;
-		if( Find_printcap_entry( name, 0 ) ){
+		DEBUG0("Extract_pr: checking '%s'", name );
+		if( (host = strchr(name,'@')) ){
+			if( strchr(host,'+') ){
+				host = 0;
+			}
+		}
+		if( strcmp( name, "all" ) == 0 ){
+			allflag = 1;
+		} else if( host || Find_printcap_entry( name, 0 ) ){
+			DEBUG0("Extract_pr: printer '%s'", name );
 			all_list[all->count++] = name;
 		} else {
 			++j;
@@ -308,7 +323,7 @@ static void Extract_pr( struct malloc_list *list, struct malloc_list *all )
 		all->count = 0;
 	}
 	all_list[all->count] = 0;
-	if(DEBUGL0 ){
+	if(DEBUGL0){
 		logDebug("Extract_pr: allflag %d, arg_list %d entries",
 			allflag, list->count );
 		arg_list = list->list;

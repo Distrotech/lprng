@@ -22,7 +22,7 @@
  *    Justin Mason <jmason@iona.ie> especially.  Some of the things
  *    that you have to do to get portability are truely bizzare.
  *
- * $Id: portable.h,v 3.6 1997/01/29 03:04:39 papowell Exp $
+ * $Id: portable.h,v 3.8 1997/02/15 15:01:30 papowell Exp papowell $
  **************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -670,8 +670,11 @@ extern int fflush( FILE *stream );
 extern int fclose( FILE *stream );
 extern int flock( int fd, int operation );
 extern int fprintf(FILE *, const char *, ...);
+extern int fputs( const char *, FILE *stream );
 extern int fstat(int fd, struct stat *buf );
+extern int fseek( FILE *stream, long offset, int ptrname );
 extern int ftruncate( int fd, off_t length );
+extern int fwrite( char *ptr, int size, int nitems, FILE *stream);
 extern int getdtablesize( void );
 extern int getpeername(int s, struct sockaddr *name, int *namelen);
 extern int getsockname(int s, struct sockaddr *name, int *namelen);
@@ -687,13 +690,16 @@ extern void bcopy(char *src,char *dest,int len);
 extern int mkstemp(char *s );
 extern int openlog( const char *ident, int logopt, int facility );
 extern int perror(const char *);
+extern int printf( const char *, ...);
 extern int rename(const char *, const char *);
 extern int select (int width, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 extern void setgrent(void);
+extern int seteuid( int euid );
 extern int setreuid( int ruid, int euid );
 extern int setsockopt(int s, int level, int optname, const char *optval,int optlen);
 extern int socket( int domain, int type, int protocol );
 extern int socketpair(int, int, int, int *);
+extern int sscanf( char *s, char *format, ... );
 extern int stat(const char *path, struct stat *buf );
 extern int strcasecmp( const char *, const char * );
 extern char *strerror( int );

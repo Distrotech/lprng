@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: fileopen.h
  * PURPOSE: fileopen.c functions
- * $Id: fileopen.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * $Id: fileopen.h,v 3.3 1997/02/25 04:50:25 papowell Exp $
  **************************************************************************/
 
 #ifndef _FILEOPEN_H
@@ -21,8 +21,8 @@
  *****************************************************************/
 int Checkread( char *file, struct stat *statb );
 int Checkwrite( char *file, struct stat *statb, int rw, int create, int del );
-int Make_temp_fd( struct control_file *cfp, char *path, int len );
-char *Init_tempfile( struct control_file *cfp );
+int Make_temp_fd( char *path, int len );
+char *Init_tempfile( void );
 void Remove_files( void *p );
 void Remove_tempfiles( void );
 int Checkwrite_timeout(int timeout,

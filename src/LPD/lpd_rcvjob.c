@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_rcvjob.c,v 3.8 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 3.13 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -121,6 +121,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 	int filetype;				/* type of file - control or data */
 	int filecount = 0;			/* number of files */
 	int cf_sent = 0;			/* control file already sent */
+	int sending_data_first = 0;	/* control or data file first */
 	char *fn = 0;				/* file name being written */
 	struct printcap_entry *pc_entry = 0; /* printcap entry */
 	struct data_file *datafile;	/* data file information */
@@ -148,7 +149,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 
 	if( Clean_name( orig_name ) ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: bad printer name", input );
+			_("%s: bad printer name"), input );
 		ack = ACK_STOP_Q;	/* no retry, don't send again */
 		goto error;
 	}
@@ -164,7 +165,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		Spooling_disabled );
 	if( Spooling_disabled ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: spooling disabled", Printer );
+			_("%s: spooling disabled"), Printer );
 		ack = ACK_RETRY;	/* retry */
 		goto error;
 	}
@@ -175,7 +176,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 	status = Link_ack( ShortRemote, socket, Send_timeout, 0x100, 0 );
 	if( status ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: Receive_job: sending ACK 0 failed", Printer );
+			_("%s: Receive_job: sending ACK 0 failed"), Printer );
 		goto error;
 	}
 
@@ -186,8 +187,8 @@ int Receive_job( int *socket, char *input, int maxlen )
 		status = Link_line_read( ShortRemote, socket, Send_timeout,
 			line, &len );
 
-		DEBUGF(DRECV2)( "Receive_job: read from %s- status %d read %d bytes '\\%d'%s'",
-				FQDNRemote, status, len, line[0], line+1 );
+		DEBUGF(DRECV2)( "Receive_job: read from %s- status %d read %d bytes '%s'",
+				FQDNRemote, status, len, line );
 		if( status && len == 0 ){
 			DEBUGF(DRECV2)( "Receive_job: from %s- read 0", FQDNRemote );
 			status = 0;
@@ -197,7 +198,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		len = strlen( line );
 		if( len < 3 ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: bad file name format '%s'", Printer, input );
+				_("%s: bad file name format '%s'"), Printer, input );
 			ack = ACK_FAIL;
 			goto error;
 		}
@@ -207,7 +208,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		filetype = line[0];
 		if( filetype != DATA_FILE && filetype != CONTROL_FILE ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: bad file type 0x%x, not data or control",
+				_("%s: bad file type 0x%x, not data or control"),
 			Printer, filetype );
 			ack = ACK_FAIL;
 			goto error;
@@ -220,7 +221,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			file_len = strtol( s, &filename, 10 );
 			if( s == filename || !isspace( *filename ) || file_len < 0 ){
 				plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-					"%s: bad file length format '%s'", Printer, input );
+					_("%s: bad file length format '%s'"), Printer, input );
 				ack = ACK_FAIL;
 				goto error;
 			}
@@ -231,10 +232,31 @@ int Receive_job( int *socket, char *input, int maxlen )
 
 		if( *filename == 0 ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: missing job file name",
+				_("%s: missing job file name"),
 					Printer, filename );
 			ack = ACK_FAIL;
 			goto error;
+		}
+		if( filecount == 0 && filetype == DATA_FILE ){
+			sending_data_first = 1;
+		}
+		/*
+		 * Total abuse of RFC1179 - sending more than one job
+		 * at a time.  If the next job is a control file,
+		 * then we need to do all the checks and then
+		 * receive a new job.
+		 */
+		if( (filetype == CONTROL_FILE && cf_sent)
+			|| (filetype == DATA_FILE && cf_sent && sending_data_first) ){
+			if( (status = Check_for_missing_files( Cfp_static, &Data_files,
+				temp_fd, 0, orig_name, 0 ) ) ){
+				goto error;
+			}
+			/* now we reinitialized things */
+			temp_fd = -1;	/* control file fd is closed in Check... */
+			filecount = 0;	/* first file of job */
+			Clear_control_file( Cfp_static );	/* get ready for next job */
+			Data_files.count = 0;
 		}
 
 		/* check the filename format for consistency,
@@ -245,7 +267,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		status = Check_format( filetype, filename, Cfp_static );
 		if( status ){
 			plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: file '%s' name format not [cd]f[A-Za-z]NNNhost",
+				_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
 					Printer, filename );
 			ack = ACK_FAIL;
 			goto error;
@@ -259,7 +281,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			 *	will force a 'A' level priority - this
 			 *  is usually pretty safe
 			 */
-			if( (ack = Fixup_job_number( Cfp_static )) ){
+			if( (ack = Find_non_colliding_job_number( Cfp_static )) ){
 				goto error;
 			}
 		}
@@ -267,18 +289,9 @@ int Receive_job( int *socket, char *input, int maxlen )
 
 		/*
 		 * now we process the control file -
-		 * check to see if there was one already transferred
 		 */
 		if( filetype == CONTROL_FILE ){
 			int priority;
-			if( cf_sent ){
-				/* another control file is being sent!  */
-				plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-					"%s: additional control file being received! '%s'",
-					Printer, filename );
-				ack = ACK_FAIL;
-				goto error;
-			}
 			cf_sent = 1;
 			/* get the priority - cfX <- X is priority
              *                    012                   */
@@ -298,7 +311,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 				 */
 				if( unlink( Cfp_static->hold_file ) != 0 ){
 					plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-					"%s: cannot unlink '%s' ", Printer, Cfp_static->hold_file );
+					_("%s: cannot unlink '%s' "), Printer, Cfp_static->hold_file );
 					ack = ACK_RETRY;
 					goto error;
 				}
@@ -324,7 +337,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			err = errno;
 			if( fd < 0 || lock <= 0 ){
 				plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: cannot lock '%s' ", Printer, fn );
+				_("%s: cannot lock '%s' "), Printer, fn );
 				ack = ACK_RETRY;
 				goto error;
 			}
@@ -359,7 +372,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			err = errno;
 			if( fd < 0 || lock <= 0 ){
 				plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-				"%s: cannot lock '%s' ", Printer, fn );
+				_("%s: cannot lock '%s' "), Printer, fn );
 				ack = ACK_RETRY;
 				goto error;
 			}
@@ -371,7 +384,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		if( ftruncate( fd, 0 ) ){
 			err = errno;
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"truncate of '%s' failed - %s", fn, Errormsg(err));
+				_("truncate of '%s' failed - %s"), fn, Errormsg(err));
 			ack = ACK_RETRY;
 			goto error;
 		}
@@ -384,12 +397,12 @@ int Receive_job( int *socket, char *input, int maxlen )
 		jobsize += file_len;
 		if( Max_job_size > 0 && (jobsize+1023)/1024 > Max_job_size ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"%s: job size too large '%s'", Printer, filename );
+				_("%s: job size too large '%s'"), Printer, filename );
 			ack = ACK_RETRY;
 			goto error;
 		} else if( Check_space( file_len, Minfree, SDpathname ) ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"%s: insuffcient file space '%s'", Printer, filename );
+				_("%s: insuffcient file space '%s'"), Printer, filename );
 			ack = ACK_RETRY;
 			goto error;
 		}
@@ -412,7 +425,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 
 		if( status ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"%s: sending ACK 0 for '%s' failed", Printer, filename );
+				_("%s: sending ACK 0 for '%s' failed"), Printer, filename );
 			ack = ACK_RETRY;
 			goto error;
 		}
@@ -436,7 +449,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			} else {
 				/* forget a 0 length file */
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"%s: zero length job file '%s'", Printer, filename );
+					_("%s: zero length job file '%s'"), Printer, filename );
 				status = 1;
 				ack = 0;
 				goto error;
@@ -444,7 +457,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			break;
 		} else if( status ){
 			plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-				"%s: transfer of '%s' from '%s' failed", Printer,
+				_("%s: transfer of '%s' from '%s' failed"), Printer,
 				filename, ShortRemote );
 			ack = ACK_RETRY;
 			goto error;
@@ -457,7 +470,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 		if( filetype == CONTROL_FILE ){
 			if( fstat( fd, &Cfp_static->statb ) < 0 ){
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"%s: fstat '%s' failed '%s'", Printer,
+					_("%s: fstat '%s' failed '%s'"), Printer,
 					fn, Errormsg(errno) );
 				ack = ACK_RETRY;
 				goto error;
@@ -468,7 +481,7 @@ int Receive_job( int *socket, char *input, int maxlen )
 			/* copy the control file */
 			if( lseek( fd, 0, SEEK_SET ) < 0 ){
 				plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-					"%s: lseek '%s' failed '%s'", Printer,
+					_("%s: lseek '%s' failed '%s'"), Printer,
 					fn, Errormsg(errno) );
 				ack = ACK_RETRY;
 				goto error;
@@ -492,12 +505,12 @@ int Receive_job( int *socket, char *input, int maxlen )
 			}
 			if( Cfp_static->auth_id[0] && Auth_from == 0 ){
 				plp_snprintf(Cfp_static->error, sizeof(Cfp_static->error),
-		"Receive_job: authorization in non-authorized transfer" );
+		_("Receive_job: authorization in non-authorized transfer") );
 				return( i );
 			}
 			if( Cfp_static->auth_id[0] == 0 && Auth_from ){
 				plp_snprintf(Cfp_static->error, sizeof(Cfp_static->error),
-		"Receive_job: missing authorization information" );
+		_("Receive_job: missing authorization information") );
 				return( i );
 			}
 
@@ -523,16 +536,11 @@ int Receive_job( int *socket, char *input, int maxlen )
 	Link_close( socket );
 
 	if( (status = Check_for_missing_files( Cfp_static, &Data_files,
-		temp_fd, orig_name, 0 ) ) ){
+		temp_fd, 0, orig_name, 0 ) ) ){
 		goto error;
 	}
 
 	DEBUGF(DRECV3)( "Receive_job: return status %d", status );
-	if( temp_fd > 0 ){
-		close( temp_fd );
-		temp_fd = -1;
-	}
-	Link_close( socket );
 	Cfp_static->remove_on_exit = 0;
 	Start_new_server();
 	return(status);
@@ -624,7 +632,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	DEBUGF(DRECV2)("Receive_block_job: doing '%s'", input );
 	if( tokencount != 3 ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"line '%s' %d tokens", input, tokencount );
+			_("line '%s' %d tokens"), input, tokencount );
 		ack = ACK_STOP_Q;
 		goto error;
 	}
@@ -639,7 +647,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 
 	if( Clean_name( orig_name ) ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: bad printer name", input );
+			_("%s: bad printer name"), input );
 		ack = ACK_STOP_Q;	/* no retry, don't send again */
 		goto error;
 	}
@@ -657,7 +665,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 		Spooling_disabled );
 	if( Spooling_disabled ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: spooling disabled", Printer );
+			_("%s: spooling disabled"), Printer );
 		ack = ACK_RETRY;	/* retry */
 		goto error;
 	}
@@ -671,7 +679,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	status = Check_format( CONTROL_FILE, filename, Cfp_static );
 	if( status ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-			"%s: file '%s' name format not [cd]f[A-Za-z]NNNhost",
+			_("%s: file '%s' name format not [cd]f[A-Za-z]NNNhost"),
 				Printer, filename );
 		ack = ACK_FAIL;
 		goto error;
@@ -681,7 +689,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	 * get the non colliding job number
 	 */
 
-	if( (ack = Fixup_job_number( Cfp_static )) ){
+	if( (ack = Find_non_colliding_job_number( Cfp_static )) ){
 		goto error;
 	}
 
@@ -704,7 +712,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	err = errno;
 	if( temp_fd < 0 || lock <= 0 ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
-		"%s: cannot lock '%s' ", Printer, fn );
+		_("%s: cannot lock '%s' "), Printer, fn );
 		ack = ACK_RETRY;
 		goto error;
 	}
@@ -715,7 +723,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	if( ftruncate( temp_fd, 0 ) ){
 		err = errno;
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"truncate of '%s' failed - %s", fn, Errormsg(err));
+			_("truncate of '%s' failed - %s"), fn, Errormsg(err));
 		ack = ACK_RETRY;
 		goto error;
 	}
@@ -727,12 +735,12 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	 ************************************************/
 	if( Max_job_size > 0 && (file_len+1023)/1024 > Max_job_size ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"%s: job size too large '%s'", Printer, filename );
+			_("%s: job size too large '%s'"), Printer, filename );
 		ack = ACK_RETRY;
 		goto error;
 	} else if( Check_space( 2*file_len, Minfree, SDpathname ) ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"%s: insuffcient file space '%s'", Printer, filename );
+			_("%s: insuffcient file space '%s'"), Printer, filename );
 		ack = ACK_RETRY;
 		goto error;
 	}
@@ -747,7 +755,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 
 	if( status ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"%s: sending ACK 0 for '%s' failed", Printer, filename );
+			_("%s: sending ACK 0 for '%s' failed"), Printer, filename );
 		ack = ACK_RETRY;
 		goto error;
 	}
@@ -758,7 +766,7 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	DEBUGF(DRECV4)("Receive_block_job: received %d bytes ", read_length );
 	if( status ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"%s: transfer of '%s' from '%s' failed", Printer,
+			_("%s: transfer of '%s' from '%s' failed"), Printer,
 			filename, ShortRemote );
 		ack = ACK_FAIL;
 		goto error;
@@ -782,13 +790,13 @@ int Receive_block_job( int *socket, char *input, int maxlen )
 	status = Link_ack( ShortRemote, socket, Send_timeout, 0x100, 0 );
 	if( status ){
 		plp_snprintf( Cfp_static->error, sizeof( Cfp_static->error),
-			"%s: sending ACK 0 for '%s' failed", Printer, filename );
+			_("%s: sending ACK 0 for '%s' failed"), Printer, filename );
 		ack = ACK_RETRY;
 		goto error;
 	}
 
 	if( (status = Check_for_missing_files( Cfp_static, &Data_files,
-		temp_fd, orig_name, 0 ) ) ){
+		temp_fd, 0, orig_name, 0 ) ) ){
 		goto error;
 	}
 	if( temp_fd >0 ){
@@ -857,7 +865,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 	/* first we reset the file position */
 	if( lseek( fd, 0, SEEK_SET ) < 0 ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),	
-			"Scan_block_file: lseek failed '%s'", Errormsg(errno) );
+			_("Scan_block_file: lseek failed '%s'"), Errormsg(errno) );
 		return(1);
 	}
 	startpos = 0;
@@ -866,7 +874,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 		startpos = lseek( fd, 0, SEEK_CUR );
 		if( startpos == -1 ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),	
-				"Scan_block_file: lseek failed '%s'", Errormsg(errno) );
+				_("Scan_block_file: lseek failed '%s'"), Errormsg(errno) );
 			return(1);
 		}
 		DEBUGF(DRECV3)("Scan_block_file: '%s', end position %d",
@@ -884,13 +892,13 @@ int Scan_block_file( int fd, struct control_file *cfp )
 		length = strtol( line+1, &name, 0 );
 		if( name == 0 ){
 			plp_snprintf( cfp->error, sizeof( cfp->error),
-			"bad length information '%s'", line+1 );
+			_("bad length information '%s'"), line+1 );
 			return(-1);
 		}
 		while( isspace(*name) ) ++name;
 		if( *name == 0 ){
 			plp_snprintf( cfp->error, sizeof( cfp->error),
-			"bad name information '%s'", line+1 );
+			_("bad name information '%s'"), line+1 );
 			return(-1);
 		}
 		if( type == CONTROL_FILE ){
@@ -907,7 +915,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			*s++ = 0;
 			if( i < 0 || len > 0 ){
 				plp_snprintf(cfp->error, sizeof(cfp->error),
-					"Scan_block_file: error reading file '%s'",
+					_("Scan_block_file: error reading file '%s'"),
 					Errormsg(errno));
 				return( -1 );
 			}
@@ -919,7 +927,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			}
 			if( cfp->auth_id[0] && Auth_from == 0 ){
 				plp_snprintf(cfp->error, sizeof(cfp->error),
-		"Scan_block_file: authorization in non-authorized transfer" );
+		_("Scan_block_file: authorization in non-authorized transfer") );
 				return( -1 );
 			}
 		} else if( type == DATA_FILE ){
@@ -952,7 +960,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			datafd = Lockf( fn, &lock, &create, &statb );
 			if( datafd < 0 || lock <= 0 ){
 				plp_snprintf( cfp->error, sizeof(cfp->error),
-				"cannot lock '%s' ", fn );
+				_("cannot lock '%s' "), fn );
 				return(-1);
 			}
 			/*
@@ -961,7 +969,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 			if( ftruncate( datafd, 0 ) ){
 				err = errno;
 				plp_snprintf( cfp->error, sizeof( cfp->error),
-					"truncate of '%s' failed - %s", fn, Errormsg(err));
+					_("truncate of '%s' failed - %s"), fn, Errormsg(err));
 				return(-1);
 			}
 			/* now copy the file */
@@ -974,14 +982,14 @@ int Scan_block_file( int fd, struct control_file *cfp )
 				if( i > 0 && Write_fd_len( datafd, buffer, i ) < 0 ){
 					err = errno;
 					plp_snprintf( cfp->error, sizeof( cfp->error),
-					"write of '%s' failed - %s", fn, Errormsg(err));
+					_("write of '%s' failed - %s"), fn, Errormsg(err));
 					return(-1);
 				}
 			}
 			if( i < 0 ){
 				err = errno;
 				plp_snprintf( cfp->error, sizeof( cfp->error),
-				"Scan_block_file: read of '%s' failed - %s",
+				_("Scan_block_file: read of '%s' failed - %s"),
 					cfp->openname, Errormsg(err));
 				return(-1);
 			}
@@ -991,7 +999,7 @@ int Scan_block_file( int fd, struct control_file *cfp )
 		startpos = lseek( fd, startpos+length, SEEK_SET );
 		if( startpos == -1 ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),	
-				"Scan_block_file: lseek failed '%s'", Errormsg(errno) );
+				_("Scan_block_file: lseek failed '%s'"), Errormsg(errno) );
 			return(1);
 		}
 		DEBUGF(DRECV3)("Scan_block_file: new position %d", startpos );
@@ -1019,7 +1027,7 @@ static int read_one_line( int fd, char *buffer, int maxlen,
 	}
 	if( status < 0 ){
 		plp_snprintf(cfp->error, sizeof(cfp->error),
-			"read_one_line: error reading '%s' - '%s'",
+			_("read_one_line: error reading '%s' - '%s'"),
 			cfp->openname, Errormsg(errno));
 		return( status );
 	}
@@ -1028,13 +1036,13 @@ static int read_one_line( int fd, char *buffer, int maxlen,
 }
 
 /***************************************************************************
- * int Fixup_job_number( struct control_file *cfp )
+ * int Find_non_colliding_job_number( struct control_file *cfp )
  *  Find a non-colliding job number for the new job
  * RETURNS: 0 if successful
  *          ack value if unsuccessful
  * Side effects: sets up control file fields;
  ***************************************************************************/
-int Fixup_job_number( struct control_file *cfp )
+int Find_non_colliding_job_number( struct control_file *cfp )
 {
 	int pid;					/* process id */
 	int encountered = 0;		/* wrap around guard for job numbers */
@@ -1047,11 +1055,14 @@ int Fixup_job_number( struct control_file *cfp )
 	hold_fd = -1;
 
 again:
-	DEBUGF(DRECV3)("Receive_job: job_number %d, encountered %d, max %d",
+	DEBUGF(DRECV3)("Find_non_colliding_job_number: job_number %d, encountered %d, max %d",
 		cfp->number, encountered, cfp->max_number  );
 	/* we now try each of these in order */
 	/* now check to see if there is a job number collision */
 
+	if( cfp->priority == 0 ){
+		cfp->priority = 'A';
+	}
 	while( hold_fd == -1
 		&& cfp->number < cfp->max_number ){
 		/* try to open the hold file
@@ -1066,10 +1077,10 @@ again:
 			cfp->number, cfp->filehostname );
 		cfp->hold_file[0] = 0;
 		/* now we lock the hold file for the job */
-		DEBUGF(DRECV3)("Receive_job: trying %s", cfp->transfername );
+		DEBUGF(DRECV3)("Find_non_colliding_job_number: trying %s", cfp->transfername );
 		Get_job_control( cfp, &hold_fd );
 		pid = cfp->hold_info.receiver;
-		DEBUGF(DRECV3)("Receive_job: receiver %d", pid );
+		DEBUGF(DRECV3)("Find_non_colliding_job_number: receiver %d", pid );
 		/* if the server is still active or has received
 			all of the files then we skip to a new one */
 		if( pid < 0 || (pid > 0 && kill( pid, 0 ) == 0) ){
@@ -1086,7 +1097,7 @@ again:
 			goto again;
 		}
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"%s: queue full - no space", Printer );
+			_("%s: queue full - no space"), Printer );
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -1095,16 +1106,10 @@ again:
 	Set_job_control( cfp, &hold_fd, 0 );
 
 error:
-	DEBUGFC(DRECV3) dump_control_file( "Fixup_job_number: done", cfp );
+	DEBUGFC(DRECV3) dump_control_file( "Find_non_colliding_job_number: done", cfp );
 	return( ack );
 }
 
-/***************************************************************************
- * int Check_for_missing_files( struct control_file *cfp,
- *	struct malloc_list *data_files );
- * Check to see that the files listed in the control file and the
- *  files that arrived are present.
- ***************************************************************************/
 
 int dfcmp(const void *l, const void *r)
 {
@@ -1115,8 +1120,23 @@ int dfcmp(const void *l, const void *r)
 	return( strcmp( left->original, right->original ) );
 }
 
+/***************************************************************************
+ * int Check_for_missing_files(
+ * struct control_file *cfp  - control file
+ * struct malloc_list *data_files - data files
+ * int temp_fd - where to write updated control file
+ * char *cf_name - temp file name (to be renamed as control file)
+ * char *orig_name - original printer name
+ * char *authentication - authentication information
+ *  1. Check to see that the files listed in the control file and the
+ *     files that arrived are present.
+ *  2. Update the control file with information
+ *  3. If necessary rename temp file as control file
+ ***************************************************************************/
+
 int Check_for_missing_files( struct control_file *cfp,
-	struct malloc_list *data_files_list, int temp_fd, char *orig_name,
+	struct malloc_list *data_files_list,
+	int temp_fd, char *cf_name, char *orig_name,
 	char *authentication )
 {
 	int status = 0;
@@ -1130,23 +1150,23 @@ int Check_for_missing_files( struct control_file *cfp,
 	DEBUGF(DRECV3)("Check_for_missing_files: Auth_from %d, authentication '%s'",
 		Auth_from, authentication );
 	DEBUGF(DRECV3)("Check_for_missing_files: %d data files arrived, %d in control file",
-		cfp->data_file_list.count, data_files_list->count );
+		data_files_list->count, cfp->data_file_list.count );
 
 	if( cfp->original[0] == 0 ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"missing control file" );
+			_("missing control file") );
 		status = JFAIL;
 		goto error;
 	}
 	if( data_files_list->count == 0 ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"no data files transferred" );
+			_("no data files transferred") );
 		status = JFAIL;
 		goto error;
 	}
 	if( cfp->data_file_list.count == 0 ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"no data files in job" );
+			_("no data files in job") );
 		status = JFAIL;
 		goto error;
 	}
@@ -1177,7 +1197,7 @@ int Check_for_missing_files( struct control_file *cfp,
 		if( strcmp( jfile, dfile ) ){
 			DEBUGF(DRECV3)("Check_for_missing_files: bad name comparision");
 			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"missing data files in job" );
+				_("missing data files in job") );
 			status = JFAIL;
 			goto error;
 		} else {
@@ -1208,7 +1228,7 @@ int Check_for_missing_files( struct control_file *cfp,
 	if( i < jobfilecount || j < datafilecount ){
 		DEBUGF(DRECV3)("Check_for_missing_files: missing files");
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"missing data files in job" );
+			_("missing data files in job") );
 		status = JFAIL;
 		goto error;
 	}
@@ -1219,7 +1239,7 @@ int Check_for_missing_files( struct control_file *cfp,
 	 */
 	if( ftruncate( temp_fd, 0 ) ){
 		plp_snprintf( cfp->error, sizeof( cfp->error),
-			"truncate of '%s' failed - %s", cfp->openname,
+			_("truncate of '%s' failed - %s"), cfp->openname,
 			Errormsg(errno));
 		status = JFAIL;
 		goto error;
@@ -1236,7 +1256,7 @@ int Check_for_missing_files( struct control_file *cfp,
 	if( Auth_from == 0 ){
 		if( cfp->auth_id[0] ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"authentication information in non-authenticated job" );
+				_("authentication information in non-authenticated job") );
 			status = JFAIL;
 			goto error;
 		}
@@ -1244,7 +1264,7 @@ int Check_for_missing_files( struct control_file *cfp,
 		char templine[LINEBUFFER];
 		if( cfp->auth_id[0] == 0 ){
 			plp_snprintf( cfp->error, sizeof(cfp->error),
-				"missing authentication information in forwarded job" );
+				_("missing authentication information in forwarded job") );
 			status = JFAIL;
 			goto error;
 		}
@@ -1287,7 +1307,7 @@ int Check_for_missing_files( struct control_file *cfp,
 	DEBUGF(DRECV3)("Check_for_missing_files: Routing_filter '%s'", Routing_filter );
 	if( Routing_filter && *Routing_filter && Get_route( cfp ) ){
 		plp_snprintf( cfp->error, sizeof( cfp->error),
-			"cannot do routing for %s", orig_name );
+			_("cannot do routing for %s"), orig_name );
 		status = JFAIL;
 		goto error;
 	}
@@ -1308,20 +1328,31 @@ int Check_for_missing_files( struct control_file *cfp,
 		if( Write_fd_str( temp_fd, s ) < 0
 			|| Write_fd_str( temp_fd, "\n" ) < 0  ){
 			plp_snprintf( cfp->error, sizeof( cfp->error),
-				"write of '%s' failed - %s", cfp->openname, Errormsg(errno));
+				_("write of '%s' failed - %s"), cfp->openname, Errormsg(errno));
 			status = JFAIL;
 			goto error;
 		}
 	}
 	close(temp_fd);
 	temp_fd = -1;
-	cfp->hold_info.receiver = -1;
-	if( Set_job_control( cfp, (void *)0, 0 ) ){
-		plp_snprintf( cfp->error, sizeof( cfp->error),
-			"could not write hold file" );
+	if( cf_name && rename( cf_name, cfp->openname ) == -1 ){
+		plp_snprintf( cfp->error, sizeof( cfp->error ),
+			_("cannot rename '%s' to '%s' - %s"),
+			cf_name, cfp->openname, Errormsg(errno) );
 		status = JFAIL;
 		goto error;
 	}
+
+	cfp->hold_info.receiver = -1;
+	DEBUGF(DRECV3)("Check_for_missing_files: setting job status");
+	if( Set_job_control( cfp, (void *)0, 0 ) ){
+		plp_snprintf( cfp->error, sizeof( cfp->error),
+			_("could not write hold file") );
+		status = JFAIL;
+		goto error;
+	}
+	/* force a reread of hold file */
+	memset( &cfp->hstatb, 0, sizeof(cfp->hstatb) );
 	Get_job_control( cfp, (void *)0 );
 
 error:
@@ -1376,7 +1407,7 @@ int Do_perm_check( struct control_file *cfp )
 
 	if( Forwarding_off && Same_host( Perm_check.host, &RemoteHostIP) ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"%s: rejecting forwarded job originally from '%s'",
+			_("%s: rejecting forwarded job originally from '%s'"),
 				Printer, host );
 		ack = ACK_FAIL;
 		goto error;
@@ -1390,7 +1421,7 @@ int Do_perm_check( struct control_file *cfp )
 				&Perm_check, cfp ))==REJECT)
 		|| (permission == 0 && Last_default_perm == REJECT) ){
 		plp_snprintf( cfp->error, sizeof(cfp->error),
-			"%s: no permission to accept job", Printer );
+			_("%s: no permission to accept job"), Printer );
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -1423,7 +1454,6 @@ void Start_new_server( void )
 	}
 	Cfp_static = 0;
 	if( Server_queue_name && *Server_queue_name ){
-		Signal_server = 1;
 		Do_queue_jobs( Server_queue_name );
 	} else {
 		Do_queue_jobs( Printer );

@@ -1,16 +1,7 @@
-From majordomo-owner@iona.com Thu Aug 29 15:47:02 1996
-Received: from dublin.iona.ie (majordom@operation.dublin.iona.ie [192.122.221.5]) by dickory.sdsu.edu (8.6.10/8.6.10) with ESMTP id PAA27089 for <papowell@dickory.SDSU.Edu>; Thu, 29 Aug 1996 15:46:58 -0700
-Received: (majordom@localhost) by dublin.iona.ie (8.7.5/jm-1.01) id XAA13875 for plp-outgoing; Thu, 29 Aug 1996 23:50:24 +0100 (BST)
-Received: from watson.eecs.berkeley.edu (watson.EECS.Berkeley.EDU [128.32.240.184]) by dublin.iona.ie (8.7.5/jm-1.01) with ESMTP id XAA13868 for <plp@iona.com>; Thu, 29 Aug 1996 23:50:16 +0100 (BST)
-Received: from watson.eecs.berkeley.edu (cxh@localhost) by watson.eecs.berkeley.edu (8.7.5/8.7.3) with ESMTP id PAA01864 for <plp@iona.com>; Thu, 29 Aug 1996 15:49:43 -0700 (PDT)
-From: Christopher Hylands <cxh@EECS.Berkeley.EDU>
-Message-Id: <199608292249.PAA01864@watson.eecs.berkeley.edu>
-To: plp@iona.com
+To: lprng@iona.com
 Subject: LPRng installation answers: Solaris, Newsprint, Framemaker
 Date: Thu, 29 Aug 1996 15:49:43 -0700
-Sender: majordomo-owner@iona.com
-Precedence: bulk
-Reply-To: plp@iona.com
+Reply-To: lprng@iona.com
 Status: R
 
 

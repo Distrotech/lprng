@@ -24,7 +24,7 @@
  ***************************************************************************/
 
 static char *const _id =
-"$Id: waitchild.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+"$Id: waitchild.c,v 3.7 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "decodestatus.h"
@@ -116,7 +116,7 @@ again:
 	if( (w = Freelist) ){
 		Freelist = Freelist->nextPtr;
 	} else {
-		log( LOG_ERR, "wait_add_to_list: out of wait() blocks!");
+		log( LOG_ERR, "waitpid_add_to_list: out of wait() blocks!");
 		alloc_blocks();
 		goto again;
 	}
@@ -211,51 +211,30 @@ static pid_t
 waitpid_wrapper (pid_t pid, plp_status_t *statusPtr, int options)
 {
 	int result;
-	plp_status_t status = 0;
 	int err;
 
-retry_waitpid:
-
-#ifdef HAVE_WAITPID
-	DEBUG3 ("waitpid_wrapper: calling waitpid");
-	result = waitpid (pid, &status, options);
-#else
-#ifdef HAVE_WAIT3
-	DEBUG3 ("waitpid_wrapper: calling wait3");
-	result = wait3 (&status, options, 0);
-#else
-#error	wait not supported!!;
-#endif /* HAVE_WAIT3 */
+#ifndef HAVE_WAITPID
+#error	waitpid not supported!!;
 #endif /* HAVE_WAITPID */
 
+	DEBUG3 ("waitpid_wrapper: calling waitpid(%d,status,%d)",pid,options);
+	result = waitpid(pid, statusPtr, options);
+
 	err = errno;
-	DEBUG3 ("waitpid_wrapper: waitpid for pid %d,returned pid %d, status 0x%x",
-		pid, result, status );
+	DEBUG3 ("waitpid_wrapper: waitpid returned pid %d, status 0x%x",
+		result, *(int *)statusPtr );
 	/* interpret the result for debugging purposes */
 	if (result == 0) {
 		DEBUG3 ("waitpid_wrapper: kid is still alive");
-
 	} else if (result == -1 && err == ECHILD) {
 		DEBUG3 ("waitpid_wrapper: no kids left alive");
-
-	} else if (result < 0) {
-		DEBUG3 ("waitpid_wrapper: returning error");
-
-	} else if ((pid != result) && (pid != -1)) {
-		/* this is not the correct process */
-		waitpid_add_to_list (status, result);
-		goto retry_waitpid;
-
-	} else if (!(options & WUNTRACED) && (WIFSTOPPED(status))) {
-		/* this is not the correct process */
-		waitpid_add_to_list (status, result);
-		goto retry_waitpid;
-
+	} else if (result == -1 ) {
+		DEBUG3 ("waitpid_wrapper: returning error '%s'", Errormsg(err));
 	} else {
-		*statusPtr = *((plp_status_t *) &status);
 		DEBUG3 ("waitpid_wrapper: returning %d (%s)",
 					result, Decode_status (statusPtr));
 	}
+	errno = err;
 	return result;
 }
 
@@ -307,6 +286,8 @@ pid_t plp_waitpid_timeout(int timeout,
 {
 	int report = -1;
 	int err;
+	DEBUG2("plp_wait_pid_timeout: timeout %d, pid %d, options %d",
+		timeout, pid, options );
 	if( Set_timeout() ){
 		Set_timeout_alarm( timeout, 0 );
 		report = plp_waitpid( pid, status, options );
@@ -325,7 +306,9 @@ void Setup_waitpid (void)
 	Child_break = 0;
 	/* the portable waitpid() emulation function needs this SIGCHLD handler. */
 	if( Freelist == 0 ) alloc_blocks();
-	(void) plp_signal(SIGCHLD, sigchld_handler);
+	/* (void) plp_signal(SIGCHLD, sigchld_handler); */
+	/* do NOT enable SIGCHLD handling */
+	signal( SIGCHLD, SIG_DFL );
 }
 
 

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getuserinfo.c,v 3.1 1996/12/28 21:40:14 papowell Exp $";
+"$Id: getuserinfo.c,v 3.2 1997/02/15 15:01:30 papowell Exp papowell $";
 /********************************************************************
  * char *Get_user_information();
  *  get the user name
@@ -38,7 +38,10 @@ char *Get_user_information( void )
 	}
 
 #else
-	name = getenv( "USER" );
+	name = getenv( "LOGNAME" );
+	if( name == 0 ){
+		name = getenv( "USER" );
+	}
 #endif
 	if( name == 0 ){
 		plp_snprintf( uid_msg, sizeof(uid_msg), "UID_%d", uid );

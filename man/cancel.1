@@ -1,4 +1,4 @@
-.ds VE LPRng-3.1.2
+.ds VE LPRng-3.2.1
 '\" e
 .\" @(#)lp.1 1.36 95/10/09 SMI; from SVr4
 .\" Copyright 1989 AT&T
@@ -26,8 +26,6 @@ cancel \- send cancel requests to an LPRng print service
 .if n .ti +5n
 [
 .IR request-ID \|.\|.\|.
-] [
-.IR printer
 ]
 .SH DESCRIPTION
 .IX "cancel command" "" "\fLcancel\fP \(em cancel requests to an LP print service"
@@ -55,6 +53,11 @@ command line can be an optional printer name.
 If the name does not appear in the LPRng
 printcap database,
 then the name is assumed to be a job identifier.
+.PP
+The format of
+.I request-ID
+should be either the identifier field value or the job number
+reported by LPQ.
 .br
 .ne 10
 .SH OPTIONS

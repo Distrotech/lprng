@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_chkparms.c,v 3.5 1997/01/29 03:04:39 papowell Exp $";
+"$Id: lpr_chkparms.c,v 3.7 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "getuserinfo.h"
@@ -49,14 +49,14 @@ void Check_parms( struct printcap_entry **pce )
         }
     }
 	if( RemoteHost == 0 ){
-		Diemsg( "No server host specified" );
+		Diemsg( _("No server host specified") );
 	}
 	if( RemotePrinter == 0 || *RemotePrinter == 0 ){
 		RemotePrinter = Printer;
 	}
 
 	/* check for priority in range */
-	if( Priority == 0 && Classname && *Classname ){
+	if( Priority == 0 && Classname && *Classname && isupper(*Classname) ){
 		Priority = Classname[0];
 	}
 	if( Priority == 0 && Default_priority && *Default_priority ){
@@ -67,7 +67,7 @@ void Check_parms( struct printcap_entry **pce )
 	}
 	if( !isupper( Priority ) ){
 		Diemsg(
-"Priority (first letter of Classname) not 'A' (lowest) to 'Z' (highest)" );
+_("Priority (first letter of Classname) not 'A' (lowest) to 'Z' (highest)") );
 	}
 
 	/* fix up the Classname 'C' option */
@@ -114,7 +114,7 @@ void Check_parms( struct printcap_entry **pce )
 	 */
 	if( Username ){
 		if( !Root_perms() ){
-			Diemsg( "-U (username) can only be used by ROOT" );
+			Diemsg( _("-U (username) can only be used by ROOT") );
 		}
 		Bnrname = Username;
 	} else {
@@ -129,7 +129,7 @@ void Check_parms( struct printcap_entry **pce )
 	DEBUG0("Check_parms: before checking format '%s'", Format );
 	if( Binary ){
 		if(Format ){
-			Diemsg( "Cannot specify binary with format '%s'", Format  );
+			Diemsg( _("Cannot specify binary with format '%s'"), Format  );
 		}
 		Format = "l";
 	}
@@ -143,11 +143,11 @@ void Check_parms( struct printcap_entry **pce )
 	if( strlen( Format ) != 1 || !islower( c = *Format )
 		|| strchr( "aios", c )
 		|| (Formats_allowed && !strchr( Formats_allowed, c ) )){
-		Diemsg( "Bad format specification '%s'", Format );
+		Diemsg( _("Bad format specification '%s'"), Format );
 	}
 	/* check to see how many files you want to print- limit of 52 */
 	if( Filecount > 52 ){
-		Diemsg( "Sorry, can only print 52 files at a time, split job up");
+		Diemsg( _("Sorry, can only print 52 files at a time, split job up"));
 	}
 	if( Copies == 0 ){
 		Copies = 1;

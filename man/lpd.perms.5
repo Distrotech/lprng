@@ -1,4 +1,4 @@
-.ds VE LPRng-3.1.2
+.ds VE LPRng-3.2.1
 .TH LPD.PERMS 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -150,7 +150,7 @@ REMOTEGROUP	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
 REMOTEIP	IP	RIP	RIP	JIP	RIP	RIP	RIP
 CONTROLLINE	S	-	CL	CL	CL	CL	CL
 PRINTER	S	-	PR	PR	PR	PR	PR
-FORWARD	V	-	-	SA	-	SA	SA
+FORWARD	V	-	SA	-	-	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
@@ -198,8 +198,8 @@ C=A*,B*
 would check that the class information (i.e.- line in the control file
 starting with C) had a value starting with A or B.
 .PP
-A permission line consists of list of tests and an a result value
-If all of the tests succeed,  then a match has been found and the
+A permission line consists of a list of tests and a result value.
+If all of the tests succeed, then a match has been found and the
 permission testing completes with the result value.  You use the
 DEFAULT reserved word to set the default ACCEPT/DENY result.
 The NOT keyword will reverse the sense of a test.

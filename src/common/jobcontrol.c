@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: jobcontrol.c,v 3.7 1997/01/30 21:15:20 papowell Exp $";
+"$Id: jobcontrol.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "jobcontrol.h"
@@ -587,7 +587,7 @@ int Set_job_control( struct control_file *cfp, int *fdptr, int force_change )
 		&& cfp->hstatb.ST_MTIME_NSEC == statb.ST_MTIME_NSEC
 #endif
 	){
-		sleep(1);
+		plp_sleep(1);
 		if( Write_fd_str( fd, "\n" ) < 0 ){
 			logerr_die( LOG_ERR, "Set_job_control: write '%s' failed",
 				hold_file );
@@ -806,6 +806,9 @@ char *Copy_hf( struct malloc_list *data, struct malloc_list *copy,
 	char *buffer = 0;
 	int buffer_len;
 	int i, len, prefix_len;
+
+	DEBUG3("Copy_hf: data 0x%x, count %d, copy 0x%x, header '%s', prefix '%s'",
+		data, data?data->count:0, copy, header, prefix );
 
 	if( data->count ){
 		if( prefix == 0 ) prefix = "";

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.1.2
+.ds VE LPRng-3.2.1
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -7,19 +7,25 @@ lpd.conf \- configuration file for the LPRng line printer spooler system
 .SH DESCRIPTION
 The file \fBlpd.conf\fR is used to provide configuration information for
 the LPRng Printer spooler system and defaults for printcap information.
-Blank lines and all
-characters after a hash sign (``#'') to the end of line are ignored.
-If a hash sign is desired in the
-configuration information,
-it should be escaped with a backslash
+Leading spaces on lines are ignored,
+and blank lines and lines whose first nonblank character is a sharp
+(``#'') are ignored.
 Trailing blanks and tabs (whitespace) for an option value
 are deleted unless the last one is escaped with a backslash
 (``\\'').
 All other lines
 specify parameters and should be of the following form:
 .RS
-keyword [ value ... ]
+.nf
+keyword
+keyword@
+keyword#value
+keyword=value
 .RE
+.fi
+Note that these values are the same format as
+.BR printcap (5)
+values.
 Values in the configuration can contain
 host or machine dependent information;
 to assist with this,
@@ -86,9 +92,6 @@ and possibly tabs or spaces (whitespace) as well.
 Keyword names can use either underscores (_) or hyphens (-)
 in their names,
 but the underscore is preferred.
-In addition to these tags,
-the printcap tags (see printcap(5)) can be used to set
-defaults for printcap information.
 .TP
 \fBinclude\fR (no default)
 This can be used to include files into
@@ -97,10 +100,40 @@ The include file parameter can be a punctuation or whitespace separated
 list of files; the files must have absolute pathnames and must
 be readable.
 .TP
-\fBarchitecture\fR (defaults: \fIsun4\fR)
-This parameter is optional, and is used when
+\fBae\fR (default: "jobend $H $n $P $k $b $t")
+This specifies either a script or a filter to be invoked
+at the send of a job for accounting purposes.
+See \fBas\fP for the matching accounting at start,
+and the
+.BR printcap (5)
+and
+.BR lpd (8)
+man pages for details.
+.TP
+\fBallow_getenv\fR (default: "LPD_CONF")
+This option specifies an enviorinment variable
+whose value is a configuration file.
+Use of this is restricted to test purposes,
+and SUID ROOT client and server will not run when the variable is enabled.
+.TP
+\fBar\fR (default: yes)
+See
+.BR printcap (5)
+for details.
+.TP
+\fBarchitecture\fR
+The default value is set at compile time and can be
+overwritten with this parameter.
+The default value of this parameter is set at compile time
+and it is used when
 expanding the special sequence \fB%a\fR in 
 pathname and filename strings in this config file.
+.TP
+\fBas\fR (default: "jobstart $H $n $P $k $b $t")
+See \fBas\fR.
+.TP
+\fBbk\fR (default: no)
+See \fBprintcap\fP(5) for details.
 .TP
 \fBbk_filter_options\fR
 (default: "$P $w $l $x $y $F $c $L $i $J $C $0n $0h $-a")
@@ -122,7 +155,7 @@ and the string expanded with values from the printcap information
 and job information.
 (see of_filter_options, filter_options, bk_filter_options, bk_of_filter_options)
 .TP
-\fBcheck_for_nonprintable\fR (default: true/yes)
+\fBcheck_for_nonprintable\fR (default: "")
 (Used by LPR) check f and p formats
 for non_printable characters unless
 \fB\-b\fR (binary)
@@ -132,12 +165,13 @@ command_line option is supplied. Note that
 files containing HPGL or other printer control
 languages would often be classed as ``non_printable''.
 .TP
-\fBclient_auth_command\fR (defaults: NULL)
+\fBclient_auth_command\fR (defaults: "")
 The default authorization command for a client to use.
 .TP
 \fBclient_config_file\fR (default:
 /etc/lpd.conf: /etc/lpd_client.conf: 
-/usr/etc/lpd.conf: /usr/etc/lpd_client.conf)
+/usr/etc/lpd.conf: /usr/etc/lpd_client.conf:
+/usr/spool/lpd/lpd.conf: /usr/spool/lpd/lpd_client.conf)
 The location of configuration information for a client program
 such as
 .I lpr
@@ -155,20 +189,23 @@ and
 .I "FILTERS"
 below for details.
 .TP
+\fBco\fR (default: 20)
+See \fBprintcap\fP(5) for details.
+.TP
 \fBconnect_grace\fR (default: 0 seconds)
 The time to pause before opening a new connection to a printer.
 This allows the printer time to recover from the previous job.
 .TP
-\fBconnect_interval\fR (default: 10 seconds)
+\fBconnect_interval\fR (default: 10 (seconds))
 The time to pause after a failed connection or open
 of the printing device before attempting a new connection or open.
 .TP
-\fBconnect_retry\fR (default: -1)
+\fBconnect_retry\fR (default: 0)
 The numbers of times to retry making a connection or open
 of the printing device.
 A negative value will cause infinite retries.
 .TP
-\fBconnect_timeout\fR (default: 10 seconds)
+\fBconnect_timeout\fR (default: 10 (seconds))
 The time to wait for a device open or connection to complete.
 A zero value is infinite timeout.
 .TP
@@ -195,7 +232,7 @@ See logger_destination for details.
 specifies a default protocol for logger information.
 See logger_destination for details.
 .TP
-\fBdefault_permission\fR (default: DEFAULT ACCEPT)
+\fBdefault_permission\fR (default: ACCEPT)
 Default permission for operations.
 .TP
 \fBdefault_printer\fR (default: "")
@@ -203,16 +240,15 @@ The default printer to use if there is no
 PRINTER environment variable,
 the user has not specified a printer,
 or there is no printcap information.
-This is a site dependent value and should be placed in the
-configuration file or compiled into the software.
 .TP
 \fBdefault_priority\fR (default: "A")
 Default priority for printing jobs.
 .TP
-\fBdefault_remote_host\fR (default: "")
+\fBdefault_remote_host\fR (default: "%H")
 The default remote host to use.
-This is a site dependent value and should be placed in the
-configuration file or compiled into the software.
+.TP
+\fBdefault_tmp_dir\fR (default: /tmp)
+Directory for temporary files.
 .TP
 \fBdomain_name\fR (default: "")
 This parameter is optional, and is appended to
@@ -222,16 +258,11 @@ be used if the software cannot determine the domain name
 using other means, such as \fBgethostbyname(3n)\fR.
 .TP
 \fBfilter_ld_path\fR
-(default: LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib)
+(default: /lib:/usr/lib:/usr/5lib:/usr/ucblib)
 The value for the environment variable LD_LIBRARY_PATH, 
 both used when executing, and passed on to filters.
 This variable is used to find shared libraries on
 SunOS, Solaris and Linux.
-.TP
-\fBfilter_path\fR
-(default: PATH=/bin:/usr/bin:/usr/ucb:/usr/sbin:/usr/etc:/etc)
-The value for the environment variable PATH, 
-both used when executing, and passed on to filters.
 .TP
 \fBfilter_options\fR
 (default: "$C $F $H $J $L $P $Q $R $Z
@@ -245,13 +276,19 @@ and job information.
 (see of_filter_options, filter_options, bk_filter_options, bk_of_filter_options)
 .TP
 \fBfilter_path\fR
-(default: PATH=/bin:/usr/bin:/usr/ucb:/usr/sbin:/usr/etc:/etc)
-The environment variable PATH, both used to find filters
+(default: /bin:/usr/bin:/usr/ucb:/usr/sbin:/usr/etc:/etc)
+The value for the environment variable PATH, both used to find filters
 and passed on to filters run by \fBlpd\fR and \fBlpr\fR.
+.TP
+\fBff\fR (default: \\f)
+Formfeed string.
 .TP
 \fBforward_auth\fR (default use_auth value)
 Server uses authentication when forwarding a command.
 Only done if the original command was authenticated.
+.TP
+\fBfx\fR (default: flp)
+See \fBprintcap\fP(5) for details.
 .TP
 \fBgroup\fR (default "daemon")
 The group to use for file ownership and process permissions.
@@ -289,6 +326,15 @@ then the kerberos principal name would be:
 lpr/alpha.com@ALPHA.COM.
 .br
 .TP
+\fBla\fR (default: yes)
+See \fBprintcap\fP(5) for details.
+.TP
+\fBlf\fR (default: log)
+Name of the log file.
+.TP
+\fBlo\fR (default: lock)
+Name of the lock file.
+.TP
 \fBlocalhost\fR
 (default "localhost")
 The name of the localhost entry to be used for the TCP/IP
@@ -312,7 +358,7 @@ entries can also specify log files for each
 printer.
 .TP
 \fBlogger_destination\fR
-(default: none)
+(default: "")
 This specifies a destination for logger information generated by the lpd server.
 The formation of the destination specification is
 host[%port][,(TCP|UDP)].
@@ -323,7 +369,7 @@ The default port and protocol are set by the
 default_logger_port and default_logger_protocol configuration variables respectively.
 .TP
 \fBlongnumber\fR
-(default: NO)
+(default: no)
 RFC1179 requires 3 digit job numbers;
 setting longnumber to yes allows 6 digit numbers.
 If the backwards_compatible flag is set,
@@ -351,24 +397,29 @@ printcap_path list is searched.
 See PRINTCAP LOOKUP for details.
 .TP
 \fBmail_operator_on_error\fR (default: "")
-Mail address of operator to send mail to when an error
-is encountered.
+Put this person on the CC-list of the mail, if it is not
+a success mail. (So in addition to the person who made the
+printer request, also this person gets error messages, but
+no success messages.)
 .TP
 \fBmax_status_size\fR (default: 10 (Kbytes))
 An integer value specifying (in K bytes)
 the maximum size of the status file
-to be generate during printing operations.
+to be generated during printing operations.
 A 0 value will create unlimited size status files.
 When the file size exceeds this value,
 it is truncated to
 .B min_status_size
 K bytes.
 .TP
+\fBmc\fR (default: 1)
+See \fBprintcap\fP(5) for details.
+.TP
 \fBmin_status_size\fR (default: 0 (Kbytes))
 Minimum status size.
 If 0, defaults to 20 percent of max_status_size.
 .TP
-\fBminfree\fR (default: "0")
+\fBminfree\fR (default: 0)
 The amount of free space (in Kbytes)
 needed in the spool directory in order
 for a job to be accepted.
@@ -412,6 +463,16 @@ originate from ports in the range 721-731.
 Client programs such as LPR, LPC, etc., will pass these
 environment variables to any filter programs they start.
 .TP
+\fBpoll_time\fR (default: 6000)
+Interval in seconds at which LPD checks for queues with jobs and no
+server active.
+.TP
+\fBpl\fR (default: 66)
+See \fBprintcap\fP(5) for details.
+.TP
+\fBpr\fR (default: /bin/pr)
+See \fBprintcap\fP(5) for details.
+.TP
 \fBprintcap_path\fR
 (default: "etc/printcap:/usr/etc/printcap:/var/spool/lpd/printcap.%h")
 The location of the printcap database information.
@@ -426,6 +487,9 @@ If a file or filter does not exist, it is skipped.
 The first file or filter that exists and is readable will be used.
 See PERMISSIONS LOOKUP for details.
 .TP
+\fBpw\fR (default: 80)
+See \fBprintcap\fP(5) for details.
+.TP
 \fBremote_user\fR (default: "")
 The authentication information name of the remote server.
 If no value provided for this name,
@@ -434,21 +498,21 @@ This name can have a %X field which is expanded in the
 same manner as the configuration information.
 .TP
 \fBsave_on_error\fR
-(default: NO)
+(default: no)
 Save a job in the spool queue if it has an error
 rather than removing it.
 .TP
 \fBsave_on_done\fR
-(default: NO)
+(default: no)
 Save a job in the spool queue after completion
 rather than removing it.
 .TP
 \fBsend_data_first\fR
-(default: NO)
+(default: no)
 Send data files of a job first,
 followed by the control file.
 .TP
-\fBsend_failure_action\fR (default: abort)
+\fBsend_failure_action\fR (default: "")
 The lpd server uses this to determine the action to take when
 unable to print or process a job.
 The keyword
@@ -487,17 +551,16 @@ accept the message on stdin, with \fIno\fR arguments.
 The message will contain the \fBTo:\fR, \fBFrom:\fR,
 \fBCc:\fR and \fBSubject:\fR headers.
 .TP
-\fBserver_user\fR (default: "")
-The authentication information name to be used by the server.
-The remote_name value is used when sending informaiton to this server.
-.TP
 \fBserver_auth_command\fR (default: "")
 The authentication program to be used by the server.
 .TP
 \fBserver_config_file\fR (default:
-/etc/lpd.conf: /etc/lpd_server.conf: 
-/usr/etc/lpd.conf: /usr/etc/lpd_server.conf)
+/etc/lpd.conf:
+/usr/etc/lpd.conf: /usr/spool/lpd.conf.%h)
 The location of configuration information for the lpd server.
+.TP
+\fBserver_tmp_dir\fR (default: /tmp)
+Temporary dir for the server.
 .TP
 \fBserver_user\fR (default: "daemon")
 The authentication userid for a server.
@@ -506,11 +569,24 @@ keys replaced by the printer,
 remote printer,
 and remote host names.
 .TP
+\fBspool_dir_perms\fR (default: 042700)
+Permissions of the spool directories.
+.TP
+\fBspool_file_perms\fR (default: 0600)
+Permissions of the spool files.
+.TP
 \fBsyslog_device\fR (default: /dev/console)
 Log to this device if all else fails.
 .TP
-\fBuse_auth\fR (default: no)
-Use authentication when sending jobs or commands.
+\fBuse_auth\fR (default: "")
+The authenication type to be used when sending a command.
+.TP
+\fBuse_date\fR (default: no)
+No information about this parameter available.
+.TP
+\fBuse_identifier\fR (default: no)
+Add a job identifier line to the control file,
+using the 'A' entry in the control file.
 .TP
 \fBuse_info_cache\fR (default: yes)
 If this is set to \fIyes\fR, lpd.perms and printcap information
@@ -530,10 +606,6 @@ This is useful for setting up a spool queue which formats
 jobs in different ways,
 depending on the name of the queue.
 .TP
-\fBuse_identifier\fR (default: no)
-Add a job identifier line to the control file,
-using the 'A' entry in the control file.
-.TP
 \fBuse_shorthost\fR (default: no)
 By default, names of lpr job files used the
 originating host fully qualified domain name.
@@ -552,9 +624,6 @@ If the user value is 0,
 then the real UID of the program when started will be used.
 This allows a non_root user to test the functionality
 of the LRPng software.
-.TP
-\fBuse_auth\fR (default: "")
-The authenication type to be used when sending a command.
 
 .SH "PRINTCAP LOOKUP, DATABASE FILES AND FILTERS"
 .PP
@@ -588,6 +657,8 @@ After having searched the various files,
 if a filter has been specified the filter will be started and
 the required printer name will be sent to the filter.
 The output from the filter will be used as the printcap information.
+\fBuser_auth_command\fR (defaults: "")
+No description available.
 
 .SH "SECURITY-RELATED PARAMETERS"
 .PP

@@ -10,7 +10,7 @@
  * PURPOSE: basic set of utilities
  **************************************************************************/
 
-static char *const _id = "$Id: utilities.c,v 3.2 1997/01/15 02:21:18 papowell Exp $";
+static char *const _id = "$Id: utilities.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "utilities.h"
@@ -99,7 +99,7 @@ int Write_fd_len_timeout( int timeout, int fd, char *msg, int len )
 {
 	int i;
 	if( Set_timeout() ){
-		Set_timeout_alarm( timeout, &fd );
+		Set_timeout_alarm( timeout, 0 );
 		i = Write_fd_len( fd, msg, len );
 	} else {
 		i = -1;
@@ -128,7 +128,7 @@ int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
 {
 	int i;
 	if( Set_timeout() ){
-		Set_timeout_alarm( timeout, &fd );
+		Set_timeout_alarm( timeout, 0 );
 		i = read( fd, msg, len );
 	} else {
 		i = -1;

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setup_filter.c,v 3.7 1997/01/29 03:04:39 papowell Exp $";
+"$Id: setup_filter.c,v 3.10 1997/02/25 04:50:25 papowell Exp $";
 
 /***************************************************************************
  *
@@ -135,6 +135,7 @@ int Make_filter( int key,
 		root = 1;
 	}
 	executable = find_executable( filter->args.list[root], filter ); 
+	DEBUG1("Make_filter: executable '%s'", executable );
 	if( executable == 0 ){
 		plp_snprintf( cf->error, sizeof( cf->error ),
 		"Make_filter: cannot find executable file '%s' - '%s'",
@@ -232,7 +233,9 @@ int Make_filter( int key,
 	setmessage( cf, header, "COMMANDLINE %s", filter->cmd );
 	/* close the various pipes */
 	filter->input = p[1];
-	(void) close( p[0] );        /* close input side */
+	if( direct_read <= 0 ){
+		(void) close( p[0] );        /* close input side */
+	}
 
 	/* we save the output device  for flushing if it is a terminal
 	 * this might prevent processes from locking up when device goes
@@ -243,17 +246,18 @@ int Make_filter( int key,
 	} else {
 		filter->output = -1;
 	}
-	DEBUG2 ("Make_filter: pid %d,input fd %d, output fd %d, '%s'",
+	DEBUG2("Make_filter: pid %d,input fd %d, output fd %d, '%s'",
 		filter->pid, filter->output, p[1], 
 		filter->cmd );
 	return( 0 );
 
 error:
 	Errorcode = JABORT;
-	if( p[0] > 0 ) close( p[0] );
+	if( p[0] > 0 && Direct_read <= 0 ) close( p[0] );
 	if( p[1] > 0 ) close( p[1] );
 	if( stderr_pipe[0] > 0 ) close( stderr_pipe[0] );
 	if( stderr_pipe[1] > 0 ) close( stderr_pipe[1] );
+	DEBUG2( "Make_filter: ERROR '%s'", cf->error );
 	return( -1 );
 }
 
@@ -313,6 +317,7 @@ int Make_passthrough( struct filter *filter, char *line,
 		root = 1;
 	}
 	executable = find_executable( filter->args.list[root], filter ); 
+	DEBUG1("Make_passthrough: executable '%s'", executable );
 	if( executable == 0 ){
 		plp_snprintf( cf->error, sizeof( cf->error ),
 		 "Make_passthrough: cannot find executable file '%s'",
@@ -439,7 +444,6 @@ int Make_passthrough( struct filter *filter, char *line,
 	 * this might prevent processes from locking up when device goes
 	 *	offline and we time out
 	 */
-	plp_usleep( 100 );
 	DEBUG2 (
 		"Make_passthrough: pid %d, cmd '%s'",
 		filter->pid, filter->cmd );
@@ -449,6 +453,7 @@ error:
 	Errorcode = JABORT;
 	if( stderr_pipe[0] > 0 ) close( stderr_pipe[0] );
 	if( stderr_pipe[1] > 0 ) close( stderr_pipe[1] );
+	DEBUG2( "Make_passthrough: ERROR '%s'", cf->error );
 	return( -1 );
 }
 
@@ -579,9 +584,7 @@ int Setup_filter( int fmt, struct control_file *cf,
 	 */
 	list = filter->args.list;
 	for( i = 0; i < filter->args.count; ++i ){
-		if( (bp = Find_meta( list[i] ) ) ){
-			Clean_meta( bp );
-		}
+		Clean_meta( list[i] );
 	}
 
 	return( 0 );
@@ -843,7 +846,7 @@ void setup_close_on_exec( int minfd )
  * consists of:
  *  LD_LIBRARY_PATH (safe value), PATH (safe value), TZ (from env), 
  *  USER, LOGNAME, HOME, LOGDIR, SHELL, IFS (safe value).
- *  SPOOL_DIR, CONTROL_DIR, PRINTCAP, and CONTROL_FILE
+ *  SPOOL_DIR, CONTROL_DIR, PRINTCAP_ENTRY, and CONTROL_FILE
  ***************************************************************************/
 
 static void add_env( struct filter *filter, char *p )
@@ -917,7 +920,7 @@ static void setup_envp(struct control_file *cf,
 	}
 
 	if( printcap_entry ){
-		s = Linearize_pc_list( printcap_entry, "PRINTCAP=" );
+		s = Linearize_pc_list( printcap_entry, "PRINTCAP_ENTRY=" );
 		if( s ){
 			add_env( filter, s );
 		}
@@ -979,10 +982,10 @@ static int is_executable( char *step, uid_t uid_v, gid_t gid_v )
 		 && (((statb.st_uid == uid_v) && (statb.st_mode & S_IXUSR)) ||
 			 ((statb.st_gid == gid_v) && (statb.st_mode & S_IXGRP)) ||
 			 (statb.st_mode & S_IXOTH) ) ){
-			DEBUG4("is_executable: yes '%s'", step );
+			DEBUG1("is_executable: yes '%s'", step );
 			return(1);
 	}
-	DEBUG4("is_executable: no '%s'", step );
+	DEBUG1("is_executable: no '%s'", step );
 	return(0);
 }
 
@@ -1002,10 +1005,10 @@ char * find_executable( char *execname, struct filter *filter )
 	gid_v = getegid();
 	if( execname[0] == '/' ){
 		if( is_executable( execname, uid_v, gid_v ) ){
-			DEBUG4("find_executable: found executable '%s'", execname );
+			DEBUG1("find_executable: found executable '%s'", execname );
 			return(execname);
 		} else {
-			DEBUG4("find_executable: not executable '%s'", execname );
+			DEBUG1("find_executable: not executable '%s'", execname );
 			return(0);
 		}
 	}
@@ -1033,11 +1036,11 @@ char * find_executable( char *execname, struct filter *filter )
 		Init_path( &filter->exec_path, step );
 		step = Add_path( &filter->exec_path, execname );
 		if( is_executable( step, uid_v, gid_v ) ){
-			DEBUG4("find_executable: found executable '%s'", step );
+			DEBUG1("find_executable: found executable '%s'", step );
 			return(step);
 		}
 	}
-	DEBUG4("find_executable: did not find executable '%s'", execname );
+	DEBUG1("find_executable: did not find executable '%s'", execname );
 	return(0);
 }
 

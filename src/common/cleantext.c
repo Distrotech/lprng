@@ -37,9 +37,8 @@ char *Clean_name( char *s )
 {
 	int c;
 	if( s ){
-		while( (c = *s) ){
-			if( !isalnum(c) && !strchr( SAFE, c ) ) return( s );
-			++s;
+		for( ; (c = *(unsigned char *)s); ++s ){
+			if( !(isalnum(c) || strchr( SAFE, c )) ) return( s );
 		}
 	}
 	return( 0 );
@@ -51,19 +50,15 @@ char *Clean_name( char *s )
 
 int Is_meta( int c )
 {
-	return( !isprint( c )
-		|| ( !isalnum( c ) && strchr( LESS_SAFE, c ) == 0) );
+	return( !(isalnum( c ) || strchr( LESS_SAFE, c )) );
 }
 
 char *Find_meta( char *s )
 {
 	int c = 0;
 	if( s ){
-		for( ; (c = *s); ++s ){
-			if( !isprint( c )
-				|| ( !isalnum( c ) && strchr( LESS_SAFE, c ) == 0) ){
-				return( s );
-			}
+		for( ; (c = *(unsigned char *)s); ++s ){
+			if( Is_meta( c ) ) return( s );
 		}
 		s = 0;
 	}

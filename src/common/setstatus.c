@@ -20,7 +20,7 @@
  *
  *	Mon Aug  7 20:49:45 PDT 1995 Patrick Powell
  ***************************************************************************/
-static char *const _id = "$Id: setstatus.c,v 3.4 1997/01/22 23:09:32 papowell Exp $";
+static char *const _id = "$Id: setstatus.c,v 3.7 1997/03/05 04:40:04 papowell Exp papowell $";
 
 #include "lp.h"
 #include "setstatus.h"
@@ -28,6 +28,7 @@ static char *const _id = "$Id: setstatus.c,v 3.4 1997/01/22 23:09:32 papowell Ex
 #include "fileopen.h"
 #include "linksupport.h"
 #include "pathname.h"
+#include "killchild.h"
 /**** ENDINCLUDE ****/
 
 static int in_setstatus;
@@ -59,41 +60,41 @@ void setstatus (va_alist) va_dcl
 #endif
 	static char *save;
 	static int size, minsize;
-	char *s, *str, *startmsg;
+	char *s, *str;
 	int len, l;
 	struct stat statb;
 	static struct dpathname dpath;
 	char *path, *at_time = 0;
+	char *msg;
     VA_LOCAL_DECL
 
     VA_START (fmt);
     VA_SHIFT (cfp, struct control_file * );
     VA_SHIFT (fmt, char *);
 
-	if( msg_b == 0 ) set_msg_b();
-	msg_b[0] = 0;
-	/* prevent recursive calls */
 	if( in_setstatus ) return;
 	++in_setstatus;
+
+	put_header( cfp, "STATUS" );
+	len = strlen(msg_b);
+	msg = msg_b+len;
+
+	(void) vplp_snprintf( msg_b+len, msg_b_len-len, fmt, ap);
 	if( Interactive ){
 		if( Verbose ){
-			(void) vfprintf ( stderr, fmt, ap);
-			(void) fprintf( stderr, "\n" );
+			len = strlen(msg_b);
+			strncat( msg_b,"\n", msg_b_len-len );
+			if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 		}
 		in_setstatus = 0;
 		VA_END;
 		return;
 	}
-
-	len = strlen(msg_b);
-	startmsg = msg_b+len;
-	(void) vplp_snprintf( msg_b+len, msg_b_len-len, fmt, ap);
+	DEBUG3("setstatus: new status '%s'", msg );
 	len = strlen(msg_b);
 	at_time = msg_b+len;
-	(void) plp_snprintf( msg_b+len, msg_b_len-len, " at %s", 
+	(void) plp_snprintf( msg_b+len, msg_b_len-len, " at %s\n", 
 		Time_str(-1,0) );
-	DEBUG3("setstatus: new status '%s'", startmsg );
-	safestrncat( msg_b, "\n" );
 
 	/* append new status to end of old */
 
@@ -156,12 +157,14 @@ void setstatus (va_alist) va_dcl
 	}
 
 	if( (str && Write_fd_str( Status_fd, str ) < 0 )
-			|| Write_fd_str( Status_fd, startmsg ) < 0 ){
+			|| Write_fd_str( Status_fd, msg ) < 0 ){
 		logerr_die( LOG_ERR, "setstatus: write to status file failed" );
 	}
 done:
 	if( at_time ) *at_time = 0;
-	if( Logger_destination && *Logger_destination ) put_end( cfp );
+	if( Is_server ){
+		put_end( cfp );
+	}
 	in_setstatus = 0;
 	VA_END;
 }
@@ -204,7 +207,7 @@ static void put_end( struct control_file *cfp )
 	int len;
 
 	len = strlen(msg_b);
-	if( len ){
+	if( len && cfp ){
 		if( len >= (msg_b_len - 3) ){
 			len = msg_b_len - 3;
 		}

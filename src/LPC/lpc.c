@@ -62,7 +62,7 @@ environment variable, etc.
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpc.c,v 3.6 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lpc.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /***************************************************************************
  * main()
@@ -94,7 +94,6 @@ int main(int argc, char *argv[], char *envp[])
 
 
 	/* set signal handlers */
-	(void) plp_signal (SIGPIPE, (plp_sigfunc_t)SIG_IGN);
 	(void) plp_signal (SIGHUP, cleanup);
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
@@ -114,22 +113,11 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* get the printer name */
 	Get_printer(&printcap_entry);
-    if( (RemoteHost == 0 || *RemoteHost == 0) ){
-		RemoteHost = 0;
-        if( Default_remote_host && *Default_remote_host ){
-            RemoteHost = Default_remote_host;
-        } else if( FQDNHost && *FQDNHost ){
-            RemoteHost = FQDNHost;
-        }
-    }
 	if( RemoteHost == 0 ){
-		Diemsg( "No remote host specified" );
-	}
-    if( (RemotePrinter == 0 || *RemotePrinter == 0) ){
-		RemotePrinter = Printer;
+		Diemsg( _("No remote host specified") );
 	}
 
-	DEBUG0("lpc: printer '%s', remote host '%s'", Printer, RemoteHost );
+	DEBUG0("lpc: RemotePrinter '%s', RemoteHost '%s'", RemotePrinter, RemoteHost );
 	DEBUG0("lpc: Optind '%d', argc '%d'", Optind, argc );
 	if(DEBUGL1){
 		int i;
@@ -162,7 +150,7 @@ int main(int argc, char *argv[], char *envp[])
 		tokencount = Crackline( msg, tokens, MAXTOKEN );
 		if( tokencount == 0 ) continue;
 		if( tokencount >= MAXTOKEN ){
-			fprintf( stdout, "Too many parameters\n" );
+			fprintf( stdout, _("Too many parameters\n") );
 			continue;
 		}
 		for( i = 0; i < tokencount;  ++i ){
@@ -189,7 +177,7 @@ int main(int argc, char *argv[], char *envp[])
 				DEBUG0("lpc: system returned %d",Errorcode);
 				cleanup(0);
 			} else if( pid < 0 ) {
-				Diemsg( "fork failed - %s'", Errormsg(errno) );
+				Diemsg( _("fork failed - %s'"), Errormsg(errno) );
 			}
 			while(1){
 				result = plp_waitpid( pid, &status, 0 );

@@ -8,13 +8,13 @@
  ***************************************************************************
  * MODULE: README
  * PURPOSE: Overview of Software
- * $Id: README.install,v 3.1 1997/01/22 23:15:29 papowell Exp $
+ * $Id: README.install,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $
  **************************************************************************/
 
 Patrick Powell <papowell@sdsu.edu>
-Jason Mason    <jmason@iona.ie>
   Sat Feb 24 07:05:52 PST 1996
   Sun Jan 19 06:32:18 PST 1997
+ Thu Mar 13 15:19:33 PST 1997
 
 The LPRng software requires an ANSI C compiler and the
 GNU Make software from the Free Software Foundation,
@@ -23,6 +23,10 @@ GNU Make is available at many FTP sites, such as:
   ftp://prep.ai.mit.edu/pub/gnu
   ftp://ftp.uu.net/pub/gnu
 
+If you want to use the GNU gettext() facility for Internationalization,
+please read ABOUT-NLS.LPRng - it contains directions on how to get the
+various GNU packages.
+
 If you are using the BSD Make,  you will need to use make -f Makefile.bsd
 or rename the Makefile.bsd files as Makefile and edit them, replacing
 the lines containing 'make -f Makefile.bsd' with just 'make'.
@@ -30,6 +34,7 @@ the lines containing 'make -f Makefile.bsd' with just 'make'.
 The LPRng software distribution has the following structure:
 following files,  listed here
  README.*     - various README files
+ ABOUT-NLS.LPRng - description of the GNU internationalization
  INFORMATION  - a short (very short) overview of LPRng
  INSTALL      - generic installation information
  man/*        - man files for the major components.  I recommend
@@ -69,6 +74,9 @@ For adventurous and/or experienced users, you can compile and install the
   method,  but will get things installed as quickly as possible.
 
     configure;
+      #if you want internationalization,
+      #  after getting the gettext facility, do:
+      # configure --enable-nls 
     make;
       (or if you are using BSD make, make -f Makefile.bsd)
     su   { you must do the following commands as root }
@@ -142,7 +150,7 @@ PORTABILITY TESTS
 
   If your system is not listed in the README.ports file,  you should run
 the portability tests.  Make sure that all the tests pass;
-if they do not,  inform the plp@iona.ie mail list and help will be
+if they do not,  inform the lprng@iona.ie mail list and help will be
 provided.  The tests exercise some basic file locking and SETUID
 functions of the LPRng software.
 

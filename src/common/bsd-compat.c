@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: bsd-compat.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+"$Id: bsd-compat.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /*******************************************************************
  * Some stuff for Solaris and other SVR4 impls; emulate BSD sm'tics.
@@ -58,17 +58,9 @@ plp_sigfunc_t plp_signal (int signo, plp_sigfunc_t func)
 	act.sa_handler = func;
 	(void) sigemptyset (&act.sa_mask);
 	act.sa_flags = 0;
-	if (signo == SIGALRM) {
-#ifdef SA_INTERRUPT
-		act.sa_flags |= SA_INTERRUPT            /* SunOS */
-#endif
-		;
-	} else {
 #ifdef SA_RESTART
-		act.sa_flags |= SA_RESTART             /* SVR4, 4.3+BSD */
+	act.sa_flags |= SA_RESTART;             /* SVR4, 4.3+BSD */
 #endif
-		;
-	}
 	if (sigaction (signo, &act, &oact) < 0) {
 		return (SIG_ERR);
 	}
@@ -250,10 +242,31 @@ int safestrcmp( const char *s1, const char *s2 )
 int plp_usleep( int i )
 {
 	struct timeval t;
-	DEBUG3("plp_sleep: starting sleep %d", i );
+	DEBUG3("plp_usleep: starting usleep %d", i );
 	if( i > 0 ){
 		memset( &t, 0, sizeof(t) );
 		t.tv_usec = i;
+		i = select( 0,
+			FD_SET_FIX((fd_set *))(0),
+			FD_SET_FIX((fd_set *))(0),
+			FD_SET_FIX((fd_set *))(0),
+			&t );
+		DEBUG3("plp_usleep: select done, status %d", i );
+	}
+	return( i );
+}
+
+
+/***************************************************************************
+ * plp_sleep() with select - simple minded way to avoid problems
+ ***************************************************************************/
+int plp_sleep( int i )
+{
+	struct timeval t;
+	DEBUG3("plp_sleep: starting sleep %d", i );
+	if( i > 0 ){
+		memset( &t, 0, sizeof(t) );
+		t.tv_sec = i;
 		i = select( 0,
 			FD_SET_FIX((fd_set *))(0),
 			FD_SET_FIX((fd_set *))(0),

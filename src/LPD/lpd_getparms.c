@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_getparms.c,v 3.1 1996/12/28 21:40:01 papowell Exp $";
+"$Id: lpd_getparms.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -24,21 +24,18 @@ static char *const _id =
  * 2. Check for duplicate information
  ***************************************************************************/
 
-char *msg[] = {
-"usage: %s [-FVci] [-D dbg] [-L log]",
-" Options",
-" -D dbg      - set debug level and flags",
-"                 Example: -D10,remote=5",
-"                 set debug level to 10, remote flag = 5",
-" -F          - run in foreground, log to stderr",
-"               Example: -D10,remote=5",
-" -L logfile  - append log information to logfile",
-" -P printer  - start up single printer (test mode)",
-" -i          - specify if started by INETD",
-" -V          - show version info",
-0
-};
-
+char *msg = N_("\
+usage: %s [-FVci] [-D dbg] [-L log]\n\
+ Options\n\
+ -D dbg      - set debug level and flags\n\
+                 Example: -D10,remote=5\n\
+                 set debug level to 10, remote flag = 5\n\
+ -F          - run in foreground, log to stderr\n\
+               Example: -D10,remote=5\n\
+ -L logfile  - append log information to logfile\n\
+ -P printer  - start up single printer (test mode)\n\
+ -i          - specify if started by INETD\n\
+ -V          - show version info\n");
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -52,12 +49,12 @@ void Get_parms(int argc, char *argv[] )
 		case 'P': Printer = Optarg; break;
 		case 'c': Clean = 1; break;
 		default:
-			Printlist(msg, stderr);
+			fputs (_(msg), stderr);
 			exit(1);
 			break;
 		case 'V':
 			++Verbose;
-			fprintf( stdout, "Version %s\n", PATCHLEVEL );
+			fprintf( stdout, _("Version %s\n"), PATCHLEVEL );
 			if( Verbose > 1 ) Printlist( Copyright, stdout );
 			exit(1);
 			break;

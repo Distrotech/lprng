@@ -10,7 +10,7 @@
  * PURPOSE: kill and create children
  **************************************************************************/
 
-static char *const _id = "$Id: killchild.c,v 3.8 1997/01/31 22:13:45 papowell Exp $";
+static char *const _id = "$Id: killchild.c,v 3.12 1997/02/25 04:50:25 papowell Exp $";
 
 #include "lp.h"
 #include "decodestatus.h"
@@ -47,7 +47,7 @@ process group.  When we exit, during cleanup,  we will
 kill all of these off.  Note that we may have to dynamically allocate
 memory to keep the list.
 
-killchildren( signal, pid )
+killchildren( signal )
  - kill all children of this process
  ***************************************************************************/
 
@@ -58,8 +58,9 @@ struct pinfo {
 
 static struct malloc_list prgrps;
 
-void killchildren( int signal, pid_t pid )
+void killchildren( int signal )
 {
+	int pid = getpid();
 	int i;
 	struct pinfo *p;
 	
@@ -73,6 +74,7 @@ void killchildren( int signal, pid_t pid )
 	p = (void *)prgrps.list;
 	for( i = 0; i < prgrps.count; ++i ){
 		if( p[i].parentpid == pid ){
+			DEBUG2("killchildren: killpg(%d,%s)", p[i].pid, Sigstr(signal));
 			killpg( p[i].pid, signal );
 		}
 	}
@@ -146,6 +148,7 @@ int dofork( void )
 		/* we do not want to copy our parent's exit jobs or temp files */
 		if( Tempfile ){
 			Tempfile->pathname[0] = 0;
+			Tempfile->pathlen = 0;
 		}
 		if(Cfp_static){
 			Cfp_static->remove_on_exit = 0;
@@ -270,33 +273,29 @@ void remove_exit( int i )
 
 plp_signal_t cleanup (int passed_signal)
 {
-	int i, pgrp;
-	int signal = passed_signal;
- 	plp_block_mask omask;
+	int i;
+	int signalv = passed_signal;
 
-	DEBUG2("cleanup: signal %d, Errorcode %d", signal, Errorcode);
-	if( passed_signal == 0 ) signal = SIGINT;
+	DEBUG2("cleanup: signal %d, Errorcode %d", signalv, Errorcode);
+	if( passed_signal == 0 ){
+		signalv = SIGINT;
+	}
+	/* job removal */
+	if( passed_signal == SIGUSR1 ){
+		passed_signal = 0;
+		signalv = SIGINT;
+		Errorcode = 0;
+	}
 	for( i = last_exit; i-- > 0; ){
 		if( exit_list[i].exit ){
 			exit_list[i].exit( exit_list[i].parm );
 		}
 	}
-	i = getpid();
 	/* kill children of this process */
-	killchildren( signal, i );
-	/* if a signal and a process leader, then kill all children */
-	/* you may not believe this, but the SVR4 version does not take
-		a parameter */
 
-#if defined(HAVE_GETPGRP_0)
-	pgrp = getpgrp( HAVE_GETPGRP_0 );
+	killchildren( signalv );
 
-	plp_block_all_signals ( &omask );
-	if( (i == pgrp) ){
-		killpg( i, signal );
-	}
-#endif
-
+	DEBUG0("cleanup: done");
 	if( Errorcode ){
 		exit( Errorcode );
 	}

@@ -10,7 +10,7 @@
  * PURPOSE:
  **************************************************************************/
 static char *const _id =
-"$Id: lprm.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
+"$Id: lprm.c,v 3.6 1997/03/24 00:45:58 papowell Exp papowell $";
 
 /***************************************************************************
  * SYNOPSIS
@@ -66,7 +66,6 @@ int main(int argc, char *argv[], char *envp[])
 
 
 	/* set signal handlers */
-	(void) plp_signal (SIGPIPE, cleanup);
 	(void) plp_signal (SIGHUP, cleanup);
 	(void) plp_signal (SIGINT, cleanup);
 	(void) plp_signal (SIGQUIT, cleanup);
@@ -103,7 +102,7 @@ int main(int argc, char *argv[], char *envp[])
 	DEBUG3("lprm: printer '%s', remote printer '%s', remote host '%s'",
 		Printer, RemotePrinter, RemoteHost );
 	if( RemoteHost == 0 ){
-		Warnmsg( "No remote host specified" );
+		Warnmsg( _("No remote host specified") );
 		usage();
 		exit(1);
 	}

@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: spoolcontrol.c,v 3.5 1997/01/30 21:15:20 papowell Exp $";
+"$Id: spoolcontrol.c,v 3.6 1997/03/24 00:45:58 papowell Exp papowell $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -267,7 +267,7 @@ int Set_spool_control( int *fdptr, int forcechange )
 #endif
 	){
 		DEBUG3("Set_spool_control: file '%s' no change, sleeping", s );
-		sleep(1);
+		plp_sleep(1);
 	}
 	if( Write_fd_str( fd, "\n" ) < 0 ){
 		Errorcode = JABORT;

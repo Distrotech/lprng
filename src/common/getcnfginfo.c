@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getcnfginfo.c,v 3.1 1996/12/28 21:40:13 papowell Exp $";
+"$Id: getcnfginfo.c,v 3.2 1997/03/04 21:18:29 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -87,8 +87,9 @@ void Get_config( char *names )
 	int c, fd, err;
 	struct stat statb;
 
-	DEBUGF(DDB1)("Get_config: '%s'", names);
-	safestrncpy( entry, names );
+	Expand_percent( names, entry, entry+sizeof(entry)-2 );
+	entry[sizeof(entry)-1] = 0;
+	DEBUGF(DDB1)("Get_config: expanded '%s'", entry);
 	for(path = entry; path && *path; path = end ){
 		end = strpbrk( path, ";:," );
 		if( end ){

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 3.9 1997/01/31 22:12:52 papowell Exp $
+# $Id: Makefile.in,v 3.11 1997/03/24 00:45:58 papowell Exp papowell $
 ########################################################################## 
 
 #**************###########**************
@@ -24,7 +24,7 @@ SRC=@srcdir@
 # ALLDIRS for other such as documentation
 #=============================================================================
 
-DIRS= src man
+DIRS= src man po
 ALLDIRS= $(DIRS) ${SRC}/TESTSUPPORT ${SRC}/UTILS ${SRC}/DOC
 
 all: $(DIRS)
@@ -142,14 +142,14 @@ cifast: newmake
 ###############################################################################
 
 update:
-#GNU
-	$(MAKE) -C man update
-#
-#BSD 	(cd man; $(MAKE) update)
 	DIR=`pwd | sed 's,.*/,,' `; \
 		echo "#define PATCHLEVEL " \"$$DIR\" >./src/include/patchlevel.h; \
 		sleep 1; \
 		echo $$DIR >VERSION ;
+#GNU
+	$(MAKE) -C man update
+#
+#BSD 	(cd man; $(MAKE) update)
 	
 
 ###############################################################################
@@ -213,7 +213,7 @@ dist: dist_list
 	DIR=`pwd | sed 's,.*/,,' `; \
 		cd ..; \
 		tar zXcf /tmp/X $${DIR}.tgz $${DIR}; \
-		md5 $${DIR}.tgz > $${DIR}.tgz.md5
+		md5 $${DIR}.tgz | pgp -fast > $${DIR}.tgz.md5
 
 dist_doc: dist_list
 	echo src >>/tmp/X

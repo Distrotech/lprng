@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: vars.c,v 3.6 1997/01/29 03:04:39 papowell Exp $";
+"$Id: vars.c,v 3.7 1997/02/17 02:31:27 papowell Exp papowell $";
 
 /* force local definitions */
 #define EXTERN
@@ -200,6 +200,8 @@ struct keywords Pc_var_list[] = {
    /* if client, pass these environment variables */
 { "pl",  INTEGER_K,  &Page_length },
    /*  page length (in lines) */
+{ "poll_time",  INTEGER_K,  &Poll_time },
+   /*  interval in secs between starting up all servers */
 { "pr",  STRING_K,  &Pr_program },
    /*  pr program for p format */
 { "printcap_path", STRING_K, &Printcap_path, 1 },
