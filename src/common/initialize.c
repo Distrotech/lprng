@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.4 2002/02/09 03:37:32 papowell Exp $";
+"$Id: initialize.c,v 1.11 2002/02/23 03:45:17 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -285,9 +285,11 @@ void Setup_configuration()
 		Dump_line_list("Setup_configuration: PC names", &PC_names_line_list );
 		Dump_line_list("Setup_configuration: PC order", &PC_order_line_list );
 		Dump_line_list("Setup_configuration: PC info", &PC_info_line_list );
-		//Dump_line_list("Setup_configuration: User_PC names", &User_PC_names_line_list );
-		//Dump_line_list("Setup_configuration: User_PC order", &User_PC_order_line_list );
-		//Dump_line_list("Setup_configuration: User_PC info", &User_PC_info_line_list );
+	/*
+		Dump_line_list("Setup_configuration: User_PC names", &User_PC_names_line_list );
+		Dump_line_list("Setup_configuration: User_PC order", &User_PC_order_line_list );
+		Dump_line_list("Setup_configuration: User_PC info", &User_PC_info_line_list );
+	*/
 		Dump_line_list("Setup_configuration: Raw Perms", &RawPerm_line_list );
 		Dump_line_list("Setup_configuration: Perms", &Perm_line_list );
 	}

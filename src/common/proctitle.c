@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: proctitle.c,v 1.4 2002/02/09 03:37:35 papowell Exp $";
+"$Id: proctitle.c,v 1.11 2002/02/23 03:45:22 papowell Exp $";
 
 #include "lp.h"
 #include "proctitle.h"
@@ -297,7 +297,6 @@
 
 {
 # if SPT_TYPE != SPT_NONE
-	register char *p;
 	register int i;
 	SETPROC_STATIC char buf[SPT_BUFSIZE];
 #  if SPT_TYPE == SPT_PSTAT
@@ -353,9 +352,11 @@
 		buf[i] = '\0';
 	}
 	(void) strcpy(Argv[0], buf);
+	{ char *p;
 	p = &Argv[0][i];
 	while (p < LastArgv)
 		*p++ = SPT_PADCHAR;
+	}
 	Argv[1] = NULL;
 #  endif
 #  if SPT_TYPE == SPT_CHANGEARGV

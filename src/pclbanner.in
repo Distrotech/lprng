@@ -14,9 +14,7 @@ Args=""
 vAr=""
 vAlue=""
 iI=""
-# set >/tmp/before
 Args="$@"
-# echo "$@" >>/tmp/before
 while expr "$1" : '-.*' >/dev/null ; do
   vAr=`expr "$1" : '-\(.\).*'`;
   vAlue=`expr "$1" : '-.\(.*\)'`;

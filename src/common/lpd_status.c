@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.4 2002/02/09 03:37:33 papowell Exp $";
+"$Id: lpd_status.c,v 1.11 2002/02/23 03:45:20 papowell Exp $";
 
 
 #include "lp.h"
@@ -472,7 +472,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		Printer_DYN, Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 	if( safestrcasecmp( buffer, Printer_DYN ) ){
 		len = strlen(header);
-		SNPRINTF( header+len, sizeof(header)-len) _("(originally %s) "), buffer );
+		SNPRINTF( header+len, sizeof(header)-len) _(" (originally %s)"), buffer );
 	}
 	end_of_name = header+strlen(header);
 

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.4 2002/02/09 03:37:32 papowell Exp $";
+"$Id: linksupport.c,v 1.11 2002/02/23 03:45:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -277,7 +277,7 @@ int getconnection ( char *hostname, char *dest_port,
 		 * and his amazingly detailed reference monographs.
 		 */
 		struct sockaddr_un dest_un;     /* unix socket address */
-		bzero( &dest_un, sizeof(dest_un) );
+		bzero( (char *)&dest_un, sizeof(dest_un) );
 
 		DEBUGF(DNW1)("getconnection: using unix socket");
 		plp_block_all_signals( &oblock );

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.4 2002/02/09 03:37:33 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.11 2002/02/23 03:45:19 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -981,7 +981,11 @@ int Do_queue_jobs( char *name, int subserver )
 		 */
 		hf_name = Find_str_value(&job.info,HF_NAME,Value_sep);
 		id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-		if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+		if( !id ){
+			Errorcode = JABORT;
+			FATAL(LOG_ERR)
+				_("Do_queue_jobs: LOGIC ERROR - no identifer '%s'"), hf_name);
+		}
 
 		/*
 		 * set the hold file information
@@ -1026,8 +1030,6 @@ int Do_queue_jobs( char *name, int subserver )
 
 			sd = Find_str_value(sp,SPOOLDIR,Value_sep);
 			pr = Find_str_value(sp,PRINTER,Value_sep);
-			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 
 			DEBUG1("Do_queue_jobs: subserver '%s', spool dir '%s' for job '%s'",
 			   pr, sd, id );
@@ -1142,20 +1144,11 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(&tinfo,NEW_DEST,new_dest);
 			Set_str_value(&tinfo,MOVE_DEST,move_dest);
 			if( (pid = Fork_subserver( &servers, 0, &tinfo )) < 0 ){
-				Set_decimal_value(&job.info,SERVER,0);
-				if( Set_hold_file( &job, 0, 0 ) ){
-					/* you cannot update hold file!! */
-					setstatus( &job, _("cannot update hold file '%s'"),
-						hf_name );
-					FATAL(LOG_ERR)
-						_("Do_queue_jobs: cannot update hold file '%s'"), 
-						hf_name );
-				}
-				/* see if a delay improves the process situation */
 				setstatus( &job, _("sleeping, waiting for processes to exit"));
 				sleep(1);
 			} else {
 				Set_str_value(sp,HF_NAME,hf_name);
+				Set_str_value(sp,IDENTIFIER,id);
 			}
 		}
 	}
@@ -1625,7 +1618,6 @@ void Wait_for_subserver( int timeout, struct line_list *servers
 
 				pr = Find_str_value(sp,PRINTER,Value_sep);
 				id = Find_str_value(sp,IDENTIFIER,Value_sep);
-				Set_str_value(&job.info,IDENTIFIER,id);
 				DEBUG1( "Wait_for_subserver: server pid %d for '%s' for '%s' '%s' finished",
 					pid, pr, hf_name, id );
 
@@ -1780,7 +1772,12 @@ void Update_status( struct job *job, int status )
 	Set_decimal_value(&job->info,SERVER,0);
 
 	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if( !id ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR)
+			_("Update_status: no identifier for '%s'"),
+			Find_str_value(&job->info,HF_NAME,Value_sep) );
+	}
 
 	if( (destinations = Find_flag_value(&job->info,DESTINATIONS,Value_sep)) ){
 		did = Find_str_value(&job->info,DESTINATION,Value_sep );
@@ -1841,7 +1838,6 @@ void Update_status( struct job *job, int status )
 			}
 			Update_destination(job);
 			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-			if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 			if( done && n >= destinations ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: job '%s' printed",
@@ -1854,7 +1850,12 @@ void Update_status( struct job *job, int status )
 			copies = Find_flag_value(&job->info,COPIES,Value_sep);
 			copy = Find_flag_value(&job->info,COPY_DONE,Value_sep);
 			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-			if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+			if( !id ){
+				Errorcode = JABORT;
+				FATAL(LOG_ERR)
+					_("Update_status: no identifier for '%s'"),
+					Find_str_value(&job->info,HF_NAME,Value_sep) );
+			}
 
 			if( Find_str_value(&job->info,MOVE,Value_sep) ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
@@ -2209,7 +2210,11 @@ void Service_worker( struct line_list *args )
 	}
 
 	id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-	if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+	if( !id ){
+		FATAL(LOG_ERR)
+			_("Service_worker: no identifier for '%s'"),
+			Find_str_value(&job.info,HF_NAME,Value_sep) );
+	}
 
 	if( (destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep)) ){
 		did = Find_str_value(&job.info,DESTINATION,Value_sep );
@@ -2861,12 +2866,12 @@ void Remove_done_jobs( void )
 		/* get printable status */
 		Setup_cf_info( &job, 1 );
 		Job_printable(&job,&Spool_control,&printable,&held,&move,&error,&done);
+
 		if( !(error || done) ) continue;
+		id = Make_identifier(&job);
 		if( Done_jobs_max_age_DYN > 0
 			&& ( (error && (tm - error) > Done_jobs_max_age_DYN)
 			   || (done && (tm - done) > Done_jobs_max_age_DYN) ) ){
-			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 			setstatus( &job, _("job '%s' removed- status expired"), id );
 			Remove_job( &job );
 			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
@@ -2875,8 +2880,6 @@ void Remove_done_jobs( void )
 		if( remove_count > 0 ){
 			--remove_count;
 		} else if( remove_count == 0 ){
-			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
-			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 			setstatus( &job, _("job '%s' removed"), id );
 			Remove_job( &job );
 			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;

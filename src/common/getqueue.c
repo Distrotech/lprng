@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.4 2002/02/09 03:37:30 papowell Exp $";
+"$Id: getqueue.c,v 1.11 2002/02/23 03:45:17 papowell Exp $";
 
 
 /***************************************************************************
@@ -1920,7 +1920,6 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 
 	if(DEBUGL3) Dump_job( "Fix_control: before fixing", job );
 
-
 	/* fix control file name */
 
 	s = safestrdup4("cf",pr,number,file_hostname,__FILE__,__LINE__);
@@ -1929,34 +1928,28 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 
 	/* fix control file contents */
 
-	if( Use_identifier_DYN ){
-		if( job->destination.count == 0 ){
-			s = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-			if( !s ){
-				Make_identifier( job );
-				s = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-			}
+	s = Make_identifier( job );
+
+	if( job->destination.count == 0 ){
+		Set_str_value(&controlfile,IDENTIFIER,s);
+	} else {
+		s = Find_str_value(&job->destination,IDENTIFIER,Value_sep);
+		cccc = Find_flag_value(&job->destination,COPIES,Value_sep);
+		n = Find_flag_value(&job->destination,COPY_DONE,Value_sep);
+		if( cccc > 1 ){
+			SNPRINTF(buffer,sizeof(buffer))"C%d",n+1);
+			s = safestrdup2(s,buffer,__FILE__,__LINE__);
 			Set_str_value(&controlfile,IDENTIFIER,s);
+			if(s) free(s); s = 0;
 		} else {
-			s = Find_str_value(&job->destination,IDENTIFIER,Value_sep);
-			cccc = Find_flag_value(&job->destination,COPIES,Value_sep);
-			n = Find_flag_value(&job->destination,COPY_DONE,Value_sep);
-			if( cccc > 1 ){
-				SNPRINTF(buffer,sizeof(buffer))"C%d",n+1);
-				s = safestrdup2(s,buffer,__FILE__,__LINE__);
-				Set_str_value(&controlfile,IDENTIFIER,s);
-				if(s) free(s); s = 0;
-			} else {
-				Set_str_value(&controlfile,IDENTIFIER,s);
-			}
+			Set_str_value(&controlfile,IDENTIFIER,s);
 		}
 	}
 	if( (Is_server && Auth_forward_DYN == 0) ){
 		/* clobber the authentication information */
 		Set_str_value(&controlfile,AUTHINFO,0);
 	}
-	if( Use_date_DYN &&
-		!Find_str_value(&controlfile,DATE,Value_sep) ){
+	if( !Find_str_value(&controlfile,DATE,Value_sep) ){
 		Set_str_value(&controlfile,DATE, Time_str( 0, 0 ) );
 	}
 	if( (Use_queuename_DYN || Force_queuename_DYN) &&
@@ -2102,6 +2095,9 @@ int Create_control( struct job *job, char *error, int errlen, char *auth_id,
 	if( auth_id ){
 		Set_str_value(&job->info,AUTHINFO,auth_id);
 	}
+
+	Make_identifier( job );
+
 	if( !(s = Find_str_value(&job->info,FROMHOST,Value_sep)) || Is_clean_name(s) ){
 		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
 		s = Find_str_value(&job->info,FROMHOST,Value_sep);
@@ -2125,12 +2121,9 @@ int Create_control( struct job *job, char *error, int errlen, char *auth_id,
 		if( s ) free(s); s = 0;
 		s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	}
-	if( Use_identifier_DYN &&
-		!Find_str_value(&job->info,IDENTIFIER,Value_sep) ){
-		Make_identifier( job );
-	}
 
-	if( Use_date_DYN && Find_str_value(&job->info,DATE,Value_sep) ){
+
+	if( !Find_str_value(&job->info,DATE,Value_sep) ){
 		s = Time_str(0,0);
 		Set_str_value(&job->info,DATE,s);
 	}

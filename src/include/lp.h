@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.4 2002/02/09 03:37:38 papowell Exp $
+ * $Id: lp.h,v 1.11 2002/02/23 03:45:26 papowell Exp $
  ***************************************************************************/
 
 
@@ -472,8 +472,6 @@ EXTERN char* Syslog_device_DYN;	/* default syslog() facility */
 EXTERN char* Trailer_on_close_DYN; /* trailer string to print when queue empties */
 EXTERN int Unix_socket_DYN;		/* use UNIX socket for localhost */
 EXTERN char* Unix_socket_path_DYN;	/* UNIX socket pathname */
-EXTERN int Use_date_DYN;		/* put date in control file */
-EXTERN int Use_identifier_DYN;	/* put identifier in control file */
 EXTERN int Use_info_cache_DYN;
 EXTERN int Use_queuename_DYN;	/* put queuename in control file */
 EXTERN int Use_queuename_flag_DYN;	/* Specified with the -Q option */

@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 8 Feb 2002 (For LPRng-3.8.6)</subtitle>
+<subtitle> 22 Feb 2002 (For LPRng-3.8.7)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.4 2002/02/09 03:37:43 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.11 2002/02/23 03:45:33 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -14785,16 +14785,6 @@ or by actions of the <application>lpc</application> command.</para>
 
 <sect1 id="useidentifier"><title>Job Identifier </title>
 
-<para>Options:
-<itemizedlist>
-
-<listitem>
-<para> <literal>use_identifier</literal><emphasis>put job identifier in control file</emphasis></para>
-</listitem>
-
-</itemizedlist>
-</para>
-
 <para>For each job in a spool queue,
 the &LPRng; software creates a unique identifier.
 This identifier is recorded in the control file
@@ -16538,10 +16528,6 @@ the job status is updated in the same manner as for a printed job.</para>
 </listitem>
 
 <listitem>
-<para> <literal>use_date</literal> FLAG <emphasis>put date information in control file</emphasis></para>
-</listitem>
-
-<listitem>
 <para> <literal>use_info_cache</literal> FLAG <emphasis>cache printcap and other information</emphasis></para>
 </listitem>
 
@@ -16604,9 +16590,7 @@ which has timestamps to have a full (year, month, day, etc.) timestamp.
 The
 <literal>ms_time_resolution</literal> flag forces millisecond time resolution
 in the time stamp.
-The
-<literal>use_date</literal> flag forces a date value to be placed in a control file
-if there is none.</para>
+</para>
 
 <para>The <literal>use_info_cache</literal> (default ON) causes <application>lpd</application>
 to cache printcap and configuration information.
@@ -22725,10 +22709,6 @@ translate data format in control file <!-- <br> -->
 enable use of a UNIX socket for localhost connections <!-- <br> -->
 </entry></row><row><entry><link linkend="setuid">unix_socket_path</link></entry><entry>
 UNIX socket pathname<!-- <br> -->
-</entry></row><row><entry><link linkend="debugging">use_date</link></entry><entry>
-force date in control file <!-- <br> -->
-</entry></row><row><entry><link linkend="useidentifier">use_identifier</link></entry><entry>
-force identifier in control file <!-- <br> -->
 </entry></row><row><entry><link linkend="debugging">use_info_cache</link></entry><entry>
 read and cache information <!-- <br> -->
 </entry></row><row><entry><link linkend="jobtransfer">use_shorthost</link></entry><entry>

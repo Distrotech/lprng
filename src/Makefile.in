@@ -119,7 +119,7 @@ STRIP      = @STRIP@
 # Define G ETENV to allow the LPD_CONFIG environment
 #  variable to be used as the name of a configuration file.  In non-testing
 #  systems,  this is a security loophole.
-CFLAGS:= $(CFLAGS) -DGETENV=\"1\" -Wall -Werror
+#CFLAGS:= $(CFLAGS) -DGETENV=\"1\" -Wall -Werror
 
 # Set location of configuration, permissions, and printcap file
 #
@@ -297,7 +297,7 @@ lp: lpr
 	echo "# lpd.conf" >/tmp/$@.$$$$ ; \
 	echo "# VERSION=$(VERSION)" >>/tmp/$@.$$$$ ; \
 	$(CPP) $(CFLAGS) -C ${SRC}/common/vars.c \
-	 | /bin/sh ${SRC}/../UTILS/make_lpd_conf >>/tmp/$@.$$$$ ; \
+	 | /bin/sh ../UTILS/make_lpd_conf >>/tmp/$@.$$$$ ; \
 	chmod 644 /tmp/$@.$$$$ ; \
 	cp /tmp/$@.$$$$ $@ ; rm /tmp/$@.$$$$
 

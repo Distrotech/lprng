@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.4 2002/02/09 03:37:29 papowell Exp $";
+"$Id: accounting.c,v 1.11 2002/02/23 03:45:16 papowell Exp $";
 
 
 #include "lp.h"
@@ -170,10 +170,12 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			DEBUG1("Do_accounting: read %d, '%s'", n, msg );
 		}
 		Free_line_list(&args);
+		lowercase(msg);
 		Split(&args,msg,Whitespace,0,0,0,0,0,0);
 		err = JSUCC;
 		if( args.count && (s = args.list[0]) ){
-			if( (t = strchr(s,'\n')) ) *t = 0;
+			if( (t = safestrchr(s,'\n')) ) *t = 0;
+			SETSTATUS(job)"accounting filter replied with '%s'", s);
 			if( *s == 0 || !safestrncasecmp( s, "accept", 6 ) ){
 				err = JSUCC;
 			} else if( !safestrncasecmp( s, "hold", 4 ) ){

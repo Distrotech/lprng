@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 1.4 2002/02/09 03:37:34 papowell Exp $";
+"$Id: lpstat.c,v 1.11 2002/02/23 03:45:21 papowell Exp $";
 
 
 /***************************************************************************
@@ -343,7 +343,7 @@ int Read_status_info( char *host, int sock,
 					++t;
 					while( isspace(cval(t)) ) ++t;
 					Set_DYN(&Printer_DYN,t );
-					for( t = Printer_DYN; t && !isspace(cval(t)); ++t );
+					for( t = Printer_DYN; !ISNULL(t) && !isspace(cval(t)); ++t );
 					if( isspace(cval(t)) ) *t = 0;
 				}
 				if( display_format == 0 ){

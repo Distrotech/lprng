@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.4 2002/02/09 03:37:33 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.11 2002/02/23 03:45:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -206,9 +206,23 @@ void Service_connection( struct line_list *args )
 #endif
 		){
 		/* force the localhost address */
+		int len;
+		void *s, *addr;
 		memset( &sinaddr, 0, sizeof(sinaddr) );
-	 	sinaddr.sa_family = AF_INET;
-		inet_pton( sinaddr.sa_family, "127.0.0.1", &((struct sockaddr_in *)(&sinaddr))->sin_addr );
+	 	sinaddr.sa_family = Localhost_IP.h_addrtype;
+		len = Localhost_IP.h_length;
+		if( sinaddr.sa_family == AF_INET ){
+			addr = &(((struct sockaddr_in *)&sinaddr)->sin_addr);
+#if defined(IPV6)
+		} else if( sinaddr->sa_family == AF_INET6 ){
+			addr = &(((struct sockaddr_in6 *)&sinaddr)->sin6_addr);
+#endif
+		} else {
+			FATAL(LOG_INFO) _("Service_connection: BAD LocalHost_IP value"));
+			addr = 0;
+		}
+		s = Localhost_IP.h_addr_list.list[0];
+		memmove(addr,s,len);
 	} else {
 		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
 	}
@@ -241,7 +255,8 @@ void Service_connection( struct line_list *args )
 		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request") );
 	}
 	if( len < 2 ){
-		FATAL(LOG_INFO) _("Service_connection: bad request line '%s'"), input );
+		FATAL(LOG_INFO) _("Service_connection: bad request line '%s', from '%s'"),
+			input, inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ) );
 	}
 
 	/* read the permissions information */

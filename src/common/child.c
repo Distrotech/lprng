@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: child.c,v 1.4 2002/02/09 03:37:29 papowell Exp $";
+"$Id: child.c,v 1.11 2002/02/23 03:45:16 papowell Exp $";
 
 
 #include "lp.h"
@@ -259,6 +259,13 @@ plp_signal_t cleanup (int passed_signal)
 
 	DEBUG2("cleanup: signal %s, Errorcode %d",
 		Sigstr(passed_signal), Errorcode );
+#if defined(__CYGWIN__)
+	if( getpid() == Server_pid ) {
+		char *path = safestrdup3( Lockfile_DYN,".", Lpd_port_DYN, __FILE__, __LINE__ );
+        unlink(path);
+		if( path ) free(path); path = 0;
+	}
+#endif
 
 	/* shut down all logging stuff */
 	Doing_cleanup = 1;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.4 2002/02/09 03:37:35 papowell Exp $";
+"$Id: printjob.c,v 1.11 2002/02/23 03:45:22 papowell Exp $";
 
 
 #include "lp.h"
@@ -186,6 +186,7 @@ int Print_job( int output, int status_device, struct job *job,
 
 	msgbuffer[0] = 0;
 	/* do we need an OF filter? */
+	Set_block_io( output );
 	if( OF_Filter_DYN ){
 		if( Run_OF_filter( timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
@@ -214,6 +215,7 @@ int Print_job( int output, int status_device, struct job *job,
 		datafile = (void *)job->datafiles.list[count];
 		if(DEBUGL4)Dump_line_list("Print_job - datafile", datafile );
 
+	Set_block_io( output );
 		transfername = Find_str_value(datafile,TRANSFERNAME,Value_sep);
 		openname = Find_str_value(datafile,OPENNAME,Value_sep);
 		format = Find_str_value(datafile,FORMAT,Value_sep);
@@ -333,6 +335,7 @@ int Print_job( int output, int status_device, struct job *job,
 			}
 			/* do we have output for the OF device/filter ? */
 			if( Outlen > 0 ){
+				Set_block_io( output );
 				/* yes */
 				if( OF_Filter_DYN ){
 					/* send it to the OF filter */
@@ -357,6 +360,7 @@ int Print_job( int output, int status_device, struct job *job,
 				Init_buf(&Outbuf, &Outmax, &Outlen );
 			}
 
+			Set_block_io( output );
 			if( filter ){
 				DEBUG3("Print_job: format '%s' starting filter '%s'",
 					format, filter );
@@ -479,6 +483,7 @@ int Print_job( int output, int status_device, struct job *job,
 	 * close the OF Filters
 	 */
 
+	Set_block_io( output );
 	if( OF_Filter_DYN ){
 		if( Run_OF_filter( timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
@@ -622,9 +627,11 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		*of_stderr = of_error[0];
 		*of_stdin = of_fd[1];
 	} else {
+		DEBUG3("Run_OF_filter: SIGCONT to to OF pid '%d'", *of_pid );
 		kill( *of_pid, SIGCONT );
 	}
 	if( Suspend_OF_filter_DYN && !terminate_of ){
+		DEBUG3("Run_OF_filter: stopping OF pid '%d'", *of_pid );
 		Put_buf_str( Filter_stop, outbuf, outmax, outlen );
 		n = Write_outbuf_to_OF(job,"OF",*of_stdin,
 			*outbuf, *outlen,
@@ -642,6 +649,7 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		}
 		SETSTATUS(job)"OF filter suspended" );
 	} else {
+		DEBUG3("Run_OF_filter: end OF pid '%d'", *of_pid );
 		n = Write_outbuf_to_OF(job,"OF",*of_stdin,
 			*outbuf, *outlen,
 			*of_stderr, msgbuffer, msglen,
@@ -662,7 +670,7 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 			goto exit;
 		}
 		close( *of_stderr );
-		*of_stdin = -1;
+		*of_stderr = -1;
 		/* now we get the exit status for the filter */
 		n = Wait_for_pid( *of_pid, "OF", 0, timeout );
 		if( n ){
@@ -823,7 +831,9 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 			}
 			count = -1;
 			/* we put a 1 second timeout here, just to make sure */
+			Set_block_io( of_error );
 			count = Read_fd_len_timeout( 1, of_error, msg+msglen, msgmax-msglen );
+			Set_nonblock_io( of_error );
 			if( count > 0 ){
 				msglen += count;
 				msg[msglen] = 0;
@@ -965,13 +975,15 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 			} while( count > 0 );
 		} else do {
 			/* now we read the error output, just in case there is something there */
-			DEBUG4("Get_status_from_OF: now reading, left %d", left );
+			DEBUG4("Get_status_from_OF: now reading on fd %d, left %d",
+				of_error, left );
 			msglen = strlen(msg);
 			if( msglen >= msgmax ){
 				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
 				msg[0] = 0;
 				msglen = 0;
 			}
+			Set_block_io( of_error );
 			count = Read_fd_len_timeout( left, of_error, msg+msglen, msgmax-msglen );
 			if( count > 0 ){
 				msglen += count;

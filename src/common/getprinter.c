@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.4 2002/02/09 03:37:30 papowell Exp $";
+"$Id: getprinter.c,v 1.11 2002/02/23 03:45:17 papowell Exp $";
 
 
 #include "lp.h"
@@ -135,7 +135,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			}
 			Set_DYN(&Printer_DYN,s);
 
-			DEBUG2("Fix_Rm_Rp_info: found '%s'", Printer_DYN );
+			DEBUG2("Fix_Rm_Rp_info: from printcap found '%s'", Printer_DYN );
 			if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_alias_line_list",
 				&PC_alias_line_list );
 			if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_entry_line_list",
@@ -152,7 +152,9 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		/* if a client and have direct, then we need to use
 		 * the LP values
 		 */
+		Expand_percent( &Lp_device_DYN );
 		if( Direct_DYN ){
+			DEBUG2("Fix_Rm_Rp_info: direct to '%s'", Lp_device_DYN );
 			if( strchr( "/|", cval(Lp_device_DYN)) ){
 				Set_DYN(&RemotePrinter_DYN, 0 );
 				Set_DYN(&RemoteHost_DYN, 0 );
@@ -173,10 +175,23 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			}
 		}
 		if( Force_localhost_DYN ){
+			DEBUG2("Fix_Rm_Rp_info: force_localhost to '%s'", Printer_DYN );
 			Set_DYN( &RemoteHost_DYN, LOCALHOST );
 			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 			Set_DYN( &Lp_device_DYN, 0 );
 			goto done;
+		}
+		if( (s = safestrchr( Lp_device_DYN, '@' ))  ){
+			DEBUG2("Fix_Rm_Rp_info: Lp_device_DYN is printer '%s'", Lp_device_DYN );
+			Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
+			if( (s = safestrchr( RemotePrinter_DYN,'@')) ){
+				*s++ = 0;
+				Set_DYN(&RemoteHost_DYN, s );
+				if( (s = safestrchr(RemoteHost_DYN+1,'%')) ){
+					*s++ = 0;
+					Set_DYN(&Lpd_port_DYN,s);
+				}
+			}
 		}
 		if( RemoteHost_DYN == 0 || *RemoteHost_DYN == 0 ){
 			Set_DYN( &RemoteHost_DYN, Default_remote_host_DYN );
@@ -298,8 +313,8 @@ void Get_all_printcap_entries(void)
 	} else {
 		for( i = 0; i < PC_order_line_list.count; ++i ){
 			s = PC_order_line_list.list[i];
-			if( !s || !*s || !safestrcmp( ALL, s ) ) continue;
-			if( !safestrcmp(s,"*") || !ispunct( cval( s ) ) ){
+			if( ISNULL(s) || !safestrcmp( ALL, s ) ) continue;
+			if( safestrcmp(s,"*") && !ispunct( cval( s ) ) ){
 				Add_line_list(&All_line_list,s,0,0,0);
 			}
 		}

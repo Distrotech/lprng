@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.4 2002/02/09 03:37:33 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.11 2002/02/23 03:45:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -865,6 +865,8 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	Set_flag_value(&job->info,JOB_TIME,(int)start_time.tv_sec);
 	Set_flag_value(&job->info,JOB_TIME_USEC,(int)start_time.tv_usec);
 
+	Make_identifier( job );
+
 	Init_line_list(&datafiles);
 
 	if( files ){
@@ -1043,6 +1045,8 @@ int Set_up_temporary_control_file( struct job *job,
 		goto error;
 	}
 	DEBUG1("Set_up_temporary_control_file: hold file fd '%d'", fd );
+	
+	Make_identifier( job );
 	if( Create_control( job, error, errlen, auth_id, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Set_up_temporary_control_file: Create_control error '%s'", error );
 		close(fd); fd = -1;
@@ -1227,8 +1231,13 @@ int Get_route( struct job *job, char *error, int errlen )
 	Free_line_list( &env );
 	Get_file_image_and_split(tempfile,0,1,&env,Line_ends,0,0,0,1,0,0);
 	Free_line_list(&job->destination);
+
 	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-	if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	if(!id){
+		FATAL(LOG_ERR)
+			_("Get_route: no identifier for '%s'"),
+			Find_str_value(&job->info,HF_NAME,Value_sep) );
+	}
 	count = 0;
 	for(i = 0; i < env.count; ++i ){
 		s = env.list[i];

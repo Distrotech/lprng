@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.4 2002/02/09 03:37:32 papowell Exp $";
+"$Id: linelist.c,v 1.11 2002/02/23 03:45:17 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -1725,8 +1725,8 @@ char *Select_pc_info( const char *id,
 	struct line_list *input,
 	int depth, int wildcard )
 {
-	int start, end, i, c, allglob = 0, glob;
-	char *s, *t, *found = 0;
+	int start, end, i, c;
+	char *s, *t, *found = 0, *allglob = 0;
 	struct line_list l;
 
 	Init_line_list(&l);
@@ -1751,33 +1751,38 @@ char *Select_pc_info( const char *id,
 		found = Find_str_value( names, id, Value_sep );
 	}
 	/* do partial glob match  */
-	if( wildcard ){
+	c = 0;
+	for( i = 0; !found && i < names->count; ++i ){
+		s = names->list[i];
+		if( (t = safestrpbrk(s, Value_sep)) ){
+			c = *t; *t = 0;
+			DEBUG1("Select_pc_info: wildcard trying '%s'", s );
+			if( !safestrcmp(s, id ) ){
+				found = t+1;
+			}
+			*t = c;
+		}
+	}
+	if( !found && wildcard ){
 		c = 0;
 		for( i = 0; !found && i < names->count; ++i ){
 			s = names->list[i];
 			if( (t = safestrpbrk(s, Value_sep)) ){
 				c = *t; *t = 0;
-				DEBUG1("Select_pc_info: trying '%s'", s );
-				glob = !strcmp(s,"*"); 
-				allglob |= glob;
-				if( !glob && !Globmatch( s, id ) ){
+				DEBUG1("Select_pc_info: wildcard trying '%s'", s );
+				if( !strcmp(s,"*") ){ 
+					if( ISNULL(allglob) ){
+						allglob = t+1;
+					}
+				} else if( !Globmatch( s, id ) ){
 					found = t+1;
 				}
 				*t = c;
 			}
 		}
-		/* do full glob match  */
-		for( i = 0; !found && allglob && i < names->count; ++i ){
-			s = names->list[i];
-			if( (t = safestrpbrk(s, Value_sep)) ){
-				c = *t; *t = 0;
-				DEBUG1("Select_pc_info: trying '%s'", s );
-				if( !Globmatch( s, id ) ){
-					found = t+1;
-				}
-				*t = c;
-			}
-		}
+	}
+	if( !found ){
+		found = allglob;
 	}
 	if( found ){
 		Find_pc_info( found, info, aliases, names, order, input, depth, 0 );

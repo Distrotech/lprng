@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.4 2002/02/09 03:37:29 papowell Exp $";
+"$Id: checkpc.c,v 1.11 2002/02/23 03:45:16 papowell Exp $";
 
 
 
@@ -50,7 +50,7 @@ int main( int argc, char *argv[], char *envp[] )
 	int ruid, euid, rgid, egid;
 	char *printcap;
 	char *serial_line = 0;
-	struct line_list raw;
+	struct line_list raw, spooldirs;
 	char *s, *t;
 	struct stat statb;
 
@@ -59,6 +59,7 @@ int main( int argc, char *argv[], char *envp[] )
 
 	s = t = printcap = 0;
 	Init_line_list(&raw);
+	Init_line_list(&spooldirs);
 	/* set up the uid state */
 	To_euid_root();
 	time(&Current_time);
@@ -234,13 +235,13 @@ int main( int argc, char *argv[], char *envp[] )
 		DEBUG1("checkpc: for SERVER %s is really %s", User_specified_printer, s );
 		if( s ){
 			Set_DYN(&Printer_DYN,s);
-			Scan_printer();
+			Scan_printer(&spooldirs);
 		}
 	} else {
 		if( DEBUGL1 ) Dump_line_list("checkpc: all", &All_line_list );
 		for( i = 0; i < All_line_list.count; ++i ){
 			Set_DYN(&Printer_DYN,All_line_list.list[i]);
-			Scan_printer();
+			Scan_printer(&spooldirs);
 		}
 	}
 
@@ -253,6 +254,8 @@ int main( int argc, char *argv[], char *envp[] )
             }
         }
     }
+	Free_line_list(&raw);
+	Free_line_list(&spooldirs);
 	return(0);
 }
 
@@ -294,7 +297,7 @@ void mkdir_path( char *path )
 	"filter", "bp", "bs", "be", 0
 	};
 
-void Scan_printer(void)
+void Scan_printer(struct line_list *spooldirs)
 {
 	DIR *dir;
 	struct dirent *d;
@@ -372,6 +375,13 @@ void Scan_printer(void)
 			Printer_DYN);
 		return;
 	}
+	if( (s =  Find_str_value(spooldirs,Spool_dir_DYN,Value_sep)) ){
+		WARNMSG("%s: CATASTOPHIC ERROR! queue '%s' also has spool directory '%s'",
+			Printer_DYN, s, Spool_dir_DYN);
+		return;
+	}
+	Set_str_value(spooldirs,Spool_dir_DYN,Printer_DYN);
+	
 
 	/*
 	 * check the permissions of files and directories

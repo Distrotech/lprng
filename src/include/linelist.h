@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.4 2002/02/09 03:37:37 papowell Exp $
+ * $Id: linelist.h,v 1.11 2002/02/23 03:45:25 papowell Exp $
  ***************************************************************************/
 
 
@@ -93,8 +93,10 @@ EXTERN struct line_list
 	Config_line_list, PC_filters_line_list,
 	PC_names_line_list, PC_order_line_list,
 	PC_info_line_list, PC_entry_line_list, PC_alias_line_list,
-	//User_PC_names_line_list, User_PC_order_line_list,
-	//User_PC_info_line_list, User_PC_alias_line_list,
+	/*
+	User_PC_names_line_list, User_PC_order_line_list,
+	User_PC_info_line_list, User_PC_alias_line_list,
+	*/
 	All_line_list, Spool_control, Sort_order,
 	RawPerm_line_list, Perm_line_list, Perm_filters_line_list,
 	Process_list, Tempfiles, Servers_line_list, Printer_list,
@@ -105,8 +107,10 @@ EXTERN struct line_list *Allocs[]
 	 &Config_line_list, &PC_filters_line_list,
 	 &PC_names_line_list, &PC_order_line_list,
 	 &PC_info_line_list, &PC_entry_line_list, &PC_alias_line_list,
-	 //&User_PC_names_line_list, &User_PC_order_line_list,
-	 //&User_PC_info_line_list, &User_PC_alias_line_list,
+	/*
+	 &User_PC_names_line_list, &User_PC_order_line_list,
+	 &User_PC_info_line_list, &User_PC_alias_line_list,
+	*/
 	 &All_line_list, &Spool_control, &Sort_order,
 	 &RawPerm_line_list, &Perm_line_list, &Perm_filters_line_list,
 	 &Tempfiles, &Servers_line_list,

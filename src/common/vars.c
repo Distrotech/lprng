@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.4 2002/02/09 03:37:36 papowell Exp $";
+"$Id: vars.c,v 1.11 2002/02/23 03:45:23 papowell Exp $";
 
 
 /* force local definitions */
@@ -392,13 +392,13 @@ struct keywords Pc_var_list[] = {
    /*  put queue name in control file */
 { "qq", 0,  FLAG_K,  &Use_queuename_DYN,0,0,"=1"},
    /*  print queue control file name */
-{ "queue_control_file", 0,  STRING_K,  &Queue_control_file_DYN,0,0,"=control.%P"},
+{ "queue_control_file", 0,  STRING_K,  &Queue_control_file_DYN,0,0,"=control.pr"},
    /*  print queue lock file name */
-{ "queue_lock_file", 0,  STRING_K,  &Queue_lock_file_DYN,0,0,"=%P"},
+{ "queue_lock_file", 0,  STRING_K,  &Queue_lock_file_DYN,0,0,"=lock.pr"},
    /*  print queue status file name */
-{ "queue_status_file", 0,  STRING_K,  &Queue_status_file_DYN,0,0,"=status.%P"},
+{ "queue_status_file", 0,  STRING_K,  &Queue_status_file_DYN,0,0,"=status.pr"},
    /*  print queue unspooler pid file name */
-{ "queue_unspooler_file", 0,  STRING_K,  &Queue_unspooler_file_DYN,0,0,"=unspooler.%P"},
+{ "queue_unspooler_file", 0,  STRING_K,  &Queue_unspooler_file_DYN,0,0,"=unspooler.pr"},
    /*  operations allowed to remote host */
 { "remote_support", 0,  STRING_K,  &Remote_support_DYN,0,0,"=RMQVC"},
    /* remove these -Z options from options list on outgoing or filters */
@@ -497,12 +497,8 @@ struct keywords Pc_var_list[] = {
 { "translate_incoming_format", 0,  STRING_K,  &Xlate_incoming_format_DYN,0,0},
    /*  use UNIX socket for localhost connections */
 { "unix_socket", 0,  FLAG_K,  &Unix_socket_DYN,0,0,"=" UNIXSOCKET},
-   /*  put date in control file */
+   /*  path for UNIX socket for localhost connections */
 { "unix_socket_path", 0,  STRING_K,  &Unix_socket_path_DYN,0,0,"=" UNIXSOCKETPATH},
-   /*  put date in control file */
-{ "use_date", 0,  FLAG_K,  &Use_date_DYN,0,0,"1"},
-   /*  put identifier in control file */
-{ "use_identifier", 0,  FLAG_K,  &Use_identifier_DYN,0,0,"1"},
    /*  read and cache information */
 { "use_info_cache", 0, FLAG_K, &Use_info_cache_DYN,0,0,"1"},
    /*  put queue name in control file */

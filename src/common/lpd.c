@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.4 2002/02/09 03:37:32 papowell Exp $";
+"$Id: lpd.c,v 1.11 2002/02/23 03:45:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -204,14 +204,27 @@ int main(int argc, char *argv[], char *envp[])
 		Set_DYN( &Unix_socket_path_DYN, Lpd_socket_arg );
 	}
 
-	lockfd = Lock_lpd_pid();
-	if( lockfd < 0 ){
-  		pid = Get_lpd_pid();
+	pid = Get_lpd_pid();
+#if defined(__CYGWIN__)
+	if( (pid > 0 && ( kill(pid,0) || (errno != ESRCH) )) {
 		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
   				pid );
 	}
-
+	lockfd = Lock_lpd_pid();
+	if( lockfd < 0 ){
+		DIEMSG( _("cannot open or lock lockfile - %s"), Errormsg(errno) );
+	}
 	Set_lpd_pid( lockfd );
+	close( lockfd );
+	lockfd = -1;
+#else
+	lockfd = Lock_lpd_pid();
+	if( lockfd < 0 ){
+		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
+  				pid );
+	}
+	Set_lpd_pid( lockfd );
+#endif
 
 	sock = Link_listen();
 	DEBUG1("lpd: listening socket fd %d",sock);
@@ -272,7 +285,18 @@ int main(int argc, char *argv[], char *envp[])
 	 * Write the PID into the lockfile
 	 */
 
+#if defined(__CYGWIN__)
+	lockfd = Lock_lpd_pid();
+	if( lockfd < 0 ) {
+	   DIEMSG( "Can't open lockfile for writing" );
+	}
 	Set_lpd_pid( lockfd );
+	close( lockfd );
+	lockfd = -1;
+#else
+	Set_lpd_pid( lockfd );
+#endif
+
 
 	if( Drop_root_DYN ){
 		Full_daemon_perms();
@@ -637,8 +661,10 @@ int Lock_lpd_pid(void)
 	if( lockfd < 0 ){
 		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open lock file '%s'"), path );
 	}
+#if !defined(__CYGWIN__)
 	fchown( lockfd, DaemonUID, DaemonGID );
 	fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
+#endif
 	To_euid(euid);
 	if( Do_lock( lockfd, 0 ) < 0 ){
 		close( lockfd );

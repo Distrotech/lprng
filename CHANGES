@@ -1,3 +1,50 @@
+Version LPRng-3.8.7 - Fri Feb 22 12:24:38 PST 2002
+
+  Modified the wildcard lookup so that it returns some sane
+   values for defaults, i.e. - '*' is not treated like
+   a real printer and the first 'real' printer is used.
+     Sigh...
+
+  autoconf, automake, and libtoolize insanity.
+    Each of these facilities has a different version of the
+    config.guess and config.sub files, and will brutally copy
+    them to the distribution directory when you run automake,
+    autoconf, or libtoolize.  Problem sort of solved by
+    running through the /usr/local/share/{auto*,libtool}
+    directory and finding latest versions of things.  As the
+    CarTalk guys say, "Bo-0H-OH-OH Gus!".  Sigh. 
+
+  The 'Service_connection: bad request...' error message now has
+   the IP address of the sender added.
+  (Good idea from: Rainer Tammer <rainer.tammer@spg.schulergroup.com>)
+
+  Makefile.in had the diagnostic options left enabled after
+   regression tests.
+   BAD! Bad Programmer! BAD! No coffee for you today.
+   (Reported by: Petri Kaukasoina <kaukasoi-lprng@elektroni.ee.tut.fi>
+      among others...)
+
+  Portability stuff,  // comments, and src/Makefile referencing
+   ${SRC}/../UTILS instead of ../UTILS.
+   (Reported by: Hans Peter Verne <h.p.verne@usit.uio.no>)
+
+  Missing check in lpstat for end of string condition:
+   for( t = Printer_DYN; t && !isspace(cval(t)); ++t );
+    => for( t = Printer_DYN; !ISNULL(t) && !isspace(cval(t)); ++t );
+   (Reported by: Villy Kruse <vek@pharmapartners.nl>)
+
+  psbanner was creating a /tmp/before file.
+   (Reported by:
+     Anthony R Iano-Fletcher <Anthony.Iano-Fletcher@cbel.cit.nih.gov>)
+
+  Fixed the 'job done' status message so that it shows the job id.
+   (Suggested by: Christoph Beyer <christoph.beyer@desy.de>)
+
+  Added some sanity checks to handle cases when hold files and
+   control files do not have identifier information in them.
+
+  Checkpc now checks for duplicate spool directories.
+
 Version LPRng-3.8.6 - Fri Feb  8 19:31:52 PST 2002
 
   HF_NAME not getting set when hold file read and it is not
