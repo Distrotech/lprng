@@ -2,9 +2,9 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_jobs.h,v 5.9 2000/11/27 23:20:06 papowell Exp papowell $
+ * $Id: lpd_jobs.h,v 5.11 2000/12/25 01:51:20 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -21,7 +21,7 @@ void Get_subserver_info( struct line_list *order,
 	char *list, char *old_order);
 char *Make_temp_copy( char *srcfile, char *destdir );
 int Do_queue_jobs( char *name, int subserver );
-int Remote_job( struct job *job, int lpd_bounce, char *id );
+int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id );
 int Local_job( struct job *job, char *id );
 int Fork_subserver( struct line_list *server_info, int use_subserver,
 	struct line_list *parms );

@@ -11,7 +11,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 30 Nov 2000 (For LPRng-3.7.1)</subtitle>
+<subtitle> 26 Dec 2000 (For LPRng-3.7.3)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -19,7 +19,7 @@
 <surname>Powell</surname>
 <affiliation>
 <address>
-<email>papowell@astart.com</email>
+<email>papowell@lprng.com</email>
 AStArt Technologies addr
 9475 Chesapeake Dr, Suite D,
 San Diego, CA 92123
@@ -34,10 +34,10 @@ Fax <fax>858-279-8424</fax>
 <year>1998</year>
 <year>1999</year>
 <year>2000</year>
-<holder role="mailto:papowell@astart.com">Patrick Powell</holder>
+<holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 5.83 2000/11/30 18:14:04 papowell Exp papowell $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 5.87 2000/12/27 02:42:13 papowell Exp papowell $</releaseinfo>
 
 	<legalnotice>
 	 <important>
@@ -449,7 +449,7 @@ systems, as well as real time and network software.</para>
 <para>Main FTP Site:
 <simplelist type=vert columns=1>
 <member>
-<ulink URL="ftp://ftp.astart.com/pub/LPRng">ftp://ftp.astart.com/pub/LPRng</ulink> (US)
+<ulink URL="ftp://ftp.lprng.com/pub/LPRng">ftp://ftp.lprng.com/pub/LPRng</ulink> (US)
 </member>
 </simplelist>
 </para>
@@ -458,6 +458,7 @@ systems, as well as real time and network software.</para>
 <para>Mirrors:<!-- <br> -->
 <simplelist type=vert columns=1>
 <member><ulink URL="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng">ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng</ulink> (US) </member>
+<member><ulink URL="ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng">ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://uiarchive.uiuc.edu/pub/packages/LPRng">ftp://uiarchive.uiuc.edu/pub/packages/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng/">ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng/</ulink> (AU) </member>
@@ -494,7 +495,7 @@ Here is the key for validating the checksums:
 <informalexample>
 <screen>Type Bits/KeyID    Date       User ID
 pub  1024/00D95C9D 1997/01/31 Patrick A. Powell \
-   &lt;papowell@astart.com&gt;
+   &lt;papowell@lprng.com&gt;
 
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: 2.6.3i
@@ -1006,7 +1007,9 @@ For example:
 <para>In addition to these standard <application>configure</application>
 options the following options provided.
 <variablelist>
+
 <varlistentry><term><literal> --disable-setuid </literal></term>
+
 <listitem>
 <para>Install the executables without setuid ROOT permissions.
 Non-setuid clients and programs are inherently more secure than SETUID programs,
@@ -1014,9 +1017,19 @@ and system administrators would be well advised to install them without
 SETUID root permissions.
 Please see
 <link linkend="setuid">Security Considerations</link>
-
 for more details about this option.</para>
+</listitem>
+</varlistentry>
 
+<varlistentry><term><literal> --disable-gdbm </literal></term>
+
+<listitem>
+<para>
+Do not use the GDBM database library.
+This library is used to speed up storage and retrieval of job information.
+This is especially useful when there are a large number of jobs in the
+system which need to be accessed.
+</para>
 </listitem>
 </varlistentry>
 
@@ -2271,7 +2284,7 @@ authenticated users.
     printing = lprng
     load printers = yes
     guest ok = no
-    printcap file = /etc/printcap
+    printcap name = /etc/printcap
     print command =      /usr/bin/lpr  -P%p -r %s
     lpq command   =      /usr/bin/lpq  -P%p
     lprm command  =      /usr/bin/lprm -P%p %j
@@ -2289,6 +2302,26 @@ authenticated users.
 in the directory specified by <literal>path</literal>.
 If the print operation fails then sometimes the print file
 is left in the directory.
+</para></listitem>
+<listitem><para>
+The directory should have
+the same ownership and permissions as
+<filename>/tmp</filename>,
+i.e.- owner and group <literal/root/ and <literal/bin/,
+with
+<literal/01777/ permissions,
+where <literal/01000/ is the sticky bit.
+</para><para>
+A directory whose `sticky bit' is set becomes an append-only directory,
+or, more accurately, a directory in which the deletion of files is re-
+stricted.  A file in a sticky directory may only be removed or renamed by
+a user if the user has write permission for the directory and the user is
+the owner of the file, the owner of the directory, or the super-user.
+This feature is usefully applied to directories such as /tmp which must
+be publicly writable but should deny users the license to arbitrarily
+delete or rename each others' files.
+</para></listitem>
+<listitem><para>
 The directory should be examined periodically and files
 older then a day should be removed.  The following command
 can be used to do this,  and should be put in a file that
@@ -2315,9 +2348,9 @@ be one of the following:
 <informalexample>
 <screen>[printers]
   #
-    printcap file = |/usr/local/libexec/filters/getpc
+    printcap name = |/usr/local/libexec/filters/getpc
   # or
-    printcap file = |/usr/bin/lpc client all 
+    printcap name = |/usr/bin/lpc client all 
 
 #!/bin/sh
 # getpc program
@@ -8226,7 +8259,7 @@ debug usage: -D [ num | key=num | key=str | flag | flag@ | flag+N ]*
   keys recognized: network[+N,@], database[+N,@], lpr[+N,@],
    lpc[+N,@], lprm[+N,@], lpq[+N,@], test=num, job=num, log[+N,@]
 <prompt>h4: {293} % </prompt><userinput>lpr -V /tmp/hi</userinput>
-LPRng-3.6.14beta32, Copyright 1988-2000 Patrick Powell, &lt;papowell@astart.com&gt;
+LPRng-3.7.2, Copyright 1988-2000 Patrick Powell, &lt;papowell@lprng.com&gt;
 sending job 'papowell@h4+981' to lp@localhost
 connecting to 'localhost', attempt 1
 connected to 'localhost'
@@ -9602,7 +9635,7 @@ Printer: t1@astart110  'Test Printer 1' (printing disabled)
  Server: no server active
  Status: finished operations at 09:44:00
  Rank   Owner/ID                   Class Job  Files             Size Time
-1       papowell@astart110+202228663    A 10663 /tmp/hi               3 20:22:29
+1       papowell@lprng110+202228663    A 10663 /tmp/hi               3 20:22:29
 Printer: t2@astart110  'Test Printer 2' (routed/bounce to t1@h10.private)
  Queue: no printable jobs in queue
  Status: finished operations at 16:30:08
@@ -9646,25 +9679,25 @@ Printer: t1@astart110
  Spooling: yes
  Queue: 1 printable job
  Server: no server active
- Status: accounting at end 'papowell@astart110+094352860' at 09:44:00
- Status: printing 'papowell@astart110+094352860', closing device at 09:44:00
- Status: printing 'papowell@astart110+094352860', finished  at 09:44:00
- Status: subserver status 'JSUCC' for 'papowell@astart110+094352860' \
+ Status: accounting at end 'papowell@lprng110+094352860' at 09:44:00
+ Status: printing 'papowell@lprng110+094352860', closing device at 09:44:00
+ Status: printing 'papowell@lprng110+094352860', finished  at 09:44:00
+ Status: subserver status 'JSUCC' for 'papowell@lprng110+094352860' \
             on attempt 1 at 09:44:00
  Status: finished operations at 09:44:00
- Job: papowell@astart110+202228663 status= 1
- Job: papowell@astart110+202228663 CONTROL=
+ Job: papowell@lprng110+202228663 status= 1
+ Job: papowell@lprng110+202228663 CONTROL=
  - Hh10.private
  - Ppapowell
  - J/tmp/hi
  - CA
  - Lpapowell
- - Apapowell@astart110+202228663
+ - Apapowell@lprng110+202228663
  - Qt1
  - fdfA010663h10.private
  - N/tmp/hi
  - UdfA010663h10.private
- Job: papowell@astart110+202228663 HOLDFILE=
+ Job: papowell@lprng110+202228663 HOLDFILE=
  - active 0
  - done 0
  - hold 0
@@ -12897,14 +12930,14 @@ for multiple destination jobs.  For example:
  Rank  Owner/ID        Class Job Files                         Size Time
 active  papowell@h4+707 A 707  /tmp/hi                         3 10:04:49
  - actv papowell@h4+707.1 A 707 -&gt;t1@localhost &lt;cpy 1/2&gt;       3 10:04:49
- -      papowell@astart2+707.2 A 707 -&gt;t2@localhost                 3 10:04:49</literallayout>
+ -      papowell@lprng2+707.2 A 707 -&gt;t2@localhost                 3 10:04:49</literallayout>
 </para>
 
 <para>The routing information is displayed below the main job information.
 Each destination will have its transfer status displayed as it is
 transferred.  By convention,  the job identifier of the routed jobs
 will have a suffix of the form .N added;  copies will have CN added
-as well.  For example, papowell@astart2+707.1C2 will be the job
+as well.  For example, papowell@lprng2+707.1C2 will be the job
 sent to the first destination, copy two.</para>
 
 <para>Routed jobs can be held, removed, etc., just as normal jobs.  In addition,
@@ -21603,7 +21636,7 @@ and failed to specify such interesting details as the order in which
 print jobs and their components could be transferred.</para>
 
 <para>Comment by Patrick Powell
-<literal> &lt;papowell@astart.com&gt; </literal>:
+<literal> &lt;papowell@lprng.com&gt; </literal>:
 <blockquote>
 
 <para>Since 1988,

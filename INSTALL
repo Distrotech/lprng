@@ -1,35 +1,83 @@
                LPRng Installation 
-          Patrick Powell <papowell@astart.com>
-          Updated Wed Aug 16 18:59:12 PDT 2000
+          Patrick Powell <papowell@lprng.com>
+          Updated Tue Dec 26 08:38:53 PST 2000
 
 CAVEATS and WARNINGS:
 
-The LPRng software requires an ANSI C compiler and the GNU Make
-(verson 3.73 at least) software from the Free Software Foundation,
-or a BSD 4.3/4.4 compatible make.
+    The LPRng software requires an ANSI C compiler and a make that is
+    compatible with Gnu Make (verson 3.73) or BSD 4.3/4.4.  By default,
+    LPRng is compiled and tested using GCC and Gnu Make.
 
-GNU Make is available at many
-FTP sites, such as:
-  ftp://prep.ai.mit.edu/pub/gnu
-  ftp://ftp.uu.net/pub/gnu
+    Starting with Release 3.7.1,  it is STRONGLY recommended that you
+    install the gdbm database support library.  This will provide a
+    significant performance increase.
+    If you do not want to install or use the gdbm database use the
+     --disable-gdbm configuration option.
+    
+    GNU Make, GCC, and gdbm are available at many FTP sites, such as:
+      ftp://prep.ai.mit.edu/pub/gnu
+      ftp://ftp.uu.net/pub/gnu
+
+Solaris Users:
+   
+     You can get precompiled versions of the GCC compiler, GNU Make,
+   and gdbm libraries from:
+      www.sunfreeware.com
+   
+   Use the "install in '/usr/local/'" versions.  The LPRng code has
+   NOT been tested with the Sun Microsystems compilers, and NOT been
+   tested with 64 bit support enabled.
+   
+     You MUST repeat MUST set your PATH so that the GNU gcc and
+   other utilities in /usr/local/bin are found FIRST and then you
+   MUST have the /usr/ccs/bin next in your path.
+   
+     PATH=/usr/local/bin:/usr/ccs/bin:$PATH
+   
+   If you have ANY problems with compilation,  and you are NOT
+   using a 'clean' GCC installation,  please install GCC from
+   a package (see http://www.sunfreeware.com) or recompile gcc
+   and reinstall it.  Also,  please make sure that the include
+   files are correct for your version of Solaris.  In fact,
+   I recommend that you do the compilation on a 'clean' machine
+   that has nothing but a 'virgin' Solaris Install + utilities
+   BEFORE reporting problems.
+   
+     You have been warned.
+   
+HPUX Users:
+    See the following site for precompiled GCC and other tools:
+         http://hpux.cae.wisc.edu/
+
+   I STRONGLY recommend installing GCC and using GCC,  especially
+   on HPUX 9.X and 10.X.  Make sure that your include files are
+   the correct ones for your particular OS.
+   
+   If you use the native or HP provided C compiler,  you will need to
+   add some additional flags to allow ANSI C compatibility.  The
+   -Aa and -Ae are candidates,  but you will have to check your
+   particular compiler for details.
+   
+     You have been warned.
 
 EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
 
-It is extremely dangerous to use NFS mounted file systems for spool
-directories.  The LPRng system depends on file locking for process
-coordination and synchronization.  Given the historical evidence
-of problems with file locks and NFS,  not to mention the terrible
-performance impact,  it is strongly recommended that you use a file
-system local to the server host.
+	It is extremely dangerous to use NFS mounted file systems for spool
+	directories.  The LPRng system depends on file locking for process
+	coordination and synchronization.  Given the historical evidence
+	of problems with file locks and NFS,  not to mention the terrible
+	performance impact,  it is strongly recommended that you use a file
+	system local to the server host for your spool directories.
+
+     You have been warned.
 
 EXPRESS INSTALLATION INSTRUCTIONS
 
-Please read the following carefully, as it explains some differences
-between LPRng and some of the 'standard' BSD print spoolers
+  AUTOMATED STARTUP
 
-AUTOMATED STARTUP
-  The current version will try to install a startup script
-  if it detects a system it knows about.
+  The during installation,  the LPRng software will try to
+  install a startup script for the following systems:
+
   FreeBSD:  will stop the LPD print spooler, try to install
    startup script.  If your system is compatible with this,
    see notes on INIT SCRIPTS AND PACKAGES at end of this file.
@@ -38,12 +86,15 @@ AUTOMATED STARTUP
     at end of this file.
   Linux: RedHat - will try to use the chkconfig script to
     set up lprng.
-    Other distributions:  you will have to hand install 
-    startup scripts.
   Solaris: will edit /etc/inetd.conf file,  remove the
     printer entry.   Also puts in startup script in
     /etc/init.d and creates link in /etc/rc2.d for startup.
     See the HOWTO for additional on Solaris installation.
+  Other distributions:  you will have to hand install 
+    startup scripts.  See the sample startup scripts on your
+    system and modify them appropriately.  You will probably
+    be able to simply change the path to the lpd program
+    or lpsched program to use the LPRng lpd server.
 
 STEP 1: ./configure
 
@@ -96,6 +147,7 @@ OR STEP1: Custom Installation - see LPRng-HOWTO
   --with-ldopts=LDFLAGS    select linker command line options
   --with-cppopts=CPPFLAGS  select compiler preprocessor command line options
   --disable-setuid                  disable setuid root client and server executables
+  --disable-gdbm                    disable the use of the GDBM library support
   --enable-priv_ports               require connections to be from privileged ports
   --disable-force_localhost         force_localhost default to disabled
   --disable-require_configfiles     client programs require lpd.conf, printcap
@@ -125,12 +177,19 @@ STEP2: Make and Install
     make install
     ./src/checkpc -f
 
-To run LPRng after installation,  you can do the following:
-
 STEP3: Manually Start Server and Check
+    If the installation step did not install the system time
+    run scripts or you need to do the installation by hand,
+    here is the method to follow:
+
     # kill off the old server
+    On BSD:
     kill `ps -aux |grep lpd | awk '{print $2}'`
+    On System V:
+    kill `ps -e |grep lpd | awk '{print $1}'`
+
     # you should remove or rename the existing lpd binaries if they
+    # have not been installed correctly:
     mv /usr/lib/lpd /usr/lib/lpd.old
     ln -s /usr/local/bin/lpd /usr/lib/lpd
     # you might want to track down the old lpr, lpq, lprm binaries

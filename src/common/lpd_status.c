@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 5.23 2000/11/29 02:33:57 papowell Exp papowell $";
+"$Id: lpd_status.c,v 5.25 2000/12/25 01:51:11 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -1169,6 +1169,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 					Send_query_rw_timeout_DYN, *sock );
 				if( fd >= 0 ){
 					char *tempfile;
+					shutdown( fd, 1 );
 					tempfd = Make_temp_fd( &tempfile );
 					while( (nx = read(fd,msg,sizeof(msg))) > 0 ){
 						if( Write_fd_len(tempfd,msg,nx) < 0 ) cleanup(0);
@@ -1241,7 +1242,7 @@ void Print_status_info( int *sock, char *file,
 			*t = 0;
 		}
 		/* make the date format short */
-		if( Short_status_date_DYN ){
+		if( !Full_time_DYN ){
 			for( u = s; (t = strstr(u,atmsg)); u = t+strlen(atmsg) );
 			if( u != s && (t = strrchr( u, '-' )) ){
 				memmove( u, t+1, strlen(t)+1 );
@@ -1340,11 +1341,12 @@ void Get_local_or_remote_status( struct line_list *tokens, int *sock,
 		fd = Send_request( 'Q', displayformat, tokens->list, Connect_timeout_DYN,
 			Send_query_rw_timeout_DYN, *sock );
 		if( fd >= 0 ){
+			shutdown( fd, 1 );
 			tempfd = Make_temp_fd( 0 );
 			while( (n = read(fd,msg,sizeof(msg))) > 0 ){
 				if( Write_fd_len(tempfd,msg,n) < 0 ) cleanup(0);
 			}
-			close(fd);
+			close(fd); fd = -1;
 			Print_different_last_status_lines( sock, tempfd, status_lines, 0 );
 			close(tempfd);
 		}

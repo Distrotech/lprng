@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 5.37 2000/11/28 20:43:37 papowell Exp papowell $";
+"$Id: lpd_jobs.c,v 5.39 2000/12/25 01:51:09 papowell Exp papowell $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -1161,7 +1161,7 @@ int Do_queue_jobs( char *name, int subserver )
  *
  ***************************************************************************/
 
-int Remote_job( struct job *job, int lpd_bounce, char *id )
+int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 {
 	int status, tempfd, n;
 	double job_size;
@@ -1247,7 +1247,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *id )
 		Set_flag_value(lp,COPIES,1);
 		Set_double_value(lp,SIZE,job_size);
 		Set_str_value(lp,FORMAT,Bounce_queue_format_DYN);
-	} else {
+	} else if( !move_dest ) {
 		int err = Errorcode;
 		Errorcode = 0;
 		if( Generate_banner_DYN ){
@@ -2160,9 +2160,6 @@ void Service_worker( struct line_list *args )
 		Set_DYN( &RemotePrinter_DYN, 0);
 		Set_DYN( &Lp_device_DYN, 0);
 
-		Set_DYN( &Lpd_port_DYN,
-			Find_str_value(&Config_line_list,LPD_PORT,Value_sep) );
-
 		Set_DYN( &RemotePrinter_DYN, new_dest );
 		if( (s = safestrchr(RemotePrinter_DYN, '@')) ){
 			*s++ = 0;
@@ -2201,7 +2198,7 @@ void Service_worker( struct line_list *args )
 		setproctitle( "lpd %s '%s'", Name, Printer_DYN );
 		if( Remote_support_DYN ) uppercase( Remote_support_DYN );
 		if( safestrchr( Remote_support_DYN, 'R' ) ){
-			Errorcode = Remote_job( &job, lpd_bounce, id );
+			Errorcode = Remote_job( &job, lpd_bounce, move_dest, id );
 		} else {
 			Errorcode = JABORT;
 			setstatus( &job, "no remote support to `%s@%s'",

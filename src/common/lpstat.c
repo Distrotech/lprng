@@ -2,20 +2,20 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 5.15 2000/11/07 18:14:27 papowell Exp papowell $";
+"$Id: lpstat.c,v 5.17 2000/12/25 01:51:12 papowell Exp papowell $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -243,10 +243,11 @@ void Show_status(char **argv, int display_format)
 	fd = Send_request( 'Q', Displayformat,
 		0, Connect_timeout_DYN, Send_query_rw_timeout_DYN, 1 );
 	if( fd >= 0 ){
+		shutdown( fd, 1 );
 		Read_status_info( RemoteHost_DYN, fd,
 			1, Send_query_rw_timeout_DYN, display_format,
 			Status_line_count );
-		close(fd);
+		close(fd); fd = -1;
 	}
 	DEBUG1("Show_status: end");
 }

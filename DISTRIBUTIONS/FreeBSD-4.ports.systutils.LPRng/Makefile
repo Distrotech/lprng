@@ -76,7 +76,7 @@
 # 
 
 PORTNAME=LPRng
-PORTVERSION=3.7.1
+PORTVERSION=3.7.3
 CATEGORIES=	    sysutils print
 MASTER_SITES=	ftp://ftp.astart.com/pub/LPRng/LPRng/
 EXTRACT_SUFX=	.tgz

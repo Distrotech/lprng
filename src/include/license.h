@@ -4,7 +4,7 @@
 "                   (Version 4, Jan 24, 2000)",
 "",
 "              Copyright Patrick Powell, Astart Technologies",
-"                       <papowell@astart.com>",
+"                       <papowell@lprng.com>",
 "",
 "                      All rights reserved.",
 "",

@@ -1,5 +1,5 @@
                  LPRng - An Enhanced Printer Spooler
-               Patrick Powell <papowell@astart.com>
+               Patrick Powell <papowell@lprng.com>
 				Updated Thu Apr 13 04:29:06 PDT 2000
 
 The following is a guide to the documentation and LPRng files,
@@ -59,7 +59,7 @@ Web Page and HOWTO in HTML format:
    and the HOWTO/ directory in the distribution
 
 The software may be obtained from
-   ftp://ftp.astart.com/pub/LPRng  (Main site)
+   ftp://ftp.lprng.com/pub/LPRng  (Main site)
 
 Mirrors:
     ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng (AU)
@@ -103,7 +103,7 @@ The LPRng software distribution has the following structure:
 If you want to check the signed md5 checksums,  here is the PGP key:
 
 Type Bits/KeyID    Date       User ID
-pub  1024/00D95C9D 1997/01/31 Patrick A. Powell <papowell@astart.com>
+pub  1024/00D95C9D 1997/01/31 Patrick A. Powell <papowell@lprng.com>
                               Patrick A. Powell <papowell@sdsu.edu>
 
 -----BEGIN PGP PUBLIC KEY BLOCK-----

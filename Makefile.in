@@ -2,7 +2,7 @@
 # LPRng - An Extended Print Spooler System
 #
 # Copyright 1988-1995 Patrick Powell, San Diego, CA
-#     papowell@astart.com
+#     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
@@ -16,7 +16,7 @@
 #***************************************
 
 PACKAGE=@PACKAGE@
-VERSION=3.7.1
+VERSION=3.7.3
 SRC=@srcdir@
 @SET_MAKE@
 INSTALL=@INSTALL@
@@ -261,7 +261,7 @@ tar: distclean
 	DIR=`pwd | sed 's,.*/,,'`; \
 		cd ..; \
 		tar zXcf /tmp/X.LPRng $${DIR}.tgz $${DIR}; \
-		md5 $${DIR}.tgz | pgp -fast -u papowell@astart > $${DIR}.tgz.md5
+		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
 
 configure: configure.in
 	autoconf

@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 5.32 2000/11/29 22:12:32 papowell Exp papowell $";
+"$Id: getqueue.c,v 5.35 2000/12/27 02:41:51 papowell Exp papowell $";
 
 
 /***************************************************************************
@@ -118,7 +118,7 @@ int Scan_queue( struct line_list *spool_control,
 					hf_name = 0;
 				}
 			}
-#if HAVE_GDBM_H
+#ifdef HAVE_GDBM_H
 		} else if( gdbm_file ){
 			if( hf_name == 0 ){
 				key_data = gdbm_firstkey( gdbm_file );
@@ -144,7 +144,7 @@ int Scan_queue( struct line_list *spool_control,
 		if( create_db ){
 			Get_file_image_and_split( hf_name, 0, 0,
 				&job.info, Line_ends, 1, Value_sep,1,1,1,0);
-#if HAVE_GDBM_H
+#ifdef HAVE_GDBM_H
 		} else if( gdbm_file ){
 			struct stat statb;
 			if( stat( hf_name, &statb ) ){
@@ -191,7 +191,7 @@ int Scan_queue( struct line_list *spool_control,
 			}
 		}
 
-#if HAVE_GDBM_H
+#ifdef HAVE_GDBM_H
 		/* we now set the DB entry */
 		if( gdbm_file ){
 			key_data.dptr = hf_name;
@@ -219,12 +219,12 @@ int Scan_queue( struct line_list *spool_control,
 	Free_job(&job);
 	Free_line_list(&directory_files);
 
-#if HAVE_GDBM_H
+#ifdef HAVE_GDBM_H
 	if( !write_db ){
 		Close_gdbm();
 	}
 	DEBUG1("Scan_queue: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-		(int)gdbm_file, gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
+		Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
 #endif
 
 	if(DEBUGL5){
@@ -1134,13 +1134,11 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 		goto error;
 	}
 	lowercase(name);
-	Set_DYN(&Printer_DYN,name);
-
-	Reset_config();
 	if( !subserver && Status_fd > 0 ){
 		close( Status_fd );
 		Status_fd = -1;
 	}
+	Set_DYN(&Printer_DYN,name);
 	Fix_Rm_Rp_info(0,0);
 
 	if( Spool_dir_DYN == 0 || *Spool_dir_DYN == 0 ){
@@ -2449,10 +2447,20 @@ int Open_gdbm( int db_create )
 				Queue_db_file_DYN );
 		}
 		DEBUG1("Open_gdbm: locking %d", (int)gdbm_lock );
-		if( Do_lock( gdbm_lock, 1 ) < 0 ){
-			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot lock '%s'",
-				Queue_db_file_DYN );
+		while(1){
+			errno  = 0;
+			if( Do_lock( gdbm_lock, 1 ) < 0 ){
+				if( errno == EINTR ){
+					LOGERR(LOG_ERR)"Open_gdbm: cannot lock '%s'",
+						Queue_db_file_DYN );
+					plp_usleep(1000);
+					continue;
+				} else {
+					Errorcode = JABORT;
+					LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot lock '%s'",
+						Queue_db_file_DYN );
+				}
+			}
 		}
 		if( fstat( gdbm_lock, &statb ) ){
 			Errorcode = JABORT;
@@ -2471,7 +2479,7 @@ int Open_gdbm( int db_create )
 				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
 		}
 		DEBUG1("Open_gdbm: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-			(int)gdbm_file, gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
+			Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
 	}
 #endif
 	return( 1 );
@@ -2482,7 +2490,7 @@ void Close_gdbm(void)
 {
 #ifdef HAVE_GDBM_H
 	DEBUG1("Close_gdbm: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-		(int)gdbm_file, gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
+		Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
 	if( gdbm_file ){
 		gdbm_close( gdbm_file );
 		close( gdbm_lock );

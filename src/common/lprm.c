@@ -2,20 +2,20 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 5.12 2000/11/07 18:14:26 papowell Exp papowell $";
+"$Id: lprm.c,v 5.14 2000/12/25 01:51:12 papowell Exp papowell $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -243,10 +243,13 @@ void Do_removal(char **argv)
 	}
 	fd = Send_request( 'M', REQ_REMOVE,
 		argv, Connect_timeout_DYN, Send_query_rw_timeout_DYN, 1 );
-	while( (n = read(fd, msg, sizeof(msg)) ) > 0 ){
-		if( write(1,msg,n) < 0 ) cleanup(0);
+	if( fd > 0 ){
+		shutdown( fd, 1 );
+		while( (n = read(fd, msg, sizeof(msg)) ) > 0 ){
+			if( write(1,msg,n) < 0 ) cleanup(0);
+		}
+		close(fd);
 	}
-	close(fd);
 	DEBUG1("Do_removal: end");
 }
 
@@ -327,7 +330,7 @@ N_("    'clean 30 lp' removes job 30 on printer lp\n"),
 N_("    'clean'       removes first job on default printer\n"),
 N_("    'clean all'      removes all your jobs on default printer\n"),
 N_("    'clean all all'  removes all your jobs on all printers\n"),
-N_("  Note: lprm removes only jobs for which you have removal permission\n"),
+N_("  Note: clean removes only jobs for which you have removal permission\n"),
 	0 };
 
 char *lprm_msg[] =  {

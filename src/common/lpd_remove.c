@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 5.22 2000/11/28 16:51:15 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 5.24 2000/12/25 01:51:10 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -348,10 +348,11 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			fd = Send_request( 'M', REQ_REMOVE, tokens->list, Connect_timeout_DYN,
 				Send_query_rw_timeout_DYN, *sock );
 			if( fd >= 0 ){
+				shutdown( fd, 1 );
 				while( (c = read(fd,msg,sizeof(msg))) > 0 ){
 					Write_fd_len(*sock,msg,c);
 				}
-				close(fd);
+				close(fd); fd = -1;
 			}
 			for( i = 0; i < tokens->count; ++i ){
 				tokens->list[i] = tokens->list[i+1];
@@ -409,10 +410,11 @@ void Get_local_or_remote_remove( char *user, int *sock,
 	fd = Send_request( 'M', REQ_REMOVE, tokens->list, Connect_timeout_DYN,
 		Send_query_rw_timeout_DYN, *sock );
 	if( fd >= 0 ){
+		shutdown( fd, 1 );
 		while( (n = read(fd,msg,sizeof(msg))) > 0 ){
 			Write_fd_len(*sock,msg,n);
 		}
-		close(fd);
+		close(fd); fd = -1;
 	}
 	for( i = 0; i < tokens->count; ++i ){
 		tokens->list[i] = tokens->list[i+1];

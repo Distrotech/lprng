@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 5.39 2000/11/27 23:19:52 papowell Exp papowell $";
+"$Id: linelist.c,v 5.41 2000/12/25 01:51:07 papowell Exp papowell $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -1704,7 +1704,7 @@ char *Select_pc_info( const char *id,
 	struct line_list *user_input )
 {
 	int start, end, i, c;
-	char *s, *t, *name = 0;
+	char *s, *t, *name = 0, *found = 0;
 	struct line_list l;
 
 	Init_line_list(&l);
@@ -1729,9 +1729,9 @@ char *Select_pc_info( const char *id,
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter info", info );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter names", names );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter input", input );
+		name = Find_str_value( names, id, Value_sep );
 	}
 	/* do lookup */
-	name = Find_str_value( names, id, Value_sep );
 	c = 0;
 	if( name == 0 ) for( i = 0; name == 0 && i < names->count; ++i ){
 		s = names->list[i];
@@ -1747,6 +1747,7 @@ char *Select_pc_info( const char *id,
 	}
 	if( name ){
 		Find_pc_info( name, info, aliases, names, order, input, 0, 0, depth );
+		found = name;
 	}
 	/* do lookup for user supplied printcap information */
 	name = Find_str_value( user_names, id, Value_sep );
@@ -1765,14 +1766,15 @@ char *Select_pc_info( const char *id,
 	}
 	if( name && user_names ){
 		Find_pc_info( name, info, aliases, names, order, input, user_names, user_input, depth );
+		found = name;
 	}
 	if(DEBUGL3){
 		LOGDEBUG("Select_pc_info: printer '%s', found '%s'", id, name );
 		Dump_line_list_sub("aliases",aliases);
 		Dump_line_list_sub("info",info);
 	}
-	DEBUG1("Select_pc_info: returning '%s'", name );
-	return( name );
+	DEBUG1("Select_pc_info: returning '%s'", found );
+	return( found );
 }
 
 void Find_pc_info( char *name,
@@ -1802,19 +1804,19 @@ void Find_pc_info( char *name,
 		|| Find_last_key(use_this_input,name,Printcap_sep,&end) ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)
-			"Fixup_pc_info: name '%s' in names and not in input list",
+			"Find_pc_info: name '%s' in names and not in input list",
 			name );
 	}
-	DEBUG4("Fixup_pc_info: name '%s', start %d, end %d",
+	DEBUG4("Find_pc_info: name '%s', start %d, end %d",
 		name, start, end );
 	for(; start <= end; ++start ){
 		u = use_this_input->list[start];
-		DEBUG4("Fixup_pc_info: line [%d]='%s'", start, u );
+		DEBUG4("Find_pc_info: line [%d]='%s'", start, u );
 		if( u && *u ){
 			Add_line_list( &pc, u, 0, 0, 0 );
 		}
 	}
-	if(DEBUGL4)Dump_line_list("Fixup_pc_info- entry lines", &l );
+	if(DEBUGL4)Dump_line_list("Find_pc_info- entry lines", &l );
 	for( start = 0; start < pc.count; ++ start ){
 		u = pc.list[start];
 		c = 0;
@@ -1833,13 +1835,13 @@ void Find_pc_info( char *name,
 			}
 		}
 		/* get the tc entries */
-		if(DEBUGL4)Dump_line_list("Fixup_pc_info- pc entry", &l );
+		if(DEBUGL4)Dump_line_list("Find_pc_info- pc entry", &l );
 		if( !Find_first_key(&l,"tc",Value_sep,&start_tc)
 			&& !Find_last_key(&l,"tc",Value_sep,&end_tc) ){
 			for( ; start_tc <= end_tc; ++start_tc ){
 				if( (s = l.list[start_tc]) ){
 					lowercase(s);
-					DEBUG4("Fixup_pc_info: tc '%s'", s );
+					DEBUG4("Find_pc_info: tc '%s'", s );
 					if( (t = safestrchr( s, '=' )) ){
 						Split(&tc,t+1,File_sep,0,0,0,1,0);
 					}
@@ -1848,17 +1850,17 @@ void Find_pc_info( char *name,
 				}
 			}
 		}
-		if(DEBUGL4)Dump_line_list("Fixup_pc_info- tc", &tc );
+		if(DEBUGL4)Dump_line_list("Find_pc_info- tc", &tc );
 		for( j = 0; j < tc.count; ++j ){
 			s = tc.list[j];
-			DEBUG4("Fixup_pc_info: tc entry '%s'", s );
+			DEBUG4("Find_pc_info: tc entry '%s'", s );
 			if( !Select_pc_info( s, info, 0, names, order, input, depth+1, user_names, user_input ) ){
 				FATAL(LOG_ERR)
-				"Fixup_pc_info: tc entry '%s' not found", s);
+				"Find_pc_info: tc entry '%s' not found", s);
 			}
 		}
 		Free_line_list(&tc);
-		if(DEBUGL4)Dump_line_list("Fixup_pc_info - adding", &l );
+		if(DEBUGL4)Dump_line_list("Find_pc_info - adding", &l );
 		for( i = 0; i < l.count; ++i ){
 			if( (t = l.list[i]) ){
 				Add_line_list( info, t, Value_sep, 1, 1 );

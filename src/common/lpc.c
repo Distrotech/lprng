@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 5.18 2000/11/27 23:19:54 papowell Exp papowell $";
+"$Id: lpc.c,v 5.20 2000/12/25 01:51:08 papowell Exp papowell $";
 
 
 /***************************************************************************
@@ -270,6 +270,7 @@ void doaction( struct line_list *args )
 		if( action == OP_SERVER ){
 			Is_server = 1;
 			Setup_configuration();
+			Get_printer();
 		}
 		Dump_default_parms( 1, ".defaults", Pc_var_list );
 		Free_line_list(&l);
@@ -363,6 +364,7 @@ void doaction( struct line_list *args )
 		fd = Send_request( 'C', REQ_CONTROL, l.list, Connect_timeout_DYN,
 			Send_query_rw_timeout_DYN, 1 );
 		if( fd > 0 ){
+			shutdown( fd, 1 );
 			while( (n = read(fd, msg, sizeof(msg))) > 0 ){
 				if( (write(1,msg,n)) < 0 ) cleanup(0);
 			}

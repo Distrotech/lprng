@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 5.13 2000/11/27 23:19:52 papowell Exp papowell $";
+"$Id: krb5_auth.c,v 5.14 2000/12/25 01:51:07 papowell Exp papowell $";
 
 #include "lp.h"
 #include "errorcodes.h"

@@ -1,13 +1,13 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 5.77 2000/11/29 22:12:15 papowell Exp papowell $
+dnl $Id: configure.in,v 5.80 2000/12/27 02:41:33 papowell Exp papowell $
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
 AC_INIT(Makefile.in)
 
 PACKAGE=LPRng
-VERSION=3.7.1
+VERSION=3.7.3
 
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
@@ -66,6 +66,16 @@ PERMS=SUID_ROOT_PERMS
 )
 AC_MSG_RESULT($PERMS)
 AC_SUBST(PERMS)
+
+dnl check to see if gdbm is suppressed
+AC_MSG_CHECKING(suppress DBM or GDBM use for queue status)
+AC_ARG_ENABLE( gdbm,
+[  --disable-gdbm                    do not use DBM or GDBM for queue status],
+[v=yes;  USE_GDBM="0";],
+[v=no; USE_GDBM="1";]
+)
+AC_MSG_RESULT($v);dnl
+AC_SUBST(USE_GDMB)
 
 dnl check to see if setuid is suppressed
 AC_MSG_CHECKING(require connections from priviledged ports)
@@ -183,7 +193,7 @@ dnl  startup file location
 dnl
 AC_MSG_CHECKING(startup (initialization) file location)
 AC_ARG_WITH(init_path,
-[  --with-initpath=PATH              path of lprng.sh init file (default /usr/local/etc/rc.d/lprng.sh)
+[  --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
                                        use 'no' to disable installation and lpd startup],
 INIT=$withval,
 INIT=,
@@ -501,11 +511,6 @@ changequote([, ])dnl
 		CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE=1"
 		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
 		AC_DEFINE_UNQUOTED(HPUX,$version)
-		if test "$ac_cv_prog_gcc" != yes; then
-			echo "HP UX and not using GCC, adding -Aa flag for compilation";
-			CPPFLAGS="$CPPFLAGS -Aa";
-			CFLAGS="$CFLAGS -Aa";
-		fi;
 		;;
 	*sunos* )
 		AC_DEFINE_UNQUOTED(SUNOS,$version)
@@ -527,7 +532,7 @@ dnl headers:
 
 AC_CHECK_HEADERS(a_out.h aouthdr.h ar.h arpa/inet.h arpa/nameser.h assert.h)
 AC_CHECK_HEADERS(com_err.h compat.h ctype.h ctypes.h dirent.h errno.h)
-AC_CHECK_HEADERS(exechdr.h fcntl.h filehdr.h gdbm.h grp.h limits.h locale.h)
+AC_CHECK_HEADERS(exechdr.h fcntl.h filehdr.h grp.h limits.h locale.h)
 AC_CHECK_HEADERS(machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h)
 AC_CHECK_HEADERS(nlist.h pwd.h reloc.h resolv.h select.h setjmp.h)
 AC_CHECK_HEADERS(sgs.h sgtty.h signal.h stab.h stdarg.h stdio.h)
@@ -586,13 +591,32 @@ if test -z "$checklibs"; then
 	fi
 fi
 
-dnl check for the gdbm library
-AC_CHECK_LIB(gdbm, gdbm_open, [LIBS="$LIBS -lgdbm"],[
-	echo "
-WARNING: you do not have GDBM installed and will suffer a severe
-performance impact on a large server.  It is recommened you install gdbm
+echo USE_GDBM $USE_GDBM
+if test "$USE_GDBM" = 1 ; then
+	AC_CHECK_HEADERS(gdbm.h,,[
+		echo "
+WARNING: you have GDBM use enabled and cannot find the gdbm.h file.
+You may need to add -I /usr/local/include to the compilation options:
+  Bourne Shell:
+    CPPFLAGS="-I/usr/local/include" configure ...
+  Csh:
+   env CPPFLAGS="-I/usr/local/include" configure ...
 "
-]
+	exit 1
+])
+	dnl check for the gdbm library
+	AC_CHECK_LIB(gdbm, gdbm_open, [LIBS="$LIBS -lgdbm"],[
+		echo "
+WARNING: you have GDBM use enabled and cannot find the gdbm library.
+You may need to add -I /usr/local/include to the compilation options:
+  Bourne Shell:
+    LDFLAGS="-L/usr/local/lib" configure ...
+  Csh:
+   env LDFLAGS="-I/usr/local/lib" configure ...
+"
+	exit 1
+	]
+fi
 )
 
 dnl ----------------------------------------------------------------------------
@@ -1512,7 +1536,6 @@ UTILS/remote_active
 UTILS/test_read
 UTILS/update_z.pl
 lpd.perms
-printcap
 man/Makefile
 src/Makefile
 src/pclbanner

@@ -19,8 +19,9 @@ Version: %{version}
 Release: %{release}
 
 # we need to be compatible with a set of entries
-Provides: lpr lprng
+Provides: lpr LPRng
 Obsoletes: lpr
+Requires: gdbm >= 1.8.0
 
 Copyright: GPL and Artistic License, 1986-2000 Patrick Powell <papowell@astart.com>
 Group: System Environment/Daemons

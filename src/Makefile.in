@@ -2,12 +2,12 @@
 # LPRng - An Extended Print Spooler System
 #
 # Copyright 1988-2000 Patrick Powell, San Diego, California
-#     papowell@astart.com
+#     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.in,v 1.37 2000/11/27 23:19:47 papowell Exp papowell $
+# $Id: Makefile.in,v 1.39 2000/12/25 01:51:03 papowell Exp papowell $
 ###########################################################################
 #
 
@@ -23,7 +23,7 @@
 
 
 PACKAGE=@PACKAGE@
-VERSION=3.7.1
+VERSION=3.7.3
 
 # where the source directory is
 SRC=@srcdir@

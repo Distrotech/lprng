@@ -11,12 +11,12 @@ my $s = ctime( time );
 my @s = split ' ', $s;
 my $w = '<subtitle> ' ."$s[2] $s[1] $s[4] (For $v)" . '</subtitle>' . "\n";
 my $wd = '<date> ' ."$s[2] $s[1] $s[4] (For $v)" . '</date>' . "\n";
-my $n = "Latest LPRng distribution <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}.tgz\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}.tgz</a>\n";
-my $srn = "Latest LPRng SRPM <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.src.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.src.rpm</a>\n";
-my $rn = "Latest LPRng RPM <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.i386.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.i386.rpm</a>\n";
-my $in = "Latest IFHP distribution <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}.tgz\">ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}.tgz</a>\n";
-my $isrn = "Latest IFHP SRPM <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.src.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${iv}-1.src.rpm</a>\n";
-my $irn = "Latest IFHP RPM <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm\">ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm</a>\n";
+my $n = "Latest LPRng distribution <a href=\"ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}.tgz\">ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}.tgz</a>\n";
+my $srn = "Latest LPRng SRPM <a href=\"ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}-1.src.rpm\">ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}-1.src.rpm</a>\n";
+my $rn = "Latest LPRng RPM <a href=\"ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}-1.i386.rpm\">ftp://ftp.lprng.com/pub/LPRng/LPRng/${v}-1.i386.rpm</a>\n";
+my $in = "Latest IFHP distribution <a href=\"ftp://ftp.lprng.com/pub/LPRng/FILTERS/${iv}.tgz\">ftp://ftp.lprng.com/pub/LPRng/FILTERS/${iv}.tgz</a>\n";
+my $isrn = "Latest IFHP SRPM <a href=\"ftp://ftp.lprng.com/pub/LPRng/FILTERS/${iv}-1.src.rpm\">ftp://ftp.lprng.com/pub/LPRng/LPRng/${iv}-1.src.rpm</a>\n";
+my $irn = "Latest IFHP RPM <a href=\"ftp://ftp.lprng.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm\">ftp://ftp.lprng.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm</a>\n";
 #print $w;
 while ( <> ){
 	if( /h4: {/ ){

@@ -2,9 +2,9 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 5.25 2000/11/29 02:34:06 papowell Exp papowell $
+ * $Id: lp.h,v 5.27 2000/12/25 01:51:19 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -438,7 +438,6 @@ EXTERN char* Server_queue_name_DYN; /* name of queue that server serves (with sv
 EXTERN char* Server_tmp_dir_DYN;	/* default temporary file directory */
 EXTERN char* Shell_DYN;
 EXTERN int Short_banner_DYN; /* short banner (one line only) */
-EXTERN int Short_status_date_DYN; /* short date in status information */
 EXTERN int Short_status_length_DYN;	/* short status length */
 EXTERN int Socket_linger_DYN;	/* set SO_linger for connections to remote hosts */
 EXTERN char* Spool_dir_DYN; /* spool directory (only ONE printer per directory!) */

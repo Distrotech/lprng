@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 5.32 2000/11/29 02:34:02 papowell Exp papowell $";
+"$Id: vars.c,v 5.34 2000/12/25 01:51:16 papowell Exp papowell $";
 
 
 /* force local definitions */
@@ -395,7 +395,7 @@ struct keywords Pc_var_list[] = {
 { "reuse_addr", 0,  FLAG_K,  &Reuse_addr_DYN,0,0},
    /*  reverse LPQ status format when specified remotehost */
 { "reverse_lpq_status", 0,  STRING_K,  &Reverse_lpq_status_DYN,0,0},
-   /*  reverse priority order, z-aZ-A, so A is lowest */
+   /*  reverse priority order, z-aZ-A, i.e.- A is highest, z is lowest */
 { "reverse_priority_order", 0,  FLAG_K,  &Reverse_priority_order_DYN,0,0},
    /*  remote-queue machine (hostname) (with rp) */
 { "rm", 0,  STRING_K,  &RemoteHost_DYN,0,0},
@@ -441,8 +441,6 @@ struct keywords Pc_var_list[] = {
 { "sh", 0,  FLAG_K,  &Suppress_header_DYN,0,0},
    /*  SHELL enviornment variable value for filters */
 { "shell", 0,  STRING_K,  &Shell_DYN,0,0,"=/bin/sh"},
-   /*  short status date enabled or disabled */
-{ "short_status_date", 0,  FLAG_K,  &Short_status_date_DYN,0,0,"=1"},
    /*  short status length in lines */
 { "short_status_length", 0,  INTEGER_K,  &Short_status_length_DYN,0,0,"=3"},
    /* set the SO_LINGER socket option */

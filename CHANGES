@@ -2,7 +2,7 @@
 # LPRng - An Extended Print Spooler System
 #
 # Copyright 1988-2000 Patrick Powell, San Diego, CA
-#     papowell@astart.com
+#     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
@@ -10,6 +10,51 @@
 # PURPOSE: Record Changes
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
+
+Release LPRng 3.7.3 Sun Dec 24 17:47:52 PST 2000
+  Updated the default printcap file with a simplified set
+   of instructions.
+  There was a 'sleep(1000)' instead of a 'plp_usleep(1000)'.
+   Needless to say,  this did slow things down a bit.
+  LPRng HOWTO Section on Samba had 'printcap file' instead of 'printcap name'
+   (Spotted by: Marcel Kunath" <kunathma@pilot.msu.edu>)
+  HPUX compilation without GCC had a gratuitious CFLAGS=-Aa.  I removed the flags.
+   (Reported by: Ryan Novosielski <novosirj@umdnj.edu>)
+
+Release LPRng 3.7.2 Fri Dec 22 10:45:00 PST 2000
+  Discovered that job moves were not working correctly.  Was
+  removing the lpd_port value by mistake.
+
+  Close_gdbm() was not defined,  and the #if HAVE_GDBM_H
+   confused some compilers.
+  (Reported by: Shane Voss <Shane.Voss@glg.ed.ac.uk>)
+
+  ifhp.conf got the 'reverse_priority' description wrong.
+  (Proof-reder was: Michael J. Carter <mcarter@lanl.gov>)
+
+  When I added the user printcap stuff I did not set a return
+  value and the 'tc=' broke.  Sigh.
+  (Reported by:  gizillions of people, including
+     Michal Kouril <mkouril@ececs.uc.edu>)
+
+  RFC1179 does not ABSOLUTELY PROHIBIT some print spooler
+    expecting multiple LPQ request.  So it does not close
+    the connection after sending status.  So I now do a
+    shutdown() to cause it to not expect further commands.
+   (Detective work done by Rainer Tammer <rainer.tammer@spg.schulergroup.com>)
+
+  The 'short_status_date' and 'full_time' options seem to conflict
+    with each other.  The 'full_time' means to use full time formats
+    in LPQ status,  and the 'short_status_date' means to use short
+    date formats.  The 'full_time' option now controls both of these,
+    which is probably what was intended in the first place.
+    (Pointed out by: Bill Kemp <bkemp@srp.gov>)
+
+  Get_all_printcap_entries() was not clearing All_line_list so you
+    would get duplicate entries. Solved the 'mystery duplicate printer'
+    problem observed during testing.
+
+  Natter in the README and INSTALL for Solaris users. 
 
 Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
@@ -266,6 +311,20 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
  lpq did not always have a space before job file size.
    (Noted by: Jonathan Briggs <jbriggs@esoft.com>)
+Release LPRng 3.6.26 Fri Oct 13 07:38:38 PDT 2000
+ unsetenv() is not available on some systems.  Fallback
+   to setenv and then putenv() if not present
+ (Found by: Niklas Edmundsson <nikke@ing.umu.se>)
+
+Release LPRng 3.6.25 Tue Oct  3 09:19:11 PDT 2000
+ syslog Compromise -
+   modified syslog to use 'syslog(xx,"%s", msg).
+ gettext Compromise -
+   added the following to Initialize():
+    if( getuid() == 0 || geteuid() == 0 ) unsetenv("NLSPATH");
+ IN6_ADDR removed,  in fact IPV6 stuff removed.
+
+   See the various CERT advisories.  Sigh...
 
 Release LPRng 3.6.24 - Fri Aug 11 08:03:23 PDT 2000
  LPRng-HOWTO - added update for Samba print queue configuration.
@@ -615,7 +674,7 @@ Release LPRng 3.6.21 - Sun Jul 16 16:58:19 PDT 2000
    No select, nothing.  Just a write.  This seems to solve the
    problem.  Oh yes.  You also make sure the file descriptor
    is non-blocking.
-   (By:  Patrick Powell <papowell@astart.com>)
+   (By:  Patrick Powell <papowell@lprng.com>)
   There is a bizzare problem with doing select for read on some Solaris
    systems with certain patch sets on file descriptors that have
    been set for non-blocking.  The select call will actually return
@@ -650,7 +709,7 @@ Release LPRng 3.6.20 - Sat Jul  8 12:32:38 PDT 2000
    When one was not found for the case where I had 0 processes
    I knew that I had found the problem.  Sigh.
    (Stumbled over after staring at the code for a week by:
-      Patrick Powell <papowell@astart.com>)
+      Patrick Powell <papowell@lprng.com>)
   Makefile now checks that POSTINSTALL is 'NO' or 'no'
     (Noted by: Craig Small <csmall@eye-net.com.au>)
   checkpc -C and checkpc -c file removed.  Legacy options and
@@ -808,7 +867,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
    script for 'vim' and see what they do.  Not for me,  when this
    is only a VERY small part of a much larger system.
    (Changed after finding curses, ncurses, and sys5 curses on
-     a system by: Patrick Powell <papowell@astart.com>)
+     a system by: Patrick Powell <papowell@lprng.com>)
 
   Makefile.bsd  is now a VERY small makefile:
     # List the things you want to generate:
@@ -895,7 +954,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
    Yes,  I have no shame.
    (Put into the distribution after telling people 5 times how
-     to use this by:  Patrick Powell <papowell@astart.com>)
+     to use this by:  Patrick Powell <papowell@lprng.com>)
 
   lpr -U option did not work correctly when UID was root.
     (Patch happily submitted after a long search by:
@@ -973,7 +1032,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
   The 'lpq -s ID' command was not reporting information correctly.
     It always reported the total printable, not the ones selected
     by the options.
-   (Discovered by: Patrick Powell <papowell@astart.com>)
+   (Discovered by: Patrick Powell <papowell@lprng.com>)
   Retested Kerberos 5 and Kerberos4 stuff with Kerberos 1.1.1,
    found problems with compilation,  fixed them. 
    (Helped by: Mike Whitson <mwhitson@MIT.EDU>)
@@ -1132,7 +1191,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
            available AND it has a change flag set THEN I start a
            subserver process.
      As you suspect,  this was NOT a simple set of changes.
-    (Painfully debugged by: Patrick Powell <papowell@astart.com>)
+    (Painfully debugged by: Patrick Powell <papowell@lprng.com>)
 
   Kerberos Fix From MIT: added auth=none support, and allow default
     principal lookup.
@@ -1211,7 +1270,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
      # FreeBSD Convenience Script for Source Install
      # -- START --
-     # $Id: CHANGES,v 5.83 2000/11/28 16:50:51 papowell Exp papowell $
+     # $Id: CHANGES,v 5.86 2000/12/25 01:50:42 papowell Exp papowell $
      #
      #  If you are building a PORT, see the
      #  DISTRIBUTIONS/Freebsd directory for a complete port
@@ -1365,7 +1424,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
     
 	# LINUX/RedHat Source Installation Convenience Script
 	# -- START --
-	# $Id: CHANGES,v 5.83 2000/11/28 16:50:51 papowell Exp papowell $
+	# $Id: CHANGES,v 5.86 2000/12/25 01:50:42 papowell Exp papowell $
       *** same as above
 	fix () {
       *** same as above
@@ -1444,7 +1503,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
   pclbanner and psbanner now back in /bin/sh.  Sigh.  Some supported
    systems do not have Perl.
     (Grudgingly ported to /bin/sh scripts by:
-      Patrick Powell <papowell@astart.com>)
+      Patrick Powell <papowell@lprng.com>)
 
   The printcap 'x:' is now a real printcap.  You use the default
     entry values for it.  Strange how this one did not get caught
@@ -1804,7 +1863,7 @@ Release LPRng 3.6.11 Sun Oct 24 13:37:44 PDT 1999
    Solaris 2.5 format.
    (Noticed by:  Martin Mokrejs <mmokrejs@natur.cuni.cz>)
   Added support for case sensitive key lookup in sorted lists.
-   (General cleanup and tidy: Patrick Powell <papowell@astart.com>)
+   (General cleanup and tidy: Patrick Powell <papowell@lprng.com>)
   Set_linger() (setsockopt socket linger timeout) failure is
    now ignored,  rather than treated as failure.  This now
    handles the case where pipes are actually second class citizens
@@ -2099,9 +2158,9 @@ Release LPRng 3.6.5 Sun Aug  1 16:46:31 PDT 1999
     sillyness is partly forced on us by Y2K issues.
     New flag option: short_status_date - when set, status time/date displays
     only time.
-    (Sigh... by: Patrick Powell <papowell@astart.com>)
+    (Sigh... by: Patrick Powell <papowell@lprng.com>)
   Remote logging information now contains full date and time and process id.
-    (Sigh... by: Patrick Powell <papowell@astart.com>)
+    (Sigh... by: Patrick Powell <papowell@lprng.com>)
   Update LPRng HOWTO to specify that filter STDERR output is now merged with
     the status messages.  This allows errors reported by the filter to appear
     on the lpq status.
@@ -2112,7 +2171,7 @@ Release LPRng 3.6.5 Sun Aug  1 16:46:31 PDT 1999
     printer names.
     (Reported by: Martin Forssen <maf@crt.se>)
   Removed duplicate status information lines in status file.
-    (Discovered by: Patrick Powell <papowell@astart.com>)
+    (Discovered by: Patrick Powell <papowell@lprng.com>)
   Added 'send_failure_action' information to status output to allow users
     of this very odd feature to figure out what is happening.
   Fixed up LPRng to handle a stupid RFC1179 idiocy.  If you have a control
@@ -2169,7 +2228,7 @@ Release LPRng 3.6.4 Sat Jul 24 14:29:09 PDT 1999
    
   commmon/linelist.c: Escape() had a malloc() size error.
   man/lpd.8 man page editted and fixed up for consistency.
-   (Found by: Patrick Powell <papowell@astart.com>)
+   (Found by: Patrick Powell <papowell@lprng.com>)
 
   FreeBSD Support: FreeBSD.ports.sysutils has the files for a Ports Install
   RedHat RPM: pkg has the files needed to build a RedHat RPM distribution.
@@ -2244,7 +2303,7 @@ Release LPRng 3.6.3 Fri Jul 16 16:01:27 PDT 1999
     line, i.e: END\n.  This enables a database management system to
     know that all of the queue information has arrived and can then
     undertake to do any consistency checks.
-    (Need determined by:  Patrick Powell <papowell@astart.com>)
+    (Need determined by:  Patrick Powell <papowell@lprng.com>)
 
   When a 'lpc reread' is done,  the logger process is killed and restarted.
     This forces the logger process to use the new printcap or configuration
@@ -2294,7 +2353,7 @@ Release LPRng 3.6.2 Sat Jun 12 16:44:15 PDT 1999
   File locking had problems under SunOS 4.1.4.
 
   You can now have single letter printer names.
-    (Sigh... noted by: Patrick Powell <papowell@astart.com>)
+    (Sigh... noted by: Patrick Powell <papowell@lprng.com>)
 
   Accounting information now has options (correctly) quoted:
    start '-H...' '-c' '-JThis is a job'
@@ -2656,7 +2715,7 @@ Release LPRng 3.5.3 Mon Nov  9 10:07:42 PST 1998
   Filters were not being passed -Knnn option.
     (Noticed by: Charles Karney <karney@pppl.gov>)
   Permissions:  SERVER keyword was not used for X permissions.
-    (Fix by: Patrick Powell <papowell@astart.com>)
+    (Fix by: Patrick Powell <papowell@lprng.com>)
   File Permissions:  spool_file_perms was being ignored due to the
     umask() not being (un)set before creating a file.
     (Discovered by: Albert Fluegel <albert.fluegel@hl.siemens.de)
@@ -2674,13 +2733,13 @@ Release LPRng 3.5.3 Mon Nov  9 10:07:42 PST 1998
     :destination=... entry was present
     (Patch by: john@cs.wisc.edu)
    Log files not being truncated.  Well, they are now.
-    (Fix by: Patrick Powell <papowell@astart.com>)
+    (Fix by: Patrick Powell <papowell@lprng.com>)
    LPR not printing multiple copies (-K option)
     (Patch by: Keith Richardson <keithr@ms.com>)
    LPD did not check spool queue just before exiting from printing loop.
     This opened a BIG race window on systems with lots of jobs in the
     spool queue.
-    (Fix by: Patrick Powell <papowell@astart.com>)
+    (Fix by: Patrick Powell <papowell@lprng.com>)
    Expand_command did not check for Do_dollar() returning 0, indicating
     a string overflow condition, which it then dereferenced and core dumped.
     (Reported by:  (Walter Misar) <misar@rbg.informatik.tu-darmstadt.de>)
@@ -2689,11 +2748,11 @@ Release LPRng 3.5.3 Mon Nov  9 10:07:42 PST 1998
    Memory trashing being done by different behaviour of strncat() on some
     systems.  Replaced by mystrncat() and took the performance hit in return
     for reproducible behaviour and non-trashing copies.  Sigh.
-    (Fix by: Patrick Powell <papowell@astart.com>)
+    (Fix by: Patrick Powell <papowell@lprng.com>)
    strncpy() and strcpy() does not handle overlapping strings correctly, or
     at least that is what the man page says.  Replaced several of these
     calls by memcopy() and friends.
-    (Fix by: Patrick Powell <papowell@astart.com>)
+    (Fix by: Patrick Powell <papowell@lprng.com>)
 
 Release LPRng 3.5.2 Fri May  1 14:39:55 PDT 1998
   Bug Fix:
@@ -2975,7 +3034,7 @@ Release LPRng 3.4.6 Tue Mar 31 18:10:59 PST 1998
 Release LPRng 3.4.5 Sun Mar 29 18:37:09 PST 1998
   LPF:
     Cleaned up some minor nits with options.
-    (Noticed by: Patrick Powell <papowell@astart.com>)
+    (Noticed by: Patrick Powell <papowell@lprng.com>)
 
   LPRng-HOWTO:
     A huge number of corrections from:
@@ -3191,7 +3250,7 @@ Release LPRng 3.4.1
     Fixed missing permission check checkpc.
     Also (correctly) implemented ${option} expansion in filter commands.
      This now gets expanded to the printcap option value,  as documented.
-    (Made by: Patrick Powell <papowell@astart.com>
+    (Made by: Patrick Powell <papowell@lprng.com>
 
 Release LPRng 3-3-7
 
@@ -3399,7 +3458,7 @@ Release LPRng 3-3-5
        By default, LPRng executables are now installed SUID root.
      This will reduce the number of problems encountered by folks who
      do not read the README.install instrucutions.
-     (Noted by: Patrick Powell <papowell@astart.com>)
+     (Noted by: Patrick Powell <papowell@lprng.com>)
 
   :remote_support=RMQVC (default)
     R = lpr, M = lprm, Q = lpq, V = verbose lpq, C = lpc : allowed operation
@@ -3417,14 +3476,14 @@ Release LPRng 3-3-5
   Bug Fixes:
    After a LOOOONG study,  the problem with non-LPRng servers terminating
    with 'out of space' error status has been resolved,  and hopefully fixed.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    Order of variables in sorted list was incorrect.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    README.pgp_authentication referenced 'client_auth*' names; should be
     'user_auth*' names.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    The print job transfer (LPD/lpd_rcvjob.c) code has been reviewed,  and
      the underlying method has been modified to accomodate reception of
@@ -3436,7 +3495,7 @@ Release LPRng 3-3-5
      4. The routing filter (if any) is invoked.  Note that the data files
         are available for reference during this stage.
      5. The control file is renamed to the final version.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    The plp_waitpid() code has been extensively modified,  together with the
      fdfork() code,  the killchildren() support,  and the Print_abort()
@@ -3444,16 +3503,16 @@ Release LPRng 3-3-5
      not being terminated and/or zombies accumulating.  This has the
      (desirable!) side effect that child exits will not cause system calls
      to terminate with EINTR status.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    By default, LPRng executables are now installed SUID root.
      This will reduce the number of problems encountered by folks who
    do not read the README.install instrucutions.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    Race condition with Set_control_info fixed.  Now file locking works
      correctly.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    For HP configurations and no GCC,  added a -Aa flag to CFLAGS
      (Suggested by:  Brad Rogers <brad@ast.lmco.com>)
@@ -3467,17 +3526,17 @@ Release LPRng 3-3-5
    By default, LPRng executables are now installed SUID root.
      This will reduce the number of problems encountered by folks who
    do not read the README.install instrucutions.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    The SERVER permissions checking did not handle localhost correctly.
-   (Noted by: Patrick Powell <papowell@astart.com>)
+   (Noted by: Patrick Powell <papowell@lprng.com>)
 
    Passed the PRINTCAP_ENTRY to routing filters and control file filters.
     (Patch by: George Lindholm <lindholm@ucs.ubc.ca>)
 
    Only LPD now does killpg() otherwise this effects output from the
      lpq, lpc, etc., programs.
-     (Noted by: Patrick Powell <papowell@astart.com>)
+     (Noted by: Patrick Powell <papowell@lprng.com>)
 
    Jobs were being thrown away with Send_try#0 
      (Patch by: George Lindholm <lindholm@ucs.ubc.ca>)
@@ -3559,7 +3618,7 @@ Release LPRng 3-2-12
     suppressed by setting retry to 0, as documented.
   The above bugs/changes were the result of a long standing report of
     the LPD server being slow to respond when printing bad jobs.
-  (Added by: Patrick Powell <papowell@astart.com>)
+  (Added by: Patrick Powell <papowell@lprng.com>)
 
 Release LPRng 3-2-11
   Enhancements:
@@ -3724,7 +3783,7 @@ Release LPRng 3-2-7
       (Reported by: Jan Barte <yann@plato.uni-paderborn.de>)
     When routing a file,  the route Xnnnn information was not used.
       Updated Fix_control to use this information as per documentation.
-      (Reported by: Patrick Powell <papowell@astart.com>)
+      (Reported by: Patrick Powell <papowell@lprng.com>)
     Control file not reparsed after 'control_filter' processing.
       It is now reparsed,  and only the new contents are sent
       to the destination.  This includes the data files.  The
@@ -3766,7 +3825,7 @@ Release LPRng 3-2-5
       (Reported and fixed by: Horst <horst.fickenscher@it.erlm.siemens.de>)
     memory leak fix of 3-2-4 interacted with other code in unexpected
       manner - revised memory fix.
-      (Reported and fixed by:  Patrick Powell <papowell@astart.com>)
+      (Reported and fixed by:  Patrick Powell <papowell@lprng.com>)
     LPD/lpd_status.c - status display line length now controlled by
       max_status_line configuration/printcap variable,  which allows
       the maximum line length to be exceeded if desired.  Default is
@@ -3779,7 +3838,7 @@ Release LPRng 3-2-5
 Release LPRng 3-2-4
     LPD - pursued and found an extremely minor memory leak that
       was exercised only under a very unusual set of conditions.
-      (Reported and fixed by:  Patrick Powell <papowell@astart.com>)
+      (Reported and fixed by:  Patrick Powell <papowell@lprng.com>)
     Batch of patches and errors: Tom Bertelson <tbert@pamd.cig.mot.com>
       include/portable.h - minor changes in SUNOS prototypes
       CHECKPC/checkpc_port.c - better check to see if setproctitle worked

@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 5.22 2000/11/29 02:33:52 papowell Exp papowell $";
+"$Id: getprinter.c,v 5.24 2000/12/25 01:51:06 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -247,6 +247,7 @@ void Get_all_printcap_entries(void)
 	 */
 	s = t = 0;
 	DEBUG1("Get_all_printcap_entries: starting");
+	Free_line_list( &All_line_list );
 	if( (s = Select_pc_info(ALL,
 			&PC_entry_line_list,
 			&PC_alias_line_list,

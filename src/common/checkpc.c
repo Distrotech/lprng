@@ -2,13 +2,13 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-2000, Patrick Powell, San Diego, CA
- *     papowell@astart.com
+ *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 5.25 2000/11/30 18:13:37 papowell Exp papowell $";
+"$Id: checkpc.c,v 5.27 2000/12/25 01:51:04 papowell Exp papowell $";
 
 
 
@@ -201,6 +201,15 @@ int main( int argc, char *argv[], char *envp[] )
 
 	if( Verbose )Show_all_printcap_entries();
 
+    if(DEBUGL3){
+		struct stat statb; int i;
+        LOGDEBUG("main: START open fd's");
+        for( i = 0; i < 20; ++i ){
+            if( fstat(i,&statb) == 0 ){
+                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+            }
+        }
+    }
 	if(Verbose)MESSAGE("Checking printcap info");
 	if( User_specified_printer ){
 		if( DEBUGL1 ) Dump_line_list("checkpc: names", &PC_names_line_list );
@@ -211,6 +220,7 @@ int main( int argc, char *argv[], char *envp[] )
 			Scan_printer();
 		}
 	} else {
+		if( DEBUGL1 ) Dump_line_list("checkpc: all", &All_line_list );
 		for( i = 0; i < All_line_list.count; ++i ){
 			Set_DYN(&Printer_DYN,All_line_list.list[i]);
 			Scan_printer();
@@ -247,6 +257,16 @@ int main( int argc, char *argv[], char *envp[] )
 			Scan_printer();
 		}
 	}
+
+    if(DEBUGL3){
+		struct stat statb; int i;
+        LOGDEBUG("main: END open fd's");
+        for( i = 0; i < 20; ++i ){
+            if( fstat(i,&statb) == 0 ){
+                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+            }
+        }
+    }
 	return(0);
 }
 
@@ -306,6 +326,16 @@ void Scan_printer(void)
 	error[0] = 0;
 
 	if(Verbose)MESSAGE( "Checking printer '%s'", Printer_DYN );
+
+    if(DEBUGL3){
+		struct stat statb; int i;
+        LOGDEBUG("Scan_printer: START open fd's");
+        for( i = 0; i < 20; ++i ){
+            if( fstat(i,&statb) == 0 ){
+                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+            }
+        }
+    }
 
 	/* get printer information */
 	error[0] = 0;
