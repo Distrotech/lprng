@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: termclear.c,v 3.2 1997/02/15 15:01:30 papowell Exp papowell $";
+"$Id: termclear.c,v 3.3 1997/09/18 19:46:07 papowell Exp $";
 
 #include "lp.h"
 #include "termclear.h"
@@ -30,7 +30,7 @@ static char *const _id =
 #endif
 
 /* terminfo has a termcap emulation */
-#if defined(HAVE_TERMCAP_H) && !defined(__FreeBSD__) && !defined(__linux__)
+#if defined(HAVE_TERMCAP_H) && !defined(__FreeBSD__) && !defined(IS_LINUX)
 # include <termcap.h>
 #endif
 

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_remove.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 3.16 1998/01/18 00:10:32 papowell Exp papowell $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -201,6 +201,48 @@ error:
 done:
 	DEBUG3( "Job_remove: done" );
 	return( 0 );
+}
+
+static void
+Remote_remove(int *socket, int tokencount,
+	      struct token *tokens, char *user, char *orig_name)
+{
+  DEBUG3( "Remote_remove: checking '%s'", RemotePrinter );
+  if( RemotePrinter && RemoteHost == 0 ){
+    RemoteHost = Default_remote_host;
+    if( RemoteHost == 0 ){
+      RemoteHost = FQDNHost;
+    }
+  }
+  if( RemotePrinter ){
+    static struct malloc_list args;
+    char **list;
+    int i;
+    
+    Find_fqdn( &RemoteHostIP, RemoteHost, 0 );
+    if( Same_host( &RemoteHostIP, &HostIP ) == 0 ){
+      DEBUG3("Remote_remove: same host, using recursion" );
+      Get_queue_remove( user, RemotePrinter, socket,
+			tokencount, tokens );
+      DEBUG3("Remote_remove: finished removal %s", orig_name );
+    } else {
+      if( tokencount+1 >= args.max ){
+	extend_malloc_list( &args, sizeof( char *), tokencount+1 );
+      }
+      args.count = 0;
+      list = (void *)args.list;
+      for( args.count = 0, i = 1; i < tokencount; ++i, ++args.count ){
+	list[args.count] = tokens[i].start;
+      }
+      list[args.count] = 0;
+      DEBUG3("Remote_remove: removing jobs from remote host '%s'", 
+	     RemoteHost );
+      /* get extended format */
+      Send_lprmrequest( RemotePrinter, RemoteHost, user, list,
+			Connect_timeout, Send_query_rw_timeout, *socket );
+    }
+  }
+  DEBUG3("Remote_remove: finished '%s'", RemotePrinter );
 }
 
 /***************************************************************************
@@ -404,32 +446,33 @@ next_destination:
 				cfp->identifier+1, destination->identifier+1 );
 			plp_snprintf( msg, sizeof(msg), _("  dequeued '%s' destination %s\n"),
 				cfp->identifier+1, destination->identifier+1 );
-		} else {
-			DEBUG4("Get_queue_remove: removing '%s'", cfp->identifier+1 );
-			plp_snprintf( msg, sizeof(msg), _("  dequeued '%s'\n"),
-				cfp->identifier+1 );
-		}
-		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
-
-		if( destination ){
+			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 			plp_snprintf( destination->error, sizeof( destination->error ),
 				_("entry deleted") );
 			destination->done = time( (void *)0 );
-			Set_job_control( cfp, (void *)0, 0 );
+			Set_job_control( cfp, (void *)0 );
 			goto next_destination;
 		}
+		/* log this to the world */
+		DEBUG4("Get_queue_remove: removing '%s'", cfp->identifier+1 );
+		plp_snprintf( msg, sizeof(msg), _("  dequeued '%s'\n"),
+			cfp->identifier+1 );
+		if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
+
+		setmessage( cfp, "LPRM", "%s@%s: lprm STARTING removing job", Printer, FQDNHost );
 		if( Remove_job( cfp ) ){
 			plp_snprintf( error, sizeof(error),
 				_("error: could not remove '%s'"), cfp->identifier+1 ); 
+			setmessage( cfp, "LPRM", "%s@%s: lprm FAILED removing job", Printer, FQDNHost );
 			goto error;
 		}
-		setmessage( cfp, "TRACE", "%s@%s: lprm removed job", Printer, FQDNHost );
+		setmessage( cfp, "LPRM", "%s@%s: lprm SUCCEEDED removing job", Printer, FQDNHost );
 		/* check to see if active */
-		if( (pid = cfp->hold_info.active) > 0 ){
+		if( cfp->hold_info.server > 0 && (pid = cfp->hold_info.subserver) > 0 ){
 			plp_snprintf( msg, sizeof(msg), _("killing subserver '%d'\n"), pid );
 			if( Write_fd_str( *socket, msg ) < 0 ) cleanup(0);
 			/* we need to kill the unspooler */
-			/* we will be gentle here */
+			/* we will not be gentle here */
 			DEBUG3("Get_queue_remove: kill subserver pid '%d'", pid );
 			kill( pid, SIGUSR1 );
 				/* sigh ... yes, you may need to start it */
@@ -490,6 +533,35 @@ remote:
 				server_info->name );
 		}
 		RemotePrinter = RemoteHost = 0;
+		if( servers.list ) free( servers.list );
+	} else if( Destinations ) {
+		static struct malloc_list servers;
+		struct server_info *server_info;
+
+		Get_subserver_info( &servers, Destinations );
+		server_info = (void *)servers.list;
+		for( i = 0; i < servers.count; ++server_info, ++i ){
+		  DEBUG3("Get_queue_remove: removing from destination '%s'", 
+			 server_info->name);
+		  RemoteHost = 0;
+		  RemotePrinter = 0;
+		  if( strchr( server_info->name, '@' ) ){
+		    Lp_device = server_info->name;
+		    Check_remotehost();
+		    if( Check_loop() ){ 
+		      plp_snprintf( error, sizeof(error),
+				    "printer '%s' loop to bounce queue '%s'",
+				    server_info->name );
+		    }
+		  }
+		  if( RemotePrinter == 0 ){
+		    RemotePrinter = server_info->name;
+		  }
+
+		  Remote_remove(socket, tokencount, tokens, user, orig_name);
+		}
+		if( servers.list ) free( servers.list );
+		goto done;
 	} else if( Bounce_queue_dest ){
 		DEBUG3("Get_queue_remove: removing from bouncequeue '%s'", 
 			Bounce_queue_dest);
@@ -515,40 +587,9 @@ remote:
 			 */
 		RemoteHost = RemotePrinter = 0;
 	}
-	if( RemotePrinter && RemoteHost == 0 ){
-		RemoteHost = Default_remote_host;
-		if( RemoteHost == 0 ){
-			RemoteHost = FQDNHost;
-		}
-	}
-	if( RemotePrinter ){
-		static struct malloc_list args;
-		char **list;
+	Remote_remove(socket, tokencount, tokens, user, orig_name);
 
-		Find_fqdn( &RemoteHostIP, RemoteHost, 0 );
-		if( Same_host( &RemoteHostIP, &HostIP ) == 0 ){
-			DEBUG3("Get_queue_remove: same host, using recursion" );
-			Get_queue_remove( user, RemotePrinter, socket,
-				tokencount, tokens );
-			DEBUG3("Get_queue_remove: finished removal %s", orig_name );
-		} else {
-			if( tokencount+1 >= args.max ){
-				extend_malloc_list( &args, sizeof( char *), tokencount+1 );
-			}
-			args.count = 0;
-			list = (void *)args.list;
-			for( args.count = 0, i = 0; i < tokencount; ++i, ++args.count ){
-				list[args.count] = tokens[i].start;
-			}
-			list[args.count] = 0;
-			DEBUG3("Get_queue_remove: removing jobs from remote host '%s'", 
-				RemoteHost );
-			/* get extended format */
-			Send_lprmrequest( RemotePrinter, RemoteHost, user, list,
-				Connect_timeout, Send_timeout, *socket );
-		}
-	}
-
+done:
 	Printer = orig_name;
 	DEBUG3("Get_queue_remove: finished '%s'", orig_name );
 	/* start the server again if necessary */

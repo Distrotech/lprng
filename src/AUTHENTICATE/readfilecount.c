@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: readfilecount.c,v 3.1 1996/12/28 21:39:58 papowell Exp $";
+"$Id: readfilecount.c,v 3.2 1997/09/18 19:45:41 papowell Exp $";
 
 /*
  * readfilecount [-D]
@@ -20,7 +20,7 @@ static char *const _id =
  *     [contents of destfile]
  *   - writes the contents to stdout 
  *
- * Patrick Powell, papowell@sdsu
+ * Patrick Powell, papowell@astart.com
  * Thu Dec  5 08:34:40 PST 1996
  */
 

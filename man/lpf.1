@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPF 1 \*(VE "LPRng"
 .ig
 Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
@@ -32,7 +32,7 @@ lpf \- general printer filter
 .BI \-h Host
 .BI \-F format
 [
-.BI \-T x
+.BI \-T [crlf,endlinechar]
 .BI \-D level
 ] [
 affile
@@ -41,6 +41,8 @@ affile
 .B Lpf
 is a general printer filter. Usually it is used as filter in the
 printcap file and is called by lpd.
+By default,
+it will translate LF to CR/LF pairs.
 
 The following options passes lpd by default:
 .IP "\fB\-P\fIprinter\fR" 5
@@ -85,6 +87,12 @@ The name of the accounting file, from printcap information.
 .IP "\fB\-D\fIlevel\fR" 5
 Sets debug level. The level must be an integer, a nonzero value
 switches debugging on.
+.IP "\fB\-T\fIcrlf\fR" 5
+Turns LF to CRLF translation off.
+.IP "\fB\-T\fINNN\fR" 5
+NNN is an integer in C format.
+The corresponding character is appended to the end of a line.
+This can be done to force a different form of CR/LF translation.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the

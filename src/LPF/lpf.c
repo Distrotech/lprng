@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  * From the original PLP Software distribution
  *
@@ -21,7 +21,7 @@
  ***************************************************************************/
 #ifndef lint
 static char *const _id =
-	"$Id: lpf.c,v 3.1 1996/12/28 21:40:03 papowell Exp $";
+	"$Id: lpf.c,v 3.4 1997/12/16 15:06:21 papowell Exp $";
 #endif
 
 /***************************************************************************
@@ -35,7 +35,7 @@ static char *const _id =
  *      -Kcontrolfilename -Lbnrname \
  *      [-iindent] \
  *		[-Zoptions] [-Cclass] [-Jjob] [-Raccntname] -nlogin -hHost  \
- *      -Fformat [-Tlevel,x] [affile]
+ *      -Fformat [-Tcrlf] [-Ddebuglevel] [affile]
  * 
  *  1. Parameters can be in different order than the above.
  *  2. Optional parameters can be missing
@@ -93,8 +93,11 @@ static char *const _id =
  * accntfile file          char*    AF, accounting file
  *
  * npages    - number of pages for accounting
+ *
  * -Tlevel - sets debug level. level must be integer
+ * -Tcrlf  - turns LF to CRLF off
  * -TX     - puts character X at end of each line.
+ *
  * verbose   - echo to a log file
  *
  *	The functions fatal(), logerr(), and logerr_die() can be used to report
@@ -176,7 +179,7 @@ XX ** NO VARARGS ** XX
 int errorcode;
 char *name;		/* name of filter */
 /* set from flags */
-int debug, xflag, verbose, width, length, xwidth, ylength, literal, indent;
+int debug, verbose, width, length, xwidth, ylength, literal, indent;
 char *zopts, *class, *job, *login, *accntname, *host, *accntfile, *format;
 char *printer, *controlfile, *bnrname, *comment;
 char *queuename, *errorfile;
@@ -184,6 +187,7 @@ int npages;	/* number of pages */
 char *statusfile;
 char filter_stop[] = "\031\001";	/* sent to cause filter to suspend */
 int  accounting_fd;
+int crlf;	/* change lf to CRLF */
 
 void getargs( int argc, char *argv[], char *envp[] );
 void log( char *msg, ... );
@@ -194,6 +198,7 @@ extern void banner( void );
 extern void cleanup( void );
 extern void doaccnt( void );
 extern void filter( char * );
+int of_filter;
 
 int main( int argc, char *argv[], char *envp[] )
 {
@@ -211,7 +216,7 @@ int main( int argc, char *argv[], char *envp[] )
 	 * Turn off SIGPIPE
 	 */
 	(void)signal( SIGPIPE, SIG_IGN );
-	if( format && format[0] == 'o' ){
+	if( of_filter || (format && format[0] == 'o') ){
 		filter( filter_stop );
 	} else {
 		filter( (char *)0 );
@@ -389,6 +394,12 @@ void getargs( int argc, char *argv[], char *envp[] )
 	char *s, *end;
 
 	if( (name = argv[0]) == 0 ) name = "FILTER";
+	if( (s = strrchr( name, '/' )) ){
+		++s;
+	} else {
+		s = name;
+	}
+	of_filter =  (strstr( s, "of" ) != 0);
 	for( i = 1; i < argc && (arg = argv[i])[0] == '-'; ++i ){
 		if( (c = arg[1]) == 0 ){
 			fprintf( stderr, "missing option flag");
@@ -419,7 +430,9 @@ void getargs( int argc, char *argv[], char *envp[] )
 							*end++ = 0;
 						}
 						while( isspace( *s ) ) ++s;
-						xflag = *s;
+						if( !strcasecmp( s, "crlf" ) ){
+							crlf = 1;
+						}
 					}
 					break; 
 			case 'F': format = optarg; break; 
@@ -531,38 +544,44 @@ void filter(char *stop)
 	npages = 1;
 
 	while( (c = getchar()) != EOF ){
-		if( xflag ){
-			if( (c == '\r' || c == '\n' ) ){
-				if( xout == 0 ){
-					putchar( xflag );
-					++xout;
-				}
-			} else {
-				xout = 0;
-			}
-		}
 		if( c == '\n' ){
 			++lines;
 			if( lines > length ){
 				lines -= length;
 				++npages;
 			}
+			if( !literal && crlf == 0 ){
+				putchar( '\r' );
+			}
 		}
-		if( (stop || state) && c == stop[state] ){
-			++state;
-			if( stop[state] == 0 ){
-				state = 0;
-				if( fflush(stdout) ){
-					logerr( "fflush returned error" );
-					break;
+		if( c == '\014' ){
+			++npages;
+			lines = 0;
+			if( !literal && crlf == 0 ){
+				putchar( '\r' );
+			}
+		}
+		if( stop ){
+			if( c == stop[state] ){
+				++state;
+				if( stop[state] == 0 ){
+					state = 0;
+					if( fflush(stdout) ){
+						logerr( "fflush returned error" );
+						break;
+					}
+					suspend_ofilter();
 				}
-				suspend_ofilter();
+			} else if( state ){
+				for( i = 0; i < state; ++i ){
+					putchar( stop[i] );
+				}
+				state = 0;
+				putchar( c );
+			} else {
+				putchar( c );
 			}
 		} else {
-			for( i = 0; i < state; ++i ){
-				putchar( stop[i] );
-			}
-			state = 0;
 			putchar( c );
 		}
 	}

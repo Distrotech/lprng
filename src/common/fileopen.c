@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: fileopen.c,v 3.8 1997/02/25 04:50:25 papowell Exp $";
+"$Id: fileopen.c,v 3.10 1997/12/16 15:06:25 papowell Exp $";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -80,14 +80,17 @@ int Checkread( char *file, struct stat *statb )
 
 
 /***************************************************************************
- * int Checkwrite( char *file, struct stat *statb, int rw, int create, int del )
+ * int Checkwrite( char *file, struct stat *statb, int rw, int create,
+ *  int nodelay )
  *  - if rw != 0, open for both read and write
  *  - if create != 0, create if it does not exist
+ *  - if nodelay != 0, use nonblocking open
  * open a file or device for writing,  and check its permissions
  * Returns: fd of open file, -1 if error.
  *     status in *statb
  ***************************************************************************/
-int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
+int Checkwrite( char *file, struct stat *statb, int rw, int create,
+	int nodelay )
 {
 	int fd = -1;
 	int status = 0;
@@ -96,11 +99,11 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
 	int err = errno;
 
 	/* open the file */
-	DEBUG3("Checkwrite: file '%s', rw %d, create %d, delay %d",
-		file, rw, create, delay );
+	DEBUG3("Checkwrite: file '%s', rw %d, create %d, nodelay %d",
+		file, rw, create, nodelay );
 
 	memset( statb, 0, sizeof( statb[0] ) );
-	if( delay ){
+	if( nodelay ){
 		options |= NONBLOCK;
 	}
 	if( rw ){
@@ -115,8 +118,7 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
 		err = errno;
 		status = -1;
 		DEBUG3( "Checkwrite: cannot open '%s', %s", file, Errormsg(err) );
-	}
-	if( fd >= 0 && delay ){
+	} else if( nodelay ){
 		/* turn off nonblocking */
 		mask = fcntl( fd, F_GETFL, 0 );
 		if( mask == -1 ){
@@ -139,7 +141,7 @@ int Checkwrite( char *file, struct stat *statb, int rw, int create, int delay )
 
     if( status >= 0 && fstat( fd, statb ) < 0 ) {
 		err = errno;
-        logerr(LOG_ERR, "Checkwrite: fstat of '%s' failed, possible security problem", file);
+        logerr_die(LOG_ERR, "Checkwrite: fstat of '%s' failed, possible security problem", file);
         status = -1;
     }
 
@@ -229,35 +231,36 @@ char *Init_tempfile( void )
 		"bfA%03d", getpid() );
 	Tempfile->pathlen = strlen( Tempfile->pathname );
 	dir = Clear_path(Tempfile);
+	Tempcount = 0;
 	DEBUG3("Init_tempfile: temp file '%s'", dir );
 	return(dir);
 }
+
+static int temp_registered;
 
 int Make_temp_fd( char *temppath, int templen )
 {
 	int tempfd = -1;
 	int len;
 	struct stat statb;
-	int lock, create;
 	char pathname[MAXPATHLEN];
 
-	register_exit( (exit_ret)Remove_tempfiles, 0 );
+	if( temp_registered == 0 ){
+		register_exit( (exit_ret)Remove_tempfiles, 0 );
+		temp_registered = 1;
+	}
 	if( Tempfile == 0 || Tempfile->pathname[0] == 0){
 		Init_tempfile();
 	}
-	while( tempfd <= 0 ){
+	/* put an arbitrary limit of 1000 on tempfiles */
+	while( tempfd < 0 && Tempcount < 1000 ){
 		safestrncpy( pathname, Clear_path( Tempfile ) );
 		len = strlen(pathname);
 		plp_snprintf( pathname+len, sizeof(pathname)-len, ".%d", ++Tempcount );
 		if( temppath ) strncpy( temppath, pathname, templen );
 		DEBUG0("Make_temp_fd: trying '%s'", pathname );
-		tempfd = Lockf( pathname, &lock, &create, &statb);
-		DEBUG0("Make_temp_fd: tempfd %d, create %d, lock %d",
-				tempfd, create, lock );
-		if( tempfd > 0 && (create == 0 || lock == 0) ){
-			close(tempfd);
-			tempfd = -1;
-		}
+		tempfd = Checkwrite( pathname, &statb, O_RDWR|O_CREAT|O_EXCL, 1, 0 );
+		DEBUG0("Make_temp_fd: tempfd %d", tempfd );
 	}
 	DEBUG0("Make_temp_fd: using '%s'", pathname );
 	if( ftruncate( tempfd, 0 ) < 0 ){
@@ -307,6 +310,7 @@ void Remove_tempfiles( void )
 	int len;
 
 
+	temp_registered = 0;
 	DEBUGF(DRECV2)("Remove_tempfiles: Tempfile '%s'", Tempfile );
 	Close_passthrough( &Passthrough_send, 3 );
 	Close_passthrough( &Passthrough_receive, 3 );
@@ -345,7 +349,7 @@ void Remove_tempfiles( void )
  ***************************************************************************/
 static void unlinkf( char *s )
 {
-	if( s[0] ){
+	if( s && s[0] ){
 		DEBUGF(DRECV3)("Remove_files: unlinking '%s'", s );
 		unlink( s );
 	}
@@ -360,16 +364,12 @@ void Remove_files( void *nv )
 	if( Cfp_static && Cfp_static->remove_on_exit ){
 		data = (void *)Data_files.list;
 		for( i = 0; i < Data_files.count; ++i ){
-			if( data[i].openname[0] ){
-				unlinkf( data[i].openname );
-			}
+			unlinkf( data[i].openname );
+			unlinkf( data[i].transfername );
 		}
-		if( Cfp_static->openname[0] ){
-			unlinkf( Cfp_static->openname );
-		}
-		if( Cfp_static->hold_file[0] ){
-			unlinkf( Cfp_static->hold_file );
-		}
+		unlinkf( Cfp_static->openname );
+		unlinkf( Cfp_static->transfername );
+		unlinkf( Cfp_static->hold_file );
 	}
 }
 
@@ -378,12 +378,12 @@ void Remove_files( void *nv )
  *  Tries to do Checkwrite() with a timeout 
  ***************************************************************************/
 int Checkwrite_timeout(int timeout,
-	char *file, struct stat *statb, int rw, int create, int delay )
+	char *file, struct stat *statb, int rw, int create, int nodelay )
 {
 	int fd;
 	if( Set_timeout() ){
 		Set_timeout_alarm( timeout, 0);
-		fd = Checkwrite( file, statb, rw, create, delay );
+		fd = Checkwrite( file, statb, rw, create, nodelay );
 	} else {
 		fd = -1;
 	}

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE: perform system dependent initialization
  **************************************************************************/
 
-static char *const _id = "$Id: initialize.c,v 3.7 1997/03/24 00:45:58 papowell Exp papowell $";
+static char *const _id = "$Id: initialize.c,v 3.10 1997/10/27 00:14:19 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -46,12 +46,16 @@ static char *const _id = "$Id: initialize.c,v 3.7 1997/03/24 00:45:58 papowell E
  * This should NOT do any network operations
  ***************************************************************************/
 
-void Initialize( void )
+void Initialize( char *argv[] )
 {
 	if( !Init_done ){
 		Init_done = 1;
+		Name = "UNKNOWN";
+		if( argv && argv[0] ){
+			Name = argv[0];
+		}
 		/* set the umask so that you create safe files */
-		umask( 0177 );
+		umask( 0077 );
 		(void)signal( SIGPIPE, SIG_IGN );
 #ifdef IS_AUX
 		/********************************************
@@ -75,9 +79,6 @@ void Initialize( void )
 		bindtextdomain (PACKAGE, LOCALEDIR);
 		textdomain (PACKAGE);
 #endif
-
-		/* prepare to catch dead children */
-		Setup_waitpid();
 
 		/*
 			open /dev/null on fd 0, 1, 2 if neccessary
@@ -109,10 +110,7 @@ void Setup_configuration()
 
 	/* Get default configuration file information */
 	Clear_config();
-	config_file = Client_config_file;
-	if( Is_server && Server_config_file && *Server_config_file ){
-		config_file = Server_config_file;
-	}
+	config_file = Config_file;
 
     /* get the configuration file information if there is any */
     if( Allow_getenv ){
@@ -144,7 +142,9 @@ void Setup_configuration()
 	 */
 
     Get_local_host();
-	if( config_file ) Get_config( config_file );
+	Get_config( config_file );
+
+	if( Checkpc_Printcap_path ) Printcap_path = Checkpc_Printcap_path;
 
 	/* we now know if we are using IPV4 or IPV6 from configuration */
 #if defined(IN6_ADDR)
@@ -160,10 +160,8 @@ void Setup_configuration()
 
 	if( Is_server ){
 		Reset_daemonuid();
+		Setdaemon_group();
 		DEBUG0( "DaemonUID %d", DaemonUID );
-		if( Is_server ){
-			Setdaemon_group();
-		}
 	}
 
 	/* get the fully qualified domain name of host and the

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -29,7 +29,8 @@
  *
  *   lprm printer [ user [@host]  | host | jobnumber ] *
  *   lpq printer [ user [@host]  | host | jobnumber ] *
- *   lpd                  - PID of LPD server
+ *   lpd [pr | pr@host]   - PID of LPD server
+ *   active [pr |pr@host] - check to see if server accepting connections
  *
  * DESCRIPTION
  *   lpc sends a  request to lpd(8)
@@ -59,10 +60,11 @@ environment variable, etc.
 #include "waitchild.h"
 #include "setuid.h"
 #include "decodestatus.h"
+#include "permission.h"
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpc.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpc.c,v 3.14 1997/12/20 21:16:26 papowell Exp $";
 
 /***************************************************************************
  * main()
@@ -90,14 +92,14 @@ int main(int argc, char *argv[], char *envp[])
 	 * set up the user state
 	 */
 	Interactive = 1;
-	Initialize();
+	Initialize(argv);
 
 
 	/* set signal handlers */
-	(void) plp_signal (SIGHUP, cleanup);
-	(void) plp_signal (SIGINT, cleanup);
-	(void) plp_signal (SIGQUIT, cleanup);
-	(void) plp_signal (SIGTERM, cleanup);
+	(void) plp_signal (SIGHUP, cleanup_HUP);
+	(void) plp_signal (SIGINT, cleanup_INT);
+	(void) plp_signal (SIGQUIT, cleanup_QUIT);
+	(void) plp_signal (SIGTERM, cleanup_TERM);
 
 
 	/* scan the argument list for a 'Debug' value */
@@ -126,14 +128,21 @@ int main(int argc, char *argv[], char *envp[])
 		}
 	}
 
+	if( Check_for_rg_group( Logname ) ){
+		fprintf( stderr, "cannot use printer - not in privileged group\n" );
+		Errorcode = 1;
+		cleanup(0);
+	}
+
 	if( Optind < argc ){
 		/* we have a command line */
 		action = Get_controlword( argv[Optind] );
 		if( action == 0 ){
 			use_msg();
 		} else {
-			Send_lpcrequest( Logname, &argv[Optind],
-				Connect_timeout, Send_timeout, 1, action );
+			Send_lpcrequest( Logname, &argv[Optind], Connect_timeout,
+				Send_query_rw_timeout,
+				1, action );
 		}
 	} else while(1){
 		int tokencount, i;
@@ -168,13 +177,13 @@ int main(int argc, char *argv[], char *envp[])
 				i = strlen(orig_msg);
 				plp_snprintf( orig_msg+i, sizeof(orig_msg)-i, " -P%s", Printer );
 			}
-			if( (pid = dofork()) == 0 ){
+			if( (pid = dofork(0)) == 0 ){
 				/* we are going to close a security loophole */
 				Full_user_perms();
 				/* this would now be the same as executing LPQ as user */
 				DEBUG0("lpc: doing system(%s)",orig_msg);
 				Errorcode = system( orig_msg );
-				DEBUG0("lpc: system returned %d",Errorcode);
+				DEBUG0("lpc: system() returned %d",Errorcode);
 				cleanup(0);
 			} else if( pid < 0 ) {
 				Diemsg( _("fork failed - %s'"), Errormsg(errno) );
@@ -183,7 +192,7 @@ int main(int argc, char *argv[], char *envp[])
 				result = plp_waitpid( pid, &status, 0 );
 				if( (result == -1 && errno != EINTR) || result == 0 ) break;
 			}
-			DEBUG0("lpc: 'lpq' system pid %d, exit status %s",
+			DEBUG0("lpc: system pid %d, exit status %s",
 				result, Decode_status( &status ) );
 			continue;
 		}
@@ -193,7 +202,9 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		}
 		Send_lpcrequest( Logname, lineargs,
-			Connect_timeout, Send_timeout, 1, action );
+			Connect_timeout,
+			Send_query_rw_timeout,
+			1, action );
 	}
 	Errorcode = 0;
 	cleanup(0);

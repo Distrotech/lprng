@@ -1,14 +1,14 @@
  ***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
- *     papowell@sdsu.edu
+ * Copyright 1988-1995 Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: LICENSE
  * PURPOSE: terms and conditions
- * $Id: LICENSE,v 3.1 1997/01/22 23:15:26 papowell Exp $
+ * $Id: LICENSE,v 3.2 1997/09/18 19:45:29 papowell Exp $
  **************************************************************************
 
 
@@ -20,5 +20,8 @@ copyright.c in this distribution for general copyright information.
 Individual source files have their copyrights as well, where
 applicable.
 
-Patrick Powell
-Mon Jul 10 07:01:54 PDT 1995
+Patrick Powell                 Astart Technologies,
+papowell@astart.com            9475 Chesapeake Drive, Suite D,
+Network and System             San Diego, CA 92123
+  Consulting                   619-874-6543 FAX 619-279-8424 
+LPRng - Print Spooler (http:www.astart.com/LPRng)

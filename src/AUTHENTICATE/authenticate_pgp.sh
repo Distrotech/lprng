@@ -107,7 +107,6 @@ cstatusfile="${tempfile}".csta;
 remove () {
 	if [ -z "$debug" -a -n "${tempfile}" ] ; then
 		rm -f "${tempfile}".* >/dev/null 2>&1;
-		;
 	fi;
 }
 
@@ -408,9 +407,10 @@ if [ -z "${client}" -o -n "${debug}" ] ; then
 
  	if [ -z "${debug}" ] ; then
 		cat <&3 >"${sstatusfile}";
-		echo "STATUS" 1>&2
-		cat "${sstatusfile}" 1>&2;
-		echo "STATUS END" 1>&2
+		# remove comments for debugging
+		# echo "STATUS" 1>&2
+		# cat "${sstatusfile}" 1>&2;
+		# echo "STATUS END" 1>&2
 	else
 		echo "Sending client back same information" 1>&2
 		cat "${srecvfile}" > "${sstatusfile}"

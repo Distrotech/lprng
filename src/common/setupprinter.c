@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setupprinter.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: setupprinter.c,v 3.7 1997/09/18 19:46:06 papowell Exp $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -100,10 +100,6 @@ int Setup_printer( char *name,
 		goto error;
 	}
 	if( pc_entry ) *pc_entry = pc;
-	/* save the original information in the printcap database */
-	Orig_Lp_device = Lp_device;
-	Orig_RemoteHost = RemoteHost;
-	Orig_RemotePrinter = RemotePrinter;
 
 	DEBUG2("Setup_printer: RemoteHost '%s', RemotePrinter '%s', Lp '%s'",
 		RemoteHost, RemotePrinter, Lp_device );
@@ -112,12 +108,10 @@ int Setup_printer( char *name,
 		Check_remotehost();
 	}
 
-	if( Spool_dir && *Spool_dir ){
-		s = Expand_path( SDpathname, Spool_dir );
-		Spool_dir = s;
-	}
-	DEBUG2( "Setup_printer: Spool_dir '%s'->'%s'",
-		Spool_dir, s );
+	/* save the original information in the printcap database */
+	Orig_Lp_device = Lp_device;
+	Orig_RemoteHost = RemoteHost;
+	Orig_RemotePrinter = RemotePrinter;
 
 	if( Spool_dir == 0 || *Spool_dir == 0 ){
 		plp_snprintf( error, errlen,
@@ -125,6 +119,11 @@ int Setup_printer( char *name,
 		status = 2;
 		goto error;
 	}
+
+	safestrncpy( Spool_dir_expanded, Expand_path( SDpathname, Spool_dir ));
+	DEBUG2( "Setup_printer: Spool_dir '%s'->'%s'", Spool_dir,
+		Spool_dir_expanded );
+	Spool_dir = Spool_dir_expanded;
 
 	if( chdir( Spool_dir ) < 0 ){
 		plp_snprintf( error, errlen,
@@ -136,13 +135,14 @@ int Setup_printer( char *name,
 
 	if( Control_dir && *Control_dir ){
 		CDpathname = &cdpath;
-		s = Expand_path( CDpathname, Control_dir );
-		Control_dir = s;
+		safestrncpy( Control_dir_expanded,
+			Expand_path( CDpathname, Control_dir ));
+		DEBUG2( "Setup_printer: Control_dir '%s'->'%s'", Control_dir,
+			Control_dir_expanded );
+		Control_dir = Control_dir_expanded;
 	} else {
 		Control_dir = Spool_dir;
 	}
-	DEBUG2( "Setup_printer: Control_dir '%s'->'%s'",
-		Control_dir, s );
 
 	DEBUG2( "Setup_printer: log file '%s'", Log_file );
 	New_log_file = 0;

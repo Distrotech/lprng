@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: waitchild.h
  * PURPOSE: waitchild.c functions
- * $Id: waitchild.h,v 3.3 1997/01/19 14:34:56 papowell Exp $
+ * $Id: waitchild.h,v 3.4 1997/12/16 15:06:50 papowell Exp $
  **************************************************************************/
 
 #ifndef _WAITCHILD_H
@@ -46,7 +46,7 @@ pid_t plp_waitpid_timeout(int timeout,
 	pid_t pid, plp_status_t *status, int options);
 
 void Setup_waitpid (void);
-void Setup_waitpid_break (void);
+void Setup_waitpid_break (int gather_body );
 
 EXTERN int Child_exit;
 #endif

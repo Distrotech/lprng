@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: setstatus.h
  * PURPOSE: setstatus.c functions
- * $Id: setstatus.h,v 3.1 1996/12/28 21:40:35 papowell Exp $
+ * $Id: setstatus.h,v 3.2 1997/12/16 15:06:48 papowell Exp $
  **************************************************************************/
 
 #ifndef _SETSTATUS_H
@@ -29,8 +29,9 @@ void setmessage( struct control_file *cfp, char *msg, char *fmt, ... );
 void setstatus( va_alist );
 void setmessage( va_alist );  
 #endif
-void send_to_logger( char *msg );
+void send_to_logger( struct control_file *cfp, char *msg );
 void reset_logging( void );
 void Dup_logger_fd( int fd );
+int hostport( char *str );
 
 #endif

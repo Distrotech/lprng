@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
 #include "lp.h"
 /**** ENDINCLUDE ****/
 
-static char *const _id = "$Id: snprintf.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+static char *const _id = "$Id: snprintf.c,v 3.3 1997/09/18 19:46:06 papowell Exp $";
 
 /*
  * dopr(): poor man's version of doprintf

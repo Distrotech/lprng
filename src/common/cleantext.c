@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -20,7 +20,7 @@
 
 
 static char *const _id =
-"$Id: cleantext.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+"$Id: cleantext.c,v 3.4 1997/12/24 20:10:12 papowell Exp $";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -50,7 +50,7 @@ char *Clean_name( char *s )
 
 int Is_meta( int c )
 {
-	return( !(isalnum( c ) || strchr( LESS_SAFE, c )) );
+	return( !(isalnum( c ) || strchr( LESS_SAFE, c )|| (Safe_chars && strchr(Safe_chars,c)) ) );
 }
 
 char *Find_meta( char *s )

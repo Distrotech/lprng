@@ -113,6 +113,9 @@
    This function is required for alloca.c support on those systems.  */
 #undef CRAY_STACKSEG_END
 
+/* Define for DECALPHA  */
+#undef DECALPHA
+
 /* Define to 1 if NLS is requested.  */
 #undef ENABLE_NLS
 
@@ -169,6 +172,9 @@
 
 /* Define if we have a BSD-ish struct exec in <a.out.h> */
 #undef HAVE_STRUCT_EXEC
+
+/* Define if we have a SOLARIS struct linger in <socket.h> */
+#undef HAVE_STRUCT_LINGER
 
 /* Define if sys_errlist has the error strings. */
 #undef HAVE_SYS_ERRLIST
@@ -264,6 +270,9 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+/* Define if you have the ANSI C header files.  */
+#undef STDLIB_DEFINES_RANDOM
+
 /* Define if you have struct stat with st_mtime_nsec */
 #undef ST_MTIME_NSEC
 
@@ -293,6 +302,9 @@
 
 /* Define if we are to use the termios structure and TCGETS. */
 #undef USE_TERMIOS
+
+/* Define if we are to use the HP TERMIOX calls */
+#undef USE_TERMIOX
 
 /* Define to the version of the distribution.  */
 #undef VERSION
@@ -372,6 +384,12 @@
 /* Define if you have the putenv function.  */
 #undef HAVE_PUTENV
 
+/* Define if you have the rand function.  */
+#undef HAVE_RAND
+
+/* Define if you have the random function.  */
+#undef HAVE_RANDOM
+
 /* Define if you have the setenv function.  */
 #undef HAVE_SETENV
 
@@ -399,11 +417,11 @@
 /* Define if you have the sigaction function.  */
 #undef HAVE_SIGACTION
 
+/* Define if you have the siglongjmp function.  */
+#undef HAVE_SIGLONGJMP
+
 /* Define if you have the sigprocmask function.  */
 #undef HAVE_SIGPROCMASK
-
-/* Define if you have the sigsetjmp function.  */
-#undef HAVE_SIGSETJMP
 
 /* Define if you have the socketpair function.  */
 #undef HAVE_SOCKETPAIR
@@ -632,6 +650,9 @@
 
 /* Define if you have the <sys/termio.h> header file.  */
 #undef HAVE_SYS_TERMIO_H
+
+/* Define if you have the <sys/termiox.h> header file.  */
+#undef HAVE_SYS_TERMIOX_H
 
 /* Define if you have the <sys/time.h> header file.  */
 #undef HAVE_SYS_TIME_H

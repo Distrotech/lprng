@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: permission.h
  * PURPOSE: permission file parsing
- * $Id: permission.h,v 3.3 1997/02/04 23:34:23 papowell Exp papowell $
+ * $Id: permission.h,v 3.7 1997/12/24 20:10:12 papowell Exp $
  **************************************************************************/
 
 #ifndef _PERMISSION_H
@@ -79,6 +79,7 @@ EXTERN struct perm_file Perm_file;
 #define AUTHUSER	21	/* authentication user name */
 #define FWDUSER		22	/* forwarded user name */
 #define IFIP		23	/* interface IP address */
+#define AUTHTYPE	24	/* authentication type */
 
 #define AUTH_NONE	0	/* authentication type - USER, SERVER, NONE */
 #define AUTH_USER	1	/* authentication type - USER, SERVER, NONE */
@@ -109,6 +110,8 @@ struct perm_check {
 	char *printer;			/* printer name */
 	struct sockaddr *addr;	/* IF address information */
 	int service;			/* first character service */
+	char *authtype;			/* authentication type */
+	char *lpc;				/* lpc command */
 };
 
 EXTERN struct perm_file Perm_file;
@@ -118,7 +121,7 @@ EXTERN struct perm_check Perm_check;
 EXTERN int Last_default_perm;	/* last default permission */
 
 char *perm_str( int val );
-void Get_perms( char *name, struct perm_file *perms, char *path );
+int Get_perms( char *name, struct perm_file *perms, char *path );
 int Filter_perms( char *name, struct perm_file *perms, char *filter );
 
 int Buffer_perms( struct perm_file *perms, char *file, char *buffer );
@@ -128,5 +131,7 @@ void Init_perms_check( void );
 void Free_perms( struct perm_file *perms );
 int Perms_check( struct perm_file *perms, struct perm_check *check,
 	struct control_file *cf );
+int Check_for_rg_group( char *user );
+int Match_ipaddr_value( char *str, struct host_information *host );
 
 #endif

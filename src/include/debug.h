@@ -10,7 +10,7 @@
  * PURPOSE: define parsing and other information for debug option
  *  handling.
  *
- * $Id: debug.h,v 3.3 1997/01/29 03:04:39 papowell Exp $
+ * $Id: debug.h,v 3.4 1997/10/04 16:14:09 papowell Exp $
  **************************************************************************/
 
 /****************************************
@@ -32,12 +32,6 @@
  */
 
 #ifdef NODEBUG
-
-#if 0
-#define DEBUGC(VAL,FLAG)      if( 0 ) logDebug
-#define DEBUGV(VAL,VAR)       if( 0 ) logDebug
-#define DEBUGFC(FLAG)         if( 0 )
-#endif
 
 #define DEBUGFSET(FLAG)       ( 0 )
 #define DEBUGF(FLAG)          if( 0 ) logDebug
@@ -137,6 +131,16 @@ EXTERN int DbgAuth;	/* debug authenticated transfer */
 #define DAUTH4     ((0x1<<DAUTHSHIFT))
 #define DBAUTH4    ((0x1<<DAUTHSHIFT))
 
+#define DMEMSHIFT 20
+#define DMEMMASK  ((0xF<<DMEMSHIFT))
+#define DMEM1     ((0xF<<DMEMSHIFT))
+#define DBMEM1    ((0x8<<DMEMSHIFT))
+#define DMEM2     ((0x7<<DMEMSHIFT))
+#define DBMEM2    ((0x4<<DMEMSHIFT))
+#define DMEM3     ((0x3<<DMEMSHIFT))
+#define DBMEM3    ((0x2<<DMEMSHIFT))
+#define DMEM4     ((0x1<<DMEMSHIFT))
+#define DBMEM4    ((0x1<<DMEMSHIFT))
 
 EXTERN int DbgTest;			/* Flags set to test various options */
 EXTERN int DbgJob;	/* force job number */

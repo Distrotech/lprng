@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: timeout.c,v 3.3 1997/03/04 21:18:29 papowell Exp papowell $";
+"$Id: timeout.c,v 3.5 1997/09/18 19:46:07 papowell Exp $";
 
 #include "lp.h"
 #include "timeout.h"
@@ -45,7 +45,7 @@ static plp_signal_t timeout_alarm (int sig)
 	}
 	Alarm_timed_out = 1;
 	signal( SIGALRM, SIG_IGN );
-#if defined(HAVE_SIGSETJMP)
+#if defined(HAVE_SIGLONGJMP)
 	siglongjmp(Timeout_env,1);
 #else
 	longjmp(Timeout_env,1);

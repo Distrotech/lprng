@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -219,7 +219,7 @@ certainly will get a duplicate.
 */
 
 static char *const _id =
-"$Id: lpr.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpr.c,v 3.19 1998/01/08 09:51:06 papowell Exp $";
 
 #include "lp.h"
 #include "dump.h"
@@ -230,9 +230,6 @@ static char *const _id =
 #include "setuid.h"
 #include "printcap.h"
 /**** ENDINCLUDE ****/
-
-char LPR_optstr[]    /* LPR options */
- = "1:2:3:4:#:AC:D:F:J:K:NP:QR:T:U:VZ:bcdfghi:lkm:nprstvw:" ;
 
 /***************************************************************************
  * main()
@@ -264,17 +261,13 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 	Errorcode = 1;
 	Interactive = 1;
-	Initialize();
+	Initialize(argv);
 
 	/* set signal handlers */
-	(void) plp_signal (SIGHUP, cleanup);
-	(void) plp_signal (SIGINT, cleanup);
-	(void) plp_signal (SIGQUIT, cleanup);
-	(void) plp_signal (SIGTERM, cleanup);
-
-
-	/* scan the argument list for a 'Debug' value */
-	Get_debug_parm( argc, argv, LPR_optstr, debug_vars );
+	(void) plp_signal (SIGHUP, cleanup_HUP);
+	(void) plp_signal (SIGINT, cleanup_INT);
+	(void) plp_signal (SIGQUIT, cleanup_QUIT);
+	(void) plp_signal (SIGTERM, cleanup_TERM);
 
 	Setup_configuration();
 
@@ -288,6 +281,10 @@ int main(int argc, char *argv[], char *envp[])
 
 	if(DEBUGL4 ) dump_parms("LPR Vars after checking parms",Lpr_parms);
 
+	if( Check_for_rg_group( Logname ) ){
+		fprintf( stderr, "cannot use printer - not in privileged group\n" );
+		cleanup(0);
+	}
 	/*
 	 * Fix the rest of the control File
 	 */
@@ -301,12 +298,21 @@ int main(int argc, char *argv[], char *envp[])
 
 	Init_path( &dpath, (char *)0 );
 
-	Send_job( RemotePrinter?RemotePrinter:Printer, RemoteHost, Cfp_static,
-		&dpath, 1, Connect_timeout,
-		Connect_interval, Send_timeout, printcap_entry );
+	if( RemotePrinter == 0 || RemotePrinter[0] == 0 ) RemotePrinter = Printer;
+	if( Remote_support
+		&& strchr( Remote_support, 'r' ) == 0
+		&& strchr( Remote_support, 'R' ) == 0 ){
+		Errorcode = 1;
+		Warnmsg( _("no remote support for %s@%s"), RemotePrinter,RemoteHost );
+	} else {
+		Errorcode =
+		Send_job( RemotePrinter?RemotePrinter:Printer, RemoteHost, Cfp_static,
+		&dpath, Connect_timeout, Connect_interval, Max_connect_interval,
+		Send_job_rw_timeout, printcap_entry );
+	}
 
 	/* the dreaded -r (remove files) option */
-	if( Removefiles ){
+	if( Removefiles && !Errorcode ){
 		int i;
 
 		/* eliminate any possible game playing */
@@ -319,7 +325,6 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		}
 	}
-	Errorcode = 0;
 	cleanup(0);
 	return(0);
 }

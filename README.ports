@@ -1,23 +1,57 @@
-Updated Fri Jan 17 13:42:47 PST 1997
+The following is a list of the systems that LPRng has been ported to.
+In addition,  there are a large number of others that it works on,
+but have not been reported.  See the README.install, and DOC/Install.txt
+documents for horribly detailed instructions on how to find out WHAT is not
+working on a system if you simply cannot run 'configure' and then compile
+and install the system.
+
 Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
-     Solaris/ SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4, 2.5, 2.5.1
-BSDI: BSDI 2.0.0, 2.0.1, 2.1.0
+     Solaris/SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4
+     Solaris 2.5, 2.5.1, 2.6
+BSDI (BSD/OS): BSDI 2.0.0, 2.0.1, 2.1.0, 3.0, 3.1
 HPUX: 8.2, 9.4, 10.0
+	Note: with HP's C compiler, please try:
+      configure CFLAGS=-Ae
+    or
+      configure CFLAGS=-Aa
+    for ANSI compatibilty.
+
 SGI:  IRIX5, IRIX6
-Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997)
+Linux:  Slackware 1.2.13, RedHat 2.0 (Jan 1997),
 DEC:     ULTRIX, DEC Alpha
 AIX:     1.06
 FreeBSD: 2.0.5, 2.1.5
+AIX:  See the README.aix for detailed instructions
 
+POSIX Compatible Systems:
+   If your system is POSIX compatible,  then there should
+   be few,  if any,  problems.   Warnings and error messages
+   about conflicting pointer types are usually the result
+   of conflicts between LPRng and system default implementations
+   of some functions.  Check these carefully.
 
 Note:
-  Some systems do not have prototypes for all system functions.  See the
-  src/include/portable.h file for help - you can enable a set of default
-  prototypes.
+  Some systems do not have prototypes for all system functions used
+  by LPRng.  See the src/include/portable.h file for help - you
+  can enable a set of default prototypes.
 
-Note: some systems appear to have conflicts in definitions  in different
-files.  This is a SYSTEM fault, not LPRng's.  Effort has been made to
-detect these systems and to not include conflicting files.  To make life
-worse,  these conflicts may appear in one version and get fixed in the
-next.  See the #if statements in various files, i.e. - stty.c is a good
-example of insanity.
+Note:
+Some systems appear to have conflicts in function definitions in
+different include files.  This is the target SYSTEMS fault,
+not LPRng's.
+
+Great effort has been made to accommodate these systems and to not
+include conflicting files by using the "configure" facility.  To
+make life worse,  these conflicts may appear in one version and
+get fixed in the next. This has led to the use of "configure" and
+the need to detect not only the operating system, but also the
+version of various libraries and functions.  See the #if statements
+in various files, i.e. - stty.c is a good example of insanity.
+
+If you have problems,  please contact me and I will see what can be done.
+
+Patrick Powell                 Astart Technologies,
+papowell@astart.com            9475 Chesapeake Drive, Suite D,
+Network and System             San Diego, CA 92123
+  Consulting                   619-874-6543 FAX 619-279-8424 
+LPRng - Print Spooler (http://www.astart.com)

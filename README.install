@@ -1,20 +1,8 @@
- ***************************************************************************
- * LPRng - An Extended Print Spooler System
- *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
- *     papowell@sdsu.edu
- * See LICENSE for conditions of use.
- *
- ***************************************************************************
- * MODULE: README
- * PURPOSE: Overview of Software
- * $Id: README.install,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $
- **************************************************************************/
+               LPRng Installation 
+          Patrick Powell <papowell@astart.com>
+ * $Id: README.install,v 3.9 1997/12/31 19:30:10 papowell Exp $ *
 
-Patrick Powell <papowell@sdsu.edu>
-  Sat Feb 24 07:05:52 PST 1996
-  Sun Jan 19 06:32:18 PST 1997
- Thu Mar 13 15:19:33 PST 1997
+CAVEATS and WARNINGS:
 
 The LPRng software requires an ANSI C compiler and the
 GNU Make software from the Free Software Foundation,
@@ -31,436 +19,103 @@ If you are using the BSD Make,  you will need to use make -f Makefile.bsd
 or rename the Makefile.bsd files as Makefile and edit them, replacing
 the lines containing 'make -f Makefile.bsd' with just 'make'.
 
-The LPRng software distribution has the following structure:
-following files,  listed here
- README.*     - various README files
- ABOUT-NLS.LPRng - description of the GNU internationalization
- INFORMATION  - a short (very short) overview of LPRng
- INSTALL      - generic installation information
- man/*        - man files for the major components.  I recommend
-                reading lpd.8, printcap.5, and lpd.conf.5
- DOC/*        - text and source files of more extended docmentation.
-    Install.txt  - extremely detailed installation and testing instructions
-    Using_stty   - how to use the 'ty' printcap field
- CHANGES      - change log (major changes only)
- TESTSUPPORT  - a mini lpr setup
- UTILS/*      - set of utilities used during developement and for management
- LP_SIMULATION - support for SVR4 lp and lpstat
+THE EXPRESS INSTALLATION INSTRUCTIONS
 
-I recommend the following steps, each of which is detailed below.
+To compile and install LPRng,  you can use the following commands.
 
-1. Generate a test version of the LPRng software
-2. Install a test version, (TESTSUPPORT) and do portability testing
-   if your system is not listed in the README.ports file.
-3. Try the exercises outlined in the DOC/Tutorial documents.
-   You should also read the DOC/Intro documents as well.
-4. Check out the filters for whatever devices you have,  and see if
-    they require work.  Use the test version of the software to do this.
-   If you do not have a filter for your printer, then check out the various
-    ones in the FILTERS_LPRng distribution.
-5. Install the default database files.
-6. Generate a regular (non-test) version of LPRng software
-7. Install the default database files,  and edit them appropriately
-    for your site.  You should check the /etc/lpd.conf and /etc/lpd.perms
-    files.
-8. Run the checkpc command to make sure that ownership and permissions
-   are of files are correct.
-9. Install the LPRng software as the working version
-10. Update startup scripts (/etc/rc.local)
-11. Install periodic cleanup commands (crontab)
-
-For adventurous and/or experienced users, you can compile and install the
-  target version using the following commands.  This is NOT the recommended
-  method,  but will get things installed as quickly as possible.
-
-    configure;
-      #if you want internationalization,
-      #  after getting the gettext facility, do:
-      # configure --enable-nls 
-    make;
-      (or if you are using BSD make, make -f Makefile.bsd)
-    su   { you must do the following commands as root }
+GNU Make:
+    ./configure;
+      #if you want internationalization, do:
+      # ./configure --enable-nls 
+    make clean all;
+    su   # you must do the following commands as root
     make install
-      (or if you are using BSD make, make -f Makefile.bsd install)
-    if [ ! -f /etc/lpd.perms ]; make default;
-      (or if you are using BSD make, make -f Makefile.bsd default)
-    checkpc -f
+    # if  you have not installed LPRng before,
+    # install default lpd.perms and lpd.conf file in /etc
+    if [ ! -f /etc/lpd.perms ]; then make default; fi;
+    # update permissions,  create files needed for LPRng, check
+    # /etc/printcap file for problems. Do as root:
+    ./src/checkpc -f
+
+BSD Make:
+    ./configure;
+      #if you want internationalization, do:
+      # ./configure --enable-nls 
+    make -f Makefile.bsd clean all;
+    su   # you must do the following commands as root
+    make -f Makefile.bsd install
+    # if  you have not installed LPRng before,
+    # install default lpd.perms and lpd.conf file in /etc
+    if [ ! -f /etc/lpd.perms ]; then make default; fi;
+    # update permissions,  create files needed for LPRng, check
+    # /etc/printcap file for problems. Do as root:
+    ./src/checkpc -f
+
+If you do not want to have the LPRng executables installed SUID root
+(which could open some security loopholes),  then edit the src/Makefile
+and comment out the indicated line:
+
+	# comment out the next line to have LPRng installed non-setuid
+	PERMS=$(SUID_ROOT_PERMS)
+
+To run LPRng after installation,  you can do the following:
+
+    # kill off the old server
     kill `ps -aux |grep lpd | awk '{print $2}'`
+	# you should remove or rename the existing lpd binaries
     mv /usr/lib/lpd /usr/lib/lpd.old
     ln -s /usr/local/bin/lpd /usr/lib/lpd
-    lpd
-    lpq
-
-    If you are running on Solaris, see the README.solaris for
-        further instructions.
-      
-GENERATION.
-
-See the DOC/Install.txt for extremely detailed instructions.
-LPRng requires ANSI C compiler.
-
-configure           ; run the configure script
-make TESTVERSION=YES
-   OR cd src; make TESTVERSION=YES
-
-You have now built the software.  Note that this is a TEST version,
-and is compiled with the GETENV option enabled.  You can modify
-the Makefile to set the -DGETENV compile flag during test generation.
-
-PORTABILITY TESTING and TUTORIAL VERSION
-
-The TESTSUPPORT directory contains a 'mini-LPD' system that
-is installed in the /tmp directory.  It also has a set of
-dummy devices and filters.  These allow you to play with the
-LPRng functionality without actually installing the software.
-
-1. compile the TESTVERSION of the LPRng software.
-You may want to edit the src/Makefile and enable the
-TESTVERSION flag during testing.  The following commands are used.
-
-    configure
-    make TESTVERSION=YES
-    cd ../TESTSUPPORT
-
-  CSH:
-    setenv HOST {fully qualified domain name};
-    setenv USER `whoami`
-  Bourne Shell:
-    HOST={fully qualified domain name}; export HOST;
-    USER='whoami'; export USER
-
-    make
-
-This will make a /tmp/LPD directory and install the various utilities
-in it.  The /tmp/LPD must be put in the START of your $PATH, and
-the LPD_CONF environment variable set, and remove your PRINTER
-environment variable.
-
-For testing, set the LPD_CONF environment variable to
-  CSH:
-    setenv LPD_CONF /tmp/LPD/lpd_conf
-    set path=( /tmp/LPD $path )
-    setenv PRINTER
-  Bourne Shell:
-    LPD_CONF=/tmp/LPD/lpd_conf.$HOST; export LPD_CONF
-    PATH=/tmp/LPD:$PATH; export PATH
-    PRINTER=; export PRINTER
-
-PORTABILITY TESTS
-
-  If your system is not listed in the README.ports file,  you should run
-the portability tests.  Make sure that all the tests pass;
-if they do not,  inform the lprng@iona.ie mail list and help will be
-provided.  The tests exercise some basic file locking and SETUID
-functions of the LPRng software.
-
-For the portablility tests you need a serial port on your system,
-and it must be openable by the user or root.
-
-1. Basic functional test.  As root or as a user able to open the serial
-    device, do:
-
-  /tmp/LPD/checkpc -T {serial device}
-
-  example:
-    /tmp/LPD/checkpc -T /dev/ttya
-
-  This test will attempt to exercise some basic LPRng functionality.
-  Some of the tests are essential,  and must pass. Some exercise
-  diagnostic functions and are not essential.
-
-2. Setuid test.  This checks to see if the setuid functions
-work.  Set checkpc to setuid ROOT then repeat the above test.
-Remove the setuid version of checkpc after testing.  You may want
-to copy the /tmp/LPD/checkpc file to another directory to prevent
-users from trying to exploit any security holes.
-
-    su      (Root User)
-    chown root /tmp/LPD/checkpc
-    chmod 04111 /tmp/LPD/checkpc
-    exit    (return to normal user status)
-    /tmp/LPD/checkpc -T /dev/ttya
-    su      (Root User)
-    chmod 555 /tmp/LPD/checkpc 
-    chown {user} /tmp/LPD/checkpc 
-    exit    (return to normal user status)
-   
-BASIC QUICK FUNCTIONAL TESTS USING TESTSUPPORT VERSION
-
-After having created the TESTSUPPORT version, and
-set your LPD_CONF environment variable and path as instructed above,
-you can run some basic functionality tests.  It is assumed that the
-user will have a multiwindow system or be able to log onto the
-system on two different terminals.  Note that you can do (should do!)
-these tests as a regular user.
-
-1. Checkpc (check printcap) demonstration
-    The checkpc program will read the printcap information on a
-    server and attempt to create and/or repair various files needed
-    for correct operation.  For the purposes of the functional test,
-    several errors and problems have been deliberately left
-    in the TESTSUPPORT version spool directories,  to show how they
-    are reported.  To see the format of information,  run the following
-    command.  Later we will use the -f (fixup) option:
-
-    checkpc
-
-2. Start server and test functionality
-    (Window 1)
-    lpd -F -D2
-
-    This will cause the server to start up and read the various
-    configuration files.  The -F (foreground) causes the server
-    to stay in the foreground,  and it can be killed using the ^C
-    (Control-C) key.  The server will read the various configuration
-    and information files,  and then wait for a request from the client
-    programs.
-
-3. Test server response
-    (Window 2)
-    lpc status
-
-    This will connect to the server and have request a status display.
-    If this does not work,  try
-
-    lpc -D5,remote=5 status
-
-    This will set the debugging level to 5,  and the remote debugging
-    level to 5.  You will get a trace of the activities of the lpc
-    program,  and should be able to determine the failure cause.
-    These flags can be used with all client programs for debugging.
-    -D1 is the lowest (simplest) debugging level; -D10 will dump
-    enormous amounts of information.
-
-4. Test lpq status display
-    (Window 2)
-    lpq
-
-    This will display the status for the default printer.
-
-    (Window 2)
-    lpq -a
-
-    This will display the status for all printers.
-    
-    (Window 2)
-    lpq -t2 -c
-
-    This does a continual status display for the selected printer.
-
-5.  Test lpr job submission
-
-    (Window 2)
-    echo hi | lpr
-    lpq -t2 -c
-    
-    This will test job submission.  You should see the status of the
-    job changing as it is printed.
-
-6.  Test CHECKPC fixup functionality
-
-    The checkpc program will check permissions and repair various problems
-    it detects in spool directories.  The -f (fixup) option is very
-    useful.  Try:
-
-    checkpc -f
-
-    This will fix up permissions,  and create various control files.
-    As spooling operations continue,  various junk files will accumulate.
-    The command
-
-    checkpc -A 1s -r
-
-    will remove junk files older than 1 second, effectively purging the
-    spool queues of junk.
-     
-TESTING CONNECTIONS TO OTHER LPD SPOOLERS
-
-The LPRng clients can connect and operate with other UNIX BSD based
-print spoolers.  The following tests will exercise this
-capability.
-
-1. Test user level connection
-    Assume that you have a remote system (host) with printer p1
-    on it,  and it supports BSD based print spooling.  Try the following:
-
-    (Window 2)
-    lpq -Pp1@host
-
-Remember that the SUN and other servers expect a connection from
-a reserved port,  so you may get a 'malformed address' error if
-this is not the case.  If you get such a message, try:
-
-    (Window 2)
-    su     (root user)
-    lpq -Pp1@host
-
-If you want to interact directly with these spoolers,  you will have
-to install the lpr, lpq and lprm programs SUID root.
-
-FILTER TESTING
-
-The TESTSUPPORT software can be (and should be!) used for testing
-printer filters.  A filter is a support program that takes
-standard text or other files and sends them to a printer.
-The filter usually takes care of setting up the printer correctly,
-putting in appropriate control sequences,  and other critical
-functions.
-
-If your printer is on a parallel port, and you only want to dump files
-to the printer, with no other processing or intervention,  then the
-following printcap can be used:
-
-# RAW Printer - just dump files
-# Note: only handles the f and l (binary) formats
-ps|lp
-    :rw:sh:
-    :lp=/dev/lp
-    :sd=/usr/spool/lpd/ps
-    # accounting, log, and device status files
-    :fx=flp:
-    :af=acct:lf=log:ps=status
-    # filters
-    :if=/bin/cat
-    :of=/bin/cat
-    :vf=/bin/cat
-
-The :sd: field is the location of a spool directory;  the :lp:  is the
-printing device.  The :sy: fields are used to set the serial line
-characteristics.  The :af:, :lf:, and :ps: fields are the names of the
-account, log, and device status files, respectively.  You can comment
-these out of you do not want them.  The :fx: field specifies the
-formats recognized by the printer - you will need a corresponding
-filter for each format.  The 'l' format is a binary format, and is
-processed by the same filter as the 'f' or ordinary format.  The 'p'
-format is first processed by the 'pr' program and then treated as an
-'f' format job.  The 'v' format is used by many systems to support PC
-printing.  Jobs submitted by a PC spooling software usually require
-special handling as they do not use the UNIX \n line termination.
-
-A typical printcap entry for a HP printer attached by a serial line would be:
-
-# HP Printer on Serial Port
-ps|lp
-    :rw:sh:
-    :lp=/dev/ttyb
-    :sd=/usr/spool/lpd/ps
-    :sy=9600 -echo -crmod -raw -oddp -evenp pass8 cbreak ixon
-    # accounting, log, and device status files
-    :af=acct:lf=log:ps=status
-    :fx=flpv
-    :if=/usr/local/lib/CTI-Print/bin/ifhp
-    :of=/usr/local/lib/CTI-Print/bin/ofhp
-    :vf=/usr/local/lib/CTI-Print/bin/ifhp -c
-
-
-The CTI-Print filters shown above support HP printers, and will
-insert command strings and Printer Job Language setup.
-If the printer is attached by a serial line,  then no status
-can be returned,  and the -Tstatus=off flag should be specified:
-
-# HP Printer on Parallel Port
-ps|lp
-    :rw:sh:
-    :lp=/dev/lp
-    :sd=/usr/spool/lpd/ps
-    # accounting, log, and device status files
-    :af=acct:lf=log:ps=status
-    :fx=flpv
-    :if=/usr/local/lib/CTI-Print/bin/ifhp -Tstatus=off
-    :of=/usr/local/lib/CTI-Print/bin/ofhp -Tstatus=off
-    :vf=/usr/local/lib/CTI-Print/bin/ifhp -c -Tstatus=off
-
-
-If you have an existing printcap file, be brave and try it (unmodified)
-with LPRng.  Older LPD system specified serial line flags using
-numerical values; see DOC/Using_stty for a useful program for decoding
-these flag.  If you are desperate, read /usr/include/tty.h and try to
-decode them!
-
-INSTALLATION
-
-LPD Configuration File - /etc/lpd.conf
-
-The /etc/lpd.conf file contains a rather large number of configuration
-variables that can be used to set up special operations for your
-particular site.  A commonly acceptible set of defaults has been
-hard coded into the executables;  see the src/common/defaults.c file
-for these.  A default version of this file is provided with the distribution
-and can be installed using 'make default'.
-
-LPD Permissions File - /etc/lpd.perm
-
-The /etc/lpd.perm file controls access to the functions of the LPRng
-server.  The default lpd.perm file sets up the following defaults:
-   LPR:  all users on all systems allowed to print
-   LPRM: the user that submitted a job can remove it
-   LPQ:  all users allowed to request status
-   LPC:  all users allowed to use status, printcap, and lpd command
-         only root on the server host can use other commands
-
-Before starting an installation,  I recommend copying the existing
-printcap, configuration, and permissions files.  The default
-installation directory for executables is /usr/local/bin. Rename or
-delete the existing files in /usr/ucb/ or whatever.  Note that lpd gets
-installed in /usr/local/bin by default.  You WILL need to modify
-your /etc/rc files to have the new LPD server started at boot time,
-or you can overwrite the existing one.
-
-
-Installation Summary:
-
-1. Generate the working version of the software:
-   Edit the src/Makefile and make sure that TESTVERSION
-   has been commented out:
-   # TESTVERSION = -DGETENV
-
-2. Remove the default.o object file, recompile, and install
-    Note: if you want to have these installed SUID root, to allow
-    easy interaction with non LPRng systems,  do the installation as
-    root:
-
-   rm src/default.o     (forces remake of defaults)
-   make
-
-   { optional: if you want SUID versions installed - su }
-   make install
-
-3. For first time users, install the default lpd.conf and lpd.perm files:
-
-   su
-   make default
-
-4. Check the format of the printcap files and spool queue files:
-   checkpc -f
-
-5. As root,  kill off the current LPD daemon and start the LPRng version
-    su
-    kill `ps -aux |grep lpd | awk '{print $2}'`
-    /usr/local/bin/lpd
-
-6. As a user,  test the lpq, lpr, lpc functionality.
-
-6. Modify /etc/rc files to refer to the /usr/local/bin/lpd executable,
-    or link the old lpd executable to the new
-
-    mv /usr/lib/lpd /usr/lib/lpd.old
-    ln -s /usr/local/bin/lpd /usr/lib/lpd
-
-
-MAINTENANCE AND PERIODIC CLEANUP
-
-The LPRng system creates log and accounting files that can grow quite
-long.  It is recommended that these be periodically truncated.
-The checkpc program can be used to truncate the log (:lf:), accounting (:af:),
-and printer status (:ps:) files.  The command
-  checkpc -t len
-will truncate these files.  This command can be put in the ROOT crontab.
-
-For example, the following entry will run once a day at 6:00 am
-and truncate the log, accounting, and status files to 10K bytes.
-
-15 5 * * * /usr/local/bin/checkpc -t 10K
-
-Patrick Powell
-Fri Mar  1 08:32:57 PST 1996
+	# you might want to track down the old lpr, lpq, lprm binaries
+	find /usr -type file -name lp\* \; -print >/tmp/candidates
+	find /sbin -type file -name lp\* \; -print >>/tmp/candidates
+    # Examine the /tmp/candidates file, and remove or rename the
+    # non-LPRng versions of the programs
+	# remove or rename the candidate files
+    lpd;    # start up LPD
+    lpq;    # test it with LPQ
+
+If you are running on Solaris, see the Solaris section in the
+LPRng-HOWTO for further instructions on integration with the LP subsystem.
+
+Don't forget to modify the /etc/rc.local or other system startup files
+to start LPRng's lpd.  For UNIX SystemV or Linux like systems,  here is
+a small sample file that will start up and shut down the lpd server.
+
+#!/bin/sh
+case "$1" in
+  start)
+        # Start daemons.
+        /usr/bin/echo "Starting lpd: \c"; /usr/local/bin/lpd; /usr/bin/echo;
+        ;;
+  stop)
+        # Stop daemons.
+        /usr/bin/echo "Shutting down lpd: \c"
+        server=`/usr/local/bin/lpc -Pany@localhost lpd \
+        | awk '{for(i=1;i<=NF;++i){v=$i+0;if(v>1){ print v;exit;}}}'`
+        if [ -n "$server" ]; then
+            /usr/bin/echo " server pid $server";
+            kill $server;
+        else
+            /usr/bin/echo " no server active";
+        fi;
+        ;;
+  *)
+        echo "Usage: lpd {start|stop}"
+        exit 1
+        ;;
+esac
+
+
+ 
+PRINTCAP FILES:
+
+You will probably want to update your printcap files.  See
+the LPRng-HOWTO for information on printcap files.
+If you want to use existing or non-LPRng compatible filters,
+try setting the :bkf:  (Berkeley LPD conformant filter) in the
+printcap entry:
+
+Example:
+
+lp:bkf:\
+  :if=/usr/libexec/psfilter

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lockfile.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+"$Id: lockfile.c,v 3.5 1997/12/16 15:06:29 papowell Exp $";
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.
@@ -86,48 +86,31 @@ int devlock_lockf( int fd, int nowait);
 #endif
 
 
-int Lockf( char *filename, int *lock, int *create, struct stat *statb )
+int Lockf( char *filename, struct stat *statb )
 {
     int fd;			/* fd for file descriptor */
-	int status = -1;
 	int err = errno;
 	
     /*
      * Open the lock file for RW
      */
-	if( lock ) *lock = 0;
-	if( create ) *create = 0;
-    if( (fd = Checkwrite(filename, statb, O_RDWR, 0, 0 )) < 0) {
+	if( (fd = Checkwrite(filename, statb, O_RDWR, 1, 0 )) < 0) {
 		err = errno;
-		DEBUG3("Lockf: '%s' does not exist", filename);
-    } else {
-		status = fd;
-	}
-	if( fd < 0 && create ){
-		*create = 0;
-		if( (fd = Checkwrite(filename, statb, O_RDWR, 1, 0 )) < 0) {
-			err = errno;
-			logerr(LOG_DEBUG, "Lockf: lock '%s' open failed", filename);
-			status = -1;
-		} else {
-			*create = 1;
-			status = fd;
-		}
-	}
-	if( status >= 0 ){
-		status = Lock_fd( fd, filename, lock, statb );
+		DEBUG3( "Lockf: lock '%s' open failed, %s",
+			filename, Errormsg(err) );
+	} else if( Lock_fd( fd, filename, statb ) < 0 ){
 		err = errno;
-	}
-	if( status < 0 && fd >= 0 ){
+		DEBUG3 ("Lockf: lockfd '%s' failed, %s",
+			filename, Errormsg(err) );
 		close( fd );
+		fd = -1;
 	}
-    DEBUG3 ("Lockf: file '%s', status %d, lock '%s'", filename, status,
-		lock?(*lock?"YES":"NO"):"NOT REQUESTED");
+    DEBUG3 ("Lockf: file '%s', fd %d", filename, fd );
 	errno = err;
-    return( status );
+    return( fd );
 }
 
-int Lock_fd( int fd, char *filename, int *lock, struct stat *statb )
+int Lock_fd( int fd, char *filename, struct stat *statb )
 {
 	struct stat lstatb;
 	int status = fd;
@@ -156,17 +139,6 @@ int Lock_fd( int fd, char *filename, int *lock, struct stat *statb )
 		status = -1;
 	}
 
-	/* check for a security loophole: hard link to the file */
-
-	if( status >= 0 && statb->st_nlink > 1 ){
-		/* AHA!  Somebody else has a link to this file */
-		/* ummmm... note that some &*()*& NFS systems report 0 links... */
-		log( LOG_ERR, "Lockf: link count of '%s' = %d, possible security problem",
-			filename, statb->st_nlink );
-		status = -1;
-	}
-
-
 	/* check for a security loophole: wrong permissions */
 
 	if( status >= 0 && (077777 & (statb->st_mode ^ Spool_file_perms)) ){
@@ -177,11 +149,10 @@ int Lock_fd( int fd, char *filename, int *lock, struct stat *statb )
 
 	/* try locking the file */
 	if( status >= 0 ){
-		*lock = Do_lock( fd, filename, 0 );
+		status = Do_lock( fd, filename, 1 );
 	}
 
-    DEBUG3 ("Lock_fd: file '%s', status %d, lock '%s'", filename, status,
-		lock?(*lock?"YES":"NO"):"NOT REQUESTED");
+    DEBUG3 ("Lock_fd: file '%s', status %d", filename, status );
     return( status );
 }
 
@@ -201,17 +172,17 @@ int Do_lock( int fd, const char *filename, int block )
 	DEBUG3("Do_lock: using fcntl");
 	code = devlock_fcntl( fd, block );
 #else
-#ifdef HAVE_LOCKF
+# ifdef HAVE_LOCKF
     /*
      * want to try F_TLOCK
      */
 	DEBUG3("Do_lock: using lockf");
 	code = devlock_lockf( fd, block );
-#else
+# else
     /* last resort -- doesn't work over NFS */
 	DEBUG3("Do_lock: using flock");
 	code = devlock_flock( fd, block );
-#endif  /* HAVE_LOCKF */
+# endif  /* HAVE_LOCKF */
 #endif  /* HAVE_FCNTL */
 
     DEBUG3 ("Do_lock: status %d", code);
@@ -248,15 +219,11 @@ int devlock_fcntl( int fd, int block)
 	status = fcntl( fd, how, &file_lock);
 	err = errno;
 	if( status < 0 ){
-		DEBUG0( "fcntl failed: %s", Errormsg( err ));
-		if( err == EACCES || err == EAGAIN ){
-			status = 0;
-		} else {
-			status = -1;
-		}
+		status = -1;
 	} else {
-		status = 1;
+		status = 0;
 	}
+	DEBUG3 ("devlock_fcntl: status %d", status );
 	errno = err;
 	return( status );
 }

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: decodestatus.c,v 3.5 1997/02/05 23:05:11 papowell Exp papowell $";
+"$Id: decodestatus.c,v 3.8 1998/01/08 09:51:09 papowell Exp $";
 #include "lp.h"
 #include "decodestatus.h"
 #include "errorcodes.h"
@@ -26,8 +26,14 @@ struct signame {
     char *str;
     int value;
 };
+
 #undef PAIR
-#define PAIR(X) { #X , X }
+#ifndef _UNPROTO_
+# define PAIR(X) { #X , X }
+#else
+# define __string(X) "X"
+# define PAIR(X) { __string(X) , X }
+#endif
 
 #if !defined(HAVE_SYS_SIGLIST)
 struct signame signals[] = {
@@ -185,7 +191,7 @@ const char *Decode_status (plp_status_t *status)
 		n = WEXITSTATUS(*status);
 		if( n > 0 && n < 32 ) n += JFAIL-1;
 		(void) plp_snprintf (msg, sizeof(msg),
-		"exited with status %d (%s)", WEXITSTATUS (*status),
+		"exit status %d (%s)", WEXITSTATUS(*status),
 				 Server_status(n) );
     } else if (WIFSTOPPED (*status)) {
 		(void) strcpy(msg, "stopped");

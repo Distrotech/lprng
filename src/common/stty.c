@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -26,7 +26,7 @@
  *
  **************************************************************************/
 static char *const _id =
-"$Id: stty.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+"$Id: stty.c,v 3.8 1998/01/12 20:29:25 papowell Exp $";
 
 #include "lp.h"
 #include "stty.h"
@@ -47,6 +47,10 @@ static char *const _id =
 
 #if USE_STTY == TERMIOS
 # include <termios.h>
+#endif
+
+#ifdef USE_TERMIOX
+# include <sys/termiox.h>
 #endif
 
 #if !defined(TIOCEXCL) && defined(HAVE_SYS_TTOLD_H) && !defined(IRIX)
@@ -230,8 +234,8 @@ void Do_stty( int fd )
 		ep = 0;
 	}
 	while( ep && *ep) {
-		for( ; *ep && isspace( *ep); ++ep);
-		for( arg = ep; *ep && !isspace( *ep ); ++ep);
+		for( ; *ep && (isspace(*ep) || *ep == ','); ++ep);
+		for( arg = ep; *ep && !(isspace(*ep) || *ep == ','); ++ep );
 		if( *ep ){
 			*ep++ = 0;
 		}
@@ -651,7 +655,15 @@ struct s_term_dat {
 	uint and_dat;
 };
 
+#undef FLAGS
+#ifndef _UNPROTO_
 #define FLAGS(X) { #X, X , 0 }, { "-" #X, 0, X }
+#else
+#define __string(X) "X"
+#define FLAGS(X) { __string(X), X , 0 }, { "-" __string(X), 0, X }
+#endif
+ 
+
 
 /* c_iflag bits */
 static struct s_term_dat c_i_dat[] =
@@ -851,6 +863,19 @@ static struct s_term_dat c_l_dat[] =
 	{ 0 ,0 ,0 }
 };
 
+#ifdef USE_TERMIOX
+/* termiox bits */
+static struct s_term_dat tx_x_dat[] =
+{
+	{"RTSXOFF", RTSXOFF, 0},
+	{"-RTSXOFF", 0, RTSXOFF},
+	{"CTSXON", CTSXON, 0},
+	{"-CTSXON", 0, CTSXON}
+};
+
+struct termiox tx_dat;
+#endif /* USE_TERMIOX */
+
 struct termios t_dat;
 
 static struct special {
@@ -866,12 +891,21 @@ static struct special {
 void Do_stty( int fd )
 {
 	int i;
+#ifdef USE_TERMIOX
+	int termiox_fail = 0;
+#endif
 	char buf[SMALLBUFFER], *bp, *ep, *arg;
 
 	DEBUG3("Do_stty: using TERMIOS, fd %d", fd );
 	if( tcgetattr( fd, &t_dat) < 0 ){
 		logerr_die( LOG_INFO, "cannot get tty parameters");
 	}
+#ifdef USE_TERMIOX
+	if( ioctl( fd, TCGETX, &tx_dat) < 0 ){
+		DEBUG0("stty: TCGETX failed");
+		termiox_fail = 1;
+	}
+#endif
 	DEBUG2("stty: before iflag 0x%x, oflag 0x%x, cflag 0x%x lflag 0x%x",
 			 t_dat.c_iflag, t_dat.c_oflag, t_dat.c_cflag, t_dat.c_lflag);
 	if( Baud_rate ){
@@ -913,8 +947,8 @@ void Do_stty( int fd )
 		ep = 0;
 	}
 	while( ep && *ep ){
-		for( ; *ep && isspace( *ep); ++ep);
-		for( arg = ep; *ep && !isspace( *ep); ++ep );
+		for( ; *ep && (isspace(*ep) || *ep == ','); ++ep);
+		for( arg = ep; *ep && !(isspace(*ep) || *ep == ','); ++ep );
 		if( *ep ){
 			*ep++ = 0;
 		}
@@ -987,6 +1021,16 @@ void Do_stty( int fd )
 			DEBUG3("stty: special %s %s", arg, bp);
 			continue;
 		}
+#ifdef USE_TERMIOX
+		for( i = 0; tx_x_dat[i].name && strcasecmp( tx_x_dat[i].name, arg); i++);
+		if( tx_x_dat[i].name ){
+			DEBUG3("stty: tx_xflag %s, ms 0x%x mc 0x%x",
+					 tx_x_dat[i].name, tx_x_dat[i].or_dat, tx_x_dat[i].and_dat);
+			tx_dat.x_hflag &= ~(tx_x_dat[i].and_dat);
+			tx_dat.x_hflag |= tx_x_dat[i].or_dat;
+			continue;
+		}
+#endif /* USE_TERMIOX */
 		fatal( LOG_INFO, "unknown mode: %s\n", arg);
 	}
 
@@ -1002,5 +1046,11 @@ void Do_stty( int fd )
 	if( tcsetattr( fd, TCSANOW, &t_dat) < 0 ){
 		logerr_die( LOG_NOTICE, "cannot set tty parameters");
 	}
+
+#ifdef USE_TERMIOX
+	if( termiox_fail == 0 && ioctl( fd, TCSETX, &tx_dat) < 0 ){
+		logerr_die( LOG_NOTICE, "cannot set tty parameters (termiox)");
+	}
+#endif
 }
 #endif

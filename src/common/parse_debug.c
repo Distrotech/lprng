@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -17,7 +17,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: parse_debug.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: parse_debug.c,v 3.7 1997/10/04 16:14:09 papowell Exp $";
 
 /*************************************************************
  * void Get_debug_parm(int argc, char *argv[], struct keywords *list)
@@ -65,6 +65,12 @@ struct keywords debug_vars[]		/* debugging variables */
     { "auth+2",FLAG_K,(void *)&DbgFlag,DBAUTH2, DAUTHMASK },
     { "auth+3",FLAG_K,(void *)&DbgFlag,DBAUTH3, DAUTHMASK },
     { "auth+4",FLAG_K,(void *)&DbgFlag,DBAUTH4, DAUTHMASK },
+/*    { "memory",FLAG_K,(void *)&DbgFlag,DMEMMASK, DMEMMASK }, */
+    { "memory",FLAG_K,(void *)&DbgFlag,DBMEM3, DMEMMASK },
+    { "memory+1",FLAG_K,(void *)&DbgFlag,DBMEM1, DMEMMASK },
+    { "memory+2",FLAG_K,(void *)&DbgFlag,DBMEM2, DMEMMASK },
+    { "memory+3",FLAG_K,(void *)&DbgFlag,DBMEM3, DMEMMASK },
+    { "memory+4",FLAG_K,(void *)&DbgFlag,DBMEM4, DMEMMASK },
 #endif
     { (char *)0 }
 };
@@ -197,6 +203,7 @@ void Parse_debug (char *dbgstr, struct keywords *list, int interactive )
 	"debug usage: -D [ num | key=num | key=str | flag | flag@ | flag+N ]*\n");
 		    fprintf (stderr, "  keys recognized:");
 		    for (i = 0; list[i].keyword; i++) {
+				if( strchr( list[i].keyword, '+' ) ) continue;
 				if( nooutput == 0 ){
 					if( i ){
 						fprintf( stderr, ", " );

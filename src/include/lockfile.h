@@ -8,15 +8,15 @@
  ***************************************************************************
  * MODULE: lockfile.h
  * PURPOSE: lockfile.c functions
- * $Id: lockfile.h,v 3.1 1996/12/28 21:40:29 papowell Exp $
+ * $Id: lockfile.h,v 3.2 1997/12/16 15:06:44 papowell Exp $
  **************************************************************************/
 
 #ifndef _LOCKFILE_H
 #define _LOCKFILE_H
 
 
-int Lockf (char *filename, int *lock, int *create, struct stat *statb );
-int Lock_fd( int fd, char *filename, int *lock, struct stat *statb );
+int Lockf( char *filename, struct stat *statb );
+int Lock_fd( int fd, char *filename, struct stat *statb );
 int Do_lock (int fd, const char *filename, int block );
 int LockDevice(int fd, char *devname);
 

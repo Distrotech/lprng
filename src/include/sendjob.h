@@ -8,10 +8,10 @@
  ***************************************************************************
  * MODULE: sendjob.h
  * PURPOSE: declare Send_job fucntions
- * $Id: sendjob.h,v 3.1 1996/12/28 21:40:34 papowell Exp $
+ * $Id: sendjob.h,v 3.4 1998/01/08 09:51:29 papowell Exp $
  **************************************************************************/
 
 int Send_job( char *printer, char *host, struct control_file *cf,
 	struct dpathname *dpath,
-	int max_try, int connect_timeout, int connect_interval,
+	int connect_timeout, int connect_interval, int max_connect_interval,
 	int transfer_timeout, struct printcap_entry *printcap_entry );

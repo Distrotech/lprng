@@ -1,0 +1,35 @@
+#!/bin/sh
+perl5 -e '
+$date = `date`;
+print "# lpd.conf generated from $ARGV[0] on $date";
+while ( ($m = <>) &&  !( $m =~ m/START/) ){
+	;
+}
+while ( ($m = <>) &&  !( $m =~ m/END/) ){
+	chomp($m);
+	if ( $m =~ /{/ ){
+		$m =~ s/},$//;
+		$m =~ s/",//;
+		$m =~ s/{//;
+		$m =~ s/_K,.*,/_K /;
+		$m =~ s/"//;
+		$m =~ s/\s+/ /g;
+		$m =~ s/^\s+//;
+		if( $m =~ /FLAG_K/ ){
+			$m =~ s/ FLAG_K 0/@/;
+			$m =~ s/ .*//;
+		} elsif ( $m =~ /"/ ){
+			$m =~ s/ .*_K "//;
+			$m =~ s/"//;
+		} else {
+			$m =~ s/ STRING_K 0/=/;
+			$m =~ s/ INTEGER_K 0/#0/;
+		}
+		print "# $m" . "\n";
+	} else {
+		$m =~ s:^\s*/\*\s*::;
+		$m =~ s:\*/::;
+		print "# Purpose: $m" . "\n";
+	}
+}
+' $1

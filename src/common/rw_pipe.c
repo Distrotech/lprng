@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE: create a set of read/write pipe descriptors
  **************************************************************************/
 
-static char *const _id = "$Id: rw_pipe.c,v 3.3 1997/01/19 14:34:56 papowell Exp $";
+static char *const _id = "$Id: rw_pipe.c,v 3.5 1997/09/18 19:46:04 papowell Exp $";
 
 #include "lp.h"
 #include "rw_pipe.h"
@@ -56,8 +56,8 @@ int rw_pipe( int fds[] )
 	memcpy( &sin.sin_addr, (void *)LocalHostIP.host_addr_list.list,
 		LocalHostIP.host_addrlength );
 
-	p1 = socket(LocalHostIP.host_addrtype, SOCK_DGRAM, 0);
-	p2 = socket(LocalHostIP.host_addrtype, SOCK_DGRAM, 0);
+	p1 = socket(sin.sin_family, SOCK_DGRAM, 0);
+	p2 = socket(sin.sin_family, SOCK_DGRAM, 0);
 	if( bind(p1, (struct sockaddr *)&sin, sizeof(sin)) < 0 ){
 		logerr( LOG_ERR, "rw_pipe: bind failed" );
 		return(-1);

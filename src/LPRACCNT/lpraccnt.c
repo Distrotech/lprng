@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpraccnt.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+"$Id: lpraccnt.c,v 3.3 1997/09/18 19:45:50 papowell Exp $";
 /*
  * Monitor for Accounting Information
  *  Opens a tcp socket and waits for data to be sent to it.

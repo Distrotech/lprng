@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *	 papowell@sdsu.edu
+ *	 papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: krb5_auth.c,v 1.6 1997/02/02 15:44:39 papowell Exp papowell $";
+"$Id: krb5_auth.c,v 1.8 1997/10/15 04:06:28 papowell Exp $";
 
 #include "lp.h"
 #include "krb5_auth.h"
@@ -189,7 +189,7 @@ int server_krb5_auth( char *keytabfile, char *service, int sock,
 			retval = 1;
 			goto done;
 		}
-		if( (pid = dofork()) < 0 ){
+		if( (pid = dofork(0)) < 0 ){
 			plp_snprintf( err, errlen, "dofork() failed - %s",
 				Errormsg(errno) );
 			retval = 1;
@@ -591,7 +591,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 			retval = 1;
 			goto done;
 		}
-		if( (pid = dofork()) < 0 ){
+		if( (pid = dofork(0)) < 0 ){
 			plp_snprintf( err, errlen, "dofork() failed - %s",
 				Errormsg(errno) );
 			retval = 1;

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: removejob.c,v 3.5 1997/02/25 04:50:25 papowell Exp $";
+"$Id: removejob.c,v 3.7 1997/12/16 15:06:32 papowell Exp $";
 
 #include "lp.h"
 #include "removejob.h"
@@ -61,7 +61,7 @@ int Remove_job( struct control_file *cfp )
 	if( cfp->hold_file[0] &&
 		stat( cfp->hold_file, &statb ) == 0 ){
 		cfp->hold_info.remove_time = time( (void *) 0 );
-		Set_job_control( cfp, (void *) 0, 0 );
+		Set_job_control( cfp, (void *) 0 );
 	}
 	/* remove all of the data files listed in the control file */
 
@@ -80,9 +80,9 @@ int Remove_job( struct control_file *cfp )
 	close(fd);
 
 	if( fail == 0 ){
-		setmessage( cfp, "TRACE", "%s@%s: job removed", Printer, FQDNHost );
+		setmessage( cfp, "TRACE", "%s@%s: job removed - Remove_job", Printer, FQDNHost );
 	} else {
-		setmessage( cfp, "TRACE", "%s@%s: job removal FAILED", Printer, FQDNHost );
+		setmessage( cfp, "TRACE", "%s@%s: job removal FAILED - Remove_job", Printer, FQDNHost );
 	}
 	return( fail );
 }

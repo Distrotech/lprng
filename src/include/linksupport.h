@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: linksupport.h
  * PURPOSE: linksupport.c functions
- * $Id: linksupport.h,v 3.2 1997/01/15 02:21:18 papowell Exp $
+ * $Id: linksupport.h,v 3.5 1998/01/08 09:51:25 papowell Exp $
  **************************************************************************/
 
 #ifndef _LINKSUPPORT_H
@@ -24,9 +24,9 @@ int Link_setreuse( int sock );
 int Link_getreuse( int sock );
 int Link_dest_port_num( void );
 int Link_listen(void);
-int Link_open(char *host, int retry, int timeout );
-int Link_open_type(char *host, int retry, int timeout,
-	int port, int connection_type );
+int Link_open(char *host, int timeout, int try_localhost );
+int Link_open_type(char *host, int timeout,
+	int port, int connection_type, int try_localhost );
 void Link_close( int *sock );
 int Link_ack( char *host, int *socket, int timeout, int sendc, int *ack );
 int Link_send ( char *host, int *socket, int timeout,
@@ -42,5 +42,7 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
       int fd, int *count, int *ack );
 const char *Link_err_str (int n);
 const char *Ack_err_str (int n);
+int Localhost_connection( void );
+void Set_linger( int sock, int n );
 
 #endif

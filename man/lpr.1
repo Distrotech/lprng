@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPR 1 \*(VE "LPRng"
 .ig
 Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
@@ -75,6 +75,9 @@ lpr \- off line print
 [
 .BI \-Z " zoptions"
 ]
+[
+.BI \-1,2,3,4 " font"
+]
 .ti +5n
 [
 .IR filename " \|.\|.\|."
@@ -121,7 +124,7 @@ Therer are other formats available,
 listed below.
 Not all formats may be available on all printers;
 see
-.IR printcap (5)
+.BR printcap (5)
 for details.
 Formats are single lower case letters;
 the following are the valid arguments for
@@ -147,42 +150,46 @@ with processing suppressed.
 .TP 5
 .B \-c
 data produced by
-.IR cifplot (l).
+.BR cifplot (l).
 .TP 5
 .B \-d
 output from
-.IR tex (l)
+.BR tex (l)
 (DVI format from Stanford).
 .TP 5
 .B \-g
 standard plot data as produced by the
-.IR plot (3X)
+.BR plot (3X)
 routines (see also
-.IR plot (1G)
+.BR plot (1G)
 for the filters used by the printer spooler).
 .TP 5
 .B \-n
 output from (device independent)
-.IR troff .
+.BR troff .
 .TP 5
 .B \-p
 First use
-.IR pr (1)
+.BR pr (1)
 to format the files,
 then print using 
 .I f
 format.
 .TP 5
 .B \-r
-text in which the first character of each line is interpreted as a
-standard FORTRAN carriage control character.
-The effect of this format used to be obtained with the
-.B \-f
+The DREADED
+.B "REMOVE AFTER PRINTING"
 option.
+Beware, for 
+.I lpr
+will delete the files after spooling them.
+Present by demand from users for compatibility with other Berkeley lpr
+implementation,
+but really should NOT be present.
 .TP 5
 .B \-t
 output from
-.IR troff (1)
+.BR troff (1)
 (originally cat phototypesetter commands,
 but now we assume the same as the
 .B n
@@ -206,7 +213,9 @@ defaults to the name of the first file in job or
 if input is from a pipe.
 .TP 5
 .B \-k
-When used as a filter, lpr normally creates a temporary file
+When used as a filter,
+.B lpr
+normally creates a temporary file
 for the input read from stdin before sending it to the remote
 printer.
 The
@@ -248,15 +257,16 @@ can be used to specify a billing code to be charged for the
 printing.
 .TP 5
 .B \-s
-This flag is included for compatibility with other versions of lpr.
+This flag is included for compatibility with other versions of
+.BR lpr .
 In these versions it will create a symbolic link to the files to be
 printed.  
-.I Lpr
+.B Lpr
 now sends files directly to the server and it is irrelevant.
 .TP 5
 .BI \-T "  title"
 Specify the title used by
-.IR pr (1);
+.BR pr (1);
 defaults to the file name.
 .TP 5
 \fB\-U\fP\ \fIusername\fP
@@ -289,7 +299,7 @@ for TROFF printing (Obsolete).
 .PP
 By default,
 if no filenames are specified
-.I lpr
+.B lpr
 will read stdin and print it.
 A filename of the form
 .I -
@@ -304,8 +314,10 @@ See the LPRng support documentation for details on its operation
 and support.
 .SH COMPATIBILITY 
 .PP
-The LPRng version of lpr
-attempts to be functionaly compatible with common implementations of lpr.
+The LPRng version of
+.B lpr
+attempts to be functionaly compatible with common implementations of
+.BR lpr .
 However,
 there are some commands and functionality that are deliberately missing.
 .IP "\fB\-s\fP\ Symbolic Links" 5
@@ -314,11 +326,6 @@ to the original data file
 rather than a copy of the data file was to be used when spooling jobs.
 This opens up a variety of security problems,
 as well as being ineffective when printing to a remote host.
-.IP "\fB\-r\fP\ Remove File" 5
-This option specified that data files were to be removed after
-the print job was completed.
-This opens up a variety of security problems,
-especially in a NFS based system.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -336,15 +343,15 @@ The following are a commonly used set of default values.
 /var/spool/printer*/log.printer	log file
 .fi
 .SH "SEE ALSO"
-lpd.conf(5),
-lpc(8),
-lpd(8),
-lpr(1),
-lpq(1),
-lprm(1),
-printcap(5),
-lpd.perms(5),
-pr(1).
+.BR lpd.conf (5),
+.BR lpc (8),
+.BR lpd (8),
+.BR lpr (1),
+.BR lpq (1),
+.BR lprm (1),
+.BR printcap (5),
+.BR lpd.perms (5),
+.BR pr (1).
 .SH DIAGNOSTICS
 .nf
 Most of the diagnostics are self explanatory.

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_getparms.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpr_getparms.c,v 3.9 1997/10/27 00:14:19 papowell Exp $";
 
 #include "lp.h"
 #include "getparms.h"
@@ -31,6 +31,11 @@ void usage(void);
 static char Zopts_val[LINEBUFFER];
 static char format_stat[2];
 
+char LPR_optstr[]    /* LPR options */
+ = "1:2:3:4:#:AC:D:F:J:K:NP:QR:T:U:VZ:bcdfghi:lkm:nprstvw:" ;
+char LP_optstr[]    /* LP options */
+ = 	"Acmprswd:D:f:H:n:o:P:q:S:t:T:y:";
+
 void Get_parms(int argc, char *argv[] )
 {
 	int option;
@@ -43,6 +48,7 @@ void Get_parms(int argc, char *argv[] )
 	}
 	/* check to see if we simulate (poorly) the LP options */
 	if( name && strcmp( name, "lp" ) == 0 ){
+		Get_debug_parm( argc, argv, LP_optstr, debug_vars );
 		LP_mode = 1;
 		while( (option = Getopt( argc, argv,
 			"Acmprswd:D:f:H:n:o:P:q:S:t:T:y:" )) != EOF )
@@ -111,7 +117,9 @@ void Get_parms(int argc, char *argv[] )
 			usage();
 		    break;
 		}
-	} else while( (option = Getopt (argc, argv, LPR_optstr )) != EOF ){
+	} else {
+		Get_debug_parm( argc, argv, LPR_optstr, debug_vars );
+		while( (option = Getopt (argc, argv, LPR_optstr )) != EOF )
 		switch( option ){
 		case '1':
 		    Check_str_dup( option, &Font1, Optarg, M_FONT);
@@ -127,7 +135,14 @@ void Get_parms(int argc, char *argv[] )
 			break;
 		case 'A':	Use_auth_flag = 1; break;	/* use authentication */
 		case 'C':
-		    Check_str_dup( option, &Classname, Optarg, M_CLASSNAME);
+  		    if ( Classname_length > M_CLASSNAME ) {
+		      log ( LOG_ERR,
+			    "Get_parms: Classname_length value too long, truncating to %d",
+			    M_CLASSNAME );
+		      Classname_length = M_CLASSNAME;
+		    }
+		    Check_str_dup( option, &Classname, Optarg,
+				   Classname_length);
 		    break;
 		case 'D': /* debug has already been done */
 			break;
@@ -252,7 +267,7 @@ void Get_parms(int argc, char *argv[] )
 	Files = &argv[Optind];
 	if( Verbose > 0 ){
 		fprintf( stdout, _("LPRng Version %s Copyright 1988-1997\n"),PATCHLEVEL );
-		fprintf( stdout, _("  Patrick Powell, San Diego, <papowell@sdsu.edu>\n") );
+		fprintf( stdout, _("  Patrick Powell, San Diego, <papowell@astart.com>\n") );
 		fprintf( stdout, _("  Use -VV to see Copyright details\n"));
 	}
 	if( Verbose > 1 ) Printlist( Copyright, stdout );
@@ -321,9 +336,9 @@ usage summary: %s [ -c ] [ -m ] [ -p ] [ -s ] [ -w ] [ -d dest ]\n\
 void usage(void)
 {
 	if(LP_mode ){
-		fputs ( _(LP_msg), stderr );
+		fprintf( stderr, _(LP_msg), Name );
 	} else {
-		fputs ( _(LPR_msg), stderr );
+		fprintf( stderr, _(LPR_msg), Name );
 	}
 	exit(1);
 }

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlprm.c,v 3.4 1997/01/27 20:04:17 papowell Exp $";
+"$Id: sendlprm.c,v 3.9 1998/01/08 09:51:18 papowell Exp $";
 
 #include "lp.h"
 #include "sendlprm.h"
@@ -80,7 +80,19 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 
 	DEBUG3("Send_lprmrequest: connect_timeout %d, transfer_timeout %d",
 			connect_timeout, transfer_timeout );
-	sock = Link_open( host, 0, connect_timeout );
+	if( Remote_support
+		&& strchr( Remote_support, 'M' ) == 0 
+		&& strchr( Remote_support, 'm' ) == 0 ){
+		plp_snprintf( line, sizeof(line)-2,
+			_("no remote support for `%s@%s'"), printer, host );
+		setstatus( NORMAL, line );
+		if( Interactive ){
+			strcat(line, "\n" );
+			if( Write_fd_str( 2, line ) < 0 ) cleanup(0);
+		}
+		return;
+	}
+	sock = Link_open( host, connect_timeout, Localhost_connection() );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,
@@ -91,6 +103,7 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 			strcat(line, "\n" );
 			if( Write_fd_str( 2, line ) < 0 ) cleanup(0);
 		}
+		return;
 	}
 	DEBUG3("Send_lprmrequest: socket %d", sock );
 
@@ -123,6 +136,6 @@ void Send_lprmrequest( char *printer,	/* name of printer */
 		status = Link_send( RemoteHost, &sock, transfer_timeout,
 			line, strlen(line), 0 );
 	}
-	Read_status_info( Printer, 0, sock, host, output );
+	Read_status_info( Printer, 0, sock, host, output, transfer_timeout );
 	Link_close( &sock );
 }

@@ -18,7 +18,7 @@
 #      ln -s /usr/local/share/po/Makefile.in.in po/Makefile.in
 #
 
-all: all-yes
+all: all-no
 
 all-yes:
 	echo "You need to link to the correct Makefile.in.in - see README.gettext"
@@ -27,6 +27,8 @@ all-no:
 	echo "No internationalization"
 
 install installcheck uninstall check mostlyclean clean:
+
+ci:
 
 distclean:
 .NOEXPORT:

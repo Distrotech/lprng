@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: printcap.h
  * PURPOSE:
- * $Id: printcap.h,v 3.2 1997/01/29 03:04:39 papowell Exp $
+ * $Id: printcap.h,v 3.3 1997/12/16 15:06:46 papowell Exp $
  **************************************************************************/
 
 #ifndef _PRINTCAP_H
@@ -19,7 +19,6 @@
  */
 EXTERN struct file_entry Config_info;
 EXTERN struct file_entry Raw_printcap_files; /* raw printcap files */
-extern char *Default_configuration[];
 
 EXTERN struct malloc_list Expanded_printcap_entries;	/* expanded entries */
 	/* list is an array of struct printcap */

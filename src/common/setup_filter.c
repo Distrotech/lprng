@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setup_filter.c,v 3.10 1997/02/25 04:50:25 papowell Exp $";
+"$Id: setup_filter.c,v 3.20 1997/12/31 19:30:10 papowell Exp $";
 
 /***************************************************************************
  *
@@ -66,6 +66,8 @@ static void setup_envp( struct control_file *cf,
 	struct printcap_entry *printcap_entry, struct filter *filter );
 static int cmd_split( struct filter *filter );
 
+static struct printcap_entry *pc_entry;
+
 /*
  * Make_filter(
  *   int key,      - format key, i.e.- a for 'af'
@@ -109,8 +111,10 @@ int Make_filter( int key,
 	char header[SMALLBUFFER];
 	int root = 0;
 
+	header[0] = 0;
 	DEBUG1 ("Make_filter: stderr_to_logger %d, starting filter '%s'",
 		stderr_to_logger, filter->cmd );
+	pc_entry = printcap_entry;
 
 	p[0] = p[1] = stderr_pipe[0] = stderr_pipe[1] = -1;
 	filter->input = -1;
@@ -159,6 +163,7 @@ int Make_filter( int key,
 		}
 	} else {
 		p[0] = direct_read;
+		p[1] = -1;
 	}
 
 	/*
@@ -171,7 +176,7 @@ int Make_filter( int key,
 			Errormsg(errno) );
 		goto error;
 	}
-	if( (filter->pid = dofork()) == 0 ){              /* child */
+	if( (filter->pid = dofork(0)) == 0 ){              /* child */
 		/* pipe is stdin */ /* printer is stdout */
 		if( dup2(p[0], 0) < 0 
 			|| (print_fd != 1 && dup2( print_fd, 1) < 0) ){
@@ -207,11 +212,10 @@ int Make_filter( int key,
 		} else {
 			setup_close_on_exec(3); /* this'll close the unused pipe fds */
 		}
+		send_to_logger(0,0);
 		execve( executable, &filter->args.list[root], filter->envp.list );
-		plp_snprintf( cf->error, sizeof( cf->error ),
-		 "Make_filter: execve '%s' failed - '%s'",
-			executable, Errormsg(errno) );
-		goto error;
+		Errorcode = JABORT;
+		logerr_die( LOG_ERR, "Make_filter: execve '%s' failed", executable );
 	} else if( filter->pid < 0 ){
 		plp_snprintf( cf->error, sizeof( cf->error ),
 		 "Make_filter: fork failed - '%s'", Errormsg(errno) );
@@ -331,7 +335,7 @@ int Make_passthrough( struct filter *filter, char *line,
 
 	DEBUG1 ("Make_passthrough: stderr_to_logger %d, starting filter '%s'",
 		stderr_to_logger, filter->cmd );
-	if( (filter->pid = dofork()) == 0 ){              /* child */
+	if( (filter->pid = dofork(0)) == 0 ){              /* child */
 		if( stderr_to_logger ){
 			int len, count, i, filter_pid;
 			int pid;	/* for the stderr */
@@ -339,6 +343,7 @@ int Make_passthrough( struct filter *filter, char *line,
 			char head[SMALLBUFFER];
 			char stderr_info[SMALLBUFFER];
 
+			head[0] = 0;
 			filter_pid = getpid();
 			if( pipe( stderr_pipe ) < 0 ){
 				plp_snprintf( cf->error, sizeof( cf->error ),
@@ -346,7 +351,7 @@ int Make_passthrough( struct filter *filter, char *line,
 					Errormsg(errno) );
 				goto error;
 			}
-			if( (pid = dofork()) == 0 ){
+			if( (pid = dofork(0)) == 0 ){
 				/* we are the daughter, waiting for stderr output */
 				DEBUG3( "Make_passthrough: stderr pid %d, filter pid %d, pipe[%d,%d]",
 					getpid(), filter_pid, stderr_pipe[0], stderr_pipe[1] );
@@ -356,8 +361,8 @@ int Make_passthrough( struct filter *filter, char *line,
 					Errorcode = JABORT;
 					logerr_die( LOG_ERR, "Make_filter: stderr_to_logger - dup2 failed" );
 				}
+				Dup_logger_fd( 1 );
 				setup_close_on_exec(3); /* this'll close the unused pipe fds */
-				send_to_logger(0);
 				plp_snprintf( head, sizeof(head),
 					"FILTER_STATUS PID %d", filter_pid );
 				setmessage( cf, head, "COMMANDLINE %s", filter->cmd );
@@ -432,6 +437,7 @@ int Make_passthrough( struct filter *filter, char *line,
 			}
 		}
 		setup_close_on_exec(fd_count); /* this'll close the unused pipe fds */
+		send_to_logger(0,0);
 		execve( executable, &filter->args.list[root], filter->envp.list );
 		Errorcode = JABORT;
 		logerr_die( LOG_ERR, "Make_passthrough: execve '%s' failed", executable );
@@ -657,7 +663,7 @@ static char * add_numopt( char *s, char *e, int n)
 /***************************************************************************
  *char *Do_dollar( struct control_file *cf, char *s, char *e,
  *	int type, int fmt, int space, int notag, struct *datafile
- *  int noquote )
+ *  int noquote, char *name )
  * Expand the $<tag> information in the filter definition
  * Note: see the code for the keys!
  * replace $X with -X<value>
@@ -685,7 +691,8 @@ static char *chop( char * s)
 }
 
 char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
-	int fmt, int space, int notag, struct data_file *data_file, int noquote )
+	int fmt, int space, int notag, struct data_file *data_file, int noquote,
+	char *name )
 {
 	int kind = STRING_K;
 	char *str = 0;
@@ -698,9 +705,16 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 	f[0] = fmt;
 
 	/* skip expansion if no control file */
-	/* DEBUG4("Do_dollar: type '%c' cf 0x%x, space %d, notag %d",
-		type, cf, space, notag ); / **/
-	switch( type ){
+	/* DEBUG1("Do_dollar: type '%c' cf 0x%x, space %d, notag %d, name '%s'",
+		type, cf, space, notag, name ); / **/
+	if( name ){
+		/* get the printcap value for name */
+		str = Get_pc_option_value( name, pc_entry );
+		prefix = 0;
+		if( str && (*str == '=' || *str == '#') ){
+			++str;
+		}
+	} else switch( type ){
 		case 'a': str = Accounting_file; break;
 		case 'b': if( cf ) kind = INTEGER_K; n = cf->jobsize; break;
 		case 'c': prefix = 0; noquote = 1; space = 0;
@@ -725,7 +739,7 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 					n = cf->number;
 					}
 					break;
-		case 'k': if( cf ) str = cf->transfername; break;
+		case 'k': if( cf ) str = cf->openname; break;
 		case 'l': kind = INTEGER_K; n = Page_length; break;
 		case 'm': kind = INTEGER_K; n = Cost_factor; break;   /* cost */
 		case 'n': if( cf ) str = chop(cf->LOGNAME); break;
@@ -761,7 +775,7 @@ char * Do_dollar( struct control_file *cf, char *s, char *e, int type,
 	/* DEBUG4("Do_dollar: prefix '%s'", p ); */
 	switch( kind ){
 		case STRING_K:
-			if( str ){
+			if( str && *str ){
 				if( prefix && notag == 0 ){
 					s = add_str( s, e, p );
 				}
@@ -818,9 +832,9 @@ static void setup_std_fds( void )
 
 void setup_clean_fds( int minfd )
 {
-    int fd;
+    int fd, max = getdtablesize();
 
-    for( fd = minfd; fd < getdtablesize( ); fd++ ){
+    for( fd = minfd; fd < max; fd++ ){
         (void) close( fd);
     }
 }
@@ -1191,6 +1205,8 @@ char *Expand_command( struct control_file *cfp,
 	char *bp, char *ep, char *s, int fmt, struct data_file *data_file )
 {
 	int c, space, notag, noquote;
+	char name[LINEBUFFER];
+	char *t;
 
 	/*
 	 * replace $X with the corresponding value
@@ -1203,6 +1219,7 @@ char *Expand_command( struct control_file *cfp,
 				notag = 0;
 				space = 0;
 				noquote = 0;
+				t = 0;
 				while( strchr( " 0-'", c) ){
 					switch( c ){
 					case '0': case ' ': space = 1; break;
@@ -1211,11 +1228,20 @@ char *Expand_command( struct control_file *cfp,
 					}
 					c = *++s;
 				}
-				/* DEBUG4("Expand_command: expanding '%c', space %d, notag %d",
-					c, space, notag ); */
+				if( c == '{' ){
+					t = name;
+					++s;
+					while( *s && *s != '}' ){
+						*t++ = *s++;
+					}
+					*t = 0;
+					t = name;
+				}
+				/* DEBUG2("Expand_command: expanding '%c', space %d, notag %d, name '%s'",
+					c, space, notag, t ); / **/
 				--bp;
 				bp = Do_dollar( cfp, bp, ep, c, fmt, space, notag,
-					data_file, noquote );
+					data_file, noquote, t );
 			}
 			++s;
 		}
@@ -1240,14 +1266,6 @@ void Flush_filter( struct filter *filter )
 #endif
 }
 
-void Kill_filter( struct filter *filter, int signal )
-{
-	if( filter->pid > 0 ){
-		kill( filter->pid, signal );
-		kill( filter->pid, SIGCONT );
-	}
-}
-
 /***************************************************************************
  * int Close_filter( struct filter *filter, int timeout, const char *key )
  * - filter is the data structure with the filte interformation
@@ -1256,11 +1274,13 @@ void Kill_filter( struct filter *filter, int signal )
  * - timeout < 0  we do not block
  * key is identifier who called
  ***************************************************************************/
-int Close_filter( struct filter *filter, int timeout, const char *key )
+int Close_filter( struct control_file *cfp,
+	struct filter *filter, int timeout, const char *key )
 {
 	pid_t result = 0;
 	plp_status_t status = 0;
 	int err;
+	char error[LINEBUFFER];
 
 	if( key == 0 ) key = "ANONYMOUS";
 	DEBUG3("Close_filter: starting input %d, pid %d, timeout %d, key %s",
@@ -1284,8 +1304,11 @@ int Close_filter( struct filter *filter, int timeout, const char *key )
 		DEBUG3( "Close_filter: '%s' pid %d, errno '%s', status '%s'",
 			key,result, Errormsg(err), Decode_status(&status) );
 		if( Alarm_timed_out ){
-			setstatus( NORMAL, "timeout %d for %s filter close", timeout, key );
-			status = JFAIL;
+			plp_snprintf( error, sizeof(error),
+				"timeout %d for %s filter close", timeout, key );
+			if( cfp ) safestrncpy( cfp->error, error );
+			setstatus( cfp, error );
+			status = JABORT;
 		} else if( result == -1 && err == ECHILD ){
 			/* no child, already dead */
 			filter->pid = 0;
@@ -1298,18 +1321,33 @@ int Close_filter( struct filter *filter, int timeout, const char *key )
 		} else {
 			filter->pid = -1;
 			if( WIFSIGNALED( status ) ){
-				setstatus( NORMAL, "%s filter died with signal '%s'", key,
+				plp_snprintf( error, sizeof(error),
+					"%s filter died with signal '%s'", key,
 					Decode_status( &status )  );
-				status = WTERMSIG( status );
+				if( cfp ) safestrncpy( cfp->error, error );
+				setstatus( cfp, error );
+				status = JABORT;
 			} else if( status ) {
 				int n = WEXITSTATUS( status );
 
 				/* adjust status so 1 -> JFAIL */
-				if( n > 0 && n < 32 ){
-					n += (JFAIL - 1);
+				switch( n ){
+#define XTLATE(J) case J-(JFAIL-1): n = J; break
+					XTLATE(JFAIL); XTLATE(JABORT); XTLATE(JREMOVE);
+					XTLATE(JACTIVE); XTLATE(JIGNORE); XTLATE(JHOLD);
+					XTLATE(JNOSPOOL); XTLATE(JNOPRINT);
+					case JFAIL: case JABORT: case JREMOVE:
+					case JIGNORE: case JHOLD: case JNOSPOOL:
+					case JNOPRINT:
+						break;
+					default: n = JABORT;
+						break;
 				}
-				setstatus( NORMAL, "%s filter died with status %d '%s'", key,
+				plp_snprintf( error, sizeof(error),
+					"%s filter died with status %d '%s'", key,
 					WEXITSTATUS( status ), Server_status( n ) );
+				if( cfp && n == JABORT ) safestrncpy( cfp->error, error );
+				setstatus( cfp, error );
 				status = n;
 			}
 		}
@@ -1341,6 +1379,7 @@ char *Filter_read( char *name, struct malloc_list *list, char *filter )
 	char *buffer, **buffers;	/* list of buffers and a buffer */
 	char line[LINEBUFFER];		/* buffer for a line */
 	int list_index = 0;
+	struct control_file cf;
 
 	buffer = 0;
 	/* make a pipe */
@@ -1356,7 +1395,8 @@ char *Filter_read( char *name, struct malloc_list *list, char *filter )
 	DEBUG4("Filter_read: pipe [%d,%d]", pipes[0],pipes[1] );
 	/* create the printcap info process */
 	/* Make_filter( 'f',(void *)0,&Pr_fd_info,filter,1, 0, pipes[1], */
-	Make_filter( 'f',(void *)0,&Pr_fd_info,filter,0, 0, pipes[1],
+	memset( &cf, 0, sizeof(cf) );
+	Make_filter( 'f',&cf,&Pr_fd_info,filter,0, 0, pipes[1],
 		(void *)0, (void *)0, 0, 0, 0 );
 	DEBUG4("Filter_read: filter pid %d, input fd %d, sending '%s'",
 		Pr_fd_info.pid, Pr_fd_info.input, name?name:"<NULL>" );
@@ -1400,6 +1440,8 @@ char *Filter_read( char *name, struct malloc_list *list, char *filter )
 		DEBUG4("Filter_read: len %d", buffer_index );
 		/* check to see if we have a buffer read */
 	} while( i > 0 );
+	/* close the output side of the pipe */
+	close( pipes[0] );
 
 	if( buffer_index == 0 ){
 		/* nothing read */
@@ -1410,7 +1452,7 @@ char *Filter_read( char *name, struct malloc_list *list, char *filter )
 		buffer[buffer_index] = 0;
 	}
 
-	Close_filter( &Pr_fd_info, 0, "printcap" );
+	Close_filter( 0, &Pr_fd_info, 0, "printcap" );
 	DEBUG4( "Filter_read: buffer_index %d, '%s'",
 		buffer_index, buffer );
 	return( buffer );
@@ -1425,7 +1467,7 @@ static int Make_errlog( int stderr_pipe[], struct control_file *cf,
 	char *endstr, *start;
 	char stderr_info[LARGEBUFFER];
 
-	if( (pid = dofork()) == 0 ){
+	if( (pid = dofork(0)) == 0 ){
 		/* we are the daughter, waiting for stderr output */
 		DEBUG4( "Make_errlog: pid %d, ppid %d, pipe[%d,%d], header '%s'",
 			getpid(), getppid(), stderr_pipe[0], stderr_pipe[1], header );

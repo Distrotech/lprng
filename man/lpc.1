@@ -1,7 +1,7 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPC 1 \*(VE "LPRng"
 .ig
-$Id: lpc.1,v 3.6 1997/03/05 04:40:04 papowell Exp papowell $
+$Id: lpc.1,v 3.34 1998/01/12 20:29:38 papowell Exp $
 Mon Jul 17 20:14:17 PDT 1995 Patrick Powell
 ..
 .SH NAME
@@ -47,10 +47,12 @@ start and stop printer servers for a queue with multiple print servers,
 .IP \(bu 3
 hold and release a specific job in a printer queue,
 .IP \(bu 3
-redirect printing to another printer
+redirect printing to another printer,
 .IP \(bu 3
 restart a printer job after having solved printer problems and let it
 print from the beginning, 
+.IP \(bu 3
+reprint a job
 .PP
 Without any arguments,
 .I lpc
@@ -125,6 +127,12 @@ part of the command.
 .br
 Help.
 Also, any unrecognized input produces a help listing.
+.TP
+active [pr@[host]]
+.br
+makes a connection to the LPD server for the specified printer.
+Closes the connection after making it.
+This is useful for checking to see if a non-LPRng server is active.
 .TP
 abort { all | printer* }
 .br
@@ -241,9 +249,10 @@ Note that due to race conditions and delays,
 that the start command may not be effective this action should
 be monitored to ensure that the job restarts.
 .TP
-lpd
+lpd [printer@[host]]
 .br
-determines the LPD daemon process is running,
+determines if LPD daemon process on the print server is running,
+and gets the PID.
 This is handy to determine if the LPD daemon was killed or
 aborted due to abnormal conditions.
 .TP
@@ -255,13 +264,15 @@ from inside the
 .I lpc
 program.
 .TP
-lprm printer [options]
+lprm printer jobid [jobid]*
 .br
 Run
 .I lprm
 from inside the 
 .I lpc
 program.
+Not all options are supported - this form requires
+the printer name and jobid to be specified explicitly.
 .TP
 move printer { jobid }  destinationPrinter
 .br
@@ -291,11 +302,15 @@ Action: updates spool control file
 .I redirect
 field.
 .TP
+redo [printer [jobid]]
+.br
+Reprint the selected job.
+.TP
 release [printer [jobid]]
 .br
 Releases the selected job for printing.
 .TP
-reread [ printer ]
+reread [ printer [@host] ]
 .br
 Sends a request to the LPD server for the printer to reread the
 configuration and printcap information.

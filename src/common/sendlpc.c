@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpc.c,v 3.4 1997/02/19 23:16:46 papowell Exp papowell $";
+"$Id: sendlpc.c,v 3.10 1998/01/08 09:51:18 papowell Exp $";
 
 #include "lp.h"
 #include "sendlpc.h"
@@ -74,10 +74,11 @@ void Send_lpcrequest(
 	}
 
 	Queue_name = 0;
-	if( argc > 1 && action != LPD && action != REREAD ){
+	if( argc > 1 ){
 		/* second argument is the printer */
 		Printer = options[1];
 		/* Find the remote printer and host name */
+		RemotePrinter = RemoteHost = 0;
 		Get_printer(0);
 		if((s = strchr( options[1], '@' ))) *s = 0;
 	}
@@ -96,11 +97,24 @@ void Send_lpcrequest(
 		goto error;
 	}
 
-	DEBUG3("Send_lpcrequest: Printer '%s', Remote printer %s, RemoteHost '%s'",
-		Printer, RemotePrinter, RemoteHost );
+	if( RemotePrinter == 0 || RemotePrinter[0] == 0 ){
+		RemotePrinter = Printer;
+	}
+
+	DEBUG3("Send_lpcrequest: Remote printer '%s', RemoteHost '%s'",
+		RemotePrinter, RemoteHost );
+
+	if( Remote_support
+		&& strchr( Remote_support, 'C' ) == 0 
+		&& strchr( Remote_support, 'c' ) == 0 ){
+		plp_snprintf( line, sizeof(line)-2,
+			_("no remote support to to `%s@%s'"), RemotePrinter, RemoteHost );
+		goto error;
+	}
+
 	/* now format the option line */
 	plp_snprintf( line, sizeof(line), "%c%s %s\n",
-		REQ_CONTROL, RemotePrinter?RemotePrinter:Printer, user );
+		REQ_CONTROL, RemotePrinter, user );
 
 	for( i = 0; (s = options[i]); ++i ){
 		len = strlen(line) - 1;
@@ -117,13 +131,20 @@ void Send_lpcrequest(
 	}
 
 	DEBUG0("Send_lpcrequest: sending '%s'", line );
-	sock = Link_open( RemoteHost, 0, connect_timeout );
+	sock = Link_open( RemoteHost, connect_timeout, Localhost_connection() );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,
 			"cannot open connection to `%s@%s' - %s",
 			Printer, RemoteHost, Errormsg(err) );
 		goto error;
+	}
+
+	if( action == ACTive ){
+		plp_snprintf( line, sizeof(line)-2,
+			"server for %s is %s, accepting connections",
+			Printer, RemoteHost, Errormsg(err) );
+		goto noerror;
 	}
 
 	Fix_auth();
@@ -138,12 +159,13 @@ void Send_lpcrequest(
 		status = Link_send( RemoteHost, &sock, transfer_timeout, line,
 			strlen( line ), 0 );
 	}
-	Read_status_info( Printer, 0, sock, RemoteHost, output );
+	Read_status_info( Printer, 0, sock, RemoteHost, output, transfer_timeout );
 	Link_close( &sock );
 	return;
 
 error:
 	Errorcode = JFAIL;
+noerror:
 	if( Interactive ){
 		safestrncat(line, "\n" );
 		Write_fd_str( output, line );

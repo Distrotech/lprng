@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/printer_perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms.proto,v 3.1 1996/12/28 21:40:46 papowell Exp $
+# $Id: lpd.perms.proto,v 3.2 1997/12/20 21:16:26 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 #
@@ -107,14 +107,14 @@
 #start all
 DEFAULT ACCEPT
 # Default configuration: allow only root on server to do LPC functions
-ACCEPT SERVICE=C SERVER USER=root
-ACCEPT SERVICE=C SERVER USER=_USER_
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+ACCEPT SERVICE=C SERVER REMOTEUSER=_USER_
 REJECT SERVICE=C
 #
 # allow same user on originating host to remove a job
 ACCEPT SERVICE=M SAMEHOST SAMEUSER
 # allow root on server to remove a job
-ACCEPT SERVICE=M SERVER USER=root
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
 REJECT SERVICE=M
 #end all
 #start t1

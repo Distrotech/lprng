@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,12 +10,13 @@
  * PURPOSE: kill and create children
  **************************************************************************/
 
-static char *const _id = "$Id: killchild.c,v 3.12 1997/02/25 04:50:25 papowell Exp $";
+static char *const _id = "$Id: killchild.c,v 3.19 1997/12/16 15:06:28 papowell Exp $";
 
 #include "lp.h"
 #include "decodestatus.h"
 #include "malloclist.h"
 #include "killchild.h"
+#include "errorcodes.h"
 /**** ENDINCLUDE ****/
 
 /*
@@ -64,7 +65,8 @@ void killchildren( int signal )
 	int i;
 	struct pinfo *p;
 	
-	DEBUG2("killchildren: pid %d, signal %s", pid, Sigstr(signal) );
+	DEBUG2("killchildren: pid %d, signal %s, count %d",
+			pid,Sigstr(signal), prgrps.count );
 	if(DEBUGL2){
 		p = (void *)prgrps.list;
 		for( i = 0; i < prgrps.count; ++i ){
@@ -75,16 +77,19 @@ void killchildren( int signal )
 	for( i = 0; i < prgrps.count; ++i ){
 		if( p[i].parentpid == pid ){
 			DEBUG2("killchildren: killpg(%d,%s)", p[i].pid, Sigstr(signal));
-			killpg( p[i].pid, signal );
+			kill( p[i].pid, signal );
+			kill( p[i].pid, SIGCONT );
 		}
 	}
+	i = Countpid( 0 );
+	DEBUG2("killchildren: count %d left", i );
 }
 
 /*
  * dofork: fork a process and set it up as a process group leader
  */
 
-int dofork( void )
+int dofork( int new_process_group )
 {
 	struct pinfo *p;
 	pid_t pid;
@@ -102,6 +107,7 @@ int dofork( void )
 		 * are catastrophic.  Believe me on this one...
 		 */
 
+		if( new_process_group ){
 #if defined(HAVE_SETSID)
 		i =	setsid();
 		s = "setsid()";
@@ -120,7 +126,7 @@ int dofork( void )
 # endif
 #endif
 		if( i < 0 ){
-			logerr_die( LOG_ERR, "forkpg: %s failed", s );
+			logerr_die( LOG_ERR, "dofork: %s failed", s );
 		}
 #ifdef TIOCNOTTY
 		/* BSD: non-zero process group id, so it cannot get control terminal */
@@ -145,6 +151,7 @@ int dofork( void )
 		 *		Advanced Programming in the UNIX environment,
 		 *		 W. Richard Stevens, Section 9.5
 		 */
+		}
 		/* we do not want to copy our parent's exit jobs or temp files */
 		if( Tempfile ){
 			Tempfile->pathname[0] = 0;
@@ -184,38 +191,23 @@ int dofork( void )
 	return( pid );
 }
 
-/*
- * remove a process from the prgrps list
- */
-void Removepid( pid_t pid )
-{
-	int i;
-	struct pinfo *p;
-
-	p = (void *)prgrps.list;
-	for( i = 0; i < prgrps.count; ++i ){
-		if( p[i].pid == pid ){
-			p[i].pid = p[i].parentpid = 0;
-			break;
-		}
-	}
-}
-
-int Countpid( void )
+int Countpid( int clean )
 {
 	int i, count;
 	struct pinfo *p;
 	plp_block_mask oblock;
 	count = 0;
 
-	plp_block_one_signal( SIGCHLD, &oblock ); /* race condition otherwise */
+	plp_block_all_signals( &oblock ); /* race condition */
 	p = (void *)prgrps.list;
 	for( i = 0; i < prgrps.count; ++i ){
-		if( p[i].pid > 0 ){
+		if( p[i].pid > 0 && kill(p[i].pid, 0) == 0 ){
+			if( clean ) p[count] = p[i];
 			++count;
 		}
 	}
-	plp_unblock_all_signals( &oblock );  /* race condition otherwise */
+	if( clean ) prgrps.count = count;
+	plp_unblock_all_signals( &oblock );  /* race otherwise */
 	return( count );
 }
 
@@ -271,12 +263,38 @@ void remove_exit( int i )
 	exit_list[i].exit = 0;
 }
 
+plp_signal_t cleanup_USR1 (int passed_signal)
+{
+	DEBUG0("cleanup_USR1: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
+	cleanup(SIGUSR1);
+}
+plp_signal_t cleanup_HUP (int passed_signal)
+{
+	DEBUG0("cleanup_HUP: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
+	cleanup(SIGHUP);
+}
+plp_signal_t cleanup_INT (int passed_signal)
+{
+	DEBUG0("cleanup_INT: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
+	cleanup(SIGINT);
+}
+plp_signal_t cleanup_QUIT (int passed_signal)
+{
+	DEBUG0("cleanup_QUIT: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
+	cleanup(SIGQUIT);
+}
+plp_signal_t cleanup_TERM (int passed_signal)
+{
+	DEBUG0("cleanup_TERM: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
+	cleanup(SIGTERM);
+}
+
 plp_signal_t cleanup (int passed_signal)
 {
-	int i;
+	int i, pid = getpid();
 	int signalv = passed_signal;
 
-	DEBUG2("cleanup: signal %d, Errorcode %d", signalv, Errorcode);
+	DEBUG2("cleanup: signal %s, Errorcode %d", Sigstr(passed_signal), Errorcode);
 	if( passed_signal == 0 ){
 		signalv = SIGINT;
 	}
@@ -286,18 +304,29 @@ plp_signal_t cleanup (int passed_signal)
 		signalv = SIGINT;
 		Errorcode = 0;
 	}
+
+
 	for( i = last_exit; i-- > 0; ){
 		if( exit_list[i].exit ){
 			exit_list[i].exit( exit_list[i].parm );
 		}
 	}
-	/* kill children of this process */
 
+	/* kill children of this process */
 	killchildren( signalv );
 
-	DEBUG0("cleanup: done");
-	if( Errorcode ){
-		exit( Errorcode );
+	if( Errorcode == 0 ){
+		Errorcode = passed_signal;
 	}
-	exit(passed_signal);
+
+	DEBUG0("cleanup: done, doing killpg then exit(%d)", Errorcode);
+
+	if( Is_server && getpgrp() == pid ){
+		plp_block_mask oblock;
+		plp_block_all_signals( &oblock );
+		killpg( pid, signalv );
+		killpg( pid, SIGCONT );
+	}
+
+	exit(Errorcode);
 }

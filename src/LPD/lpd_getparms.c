@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,11 +13,12 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_getparms.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpd_getparms.c,v 3.5 1997/10/10 03:04:15 papowell Exp $";
 
 #include "lp.h"
 #include "patchlevel.h"
 
+void usage(void);
 /***************************************************************************
  * void Get_parms(int argc, char *argv[])
  * 1. Scan the argument list and get the flags
@@ -49,15 +50,22 @@ void Get_parms(int argc, char *argv[] )
 		case 'P': Printer = Optarg; break;
 		case 'c': Clean = 1; break;
 		default:
-			fputs (_(msg), stderr);
-			exit(1);
+			usage();
 			break;
 		case 'V':
 			++Verbose;
-			fprintf( stdout, _("Version %s\n"), PATCHLEVEL );
-			if( Verbose > 1 ) Printlist( Copyright, stdout );
-			exit(1);
 			break;
 		}
 	}
+	if( Verbose > 0 ) {
+		fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
+		if( Verbose > 1 ) Printlist( Copyright, stderr );
+		exit(1);
+		}
+}
+
+void usage(void)
+{
+	fprintf( stderr, _(msg), Name);
+	exit(1);
 }

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: permissions.c,v 3.6 1997/02/04 23:34:23 papowell Exp papowell $";
+"$Id: permissions.c,v 3.13 1997/12/24 20:10:12 papowell Exp $";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -21,6 +21,12 @@ static char *const _id =
 #include "permission.h"
 #include "setup_filter.h"
 #include "dump.h"
+#if defined(HAVE_ARPA_NAMESER_H)
+# include <arpa/nameser.h>
+#endif
+#if defined(HAVE_RESOLV_H)
+# include <resolv.h>
+#endif
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -81,14 +87,14 @@ void Free_perms( struct perm_file *perms )
  *   3. parse the perm_ informormation
  ***************************************************************************/
 
-void Get_perms( char *name, struct perm_file *perms, char *path )
+int Get_perms( char *name, struct perm_file *perms, char *path )
 {
 	char *end;
 	int fd, c;
 	struct stat statb;
 	int err;
 	char pathname[MAXPATHLEN];
-
+	int found_perms = 0;
 
 	safestrncpy( pathname, path );
 	DEBUGF(DDB1)("Get_perms: '%s'", name );
@@ -99,9 +105,6 @@ void Get_perms( char *name, struct perm_file *perms, char *path )
 		}
 		while( isspace(*path) ) ++path;
 		if( (c = *path) == 0 ) continue;
-		if( Verbose ){
-			logDebug( "Get_perms: permissions entry '%s'", path );
-		}
 		DEBUGF(DDB1)( "Get_perms: permissions file '%s'", path );
 
 		switch( c ){
@@ -109,22 +112,21 @@ void Get_perms( char *name, struct perm_file *perms, char *path )
 				DEBUGF(DDB2)("Get_perms: file '%s'", path );
 				fd =  Checkread( path, &statb );
 				err = errno;
-				if( Verbose && fd < 0 ){
-					logDebug( "Cannot open '%s' - %s", path, Errormsg(err) );
-				}
 				if( fd < 0 ){
 					DEBUGF(DDB2)("Get_perms: cannot open '%s' - %s",
 						path, Errormsg(err) );
 				} else if( Read_perms( perms, path, fd, &statb ) ){
 					DEBUGF(DDB1)( "Get_perms: error reading %s, %s",
 						path, Errormsg(err) );
+				} else {
+					found_perms |= 1;
 				}
 				close(fd);
 				break;
 			case '|':
 				DEBUGF(DDB2)("Get_perms: filter '%s' name '%s'", path, name );
 				if( name ){
-					Filter_perms( name, perms, path+1 );
+					found_perms |= !Filter_perms( name, perms, path+1 );
 				}
 				break;
 			default:
@@ -134,9 +136,11 @@ void Get_perms( char *name, struct perm_file *perms, char *path )
 	}
 	DEBUGFC(DDB4){
 		char msg[64];
-		plp_snprintf( msg, sizeof(msg), "Get_perms: all perms database" );
+		plp_snprintf( msg, sizeof(msg),
+			"Get_perms: found %d, all perms database", found_perms );
 		dump_perm_file( msg, perms );
 	}
+	return( found_perms );
 }
 
 /***************************************************************************
@@ -154,7 +158,7 @@ static int Read_perms( struct perm_file *perms, char *file, int fd,
 	char *s;				/* ACE, cheaper and better */
 
 	/* malloc data structures */
-	
+
 	DEBUGF(DDB3)("Read_perm: file '%s' size %d", file, statb->st_size );
 	strcpy( add_buffer( &perms->files, strlen(file)+1 ), file );
 	begin = add_buffer( &perms->files, statb->st_size+1 );
@@ -185,11 +189,15 @@ static int Read_perms( struct perm_file *perms, char *file, int fd,
 int Filter_perms( char *name, struct perm_file *perms, char *filter )
 {
 	char *buffer;
+	int error = 1;
 
 	DEBUGF(DDB1)("Filter_perms: filter '%s'", filter );
 	strcpy( add_buffer( &perms->filters, strlen(filter)+1), filter );
 	buffer = Filter_read( name, &perms->filters, filter );
-	return( parse_perms( perms, filter, buffer ) );
+	if( buffer ){
+		error = parse_perms( perms, filter, buffer );
+	}
+	return( error );
 }
 
 /***************************************************************************
@@ -199,7 +207,15 @@ int Filter_perms( char *name, struct perm_file *perms, char *filter )
  *     see Commentary at start of file
  ***************************************************************************/
 
-#define PAIR(X) { #X, INTEGER_K, (void *)0, X }
+#undef PAIR
+#ifndef _UNPROTO_
+# define PAIR(X) { #X, INTEGER_K, (void *)0, X }
+#else
+# define __string(X) "X"
+# define PAIR(X) { __string(X), INTEGER_K, (void *)0, X }
+#endif
+
+
 static struct keywords permwords[] = {
 PAIR(REJECT),
 PAIR(ACCEPT),
@@ -225,6 +241,7 @@ PAIR(AUTH),
 PAIR(AUTHUSER),
 PAIR(FWDUSER),
 PAIR(IFIP),
+PAIR(AUTHTYPE),
 {0}
 };
 
@@ -251,29 +268,27 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 	char **permlist;
 
 	DEBUGF(DDB2)("parse_perms: file '%s'", file );
-	if( perms->lines.count+10 >= perms->lines.max ){
-		extend_malloc_list( &perms->lines, sizeof( permline[0] ),
-		perms->lines.count + 100 );
+	if( perms->lines.max == 0 ){
+		extend_malloc_list( &perms->lines, sizeof( permline[0] ), 100 );
 	}
 	permlines = (void *)perms->lines.list;
-	if( perms->values.count+10 >= perms->values.max ){
-		extend_malloc_list( &perms->values, sizeof( permval[0] ), 
-			perms->values.count+10 );
-		if( perms->values.count == 0 ){
-			memset( permlines, 0, sizeof(permlines[0]) );
-			perms->values.count++;
-		}
+
+	if( perms->values.max == 0 ){
+		extend_malloc_list( &perms->values, sizeof( permval[0] ), 10 );
+	}
+	if( perms->values.count == 0 ){
+		memset( permlines, 0, sizeof(permlines[0]) );
+		perms->values.count++;
 	}
 	permvals = (void *)perms->values.list;
 
 	/* set the first entry in the list to 0 */
-	if( perms->list.count+1 >= perms->list.max ){
-		extend_malloc_list( &perms->list,sizeof(char *),
-			perms->list.count+10);
-		permlist = (void *)perms->list.list;
-		if( perms->list.count == 0 ){
-			permlist[perms->list.count++] = 0;
-		}
+	if( perms->list.max == 0 ){
+		extend_malloc_list( &perms->list,sizeof(char *), 10);
+	}
+	permlist = (void *)perms->list.list;
+	if( perms->list.count == 0 ){
+		permlist[perms->list.count++] = 0;
 	}
 	permlist = (void *)perms->list.list;
 
@@ -397,7 +412,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
 			memset( permval, 0, sizeof( permval[0] ) );
 		}
 	}
-	
+
 	DEBUGFC(DDB2){
 		char msg[64];
 		plp_snprintf( msg, sizeof(msg), "parse_perms: file '%s'", file );
@@ -415,6 +430,7 @@ static int parse_perms( struct perm_file *perms, char *file, char *buffer )
  * 3. The entire set of tests is accepted if all pass, i.e. none fail
  ***************************************************************************/
 static int match( struct perm_val *val, char *str, int invert );
+static int match_pr( struct perm_val *val, char *str, int invert );
 static int match_ip( struct perm_val *val, struct host_information *host,
 		int invert );
 static int match_addrip( struct perm_val *val, struct sockaddr *host,
@@ -543,6 +559,7 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 						break;
 					}
 					break;
+
 				case IFIP:
 					m = match_addrip( &val[j], check->addr, invert );
 					break;
@@ -584,9 +601,6 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
  					default:
 						m = match_host( &val[j], check->remotehost, invert );
 						break;
- 					case 'P':
-						m = match_host( &val[j], check->host, invert );
-						break;
 					}
  					break;
 				case AUTH:
@@ -605,6 +619,14 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 						m = match( &val[j], cf->auth_id+1, invert );
 					}
 					break;
+				case AUTHTYPE:
+					m = 1;
+ 					switch (check->service){
+ 					case 'X': break;
+					default:
+						m = match( &val[j], check->authtype, invert );
+					}
+					break;
 				case FWDUSER:
 					m = 1;
  					switch (check->service){
@@ -618,9 +640,6 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 					switch( check->service ){
 					default:
 						m = match_ip( &val[j], check->remotehost, invert );
-						break;
-					case 'P':
-						m = match_ip( &val[j], check->host, invert );
 						break;
 					}
 					break;
@@ -647,7 +666,7 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
  					switch (check->service){
  					case 'X': break;
 					default:
-						m = match( &val[j], check->printer, invert );
+						m = match_pr( &val[j], check->printer, invert );
 						break;
 					}
 					break;
@@ -672,6 +691,21 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 					case 'R': case 'Q': case 'M': case 'C': case 'S':
 						/* SAMEHOST check succeeds if REMOTEIP == IP */
 						m = Same_host(check->host, check->remotehost);
+						if( m ){
+						/* check to see if both remote and local are
+							server */
+						int r, h;
+						r = Same_host(check->remotehost,&HostIP);
+						if( r ) r = Same_host(check->remotehost,&LocalhostIP);
+						h = Same_host(check->host,&HostIP);
+						if( h ) h = Same_host(check->host,&LocalhostIP);
+						DEBUGF(DDB3)(
+							"Perms_check: SAMEHOST server name check r=%d,h=%d",
+							r, h );
+						if( h == 0 && r == 0 ){
+							m = 0;
+						}
+						}
 						if( invert ) m = !m;
 						break;
 					}
@@ -696,13 +730,13 @@ int Perms_check( struct perm_file *perms, struct perm_check *check,
 					default: break;
 					case 'R': case 'Q': case 'M': case 'C': case 'S':
 						/* check succeeds if remote IP and server IP == IP */
-						m = !(Same_host(check->remotehost,&HostIP)
-							|| Same_host(check->remotehost,&LocalhostIP));
+						m = Same_host(check->remotehost,&HostIP);
+						if( m ) m = Same_host(check->remotehost,&LocalhostIP);
 						if( invert ) m = !m;
 						break;
 					}
 					break;
-					
+
 				case DEFAULT:
 					if( j || val[j+1].token == 0 || val[j+2].token  ){
 						log( LOG_ERR,
@@ -775,8 +809,9 @@ static int match( struct perm_val *val, char *str, int invert )
 
 /***************************************************************************
  * static int match_host( struct perm_val *val, char *host );
+ * static int match_pr( struct perm_val *val, char *host );
  *  returns 1 on failure, 0 on success
- *  - match the hostname strings against the list of options
+ *  - match the hostname/printer strings against the list of options
  *    options are glob type regular expressions;  we implement this
  *    currently using the most crude of pattern matching
  *  - if string is null or pattern list is null, then match fails
@@ -811,6 +846,31 @@ static int match_host( struct perm_val *val, struct host_information *host,
 	if( invert ) result = !result;
  	DEBUGF(DDB3)("match: host '%s' final result %d", host?host->fqdn:0,
 		result );
+	return( result );
+}
+
+static int match_pr( struct perm_val *val, char *str, int invert )
+{
+ 	char **list;
+ 	int result = 1;
+ 	int i;
+ 	DEBUGF(DDB3)("match_pr: str '%s'", str );
+ 	list = &perm_list[val->list];
+ 	if(str && val->list)for( i = 0; result && list[i]; ++i ){
+ 		/* now do the match */
+		if( list[i][0] == '@' ) {	/* look up host in netgroup */
+#ifdef HAVE_INNETGR
+			result = !innetgr( list[i]+1, str, NULL, NULL );
+#else /* HAVE_INNETGR */
+			DEBUGF(DDB3)("match_pr: no innetgr() call, netgroups not permitted");
+#endif /* HAVE_INNETGR */
+		} else {
+	 		result = Globmatch( list[i], str );
+		}
+		DEBUGF(DDB3)("match_pr: list[%d]='%s', result %d", i, list[i],  result );
+	}
+	if( invert ) result = !result;
+ 	DEBUGF(DDB3)("match_pr: str '%s' final result %d", str, result );
 	return( result );
 }
 
@@ -921,6 +981,44 @@ static int match_ip( struct perm_val *val, struct host_information *host,
 	}
 	if( invert ) result = !result;
 	DEBUGF(DDB3)("match_ip: result %d", result );
+	return( result );
+}
+
+/*
+ * int Match_ipaddr_value( char *str, struct host_information *host )
+ *  str has format addr,addr,addr
+ * Match the indicated address against the host
+ *  returns: 0 if match
+ *           1 if no match
+ */
+int Match_ipaddr_value( char *str, struct host_information *host )
+{
+	int result = 1;
+	char *end;
+	static char *buffer;
+	DEBUGF(DDB2)("Match_ipaddr_value: str '%s'", str);
+	if( str && *str ){
+		if( buffer ) free(buffer);
+		buffer = safestrdup( str );
+		for( str = buffer; str; str = end ){
+			while( isspace( *str ) ) ++str;
+			end = strpbrk( str, ",; \t");
+			if( end ) *end++ = 0;
+			if( *str == '@' ) {	/* look up host in netgroup */
+#ifdef HAVE_INNETGR
+				result = !innetgr( str+1, host->fqdn, NULL, NULL );
+#else /* HAVE_INNETGR */
+				DEBUGF(DDB3)("match: no innetgr() call, netgroups not permitted");
+#endif /* HAVE_INNETGR */
+			} else {
+				result = Globmatch( str, host->fqdn );
+				if( result ) result = ipmatch( str, host );
+			}
+			DEBUGF(DDB2)("Match_ipaddr_value: checked '%s', result %d", str, result);
+			if( result == 0 ) break;
+		}
+	}
+	DEBUGF(DDB2)("Match_ipaddr_value: result %d, on name '%s'", result, str);
 	return( result );
 }
 
@@ -1111,9 +1209,10 @@ static int ingroup( char *group, char *user )
 		return( result );
 	}
 	/* first try getgrnam, see if it is a group */
+	pwent = getpwnam(user);
 	if( (grent = getgrnam( group )) ){
 		DEBUGF(DDB3)("ingroup: group id: %d\n", grent->gr_gid);
-		if( (pwent = getpwnam(user)) && (pwent->pw_gid == grent->gr_gid) ){
+		if( pwent && (pwent->pw_gid == grent->gr_gid) ){
 			DEBUGF(DDB3)("ingroup: user default group id: %d\n", pwent->pw_gid);
 			result = 0;
 		} else for( members = grent->gr_mem; result && *members; ++members ){
@@ -1127,10 +1226,16 @@ static int ingroup( char *group, char *user )
 			DEBUGF(DDB3)("ingroup: group name '%s'", grent->gr_name);
 			/* now do match against group */
 			if( Globmatch( group, grent->gr_name ) == 0 ){
-				DEBUGF(DDB3)("ingroup: found '%s'", grent->gr_name);
-				for( members = grent->gr_mem; result && *members; ++members ){
-					DEBUGF(DDB3)("ingroup: member '%s'", *members);
-					result = (strcmp( user, *members ) != 0);
+				if( pwent && (pwent->pw_gid == grent->gr_gid) ){
+					DEBUGF(DDB3)("ingroup: user default group id: %d\n",
+					pwent->pw_gid);
+					result = 0;
+				} else {
+					DEBUGF(DDB3)("ingroup: found '%s'", grent->gr_name);
+					for( members = grent->gr_mem; result && *members; ++members ){
+						DEBUGF(DDB3)("ingroup: member '%s'", *members);
+						result = (strcmp( user, *members ) != 0);
+					}
 				}
 			}
 		}
@@ -1147,10 +1252,34 @@ static int ingroup( char *group, char *user )
 		DEBUGF(DDB3)( "ingroup: no innetgr() call, netgroups not permitted" );
 #endif /* HAVE_INNETGR */
 	}
-	DEBUGF(DDB3)("ingroup: result: %d\n", result );
+	DEBUGF(DDB3)("ingroup: result: %d", result );
 	return( result );
 }
 
+int Check_for_rg_group( char *user )
+{
+	int match = 0;
+	char buffer[MAXPATHLEN];
+	char *s, *end;
+
+	DEBUGF(DDB3)("Check_for_rg_group: name '%s', Restricted_group '%s'",
+		user, Restricted_group );
+	if( Restricted_group && *Restricted_group ){
+		match = 1;
+		safestrncpy( buffer, Restricted_group );
+		for( s = buffer; match && s && *s; s = end ){
+			end = strpbrk( s, " \t,;" );
+			if( end ){
+				*end++ = 0;
+			}
+			if( *s ){
+				match = ingroup( s, user );
+			}
+		}
+	}
+	DEBUGF(DDB3)("Check_for_rg_group: result: %d", match );
+	return( match );
+}
 
 /***************************************************************************
  * static int match_auth( struct perm_val *val, char *str );
@@ -1169,8 +1298,8 @@ static int match_auth( struct perm_val *val, struct control_file *cf,
  	int result = 1;
  	int i, key = 0;
 	if( cf ){
-		if( cf->auth_id[0] ) key = 1;
-		if( cf->forward_id[0] ) key = 2;
+		if( cf->auth_id[0] ) key |= 1;
+		if( cf->forward_id[0] ) key |= 2;
 		list = &perm_list[val->list];
 		DEBUGF(DDB3)("match_auth: key %d, val->list %d",
 			key, val->list );
@@ -1181,9 +1310,9 @@ static int match_auth( struct perm_val *val, struct control_file *cf,
 			if( strcasecmp( s, "NONE" ) == 0 ){
 				if( key == 0 ) result = 0;
 			} else if( strcasecmp( s, "USER" ) == 0 ){
-				if( key == 1 ) result = 0;
+				if( key & 1 ) result = 0;
 			} else if( strcasecmp( s, "FWD" ) == 0 ){
-				if( key == 2 ) result = 0;
+				if( key & 2 ) result = 0;
 			}
 		}
 	}

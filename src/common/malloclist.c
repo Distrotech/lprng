@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: malloclist.c,v 3.5 1997/02/04 22:01:49 papowell Exp papowell $";
+"$Id: malloclist.c,v 3.6 1997/09/18 19:46:01 papowell Exp $";
 #include "lp.h"
 #include "malloclist.h"
 /**** ENDINCLUDE ****/
@@ -134,7 +134,6 @@ void Clear_control_file( struct control_file *cf )
 	clear_malloc_list( &cf->control_file_lines, 0 );
 	clear_malloc_list( &cf->control_file_copy, 0 );
 	clear_malloc_list( &cf->control_file_print, 0 );
-	clear_malloc_list( &cf->hold_file_info, 0 );
 	clear_malloc_list( &cf->hold_file_lines, 0 );
 	clear_malloc_list( &cf->hold_file_print, 0 );
 	clear_malloc_list( &cf->destination_list, 0 );

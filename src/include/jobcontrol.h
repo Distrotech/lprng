@@ -8,14 +8,18 @@
  ***************************************************************************
  * MODULE: jobcontrol.h
  * PURPOSE: read and write the spool queue control file
- * $Id: jobcontrol.h,v 3.4 1997/01/30 21:15:20 papowell Exp $
+ * $Id: jobcontrol.h,v 3.6 1997/12/16 15:06:42 papowell Exp $
  **************************************************************************/
 
 
+char *Hold_file_pathname( struct control_file *cfp, struct dpathname *dpath );
+int Find_non_colliding_job_number( struct control_file *cfp,
+	struct dpathname *dpath );
+int Lock_hold_file( struct control_file *cfp, struct stat *statb );
 int Get_job_control( struct control_file *cf, int *fd );
-int Set_job_control( struct control_file *cf, int *fd, int force_change );
+int Set_job_control( struct control_file *cf, int *fd );
 int Remove_job_control( struct control_file *cf );
-int Get_route( struct control_file *cf );
+int Get_route( struct control_file *cf, int fd, struct printcap_entry *pc_entry );
 
 /* get and set the current spooling and printing permissions */
 

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.conf.proto
 # PURPOSE: lpd.conf file for testing
-# $Id: lpd.conf.proto,v 3.2 1997/01/25 17:54:49 papowell Exp $
+# $Id: lpd.conf.proto,v 3.3 1997/12/20 21:16:26 papowell Exp $
 ########################################################################## 
 # Test version of the plp.conf(5) file, using non-standard locations
 # and ports so as to avoid interfering with a running lpd(8).
@@ -37,8 +37,8 @@ printcap_include_path=_TMP_LPD
 #printcap_path=|_TMP_LPD/dbserver _TMP_LPD/printcap.db.%H
 printcap_path=_TMP_LPD/printcap.%H
 
-#print_perms-path=|_TMP_LPD/dbserver _TMP_LPD/lpd.perms.db.%H
-printer_perms-path=_TMP_LPD/lpd.perms.%H
+#perms_path=|_TMP_LPD/dbserver _TMP_LPD/lpd.perms.db.%H
+perms_path=_TMP_LPD/lpd.perms.%H
 
 use-info-cache
 use_identifier

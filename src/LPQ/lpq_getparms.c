@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpq_getparms.c,v 3.7 1997/03/05 04:40:04 papowell Exp papowell $";
+"$Id: lpq_getparms.c,v 3.11 1997/10/10 03:04:15 papowell Exp $";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -57,6 +57,11 @@ static void Add_to( struct malloc_list *val, char *arg )
 extern char *next_opt;
 void usage(void);
 
+char LPQ_optstr[]    /* LPQ options */
+ = "AD:P:Vaclst:v" ;
+char LPSTAT_optstr[]	/* LPSTAT options */
+ =	"AdrRsta:c:f:lo:p:D:P:S:u:v";
+
 void Get_parms(int argc, char *argv[] )
 {
 	int option;
@@ -71,11 +76,12 @@ void Get_parms(int argc, char *argv[] )
 	if( name && strcmp( name, "lpstat" ) == 0 ){
 		LP_mode = 1;
 		Opterr = 0;
+		Get_debug_parm( argc, argv, LPSTAT_optstr, debug_vars );
 		while ((option = Getopt (argc, argv,
-			"AdrRsta:c:f:lo:p:D:P:S:u:v" )) != EOF)
+			LPSTAT_optstr)) != EOF)
 		switch(option){
 		case 'a': /* option a */
-			Lp_status = 1;
+/*			Lp_status = 1; */
 			Lp_accepting = 1;
 			if( Optarg == 0 ){
 				Add_to( &Lp_pr_list, "all" );
@@ -166,7 +172,7 @@ void Get_parms(int argc, char *argv[] )
 		default: usage(); break;
 		}
 		if( Optind == argc ){
-			Lp_status = 1;
+/*			Lp_status = 1; */
 			name = getenv( "LOGNAME" );
 			if( name == 0 ){
 				name = getenv( "USER" );
@@ -193,78 +199,80 @@ void Get_parms(int argc, char *argv[] )
 				logDebug( "[%d] '%s'", i, list[i] );
 			}
 		}
-	} else while ((option = Getopt (argc, argv, LPQ_optstr )) != EOF) {
-		switch (option) {
-		case 'A': Use_auth_flag = 1; /* use authentication */
-			break;
-		case 'D': /* debug has already been done */
-			break;
-		case 'P': if( Optarg == 0 ) usage();
-			Printer = Optarg;
-			Orig_printer = Optarg;
-			break;
-		case 'V': ++Verbose; break;
-		case 'a': Printer = "all"; ++All_printers; break;
-		case 'c': Clear_scr = 1; break;
-		case 'l': ++Longformat; break;
-		case 's': Longformat = 0;
-					Displayformat = REQ_DSHORT;
-					break;
-		case 't': if( Optarg == 0 ) usage();
-					Interval = atoi( Optarg );
-					break;
-		case 'v': Longformat = 0; Displayformat = REQ_VERBOSE; break;
-		default:
-			usage();
+	} else {
+		Get_debug_parm( argc, argv, LPQ_optstr, debug_vars );
+		/* scan the input arguments, setting up values */
+		while ((option = Getopt (argc, argv, LPQ_optstr )) != EOF) {
+			switch (option) {
+			case 'A': Use_auth_flag = 1; /* use authentication */
+				break;
+			case 'D': /* debug has already been done */
+				break;
+			case 'P': if( Optarg == 0 ) usage();
+				Printer = Optarg;
+				Orig_printer = Optarg;
+				break;
+			case 'V': ++Verbose; break;
+			case 'a': Printer = "all"; ++All_printers; break;
+			case 'c': Clear_scr = 1; break;
+			case 'l': ++Longformat; break;
+			case 's': Longformat = 0;
+						Displayformat = REQ_DSHORT;
+						break;
+			case 't': if( Optarg == 0 ) usage();
+						Interval = atoi( Optarg );
+						break;
+			case 'v': Longformat = 0; Displayformat = REQ_VERBOSE; break;
+			default:
+				usage();
+			}
 		}
 	}
-	if( Verbose > 0 ) fprintf( stdout, "Version %s\n", PATCHLEVEL );
-	if( Verbose > 1 ) Printlist( Copyright, stdout );
+	if( Verbose > 0 ) {
+		fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
+		if( Verbose > 1 ) Printlist( Copyright, stderr );
+		}
 }
 
-char *lpq_msg[] = {
-"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]
-  -a           - all printers
-  -A           - use authentication
-  -c           - clear screen before update
-  -l           - increase (lengthen) detailed status information
-                 additional l flags add more detail.
-  -Ddebuglevel - debug level
-  -Pprinter    - specify printer
-  -s           - short (summary) format
-  -tsleeptime  - sleeptime between updates
-  -V           - print version information",
-	0
-};
+char *lpq_msg = 
+"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n\
+  -a           - all printers\n\
+  -A           - use authentication\n\
+  -c           - clear screen before update\n\
+  -l           - increase (lengthen) detailed status information\n\
+                 additional l flags add more detail.\n\
+  -Ddebuglevel - debug level\n\
+  -Pprinter    - specify printer\n\
+  -s           - short (summary) format\n\
+  -tsleeptime  - sleeptime between updates\n\
+  -V           - print version information\n";
 
-char *lpstat_msg[] = {
-"usage: %s [-d] [-r] [-R] [-s] [-t] [-a [list]]
-  [-c [list]] [-f [list] [-l]] [-o [list]]
-  [-p [list]] [-P] [-S [list]] [list]
-  [-u [login-ID-list]] [-v [list]]
- list is a list of print queues
- -a [list] destination status *
- -c [list] class status *
- -f [list] forms status *
- -o [list] job or printer status *
- -p [list] printer status *
- -P        paper types - ignored
- -r        scheduler status
- -s        summary status information - short format
- -S [list] character set - ignored
- -t        all status information - long format
- -u [joblist] job status information
- -v [list] printer mapping *
- * - long status format produced",
-0
-};
+char *lpstat_msg = 
+"usage: %s [-d] [-r] [-R] [-s] [-t] [-a [list]]\n\
+  [-c [list]] [-f [list] [-l]] [-o [list]]\n\
+  [-p [list]] [-P] [-S [list]] [list]\n\
+  [-u [login-ID-list]] [-v [list]]\n\
+ list is a list of print queues\n\
+ -a [list] destination status *\n\
+ -c [list] class status *\n\
+ -f [list] forms status *\n\
+ -o [list] job or printer status *\n\
+ -p [list] printer status *\n\
+ -P        paper types - ignored\n\
+ -r        scheduler status\n\
+ -s        summary status information - short format\n\
+ -S [list] character set - ignored\n\
+ -t        all status information - long format\n\
+ -u [joblist] job status information\n\
+ -v [list] printer mapping *\n\
+ * - long status format produced\n";
 
 void usage(void)
 {
 	if( LP_mode ){
-		Printlist( lpstat_msg, stderr );
+		fprintf( stderr, lpstat_msg, Name );
 	} else {
-		Printlist( lpq_msg, stderr );
+		fprintf( stderr, lpq_msg, Name );
 	}
 	exit(1);
 }

@@ -1,8 +1,7 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl jmason 23 dec 94 -- fixed union wait and sys_errlist checks
 dnl Patrick Powell Fri Jul  7 21:08:48 PDT 1995
-dnl $Id: configure.in,v 3.14 1997/03/24 00:45:58 papowell Exp papowell $
+dnl $Id: configure.in,v 3.27 1998/01/12 20:29:02 papowell Exp $
 dnl  Original version from PLP4.0 Release
 
 AC_INIT(Makefile.in)
@@ -11,7 +10,7 @@ AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER(config.h)
 
 PACKAGE=LPRng
-VERSION=3.1.10
+VERSION=3.4.2
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -25,6 +24,51 @@ AC_SUBST(SHELL)
 AC_SUBST(CPP)
 AC_SUBST(CFLAGS)
 AC_SUBST(LDCC)
+
+dnl
+dnl Allow the user to specify where the lpd binary should be installed.
+dnl Default: ${bindir} for backward compability.  I personally feel it should
+dnl default to ${sbindir}  :-)
+dnl
+
+dnl comment out the AC_MSG_CHECKING and the AC_MSG_RESULT below if you don't
+dnl want the user informed during the configure process where stuff is going
+dnl
+AC_MSG_CHECKING(where to install the lpd binary)
+AC_ARG_WITH(lpddir,
+[  --with-lpddir=DIR       where to install the lpd binary.  default: \$(bindir)]
+,
+	LPRNGLPDDIR=$withval,
+	LPRNGLPDDIR='${bindir}'
+)
+
+AC_MSG_RESULT($LPRNGLPDDIR)
+AC_SUBST(LPRNGLPDDIR)
+
+
+dnl
+dnl Allow the user to specify where the "administrative" commands (lpc,
+dnl checkpc, et. al.  -- commands designed to be run more often by an admin
+dnl than by a normal user) should be installed.
+dnl
+dnl Default: ${bindir} for backward compability.  I personally feel it should
+dnl default to ${sbindir}  :-)
+dnl
+
+dnl comment out the AC_MSG_CHECKING and the AC_MSG_RESULT below if you don't
+dnl want the user informed during the configure process where stuff is going
+dnl
+AC_MSG_CHECKING(where to install the LPRng administrative commands)
+AC_ARG_WITH(admindir,
+[  --with-admindir=DIR     where to install the administrative commands, like
+                          checkpc, lpc, etc.                default: \$(bindir)]
+,
+	LPRNGADMINDIR=$withval,
+	LPRNGADMINDIR='${bindir}'
+)
+
+AC_MSG_RESULT($LPRNGADMINDIR)
+AC_SUBST(LPRNGADMINDIR)
 
 
 dnl ----------------------------------------------------------------------------
@@ -87,15 +131,26 @@ case $target_os in
 		;;
 	solaris* )
 		AC_DEFINE(SVR4)
+		if test $version -lt 100 ; then
+			version=`expr $version \* 10 `;
+			echo "using version $version";
+		fi;
 		AC_DEFINE_UNQUOTED(SOLARIS,$version)
 		;;
 	hpux* )
 		AC_DEFINE(_HPUX_SOURCE)
 		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
 		AC_DEFINE_UNQUOTED(HPUX,$version)
+		if test $ac_cv_prog_gcc != yes; then
+			echo "HP UX and not using GCC, adding -Aa flag for compilation";
+			CFLAGS="$CFLAGS -Aa";
+		fi;
 		;;
 	sunos* )
 		AC_DEFINE_UNQUOTED(SUNOS,$version)
+		;;
+	alpha*dec*osf* )
+		AC_DEFINE_UNQUOTED(DECALPHA,$version)
 		;;
 esac
 
@@ -112,6 +167,12 @@ dnl check to see if we suppress probing for libraries
 dnl this is done by using the checklibs variable
 
 if test -z "$checklibs"; then
+
+	dnl BIND library may be needed,  need to force this first
+	AC_CHECK_FUNC(gethostbyname2,name2=yes)
+	if test -z "$name2" ; then
+		AC_CHECK_LIB(resolv, gethostbyname2, [LIBS="$LIBS -lresolv"])
+	fi;
 
 	dnl BSDI uses this for setproctitle
 	AC_CHECK_LIB(util, setproctitle, [LIBS="$LIBS -lutil"])
@@ -200,7 +261,8 @@ AC_CHECK_HEADERS(stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h)
 AC_CHECK_HEADERS(sys/exechdr.h sys/fcntl.h sys/file.h sys/ioctl.h sys/loader.h)
 AC_CHECK_HEADERS(sys/mount.h sys/ndir.h sys/param.h sys/pstat.h sys/resource.h)
 AC_CHECK_HEADERS(sys/select.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h)
-AC_CHECK_HEADERS(sys/syslog.h sys/systeminfo.h sys/termio.h sys/time.h sys/ttold.h)
+AC_CHECK_HEADERS(sys/syslog.h sys/systeminfo.h sys/termio.h sys/termiox.h)
+AC_CHECK_HEADERS(sys/time.h sys/ttold.h)
 AC_CHECK_HEADERS(sys/ttycom.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h)
 AC_CHECK_HEADERS(term.h termcap.h termio.h termios.h time.h unistd.h)
 AC_CHECK_HEADERS(utsname.h varargs.h vmparam.h)
@@ -211,9 +273,9 @@ dnl function checks:
 AC_CHECK_FUNCS(cfsetispeed fcntl flock gethostbyname2 getdtablesize)
 AC_CHECK_FUNCS(gethostname getrlimit inet_aton inet_ntop inet_pton)
 AC_CHECK_FUNCS(innetgr killpg lockf mkstemp)
-AC_CHECK_FUNCS(mktemp openlog seteuid setlocale setpgid setproctitle)
+AC_CHECK_FUNCS(mktemp openlog random rand seteuid setlocale setpgid setproctitle)
 AC_CHECK_FUNCS(setresuid setreuid setsid sigaction)
-AC_CHECK_FUNCS(sigprocmask sigsetjmp socketpair strcasecmp)
+AC_CHECK_FUNCS(sigprocmask siglongjmp socketpair strcasecmp)
 AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysinfo)
 AC_CHECK_FUNCS(tcflush tcsetattr uname wait3 waitpid)
 
@@ -273,6 +335,9 @@ fi
 if test "$ac_cv_struct_term" = "termios"; then
 	AC_DEFINE(USE_TERMIOS)
 	AC_DEFINE(USE_STTY,TERMIOS)
+	if test "$ac_cv_header_sys_termiox_h" = yes; then
+		AC_DEFINE(USE_TERMIOX)
+	fi
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -291,6 +356,20 @@ fi
 AC_MSG_RESULT($ac_cv_struct_exec)
 if test $ac_cv_struct_exec = yes; then
   AC_DEFINE(HAVE_STRUCT_EXEC)
+fi
+
+dnl ----------------------------------------------------------------------------
+
+dnl test to see if stdlib.h defines random
+
+AC_MSG_CHECKING(checking whether stdlib.h defines random)
+AC_TRY_COMPILE([
+#include <stdlib.h>
+],[extern char *random(int c)],
+ac_cv_stdlib_random=no, ac_cv_stdlib_random=yes)
+AC_MSG_RESULT($ac_cv_stdlib_random)
+if test $ac_cv_stdlib_random = yes; then
+  AC_DEFINE(STDLIB_DEFINES_RANDOM)
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -797,6 +876,9 @@ AM_GNU_GETTEXT
 test "$USE_NLS" = yes && LIBS="$LIBS -lintl"
 
 dnl ----------------- GCC Compilation ----------------------------------
-AC_OUTPUT(Makefile src/Makefile po/Makefile.in man/Makefile TESTSUPPORT/Makefile
- Makefile.bsd src/Makefile.bsd man/Makefile.bsd TESTSUPPORT/Makefile.bsd,
- sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile)
+AC_OUTPUT(Makefile src/Makefile po/Makefile.in man/Makefile
+ TESTSUPPORT/Makefile Makefile.bsd src/Makefile.bsd man/Makefile.bsd
+ TESTSUPPORT/Makefile.bsd HOWTO/Makefile,
+ cp po/Makefile.in po/Makefile
+ cp po/Makefile.in po/Makefile.bsd
+)

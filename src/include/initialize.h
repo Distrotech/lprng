@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: initialize.h
  * PURPOSE: initialize.c functions
- * $Id: initialize.h,v 3.1 1996/12/28 21:40:28 papowell Exp $
+ * $Id: initialize.h,v 3.2 1997/12/20 21:16:26 papowell Exp $
  **************************************************************************/
 
 #ifndef _INITIALIZE_H
@@ -20,7 +20,7 @@
  * of different systems needing dynamic initialization calls.
  * Setup_configuration does a second stage initialization.
  *****************************************************************/
-void Initialize( void ); 
+void Initialize( char *argv[] ); 
 void Setup_configuration( void );
  
 #endif

@@ -1,0 +1,397 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE> LPRng-HOWTO: Accounting</TITLE>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-12.html">Next</A>
+<A HREF="LPRng-HOWTO-10.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc11">Contents</A>
+<HR>
+<H2><A NAME="s11">11. Accounting</A></H2>
+
+<P>The LPRng method for doing accounting is based on experiences in a
+Academic environment,  where avoiding printing accounting procedures
+has long been practiced.  While the LPRng procedures are not bombproof,
+they do provide a wide range of facilities,  with various degrees
+of trust built into them.
+<H2><A NAME="ss11.1">11.1 Printer Accounting Reality Check</A>
+</H2>
+
+<P>The following was written
+by Patrick Powell
+<CODE>&lt;papowell@astart.com></CODE>
+in response to the expressions of frustration
+that are periodically vented in the
+<CODE>
+<A HREF="LPRng-HOWTO-1.html#maillist">lprng@iona.ie</A></CODE>
+mailing list.
+While this addresses the use of a particular set of printer filters,
+i.e. - the
+<A HREF="LPRng-HOWTO-6.html#ifhp">CTI-ifhp</A>
+set,
+the comments are appropriate to other issues.
+<P>In Academic institutions, avoiding printing accounting has been
+regarded as a challenge,  an ongoing game of fat cat and poor starving
+mouse, between the Administration and the downtrodden, poor, overcharged
+student.  The following is a lighthearted ramble down the dark lane of
+printing accounting.
+<P>We will disregard the fact that if most students put as much effort
+into their studies as in finding ways to avoid accounting procedures
+then they would be Rhodes Scholar material,  but I digress...
+<P>The accounting procedures put into the LPRng and the hpif filters may
+appear to be extraordinarily complex,  but believe me, they are not.
+Firstly, we make the assumption that the printer has some sort of
+non-volatile page counter mechanism that is reliable and impervious to
+power on/off cycles.  Without this mechanism the enterprising student
+ummm... user will simply turn off the printer.  Software that prescans
+jobs for line counts and pages is notoriously unreliable,  given even
+the most modest efforts of users to hide these procedures.   The cost
+of running a PostScript simulator simply to do accounting has its
+flaws; without ensuring that the simulator has all of the interesting
+security loopholes closed, such as opening files, etc.,  it can become
+a trap door to hell for the system administrator.
+<P>Secondly,  we must make the assumption that the student... uhhh...
+user will not be able to tinker with the page counter mechanism, i.e.-
+they will not be able to roll back the odometer on the printer, FOR THE
+DURATION OF A SINGLE JOB.  I will digress and point out that a student
+actualy did this for a challenge;  it only took him a couple of weeks
+of study and a fully equipped micrcontroller lab, and two (2) laser
+printers which he ruined in the experiment.  HP was not amused when we
+sent them back under warranty,  claiming that this our 'normal lab usage.'
+<P>Lastly,  you should not mind a small amount of pilferage, or a few
+pages here and there being charged to the wrong account.
+<P><B>How Does It Work?</B>
+<P>The basic mechanism the CTI/LPRng filter uses is to record the page
+counter value at the start and end of each part of a print job. Each
+record has the form:
+<PRE>
+start -ppagecounter -Ff -kjob -uuser -hhost -R... 
+end  -ppages -qpagecounter -Ff -kjob -uuser -hhost -R...
+</PRE>
+<P>When we use the OF filter and/or banners,  we will see the
+individual jobs bracketed by the OF filter records:
+<PRE>
+start -p100 -Fo -kcfA100taco -uuser -hhost -R...  
+start -p101 -Ff -kcfA100taco -uuser -hhost -R...  
+end  -p1 -q102 -Ff -kcfA100taco -uuser -hhost -R...  
+start -p102 -Ff -kcfA100taco -uuser -hhost -R...
+end  -p3 -q105 -Ff -kcfA100taco -uuser -hhost -R...  
+end  -p5 -q105 -Fo -kcfA100taco -uuser -hhost -R...
+</PRE>
+<P>It should be clear from the above that all we need to do is to add up
+the values for the -Fo (OF) filter lines and we are done.
+<P>Unfortunately,  this is too simplistic.  If for some reason the job is
+killed or terminates due to error conditions,  the OF filter may not
+get to finish its work.  Thus,  we may see the following:
+<PRE>
+start -p100 -Fo -kcfA100taco -uuser -hhost -R...  
+start -p101 -Ff -kcfA100taco -uuser -hhost -R...  
+start -p110 -Fo -kcfA101taco -uuser -hhost -R...
+</PRE>
+<P>This is a clear indication that the user's job has been terminated.  In
+this case we need to use the differences between pagecounters of the start
+records to do accounting.
+<P>There is a caveat to all of this;  that is the problem of the last dead
+job in the list.  If the last line in the accounting file is:
+<PRE>
+start -p110 -Fo -kcfA101taco -uuser -hhost -R...
+</PRE>
+
+is the last job finished or did it abort?
+<P><B>Who Used Up 2000 Pages of Paper Today?</B>
+<P>Now we move on to the problem of real time accounting.  Due to limited
+budgets, etc., many institutions would like to strictly enforce limits
+on paper use by students. As jobs are printed their accounts should be
+docked for the amount of paper use.  One way to do this is to have an
+external accounting procedure update a shared database.  The CTI filter
+has provision for a shell script to be called at the end of print job;
+this is done by both the OF and IF filter.  Thus, we can blithely
+assume that there is a central database carefully getting updates
+from the LPRng software, probably from dozens of different printers,
+and updating the accounting information.
+<P>The first question to be asked is simple:  is this worth it?
+Perhaps doing accounting as a batch job once an hour/four times
+a day/once a day is cheaper than building an running such a database.
+If it costs $5K/year for the database software, you might just consider
+ignoring the 10,000 pages that get lost in the shuffle and use
+a simple set of awk/sed/perl scripts to update a database once
+an hour.
+<P><B>BAD JOBS - Who Do We Bill?</B>
+<P>We inevitably run into an interesting question:
+what happens if a job does not complete correctly?
+<P>If you use the completion of the OF filter as a success status, I have
+to point out that many students... ummm... users soon find ways to send
+jobs to the printer that will cause it to lock up after their output
+has been printed. These jobs require power cycling of the printer and
+restarting the filter; a bit extreme, perhaps, but it has happened.
+<P>I suggest that you simply adopt a 'bill to last user of record'
+attitude,  using the pagecount information as follows:
+<PRE>
+start OF -- starting point for THIS job
+start IF --  nice information, but not useful
+start IF --
+end   OF -- ending point for this job - can record infomation
+start OF --
+if no end OF for previous job,  then treat as end OF and
+      update accounting.
+</PRE>
+<P>Now somebody is sure to complain that they got charged for a bunch of
+pages that they did not use.  This is inevitable;  always carry a
+can of oil for the squeaky wheels.  I might make the observation that
+once is accident, twice is coincidence, but three times is malice;
+be wary of the constant complainer and check out not only him or her but
+also their co-workers.
+<P><B>How Do We Update the Database?</B>
+<P>I suggest that database update be done as follows:
+<P>You maintain a 'last page reported' counter for each printer in the
+database.  When a successful job reports in,  check to see that<BR>
+pagecount + joblength ==  newpagecount;
+<P>If this is not the case,  then you have had a some unsuccessful jobs.
+In this case I strongly recommend that you have a means to request the
+accounting reporting program to go back through the accounting file and
+find the last report for the page counter value and try to backtrack
+through the accounting files.  The accounting file is one of the first
+things to be attacked by students... Ummm...  users.  It should NOT be
+kept on an NFS exported or mounted file system.  It should be
+carefully pruned and copied, perhaps on an hourly basis.
+<P>Now some administrators have fallen in love with network based printers;
+do not believe ANYTHING that comes over a network connection without
+some form of authentication;  PGP has some very nice Public Key
+mechansims for handling this.  This is a major weakness in using a
+database for keeping track of accounting - a weak authentication
+mechanism may lead to denial of service attacks by students flooding
+the database with bogus print usage reports;  suddenly NOBODY can print
+and the administrator is driven to turning off accounting.
+<P>Good luck.  I am never surprised when I encounter yet another wrinkle in
+this area.
+<P>Patrick ("You call me a Bean Counter?  Guido,  break this kid's fingers<BR>
+&nbsp; &nbsp; &nbsp; &nbsp; with an adding machine!") Powell
+<H2><A NAME="ss11.2">11.2 How HP Printers Implement Page Counters</A>
+</H2>
+
+<P>The following is from
+<A HREF="http://www.hp.com/cposupport/printers/support_doc/bpl02119.html">http://www.hp.com/cposupport/printers/support_doc/bpl02119.html</A><P><B>HP LaserJet Printer Family - Page Count</B>
+<P>Description Of The Page Count Feature On HP LaserJet 4 Family
+Printers
+<P>All HP LaserJet 4/5/6 family printers have a page count feature
+built into the firmware. However, this feature works differently
+depending on which HP LaserJet printer is being used. The following
+is a description of how the page count feature works for each
+printer within the HP LaserJet 4/5/6 printer families.
+<PRE>
+HP LaserJet 4/4M printers
+HP LaserJet 4 Plus/4M Plus printers
+HP LaserJet 4P/4MP printers
+HP LaserJet 4Si/4Si MX printers
+HP LaserJet 4ML printers
+HP LaserJet 5P/5MP printers
+HP LaserJet 6P/6MP printers
+</PRE>
+<P>All of the above printers use the same method for keeping track of
+the number of copies. There are really two different page count
+values: Primary and Secondary values. Every time a page is printed,
+whether it is an internal job (such as a self-test) or a standard
+print job, the Secondary page count increases by one. This value
+is stored in standard RAM. Once the Secondary page count value
+reaches 10, the Primary page count will increase by 10. The Primary
+page count value is stored in a type of memory called NVRAM
+(Non-Volatile RAM). This is important, since NVRAM is not cleared
+when the printer is powered off. Standard RAM, on the other hand,
+is cleared when the printer is turned off or reset. Thus, the
+Primary page count only increases in increments of 10.
+<P>Example
+<P>You have a brand new HP LaserJet 6P printer and you print a self-test
+page. When you look on the test page for the Page Count value, you
+will see that it says 1. Next, you decide to print a two page letter
+and, after that, another self-test. The page count value now says
+4. Internally, the printers Secondary page count (stored in RAM)
+has the value of 4 while the Primary page count (stored in NVRAM)
+still has the value of 0. Now, you turn the printer off, then back
+on, and print another self-test. The page count value again says
+1 since the previous value of 4, stored in RAM, was cleared when
+the printer was powered off. Finally, print a ten page document
+and then turn the printer off. Upon turning the printer back on
+and printing out another self test, you see that the page count
+value is 11.  Internally, the Secondary page count value is back
+at 1 while the Primary page count value (stored in NVRAM) is 10.
+Added together, you end up with the resulting value seen on the
+self-test page.
+<P>HP LaserJet 4L/5L/6L Printers
+<P>The reason that the page count method for the HP LaserJet 4L/5L/6L
+printers differ from that of the other printers is that the HP
+LaserJet 4L/5L/6L printers do not have any NVRAM available. Thus,
+no way exists for the printer to retain a page count value once
+the printer is powered off. The HP LaserJet 4L/5L/6L printers have
+only a single page count value that increases in increments of one
+until the printer is powered off. At that point, the page count
+value is reset and begins from 0 once again.
+<P>
+<A NAME="accountingserver"></A> <H2><A NAME="ss11.3">11.3 Accounting Printcap Options</A>
+</H2>
+
+<P>The accounting facilities are controlled and enabled by the following
+entries in the printcap file.  The default value is indicated.
+<P>
+<CENTER><TABLE BORDER><TR><TD>
+<BR>
+Tag</TD><TD>Default Value</TD><TD>Purpose</TD></TR><TR><TD>
+af</TD><TD>NULL</TD><TD>accounting file name</TD></TR><TR><TD>
+as</TD><TD>"jobstart $H $n $P $k $b $t"</TD><TD>accounting info for job start</TD></TR><TR><TD>
+ae</TD><TD>"jobend $H $n $P $k $b $t"</TD><TD>accounting info for job end</TD></TR><TR><TD>
+accounting_server</TD><TD>NULL</TD></TR><TR><TD>
+achk</TD><TD>FALSE</TD></TR><TR><TD>
+la</TD><TD>TRUE</TD><TD>do accounting for 'local' printer</TD></TR><TR><TD>
+ar</TD><TD>FALSE</TD><TD>do accounting for 'remote' transfers</TD></TR><TR><TD>
+
+</TD></TR></TABLE></CENTER>
+<P>
+<H2><A NAME="ss11.4">11.4 Accounting File</A>
+</H2>
+
+<P>The most common method of accounting is to record the start and end
+times of a job and its size to the accounting file. A typical entry
+for the printcap defaults are shown below.
+<PRE>
+jobstart -H'taco.astart.com' -n'root' -P'ps' -k'cfA938taco.astart.com' \
+    -b'1093' -t'Nov  5 19:39:59'
+start -p'12942' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
+    -c'0' -F'o' -t'Sun Nov  5 19:39:25 1995'
+start -p'12944' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
+    -c'0' -F'f' -t'Sun Nov  5 19:39:27 1995'
+end -p'12944' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
+    -b'3' -c'0' -F'f' -t'Sun Nov  5 19:39:58 1995'
+end -p'12942' -k'cfA938taco.astart.com' -n'root' -h'taco.astart.com' -P'ps' \
+    -b'2' -c'0' -F'o' -t'Sun Nov  5 19:39:59 1995'
+jobend -H'taco.astart.com' -n'root' -P'ps' -k'cfA938taco.astart.com' \
+    -b'1093' -t'Nov  5 19:39:59'
+</PRE>
+<P>The <CODE>jobstart</CODE> and <CODE>jobend</CODE> lines are added by the LPD server,  as
+specified by the <CODE>as</CODE> and <CODE>ae</CODE> printcap options;
+the -b (byte count) indicates the numbers of bytes in the job.
+<P>The <CODE>start</CODE> and <CODE>end</CODE>
+lines are produced by the filters;
+the of filter has an -Fo, and the if filter a -Ff entry.
+The filters in the LPRng distribution produce the
+indicated output format by default.
+The -p value is the current value of a page counter device (if any),
+and the -b value indicates the total number of pages used.
+<P>It should be clear that a simple AWK or Perl script will be able to
+process an accounting file and update accounting information for
+accounting purposes;  the usual problems with truncation, time stamps,
+etc., are left as an exercise for the system administrator.
+<P>Note that the accounting file must exist; LPRng will not create it
+(and also will not create the log file).  This prevents accidentally
+growing log and accounting files.
+<H2><A NAME="ss11.5">11.5 Remote Server Accounting</A>
+</H2>
+
+<P>To accommodate even more aggressive and centralized accounting,
+a method to make a connection to a print server and send information
+to the server has been provided as well.
+If <CODE>achk</CODE> option is set,
+it is assumed that the <CODE>af</CODE> entry specifies a connection to
+server on a remote host.
+The <CODE>lpd</CODE> server will send the <CODE>as</CODE> string to the server,
+and then wait for a single line of text from the remote server.
+If the first word on the return line is
+<CODE>accept</CODE> or <CODE>hold</CODE>,
+the job will be either accepted for printing or held.
+Any other value will cause the job to be deleted.
+<P>At the end of the job the <CODE>ae</CODE> string will be sent to the server.
+No response is expected.  Example:
+<P>
+<PRE>
+:af=accounting.site.com%2300,tcp
+:achk
+:as=starting
+:ae=ending
+</PRE>
+<P>The port that the connection originates from will be in the range
+set by the configuration or printcap
+<CODE>
+<A HREF="LPRng-HOWTO-14.html#originateport">originate_port</A></CODE>
+option.
+<H2><A NAME="ss11.6">11.6 Using Filters For Accounting</A>
+</H2>
+
+<P>Some sites have expressed interest in using a central accounting
+mechanism to check that users have permissions.  This can be done by
+using the an alternative form of the as (accounting start) and ae
+(accounting end) printcap tags.  If the as and ae are filter
+specifications,  then a filter is invoked.  If the as (accounting
+start) filter returns a non-zero exit status,  then its value
+is used to handle the job as indicated by
+the
+<A HREF="LPRng-HOWTO-6.html#termination">Abnormal Termination</A>
+codes for filters.
+At the end of the job the :ae: filter will be invoked in a similar manner,
+but its exit status is ignored.
+<P>When using an accounting filter,
+the STDIN  is attached (read/write) to the accounting file or remote host
+specified by the <CODE>af</CODE> printcap option,
+STDOUT to the output device,
+and STDERR to the log file.
+The filter program would be invoked with the default filter options.
+<P>For example, here is a sample entry to check and update accounting
+<PRE>
+printer
+   :as=|/usr/local/lib/filters/accounting.pl start
+   :ae=|/usr/local/lib/filters/accounting.pl end
+</PRE>
+<H2><A NAME="ss11.7">11.7 Accounting Utility accounting.pl</A>
+</H2>
+
+<P>In order to provide a framework for doing using the outlined accounting
+methods,  the LPRng distribution
+<CODE>UTILS</CODE> directory has a <CODE>accounting.pl</CODE> script.
+This script does the following.
+<OL>
+<LI>It is assumed that the accounting filter is invoked with the
+following printcap entry.
+The start and end is used by the filter to determine at which point in
+the accounting process it is invoked.
+<PRE>
+printer
+   :as=|/usr/local/lib/filters/accounting.pl start
+   :ae=|/usr/local/lib/filters/accounting.pl end
+</PRE>
+</LI>
+<LI>It maintains the accounting file as a set of entries in the following format:
+<PRE>
+START [job identification]
+start -pnn ...
+...
+end -pnn+pagecount ...
+END -ppagecount [job identification]
+</PRE>
+</LI>
+<LI>Each time the filter is invoked with the <CODE>start</CODE>
+tags,
+it will add a <CODE>START</CODE> record to the end of the accounting file.</LI>
+<LI>When it is invoked with the <CODE>end</CODE> option,
+it will update the accounting file and add an <CODE>END</CODE> entry.</LI>
+<LI>It will handle aborted jobs by looking for jobs with have a <CODE>START</CODE>
+entry and a following <CODE>start</CODE> line and assuming that they
+progressed to the point of starting print operations,
+i.e. - the printer page counter was accessed and reported.
+It will then look for the next <CODE>START</CODE> entry with a
+following <CODE>start</CODE> line,
+and assume that the pages between the two points were used by the
+aborted job.</LI>
+</OL>
+<P>Administrators can use this script as a starting point for more advanced
+accounting.
+For example,
+rather than just recording the information,
+at the job start the script can query either a local database
+or a remote server to see if the user has permissions to access the printer.
+At the end of the job or when an <CODE>END</CODE> line is written to the
+accounting file,
+the local database or remote accounting server can be updated.
+<A NAME="authref"></A> <HR>
+<A HREF="LPRng-HOWTO-12.html">Next</A>
+<A HREF="LPRng-HOWTO-10.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc11">Contents</A>
+</BODY>
+</HTML>

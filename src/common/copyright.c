@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -15,11 +15,11 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: copyright.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+"$Id: copyright.c,v 3.3 1997/09/18 19:45:52 papowell Exp $";
 
 char *Copyright[] = {
 "LPRng version " PATCHLEVEL "",
-"Author: Patrick Powell, <papowell@sdsu.edu>",
+"Author: Patrick Powell, <papowell@astart.com>",
 "Contributors include:",
 "  Justin Mason, Iona Technologies <jmason@iona.ie>",
 "  Angus Duggan, Harlequin Ltd. <angus@harlequin.co.uk>",

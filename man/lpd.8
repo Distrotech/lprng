@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -20,7 +20,7 @@
 .\}
 ..
 .ig
-$Id: lpd.8,v 3.15 1997/03/05 04:40:04 papowell Exp papowell $
+$Id: lpd.8,v 3.43 1998/01/12 20:29:38 papowell Exp $
 ..
 .SH NAME
 lpd \- line printer daemon
@@ -114,7 +114,7 @@ and start printing.
 .PP
 LPD access control is provided by two means:
 the pathnames or programs specified by the
-.I printer_perm_path
+.I perms_path
 configuration information and the
 printcap
 .B XU
@@ -145,11 +145,11 @@ DEFAULT ACCEPT
 REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
 # Only accept Printing (P) and spooling (LPR) from
 # Engineering Lab or the Dean's office
-REJECT SERVICE=P,R NOT REMOTEHOST=*.eng.sdsu.edu,dean.sdsu.edu
+REJECT SERVICE=P,R NOT REMOTEHOST=*.eng.astart.com,dean.astart.com
 # Do not accept forwarded jobs for printing
 REJECT SERVICE=P FORWARD
 # Allow only the administrators control access
-ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.sdsu.edu USER=root,papowell
+ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.astart.com USER=root,papowell
 ACCEPT SERVICE=C,M SERVER REMOTEUSER=root,papowell
 # Allow only the user on the same host who spooled job to remove it
 ACCEPT SERVICE=M SAMEUSER SAMEHOST
@@ -335,16 +335,16 @@ The following are typical printer entries for a local and remote printer.
 # remote postscript printer
 fullpage
    |postscript
-   :lp=postscript@farside.sdsu.edu
+   :lp=postscript@farside.astart.com
 # give access to (remote) hosts
 t1|postscript2
    :cm=Test Printer 1
-   :lp=postscript2@nearside.sdsu.edu
+   :lp=postscript2@nearside.astart.com
 
 # local printcap file
 # specification for local printer on nearside
 t1|postscript2
-   :oh=nearside.sdsu.edu
+   :oh=nearside.astart.com
    :cd=/usr/spool/LPD/safe
    :sd=/usr/spool/LPD/t1
 #
@@ -467,10 +467,10 @@ File Name	Dir	Purpose
 printer	CD	lock file and server process PID
 unspooler.printer	CD	subserver process PID
 control.printer	CD	queue control information
-*hfAnnnHOST	SD	job hold file
+*hfAnnn	SD	job hold file
 *cfAnnnHOST	SD	job control file
 *dfAnnnHOST	SD	job data file
-*bfAnnnHOST.*	SD	tempory files
+*bfAnnn.*	SD	tempory files
 .sp
 .fi
 .PP
@@ -491,7 +491,7 @@ It consists of a series of lines with keywords and values to control
 printing,
 spooling,
 and automatic job holding operations.
-The following is an example of a typical control file.
+The following is an example of a typical spool control file.
 .sp
 .nf
 .RS
@@ -716,12 +716,51 @@ The LPRng software sends the control file first,
 followed by the data files.
 .PP
 If the LPR program is acting as a filter,
-it is not necessary to create a data file on the local machine.
-The input data can be sent directly to the LPD server for spooling.
+it is not necessary to temporarily store the
+print job on the local machine.
+The input data can be sent directly to the LPD server for spooling
+using an implicit job size of 0 and sending data until the connection
+is terminated to the server.
 However,
-some other LPD servers do not accept this action,
-even though it is specified by the RFC1179.
-The LPR -k (seKure) option allows this direct transmission mode.
+some LPD servers do not accept 0 size jobs,
+even though it is specified by the RFC1179,
+so by default LPR will create a temporary file.
+The LPR -k (seKure) option specifies this direct transmission mode
+be used.
+.SH "JOB TRANSMISSION"
+.PP
+When LPR is to send a job to the server,
+it must determine the location of the server.
+It does this by examining the values of the
+specified printer and host.
+.PP
+If the printer and host are explicitly specified in the form
+.L "pr@host"
+then the LPR program will send the job to the specified spool queue
+.L pr
+and to the server running on
+.L host .
+This can be explicitly specified by the PRINTER environment variable
+or by the LPR -P option.
+.PP
+If the printer is specified only by a name,
+then the information in the printcap database is used.
+The printcap entry for the printer is searched for and the
+remote host and printer information extracted.
+The job is sent to the server running on the specified host.
+.PP
+This action can be modified by the following printcap or configuration
+tags.
+.IP 1. default_host=host
+(Configuration)
+If there is no printcap entry for the printer,
+the job is sent to the LPD server running on
+.L host .
+.IP 2. force_localhost
+(Configuration or printcap)
+If this flag is specified,  then LPR and other client programs will
+send the job to the server running on the localhost.
+This overrides the default_host information.
 .SH "FORWARDING OPERATIONS"
 .PP
 The LPD system can forward jobs from one spool directory to another.
@@ -729,15 +768,30 @@ This is controlled by the following options.
 .IP 1. 5
 The forward field in the spool control file has a value
 rp@rm.
+This can be set using the LPC forward command.
 .IP 2. 5
 The lp (line printer) printcap entry has the form rp@rm.
-.IP 3. 5
 There is a rm (remote machine) and optional rp (remote printer) printcap entry.
 .LP
 The first of the above conditions to be met will determine the
 destination.
 If printing is enabled,
 then jobs will be forwarded to the remote destination.
+Example:
+.DS
+.ft CW
+.nf
+# using lp=rp@host
+test:sd=/usr/spool/test
+  :lp=test@host
+test:sd=/usr/spool/test
+  :lp=test@host%port
+# using :rp:rm:
+test:sd=/usr/spool/test
+  :rp=test:rm=host
+.ft R
+.DE
+.IP 3. 5
 .PP
 The LPD server uses the same algorithm for sending jobs as the
 LPR program.
@@ -746,11 +800,15 @@ to the server.
 A set of timeouts is used to control error recover and retry operations.
 The printcap and configuration variables
 .I connect_timeout,
-.I connect_retry,
 .I connect_interval,
+.I connect_grace,
 and
-.I connect_grace
+.I send_try
 control connecting to the remote host.
+A connection is attempted to the remote server from a
+random port in the range of ports specified by the
+.I originate_port
+variable.
 If a connection is not completed within
 .I connect_timeout
 seconds,
@@ -758,12 +816,12 @@ the connection is aborted,
 and then after the 
 .I connect_interval
 seconds it is retried.
-This is done for
-.I connect_retry
-times,
-and then the job processing is terminated.
-A timeout value of 0 indicates no timeout;
-a retry value of 0 specifies infinite retries.
+The procedure repeated
+indefinately for printing,
+but only once for status or control operations.
+A
+connect_timeout value of 0 indicates no timeout;
+a value of 0 specifies infinite timeout
 After a job has been successfully printed,
 the connection is closed and the server waits for
 .I connect_grace
@@ -795,6 +853,7 @@ For example,
 the following printcap entry will filter format f files.
 .ne 1i
 .DS
+.ft CW
 .nf
 testbq:sd=/usr/spool/testbq:
   :lp=testbq@host:bq=final@host
@@ -802,11 +861,12 @@ testbq:sd=/usr/spool/testbq:
   :mf=/usr/lib/filter_for_m
   :pf=/usr/lib/filter_for_pr
   :translate_format=mfpf
+.ft R
 .DE
 .fi
 .PP
 When using a bounce queue,
-it is sometimes desirable to have the filters actually change the
+it is usually desirable to have the filters actually change the
 format types of the job as well as processing the data.
 This conversion can be forced using the printcap
 .L translate_format
@@ -819,6 +879,7 @@ the p format is processed similarly.
 Note that the lpr -p option specifies that the job will be processed by the
 .L /bin/pr
 command - the filter must do both the pr processing and any necessary format conversions.
+.SH "LPR FILTER PROCESSING"
 .PP
 The
 .L :lpr_bounce:
@@ -826,7 +887,95 @@ printcap flag will cause LPR to do bounce queue filtering before sending the
 job to the remote queue.
 This can have unexpected effects if the filters are not
 available on the local host.
-.SH "REFORMATTING CONTROL FILES"
+.PP
+A typical entry which will cause LPR to do filtering is shown below.
+.ne 1i
+.DS
+.ft CW
+.nf
+testbq:lpr_bounce
+  :lp=printer@host
+  :if=/usr/lib/filter_for_f
+  :vf=/usr/lib/filter_for_v
+  :mf=/usr/lib/filter_for_m
+  :translate_format=mfvf
+.ft R
+.DE
+.PP
+This entry will force LPR to run jobs with formats f, m, and v
+through the appropriate filter.
+It will also rename the formats to the f format.
+.SH "ROUTING JOBS TO PRINTERS"
+.PP
+When a job is submitted for printing,
+sometimes it is desirable to have it dynamically rerouted to another
+spool queue, or multiple copies send to various destination.
+This can be done by using a
+.L routing_filter .
+.PP
+When a job is accepted by the LPD server,
+part of the processing includes passing it to a program specified
+by the printcap
+.L router
+entry.
+This filter is invoked with the original control file as STDIN,
+and the default set of filter options.
+The output of the routing filter will be a set of directives
+used by LPD when forwarding the job to another printer
+or in processing the job.
+The environment and options flags are set as for a standard filter.
+(See "FILTERS" for details.)
+Here is a sample printcap entry:
+.DS
+.ft CW
+.nf
+t2|Test Printer 2:sd=/var/spool/LPD/t2
+    :lf=log
+    :lp=t2@printserver
+    :bq=t1@localhost
+    :destinations=t1@localhost,t2@localhost
+    :router=/usr/local/LPD/router
+.ft R
+.DE
+.PP
+The routing filter exit status is used as follows:
+.nf
+.ta 4n +4n +4n +4n +4n +4n
+	0  (JSUCC) - normal processing
+	37 (JHOLD) - job is held
+	any other value - job is deleted from queue
+.fi
+.PP
+The router filter returns one or more routing entries with the
+following format.  Note that entry order is not important, but each
+entry will end with the 'end' tag.
+.DS
+dest <destination queue>
+copies <number of copies to be made>
+X<controlfile modifications>
+end
+.DE
+.PP
+Example of router output:
+.DS
+.ft CW
+.nf
+dest t1@localhost
+copies 2
+CA
+end
+dest t2@localhost
+CZ
+end
+.ft R
+.DE
+.PP
+The above routing information will have copies of the job sent to
+the t1 and t2 spool queue servers.  If no valid routing information
+is returned by the router filter the job will be sent to the default
+bounce queue destination.
+.PP
+.SH "REFORMATING CONTROL FILES"
 .PP
 Sometimes it is desirable to reformat a control file before
 sending to a remote destination.
@@ -839,6 +988,11 @@ then the job is process normally;
 status JABORT causes the job processing to be aborted,
 status JREMOVE causes the job processing to be removed,
 and any other status is treated as JFAIL.
+.PP
+After passing the control file through the control_filter,
+the LPD server will reread it,
+and transfer only the data files specified in the new control file
+to the destination.
 .SH "SPOOL QUEUE NAME OPTION"
 .PP
 The
@@ -1254,6 +1408,10 @@ and accounting information sent there.
 All other forms will be treated as a pathname relative to the
 queue spool directory.
 .PP
+If af specifies a file,
+then the accounting information is appended to an existing file;
+the accounting file will not be created.
+.PP
 When af specifies a filter or network connection and the
 achk flag is set,
 then after writting the initial accounting information (see as printcap field below)
@@ -1581,12 +1739,12 @@ by Kerberos.
 For example,
 user principals have the form user@REALM;
 for example,
-papowell@SDSU.EDU.
+papowell@ASTART.COM.
 Services and/or servers have the form service/host@REALM;
 for example,
 the lpd server on dickory would have the form:
 .ti +5n
-lpr/dickory.sdsu.edu@SDSU.EDU
+lpr/astart2.astart.com@ASTART.COM
 .PP
 User to server authenticaiton process will use the user's principal
 name,
@@ -1725,4 +1883,4 @@ LPRng is distributed under the GNU software license for non-commercial
 use,
 the Artistic License for limited commercial use. 
 Commerical support and licensing is available through
-Patrick Powell <papowell@sdsu.edu>.
+Patrick Powell <papowell@astart.com>.

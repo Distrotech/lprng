@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: link_support.c,v 3.5 1997/02/04 21:41:05 papowell Exp papowell $";
+"$Id: link_support.c,v 3.17 1998/01/08 09:51:15 papowell Exp $";
 
 /***************************************************************************
  * MODULE: Link_support.c
@@ -21,9 +21,8 @@ static char *const _id =
  * int Link_port_num()
  *        gets destination port number for connection
  *
- * int Link_open(char *host, int retry, int timeout )
+ * int Link_open(char *host, int int timeout )
  *    opens a link to the remote host
- *    if fails, retries 'retry' times at 'interval'
  *    if timeout == 0, wait indefinately
  *    returns socket fd (>= 0); LINK errorcode (negative) if error
  *
@@ -162,7 +161,7 @@ Local_port:  The BSD UNIX networking software had a concept of reserved
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
- * int Link_open(char *host, int retry, int timeout );
+ * int Link_open(char *host, int timeout );
  * 1. Set up an inet socket;  a socket has a local host/local port and
  *    remote host/remote port address part.  The routine
  *    will attempt to open a privileged port (number less than
@@ -208,11 +207,11 @@ int Link_setreuse( int sock )
 	return( option );
 }
 /*
- * int getconnection(char *host, int timeout )
+ * int getconnection ( int force_localhost, char *hostname,
+ *    int timeout, int connection_type )
  *   opens a connection to the remote host
- * 1. gets the remote host address
- * 2. gets the local port information, and binds a socket
- * 3. makes a connection to the remote host
+ * Note:
+ *       if force_localhost != 0, then we only try localhost
  */
 
 
@@ -234,22 +233,31 @@ static int connect_timeout( int timeout,
 	return( status );
 }
 
-int getconnection ( char *hostname, int timeout, int connection_type )
+int getconnection ( int force_localhost, char *hostname, int timeout,
+	int connection_type )
 {
-	int sock;            /* socket */
+	int sock;	         /* socket */
 	int i, err;            /* ACME Generic Integers */
 	struct sockaddr_in dest_sin;     /* inet socket address */
+	struct sockaddr_in localhost_sin;     /* inet socket address */
+	struct sockaddr_in use_sin;     /* inet socket address */
 	struct sockaddr_in src_sin;     /* inet socket address */
-	int maxportno, minportno;	/* max and minimum port numbers */
+	int maxportno, minportno;
+	int port = 0;			/* max and minimum port numbers */
 	int euid;
-	int status;				/* status of operation */
+	int status = -1;			/* status of operation */
 	plp_block_mask oblock;
+	int port_count = 0;			/* numbers of ports tried */
+	int connect_count = 0;		/* number of connections tried */
+	int port_number;
+	int range;				/* range of ports */
+	char *use_host;
 
 	/*
 	 * find the address
 	 */
-	DEBUGF(DNW1)("getconnection: host %s, timeout %d, connection_type %d",
-		hostname, timeout, connection_type);
+	DEBUGF(DNW1)("getconnection: START host %s, timeout %d, connection_type %d, force_localhost %d",
+		hostname, timeout, connection_type, force_localhost);
 	euid = geteuid();
 	sock = -1;
 	memset(&dest_sin, 0, sizeof (dest_sin));
@@ -281,8 +289,15 @@ int getconnection ( char *hostname, int timeout, int connection_type )
 		"/etc/services file for a missing 'printer 515/tcp' entry" );
 		return( LINK_OPEN_FAIL );
 	}
+	localhost_sin.sin_family = AF_Protocol;
+	localhost_sin.sin_family = LocalhostIP.host_addrtype;
+	memcpy( &localhost_sin.sin_addr, (void *)LocalhostIP.host_addr_list.list,
+		LocalhostIP.host_addrlength );
+	localhost_sin.sin_port = dest_sin.sin_port;
 	DEBUGF(DNW2)("getconnection: destination IP '%s' port %d",
 		inet_ntoa( dest_sin.sin_addr ), ntohs( dest_sin.sin_port ) );
+	DEBUGF(DNW2)("getconnection: localhost '%s', port %d",
+		inet_ntoa( localhost_sin.sin_addr), ntohs( localhost_sin.sin_port ) );
 
 	/* check on the low and high port values */
 	/* we decode the minimum and  maximum range */
@@ -301,6 +316,9 @@ int getconnection ( char *hostname, int timeout, int connection_type )
 			}
 		}
 	}
+	DEBUGF(DNW2)(
+		"getconnection: Originate_port '%s' minportno %d, maxportno %d",
+		Originate_port, minportno, maxportno );
 	/* check for reversed order ... */
 	if( maxportno < minportno ){
 		i = maxportno;
@@ -321,96 +339,199 @@ int getconnection ( char *hostname, int timeout, int connection_type )
 			minportno = maxportno = 0;
 		}
 	}
-	DEBUGF(DNW2)("getconnection: minportno %d, maxportno %d",
-		minportno, maxportno );
+	range = maxportno - minportno;
+	if( minportno && range ){
+		port = plp_rand(range);
+	} else {
+		port = 0;
+	}
 
 	/* we now have a range of ports and a starting position
-	 * Note 1: if port == 0, then we get any port,
+	 * Note 1: if minportno == 0, then we use assignment by connect
 	 *  and do not set SOCKREUSE.  We only try once.
-     * Note 2: if port != 0, then we get port in range.
-     *  we DO set SOCKREUSE.
+     * Note 2: if minportno != 0, then we get port in range.
+     *  we DO set SOCKREUSE if Reuse_addr set
      * Note 3. we try all ports in range; if none work,
      *  we get an error.
-     */ 
-	do{
-		/*
-		 * do the sock et, bind and the set reuse flag operation as
-		 * ROOT;  this appears to be the side effect of some
-		 * very odd system implementations.  Note that you can
-		 * read and write to the socket as a user.
-		 */
-		plp_block_all_signals( &oblock );
-		if( UID_root ) (void)To_root();
-		sock = socket(AF_Protocol, connection_type, 0);
-		err = errno;
-		if( UID_root ) (void)To_uid( euid );
-		plp_unblock_all_signals( &oblock );
-		if( sock < 0 ){
-			errno = err;
-			logerr_die(LOG_DEBUG, "getconnection: socket call failed");
-		}
-		DEBUGF(DNW4) ("getconnection: socket %d", sock);
+     * 
+	 *
+	 * do the sock et, bind and the set reuse flag operation as
+	 * ROOT;  this appears to be the side effect of some
+	 * very odd system implementations.  Note that you can
+	 * read and write to the socket as a user.
+	 */
+	DEBUGF(DNW2)("getconnection: RESTART force_localhost '%d'",force_localhost);
+	port_count = 0;			/* numbers of ports tried */
+	port_number = 0;
+	connect_count = 0;		/* number of connections tried */
+	if( minportno ){
+		port_number = minportno + port;
+	}
+	DEBUGF(DNW2)("getconnection: minportno %d, maxportno %d, range %d, port_number %d",
+		minportno, maxportno, range, port_number );
 
-		src_sin.sin_family = AF_Protocol;
-		/* src_sin.sin_addr.s_addr = HostIP; */
-		src_sin.sin_addr.s_addr = INADDR_ANY;
-		src_sin.sin_port = htons((u_short)minportno);
+again:
+	DEBUGF(DNW2)("getconnection: AGAIN port %d, count %d, connects %d",
+		port_number, port_count, connect_count );
+	plp_block_all_signals( &oblock );
+	if( UID_root ) (void)To_root();
+	sock = socket(AF_Protocol, connection_type, 0);
+	err = errno;
+	if( UID_root ) (void)To_uid( euid );
+	plp_unblock_all_signals( &oblock );
+	if( sock < 0 ){
+		errno = err;
+		logerr_die(LOG_DEBUG, "getconnection: socket call failed");
+	}
+	DEBUGF(DNW4) ("getconnection: socket %d", sock);
 
-		plp_block_all_signals( &oblock );
-		if( UID_root ) (void)To_root();
+	/* bind to an outgoing port if you need to */
+	if( minportno ){
+		do{
+			src_sin.sin_family = AF_Protocol;
+			src_sin.sin_addr.s_addr = INADDR_ANY;
+			if( port_number > maxportno ) port_number = minportno;
+			DEBUGF(DNW2) ("getconnection: trying port %d", port_number );
+			src_sin.sin_port = htons((u_short)(port_number));
+			port_number++;
 
-		/* we do the next without interrupts */
-		status = bind(sock, (struct sockaddr *)&src_sin, sizeof(src_sin));
-
-		/* set up the 'resuse' flag on socket, or you may not be
-			able to reuse a port for up to 10 minutes */
-		if( minportno && status >= 0 ) status = Link_setreuse( sock );
-
-		if( UID_root ) (void)To_uid( euid );
-		plp_unblock_all_signals( &oblock );
-
-		DEBUGF(DNW2) ("getconnection: sock %d, port %d, bind and reuse status %d",
-			sock, minportno, status );
-
+			/* set the reuse_addr before bind */
+			status = 0;
+			if( Reuse_addr ){
+				/* set up the 'resuse' flag on socket, or you may not be
+					able to reuse a port for up to 10 minutes */
+				/* we do the next without interrupts */
+				plp_block_all_signals( &oblock );
+				if( UID_root ) (void)To_root();
+				status = Link_setreuse( sock );
+				err = errno;
+				if( UID_root ) (void)To_uid( euid );
+				plp_unblock_all_signals( &oblock );
+				DEBUGF(DNW2) ("getconnection: sock %d, reuse status %d",
+					sock, status );
+				if( status < 0 ){
+					close( sock );
+					sock = LINK_OPEN_FAIL;
+				}
+			}
+			if( status >= 0 ){
+				/* we do the next without interrupts */
+				plp_block_all_signals( &oblock );
+				if( UID_root ) (void)To_root();
+				status = bind(sock, (struct sockaddr *)&src_sin, sizeof(src_sin));
+				err = errno;
+				if( UID_root ) (void)To_uid( euid );
+				plp_unblock_all_signals( &oblock );
+				DEBUGF(DNW2) ("getconnection: sock %d, port %d, bind status %d",
+					sock, port_number, status );
+			}
+		} while( status < 0 && ++port_count < range );
 		if( status < 0 ){
-			if( sock > 0 ) close( sock );
+			close( sock );
 			sock = LINK_OPEN_FAIL;
-			continue;
+			logerr( LOG_DEBUG, "getconnection: cannot bind to port");
+			return( sock );
 		}
+	}
 
-		/*
-		 * set up timeout and then make connect call
-		 */
-		errno = 0;
-		if( UID_root ) (void)To_root();
+	/*
+	 * set up timeout and then make connect call
+	 */
+	errno = 0;
+	status = -1;
+	Alarm_timed_out = 0;
+	if( force_localhost ){
+		use_sin = localhost_sin;
+		use_host = Localhost;
+		DEBUGF(DNW2)(
+			"getconnection: trying connect to localhost '%s', no timeout",
+			use_host );
+		status = connect( sock,
+			(struct sockaddr *) &localhost_sin, sizeof(localhost_sin));
+		err = errno;
+	} else {
+		use_sin = dest_sin;
+		use_host = hostname;
+		DEBUGF(DNW2)("getconnection: trying connect to '%s', timeout %d",
+			use_host, timeout );
 		status = connect_timeout(timeout,sock,
 			(struct sockaddr *) &dest_sin, sizeof(dest_sin));
-		if( UID_root ) (void)To_uid( euid );
+		err = errno;
+	}
 
-		DEBUGF(DNW2)("getconnection: connect sock %d, status %d, errno %d",
-			sock, status, err );
-		if( status < 0 || Alarm_timed_out ){
-			if( Alarm_timed_out ) {
-				DEBUGF(DNW1)("getconnection: connection to '%s' timed out",
-					hostname);
-			} else {
-				DEBUGF(DNW1)("getconnection: connection to '%s' failed '%s'",
-					hostname, Errormsg(err) );
-			}
-			(void) close (sock);
-			sock = LINK_OPEN_FAIL;
+	DEBUGF(DNW2)(
+		"getconnection: connect sock %d, status %d, err '%s', timedout %d",
+		sock, status, Errormsg(err), Alarm_timed_out );
+	if( status < 0 || Alarm_timed_out ){
+		(void) close (sock);
+		sock = LINK_OPEN_FAIL;
+		if( Alarm_timed_out ) {
+			DEBUGF(DNW1)("getconnection: connection to '%s' timed out",
+				use_host);
+			err = errno = ETIMEDOUT;
 		} else {
-			i = sizeof( src_sin );
-			if( getsockname( sock, (struct sockaddr *)&src_sin, &i ) < 0 ){
-				logerr_die(LOG_ERR,"getconnnection: getsockname failed" );
-			}
-			DEBUGF(DNW1)( "getconnection: src ip %s, port %d, dest ip %s, port %d\n",
-				inet_ntoa( src_sin.sin_addr ), ntohs( src_sin.sin_port ),
-				inet_ntoa( dest_sin.sin_addr ), ntohs( dest_sin.sin_port ) );
+			DEBUGF(DNW1)("getconnection: connection to '%s' failed '%s'",
+				use_host, Errormsg(err) );
 		}
-	} while( sock < 0 && minportno && minportno++ < maxportno );
-	DEBUGF(DNW1)( "getconnection: socket returned %d", sock );
+		if( err == ECONNREFUSED ){
+			sock = LINK_ECONNREFUSED;
+		} 
+		if( err == ETIMEDOUT ){
+			sock = LINK_ETIMEDOUT;
+		} 
+		++connect_count;
+		if( connect_count < range
+			&& (Retry_ECONNREFUSED && err == ECONNREFUSED) ){
+			goto again;
+		}
+	} else {
+		i = sizeof( src_sin );
+		if( getsockname( sock, (struct sockaddr *)&src_sin, &i ) < 0 ){
+			logerr_die(LOG_ERR,"getconnnection: getsockname failed" );
+		}
+		DEBUGF(DNW1)( "getconnection: sock %d, src ip %s, port %d", sock,
+			inet_ntoa( src_sin.sin_addr ), ntohs( src_sin.sin_port ) );
+		DEBUGF(DNW1)( "getconnection: dest ip %s, port %d",
+			inet_ntoa( use_sin.sin_addr ), ntohs( use_sin.sin_port ) );
+		if( Socket_linger > 0 ){
+			Set_linger( sock, Socket_linger );
+		}
+	}
+	DEBUGF(DNW1)("getconnection: connection to '%s' socket %d, errormsg '%s'",
+		use_host, sock, Errormsg(err) );
+	errno = err;
 	return (sock);
+}
+
+void Set_linger( int sock, int n )
+{
+#ifdef SO_LINGER
+	DEBUGF(DNW2) ("Set_linger: SO_LINGER socket %d, value %d", sock, n );
+	if( n ){
+		int len, v, m;
+		struct linger option;
+		len = sizeof( option );
+
+		if( getsockopt( sock,SOL_SOCKET,SO_LINGER,(char *)&option, &len) ){
+			logerr_die( LOG_ERR, "Set_linger: getsockopt failed" );
+		}
+		v = option.l_onoff;
+		m = option.l_linger;
+		DEBUGF(DNW4) ("Set_linger: SO_LINGER socket %d, onoff %d, linger %d",
+			sock, v, m);
+		if( v == 0 ){
+			option.l_onoff = 1;
+			option.l_linger = n;
+			if( setsockopt( sock, SOL_SOCKET, SO_LINGER,
+					(char *)&option, sizeof(option) ) ){
+				logerr_die( LOG_ERR, "Set_linger: setsockopt failed" );
+			}
+		}
+	}
+#else
+	DEBUGF(DNW2) ("Set_linger: NO SO_LINGER, socket %d, valued %d",
+		sock, v);
+#endif
 }
 /*
  * int Link_listen()
@@ -473,30 +594,29 @@ int Link_listen( void )
 }
 
 /***************************************************************************
- * int Link_open(char *host, int retry, int timeout );
+ * int Link_open(char *host, int timeout );
  ***************************************************************************/
 
-int Link_open(char *host, int retry, int timeout )
+int Link_open(char *host, int timeout, int force_localhost )
 {
 	int sock;
-	DEBUGF(DNW4) ("Link_open: host '%s', retry %d, timeout %d",host,retry,timeout);
-	sock = Link_open_type( host, retry, timeout, Destination_port, SOCK_STREAM );
+	DEBUGF(DNW4) ("Link_open: host '%s', timeout %d, localhost %d",
+		host,timeout,force_localhost);
+	sock = Link_open_type( host, timeout, Destination_port, SOCK_STREAM, force_localhost );
 	DEBUGF(DNW4) ("Link_open: socket %d", sock );
 	return(sock);
 }
 
-int Link_open_type(char *host, int retry, int timeout, int port,
-	int connection_type )
+int Link_open_type(char *host, int timeout, int port,
+	int connection_type, int force_localhost )
 {
-	int sock;
+	int sock = -1;
 	int oldport = Destination_port;
 	Destination_port = port;
 	DEBUGF(DNW4)(
-		"Link_open_type: host '%s', retry %d, timeout %d, port %d, type %d",
-		host,retry,timeout, port, connection_type );
-	do {
-		sock = getconnection( host, timeout, connection_type );
-	} while( sock < 0 && retry-- > 0  );
+		"Link_open_type: host '%s', timeout %d, port %d, type %d",
+		host,timeout, port, connection_type );
+	sock = getconnection( force_localhost, host, timeout, connection_type );
 	Destination_port = oldport;
 	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
@@ -626,6 +746,8 @@ int Link_send( char *host, int *socket, int timeout,
 		}
 		DEBUGF(DNW3)("Link_send: ack read status %d, operation status %s, ack=%s",
 			i, Link_err_str(status), Ack_err_str(*ack) );
+
+#if !defined(IGNORE_NOVELL_EXTRA_DATA)
 		if( status == 0 && *ack == 0 ){
 			/* check to see if you have some additional stuff pending */
 			fd_set readfds;
@@ -645,6 +767,7 @@ int Link_send( char *host, int *socket, int timeout,
 				host );
 			}
 		}
+#endif
 	}
 	if( status && status != LINK_ACK_FAIL ){
 		Link_close( socket );
@@ -800,6 +923,9 @@ int Link_line_read(char *host, int *socket, int timeout,
 	char *s = 0;				/* location of \n */
 
 	len = i = status = 0;	/* shut up GCC */
+	max = *count;
+	*count = 0;
+	buf[0] = 0;
 	DEBUGF(DNW4) ("Link_line_read: reading %d from '%s' on %d, timeout %d",
 		*count, host, *socket, timeout );
 	/* check for valid socket */
@@ -809,9 +935,6 @@ int Link_line_read(char *host, int *socket, int timeout,
 		return (LINK_OPEN_FAIL);
 	}
 	/* do the read */
-	buf[0] = 0;
-	len = 0;
-	max = *count;
 	if( max > 0 ){
 		--max;
 		buf[ max ] = 0;
@@ -1076,7 +1199,14 @@ int Link_file_read(char *host, int *socket, int readtimeout, int writetimeout,
 	return( status );
 }
 
-#define PAIR(X) { #X, X }
+#undef PAIR
+#ifndef _UNPROTO_
+# define PAIR(X) { #X, X }
+#else
+# define __string(X) "X"
+# define PAIR(X) { __string(X), X }
+#endif
+
 
 static struct link_err {
     char *str;
@@ -1131,4 +1261,13 @@ const char *Ack_err_str (int n)
 		(void) plp_snprintf (buf, sizeof(buf), "ack error %d", n);
 	}
     return(s);
+}
+
+int Localhost_connection()
+{
+	int i = 0;
+	if( Force_localhost && !Is_server && Localhost && *Localhost ){
+		i = 1;
+	}
+	return( i );
 }

@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: getprinter.h
  * PURPOSE: get printer name from printcap database
- * $Id: getprinter.h,v 3.3 1997/02/15 15:01:30 papowell Exp papowell $
+ * $Id: getprinter.h,v 3.3 1997/02/15 15:01:30 papowell Exp $
  **************************************************************************/
 
 

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: spoolcontrol.c,v 3.6 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: spoolcontrol.c,v 3.8 1997/12/16 15:06:35 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -49,7 +49,6 @@ int Get_spool_control( struct stat *oldstatb, int *fdptr )
 	static struct malloc_list save_status;
 	char *buffer;
 	char *filename;
-	int lock, create;
 
 	if( fdptr ) *fdptr = 0;
 	filename = Add2_path( CDpathname, "control.", Printer );
@@ -79,21 +78,10 @@ int Get_spool_control( struct stat *oldstatb, int *fdptr )
 		}
 	}
 	/* open and lock the file */
-	fd = Lockf( filename, &lock, &create, &statb );
+	fd = Lockf( filename, &statb );
 	if( fd < 0 ){
 		logerr_die( LOG_ERR,
 			"Get_spool_control: cannot create file '%s'",filename);
-	}
-	if( lock == 0 ){
-		DEBUG4("Get_spool_control: waiting for lock" );
-		/* we need to lock the file */
-		lock = Do_lock( fd, filename, 1 );
-	}
-	if( lock <= 0 ){
-		DEBUG4("Get_spool_control: locking failed" );
-		Errorcode = JABORT;
-		logerr_die( LOG_ERR,
-			"Get_spool_control: cannot lock file '%s'",filename);
 	}
 
 	DEBUG3("Get_spool_control: file '%s', fd %d", filename, fd );
@@ -193,7 +181,6 @@ int Set_spool_control( int *fdptr, int forcechange )
 	struct stat statb, newstatb;
 	char buffer[SMALLBUFFER];
 	char *s, *t;
-	int lock, create;
 	int i, fd, len;
 	
 	dpath = *CDpathname;
@@ -227,22 +214,11 @@ int Set_spool_control( int *fdptr, int forcechange )
 	DEBUG4("Set_spool_control: file '%s', '%s'",s, buffer );
 
 	if( fdptr == 0 ){
-		fd = Lockf( s, &lock, &create, &statb );
+		fd = Lockf( s, &statb );
 		if( fd < 0 ){
 			logerr( LOG_ERR,
 				"Set_spool_control: cannot create file '%s'",s);
 			return( 1 );
-		}
-		if( lock == 0 ){
-			DEBUG4("Set_spool_control: waiting for lock" );
-			/* we want to lock the file */
-			lock = Do_lock( fd, s, 1 );
-		}
-		if( lock <= 0 ){
-			DEBUG4("Set_spool_control: locking failed" );
-			Errorcode = JABORT;
-			logerr_die( LOG_ERR,
-				"Set_spool_control: cannot lock file '%s'",s);
 		}
 	} else {
 		fd = *fdptr;

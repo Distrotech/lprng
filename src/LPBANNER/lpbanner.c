@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  * From the original PLP Software distribution
  *
@@ -21,7 +21,7 @@
  ***************************************************************************/
 #ifndef lint
 static char *const _id =
-"$Id: lpbanner.c,v 3.1 1996/12/28 21:39:59 papowell Exp $";
+"$Id: lpbanner.c,v 3.3 1997/09/18 19:45:43 papowell Exp $";
 #endif
 
 /***************************************************************************
@@ -141,7 +141,7 @@ extern void cleanup( void );
 int main( int argc, char *argv[], char *envp[] )
 {
 	/* set umask to safe level */
-	umask( 0177 );
+	umask( 0077 );
 	getargs( argc, argv, envp );
 	/*
 	 * Turn off SIGPIPE

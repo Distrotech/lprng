@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -17,7 +17,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc_perm.c,v 3.4 1997/01/30 21:15:20 papowell Exp $";
+"$Id: checkpc_perm.c,v 3.6 1997/12/31 19:30:10 papowell Exp $";
 
 /***************************************************************************
  Commentary
@@ -31,7 +31,8 @@ static char *const _id =
 
  ***************************************************************************/
 
-static int gid, uid;
+static int Gid, Uid;
+static int gotuid;
 
 int Check_perms( struct dpathname *dpath, int fix, int age, int remove )
 {
@@ -43,8 +44,11 @@ int Check_perms( struct dpathname *dpath, int fix, int age, int remove )
 
 	/* get the required group and user ids */
 	t = time( (void *)0 );
-	gid = Getdaemon_group();
-	uid = Getdaemon();
+	if( ! gotuid ){
+		Gid = Getdaemon_group();
+		Uid = Getdaemon();
+		gotuid = 1;
+	}
 
 	DEBUG4("Check_perms: '%s'", dpath->pathname );
 
@@ -104,6 +108,11 @@ int check_file( struct dpathname *dpath,
 	int err;
 
 	path = dpath->pathname;
+	if( ! gotuid ){
+		Gid = Getdaemon_group();
+		Uid = Getdaemon();
+		gotuid = 1;
+	}
 
 	DEBUG4("check_file: '%s', fix %d, time 0x%x, age %d",
 		path, fix, t, age );
@@ -122,12 +131,12 @@ int check_file( struct dpathname *dpath,
 		Warnmsg( "'%s' not a regular file - unusual", path );
 		return( 0 );
 	}
-	if( statb.st_uid != uid || statb.st_gid != gid ){
+	if( statb.st_uid != Uid || statb.st_gid != Gid ){
 		if( fix ){
 			if( fix_owner( path ) ) return(1);
 		} else {
 			Warnmsg( "owner/group of '%s' are %d/%d, not %d/%d", path,
-				statb.st_uid, statb.st_gid, uid, gid );
+				statb.st_uid, statb.st_gid, Uid, Gid );
 			return( 1 );
 		}
 	}
@@ -179,6 +188,7 @@ int fix_create_dir( struct dpathname *dpath, struct stat *statb )
 	if( (s = strrchr(path, '/')) && s[1] == 0 ) *s = 0;
 	Warnmsg( "creating '%s'", path );
 	end = 0;
+	To_root();
 	for( end = 0, s = path;s && *s; s = (end?(end+1):end) ){
 		if( end ) *end = '/';
 		end = strchr( s+1, '/' );
@@ -222,8 +232,9 @@ int fix_owner( char *path )
 
 	Warnmsg( "changing ownership '%s'", path );
 
-	DEBUG4("change ownership: '%s' to %d/%d", path, uid, gid );
-	status =  chown( path, uid, gid );
+	DEBUG4("change ownership: '%s' to %d/%d", path, Uid, Gid );
+	To_root();
+	status =  chown( path, Uid, Gid );
 	err = errno;
 	if( status ){
 		Warnmsg( "chown '%s' failed, %s", path, Errormsg(err) );
@@ -261,8 +272,11 @@ int Check_spool_dir( struct dpathname *dpath, int fix )
 	int err = 0;
 
 	/* get the required group and user ids */
-	gid = Getdaemon_group();
-	uid = Getdaemon();
+	if( !gotuid ){
+		Gid = Getdaemon_group();
+		Uid = Getdaemon();
+		gotuid = 1;
+	}
 
 	
 	safestrncpy( pathname, Clear_path( dpath ));
@@ -290,7 +304,7 @@ int Check_spool_dir( struct dpathname *dpath, int fix )
 			return( 1 );
 		}
 	}
-	if( statb.st_uid != uid || statb.st_gid != gid ){
+	if( statb.st_uid != Uid || statb.st_gid != Gid ){
 		if( fix ){
 			if( fix_owner( pathname ) ) return( 1 );
 			if( stat( pathname, &statb ) ){
@@ -299,7 +313,7 @@ int Check_spool_dir( struct dpathname *dpath, int fix )
 			}
 		} else {
 			Warnmsg( "owner/group of '%s' are %d/%d, not %d/%d", pathname,
-				statb.st_uid, statb.st_gid, uid, gid );
+				statb.st_uid, statb.st_gid, Uid, Gid );
 			err = 1;
 		}
 	}

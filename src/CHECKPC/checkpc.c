@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -28,7 +28,7 @@
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: checkpc.c,v 3.6 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: checkpc.c,v 3.13 1997/12/31 19:30:10 papowell Exp $";
 
 char checkpc_optstr[] = "ac:flp:rst:A:CD:PT:V";
 
@@ -76,7 +76,7 @@ int main( int argc, char *argv[] )
 	Interactive = 1;
 	Is_server = 1;
 
-	Initialize();
+	Initialize(argv);
 
 	umask( 0 );
 	/* set up the uid state */
@@ -101,10 +101,10 @@ int main( int argc, char *argv[] )
 			case 'D': break;
 			case 'V': Verbose = !Verbose; break;
 			case 'a': Noaccount = 1; break;
-			case 'c': Server_config_file = Optarg; break;
+			case 'c': Config_file = Optarg; break;
 			case 'f': Fix = 1; break;
 			case 'l': Nolog = 1; break;
-			case 'p': Printcap_path = Optarg; break;
+			case 'p': Checkpc_Printcap_path = Optarg; break;
 			case 'r': Remove = 1; break;
 			case 's': Nostatus = 1; break;
 			case 't':
@@ -132,6 +132,10 @@ int main( int argc, char *argv[] )
 	/* print errors and everything on stdout */
 	dup2(1,2);
 
+
+	/* check to see that all values are in order */
+	Check_pc_table();
+
 	/*
 	 * set up the local host information and other
 	 * things as well
@@ -149,20 +153,33 @@ int main( int argc, char *argv[] )
 		
 
     if(DEBUGL1 || Config ){
-		plp_snprintf( line, sizeof(line), "Configuration file %s", Server_config_file );
+		plp_snprintf( line, sizeof(line), "Configuration file %s", Config_file );
 		dump_parms( line, Pc_var_list );
 		dump_parms( "Variables", Lpd_parms );
 	}
 
-
-	/* check to see that all values are in order */
-	Check_pc_table();
-
 	if( Printer_perms_path ){
 		Free_perms( &Perm_file );
-		Get_perms( "all", &Perm_file, Printer_perms_path );
+		logDebug( "Checking permission file '%s'", Printer_perms_path );
+		if( Get_perms( "all", &Perm_file, Printer_perms_path ) == 0 ){
+			logDebug( "Warning: No permissions file" );
+		}
+/* Debugging for Permissions */
+		logDebug( "Freeing Perms" );
+		Free_perms( &Perm_file );
+		DEBUGFC(DDB4){
+			char msg[64];
+			plp_snprintf( msg, sizeof(msg),
+				"CHECKPC: empty perms database" );
+			dump_perm_file( msg, &Perm_file );
+		}
+		if( Get_perms( "all", &Perm_file, Printer_perms_path ) == 0 ){
+			logDebug( "Warning: No permissions file" );
+		}
+		logDebug( "Done Perms" );
+/* */
 	} else if( Verbose || DEBUGL0  ){
-		logDebug( "No permissions file" );
+		logDebug( "Warning: No permissions file" );
 	}
 
 	Get_all_printcap_entries();
@@ -170,15 +187,26 @@ int main( int argc, char *argv[] )
 	if( Lockfile == 0 ){
 		logDebug( "Warning: no LPD lockfile" );
 	} else {
-		logDebug( "LPD lockfile '%s'", Lockfile );
-		s = strrchr( Lockfile, '/' );
+		char buffer[MAXPATHLEN];
+		plp_snprintf( buffer, sizeof(buffer), "%s.%s", Lockfile, Lpd_port );
+		logDebug( "LPD lockfile '%s'", buffer );
+		s = strrchr( buffer, '/' );
 		if( s ){
 			struct dpathname newpath;
 			*s++ = 0;
-			Init_path( &newpath, Lockfile );
+			Init_path( &newpath, buffer );
 			Check_spool_dir( &newpath, Fix );
+			To_root();
 			Make_write_file( &newpath, 0, s, (char *)0 );
+			if( Fix ){
+				Check_perms( &newpath, Fix, 0, 0 );
+			}
 		}
+	}
+
+	if(Truncate){
+		logDebug( "Truncating LPD log file '%s'", Logfile );
+		Clean_log( Truncate, Logfile, 0, Logfile );
 	}
 
 	if( All_list.count ){
@@ -376,16 +404,18 @@ void Make_write_file( struct dpathname *dpathname,
 {
 	int fd;
 	struct stat statb;
+	struct dpathname dp = *dpathname;
 	char *s;
 
-	Clear_path( dpathname );
+	Clear_path( &dp );
 	if( flag || name == 0 || *name == 0 ){
 		return;
 	}
 	if( name[0] == '/' ){
-		s = name;
+		Init_path(&dp, name );
+		s = dp.pathname;
 	} else {
-		s = Add2_path( dpathname, name, printer );
+		s = Add2_path( &dp, name, printer );
 	}
 
 	DEBUG0("Make_write_file '%s'", s );
@@ -402,6 +432,9 @@ void Make_write_file( struct dpathname *dpathname,
 	}
 	if( (fd = Checkread( s, &statb )) < 0 ){
 		logDebug( "  ** cannot open '%s'", s );
+	}
+	if( check_file( &dp, Fix, 0, 0, 0 ) ){
+		logDebug("  ** ownership or permissions problem with '%s'", s );
 	}
 	close( fd );
 }
@@ -510,8 +543,11 @@ void Clean_log( int trunc, char *type, struct dpathname *dpath, char *logfile )
 	if( logfile && *logfile ){
 		if( logfile[0] == '/' ){
 			s = logfile;
-		} else {
+		} else if( dpath ){
 			s = Add_path( dpath, logfile );
+		} else {
+			Warnmsg( "bad log file name format '%s'", logfile );
+			return;
 		}
 		logDebug( "Checking %s file '%s'", type, s );
 		fd = Checkwrite( s, &statb, O_RDWR, 0, 0 );

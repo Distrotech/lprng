@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpc_getparms.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpc_getparms.c,v 3.9 1997/12/24 20:10:12 papowell Exp $";
 
 #include "lp.h"
 #include "patchlevel.h"
@@ -46,8 +46,10 @@ void Get_parms(int argc, char *argv[] )
 			usage();
 		}
 	}
-	if( Verbose > 0 ) fprintf( stdout, _("Version %s\n"), PATCHLEVEL );
-	if( Verbose > 1 ) Printlist( Copyright, stdout );
+	if( Verbose > 0 ) {
+		fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
+		if( Verbose > 1 ) Printlist( Copyright, stderr );
+		}
 }
 
 char *msg = N_("\
@@ -58,31 +60,35 @@ usage: %s [-A] [-Ddebuglevel] [-Pprinter] [-V] [command]\n\
   -V           - increase information verbosity\n\
   -Ddebuglevel - debug level\n\
  commands:\n\
- abort   (printer[@host] | all)  - stop server\n\
- disable (printer[@host] | all)  - disable queueing\n\
- debug   (printer[@host] | all) debugparms - set debug level for printer\n\
- enable  (printer[@host] | all)  - enable  queueing\n\
- hold    (printer[@host] | all) (name[@host] | job | all)* - hold job\n\
- holdall (printer[@host] | all)  - hold all jobs on\n\
- kill    (printer[@host] | all)  - stop and restart server\n\
- lpd [HUP]  - get LPD PID, signal it to reread printcap and configuration\n\
- lpq (printer[@host] | all) (name[@host] | job | all)*     - invoke LPQ\n\
- lprm (printer[@host] | all) (name[@host]|host|job| all)*  - invoke LPRM\n\
+ active    (printer[@host])        - check for active server\n\
+ abort     (printer[@host] | all)  - stop server\n\
+ class     printer[@host] (class | off)      - show/set class printing\n\
+ disable   (printer[@host] | all)  - disable queueing\n\
+ debug     (printer[@host] | all) debugparms - set debug level for printer\n\
+ enable    (printer[@host] | all)  - enable  queueing\n\
+ hold      (printer[@host] | all) (name[@host] | job | all)*   - hold job\n\
+ holdall   (printer[@host] | all)  - hold all jobs on\n\
+ kill      (printer[@host] | all)  - stop and restart server\n\
+ lpd       (printer[@host]) - get LPD PID \n\
+ lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke LPQ\n\
+ lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke LPRM\n\
  move printer (user|jobid)* target - move jobs to new queue\n\
  noholdall (printer[@host] | all)  - hold all jobs off\n\
- printcap (printer[@host] | all) - report printcap values\n\
- quit                            - exit LPC\n\
- redirect (printer[@host] | all) (printer@host | off )*    - redirect jobs\n\
- release  (printer[@host] | all) (name[@host] | job | all)* - release job\n\
- reread                          - LPD reread database information\n\
- start   (printer[@host] | all)  - start printing\n\
- status  (printer[@host] | all)  - status of printers\n\
- stop    (printer[@host] | all)  - stop  printing\n\
- topq    (printer[@host] | all) (name[@host] | job | all)* - reorder job\n");
+ printcap  (printer[@host] | all)  - report printcap values\n\
+ quit                              - exit LPC\n\
+ redirect  (printer[@host] | all) (printer@host | off )*       - redirect jobs\n\
+ redo      (printer[@host] | all) (name[@host] | job | all)*   - release job\n\
+ release   (printer[@host] | all) (name[@host] | job | all)*   - release job\n\
+ reread    (printer[@host])        - LPD reread database information\n\
+ start     (printer[@host] | all)  - start printing\n\
+ status    (printer[@host] | all)  - status of printers\n\
+ stop      (printer[@host] | all)  - stop  printing\n\
+ topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder job\n\
+ defaultq                         - default queue for LPD server\n");
 
 void usage(void)
 {
-	fputs (_(msg), stderr);
+	fprintf( stderr, _(msg), Name );
 	exit(1);
 }
 

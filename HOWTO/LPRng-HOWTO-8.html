@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE> LPRng-HOWTO: /etc/lpd.conf Configuration File</TITLE>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-9.html">Next</A>
+<A HREF="LPRng-HOWTO-7.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc8">Contents</A>
+<HR>
+<H2><A NAME="s8">8. /etc/lpd.conf Configuration File</A></H2>
+
+<P>The values in the LPRng configuration file
+(default: <CODE>/etc/lpd.conf</CODE>)
+specify values for global options
+and default values for printcap options.
+See the man pages for
+<CODE>lpd.conf(5)</CODE> and
+<CODE>printcap(5)</CODE>
+for a complete list of configuration variables and their effects.
+<H2><A NAME="ss8.1">8.1 Configuration File Format</A>
+</H2>
+
+<P>The LPRng distribution contains an template <CODE>lpd.conf</CODE> file
+which can be installed as
+<CODE>/etc/lpd.conf</CODE>.
+The configuration file has the following format:
+<PRE>
+# Default version of the lpd.conf file
+# ae=jobend $H $n $P $k $b $t
+# allow_getenv
+# ar
+# architecture
+# as=jobstart $H $n $P $k $b $t
+# bk_filter_options=$P $w $l $x $y $F $c $L $i $J $C $0n $0h $-a
+# bk_of_filter_options=$w $l $x $y
+# bl=$-'C:$-'n Job: $-'J Date: $-'t
+# check_for_nonprintable
+  check_for_nonprintable@
+# client_auth_command
+...
+</PRE>
+<P>The file uses the same notation for
+<A HREF="LPRng-HOWTO-4.html#printcapref">printcap</A>
+entries,
+but does not use the : (colon) separator.
+A line starting with <CODE>#</CODE> is a comment.
+<P>To change the default value of an option,
+remove the comment character and edit the entry.
+In the above example,
+the default value (1 or TRUE) for
+<CODE>check_for_nonprintable</CODE>
+has been changed to 0 or off.
+<P>To force the <CODE>lpd</CODE> server to use the new options,
+use the <CODE>lpc reread</CODE> command.
+<P>As for printcap entries,
+the <CODE>%X</CODE> combinations are interpreted when a
+configuration entry is used for configuration or defaults,
+and can be used to do site and host dependent customization.
+This interpolation is done when the default or configuration value
+is used in a printcap context.
+See
+<A HREF="LPRng-HOWTO-5.html#details">Missing Details</A> for more
+information.
+<P>
+<A NAME="allowgetenv"></A> <H2><A NAME="ss8.2">8.2 Obtaining Configuration Information</A>
+</H2>
+
+<P>The location of the configuration file is compiled into the
+LPRng software.
+The <CODE>config_file</CODE> entry in the compilation defaults
+is normally set to search for configuration information in the following
+files:
+<PRE>
+config_file=/etc/lpd.conf:/usr/etc/lpd.conf
+</PRE>
+<P>The <CODE>lpd.conf</CODE> file can be obtained by using a filter.
+See
+<A HREF="LPRng-HOWTO-5.html#secnis">Using Programs To Get Printcap Information</A>
+for details.
+An example would be:
+<PRE>
+config_file=|/usr/local/libexec/get_config
+</PRE>
+<P>The program will be run in the normal fashion for
+LPRng filters; see
+<A HREF="LPRng-HOWTO-5.html#secfilter">Filters</A> for details.
+The STDIN will be attached to <CODE>/dev/null</CODE>,
+the configuration information should be written to STDOUT,
+and STDERR will be attached to the appropriate log file or error output.
+<P>To change any of the <CODE>config_file</CODE> specifications,
+the the <CODE>LPRng/src/common/default.c</CODE>
+file will need to be modified and the LPRng software recompiled.
+<P>In addition,
+LPRng has a special <EM>debug</EM> mode.
+When compiled with the <CODE>-DGET_ENV</CODE> option enabled,
+this sets the value of the <CODE>allow_getenv</CODE> option to 1.
+LPRng can then use the value of the
+<CODE>LPD_CONF</CODE> environment variable instead of the compiled in
+<CODE>config_file</CODE> value.
+<B> This is a possible security loophole,
+and should not be used when running SETUID ROOT or as ROOT.</B>
+To enable this option,
+see the <CODE>TESTVERSION</CODE> comments in the <CODE> LPRng/src/Makefile</CODE>.
+<H2><A NAME="ss8.3">8.3 Useful Configuration Options</A>
+</H2>
+
+<P>The following variables are used to set default behavior
+for the LPRng software,
+or are commonly used for configuration of LPRng operations.
+<A NAME="defaultformat"></A> <H3>default_format</H3>
+
+<P>Default format for printing.
+Usually,
+<CODE>default_format=f</CODE>,
+but setting it to
+<CODE>default_format=l</CODE> will cause all files spooled by lpr
+to be spooled as binary files.
+<A NAME="defaultpermission"></A> <H3>default_permission=ACCEPT</H3>
+
+<P>The default permissions to use when checking for printing or other permissions.
+<A NAME="defaultpriority"></A> <H3>default_priority=A</H3>
+
+<P>The default priority for a print job.
+<A NAME="defaultremotehost"></A> <H3>default_remote_host=localhost</H3>
+
+<P>The default <CODE>lpd</CODE> server host.
+<A NAME="defaulttmpdir"></A> <H3>default_tmp_dir=/tmp</H3>
+
+<P>The default directory for temporary files.
+<P>This option can be used to specify a default
+printer. If no value is given (default), the first printer in the
+printcap file will be used when no printer is specified.
+<H3>domain_name=domain.name</H3>
+
+<P>You will only need to set this if LPRng can't determine your
+hosts domain name itself.
+This is usually a desperation option when DNS or some other
+database system is not available.
+<A NAME="lpdpermsref"></A> <HR>
+<A HREF="LPRng-HOWTO-9.html">Next</A>
+<A HREF="LPRng-HOWTO-7.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc8">Contents</A>
+</BODY>
+</HTML>

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getprinter.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: getprinter.c,v 3.10 1997/09/18 19:45:58 papowell Exp $";
 
 #include "lp.h"
 #include "getprinter.h"
@@ -49,6 +49,7 @@ void Get_printer( struct printcap_entry **pcv )
 	if( Printer == 0 ){
 		Printer = getenv( "PRINTER" );
 		/* Sigh... some folks want one for Solaris, one for LPRng... ok */
+		if( Printer == 0 && (s = getenv( "LPDEST" )) ) Printer = s;
 		if( (s = getenv( "NGPRINTER" )) ) Printer = s;
 	}
 

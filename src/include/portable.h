@@ -22,7 +22,7 @@
  *    Justin Mason <jmason@iona.ie> especially.  Some of the things
  *    that you have to do to get portability are truely bizzare.
  *
- * $Id: portable.h,v 3.8 1997/02/15 15:01:30 papowell Exp papowell $
+ * $Id: portable.h,v 3.13 1997/12/24 20:10:12 papowell Exp $
  **************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -91,7 +91,7 @@ LPRng requires ANSI Standard C compiler
 
 #if defined(cray)
 #define MAXPATHLEN	1023
-#define HAVE_SIGSETJMP	1
+#define HAVE_SIGLONGJMP	1
 
 /* configure incorrectly chooses STATVFS */
 #if defined(USE_STATFS_TYPE)
@@ -708,13 +708,21 @@ extern int long strtol( char *str, char **ptr, int base );
 extern int strftime(char *buf, int bufsize, const char *fmt, struct tm *tm);
 extern void syslog(int, const char *, ...);
 extern int system( const char *str );
-extern int tgetent( char *buffer, char *name );
+extern int tgetent( char *buffer, const char *name );
 extern time_t time( time_t *t );
 extern int tolower( int );
 extern int toupper( int );
-extern void tputs( const char *cp, int affcnt, int (*outc)() );
+extern int tputs( const char *cp, int affcnt, int (*outc)() );
 extern int vfprintf(FILE *, const char *, ...);
 extern int vprintf(FILE *, const char *, va_list ap);
+/* surprisingly, there are no declarations for random on Sun stuff */
+#endif
+
+
+#ifndef STDLIB_DEFINES_RANDOM
+ /* surprisingly, sometimes there are no declarations for random */
+  extern long random(void);
+  extern void srandom(unsigned int seed);
 #endif
 
 #ifdef SOLARIS
@@ -767,6 +775,13 @@ struct sockaddr_in6 {
 	unsigned int sin6_flowinfo;
 	struct in6_addr sin6_addr;
 };
+#endif
+
+#if defined(HAVE_ARPA_NAMESER_H)
+# include <arpa/nameser.h>
+#endif
+#if defined(HAVE_RESOLV_H)
+# include <resolv.h>
 #endif
 
 #endif	/* PLP_PORTABLE_H */

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,9 +13,10 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lprm_getparm.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lprm_getparm.c,v 3.6 1997/10/10 03:04:15 papowell Exp $";
 
 #include "lp.h"
+#include "patchlevel.h"
 #include "printcap.h"
 /**** ENDINCLUDE ****/
 
@@ -27,6 +28,10 @@ static char *const _id =
 
 extern char *next_opt;
 void usage(void);
+char LPRM_optstr[]   /* LPRM options */
+ = "aAD:P:V" ;
+char CLEAN_optstr[]   /* CLEAN options */
+ = "AD:" ;
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -41,8 +46,10 @@ void Get_parms(int argc, char *argv[] )
 	}
 	/* check to see if we simulate (poorly) the LP options */
 	if( name && strcmp( name, "clean" ) == 0 ){
+		Get_debug_parm( argc, argv, CLEAN_optstr, debug_vars );
 		LP_mode = 1;
-		while ((option = Getopt (argc, argv, "AD:" )) != EOF) switch (option) {
+		while ((option = Getopt (argc, argv, CLEAN_optstr )) != EOF)
+		switch (option) {
 		case 'A': Use_auth_flag = 1; break; /* use authentication */
 		case 'D': break; /* debug has already been done */
 		default: usage(); break;
@@ -57,9 +64,11 @@ void Get_parms(int argc, char *argv[] )
 				--argc;
 			}
 		}
-	} else while ((option = Getopt (argc, argv, LPRM_optstr )) != EOF) {
+	} else {
+		Get_debug_parm( argc, argv, LPRM_optstr, debug_vars );
+		while ((option = Getopt (argc, argv, LPRM_optstr )) != EOF)
 		switch (option) {
-		case 'a': All_printers = 1; break;
+		case 'a': All_printers = 1; Printer = "all"; break;
 		case 'A': Use_auth_flag = 1; break; /* use authentication */
 		case 'D': break; /* debug has already been done */
 		case 'V': ++Verbose; break;
@@ -67,6 +76,7 @@ void Get_parms(int argc, char *argv[] )
 		default: usage(); break;
 		}
 	}
+	if( Verbose > 0 ) fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
 	if( Verbose > 1 ) Printlist( Copyright, stderr );
 }
 
@@ -103,9 +113,9 @@ usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n\
 void usage(void)
 {
 	if( LP_mode ){
-		fputs (_(lprm_msg), stderr);
+		fprintf( stderr, _(lprm_msg), Name );
 	} else {
-		fputs (_(clean_msg), stderr);
+		fprintf( stderr, _(clean_msg), Name );
 	}
 	exit(1);
 }

@@ -1,0 +1,69 @@
+# Generated automatically from Makefile.in by configure.
+###########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-1997 Patrick Powell, San Diego, California
+#     papowell@sdsu.edu
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: FAQ/Makefile
+# PURPOSE: generate utilities
+# $Id: Makefile,v 1.4 1998/01/12 20:29:47 papowell Exp $
+########################################################################## 
+
+# FAQ Makefile
+#
+SRC = .
+
+prefix = /usr/local
+MAN =		$(prefix)/man
+SHELL =		/bin/sh
+
+DOC=LPRng-HOWTO
+
+all: $(DOC).html $(DOC).ps purge
+
+$(DOC).html: $(DOC).sgml Makefile
+	sgml2html $(DOC).sgml
+$(DOC).txt: $(DOC).sgml
+	sgml2txt $(DOC).sgml
+$(DOC).tex: $(DOC).sgml Makefile
+	sgml2latex -o tex $(DOC).sgml
+	mv $(DOC).tex $(DOC).Bex
+	sed -e '/tabular/s/{.|.}//g' $(DOC).Bex >$(DOC).tex 
+$(DOC).ps: $(DOC).tex Makefile
+	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
+		'\nonstopmode\input{LPRng-HOWTO.tex}' >/dev/null
+	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
+		'\nonstopmode\input{$(DOC).tex}'
+	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
+		'\nonstopmode\input{$(DOC).tex}'
+	dvips -q -t a4 -o $(DOC).ps $(DOC).dvi
+purge:
+	rm -f *.Bex *.aux *.dvi *.log *.toc
+fixman:
+	cp $(DOC).ps ../../LPRng_DOC
+	sed 's,LPRng-HOWTO\.,lprng/&,' LPRng.html >/tmp/LPRng.html
+	cp /tmp/LPRng.html ../..
+
+$(DOC).info: $(DOC).sgml
+	sgml2info $^
+
+clean:
+	rm -f *.Bex *.aux *.dvi LPRng-*.html *.log *.ps *.tex *.toc
+
+.PHONY: all clean install ci install.zman update purge
+
+update:
+
+# 
+#
+install:
+
+	
+realclean mostlyclean distclean:: clean
+	rm -f Makefile
+
+ci:
+	ci $(CI) -l -mUpdate -t-Initial *.sgml Makefile.in Makefile

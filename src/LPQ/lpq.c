@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -90,14 +90,13 @@ root: 2nd                                [job 031taco]
 #include "fileopen.h"
 #include "malloclist.h"
 #include "readstatus.h"
+#include "permission.h"
 /**** ENDINCLUDE ****/
 
 static char *const _id =
-"$Id: lpq.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpq.c,v 3.19 1997/12/24 20:10:12 papowell Exp $";
 
 
-char LPQ_optstr[]    /* LPQ options */
- = "AD:P:Vaclst:v" ;
 
 static void Extract_pr( struct malloc_list *list, struct malloc_list *all );
 
@@ -112,7 +111,7 @@ static void Extract_pr( struct malloc_list *list, struct malloc_list *all );
 int main(int argc, char *argv[], char *envp[])
 {
 	char msg[LINEBUFFER];
-	int i;
+	int i, lenp, lenr;
 	struct stat statb;
 	char **list;
 	char orig_name[LINEBUFFER];
@@ -125,20 +124,17 @@ int main(int argc, char *argv[], char *envp[])
 	Longformat = 1;
 	Displayformat = REQ_DLONG;
 	orig_name[0] = 0;
-	Initialize();
+	Initialize(argv);
 
 
 	/* set signal handlers */
-	(void) plp_signal (SIGHUP, cleanup);
-	(void) plp_signal (SIGINT, cleanup);
-	(void) plp_signal (SIGQUIT, cleanup);
-	(void) plp_signal (SIGTERM, cleanup);
+	(void) plp_signal (SIGHUP, cleanup_HUP);
+	(void) plp_signal (SIGINT, cleanup_INT);
+	(void) plp_signal (SIGQUIT, cleanup_QUIT);
+	(void) plp_signal (SIGTERM, cleanup_TERM);
 
 
 
-	/* scan the argument list for a 'Debug' value */
-	Get_debug_parm( argc, argv, 0, debug_vars );
-	/* scan the input arguments, setting up values */
 	Get_parms(argc, argv);      /* scan input args */
 	if( Printer ){
 		safestrncpy( orig_name, Printer );
@@ -174,10 +170,18 @@ int main(int argc, char *argv[], char *envp[])
 		argv = Lp_pr_list.list;
 	}
 	/* now force the printer list */
-	if( All_printers ){
+	if( All_printers || (Printer && strcmp(Printer,"all") == 0 ) ){
 		if( All_list.count == 0 ){
+			Get_all_printcap_entries();
 			Printer = "all";
 			Get_printer(&printcap_entry);
+		}
+		if(DEBUGL0){
+			logDebug("lpq: All_list.count %d", All_list.count );
+			list = All_list.list;
+			for( i = 0; i < All_list.count; ++i ){
+				DEBUG0("lpq: printer[%d] = '%s'", i, list[i] );
+			}
 		}
 	} else {
 		if( *orig_name ) Printer = orig_name;
@@ -211,7 +215,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 	if( Longformat && (Longformat < MAX_SHORT_STATUS )
 		&& Displayformat != REQ_VERBOSE ){
-		Max_status_lines = (1 << (Longformat-1));
+		Status_line_count = (1 << (Longformat-1));
 	}
 	do {
 		if( Clear_scr ) Term_clear();
@@ -236,32 +240,54 @@ int main(int argc, char *argv[], char *envp[])
 					}
 				}
 				if( LP_mode == 0 && Displayformat != REQ_DSHORT
-					&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
-					plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
-						Printer, RemotePrinter, RemoteHost );
-					DEBUG0("Do_all_printers: '%s'",msg);
-					/* write as long as you can */
-					if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+					&& RemotePrinter ){
+					plp_snprintf(msg,sizeof(msg),"%s@%s",
+						RemotePrinter,RemoteHost);
+					lenp = strlen( Printer );
+					lenr = strlen( RemoteHost );
+					if( lenp > lenr ) lenp = lenr;
+					if( strncmp(Printer, msg, lenp) ){
+						plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
+							Printer, RemotePrinter, RemoteHost );
+						DEBUG0("lpq: '%s'",msg);
+						if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+					}
+				}
+				if( RemotePrinter && RemotePrinter[0] == 0 ) RemotePrinter = 0;
+				if( Check_for_rg_group( Logname ) ){
+					fprintf( stderr,
+						"cannot use printer - not in privileged group\n" );
+					continue;
 				}
 				Send_lpqrequest(
 					RemotePrinter?RemotePrinter:Printer,
 					RemoteHost, Displayformat, &argv[Optind],
-					Connect_timeout, Send_timeout, 1 );
+					Connect_timeout, Send_query_rw_timeout, 1 );
 				/* if(  Write_fd_str( 1, "\n" ) < 0 ) cleanup(0); */
 			}
 		} else {
 			DEBUG0("lpq: remoteprinter '%s', remote host '%s'",
 				RemotePrinter, RemoteHost );
+			if( Check_for_rg_group( Logname ) ){
+				fprintf( stderr,
+					"cannot use printer - not in privileged group\n" );
+				break;
+			}
 			if( LP_mode == 0 && Displayformat != REQ_DSHORT
-				&& RemotePrinter && strcmp(RemotePrinter,orig_name)){
+				&& RemotePrinter){
+				lenp = strlen( RemotePrinter );
+				lenr = strlen( orig_name );
+				if( lenp > lenr ) lenp = lenr;
+				if( strncmp(RemotePrinter,orig_name,lenp)){
 				plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
 					Printer, RemotePrinter, RemoteHost );
 				if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+				}
 			}
 			Send_lpqrequest(
 				RemotePrinter?RemotePrinter:Printer,
 				RemoteHost, Displayformat, &argv[Optind],
-				Connect_timeout, Send_timeout, 1 );
+				Connect_timeout, Send_query_rw_timeout, 1 );
 			/* if(  Write_fd_str( 1, "\n" ) < 0 ) cleanup(0); */
 		}
 		Remove_tempfiles();

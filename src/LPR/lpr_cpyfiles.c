@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpr_cpyfiles.c,v 3.10 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpr_cpyfiles.c,v 3.12 1997/10/27 00:14:19 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -59,7 +59,7 @@ off_t Copy_stdin( struct control_file *cfp )
 	if( cfp->data_file_list.count < 26 ){
 		c = 'A'+cfp->data_file_list.count;
 	} else {
-		c = 'A'-26+cfp->data_file_list.count;
+		c = 'a'+cfp->data_file_list.count-26;
 	}
 	for( i = 0; i < Copies; ++i ){
 		df = &dfp[cfp->data_file_list.count++];
@@ -87,7 +87,7 @@ off_t Copy_stdin( struct control_file *cfp )
 	DEBUG3("Make_job:line [%d] '%s'", cfp->control_file_lines.count, str );
 
 	if( Secure != 0 ){
-		df->flags |= PIPE_FLAG;
+		df->d_flags |= PIPE_FLAG;
 		df->fd = dup( 0 );
 		size = -1;
 		DEBUG2( "Copy_stdin: setting up pipe" );
@@ -178,7 +178,7 @@ off_t Check_files( struct control_file *cfp, char **files, int filecount )
 			if( cfp->data_file_list.count < 26 ){
 				c = 'A'+cfp->data_file_list.count;
 			} else {
-				c = 'A'-26+cfp->data_file_list.count;
+				c = 'a'+cfp->data_file_list.count-26;
 			}
 			for( j = 0; j < Copies; ++j ){
 				df = &dfp[cfp->data_file_list.count++];

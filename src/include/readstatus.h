@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: readstatus.h
  * PURPOSE: readstatus.c functions
- * $Id: readstatus.h,v 3.1 1996/12/28 21:40:33 papowell Exp $
+ * $Id: readstatus.h,v 3.2 1997/12/17 19:34:56 papowell Exp $
  **************************************************************************/
 
 #ifndef _READSTATUS_H
@@ -21,7 +21,7 @@
  ***************************************************************************/
 
 int Read_status_info( char *printer, int ack_needed, int sock,
-	char *host, int output );
+	char *host, int output, int timeout );
 
 int Pr_status_check( char *name );
 

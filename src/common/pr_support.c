@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: pr_support.c,v 3.10 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: pr_support.c,v 3.18 1998/01/12 20:29:22 papowell Exp $";
 
 /***************************************************************************
  Commentary:
@@ -53,7 +53,7 @@ Additional sanity checks and cleanups have been added.
 
 /***************************************************************************
  * int Print_open( struct filter *filter, struct control_file *cfp,
- *   int timeout, int interval, int max_try )
+ *   int timeout, int interval, int max_timeout )
  *
  * 	Open the Printer, and set the filter structure with the pid and output
  *   device.
@@ -66,17 +66,17 @@ Additional sanity checks and cleanups have been added.
 
 int Print_open( struct filter *filter,
 	struct control_file *cfp, int timeout, int interval, int grace,
-	int max_try, struct printcap_entry *printcap_entry, int accounting_port )
+	int max_timeout, struct printcap_entry *printcap_entry, int accounting_port )
 {
-	int attempt = 0, err = 0;
+	int attempt = 0, err = 0, n;
 	struct stat statb;
-	int device_fd;
+	int device_fd = -1;
 	time_t tm;
 	char tm_str[32];
 	char *s, *end;
 
-	DEBUG3( "Print_open: device '%s', max_try %d, interval %d, timeout %d",
-		Lp_device, max_try, interval, timeout );
+	DEBUG1( "Print_open: device '%s', max_timeout %d, interval %d, timeout %d",
+		Lp_device, max_timeout, interval, timeout );
 	time( &tm );
 	tm_str[0] = 0;
 	safestrncat( tm_str, Time_str(1,tm) );
@@ -99,17 +99,17 @@ int Print_open( struct filter *filter,
 			Printer, Lp_device );
 	}
 
-	if (grace) {
-		setstatus( cfp, "Waiting Grace period '%s' : '%d'",
-			Lp_device, grace);
-		plp_sleep(grace);
-	}
 
 	/* set flag for closing on timeout */
 	do{
 		setstatus( cfp,
-		"opening '%s' at %s, attempt %d",
-			Lp_device, tm_str, ++attempt);
+		"opening '%s' at %s, attempt %d, timeout %d, grace %d",
+			Lp_device, tm_str, ++attempt, timeout, grace );
+		if (grace) {
+			setstatus( cfp, "waiting Grace period '%s' : '%d'",
+				Lp_device, grace);
+			plp_sleep(grace);
+		}
 
 		filter->pid = 0;
 		filter->input = 0;
@@ -124,10 +124,9 @@ int Print_open( struct filter *filter,
 				setstatus( cfp, "%s", cfp->error );
 				filter->input = -1;
 			}
-			device_fd = filter->input;
+ 			device_fd = filter->input;
 			break;
 		case '/':
-			device_fd = -1;
 			device_fd = Checkwrite_timeout( timeout, Lp_device, &statb, 
 					(Lock_it || Read_write)
 						?(O_RDWR):(O_APPEND|O_WRONLY), 0, Nonblocking_open );
@@ -158,43 +157,30 @@ int Print_open( struct filter *filter,
 					}
 				}
 			}
-			filter->input = device_fd;
 			break;
 		default:
-			device_fd = Link_open( Lp_device, max_try, timeout);
+			DEBUG1( "Print_open: doing link open '%s'", Lp_device );
+			device_fd = Link_open( Lp_device, timeout, 0);
 			err = errno;
-			filter->input = device_fd;
 			break;
 		}
 
 		if( device_fd < 0 ){
 			errno = err;
-			DEBUG3( "Print_open: cannot open device '%s' - '%s'",
+			n = interval*( 1 << (attempt-1) );
+			if( max_timeout > 0 && n > max_timeout ) n = max_timeout;
+			DEBUG1( "Print_open: cannot open device '%s' - '%s'",
 				Lp_device, Errormsg(err) );
-			if( (max_try == 0 || attempt < max_try) && interval > 0 ){
-				setstatus( cfp, "Cannot open '%s' - '%s', sleeping %d",
-					Lp_device, Errormsg( err), interval );
-				plp_sleep( interval );
-			} else {
-				break;
+			setstatus( cfp, "cannot open '%s' - '%s', attempt %d, sleeping %d",
+					Lp_device, Errormsg( err), attempt, n );
+			if( n > 0 ){
+				plp_sleep(n);
 			}
 		}
 	} while( device_fd < 0 );
 
-	if( device_fd < 0 ){
-		setstatus( cfp, "cannot open '%s' after %d attempts - %s",
-			Lp_device, attempt, Errormsg(err) );
-		Errorcode = JFAIL;
-	} else if( isatty( device_fd ) ){
-		/*
-		 * if it is a tty, set the baud rates and control information;
-		 * Note that the open O_NCTTY prevents this from being a control
-		 *  device for the process.
-		 */
-		Do_stty( device_fd );
-	}
 	filter->input = device_fd;
-	DEBUG4 ("Print_open: %s is fd %d", Lp_device, device_fd);
+	DEBUG1 ("Print_open: %s is fd %d", Lp_device, device_fd);
 	return( device_fd );
 }
 
@@ -215,42 +201,70 @@ void Print_flush( void )
 }
 
 /***************************************************************************
- * Print_close( void )
+ * void Print_close(struct control_file *cfp, int timeout)
  * 1. Close all of the open pipe and/or descriptors
  * 2. Signal the filter processes to start up
  * 3. We wait for a while for them to complete
  ***************************************************************************/
 
-void Print_close(int timeout)
-{
-	DEBUG3("Print_close: closing printers");
-	Print_flush();
-	/* shut them all down first */
-	Close_filter( &Device_fd_info, timeout, "Print_close" );
-	Close_filter( &OF_fd_info, timeout, "Print_close" );
-	Close_filter( &XF_fd_info, timeout, "Print_close" );
-	Close_filter( &Pr_fd_info, timeout, "Print_close" );
-	Close_filter( &Af_fd_info, timeout, "Print_close" );
-	Close_filter( &As_fd_info, timeout, "Print_close" );
-}
-
 /***************************************************************************
- * Print_kill( signal )
- * 1. Flush all of the open pipe and/or descriptors
- * 2. Close all of the open pipe and/or descriptors
- * 3. Kill them off if necessary
+ * int Close_tty( struct filter *filter, int timeout, const char *key )
+ * - filter is the data structure with the filte interformation
+ * - timeout > 0  we block for timeout seconds, waiting for exit
+ * - timeout = 0  we block indefinately
+ * - timeout < 0  we do not block
+ * key is identifier who called
  ***************************************************************************/
 
-void Print_kill( int signal )
+int Close_tty( struct filter *filter, int timeout, const char *key )
 {
-	DEBUG3("Print_kill: killing filters");
-	Print_flush();
-	Kill_filter( &Device_fd_info, signal );
-	Kill_filter( &OF_fd_info, signal );
-	Kill_filter( &XF_fd_info, signal );
-	Kill_filter( &Pr_fd_info, signal );
-	Kill_filter( &Af_fd_info, signal );
-	Kill_filter( &As_fd_info, signal );
+	int fd, err = 0, result = 0;
+	if( (fd = filter->input) > 0 && isatty( fd ) ){
+		DEBUG3("Close_tty: fd %d, timeout %d, key %s",
+			filter->input, timeout, key );
+		filter->input = -1;
+		if( Set_timeout() ){
+			Set_timeout_alarm( timeout, 0 );
+			result = close( fd );
+			err = errno;
+		} else {
+			result = -1;
+			err = EINTR;
+		}
+		Clear_timeout();
+	}
+	errno = err;
+	return( result );
+}
+
+void Print_close(struct control_file *cfp, int timeout)
+{
+	pid_t result;
+	plp_status_t status;
+	int err;
+
+	DEBUG3("Print_close: closing printers");
+	/* shut them all down first */
+	Close_filter( cfp, &Device_fd_info, timeout, "Print_close" );
+	Close_tty(    &Device_fd_info, timeout, "Print_close" );
+	Close_filter( cfp, &OF_fd_info, timeout, "Print_close" );
+	Close_tty(    &OF_fd_info, timeout, "Print_close" );
+	Close_filter( cfp, &XF_fd_info, timeout, "Print_close" );
+	Close_tty(    &XF_fd_info, timeout, "Print_close" );
+	Close_filter( cfp, &Pr_fd_info, timeout, "Print_close" );
+	Close_tty(    &Pr_fd_info, timeout, "Print_close" );
+	Close_filter( cfp, &Af_fd_info, timeout, "Print_close" );
+	Close_tty(    &Af_fd_info, timeout, "Print_close" );
+	Close_filter( cfp, &As_fd_info, timeout, "Print_close" );
+	Close_tty(    &As_fd_info, timeout, "Print_close" );
+	DEBUG1( "Print_close: gathering children" );
+	do{
+		status = 0;
+		result = plp_waitpid( -1, &status, 0 );
+		err = errno;
+		DEBUG1( "Print_close: result %d, status 0x%x", result, status );
+	} while( result > 0 || (result == -1 && err != ECHILD) );
+	DEBUG1( "Print_close: all children gathered" );
 }
 
 /***************************************************************************
@@ -271,24 +285,31 @@ void Print_abort( void )
 	DEBUG1( "Print_abort: starting shutdown" );
 
 	/* be gentle at first */
-	Print_close(-1);
+	/* Print_flush(); */
+	/* Print_close(0, -1); */
 	while(1){
+		switch( step++ ){
+			case 0:
+			DEBUG4( "Print_abort: step %d, killing SIGINT", step );
+				killchildren( SIGINT ); break;	/* hit it once */
+			case 1:
+			DEBUG4( "Print_abort: step %d, killing SIGQUIT", step );
+				killchildren( SIGQUIT ); break;   /* hit it harder */
+			case 2:
+			DEBUG4( "Print_abort: step %d, killing SIGKILL", step );
+				killchildren( SIGKILL ); break;   /* hit it really hard */
+			case 3: return; /* give up */
+		}
 		DEBUG1( "Print_abort: gathering children" );
 		do{
 			status = 0;
-			result = plp_waitpid_timeout( 10, -1, &status, 0 );
+			result = plp_waitpid_timeout(3, -1, &status, 0 );
 			err = errno;
 			DEBUG1( "Print_abort: result %d, status 0x%x", result, status );
 		} while( result > 0 );
-		if( (result == -1 ) && err == ECHILD ){
+		if( ((result == -1 ) && err == ECHILD) ){
+			DEBUG1( "Print_abort: all children gathered" );
 			break;
-		}
-		DEBUG4( "Print_abort: step %d, killing", step, status );
-		switch( step++ ){
-			case 0: Print_kill( SIGINT ); break;	/* hit it once */
-			case 1: Print_kill( SIGQUIT ); break;   /* hit it harder */
-			case 2: Print_kill( SIGKILL ); break;   /* hit it really hard */
-			case 3: return; /* give up */
 		}
 	}
 	DEBUG1( "Print_abort: done" );
@@ -312,7 +333,7 @@ int of_start( struct filter *filter )
 
 static char filter_stop[] = "\031\001";		/* magic string to stop OF_Filter */
 
-int of_stop( struct filter *filter, int timeout )
+int of_stop( struct filter *filter, int timeout, struct control_file *cfp )
 {
 	int pid = 0;
 	int err;
@@ -325,17 +346,21 @@ int of_stop( struct filter *filter, int timeout )
 	}
 
 	DEBUG2 ("of_stop: waiting for OF_Filter %d", filter->pid );
-	statb = 0;
 	do{
+		statb = 0;
+		Alarm_timed_out = 0;
 		pid = plp_waitpid_timeout(timeout, filter->pid, &statb, WUNTRACED );
 		err = errno;
 		DEBUG3( "of_stop: pid %d, statb 0x%x", pid, statb );
 	}while( Alarm_timed_out == 0 && pid == -1 && err != ECHILD );
 
 	if( Alarm_timed_out || !WIFSTOPPED (statb) ){
-		logerr( LOG_WARNING, "of_stop: did not stop or died (%s)",
-				Decode_status( &statb));
-		return( JFAIL);
+		setstatus( cfp, "of filter died (%s)", Decode_status( &statb));
+		Errorcode = JABORT;
+		if( Alarm_timed_out == 0 && WIFEXITED(statb) && WEXITSTATUS(statb) ){
+			Errorcode = WEXITSTATUS( statb );
+		}
+		cleanup(0);
 	}
 	DEBUG2 ("of_stop: output filter stopped");
 

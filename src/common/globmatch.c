@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE: permform a glob type of match
  **************************************************************************/
 
-static char *const _id = "$Id: globmatch.c,v 3.4 1997/02/04 21:41:05 papowell Exp $";
+static char *const _id = "$Id: globmatch.c,v 3.5 1997/09/18 19:45:59 papowell Exp $";
 
 #include "lp.h"
 #include "globmatch.h"

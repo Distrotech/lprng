@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: printcap.c,v 3.7 1997/03/03 19:46:51 papowell Exp papowell $";
+"$Id: printcap.c,v 3.11 1997/12/20 21:16:26 papowell Exp $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -24,6 +24,7 @@ static char *const _id =
 #include "gethostinfo.h"
 #include "globmatch.h"
 #include "cleantext.h"
+#include "getcnfginfo.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -190,6 +191,7 @@ void Free_printcap_information( void )
 
 	/* release the allocated information */
 	Free_printcap_file_entry( &Raw_printcap_files );
+	Raw_printcap_files.initialized = 0;
 	/* now clear the printcap information */
 	printcaps = (void *)Expanded_printcap_entries.list;
 	for( i = 0; i < Expanded_printcap_entries.count; ++i ){
@@ -764,7 +766,7 @@ void Check_pc_table( void )
 {
 	int i;
 	struct keywords *names;
-	char *s, *t, **values;
+	char *s, *t;
 
 	names = Pc_var_list;
 	for( i = 1; (s = names[i-1].keyword) && (t = names[i].keyword); ++i ){
@@ -772,14 +774,6 @@ void Check_pc_table( void )
 		if( strcmp( s, t ) > 0 ){
 			fatal( LOG_ERR,
 			"Check_pc_table: variables '%s' and '%s' out of order",
-				s, t );
-		}
-	}
-	values = Default_configuration;
-	for( i = 1; (s = values[i-1]) && (t = values[i]); ++i ){
-		if( strcmp( s, t ) > 0 ){
-			fatal( LOG_ERR,
-			"Check_pc_table: default values '%s' and '%s' out of order",
 				s, t );
 		}
 	}
@@ -926,6 +920,9 @@ void Clear_var_list( struct keywords *vars )
 			case FLAG_K: ((int *)(vars->variable))[0] = 0; break;
 			default: break;
 		}
+		if( vars->default_value ){
+			Config_value_conversion( vars, vars->default_value );
+		}
 	}
 }
 
@@ -972,7 +969,7 @@ void Set_var_list( char *name, struct keywords *vars, char **values,
 			key, value+n );
 		/* we have found the keyword.  Now set the value */
 		do_key_conversion( name, vars, value+n, file_entry );
-		++vars; ++values;
+		++values;
 	}
 }
 
@@ -1223,6 +1220,7 @@ void Get_all_printcap_entries( void )
 		/* find the number of possible fields */
 		all_count = 0;
 		for( s = all_field_value; s && *s; s = end ){
+			while( isspace(*s) ) ++s;
 			end = strpbrk( s, " \t,;");
 			if( end ) ++end;
 			++all_count;
@@ -1234,6 +1232,7 @@ void Get_all_printcap_entries( void )
 		all_list = All_list.list;
 		All_list.count = 0;
 		for( s = all_field_value; s && *s; s = end ){
+			while( isspace(*s) ) ++s;
 			all_list[All_list.count++] = s;
 			end = strpbrk( s, " \t,;");
 			if( end ) *end++ = 0;
@@ -1721,7 +1720,7 @@ int Expand_percent( char *s, char *next, char *end )
 	char *str;
 	int c;
 	DEBUGF(DDB3)("Expand_percent: Expanding '%s'", s );
-	for( ; next < end && (c = *s); ++s ){
+	if(s) for( ; next < end && (c = *s); ++s ){
 		if( c != '%' ){
 			*next++ = c;
 			continue;

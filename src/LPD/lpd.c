@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -23,7 +23,7 @@ We are going to simulate the LPD daemon using the basic facilities.
 
 */
 static char *const _id =
-"$Id: lpd.c,v 3.12 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpd.c,v 3.22 1997/12/24 20:10:12 papowell Exp $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -42,11 +42,12 @@ static char *const _id =
 /**** ENDINCLUDE ****/
 
 static void Service_connection( struct sockaddr *sin, int listen, int talk );
-static void Read_pc(void);
+static void Read_pc(void), Reinit(void);
 static void Set_lpd_pid(void);
 static int Get_lpd_pid(void);
 int Setuplog(char *logfile, int sock);
 void Service_printer( int talk );
+static int Reread_config;
 
 
 char LPD_optstr[] 	/* LPD options */
@@ -71,17 +72,17 @@ int main(int argc, char *argv[], char *envp[])
 {
 	int sock = 0;		/* socket for listen */
 	int newsock;		/* new socket */
-	int status;			/* status of operation */
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
 	struct timeval timeval, *timeout;
+	int timeout_encountered = 0;	/* we have a timeout */
 	int max_socks;		/* maximum number of sockets */
 	struct sockaddr sin;	/* the connection remote IP address */
-	pid_t result;		/* process termination information */
-	int l;				/* ACME?  Hmmm... well, ok */
+	int n, m;			/* ACME?  Hmmm... well, ok */
 	int err;
-	time_t last_time;	/* time that last Start_all was done */
-	time_t this_time;	/* current time */
+ 	time_t last_time;	/* time that last Start_all was done */
+ 	time_t this_time;	/* current time */
+	plp_status_t status;
 
 	Is_server = 1;	/* we are the LPD server */
 
@@ -92,7 +93,7 @@ int main(int argc, char *argv[], char *envp[])
 	 * not started by root.  If it is started by root, it is
 	 * irrelevant
 	 */
-	Initialize();
+	Initialize(argv);
 
 
 	/* scan the argument list for a 'Debug' value */
@@ -102,10 +103,10 @@ int main(int argc, char *argv[], char *envp[])
 	Get_parms(argc, argv);      /* scan input args */
 
 	/* set signal handlers */
-	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Read_pc);
-	(void) plp_signal (SIGINT, cleanup);
-	(void) plp_signal (SIGQUIT, cleanup);
-	(void) plp_signal (SIGTERM, cleanup);
+	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Reinit);
+	(void) plp_signal (SIGINT, cleanup_INT);
+	(void) plp_signal (SIGQUIT, cleanup_QUIT);
+	(void) plp_signal (SIGTERM, cleanup_TERM);
 	(void) plp_signal (SIGUSR1, (plp_sigfunc_t)SIG_IGN);
 	(void) plp_signal (SIGUSR2, (plp_sigfunc_t)SIG_IGN);
 
@@ -155,7 +156,7 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	if( !Foreground ){
-		if( (pid = dofork()) < 0 ){
+		if( (pid = dofork(1)) < 0 ){
 			logerr_die( LOG_ERR, _("lpd: main() dofork failed") );
 		} else if( pid ){
 			exit(0);
@@ -175,6 +176,8 @@ int main(int argc, char *argv[], char *envp[])
 
 	Set_lpd_pid();
 
+	/* open a connection to logger */
+	setmessage(0,"LPD","Starting");
 
 	/* read the printcap file */
 	Read_pc();
@@ -184,22 +187,20 @@ int main(int argc, char *argv[], char *envp[])
 		logerr_die( LOG_ERR, _("lpd: pipe call failed") );
 	}
 
-	/* open a connection to logger */
-	send_to_logger( 0 );
-
 	/* get the maximum number of servers allowed */
 	Max_servers = Get_max_servers();
 	DEBUG0( "lpd: maximum servers %d", Max_servers );
 
+	DEBUGFC(DMEM1){ Brk_check_size(); }
 	/*
 	 * clean out the current queues
 	 */
 	Start_all();
-	last_time = time( (void *)0 );
+ 	last_time = time( (void *)0 );
 
 	Printer = 0;
-	Name = "LPD";
-	setproctitle( "LPD" );
+	Name = "MAIN";
+	setproctitle( "lpd %s", Name );
 
 	/* set up the wait activity */
 
@@ -216,72 +217,93 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	do{
-		/* we better see if we have enough servers left */
-		{
-			int block, n;
 
-			n = Countpid();
-			block = WNOHANG;
-			if( n > Max_servers ){
-				block = 0;
-			}
-			DEBUG0( "lpd: %d servers active of %d, %s",
-				n, Max_servers, block?"WNOHANG":"not blocking" );
-			while( (result = plp_waitpid( -1, &status, block )) > 0 ){
-				err = errno;
-				DEBUG0( "lpd: server process pid %d exited", result );
-			}
-			err = errno;
-			n = Countpid();
-			DEBUG0( "lpd: now %d servers of %d active", n, Max_servers );
-			if( n > Max_servers ) continue;
+		while( (n = plp_waitpid( -1, &status, WNOHANG)) > 0 );
+		/* we better see if we have enough servers left */
+		timeout = 0;
+		n = Countpid( 1 );
+		DEBUG0( "lpd: %d servers active of %d",
+			n, Max_servers );
+		DEBUGFC(DMEM1){ Brk_check_size(); }
+		/* we see if we need to start an idle server */
+		if( n >= Max_servers ){
+			DEBUG0( "lpd: too many servers, waiting for one to exit" );
+			n = plp_waitpid( -1, &status, 0);
+			DEBUG0( "lpd: pid %d exited", n );
+			continue;
 		}
-		if( Poll_time > 0 ){
-			this_time = time( (void *)0 );
-			l = this_time - last_time;
-			if( l >= Poll_time ){
-				Start_all();
-				last_time = time( (void *)0 );
-				memset( &timeval, 0, sizeof(timeval) );
-				timeval.tv_sec = Poll_time;
-				continue;
+		if( n < Max_servers
+			&& Start_idle_server( Max_servers - n ) == 0
+			&& Poll_time > 0 ){
+			/* we set up a timeout for idle conditions */
+ 			this_time = time( (void *)0 );
+			m = (this_time - last_time);
+			timeout_encountered = 0;
+			if( m >= Poll_time ){
+				m = Poll_time;
+				last_time = this_time;
+				timeout_encountered = 1;
 			} else {
-				timeout = &timeval;
-				memset( &timeval, 0, sizeof(timeval) );
-				timeval.tv_sec = Poll_time - l;
+				m = Poll_time - m;
 			}
-			DEBUG0( "lpd: poll time %d, %d until next",
-				Poll_time, (int)timeval.tv_sec );
-		} else {
-			DEBUG0( "lpd: no poll time" );
-			timeout = 0;
+			timeout = &timeval;
+			memset( &timeval, 0, sizeof(timeval) );
+			timeval.tv_sec = m;
+			DEBUG0( "lpd: timeout %d, timeout_encountered %d, force_poll %d",
+				m, timeout_encountered, Force_poll );
+			/* we have set up the timeout */
+			if( timeout_encountered ){
+				/* start them all */
+				Start_all();
+				n = Countpid( 1 );
+				if( Start_idle_server( Max_servers - n ) == 0
+					&& Force_poll == 0 ){
+					DEBUG0( "lpd: no work, suppressing timeout" );
+					timeout = 0;
+				}
+			}
 		}
 		readfds = defreadfds;
 
+		Setup_waitpid_break(1);
+		/* deal with a problem where processes that have died
+		 * before the signal handler was installed will not be collected
+		 */
+		while( (n = plp_waitpid( -1, &status, WNOHANG)) > 0 );
+
 		DEBUG1( "lpd: starting select" );
-		Setup_waitpid_break();
-		l = select( max_socks,
+		m = select( max_socks,
 			FD_SET_FIX((fd_set *))&readfds,
 			FD_SET_FIX((fd_set *))0,
 			FD_SET_FIX((fd_set *))0, timeout );
 		err = errno;
 		Setup_waitpid();
-		DEBUG1( "lpd: select returned %d, error '%s'", l, Errormsg(err) );
-		if( l < 0 ){
+		DEBUG1( "lpd: select returned %d, error '%s'", m, Errormsg(err) );
+		/* if we got a SIGHUP then we reread configuration */
+		if( Reread_config ){
+			DEBUG1( "lpd: rereading configuration" );
+			Reread_config = 0;
+			Setup_configuration();
+			setmessage(0,"LPD","Restart");
+			Read_pc();
+		}
+		/* mark this as a timeout */
+		timeout_encountered = (m == 0);
+		if( m < 0 ){
 			if( err != EINTR ){
 				errno = err;
 				logerr_die( LOG_ERR, _("lpd: select error!"));
 				break;
 			}
 			continue;
-		} else if( l == 0 ){
+		} else if( m == 0 ){
 			DEBUG0( "lpd: signal or time out" );
 			continue;
 		}
 		if( FD_ISSET( sock, &readfds ) ){
-			l = sizeof( sin );
+			m = sizeof( sin );
 			DEBUG3("accepting connection on %d", sock );
-			newsock = accept( sock, &sin, &l );
+			newsock = accept( sock, &sin, &m );
 			err = errno;
 			DEBUG3("connection on %d", newsock );
 
@@ -296,7 +318,7 @@ int main(int argc, char *argv[], char *envp[])
 			Service_printer( Lpd_pipe[0] );
 		}
 	}while( 1 );
-	exit(0);
+	cleanup(0);
 	return(0);
 }
 
@@ -380,7 +402,7 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 	int permission;
 	int port = 0;
 
-	pid = dofork();
+	pid = dofork(1);
 	if( pid < 0 ){
 		logerr( LOG_INFO, _("Service_connection: dofork failed") );
 	}
@@ -406,11 +428,16 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 
 	len = sizeof( input ) - 1;
 	memset(input,0,sizeof(input));
-	DEBUG0( "Starting Read" );
-	status = Link_line_read(ShortRemote,&talk,Send_timeout,input,&len);
+	DEBUG0( "LPD: Starting Read" );
+	status = Link_line_read(ShortRemote,&talk,
+		Send_job_rw_timeout,input,&len);
 	DEBUG0( "Request '%s'", input );
+	if( len == 0 ){
+		DEBUG3( "LPD: zero length read" );
+		cleanup(0);
+	}
 	if( status ){
-		logerr_die( LOG_INFO, _("Service_connection: cannot read request") );
+		logerr_die( LOG_DEBUG, _("Service_connection: cannot read request") );
 	}
 	if( len < 3 ){
 		fatal( LOG_INFO, _("Service_connection: bad request line '%s'"), input );
@@ -453,7 +480,8 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 			Write_fd_len( talk, "", 1 );
 			break;
 		case REQ_RECV:
-			Receive_job( &talk, input, sizeof(input) );
+			Receive_job( &talk, input, sizeof(input),
+				Send_job_rw_timeout );
 			break;
 		case REQ_DSHORT:
 		case REQ_DLONG:
@@ -467,14 +495,30 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 			Job_control( &talk, input, sizeof(input) );
 			break;
 		case REQ_BLOCK:
-			Receive_block_job( &talk, input, sizeof(input) );
+			Receive_block_job( &talk, input, sizeof(input),
+				Send_job_rw_timeout );
 			break;
 		case REQ_SECURE:
-			Receive_secure( &talk, input, sizeof(input) );
+			Receive_secure( &talk, input, sizeof(input),
+				Send_job_rw_timeout );
 			break;
 	}
 	cleanup(0);
 }
+
+/***************************************************************************
+ * Reinit()
+ * Reinitialize the database/printcap/permissions information
+ * 1. free any allocated memory
+ ***************************************************************************/
+
+static void Reinit(void)
+{
+	Reread_config = 1;
+	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Reinit);
+}
+
+
 
 /***************************************************************************
  * Read_pc()
@@ -488,13 +532,12 @@ static void Service_connection( struct sockaddr *sin, int listen, int talk )
 static void Read_pc(void)
 {
 	/* you might as well reset all the logging information as well */
-	reset_logging();
+	DEBUG1( "Read_pc: starting" );
 	Free_printcap_information();
+	Free_perms( &Perm_file );
 	Get_all_printcap_entries();
-	if( Printer_perms_path && *Printer_perms_path ){
-		Free_perms( &Perm_file );
-		Get_perms( "all", &Perm_file, Printer_perms_path );
-	}
+	Get_perms( "all", &Perm_file, Printer_perms_path );
+	DEBUG1( "Read_pc: done" );
 }
 
 
@@ -510,7 +553,6 @@ static void Read_pc(void)
 
 void Service_printer( int talk )
 {
-	int pid;		/* PID of the server process */
 	char *name, *s, *end;
 	char line[LINEBUFFER];
 	int n, len;
@@ -530,10 +572,11 @@ void Service_printer( int talk )
 		end = strpbrk( name, ",; \t" );
 		if( end ) *end++ = 0;
 		if( (s = Clean_name( name )) ){
-			DEBUG0( "Service_printer: bad printer name '%s'", name );
+			DEBUG0( "Service_printer: bad character '%c' in printer name '%s'",
+				*s, name );
 			continue;
 		}
-		setproctitle( "lpd %s '%s'", Name, name );
+		setproctitle( "lpd %s '%s'", "STARTING", name );
 		/*
 		 * if we are starting 'all' then we need to start subprocesses
 		 */
@@ -541,23 +584,12 @@ void Service_printer( int talk )
 			/* we start all of them */
 			Start_all();
 		} else {
-			/* Call the routine to actually do the work */
-			plp_status_t status;
-			n = Countpid();
-			DEBUG0( "Service_printer: %d servers of %d active",
-				n, Max_servers );
-			while( n > Max_servers ){
-				n = plp_waitpid( -1, &status, 0 );
-				DEBUG0( "Service_printer: pid %d exited '%s'",
-					n, Decode_status( &status ) );
-				n = Countpid();
-			}
-			if( (pid = dofork()) < 0 ){
-				logerr_die( LOG_ERR, _("lpd: dofork failed") );
-			} else if( pid == 0 ){
-				Do_queue_jobs( name );
-				cleanup(0);
-			}
+			/* we will search the server list for a printer
+				with the appropriate name.  If we do not
+				find it,  then we will call Start_all()
+				to start everything instead
+			 */
+			Start_particular_server( name );
 		}
 	}
 }

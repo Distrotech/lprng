@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getqueue.c,v 3.8 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: getqueue.c,v 3.14 1997/10/27 00:14:19 papowell Exp $";
 
 /***************************************************************************
 Commentary
@@ -143,10 +143,10 @@ void Getcontrolfile( char *pathname, char *file, struct dpathname *dpath,
 	strncpy( cf->transfername, file, sizeof( cf->transfername ) );
 
 	/* read the control file into buffer */
-	DEBUG4("Getcontrolfile: allocate control file buffer len %d",
-		cf->statb.st_size  );
-	cf->cf_info = add_buffer( &cf->control_file_image, cf->statb.st_size+1 );
-	for( i = 1, len = cf->statb.st_size, s = cf->cf_info;
+	len = cf->statb.st_size;
+	DEBUG4("Getcontrolfile: allocate control file buffer len %d", len );
+	cf->cf_info = add_buffer( &cf->control_file_image, len+1 );
+	for( i = 1, s = cf->cf_info;
 		len > 0 && (i = read( fd, s, len )) > 0;
 		len -= i, s += i );
 	*s++ = 0;
@@ -201,6 +201,13 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 	DEBUG4("Parse_cf: job number '%d', filehostname '%s'",
 		cf->number, cf->filehostname );
 
+	if( check_df ){
+		cf->jobsize = 0;
+	}
+	memset( cf->capoptions, 0, sizeof( cf->capoptions ) );
+	memset( cf->digitoptions, 0, sizeof( cf->digitoptions ) );
+	cf->data_file_list.count = 0;
+
 	/* count the numbers of lines and datafile lines */
 	linecount = 0;
 	datafiles = 0;
@@ -238,9 +245,13 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 		lines[ cf->control_file_lines.count ] = s;
 		for( i = 0; (c = s[i]); ++i ){
 			if( !isprint(c) && !isspace(c) ){
-				plp_snprintf( cf->error, sizeof( cf->error),
-					"bad job line '%s'", s );
-				goto error;
+				if( Fix_bad_job ){
+					s[i] = ' ';
+				} else {
+					plp_snprintf( cf->error, sizeof( cf->error),
+						"bad job line '%s'", s );
+					goto error;
+				}
 			}
 		}
 
@@ -264,34 +275,51 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 						"'%s' Unlink before data info in '%s'",
 						s, cf->transfername );
 					goto error;
-				} else if( df->Uinfo[0] ){
-					plp_snprintf( cf->error, sizeof( cf->error),
-						"multiple U (unlink) for same data file, line '%s' in %s",
-						s, cf->transfername );
-					goto error;
 				}
 				if( Check_format( DATA_FILE, s+1, cf ) ){
+					/* vintage and broken LPR servers put in bad 'U' lines */
+					DEBUG3( "Parse_cf: Bad U line '%s", s );
+					if( Fix_bad_job ){
+						lines[ cf->control_file_lines.count ] = 0;
+						continue;
+					}
 					plp_snprintf( cf->error, sizeof( cf->error),
 						"U (unlink) data file name format bad, line '%s' in %s",
 						s, cf->transfername );
 					goto error;
 				}
 				if( strcmp( s+1, df->original ) ){
+					DEBUG3( "Parse_cf: U line does not match '%s", s );
+					if( Fix_bad_job ){
+						lines[ cf->control_file_lines.count ] = 0;
+						continue;
+					}
 					plp_snprintf( cf->error, sizeof( cf->error),
 						"U (unlink) does not match data file name, line '%s' in %s",
 						s, cf->transfername );
 					goto error;
 				}
-				/* set up for modification */
-				lines[ cf->control_file_lines.count ] = df->Uinfo;
-				strncpy( df->Uinfo, s, sizeof( df->Uinfo ) );
+				if( df->Uinfo[0] ){
+					DEBUG3( "Parse_cf: multiple U (unlink) for same data file, line '%s' in %s",
+						s, cf->transfername );
+					lines[ cf->control_file_lines.count ] = 0;
+				} else {
+					lines[ cf->control_file_lines.count ] = df->Uinfo;
+					strncpy( df->Uinfo, s, sizeof( df->Uinfo ) );
+				}
 				continue;
 			}
 			if( cf->capoptions[ c - 'A' ] ){
-				plp_snprintf( cf->error, sizeof( cf->error),
-					"duplicate option '%s' in '%s'",
-					s, cf->transfername );
-				goto error;
+				if( Fix_bad_job ){
+					/* remove the duplicate line */
+					lines[ cf->control_file_lines.count ] = 0;
+					continue;
+				} else {
+					plp_snprintf( cf->error, sizeof( cf->error),
+						"duplicate option '%s' in '%s'",
+						s, cf->transfername );
+					goto error;
+				}
 			}
 			cf->capoptions[ c - 'A' ] = s;
 			if( c == 'A' ){
@@ -304,6 +332,7 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 				strncpy( cf->identifier, s, sizeof( cf->identifier ) );
 				cf->capoptions[ c - 'A' ] = cf->identifier;
 				lines[ cf->control_file_lines.count ] = cf->identifier;
+				cf->orig_identifier = s;
 			}
 		} else if( isdigit( c ) ){
 			if( cf->digitoptions[ c - '0' ] ){
@@ -353,7 +382,11 @@ int Parse_cf( struct dpathname *dpath, struct control_file *cf, int check_df )
 			df->copies = 1;
 			strncpy(df->transfername, s, sizeof(df->transfername) );
 			strncpy(df->original, s+1, sizeof(df->original) );
-			s = Add_path( dpath, s+1 );
+			if( dpath ){
+				s = Add_path( dpath, s+1 );
+			} else {
+				s = s+1;
+			}
 			strncpy(df->openname, s, sizeof(df->openname) );
 			/* now you do not need to worry */
 			lines[ cf->control_file_lines.count ] = df->transfername;
@@ -532,6 +565,7 @@ void Scan_queue( int check_df, int new_queue )
 		found = 0;
 		free_entry = -1;
 		/* we only search if an old queue */
+		cfp = 0;
 		for( i = 0; i < C_files_list.count; ++i ){
 			/* we now check the control file name */
 			cfp = cfpp[i];
@@ -542,18 +576,19 @@ void Scan_queue( int check_df, int new_queue )
 					DEBUG4(
 					"Scan_qeueue: '%s' old ctime %d, new ctime %d", cfp->transfername,
 						cfp->statb.st_ctime, statb.st_ctime );
-					/* now we check the modification time */
-					if( cfp->statb.st_ctime != statb.st_ctime
+
+					found = 1;
+					/* now we check the size and modification time */
+					if( cfp->statb.st_size != statb.st_size
+						|| cfp->statb.st_ctime != statb.st_ctime
 						|| cfp->statb.st_dev != statb.st_dev
 						|| cfp->statb.st_ino != statb.st_ino ){
-						/* we need to reprocess the whole thing */
-						cfp->transfername[0] = 0;
-						free_entry = i;
-						break;
+						/* we need to reprocess the control file */
+						Getcontrolfile( pathname, d->d_name, SDpathname, fd,
+							&statb, check_df, cfp );
 					}
-					/* get the job control information only */
+					/* get the job control information */
 					Get_job_control( cfp, 0 );
-					found = 1;
 					break;
 				}
 			} else if( free_entry < 0 ){
@@ -574,8 +609,6 @@ void Scan_queue( int check_df, int new_queue )
 			Getcontrolfile( pathname, d->d_name, SDpathname, fd,
 				&statb, check_df, cfp );
 			Get_job_control( cfp, 0 );
-		} else {
-			cfp = cfpp[i];
 		}
 		close(fd);
 

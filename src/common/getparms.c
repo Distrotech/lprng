@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getparms.c,v 3.1 1996/12/28 21:40:13 papowell Exp $";
+"$Id: getparms.c,v 3.3 1997/10/27 00:14:19 papowell Exp $";
 
 #include "lp.h"
 #include "getparms.h"
@@ -35,8 +35,10 @@ void Check_int_dup (int option, int *value, char *arg, int maxvalue)
 {
 	char *convert;
 
-	if(*value) {
-		Diemsg ("duplicate option %c", option);
+	if ( !Allow_duplicate_args ) {
+	  if(*value) {
+	    Diemsg ("duplicate option %c", option);
+	  }
 	}
 	if (arg == 0) {
 		Dienoarg (option);
@@ -61,8 +63,10 @@ void Check_int_dup (int option, int *value, char *arg, int maxvalue)
 
 void Check_str_dup(int option, char **value, char *arg, int maxlen )
 {
-	if (*value) {
-		Diemsg ("duplicate option %c", option);
+        if ( !Allow_duplicate_args ) {
+	  if (*value) {
+	    Diemsg ("duplicate option %c", option);
+	  }
 	}
 	if (arg == 0) {
 		Dienoarg (option);
@@ -80,8 +84,10 @@ void Check_str_dup(int option, char **value, char *arg, int maxlen )
 
 void Check_dup(int option, int *value)
 {
-	if (*value) {
-		Diemsg ("duplicate option %c", option);
+	if ( !Allow_duplicate_args ) {
+	  if (*value) {
+	    Diemsg ("duplicate option %c", option);
+	  }
 	}
 	*value = 1;
 }

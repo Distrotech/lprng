@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendjob.c,v 3.13 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: sendjob.c,v 3.22 1998/01/08 09:51:17 papowell Exp $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -34,7 +34,7 @@ static char *const _id =
 
 static int Bounce_filter( struct control_file *cfp,
 	struct data_file *data_file, struct printcap_entry *printcap_entry,
-	int fd, int *size, struct stat *statb );
+	int fd, int *size, struct stat *statb, int transfer_timeout );
 
 /***************************************************************************
 Commentary:
@@ -78,17 +78,11 @@ int Send_job(
 	char *host,		- remote host name
 	struct dpathname *p - pathname to spool directory
 	struct control_file *cfp,	- control file
-	int connect_try,	- number of times to retry sending/opening connection
-						- negative is infinite
 	int connect_timeout,	- timeout on making connection
 	int connect_interval,	- interval between retries
+	int max_connect_interval - maximum connection interval
 	int transfer_timeout )	- timeout on sending a file
 
-	We will retry making the connection for connect_try times.
-		if connnect_try == 0, we do it indefinately
-	If the connect_interval > 0, we pause connect_interval between attempts;
-		we add 10 seconds until we are waiting a minute
-		(60 seconds) between attempts.
 	RETURNS: 0 if successful, non-zero if not
  **************************************************************************/
 extern int Send_files( char *host, char *printer,
@@ -108,18 +102,16 @@ extern int Send_secure_block( char *host, char *printer,
 
 int Send_job( char *printer, char *host, struct control_file *cfp,
 	struct dpathname *dpath,
-	int max_try, int connect_timeout, int connect_interval,
+	int connect_timeout, int connect_interval, int max_connect_interval,
 	int transfer_timeout, struct printcap_entry *printcap_entry )
 {
-	int sock;		/* socket to use */
-	int i, j, n;		/* AJAX Integers (ACME on strike) */
+	int sock = -1;		/* socket to use */
+	int i, j, n, errcount = 0;	/* AJAX Integers (ACME on strike) */
 	int status = 0;	/* status of transfer */
-	int attempt;
 	char msg[LINEBUFFER];
 	char bannerpath[MAXPATHLEN];
 	int err;
 	int tempfd;
-	int status_read_timeout;
 	char *id;
 	char *s;
 	struct data_file *df, *dfp;	/* data file entry */
@@ -130,11 +122,10 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 	/* now we have a banner, is it at start or end? */
 	if( Generate_banner && (Is_server || Lpr_bounce ) ){
 		s = 0;
-		DEBUG2( "Send_job: Banner_start '%s', Banner_printer '%s', Default '%s'",
-			Banner_start, Banner_printer, Default_banner_printer );
+		DEBUG2( "Send_job: Banner_start '%s', Banner_printer '%s'",
+			Banner_start, Banner_printer );
 		s = Banner_start;
 		if( s == 0 ) s = Banner_printer;
-		if( s == 0 ) s = Default_banner_printer;
 		if( s ){
 			tempfd = Make_temp_fd( bannerpath, sizeof(bannerpath) );
 			DEBUG2( "Send_job: banner path '%s'", bannerpath );
@@ -175,22 +166,29 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 			if( df->Uinfo[0] ) df->Uinfo[3] = n;
 			safestrncpy(df->openname, bannerpath );
 			/* now we insert the various lines */
-			Insert_job_line(cfp, df->Uinfo, 0, cfp->control_info);
-			Insert_job_line(cfp, df->Ninfo, 0, cfp->control_info);
-			Insert_job_line(cfp, df->transfername, 0, cfp->control_info);
+			if( Banner_last ){
+				Add_job_line(cfp, df->transfername, 0 );
+				Add_job_line(cfp, df->Ninfo, 0 );
+				Add_job_line(cfp, df->Uinfo, 0 );
+			} else {
+				Insert_job_line(cfp, df->Uinfo, 0, cfp->control_info);
+				Insert_job_line(cfp, df->Ninfo, 0, cfp->control_info);
+				Insert_job_line(cfp, df->transfername, 0, cfp->control_info);
+				cfp->flags |=  LAST_DATA_FILE_FIRST;
+			}
 			if( fstat( tempfd, &df->statb ) < 0 ){
 				Errorcode = JABORT;
 				logerr_die( LOG_INFO, "Send_job: fstat tempfd failed" );
 			}
 			close(tempfd);
 		}
-		if( Banner_last == 0 ){
-			cfp->flags |=  LAST_DATA_FILE_FIRST;
-		}
 	}
 
 	/* fix up the control file */
-	Fix_control( cfp, printcap_entry );
+	if( Fix_control( cfp, printcap_entry ) ){
+		/* NOTE: we are brutal - we need to reread the control file */
+		DEBUG3("Send_job: rereading control file '%s'", cfp->openname );
+	}
 
 	/*
 	 * do accounting at start
@@ -204,7 +202,8 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 	if( Is_server && printcap_entry && Accounting_remote ){
 		Setup_accounting( cfp, printcap_entry );
 		if( Accounting_start ){
-			i = Do_accounting( 0, Accounting_start, cfp, Send_timeout, printcap_entry, 0 );
+			i = Do_accounting( 0, Accounting_start, cfp, transfer_timeout,
+				printcap_entry, 0 );
 			if( i ){
 				Errorcode = i;
 				cleanup( 0 );
@@ -212,83 +211,82 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 		}
 	}
 
-	DEBUG3("Send_job: '%s'->'%s@%s',connect(retry %d,timeout %d,interval %d)",
-		cfp->transfername, printer, host, max_try, connect_timeout,
-		connect_interval );
+	DEBUG3("Send_job: '%s'->'%s@%s',connect(timeout %d,interval %d)",
+		cfp->transfername, printer, host, connect_timeout, connect_interval );
 
 	setstatus( cfp, "start job '%s' transfer to %s@%s", id, printer, host );
 
 	/* we check if we need to do authentication */
 	Fix_auth();
 
-	if( connect_interval > 0 ){
-		n = connect_interval;
-	} else {
-		n = 2;
-		connect_interval = 0;
+	setstatus( cfp,
+	"sending job '%s' to '%s@%s'", id, printer, host );
+	/* we pause on later tries */
+retry_connect:
+	setstatus( cfp, "connecting to '%s', attempt %d",
+		host, errcount+1 );
+	if( Network_connect_grace > 0 ){
+		plp_sleep( Network_connect_grace );
 	}
-	attempt = 0;
-	do {
-		/* we pause on later tries */
-		if( attempt > 0 ){
-			setstatus( cfp,
-			"sending job '%s' to '%s@%s', connect attempt %d failed, sleeping %d",
-				id, printer, host, attempt, n );
-			plp_sleep( n );
-			n += connect_interval;
-			if( n > 60 ) n = 60;
-		}
-		++attempt;
 
-		setstatus( cfp,
-			"connection to %s@%s attempt %d", printer, host, attempt );
-
-		errno = 0;
-		sock = Link_open( host, 0, connect_timeout );
-		DEBUG4("Send_job: socket %d", sock );
-		err = errno;
-		if( sock < 0 ){
-			status = LINK_OPEN_FAIL;
-			plp_snprintf(msg,sizeof(msg)-2,
-				"connection to %s@%s failed - %s", printer, host,
-					Errormsg(err) );
-			setstatus( cfp, msg );
-			if( Interactive ){
-				/* send it directly to the error output */
-				strcat(msg,"\n");
-				if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
-			} else {
-				log( LOG_INFO, "Send_job: error '%s'", msg );
+	errno = 0;
+	/* we use localhost connection when try_localhost flag set;
+	 * we force it when we have Force_localhost
+	 */
+	sock = Link_open( host,connect_timeout,
+				Localhost_connection());
+	err = errno;
+	DEBUG4("Send_job: socket %d", sock );
+	if( sock < 0 ){
+		++errcount;
+		status = LINK_OPEN_FAIL;
+		plp_snprintf(msg,sizeof(msg)-2,
+			"connection to '%s' failed - %s", host, Errormsg(err) );
+		setstatus( cfp, msg );
+		if( Interactive ){
+			/* send it directly to the error output */
+			strcat(msg,"\n");
+			if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
+		} else if( Is_server && Retry_NOLINK ){
+			n = 0;
+			if( connect_interval > 0 ){
+				int n = (connect_interval * (1 << (errcount - 1)));
+				if( max_connect_interval && n > max_connect_interval ){
+					n = max_connect_interval;
+				}
 			}
+			if( n > 0 ){
+				setstatus( cfp, _("sleeping %d secs before retry, starting sleep"),n );
+				plp_sleep( n );
+			}
+			goto retry_connect;
+		}
+	} else {
+		/* send job to the LPD server for the printer */
+		DEBUG2("Send_job: Is_server %d, Forward_auth '%s', auth '%s'",
+			Is_server, Forward_auth, cfp->auth_id );
+		if( (Is_server && Forward_auth && cfp->auth_id[0])
+			|| ( !Is_server && ( Use_auth || Use_auth_flag) ) ){
+			status = Send_secure_block( host, printer,
+			dpath, &sock, cfp, transfer_timeout, printcap_entry );
+		} else if( Send_block_format ){
+			status = Send_block( host, printer,
+			dpath, &sock, cfp, transfer_timeout, printcap_entry );
 		} else {
-			/* send job to the LPD server for the printer */
-			status_read_timeout = transfer_timeout;
-			DEBUG2("Send_job: Is_server %d, Forward_auth '%s', auth '%s'",
-				Is_server, Forward_auth, cfp->auth_id );
-			if( (Is_server && Forward_auth && cfp->auth_id[0])
-				|| ( !Is_server && ( Use_auth || Use_auth_flag) ) ){
-				status = Send_secure_block( host, printer,
-				dpath, &sock, cfp, transfer_timeout, printcap_entry );
-				status_read_timeout = 0;
-			} else if( Send_block_format ){
-				status = Send_block( host, printer,
-				dpath, &sock, cfp, transfer_timeout, printcap_entry );
-			} else {
-				status = Send_files( host, printer,
-				dpath, &sock, cfp, transfer_timeout, printcap_entry, 0 );
-			}
-			/* we read any other information that is sent */
-			DEBUG2("Send_job: sending status %d, sock %d", status, sock );
-			if( sock > 0 ){
-				Read_status_info( printer, 0, sock, host, 2 );
-			}
+			status = Send_files( host, printer,
+			dpath, &sock, cfp, transfer_timeout, printcap_entry, 0 );
 		}
-	} while( status && (max_try == 0 || attempt < max_try) );
+		/* we read any other information that is sent */
+		DEBUG2("Send_job: sending status %d, sock %d", status, sock );
+		if( sock > 0 ){
+			Read_status_info( printer, 0, sock, host, 2,
+			transfer_timeout );
+		}
+	}
 
 	if( status ){
-		plp_snprintf(msg, sizeof(msg)-2,
-			"job '%s' transfer to %s@%s failed after %d attempts",
-			id, printer, host, attempt );
+		plp_snprintf(msg, sizeof(msg)-2, "job '%s' transfer to %s@%s failed",
+			id, printer, host);
 		if( Interactive ){
 			strcat(msg,"\n");
 			if( Write_fd_str( 2, msg ) < 0 )cleanup(0);
@@ -299,7 +297,8 @@ int Send_job( char *printer, char *host, struct control_file *cfp,
 		DEBUG4("Send_job: printcap_entry 0x%x, end %d, file %s, remote %d",
 			printcap_entry, Accounting_end, Accounting_file, Accounting_remote );
 		if( Is_server && printcap_entry && Accounting_remote ){
-			i = Do_accounting( 1, Accounting_end, cfp, Send_timeout, printcap_entry, 0 );
+			i = Do_accounting( 1, Accounting_end, cfp,
+				transfer_timeout, printcap_entry, 0 );
 			if( i ){
 				Errorcode = i;
 				cleanup( 0 );
@@ -506,7 +505,7 @@ send_data:
 		}
 		DEBUG3( "Send_files: openname '%s', fd %d", df->openname, df->fd );
 		fd = df->fd;
-		if( df->flags & PIPE_FLAG ){
+		if( df->d_flags & PIPE_FLAG ){
 			DEBUG3( "Send_files: file '%s' open already, fd %d",
 				df->openname, fd );
 			/* ignore the status on LSEEK - we may have a pipe or fd */
@@ -527,10 +526,16 @@ send_data:
 				/* we cannot open the data file! */
 				plp_snprintf( cfp->error, sizeof(cfp->error),
 					"cannot open '%s' - '%s'", s, Errormsg(err) );
-				logerr( LOG_ERR, "Send_files: %s", cfp->error );
 				if( !Interactive ){
-					Set_job_control( cfp, (void *)0, 0 );
+					Set_job_control( cfp, (void *)0 );
+				} else {
+					/* send it directly to the error output */
+					safestrncpy(line,cfp->error);
+					strcat(line,"\n");
+					if( Write_fd_str( 2, line ) < 0 ) cleanup(0);
 				}
+				setstatus( cfp, "%s", cfp->error );
+				Link_close( sock );
 				return(JREMOVE);
 			}
 			if( statb.st_dev != df->statb.st_dev ){
@@ -539,7 +544,7 @@ send_data:
 					df->openname, statb.st_dev, df->statb.st_dev );
 				log( LOG_ERR, "Send_files: %s", cfp->error );
 				if( !Interactive ){
-					Set_job_control( cfp, (void *)0, 0 );
+					Set_job_control( cfp, (void *)0 );
 				}
 				return(JREMOVE);
 			}
@@ -549,7 +554,7 @@ send_data:
 					df->openname, statb.st_ino, df->statb.st_ino );
 				log( LOG_ERR, "Send_files: %s", cfp->error );
 				if( !Interactive ){
-					Set_job_control( cfp, (void *)0, 0 );
+					Set_job_control( cfp, (void *)0 );
 				}
 				return(JREMOVE);
 			}
@@ -559,7 +564,7 @@ send_data:
 					df->openname, statb.st_size, df->statb.st_size );
 				log( LOG_ERR, "Send_files: %s", cfp->error );
 				if( !Interactive ){
-					Set_job_control( cfp, (void *)0, 0 );
+					Set_job_control( cfp, (void *)0 );
 				}
 				return(JREMOVE);
 			}
@@ -571,7 +576,7 @@ send_data:
 					df->openname, fd, Errormsg(err) );
 				log( LOG_ERR, "Send_files: %s", cfp->error );
 				if( !Interactive ){
-					Set_job_control( cfp, (void *)0, 0 );
+					Set_job_control( cfp, (void *)0 );
 				}
 				return(JREMOVE);
 			}
@@ -603,7 +608,7 @@ send_data:
 
 		if( (Is_server && Bounce_queue_dest) || (!Is_server && Lpr_bounce) ){
 			if( (status = Bounce_filter( cfp, df, printcap_entry, fd,
-					&size, &statb )) ){
+					&size, &statb, transfer_timeout )) ){
 				return( status );
 			}
 		}
@@ -632,7 +637,7 @@ send_data:
 			 */
 
 			DEBUG3("Send_files: doing transfer of '%s'", df->openname );
-			if( df->flags & PIPE_FLAG ){
+			if( df->d_flags & PIPE_FLAG ){
 				size = -1;
 			}
 			/* no timeout on reading, we may be reading from pipe */
@@ -715,7 +720,7 @@ write_error:
 
 static int Bounce_filter( struct control_file *cfp,
 	struct data_file *data_file, struct printcap_entry *printcap_entry,
-	int fd, int *size, struct stat *statb )
+	int fd, int *size, struct stat *statb, int transfer_timeout )
 {
 	int c, in, err;
 	char *filter;
@@ -766,8 +771,8 @@ static int Bounce_filter( struct control_file *cfp,
 				Write_fd_len( XF_fd_info.input, tempbuf, in );
 			}
 		}
-		Errorcode = Close_filter( &XF_fd_info,
-			Send_timeout, "bounce queue" );
+		Errorcode = Close_filter( 0, &XF_fd_info,
+			transfer_timeout, "bounce queue" );
 		if( Errorcode ){
 			logerr_die( LOG_INFO,
 				"Bounce_filter: error closing bounce queue filter" );

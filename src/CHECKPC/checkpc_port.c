@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE: test portabile functionality
  **************************************************************************/
 
-static char *const _id = "$Id: checkpc_port.c,v 3.2 1997/01/15 02:21:18 papowell Exp $";
+static char *const _id = "$Id: checkpc_port.c,v 3.7 1997/12/16 15:06:17 papowell Exp $";
 
 #include "lp.h"
 #include "fileopen.h"
@@ -49,7 +49,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	char *sttycmd;
 	char *diffcmd;
 	int ttyfd;
-	pid_t pid, result;
+	static pid_t pid, result;
 	plp_status_t status;
 	char *mother = "From Mother";
 	char *child = "From Child";
@@ -59,7 +59,6 @@ void Test_port(int ruid, int euid, char *serial_line )
 	char *s;
 	static int i, err;
 	struct stat statb;
-	int lock, create;
 
 	status = 0;
 	fd = -1;
@@ -110,7 +109,7 @@ rw_test:
 	if( status < 0 ){
 		fprintf( stderr, "rw_pipe failed - %s", Errormsg(errno) );
 	} else {
-		if( (pid = dofork()) < 0 ){
+		if( (pid = fork()) < 0 ){
 			fprintf( stderr, "fork failed - %s", Errormsg(errno) );
 		} else if( pid ){
 			plp_usleep(1000);
@@ -198,7 +197,6 @@ rw_test:
 			fflush(stderr);
 		}
 		fflush(stderr);
-		signal( SIGCHLD, SIG_DFL );
 		if( status == 0 ){
 			fprintf( stderr, "***** waitpid() works\n" );
 			fflush(stderr);
@@ -345,7 +343,7 @@ rw_test:
 			} else if( fd < 0 ){
 				fprintf( stderr, "Error opening line '%s' - %s\n",
 				serial_line, Errormsg(err));
-			} else if( i >= 0 ){
+			} else if( i > 0 ){
 				fprintf( stderr, "Lock '%s' succeeded! wrong result\n",
 					serial_line);
 			} else {
@@ -393,7 +391,6 @@ rw_test:
 				fflush(stderr);
 			}
 			fflush(stderr);
-			signal( SIGCHLD, SIG_DFL );
 			if( status == 0 ){
 				fprintf( stderr, "***** LockDevice() works\n" );
 			}
@@ -500,7 +497,6 @@ test_stty:
 				fflush(stderr);
 			}
 			fflush(stderr);
-			signal( SIGCHLD, SIG_DFL );
 			if( status == 0 ){
 				fprintf( stderr, "***** STTY works\n" );
 			}
@@ -520,98 +516,79 @@ test_lockfd:
 	plp_snprintf( line, sizeof(line), "/tmp/XX%dXX", getpid );
 	fprintf( stderr, "Checking Lockf '%s'\n", line );
 	fflush(stderr);
-	fd = Lockf( line, &lock, &create, &statb );
+	fd = Lockf( line, &statb );
 	fflush(stderr);
 	sprintf( cmd, "ls -l %s", line );
 	fflush(stderr); i = system( cmd ); fflush(stdout);
 	if( fd < 0 ){
 		fprintf( stderr, "file open '%s' failed - '%s'\n", line,
 			Errormsg( errno ) );
-	} else if( lock == 0 ){
-		fprintf( stderr, "file '%s' locked? impossible - '%s'\n", line,
-			Errormsg( errno ) );
 	} else if( (pid = fork()) < 0 ){
 		fprintf( stderr, "fork failed!\n");
 	} else if ( pid == 0 ){
 		fprintf( stderr, "Daughter re-opening and locking '%s'\n", line );
 		close( fd );
-		fd = Lockf( line, &lock, &create, &statb );
-		if( fd < 0 ){
+		if( (fd = Checkwrite(line, &statb, O_RDWR, 1, 0 )) < 0) {
+			err = errno;
 			fprintf( stderr,
 				"Daughter re-open '%s' failed: wrong result - '%s'\n",
 				line, Errormsg(errno)  );
 			exit(1);
-		} else if( lock > 0 ){
+		}
+		if( Do_lock( fd, line, 0 ) < 0) {
 			fprintf( stderr,
-				"Daughter lock '%s' succeeded: wrong result\n", line );
-			exit( 1 );
+				"Daughter could not lock '%s', correct result\n", line );
+			exit(0);
 		}
 		fprintf( stderr,
-			"Daughter could not lock '%s', correct result\n", line );
-		exit(0);
-	} else {
-		fflush(stderr);
-		plp_usleep(1000);
-		fflush(stderr);
-		status = 0;
-		while(1){
-			result = plp_waitpid( -1, &status, 0 );
-			if( result == pid ){
-				fprintf( stderr, "Daughter exit status %d\n", status );
-				break;
-			} else if( (result == -1 && errno == ECHILD) || result == 0 ){
-				break;
-			} else if( result == -1 && errno != EINTR ){
-				fprintf( stderr,
-					"plp_waitpid() failed!  This should not happen!");
-				status = -1;
-				break;
-			}
-			fflush(stderr);
-		}
-		signal( SIGCHLD, SIG_DFL );
-		if( status == 0 ){
-			fprintf( stderr, "***** Lockf() works\n" );
-		}
-		fflush(stderr);
-	} 
+			"Daughter locked '%s', incorrect result\n", line );
+		exit(1);
+	}
 	fflush(stderr);
+	plp_usleep(1000);
+	fflush(stderr);
+	status = 0;
+	while(1){
+		result = plp_waitpid( -1, &status, 0 );
+		if( result == pid ){
+			fprintf( stderr, "Daughter exit status %d\n", status );
+			break;
+		} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+			break;
+		} else if( result == -1 && errno != EINTR ){
+			fprintf( stderr,
+				"plp_waitpid() failed!  This should not happen!");
+			status = -1;
+			break;
+		}
+		fflush(stderr);
+	}
+	if( status == 0 ){
+		fprintf( stderr, "***** Lockf() works\n" );
+	}
+	fflush(stderr);
+
 	if( (pid = fork()) < 0 ){
 		fprintf( stderr, "fork failed!\n");
 		fflush(stderr);
 	} else if ( pid == 0 ){
+		int lock = 0;
 		fprintf( stderr, "Daughter re-opening '%s'\n", line );
 		fflush(stderr);
 		close( fd );
-		fd = Lockf( line, &lock, &create, &statb );
-		if( fd < 0 ){
+		if( (fd = Checkwrite(line, &statb, O_RDWR, 1, 0 )) < 0) {
+			err = errno;
 			fprintf( stderr,
-				"Daughter re-open '%s' failed! wrong result - '%s'\n",
-				line, Errormsg(errno) );
-			fflush(stderr);
+				"Daughter re-open '%s' failed: wrong result - '%s'\n",
+				line, Errormsg(errno)  );
 			exit(1);
-		} else if( lock > 0 ){
-			fprintf( stderr, "Daughter lock '%s' succeeded! wrong result\n",
-				line );
-			fflush(stderr);
-			exit( 1 );
-		} else if( lock < 0 ){
-			fprintf( stderr, "Daughter lock '%s' failed! wrong result - %s\n",
-				line, Errormsg(errno) );
-			fflush(stderr);
-			exit( 1 );
 		}
 		fprintf( stderr, "Daughter blocking for lock\n" );
 		fflush(stderr);
 		lock = Do_lock( fd, line, 1 );
-		if( lock == 0 ){
+		if( lock < 0 ){
 			fprintf( stderr, "Daughter lock '%s' failed! wrong result\n",
 				line );
-			fflush(stderr);
-			exit( 1 );
-		} else if( lock < 0 ){
-			fprintf( stderr, "Daughter lock '%s' failed! wrong result - %s\n",
-				line, Errormsg(errno) );
 			fflush(stderr);
 			exit( 1 );
 		}
@@ -619,40 +596,37 @@ test_lockfd:
 			line );
 		fflush(stderr);
 		exit(0);
-	} else {
-		fflush(stderr);
-		plp_usleep(1000);
-		fflush(stderr);
+	}
+	plp_usleep(1000);
+	fflush(stderr);
 
-		fprintf( stderr, "Mother closing '%s', releasing lock\n", line );
-		close( fd );
-		fflush(stderr);
-		fd = -1;
-		status = 0;
-		while(1){
-			result = plp_waitpid( -1, &status, 0 );
-			if( result == pid ){
-				fprintf( stderr, "Daughter exit status %d\n", status );
-				break;
-			} else if( (result == -1 && errno == ECHILD) || result == 0 ){
-				break;
-			} else if( result == -1 && errno != EINTR ){
-				fprintf( stderr,
-					"plp_waitpid() failed!  This should not happen!");
-				status = -1;
-				break;
-			}
-			fflush(stderr);
-		}
-		fflush(stderr);
-		signal( SIGCHLD, SIG_DFL );
-		if( status == 0 ){
-			fprintf( stdout, "***** Lockf() with unlocking works\n" );
+	fprintf( stderr, "Mother closing '%s', releasing lock on fd %d\n",
+		line, fd );
+	close( fd );
+	fflush(stderr);
+	fd = -1;
+	status = 0;
+	while(1){
+		result = plp_waitpid( -1, &status, 0 );
+		if( result == pid ){
+			fprintf( stderr, "Daughter exit status %d\n", status );
+			break;
+		} else if( (result == -1 && errno == ECHILD) || result == 0 ){
+			break;
+		} else if( result == -1 && errno != EINTR ){
+			fprintf( stderr,
+				"plp_waitpid() failed!  This should not happen!");
+			status = -1;
+			break;
 		}
 		fflush(stderr);
 	}
-
 	fflush(stderr);
+	if( status == 0 ){
+		fprintf( stdout, "***** Lockf() with unlocking works\n" );
+	}
+	fflush(stderr);
+
 	if( fd >= 0 ) close(fd);
 	fd = - 1;
 	unlink( line );
@@ -664,7 +638,11 @@ test_lockfd:
 
 	fprintf( stdout, "checking if setting process info to 'XXYYZZ' works\n" );
 	setproctitle( "XXYYZZ" );
+	/* try simple test first */
 	i = system( "ps | grep 'XXYYZZ' | grep -v grep" );
+	if( i ){
+		i = system( "ps -f | grep 'XXYYZZ' | grep -v grep" );
+	}
 	if( i == 0 ){
 		fprintf( stdout, "***** setproctitle works\n" );
 	} else {

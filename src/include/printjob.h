@@ -8,10 +8,11 @@
  ***************************************************************************
  * MODULE: printjob.h
  * PURPOSE: job printing support routines
- * "$Id: printjob.h,v 3.2 1997/01/29 03:04:39 papowell Exp $"
+ * "$Id: printjob.h,v 3.3 1997/12/17 19:34:56 papowell Exp $"
  **************************************************************************/
 
-int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry );
+int Print_job( struct control_file *cfp, struct printcap_entry *printcap_entry,
+	int transfer_timeout );
 void Setup_accounting( struct control_file *cfp, struct printcap_entry *printcap_entry );
 int Do_accounting( int end, char *command, struct control_file *cfp,
 	int timeout, struct printcap_entry *printcap_entry, int filter_out );

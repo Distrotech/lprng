@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: timeout.h
  * PURPOSE: timeout support definitions
- * "$Id: timeout.h,v 3.1 1996/12/28 21:40:37 papowell Exp $"
+ * "$Id: timeout.h,v 3.2 1997/04/05 23:57:45 papowell Exp $"
  **************************************************************************/
 
 #ifndef _TIMEOUT_H 
@@ -20,7 +20,7 @@ EXTERN int Alarm_timed_out;                                     /* flag */
 EXTERN int Timeout_pending;
 EXTERN int *Close_fd;
 
-#if defined(HAVE_SIGSETJMP)
+#if defined(HAVE_SIGLONGJMP)
 EXTERN sigjmp_buf Timeout_env;
 #  define Set_timeout() (sigsetjmp(Timeout_env,1)==0)
 #else

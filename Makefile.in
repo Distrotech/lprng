@@ -2,13 +2,13 @@
 # LPRng - An Extended Print Spooler System
 #
 # Copyright 1988-1995 Patrick Powell, San Diego, CA
-#     papowell@sdsu.edu
+#     papowell@astart.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 3.11 1997/03/24 00:45:58 papowell Exp papowell $
+# $Id: Makefile.in,v 3.20 1998/01/08 09:52:27 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -25,7 +25,7 @@ SRC=@srcdir@
 #=============================================================================
 
 DIRS= src man po
-ALLDIRS= $(DIRS) ${SRC}/TESTSUPPORT ${SRC}/UTILS ${SRC}/DOC
+ALLDIRS= $(DIRS) ${SRC}/TESTSUPPORT ${SRC}/UTILS ${SRC}/HOWTO
 
 all: $(DIRS)
 
@@ -65,7 +65,7 @@ info dvi check:
 
 realclean mostlyclean distclean: clean
 	$(MAKE) MAKETARGET=$@ $(ALLDIRS)
-	-rm -f config.cache config.h config.log config.status Makefile
+	-rm -f config.cache config.h config.log config.status Makefile Makefile.bsd
 
 
 
@@ -129,8 +129,8 @@ cifast: newmake
 			-e '/.*pgp$$/d' \
 		 >/tmp/list
 	echo VERSION >>/tmp/list
-	cat /tmp/list
-	ci $(CI) -l -mUpdate -t-Initial `cat /tmp/list`; \
+	# cat /tmp/list
+	- ci $(CI) -l -mUpdate -t-Initial `cat /tmp/list`;
 	
 
 ###############################################################################
@@ -145,7 +145,12 @@ update:
 	DIR=`pwd | sed 's,.*/,,' `; \
 		echo "#define PATCHLEVEL " \"$$DIR\" >./src/include/patchlevel.h; \
 		sleep 1; \
-		echo $$DIR >VERSION ;
+		echo $$DIR >VERSION ; \
+		cp configure.in /tmp/configure.in; \
+		D=`echo $$DIR | sed 's,.*-,,' ` ; \
+		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure.in >configure.in; \
+		cp configure /tmp/configure; \
+		sed "s,VERSION=.*,VERSION=$$D," </tmp/configure >configure ;
 #GNU
 	$(MAKE) -C man update
 #
@@ -168,7 +173,7 @@ shar:
 	fi; \
 	tar ztf $${DIR}.tgz | sed -e '/\/$$/d' | sort >/tmp/_a.list; \
 	head /tmp/_a.list; \
-	shar -S -n $${DIR} -a -s papowell@sdsu.edu \
+	shar -S -n $${DIR} -a -s papowell@astart.com \
 	   -c -o /tmp/$${DIR}-Part -l100 </tmp/_a.list; \
 	cat $${DIR}/README /tmp/$${DIR}-Part.01 >/tmp/_a.list; \
 	cat >/tmp/$${DIR}-Part.01 /tmp/_a.list; \
@@ -189,9 +194,16 @@ dist_list:
 	echo core >>/tmp/X
 	echo '*core' >>/tmp/X
 	echo '*.orig' >>/tmp/X
+	echo '*.bak' >>/tmp/X
+	echo '*.rej' >>/tmp/X
+	echo '*.tex' >>/tmp/X
+	echo '*.ps' >>/tmp/X
 	echo '?' >>/tmp/X
 	echo '*.o' >>/tmp/X
 	echo '*.a' >>/tmp/X
+	echo '*,v' >>/tmp/X
+	echo '*intl/po2tbl.sed' >>/tmp/X
+	echo '*po/POTFILES' >>/tmp/X
 	for i in tags \
 		authenticate_pgp readfilecount removeoneline setupauth \
 		sserver sclient \
@@ -213,7 +225,7 @@ dist: dist_list
 	DIR=`pwd | sed 's,.*/,,' `; \
 		cd ..; \
 		tar zXcf /tmp/X $${DIR}.tgz $${DIR}; \
-		md5 $${DIR}.tgz | pgp -fast > $${DIR}.tgz.md5
+		md5 $${DIR}.tgz | pgp -fast -u papowell@astart > $${DIR}.tgz.md5
 
 dist_doc: dist_list
 	echo src >>/tmp/X
@@ -225,7 +237,6 @@ dist_doc: dist_list
 		md5 $${DIR}_doc.tgz > $${DIR}_doc.md5
 	
 dist_src: dist_list
-	echo DOC >>/tmp/X
 	echo man >>/tmp/X
 	DIR=`pwd | sed 's,.*/,,' `; \
 		cd ..; \

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_secure.c,v 3.9 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpd_secure.c,v 3.13 1997/12/17 19:34:56 papowell Exp $";
 
 #include "lp.h"
 #include "cleantext.h"
@@ -26,6 +26,7 @@ static char *const _id =
 #include "setupprinter.h"
 #include "waitchild.h"
 #include "lockfile.h"
+#include "jobcontrol.h"
 #include "krb5_auth.h"
 /**** ENDINCLUDE ****/
 
@@ -47,7 +48,7 @@ process.  See README.security for details.
 
  ***************************************************************************/
 
-int Receive_secure( int *socket, char *input, int maxlen )
+int Receive_secure( int *socket, char *input, int maxlen, int transfer_timeout )
 {
 	char *orig_name;		/* line buffer for input */
 	char tempbuf[LINEBUFFER];	/* line buffer for output */
@@ -62,6 +63,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 	int pipe_fd[2];				/* status from authenticator */
 	int report_fd[2];			/* status to authenticator */
 	int temp_fd = -1;
+	int hold_fd = -1;			/* hold file fd */
 	struct printcap_entry *pc_entry = 0;
 	int i, len, err, ack, status;
 	struct stat statb;
@@ -119,6 +121,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 	}
 	user = fields[2];
 	authtype = fields[3];
+	Perm_check.authtype = authtype;
 	filename = fields[4];
 	if( Clean_name( orig_name ) ){
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
@@ -183,35 +186,26 @@ int Receive_secure( int *socket, char *input, int maxlen )
 			ack = ACK_FAIL;
 			goto error;
 		}
-
 		/*
 		 * get the non colliding job number
 		 */
-
-		if( (ack = Find_non_colliding_job_number( Cfp_static )) ){
+		if( (hold_fd
+			= Find_non_colliding_job_number(Cfp_static,CDpathname)) < 0 ){
 			goto error;
 		}
-
-		/*
-		 * now we process the control file -
-		 * we reformat the transfername - of the job
-		 */
 		plp_snprintf( Cfp_static->transfername,
 			sizeof(Cfp_static->transfername),
 			"cf%c%0*d%s",
 			Cfp_static->priority,
 			Cfp_static->number_len,
 			Cfp_static->number, Cfp_static->filehostname );
-		strncpy( Cfp_static->openname,
-			Add_path( SDpathname, Cfp_static->transfername ),
-			sizeof( Cfp_static->openname ) );
 	} else {
 		Setup_printer( orig_name, Cfp_static->error,
 			sizeof(Cfp_static->error), debug_vars, !DEBUGFSET(DAUTH1), (void *)0,
 			&pc_entry );
 	}
 
-	status = Link_ack( ShortRemote, socket, Send_timeout, 0x100, 0 );
+	status = Link_ack( ShortRemote, socket, transfer_timeout, 0x100, 0 );
 	if( status ){
 		ack = ACK_RETRY;
 		plp_snprintf( Cfp_static->error, sizeof(Cfp_static->error),
@@ -365,7 +359,7 @@ int Receive_secure( int *socket, char *input, int maxlen )
 		/* now we process the job */
 
 		status = Check_for_missing_files( Cfp_static, &Data_files,
-			temp_fd, tempfilename, orig_name, authentication );
+			orig_name, authentication, &hold_fd, pc_entry );
 
 	} else {
 		/* we read the command */
@@ -504,7 +498,7 @@ error:
 	DEBUGF(DRECV1)("Receive_secure: error - status %d, ack %d, error '%s'",
 		status, ack, Cfp_static->error );
 	if( status || ack ){
-		if( ack ) (void)Link_ack( ShortRemote, socket, Send_timeout,ack, 0 );
+		if( ack ) (void)Link_ack( ShortRemote, socket, transfer_timeout, ack, 0 );
 		if( status == 0 ) status = JFAIL;
 		DEBUGF(DRECV1)("Receive_secure: sending ACK %d, msg '%s'",
 			ack, Cfp_static->error );
@@ -524,6 +518,10 @@ done:
 	if( pipe_fd[1] > 0 ) close( pipe_fd[1] );
 	if( report_fd[0] > 0 ) close( report_fd[0] );
 	if( report_fd[1] > 0 ) close( report_fd[1] );
+	if( hold_fd > 0 ){
+		close( hold_fd );
+		hold_fd = -1;
+	}
 
 	if( status == 0 && ack == 0 && filename ){
 		/* start a new server */

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,11 +10,12 @@
  * PURPOSE: basic set of utilities
  **************************************************************************/
 
-static char *const _id = "$Id: utilities.c,v 3.3 1997/03/24 00:45:58 papowell Exp papowell $";
+static char *const _id = "$Id: utilities.c,v 3.5 1997/09/18 19:46:07 papowell Exp $";
 
 #include "lp.h"
 #include "utilities.h"
 #include "timeout.h"
+#include "errorcodes.h"
 /**** ENDINCLUDE ****/
 
 /*
@@ -28,22 +29,36 @@ char *Time_str(int shortform, time_t t)
 {
     static char buffer[99];
 	struct tm *tmptr;
+	struct timeval tv;
 
+	tv.tv_usec = 0;
 	if( t == 0 ){
-		t = time( (time_t *) 0 );
+		if( gettimeofday( &tv, 0 ) == -1 ){
+			Errorcode = JABORT;
+			logerr_die( LOG_ERR,"Time_str: gettimeofday failed");
+		}
+		t = tv.tv_sec;
 	}
 	tmptr = localtime( &t );
-	if( shortform ){
+	if( shortform && Full_time == 0 ){
 		plp_snprintf( buffer, sizeof(buffer),
-			"%02d:%02d:%02d",
-			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec );
+			"%02d:%02d:%02d.%03d",
+			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
+			(int)(tv.tv_usec/1000) );
 	} else {
 		plp_snprintf( buffer, sizeof(buffer),
-			"%d-%02d-%02d-%02d:%02d:%02d",
+			"%d-%02d-%02d-%02d:%02d:%02d.%03d",
 			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
-			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec );
+			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
+			(int)(tv.tv_usec/1000) );
 	}
 	/* now format the time */
+	if( Ms_time_resolution == 0 ){
+		char *s;
+		if( ( s = strrchr( buffer, '.' )) ){
+			*s = 0;
+		}
+	}
 	return( buffer );
 }
 

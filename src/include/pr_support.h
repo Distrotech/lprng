@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: printer_support.h
  * PURPOSE: printer support routines
- * "$Id: pr_support.h,v 3.2 1997/01/22 23:09:32 papowell Exp $"
+ * "$Id: pr_support.h,v 3.4 1998/01/12 20:29:33 papowell Exp $"
  **************************************************************************/
 
 /*****************************************************************
@@ -19,11 +19,11 @@ int Print_open( struct filter *filter,
 	struct control_file *cf, int timeout, int interval, int grace,
 	int max_try, struct printcap_entry *printcap_entry, int accounting_port );
 
-void Print_close( int timeout );
+void Print_close( struct control_file *cfp, int timeout );
 void Print_kill( int signal );
 void Print_abort( void );
 int of_start( struct filter *filter );
-int of_stop( struct filter *filter, int timeout );
+int of_stop( struct filter *filter, int timeout, struct control_file *cfp );
 int Print_string( struct filter *filter, char *str, int len, int timeout );
 int Print_copy( struct control_file *cfp, int fd, struct stat *statb,
 	struct filter *filter, int timeout, int status, char *file_name );

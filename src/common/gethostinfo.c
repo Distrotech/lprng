@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -13,7 +13,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: gethostinfo.c,v 3.10 1997/02/09 00:25:44 papowell Exp papowell $";
+"$Id: gethostinfo.c,v 3.16 1998/01/12 20:29:16 papowell Exp $";
 /********************************************************************
  * char *get_fqdn (char *shorthost)
  * get the fully-qualified domain name for a host.
@@ -27,6 +27,12 @@ static char *const _id =
 #include "gethostinfo.h"
 #include "malloclist.h"
 #include "dump.h"
+#if defined(HAVE_ARPA_NAMESER_H)
+# include <arpa/nameser.h>
+#endif
+#if defined(HAVE_RESOLV_H)
+# include <resolv.h>
+#endif
 /**** ENDINCLUDE ****/
 
 #ifndef MAXHOSTNAMELEN
@@ -91,9 +97,12 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 	if( host_ent == 0 ){
 #if defined(HAVE_GETHOSTBYNAME2)
 		host_ent = gethostbyname2( shorthost, AF_Protocol );
-#else
-		host_ent = gethostbyname( shorthost );
+		DEBUG0( "Find_fqdn: gethostbyname2 returned 0x%x", host_ent);
+	}
+		if( host_ent == 0 ){
 #endif
+		host_ent = gethostbyname( shorthost );
+		DEBUG0( "Find_fqdn: gethostbyname returned 0x%x", host_ent);
 	}
 	if( host_ent == 0 ){
 		DEBUG0( "Find_fqdn: no entry for host '%s'", shorthost );
@@ -151,19 +160,20 @@ char *Find_fqdn( struct host_information *info, const char *shorthost,
 				fqdn == 0 && list && *list; ++list ){
 				fqdn = strchr( *list, '.' );
 			}
-		}
+		} else { /* this failed */
 		/* we have to do the lookup AGAIN */
 #if defined(HAVE_GETHOSTBYNAME2)
-		host_ent = gethostbyname2( shorthost, AF_Protocol );
+			host_ent = gethostbyname2( shorthost, AF_Protocol );
 #else
-		host_ent = gethostbyname( shorthost );
+			host_ent = gethostbyname( shorthost );
 #endif
-		if( host_ent == 0 ){
-			fatal( LOG_ERR, "Find_fqdn: 2nd search failed for host '%s'",
-				shorthost );
+			if( host_ent == 0 ){
+				fatal( LOG_ERR, "Find_fqdn: 2nd search failed for host '%s'",
+					shorthost );
+			}
+			/* sigh... */
+			Check_for_dns_hack(host_ent);
 		}
-		/* sigh... */
-		Check_for_dns_hack(host_ent);
 	}
 
 	/* make a copy of all of the names */
@@ -367,14 +377,11 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 		info->fqdn = 0;
 		info->host_names.count = 0;
 		info->host_addr_list.count = 0;
-		if( info->host_addrtype != sin->sa_family
-			|| info->host_addrlength != len ){
-			if( info->host_addr_list.list ){
-				free( info->host_addr_list.list );
-			}
-			memset( &info->host_addr_list, 0, sizeof(info->host_addr_list ));
+		if( info->host_addr_list.list ){
+			free( info->host_addr_list.list );
 		}
-		info->host_addrtype = host_ent->h_addrtype;
+		memset( &info->host_addr_list, 0, sizeof(info->host_addr_list ));
+		info->host_addrtype = sin->sa_family;
 		info->host_addrlength = len;
 
 		/* put in the address information */
@@ -416,7 +423,24 @@ int Same_host( struct host_information *host,
 		if( l1 == l2 ){ 
 			for( i = 0; result && i < c1; ++i ){
 				for( j = 0; result && j < c2; ++j ){
-					result = memcmp( h1+(i*l1), h2+(j*l2), l1 );
+					
+					result = memcmp( h1+(i*l1), h2+(j*l1), l1 );
+					if(DEBUGL4){
+						char ls[64], rs[64];
+						char *s;
+						int n;
+						s = ( h1+(i*l1));
+						ls[0] = 0; rs[0] = 0;
+						for( n = 0; n < l1; ++n ){
+							plp_snprintf( ls + strlen(ls), 6, "%02x", s[n] );
+						}
+						s = ( h2+(j*l1));
+						for( n = 0; n < l1; ++n ){
+							plp_snprintf( rs + strlen(rs), 6, "%02x", s[n] );
+						}
+						logDebug("Same_host: comparing %s to %s, result %d",
+							ls, rs, result );
+					}
 				}
 			}
 		}

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: getcnfginfo.c,v 3.2 1997/03/04 21:18:29 papowell Exp papowell $";
+"$Id: getcnfginfo.c,v 3.6 1997/12/16 15:06:26 papowell Exp $";
 
 #include "lp.h"
 #include "printcap.h"
@@ -64,14 +64,33 @@ void Set_config_var_list( char *title, struct keywords *vars, char **values );
 /***************************************************************************
  * void Clear_config( void )
  *  clears all of the configuration information, resets to void
+ *  also frees memory allocated for modified strings
  ***************************************************************************/
 
 void Clear_config( void )
 {
-	DEBUGF(DDB1)("Clear_config: starting");
+	DEBUGF(DDB1)("Clear_config: setting to Default");
 	Free_file_entry( &Config_info );
 	Clear_var_list( Pc_var_list );
-	Set_config_var_list( "Default", Pc_var_list, Default_configuration );
+	clear_malloc_list( &Config_info.expanded_str, 1 );
+	clear_malloc_list( &Raw_printcap_files.expanded_str, 1 );
+	Expand_value( Pc_var_list, &Config_info );
+}
+
+
+/***************************************************************************
+ * Reset_config() - resets variables to their
+ *  original value before printcap overrode values.
+ ***************************************************************************/
+void Reset_config( void )
+{
+	DEBUGF(DDB1)( "Reset_config: clearing and resetting values");
+
+	/* clear the allocated memory and then expand strings */
+	Clear_var_list( Pc_var_list );
+	clear_malloc_list( &Config_info.expanded_str, 1 );
+	clear_malloc_list( &Raw_printcap_files.expanded_str, 1 );
+	Set_config_var_list( "VALUES", Pc_var_list, Config_info.entries.list );
 	Expand_value( Pc_var_list, &Config_info );
 }
 
@@ -125,20 +144,6 @@ void Get_config( char *names )
 	Set_config_var_list( "VALUES", Pc_var_list, Config_info.entries.list );
 	Expand_value( Pc_var_list, &Config_info );
 }
-
-/***************************************************************************
- * Reset_config() - resets variables to their
- *  original value before configuration and printcap overrode values.
- ***************************************************************************/
-void Reset_config( void )
-{
-	DEBUGF(DDB1)( "Reset_config: clearing and resetting values");
-	Clear_var_list( Pc_var_list );
-	Set_config_var_list( "Default", Pc_var_list, Default_configuration );
-	Set_config_var_list( "VALUES", Pc_var_list, Config_info.entries.list );
-	Expand_value( Pc_var_list, &Config_info );
-}
-
 /***************************************************************************
  * valuecmp: compare two value entries, excluding the actual value
  * - for Mergesort
@@ -183,7 +188,6 @@ int real_valuecmp( char *left, char *right )
  *  4.  when we find a match we set the value
  ***************************************************************************/
 
-void Config_value_conversion( struct keywords *key, char *s );
 
 void Set_config_var_list( char *name, struct keywords *keys, char **values )
 {
@@ -202,7 +206,7 @@ void Set_config_var_list( char *name, struct keywords *keys, char **values )
 		fatal( LOG_ERR, "Set_config_var_list: Mergesort failed" );
 	}
 	DEBUGFC(DDB3){
-		logDebug("Set_config_var_list: %d values after sorting", n );
+		logDebug("Set_config_var_list: '%s' %d values after sorting", name, n );
 		for( c = 0; c < n; ++c ){
 			logDebug( " [%d] '%s'", c, values[c] );
 		}

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: bsd-compat.c,v 3.5 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: bsd-compat.c,v 3.7 1997/10/04 16:14:09 papowell Exp $";
 
 /*******************************************************************
  * Some stuff for Solaris and other SVR4 impls; emulate BSD sm'tics.
@@ -303,4 +303,53 @@ int Get_max_servers( void )
 		n = Max_servers_active;
 	}
 	return( n );
+}
+
+int plp_rand( int range )
+{
+	static int init;
+	int v, r = 0;
+	if( init == 0 ){
+		init = 1;
+#if defined(HAVE_RANDOM)
+		srandom(getpid());
+#else
+# if defined(HAVE_RAND)
+		srand(getpid());
+# endif
+#endif
+	}
+	if( range > 0 ){
+#if defined(HAVE_RANDOM)
+		v = random();
+		r = v % range;
+		DEBUG3("plp_rand: using random() value %d, range %d, result %d",
+			v, range, r );
+#else
+# if defined(HAVE_RAND)
+		v = rand();
+		r = v % range;
+		DEBUG3("plp_rand: using rand() value %d, range %d, result %d",
+			v, range, r );
+# else
+		v = (init++)*time((void *)0);
+		r = v % range;
+		DEBUG3("plp_rand: using init++*time() value %d, range %d, result %d",
+			v, range, r );
+# endif
+#endif
+	}
+	return( r );
+}
+
+void Brk_check_size( void )
+{
+	char *s = sbrk(0);
+	int   v = s - Top_of_mem;
+	if( Top_of_mem == 0 ){
+		logDebug("BRK: initial value 0x%x", s );
+	} else {
+		logDebug("BRK: new value 0x%x, increment %d", s, v );
+	}
+	Top_of_mem = s;
 }

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -52,7 +52,7 @@ The struct glyph{} array is the set of glyphs for each character.
  ***************************************************************************/
 
 static char *const _id =
-"$Id: lpbanner_fnt.c,v 3.1 1996/12/28 21:40:00 papowell Exp $";
+"$Id: lpbanner_fnt.c,v 3.2 1997/09/18 19:45:43 papowell Exp $";
 
 #include "lpbanner.h"
 

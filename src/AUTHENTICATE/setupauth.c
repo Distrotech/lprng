@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: setupauth.c,v 3.1 1996/12/28 21:39:58 papowell Exp $";
+"$Id: setupauth.c,v 3.3 1997/12/16 15:06:17 papowell Exp $";
 /**********************************************************************
  * Setup secure test
  *  setup_secure 'command 1' 'command 2'
@@ -37,14 +37,14 @@ int main(int argc, char *argv[])
 {
 	char *s, *cmd1, *cmd2, *uids1, *uids2;
 	char **args;
-	int fd[2];
+	int fd[2], i;
 	int uid, uid1, uid2;
 	int pid;
 	struct passwd *pw;
 	char **old_env;
 	
 	cmd1 = 0;
-	if( argc == 5 ){
+	if( argc > 1 ){
 		cmd1 = argv[1];
 	}
 	if( cmd1 == 0 || cmd1[0] == '-' ){
@@ -56,6 +56,10 @@ int main(int argc, char *argv[])
 		fprintf( stderr, " fd 1 = stdout\n" );
 		fprintf( stderr, " fd 2 = stderr\n" );
 		fprintf( stderr, " fd 3 = original stdout\n" );
+		fprintf( stderr, "Called with argc = %d\n", argc);
+		for( i = 0; i < argc; ++i ){
+			fprintf( stderr, "  argv[%d] = '%s'\n",i, argv[i]);
+		}
 		exit( 1 );
 	}
 	uids1 = argv[1];

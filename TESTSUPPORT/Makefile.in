@@ -9,7 +9,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/Makefile
 # PURPOSE: install test version of LPD software
-# $Id: Makefile.in,v 3.2 1997/01/19 14:34:56 papowell Exp $
+# $Id: Makefile.in,v 3.3 1997/10/01 06:45:58 papowell Exp $
 ########################################################################## 
 #
 # make all - will make the binaries, install them in ${TMP}
@@ -215,9 +215,9 @@ clean::
 	-rm -f *.o core
 
 realclean mostlyclean distclean:: clean
-	rm -f Makefile
+	rm -f Makefile Makefile.bsd
 
-uninstall::
+UNINSTAll::
 	-rm -rf ${TMP}LPD
 
 TAGS info:

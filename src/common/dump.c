@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE: dump various data structures
  **************************************************************************/
 
-static char *const _id = "$Id: dump.c,v 3.6 1997/02/05 18:55:02 papowell Exp papowell $";
+static char *const _id = "$Id: dump.c,v 3.10 1998/01/18 00:10:32 papowell Exp papowell $";
 
 #include "lp.h"
 #include "permission.h"
@@ -31,14 +31,21 @@ void dump_parms( char *title, struct keywords *k )
 	if( title ) logDebug( "*** %s ***", title );
 	for( ; k &&  k->keyword; ++k ){
 		switch(k->type){
-		case FLAG_K: case INTEGER_K:
+		case FLAG_K:
 			v =	*(int *)(k->variable);
-			logDebug( "%s: %d (0x%x, 0%o)", k->keyword,v,v,v);
+			logDebug( "%s FLAG %d", k->keyword, v);
+			break;
+		case INTEGER_K:
+			v =	*(int *)(k->variable);
+			logDebug( "%s# %d (0x%x, 0%o)", k->keyword,v,v,v);
 			break;
 		case STRING_K:
 			s = *(char **)(k->variable);
-			if( s == 0 ) s = "<NULL>";
-			logDebug( "%s: %s", k->keyword, s );
+			if( s ){
+				logDebug( "%s= '%s'", k->keyword, s );
+			} else {
+				logDebug( "%s= <NULL>", k->keyword );
+			}
 			break;
 		case LIST_K:
 			l = *(char ***)(k->variable);
@@ -131,8 +138,8 @@ void dump_control_file( char *title,  struct control_file *cf )
 			cf->transfername, cf->hold_file );
 		logDebug( "  number %d, recvd_number %d, jobsize %d, filehostname '%s'",
 			cf->number, cf->recvd_number, cf->jobsize, cf->filehostname );
-		logDebug( "  active %d, receiver %d, held_class %d",
-			cf->hold_info.active, cf->hold_info.receiver,  cf->hold_info.held_class );
+		logDebug( "  server %d, subserver %d, held_class %d",
+			cf->hold_info.server, cf->hold_info.subserver, cf->hold_info.held_class );
 		logDebug( "  flags 0x%x, priority_time %ld, hold_time %ld, error `%s'",
 			cf->flags, cf->hold_info.priority_time,
 			cf->hold_info.hold_time, cf->error );
@@ -175,9 +182,11 @@ void dump_control_file( char *title,  struct control_file *cf )
 				logDebug( "  error='%s'",
 					d->error);
 				logDebug(
-			"  done %d, copies=%d, copy_done=%d, status=%d, active=%d, seq %d",
-					d->done,d->copies, d->copy_done, d->status, d->active,
+			"  done %d, copies=%d, copy_done=%d, status=%d, server=%d, subserver=%d seq %d",
+					d->done,d->copies, d->copy_done, d->status, d->server, d->subserver,
 					d->sequence_number );
+				logDebug( "  priority='%c'",
+					d->priority );
 				logDebug( "  arg_start=%d, arg_count=%d",
 					d->arg_start, d->arg_count );
 				lines = &cf->hold_file_lines.list[d->arg_start];
@@ -239,10 +248,10 @@ void dump_host_information( char *title,  struct host_information *info )
 	unsigned char *s;
 	if( title ) logDebug( "*** %s (0x%x) ***", title, info );
 	if( info ){
-		logDebug( "info name count %d", info->host_names.count );
+		logDebug( "  info name count %d", info->host_names.count );
 		list = info->host_names.list;
 		for( i = 0; i < info->host_names.count; ++i ){
-			logDebug( "  [%d] '%s'", i, list[i] );
+			logDebug( "    [%d] '%s'", i, list[i] );
 		}
 		logDebug( "  address type %d, length %d count %d",
 				info->host_addrtype, info->host_addrlength,
@@ -251,7 +260,7 @@ void dump_host_information( char *title,  struct host_information *info )
 		for( i = 0; i < info->host_addr_list.count; ++i ){
 			char msg[64];
 			int len;
-			plp_snprintf( msg, sizeof(msg), "  [%d] 0x", i );
+			plp_snprintf( msg, sizeof(msg), "    [%d] 0x", i );
 			for( j = 0; j < info->host_addrlength; ++j ){
 				len = strlen( msg );
 				plp_snprintf( msg+len, sizeof(msg)-len, "%02x",s[j] );

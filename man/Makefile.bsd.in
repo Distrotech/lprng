@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: UTILS/Makefile
 # PURPOSE: generate utilities
-# $Id: Makefile.in,v 3.2 1997/01/19 14:34:56 papowell Exp $
+# $Id: Makefile.in,v 3.3 1997/05/06 15:26:21 papowell Exp $
 ########################################################################## 
 
 # Manual pages installation Makefile.
@@ -20,9 +20,9 @@ MANINSTCMD =	@INSTALL_MAN@
 # change MANEXT to .gz or .Z if you use compressed manpages.
 MANEXT =	
 
-## fix up PREFIX to be a make variable
-PREFIX = @prefix@
-MAN =		$(PREFIX)/man
+## fix up prefix to be a make variable
+prefix = @prefix@
+MAN =		$(prefix)/man
 SHELL =		@SHELL@
 
 

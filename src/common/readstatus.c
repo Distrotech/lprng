@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: readstatus.c,v 3.4 1997/01/19 14:34:56 papowell Exp $";
+"$Id: readstatus.c,v 3.8 1997/12/17 19:34:56 papowell Exp $";
 
 #include "lp.h"
 #include "readstatus.h"
@@ -24,7 +24,7 @@ static char *const _id =
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
- *int Read_status_info( int ack, int fd );
+ *int Read_status_info( int ack, int fd, int timeout );
  * ack = ack character from remote site
  * sock  = fd to read status from
  * char *host = host we are reading from
@@ -41,7 +41,7 @@ static char *const _id =
 static int Save_line( char *line, int output );
 
 int Read_status_info( char *printer, int ack_needed, int sock,
-	char *host, int output )
+	char *host, int output, int timeout )
 {
 	int i, cnt, next, header_len, len;
 	int status;
@@ -58,7 +58,7 @@ int Read_status_info( char *printer, int ack_needed, int sock,
 
 	if( ack_needed ){
 		i = 0;
-		status = Link_ack( host, &sock, 0, 0, &i );
+		status = Link_ack( host, &sock, timeout, 0, &i );
 		if( status == 0 ) return( 0 );
 		if( isprint(i) ){
 			statusline[0] = i;
@@ -76,7 +76,7 @@ int Read_status_info( char *printer, int ack_needed, int sock,
 			s[1] = 0;
 		} else {
 			/* read the status line */
-			status = Link_read( host, &sock, 0, s, &i );
+			status = Link_read( host, &sock, timeout, s, &i );
 			if( status || i == 0 ) break;
 			s[i] = 0;
 		}
@@ -252,7 +252,7 @@ static int Analyze( char *line, int index, struct malloc_list *status )
 			if( Pr_status_check( printer ) == 0 ){
 			lines = status->list;
 			if( LP_mode ){
-				if( pr_count++ && ( Write_fd_str( 1, "\n" ) < 0 ) ) cleanup(0);
+				if( pr_count++ && Lp_status && ( Write_fd_str( 1, "\n" ) < 0 ) ) cleanup(0);
 				status_count = 0;
 				if( status_index ){
 					status_count = index - status_index;
@@ -296,10 +296,10 @@ static int Analyze( char *line, int index, struct malloc_list *status )
 					}
 				}
 			} else {
-				DEBUG2( "Analyze: pr_start %d, index %d, Max_status_lines %d",
-					pr_start, index, Max_status_lines );
+				DEBUG2( "Analyze: pr_start %d, index %d, Status_line_count %d",
+					pr_start, index, Status_line_count );
 				/* we scan the lines for duplicate information */
-				if( Max_status_lines ){
+				if( Status_line_count ){
 					char *colon;
 					char header[LINEBUFFER];
 					int header_len = 0;
@@ -323,7 +323,7 @@ static int Analyze( char *line, int index, struct malloc_list *status )
 						DEBUG2( "Analyze: header_len %d, header '%s', line [%d] '%s'",
 							header_len, header, i, s );
 						if( header_len && strncmp( header, s, header_len ) == 0){
-							if( count >= Max_status_lines ){
+							if( count >= Status_line_count ){
 								DEBUG2( "Analyze: deleting %d", i-count );
 								lines[i-count] = 0;
 							} else {

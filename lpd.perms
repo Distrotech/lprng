@@ -1,25 +1,25 @@
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-1995 Patrick Powell, San Diego State University
-#     papowell@sdsu.edu
+# Copyright 1988-1995 Patrick Powell, San Diego, CA
+#     papowell@astart.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
-# MODULE: TESTSUPPORT/printer_perms.proto
+# MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms,v 3.2 1997/02/05 18:55:02 papowell Exp papowell $
+# $Id: lpd.perms,v 3.6 1997/12/20 21:16:26 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 ## #
 ##                  LPRng - An Enhanced Printer Spooler
 ##                     lpd.perms file
-##                   Patrick Powell <papowell@sdsu.edu>
+##                   Patrick Powell <papowell@astart.com>
 ## 
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
 ## are: /etc/lpd.perms,  /usr/etc/lpd.perms, and  /var/spool/lpd/lpd.perms.
-## The locations of these files are set by the printer_perms_path entry
+## The locations of these files are set by the perms_path entry
 ## in the lpd.conf file or by compile time defaults in the src/common/defaults.c
 ## file.  In addition to the global permissions files,  each spool queue
 ## can also have a permissions file.  This file is searched when information
@@ -133,13 +133,13 @@
 ##   REJECT SERVICE=X NOT REMOTEHOST=engpc*
 ## 
 ## #Do not allow anybody but root or papowell on
-## #dickory.sdsu.edu or the server to use control
+## #astart1.astart.com or the server to use control
 ## #facilities.
-##   ACCEPT SERVICE=C SERVER USER=root
-##   ACCEPT SERVICE=C REMOTEHOST=dickory.sdsu.edu USER=papowell
+##   ACCEPT SERVICE=C SERVER REMOTEUSER=root
+##   ACCEPT SERVICE=C REMOTEHOST=astart1.astart.com REMOTEUSER=papowell
 ## 
-## #Allow root on talker.sdsu.edu to control printer hpjet
-##   ACCEPT SERVICE=C HOST=talker.sdsu.edu PRINTER=hpjet USER=root
+## #Allow root on talker.astart.com to control printer hpjet
+##   ACCEPT SERVICE=C HOST=talker.astart.com PRINTER=hpjet REMOTEUSER=root
 ## #Reject all others
 ##   REJECT SERVICE=C
 ## 
@@ -147,13 +147,16 @@
 ##   REJECT SERVICE=R,C,M FORWARD
 ## 
 # allow root on server to control jobs
-ACCEPT SERVICE=C SERVER USER=root
-REJECT SERVICE=C
+ACCEPT SERVICE=C SERVER REMOTEUSER=root
+# allow anybody to get status
+ACCEPT SERVICE=S
+# reject all others, including lpc commands permitted by user_lpc
+REJECT SERVICE=CSU
 #
 # allow same user on originating host to remove a job
 ACCEPT SERVICE=M SAMEHOST SAMEUSER
 # allow root on server to remove a job
-ACCEPT SERVICE=M SERVER USER=root
+ACCEPT SERVICE=M SERVER REMOTEUSER=root
 REJECT SERVICE=M
 # all other operations allowed
 DEFAULT ACCEPT

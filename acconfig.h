@@ -42,6 +42,9 @@
    This function is required for alloca.c support on those systems.  */
 #undef CRAY_STACKSEG_END
 
+/* Define for DECALPHA  */
+#undef DECALPHA
+
 /* Define for DGUX with <sys/dg_sys_info.h>.  */
 #undef DGUX
 
@@ -146,6 +149,9 @@
 
 /* Define if we have a BSD-ish struct exec in <a.out.h> */
 #undef HAVE_STRUCT_EXEC
+
+/* Define if we have a SOLARIS struct linger in <socket.h> */
+#undef HAVE_STRUCT_LINGER
 
 /* Define if sys_errlist has the error strings. */
 #undef HAVE_SYS_ERRLIST
@@ -300,6 +306,9 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+/* Define if you have the ANSI C header files.  */
+#undef STDLIB_DEFINES_RANDOM
+
 /* Define if you have struct stat with st_mtime_nsec */
 #undef ST_MTIME_NSEC
 
@@ -354,6 +363,9 @@
 
 /* Define if we are to use the termios structure and TCGETS. */
 #undef USE_TERMIOS
+
+/* Define if we are to use the HP TERMIOX calls */
+#undef USE_TERMIOX
 
 /* Use the statfs() func with fs_data member to find out free space */
 #undef USE_ULTRIX_STATFS

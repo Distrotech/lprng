@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE> LPRng-HOWTO: Introduction</TITLE>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-2.html">Next</A>
+Previous
+<A HREF="LPRng-HOWTO.html#toc1">Contents</A>
+<HR>
+<H2><A NAME="s1">1. Introduction</A></H2>
+
+<P>This document is an attempt to provide some simple guidelines to set
+up LPRng. It is aimed at system managers who want to replace their
+vendor's printer daemon and its clients by LPRng.
+<P>LPRng can be configured in many ways, making it suitable for a broad
+range of applications. It has a large amount of options which are
+explained in the extensive documentation.
+<P>Despite (or due to) the extent of the documenting files, many new
+users experience problems in setting up the package. One of the
+reasons is that most of the LPRng documentation
+assumed that you already have a
+working knowledge of a BSD-style printer spooler.
+<P>In this document,
+I will first try to give some simple guidelines that
+should enable you to put together a simple working configuration
+without being overwhelmed by options.
+Next, there are some detailed descriptions of the way that LPRng
+does things.
+Finally,
+there are detailed discussions about various LPRng facilities that
+try to encapsulate common configurations and operations
+that administrators and users encounter.
+<A NAME="secfeatures"></A> <H2><A NAME="ss1.1">1.1 What is LPRng?</A>
+</H2>
+
+<P>Gordon Haverland (<CODE>haverlan@agric.gov.ab.ca</CODE>) put it this way:
+<P>
+<BLOCKQUOTE>
+LPRng is a print spooling system. It was designed to mimic the
+Berkeley (University of California - Berkeley) Line Printers (LPR)
+package, first found on Berkeley derivatives of the Unix operating
+system. The LPRng package supports users being able to print a
+document with little or no knowledge of the content or special
+processing required to print the document; on a stand-alone machine,
+on a LAN, or remotely. New (as compared to Berkeley LPR) features
+include: lightweight <CODE>lpr</CODE>, <CODE>lpc</CODE> and <CODE>lprm</CODE>
+programs; dynamic redirection of print queues; automatic job holding;
+highly verbose diagnostics; multiple printers per queue; and enhanced
+security (SUID not required in most environments (Sun/Solaris is an
+exception), improved file permissions, authorization checks, ...),
+etc.
+</BLOCKQUOTE>
+<P>Patrick Powell
+(<CODE>&lt;papowell@astart.com&gt;</CODE>), the author of
+LPRng, has the following comments:
+<BLOCKQUOTE>
+<P>LPRng started life in 1986 as PLP (Public Line Printer),
+a replacement for the original BSD LPD code.
+This was a one-shot effort to develop code that could be freely redistributed
+without the restrictions of the BSD/AT&amp;T license,
+and would allow non-license sites to fix and patch problems that they were
+having with print spooling.
+(This was before the Free Software Foundation.)
+From 1988 to 1992, various groups added features, hacked, and modified the
+PLP code, coordinated largely by Justin Mason
+(<CODE>&lt;jmason@iona.ie&gt;</CODE>),
+who also started and sponsors the LPRng mailing list (see below).
+<P>In 1992,  I redesigned and reimplemented the PLP code
+and named the result LPRng.
+The goals of the LPRng project were to build a server system that was as
+close to user abuse proof as possible,
+that would provide services limited only by the inherent capacities of the
+support system,
+RFC1179 compliant,
+and with extensive debugging capabilities to allow
+quick and easy diagnostics of problems.
+Over the period from 1994-1997,
+LPRng users have suggested extensions,
+provided patches,
+and
+added facilities.
+I have tried to incorporate these in a controlled and cautious manner.
+<P>As a side effect of this work,
+many security problems that could develop were identified and steps
+taken to ensure that they were not present in LPRng.
+For example,
+if you want, you can run LPRng clients
+such as lpr, lprm, lpc, and lpq as a non-privileged user;
+this reduces the chances of users exploiting faults in the code and
+gaining root privileges.
+Bounds checking is performed on all input and formatting (for example,
+snprintf() rather
+than sprintf() is used),
+as well as other preventive measures where appropriate.
+</BLOCKQUOTE>
+<P>In most cases, LPRng is <B>not</B>
+a drop-in replacement for BSD LPR. For most installations, you will
+need adaptations.
+However,
+most of the changes are minor,
+and many of the LPRng facilities are backwards compatible with
+existing BSD print spooler facilities.
+<P>
+<A NAME="maillist"></A> <H2><A NAME="ss1.2">1.2 More Information</A>
+</H2>
+
+<P>Much of the material in the LPRng documentation has been
+included in this document.
+For example,
+previous releases of LPRng had a large selection of README files;
+most of these are now incorporated into the HOWTO document.
+<P>Current information
+about LPRng and the latest release
+can be found on the LPRng web page:
+<A HREF="http://www.astart.com/LPRng.html">http://www.astart.com/LPRng.html</A><P>There is also a mailing list at <CODE>lprng@iona.com</CODE>. To subscribe,
+send an email to <CODE>lprng-request@iona.com</CODE>. The body should contain
+only the word `subscribe'. To get off the list later on, repeat the
+same procedure, but use the word `unsubscribe'.
+<P>The LPRng distribution has a DOC directory that contains
+several documents that are very helpful.
+<B>DOC/Intro.ps</B> (Intro.txt for a slightly less readable text version) gives
+an overview of the BSD/LPRng printing model,
+and describes how LPRng carries out the printing process.
+<B>DOC/Install.ps</B> (or Install.txt)
+gives an overly detailed description of the LPRng installation and porting
+procedures;  the README.installation file in the distribution is much shorter
+and contains all of the information needed for the average installer.
+The
+<B>DOC/Tutorial.ps</B> (or Tutorial.txt) is a very short tutorial that
+uses the non-privileged mode of LPRng which was designed for testing and
+tutorial purposes.
+<P>Several presentations of LPRng and print spooling software have been made
+at the Large Scale Installation Administrator (LISA) conferences and
+are in the LPRng distribution and available on web sites.
+<A HREF="ftp://ftp.astart.com/pub/LPRng/LPRngLISA95.ps">LPRng - An Enhanced Printer Spooler System</A>
+was presented at the LISA95 conference,
+and is in the LPRng distribution as DOC/LPRng-LISA95.ps.
+On a more general topic,
+the slides for the LISA97 tutorial on
+<A HREF="ftp://ftp.astart.com/pub/LPRng/LISA97.tgz">Printers and Network Print Spooling</A>
+are also in the LPRng distribution in the DOC/LISA97 directory.
+<P>The LPRng distribution also has a set of man pages (in the man/ directory)
+that are the reference for the LPRng operation.
+When in doubt, please consult them.
+<H2><A NAME="ss1.3">1.3 Copyright</A>
+</H2>
+
+<P>Material included in this document from the LPRng distribution
+Copyright Patrick Powell 1988-1997, where applicable.
+<P>The rights to distribute this document complete or in part are hereby
+granted for non-commercial purposes. Partial reproductions must
+acknowledge the source.
+<P>Permission to distribute this file together with LPRng and `derived
+works' (as defined in the LPRng license) is explicitly granted. This
+is allowed independent of the license under which the software is
+distributed.
+<P>Citing the document is allowed as long as the source is acknowledged.
+<H2><A NAME="ss1.4">1.4 Disclaimer</A>
+</H2>
+
+<P><B>THE MATERIAL IN THIS HOWTO IS PROVIDED WITHOUT FEE AND AS-IS WITH NO
+WARRANTY REGARDING FITNESS OF USE FOR ANY PURPOSE. THE AUTHOR AND ALL
+CONTRIBUTORS ARE NOT LIABLE FOR ANY DAMAGES, DIRECT OR INDIRECT,
+RESULTING FROM THE USE OF INFORMATION PROVIDED IN THIS DOCUMENT.</B>
+<H2><A NAME="ss1.5">1.5 Commercial Support</A>
+</H2>
+
+<P>
+<A HREF="http://www.astart.com">AStArt Technologies</A>
+provides commercial support and enhancements for
+the LPRng and other network software.
+AStArt provides network and system consulting services for UNIX and NT
+systems, as well as real time and network software.
+<H2><A NAME="ss1.6">1.6 Web Site</A>
+</H2>
+
+<P>Web Page:
+<A HREF="http://www.astart.com/lprng.html">http://www.astart.com/lprng.html</A>
+<A NAME="secftp"></A> <H2><A NAME="ss1.7">1.7 FTP Sites</A>
+</H2>
+
+<P>The software may be obtained from <BR>
+<A HREF="ftp://ftp.astart.com/pub/LPRng">ftp://ftp.astart.com/pub/LPRng</A>(Main site)<BR>
+<P>Mirrors:<BR>
+<A HREF="ftp://ftp.iona.ie/pub/plp/LPRng">ftp://ftp.iona.ie/pub/plp/LPRng</A>(IE)<BR>
+<A HREF="ftp://gwynne.cs.ualberta.ca/pub/LPRng">ftp://gwynne.cs.ualberta.ca/pub/LPRng</A>(Canada)<BR>
+<A HREF="ftp://ftp.informatik.unihamburg.de/pub/os/unix/utils/LPRng">ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng</A> (DE)<BR>
+<A HREF="ftp://ftp.unipaderborn.de/pub/unix/printer/plp/LPRng">ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng</A>(DE)<BR>
+<A HREF="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</A>(US)<BR>
+<A HREF="ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng">ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng</A>(AU/NZ)<BR>
+<A HREF="ftp://ftp.lps.ens.fr/pub/software/plp/LPRng">ftp://ftp.lps.ens.fr/pub/software/plp/LPRng</A>(FR)<BR>
+<A HREF="ftp://ftp.mono.org/pub/LPRng">ftp://ftp.mono.org/pub/LPRng</A>(UK)<BR>
+<H2><A NAME="ss1.8">1.8 Mailing List</A>
+</H2>
+
+<P>To join the LPRng mailing list, please send mail to
+<A HREF="mailto: lprngrequest@iona.ie">lprng-request@iona.ie</A>with the word 'subscribe' in the BODY
+<A NAME="faqref"></A> <H2><A NAME="ss1.9">1.9 PGP Public Key</A>
+</H2>
+
+<P>The LPRng distributions have an MD5 checksum calculated,
+which is then signed with a PGP public key.
+Here is the key for validating the checksums:
+<PRE>
+Type Bits/KeyID    Date       User ID
+pub  1024/00D95C9D 1997/01/31 Patrick A. Powell &lt;papowell@astart.com>
+                              Patrick A. Powell &lt;papowell@sdsu.edu>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.3i
+
+mQCNAzLygTQAAAEEANBW5fPYjN3wSAnP9xWOUc3CvsMUxjip0cN2sY5qrdoJyIhn
+qbAspBopR+tGQfyp5T7C21yfWRRnfXmoJ3FVtgToAsJUYmzoSFY08eDx+rmSqCLe
+rdJjX8aG8jVXpGipEo9U4QsUK+OKzx3/y/OaK4cizoWqKvy1l4lEzDsA2VydAAUT
+tCdQYXRyaWNrIEEuIFBvd2VsbCA8cGFwb3dlbGxAYXN0YXJ0LmNvbT6JAJUDBRA0
+XonoiUTMOwDZXJ0BAQ2cBAC7zU9Fn3sC3x0USJ+3vjhg/qA+Gjb5Fi1dJd4solc4
+vJvtf0UL/1/rGipbR+A0XHpHzJUMP9ZfJzKZjaK/d0ZBNlS3i+JnypypeQiAqo9t
+FV0OyUCwDfWybgAORuAa2V6UJnAhvj/7TpxMmCApolaIb4yFyKunHa8aBxN+17Ro
+rrQlUGF0cmljayBBLiBQb3dlbGwgPHBhcG93ZWxsQHNkc3UuZWR1PokAlQMFEDLy
+gTSJRMw7ANlcnQEBYBYD/0zTeoiDNnI+NjaIei6+6z6oakqO70qFVx0FG3aP3kRH
+WlDhdtFaAuaMRh+RItHfFfcHhw5K7jiJdgKiTgGfj5Vt3OdHYkeeh/sddqgf9YnS
+tpj0u5NfrotPTUw39n6YTgS5/aW0PQfO9dx7jVUcGeod1TGXTe9mIhDMwDJI4J14
+=3Zbp
+-----END PGP PUBLIC KEY BLOCK-----
+</PRE>
+<HR>
+<A HREF="LPRng-HOWTO-2.html">Next</A>
+Previous
+<A HREF="LPRng-HOWTO.html#toc1">Contents</A>
+</BODY>
+</HTML>

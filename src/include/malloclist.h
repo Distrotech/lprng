@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: malloclist.h
  * PURPOSE: malloclist.c functions
- * $Id: malloclist.h,v 3.3 1997/02/04 22:01:49 papowell Exp papowell $
+ * $Id: malloclist.h,v 3.3 1997/02/04 22:01:49 papowell Exp $
  **************************************************************************/
 
 #ifndef _MALLOCLIST_H

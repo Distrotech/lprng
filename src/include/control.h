@@ -8,7 +8,7 @@
  ***************************************************************************
  * MODULE: control.h
  * PURPOSE: LPC control information
- * $Id: control.h,v 3.1 1996/12/28 21:40:24 papowell Exp $
+ * $Id: control.h,v 3.5 1997/12/24 20:10:12 papowell Exp $
  **************************************************************************/
 
 #define  START		1
@@ -22,7 +22,7 @@
 #define  TOPQ		10
 #define  LPQ		11
 #define  LPRM		12
-#define  STATUS		13
+#define  STATUs		13
 #define  REDIRECT	14
 #define  LPD		15
 #define  PRINTCAP	16
@@ -34,5 +34,9 @@
 #define  HOLDALL	22
 #define  NOHOLDALL	23
 #define  CLAss 		24
+#define	 DEFAULTQ	25
+#define	 ACTive		26
+#define	 REDO		27
 
 int Get_controlword( char *s );
+char *Get_controlstr( int c );

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendlpq.c,v 3.5 1997/01/27 20:04:17 papowell Exp $";
+"$Id: sendlpq.c,v 3.10 1998/01/08 09:51:18 papowell Exp $";
 
 #include "lp.h"
 #include "sendlpq.h"
@@ -88,7 +88,24 @@ void Send_lpqrequest( char *printer,	/* name of printer */
 		Interactive, format );
 	DEBUG3("Send_lpqrequest: connect_timeout %d, transfer_timeout %d",
 			connect_timeout, transfer_timeout );
-	sock = Link_open( host, 0, connect_timeout );
+
+	if( Remote_support ){
+		if( strchr( Remote_support, 'Q' ) == 0 
+			&& strchr( Remote_support, 'q' ) == 0 ){
+			plp_snprintf( line, sizeof(line)-2,
+				_("no remote support to `%s@%s'"), printer, host );
+			s = line;
+			goto error;
+		}
+		if( format == REQ_VERBOSE && strchr( Remote_support, 'V' ) == 0 
+			&& strchr( Remote_support, 'v' ) == 0 ){
+			plp_snprintf( line, sizeof(line)-2,
+				_("no verbose status support to `%s@%s'"), printer, host );
+			s = line;
+			goto error;
+		}
+	}
+	sock = Link_open( host, connect_timeout, Localhost_connection() );
 	err = errno;
 	if( sock < 0 ){
 		plp_snprintf( line, sizeof(line)-2,
@@ -131,7 +148,7 @@ void Send_lpqrequest( char *printer,	/* name of printer */
 			goto error;
 		}
 	}
-	Read_status_info( Printer, 0, sock, host, output );
+	Read_status_info( Printer, 0, sock, host, output, transfer_timeout );
 	/* report the status */
 	Link_close( &sock );
 	return;

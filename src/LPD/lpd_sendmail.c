@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,13 +11,14 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: lpd_sendmail.c,v 3.4 1997/03/24 00:45:58 papowell Exp papowell $";
+"$Id: lpd_sendmail.c,v 3.7 1997/12/16 15:06:21 papowell Exp $";
 #include "lp.h"
 #include "errorcodes.h"
 #include "fileopen.h"
 #include "pathname.h"
 #include "pr_support.h"
 #include "setup_filter.h"
+#include "setstatus.h"
 /**** ENDINCLUDE ****/
 
 /*
@@ -38,9 +39,11 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	 * check to see if the user really wanted
 	 * "your file was printed ok" message
 	 */
+	DEBUG2("Sendmail: MAILNAME '%s' sendmail '%s'",
+		cfp->MAILNAME, Sendmail );
 	if( cfp->MAILNAME == 0
 		|| cfp->MAILNAME[0] == 0
-		|| cfp->MAILNAME[1] == 0 ){
+		|| cfp->MAILNAME[1] == 0 || hostport( cfp->MAILNAME ) ){
 		DEBUG2("Sendmail: no mail wanted");
 		return;
 	}
@@ -48,7 +51,6 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 		DEBUG2("Sendmail: mail is turned off");
 		return;
 	}
-	DEBUG2("Sendmail: '%s'", Sendmail );
 
 	/* create the sendmail process */
 	if( Make_filter( 'f', cfp, &Pr_fd_info, Sendmail, 1, 1, 1,
@@ -122,5 +124,5 @@ void Sendmail_to_user( int status, struct control_file *cfp,
 	(void) fflush( mail );
 	(void) fclose( mail );
 	/* give the mail a chance */
-	Close_filter( &Pr_fd_info, 0, "mailer" );
+	Close_filter( 0, &Pr_fd_info, 0, "mailer" );
 }

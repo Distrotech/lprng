@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -110,6 +110,10 @@ and
 .B R
 stands for the client programs such as
 .I LPR.
+.LP
+Some of these entries can only appear or have an effect if they are
+in the lpc.conf initialization file.
+See lpd.conf(5) for further details.
 .SH "ENTRIES BY ALPHABETICAL ORDER"
 .sp
 .nf
@@ -132,14 +136,35 @@ af	D	str	NULL
 				be made to the port on the host.  The as and ae strings
 				will be printed to the specified destination.  This
 				connection will be passed to filters as file descriptor 3.
+				The accounting file will not be created, it must exist for
+				LPD to append data to it.
 ah	D	bool	false	auto-hold - job held until explicitly released
 all	A	str	NULL	a list of all printers; (see ALL PRINTERS)
+allow_duplicate_flags	A	bool	false
+				allow duplicate command line flags; last overwrites earlier
+allow_getenv	A	bool	(compile time)
+				allows LPRng software to use the LPD_CONF environment variable
+				to specify the location of a configuration file.  This is
+				for testing only.
+allow_user_logging	A	bool	false
+				if mail is requested using lpr -mhost%port,prot operations,
+				and the allow_user_logging flag is true,  then job logging
+				information will be sent to host%port,prot.
 ar	D	bool	true	write remote transfer accounting (if af, and as/ae set)
+architecture	A	str	(compile time)
+				architecture the software was compiled for. (Obsolete.)
 as	D	str		accounting format for start of job (see also af, la, ar
 				and Accounting)
 be	D	str		banner printing program for end (overrides bp, hl)
-bk	R	bool	false	backwards-compatible: be strictly RFC-compliant
-bkf	R	bool	false	backwards-compatible filter: use Berkeley filter options
+bk	R	bool	false	Berkeley-compatible: be strictly RFC-compliant
+				or more exactly, BSD LPR compatible when sending jobs.
+bkf	R	bool	false
+				use bk_filter_options and bk_of_filter_options when
+				invoking print filter.
+bk_filter_options	D	str	(see source code)
+				when bk flag set, options for non OF print filters
+bk_of_filter_options	D	str	(see source code)
+				when bk flag set, options for OF print filters
 bl	D	str		banner line - sent to banner printer program
 				default: $-'C:$-'n Job: $-'J Date: $-'t
 				expands to:  Class:User  Job: job Date: date
@@ -152,17 +177,31 @@ bq	D	str	NULL	specifies the next destination for jobs sent to this queue.
 				Job data files are first sent through any filters listed in
 				printcap entry before transfer.  (See Bounce Queues)
 br	D	num	none	if lp is a tty, set the baud rate (see ty)
+break_classname_priority_link	A	flag	false
+				Normally, lpr sets the priority to the first letter of the
+				class specified with -C.  When non-zero, forces the class
+				and priority to be disjoint.
 bs	D	str		banner printing program for start (overrides bp, hl)
 cd	D	str	NULL	control information directory for LPD server
 cf	D	str	NULL	cifplot data filter
+check_for_nonprintable	R	bool	true
+				lpr checks f and p formats for printable files
+				Alias for xt
+check_idle	D	str	NULL
+				program to use to check for idle printer conditions before
+				processing jobs.
+classname_length	A	num	31
+				overrides the RFC1179 limitations on the control file
+				CLASS entry.  Default is 31 characters.
 cm	A	str	NULL	comment identifying printer (LPQ)
+co	D	num	20	cost in dollars.  Obsolete.
+config_file	A	str	/etc/lpd.conf:/usr/etc/lpd.conf
+				location of LPRng configuration information.  Compile
+				time option only - see allow_getenv.
 connect_grace	A	num	0
 				time between jobs to allow printer recovery
 connect_interval	A	num	10
 				time between open or connection attempts
-connect_retry	A	num	0
-				number of open or connect attempts
-				(0 is infinite number)
 connect_timeout	A	num	10
 				timeout value for connection or open
 control_filter	D	str	NULL
@@ -175,8 +214,24 @@ default_auth	R	str	NULL
 				used when specificially requested by user.
 default_format	R	str	f
 				default format for printing jobs
+default_logger_port	D	str	2001
+				default remote port for logging information
+default_logger_protocol	D	str	UDP
+				default protocol for logging information.  TCP selects TCP/IP
+default_permission	D	str	A
+				default permission for operation
+default_printer	A	str	lp
+				default printer for printing jobs
 default_priority	R	str	A
 				default priority for printing jobs
+default_remote_host	A	str	localhost
+				default remote host for printing operations
+default_tmp_dir	A	str	/tmp
+				default temporary directory
+destinations	D	str	NULL
+				names of printers that lpq/lprm should talk to
+				find a job that has been processed by a router
+				script (see README.routing)
 df	D	str	NULL	tex data filter (DVI format)
 direct_read	D	bool	false
 				if true, filters are given direct access to file.
@@ -184,52 +239,124 @@ direct_read	D	bool	false
 fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
 fd	D	bool	false	if true, no forwarded jobs accepted
 ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
+filter_ld_path	D	str	(see source)	
+				the LD_LIBARY_PATH environment variable value for filters
+filter_options	D	str	(see source code)
+				when bk flag clear, options for non OF print filters
+filter_path	D	str	(see source)	
+				the PATH environment variable value for filters
+fix_bad_job	D	bool	false	
+				fix a bad job file - usually by ignoring multiple
+				U (unlink) entries,  badly formatted file names,
+				or other common botches produced by various PC based
+				LPR clients.
 fo	D	bool	false	print a form feed when device is opened
-fq	D	bool	false	print a form feed when device is closed
-fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
+force_localhost	A	bool	FALSE
+				Forces the clients programs (lpr, lpc, etc.)
+				to send all print jobs and requests to the server running
+				on the localhost entry for action.  This flag effectively
+				forces BSD LPR behaviour.
 force_queuename	A	str	NULL
 				When :qq: flag or use_queuename configuration is enabled,
 				specifies the queuename to be used for control file Q
 				information.
-forward_auth	D	str	NULL
-				server to server authentication type
+forward_auth	A	str	NULL
+				Do server to server authentication when non-null.
+				Use this value for the remote host authentication information.
+fq	D	bool	false	print a form feed when device is closed
+full_time	D	bool detailed time format specification in log messages
+fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
 fx	A	str	``flp''	valid output filter formats
+generate_banner	D	bool	false	force banner generation
 gf	D	str	NULL	graph data filter (plot (3X) format)
 hl	D	bool	false	print banner after job instead of before
 if	D	str	NULL	filter command, run on a per-file basis
 kerberos_*	D	str
-				Kerberos authentication support.  See notes
-				in text under KERBEROS.
+				Kerberos authentication support.  See KERBEROS.
+kerberos_keytab	D	str	/etc/lpd.keytab
+				Kerberos lpd server keytab file
+kerberos_life	D	str	NULL
+				Kerberos lpd server key lifetime
+kerberos_renew	D	str	NULL
+				Kerberos lpd server key renewal time
+kerberos_server_principle	D	str	NULL
+				Kerberos remote lpd server principle
+kerberos_service	D	str	lpr
+				Kerberos service used in principle requests
 la	D	bool	true	write local printer accounting (if af is set)
 ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
 lf	D	str	``log''	error and debugging log file (LPD)
 lk	D	bool	false	lock the lp device to force arbitration
+localhost	A	str	localhost	localhost named used for localhost lookup
+lockfile	D	str	/var/spool/lpd/lpd.lock.%h
+				lpd lock file (used only in lpd.conf)
+logfile	D	str	/var/spool/lpd/lpd.log.%h
+				lpd log file (used only in lpd.conf)
 logger_destination	D	str	NULL
 				destination for logging information.  Format is
 				host[%port][,(TCP|UDP)]
 longnumber	D	bool	false
 				use 6 digit job numbers
 lp	D	str	NULL	device name or pipe to send output to
-lpr_bounce	R	bool	false
+lpd_force_poll	A	bool	FALSE
+				Forces lpd to periodically poll lpd queues.
+lpd_poll_time	A	num	600
+				After this amount of idle time,  lpd will poll queues
+lpd_port	D	str	printer
+				integer or port from /etc/services for lpd server
+				to accept connections.
+lpd_printcap_path	D	str	(see source)
+				printcap path for lpd, in addition to normal one
+				(configuration value only)
+lpr_bounce	R	bool	true
 				LPR will do bounce queue filtering.
+mail_operator_on_error	D	str	NULL
+				send mail to this user when LPD encounters printing error.
+max_connect_interval	A	num	60
+				maximum time between connection attempts
+max_servers_active	D	num	0
+				maximum servers that LPD will allow to be active at one
+				time.  0 selects the system default,  which is usually
+				pretty small, perhaps 10. (configuration value only).
+max_status_line	D	num	79	maximum number of characters on an LPQ status line
+max_status_size	D	num	10	maximum size (Kbytes) of status file
 mc	R	num	1	maximum copies allowed
 mi	D	str	0	minimum space (Kb), to be left in spool filesystem
-				You can also use nnnM for nnn megabytes.
+				You can also use nnnM for nnn megabytes. Alias for minfree
+min_status_size	D	num	2	minimum size (Kbytes) of status file
+minfree	D	str	0	alias for mi
 ml	R	num	32	minimum printable characters for printable check
+ms	D	str	NULL	alias for ty
+ms_time_resolution	D	bool	false	log time in milliseconds
 mx	R	num	1000	maximum job size (1Kb blocks, 0 = unlimited)
 nb	D	num	0	if non-zero, do a nonblocking open on lp device
 nf	D	str	NULL	DITROFF data filter
+network_connect_grace	A	num	0
+				time between attempts to send jobs to spooler
+				Useful when dealing with network printer using LPD
+				interface to allow a bit of time between jobs.
 nw	A	bool	false	spool dir is on an NFS file system
 				(take precautions when reading/writing files)
 of	D	str	NULL	output filter, run once for all output
 				(used for banner printing, form feeds between files)
+of_filter_options	D	str	(see source code)
+				when bk flag clear, options for OF print filters
+originate_port	A	str	512 1023
+				when originating a connection, use ports in this range.
 oh	A	str	NULL	Specific printcap entry for host;
 				(printcap entry ignored unless IP address of host and
 				entry value match.  Entry is used first to do glob
 				style match against the host's fully qualified domain name,
 				and then interpreted as a general IP address)
+pass_env	A	str	PGPPASS,PGPPATH
+				if not the LPD server, sanitize and put these variables
+				in a filter environment variable list.
+perms_path	A	str	/etc/lpd.perms:/usr/etc/lpd.perms
+				location of perms file (used in lpd.conf)
 pl	D	num	66	page length (in lines)
 pr	D	str	``/bin/pr''	pr program for p format
+printcap_path	A	str	/etc/printcap:/usr/etc/printcap
+				location of printcap file (used in lpd.conf)
 ps	A	str	''status''	printer status file name
 pw	D	num	132	page width (in characters)
 px	D	num	0	page width in pixels (horizontal)
@@ -239,13 +366,40 @@ qq	A	bool	false	LPR - puts in the queue name (Q entry)
 				LPD - when receiving or transferring a job,
 				if the queue name (Q entry) in the job control
 				file is not present,  puts in the queue name.
+remote_user	A	str	NULL
+				when doing authentication,  use this entry for the remote user
+				or remote end of the connection.  This allows you to specify
+				a key or other information.
+remote_support	A	str	NULL
+				if non-null, specifies allowed operations to remote queue.
+				R=lpr, M=lprm, Q=lpq, V = lpq -v, C=lpc.  For example,
+				remote_support=RM would only allow LPR and LPRM operations.
+retry_econnrefused	A	bool	true
+				if set, retry a connection to a remote system when an
+				ECONNREFUSED error is returned.
+retry_nolink	D	bool	true
+				if LPD is sending a job or opening a device for
+				printing and the value is true, then the connection or
+				device open is repeated indefinately.
+reuse_addr	A	bool	false
+				if set, use SO_REUSEADDR on outgoing connection ports.
+				This reduces the problems with exhausting port numbers.
+				(usually only in lpd.conf)
+reverse_lpq_status	D	str	NULL
+				When a lpq status request arrives from one of the specified 
+				hosts or IP addresses,  then the LPQ status format is inverted.
+				For example, if  reverse_lpq_status=host*,127.0.0.0/8,
+				then when a LONG status request arrives from host1 or from
+				ip address 127.0.0.1,  the SHORT status will be returned.
 rf	D	str	NULL	filter for printing FORTRAN style text files
 rm	A	str	NULL	remote-queue machine (hostname) (with rp)
+router	D	str	NULL	script that dynamically re-routes a job
+				(see README.routing)
 rp	A	str	NULL	remote-queue printer name (with rm)
-rs	D	num	300	number of seconds between spool queue status scans
-rt	D	num	3	number of times to try printing (0=infinite)
-				see send_failure_action, send_timeout, send_try
+rt	A	num	3	number of times to try printing (0=infinite)
+				see send_failure_action, send_job_rw_timeout, send_try
 rw	D	bool	false	open the printer for reading and writing
+safe_chars	D	str	NULL	additional safe characters for control file contents
 save_on_error	D	bool	false
 				Save job when an error occurs to allow post-mortem
 				diagnostics or reprinting.  This should only be set on
@@ -257,6 +411,11 @@ save_when_done	D	bool	false
 sb	D	bool	false	short banner (one line only)
 sc	R	bool	false	suppress multiple copies
 sd	A	str	NULL	spool directory (only ONE printer per directory!)
+send_block_format	A	bool	false
+				Use the LPRng extended 'block job' job transmission
+				method to send a job to a remote site.
+send_data_first	A	bool	false	send data files then control files
+				when sending a job to a remote host.
 send_failure_action	D	str	"abort"
 				Action on print or transmission failure after send_try
 				attempts; use the following codes:
@@ -269,19 +428,44 @@ send_failure_action	D	str	"abort"
 				the number of attempts can be read from standard input.
 				The filter should exit with one of the error codes listed
 				above to cause the appropriate action.
-send_timeout	D	num	6000
-				timeout on write operation when sending job to
-				printer or remote host (0 is infinite timeout)
-send_try		alias for rt - numbers of times to try sending
+send_job_rw_timeout	A	num	6000
+				timeout on read/write operations when sending job to
+				printer or remote host (0 value is no timeout)
+send_query_rw_timeout	A	num	6000
+				timeout on read/write operations when performin a status
+				operation (0 value is no timeout)
+send_try	A	num	3
+				alias for rt - numbers of times to try sending
 				or printing a job. 0 is infinite.
+sendmail	D	str	/usr/sbin/sendmail -oi -t
+				sendmail command to send mail to user.  Flags must be set
+				so that address and other information is taken from
+				standard input.
 server	A	bool	false	printcap entry for server only
 server_auth_command	A	str	NULL
 				authentication command for server program
+server_tmp_dir	D	str	/tmp
+				temporary directory for server to create files when there
+				is no spool directory.
+server_user	D	str	daemon	server user name used in authentication operations
 sf	D	bool	false	suppress form feeds separating jobs
 sh	D	bool	false	suppress headers and/or banner page
+socket_linger	A	num	10
+				if nonzero, forces a SO_LINGER operation to be done
+				on all TCP/IP connections.  This usually corrects a problem
+				with missing last data transmissions to remote hosts.
+spool_dir_perms	D	num	042700	permissions for spool directory
+spool_file_perms	D	num	0600	permissions for spool file
+spread_jobs	D	num	0	spread job numbers to avoid collisions
 ss	D	str	NULL	name of queue that server serves (with sv)
-sy	D	str	NULL	alias for ty
+stalled_time	D	num	120
+				Time after which to report an active job as stalled
+stop_on_abort	D	bool	true
+				Stop processing queue when print filter aborts.
 sv	D	str	NULL	names of servers for queue (with ss)
+sy	D	str	NULL	alias for ty
+syslog_device	D	str	/dev/console
+					name of syslog device to use if no syslog facility
 tc	A	str	NULL	reference to a printcap entry to include as part of
 				the current entry.
 tf	D	str	NULL	troff data filter (C/A/T phototypesetter)
@@ -292,20 +476,27 @@ translate_format	D	str	NULL
 				Example: translate_format=pfml
 				p format changed to f, m format to l
 ty	D	str	NULL	stty commands to set output line characteristics
+				alias is sy, ms
 use_identifier	R	bool	false
 				add job identifier lines ('A') in the control file
+use_info_cache	D	bool	true	cache printcap information
+use_queuename	A	str	NULL	if no Q information in control file,
+				use this value and place in control file.
 use_shorthost	R	bool	false
 				use only the hostname for job control
 				and data file names.  Host information in job file
 				will still be fully qualified domain name.
-use_auth	R	str	""
-				client to server authentication type
+user	D	str	daemon	LPD effective user (EUID) for SUID operations
 user_auth_command	A	str	NULL
 				authentication command for user (client program)
+user_lpc	D	str	NULL
+				list of lpc subcommands allowed to be executed by user
+				A matching value enables SERVICE=U permissions checking.
 vf	D	str	NULL	(Versatek) raster image filter
 xc	D	num	0	if lp is a tty, clear local mode bits (see STTY)
 xs	D	num	0	like `xc' but set bits (see STTY)
 xt	R	bool	true	lpr checks f and p formats for printable files
+				Alias for check_for_nonprintable.
 xu	A	str	NULL	additional permissions information for this queue
 .fi
 .SH "ENTRIES BY FUNCTION"
@@ -407,21 +598,31 @@ xu	A	str	NULL	additional permissions information for this queue
 db	A	num	0	debug level when using this printer
 connect_interval	A	num	10
 				time between open or connection attempts
-connect_retry	A	num	0
-				number of open or connect attempts
-				(0 is infinite number)
 connect_timeout	A	num	10
 				timeout value for connection or open
 				(0 is infinite number)
 ff	D	str	``\ef''	string to send for a form feed (see INITIALIZATION)
+fix_bad_job D   bool    false   
+                fix a bad job file - usually by ignoring multiple
+                U (unlink) entries,  badly formatted file names,
+                or other common botches produced by various PC based
+                LPR clients.
 fo	D	bool	false	print a form feed when device is opened
 fq	D	bool	false	print a form feed when device is closed
 ld	D	str	NULL	leader string printed on printer open (see INITIALIZATION)
 
 lp	D	str	NULL	device name or pipe to send output to
 lk	D	bool	false	lock the lp device to force arbitration
+max_connect_interval	A	num	60
+				maximum time between connection attempts
 nb	D	num	0	if non-zero, do a nonblocking open on lp device
-
+retry_econnrefused	A	bool	true
+				if set, retry a connection to a remote system when an
+				ECONNREFUSED error is returned.
+retry_nolink	D	bool	true
+				if LPD is sending a job or opening a device for
+				printing and the value is true, then the connection or
+				device open is repeated indefinately.
 rs	D	num	300	number of seconds between spool queue status scans
 rt	D	num	3	number of times to try printing (0=infinite).
 rw	D	bool	false	open the printer for reading and writing
@@ -432,40 +633,58 @@ save_when_done	D	bool	false
 send_failure_action	D	str	abort
 				See above.
 send_try		alias for rt
-send_timeout	D	num	6000
-				timeout when sending job to remote device
-				(0 or -1 is infinite timeout)
 sf	D	bool	false	suppress form feeds separating jobs
+socket_linger	A	num	10
+				if nonzero, forces a SO_LINGER operation to be done
+				on all TCP/IP connections.  This usually corrects a problem
+				with missing last data transmissions to remote hosts.
 tr	D	str	NULL	trailer string to print when queue empties
 
 .B "Serial Line Setup"
 br	D	num	none	if lp is a tty, set the baud rate (see ty)
 fc	D	num	OBSOLETE	if lp is a tty, clear flag bits (see STTY)
 fs	D	num	OBSOLETE	like `fc' but set bits (see STTY)
+ms	D	str	NULL	alias for ty
 sy	D	str	NULL	alias for ty
 ty	D	str	NULL	stty commands to set output line characteristics
+				alias is sy, ms
 xc	D	num	OBSOLETE	if lp is a tty, clear local mode bits (see STTY)
 xs	D	num	0	like `xc' but set bits (see STTY)
 
 .B Miscellaneous
+.nf
 all	A	str	NULL	a list of all printers; (see ALL PRINTERS)
+destinations	D	str	NULL
+				names of printers that lpq/lprm should talk to find
+				a job that has been processed by a router script
+				(see README.routing)
 forward_auth	D	str	NULL
 				server to server authentication type, e.g. pgp, kerberos
-use_auth	D	str	NULL
-				client to server authentication type, e.g. pgp, kerberos
+force_localhost	A	bool	FALSE
+				Forces the clients programs (lpr, lpc, etc.)
+				to send all print jobs and requests to the server running
+				on the localhost entry for action.  This flag effectively
+				forces BSD LPR behaviour.
+force_queuename	A	str	NULL
+				See above.
+logger_destination	D	str	NULL
+				destination for logging information.  Format is
+				host[%port][,(TCP|UDP)]
 oh	D	str	NULL	Specific printcap entry for host. See above.
+remote_support	A	str	RMQC
+				if non-null, specifies allowed operations to remote queue.
+				R=lpr, M=lprm, Q=lpq, C=lpc
+router	D	str	NULL	script that dynamically re-routes a job
+				(see README.routing)
 server	A	bool	false	printcap entry for server only
 server_auth_command	D	str	NULL
 				authentication command for server to use.
 tc	A	str	NULL	reference to a printcap entry to include as part of
 				the current entry.
-force_queuename	A	str	NULL
-				See above.
+use_auth	D	str	NULL
+				client to server authentication type, e.g. pgp, kerberos
 user_auth_command	R	str	NULL
 				authentication command for user (client program)
-logger_destination	D	str	NULL
-				destination for logging information.  Format is
-				host[%port][,(TCP|UDP)]
 
 .nf
 .SH "FILTERS"
@@ -791,9 +1010,13 @@ printcap flag can be used to cause LPR to do bounce queue filtering,
 rather than the server.
 This should be used with caution,
 as missing filters can cause unexpected behaviour.
-.SH KERBEROS
+.SH "KERBEROS, PGP, AND OTHER AUTHENTICATION METHODS"
 .PP
 LPRng supports built in kerberos authentication.
+To enable this, the
+LPD protocol has been extended to provide a way to transfer authenticated
+and/or encrypted jobs and commands.
+The details are covered in other LPRng documentation.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the

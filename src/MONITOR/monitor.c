@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: monitor.c,v 3.1 1996/12/28 21:40:06 papowell Exp $";
+"$Id: monitor.c,v 3.5 1997/12/24 20:10:12 papowell Exp $";
 
 #include "lp.h"
 /**** ENDINCLUDE ****/
@@ -28,7 +28,8 @@ static char *const _id =
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 # include "portable.h"
-#endif
+
+# else
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -40,6 +41,8 @@ static char *const _id =
 #include <netdb.h>
 #include <errno.h>
 #include <time.h>
+
+#endif
 
 
 extern int errno;
@@ -79,7 +82,7 @@ void usage(void)
 	fprintf( stderr, "usage: %s [-u] [-t] [port]\n", prog );
 	fprintf( stderr, "  -u = use UDP\n" );
 	fprintf( stderr, "  -t = use TCP (default)\n" );
-	fprintf( stderr, "  port = port to use (560 default)\n" );
+	fprintf( stderr, "  port = port to use (%d default)\n", port_num  );
 	exit(1);
 }
 	
@@ -170,14 +173,19 @@ int main(int argc, char *argv[] )
 					if( c == 0 ){
 						/* closed connection */
 						fprintf(stdout, "closed connection %d\n", i );
-						if( i != udp_fd ) close( i );
+						if( i != udp_fd ){
+							close( i );
+							FD_CLR(i, &readfds );
+						}
 					} else if( c > 0 ){
 						buffer[c] = 0;
-						fprintf( stdout, "recv: %s\n", buffer );
+						fprintf( stdout, "recv port %d: %s\n", i, buffer );
 						fflush(stdout);
 					} else {
 						fprintf( stderr, "read error - %s\n",
 							Errormsg(errno) );
+						close( i );
+						FD_CLR(i, &readfds );
 					}
 				}
 			}

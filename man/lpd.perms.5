@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPD.PERMS 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -27,7 +27,7 @@ DEFAULT REJECT
 .PP
 LPD access control is provided by two means:
 the pathnames or programs specified by the
-.I printer_perm_path
+.I perms_path
 configuration information and the
 printcap
 .B XU
@@ -55,18 +55,18 @@ The following is a typical permissions file:
 # Set default permissions
 DEFAULT ACCEPT
 # Reject any connections from outside our subnet
-REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
+REJECT SERVICE=X NOT REMOTEIP=130.191.0.0/255.255.0.0
 # Only accept Printing (P) and spooling (LPR) from
 # Engineering Lab or the Dean's office
-REJECT SERVICE=P,R NOT HOST=*.eng.sdsu.edu,dean.sdsu.edu
+REJECT SERVICE=P,R NOT REMOTEHOST=*.eng.sdsu.edu,dean.sdsu.edu
 # Do not accept forwarded jobs for printing
 REJECT SERVICE=P FORWARD
 # Allow only the administrators control access
-ACCEPT SERVICE=C,M HOST=spooler.eng.sdsu.edu USER=root,papowell
-ACCEPT SERVICE=C,M SERVER USER=root,papowell
+ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.sdsu.edu REMOTEUSER=root,papowell
+ACCEPT SERVICE=C,M SERVER REMOTEUSER=root,papowell
 # Allow only the user on the same host who spooled job to remove it
-ACCEPT SERVICE=M SAMEUSER SAMEHOST
-REJECT SERVICE=M,C
+ACCEPT SERVICE=M,U SAMEUSER SAMEHOST
+REJECT SERVICE=M,C,U
 .RE
 .fi
 .sp
@@ -75,7 +75,8 @@ Permission checking is done by using a set of keys (or fields)
 with associated values to check for permission.
 The SERVICE key has value P for printing (i.e.- unspooling),
 R for spooling (i.e.- LPR request),
-C and S for printer control and status respectively (i.e.- LPC request),
+C, S, and U for printer control, status,
+and user allowed operation respectively (i.e.- LPC request),
 M for removal (i.e.- LPRM request),
 Q for queue information (i.e.- LPRM request),
 and so forth.
@@ -101,6 +102,7 @@ DEFAULT key is used to specify the current default permission to
 be used for successful matches or if there is no match after
 scanning the entire permissions database.
 .LP
+The PRINTER entry is used to specify the printer to be checked.
 The GROUP entry is used to check that the USER name appears in a
 group entry in the system user group database.
 For example,
@@ -108,17 +110,18 @@ GROUP=student*,staff*
 would check to see if any of the group name matching
 student* or staff* have the specified user name in them.
 If a system has the
-I netgroups
+.I netgroups
 capability,
-a group name starting with a
+a printer, group, or remotegroup name starting with a
 \f(CW@\fP
 will be treated as a netgroup name,
-and current user name from the job file will bechecked to see if
+and specified user name or printer will be checked to see if
 it is in the group.
 Note that wildcard matches are not performed on netgroups.
 Similarly,
 the
 REMOTEGROUP entry will check a remote user name.
+.LP
 The
 PORT
 entry can be used to ensure that a connection to the server
@@ -183,6 +186,7 @@ Match: S = string with wild card, IP = IPaddress[/netmask],
 SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
     'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
     'C' - lpc spool control request; 'S' - lpc spool status request
+	'U' - administratively allowed user operation
 NOTE: when printing (P action), the remote and job check values
 	(i.e. - RUSR, JUSR) are identical.
 .fi
@@ -257,6 +261,24 @@ be different values.
 The FWDUSER matches the authentication information originated by
 the server to server forwarding operation,
 and can be used to restrict these operations. 
+.SH "SERVER=U AND ALLOW_LPC CONFIGURATION VARIABLE"
+.PP
+The allow_lpc configuration variable can be used to specify a subset
+of the standard lpc operations will be classified as U operations.
+The candidates for selection include hold, release, move, and topq.
+For example, if the allow_lpc variable had the value:
+.br
+allow_lpc=hold,release
+.PP
+Then the following permissions entry would
+allows users to hold or release their own jobs:
+.br
+ACCEPT SERVICE=U SAMEUSER SAMEHOST 
+REJECT SERVICE=U
+.PP
+When checking permissions,
+if permission is explicitly granted for SERVICE=C operations,
+it must be done before the checks for U or S services.
 .SH "DNS, IPV6, AND MULTIHOMED HOSTS"
 .PP
 There is a subtle problem with names and IP addresses which are

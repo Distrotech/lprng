@@ -1,0 +1,975 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE> LPRng-HOWTO: Authentication and Encryption</TITLE>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-13.html">Next</A>
+<A HREF="LPRng-HOWTO-11.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc12">Contents</A>
+<HR>
+<H2><A NAME="s12">12. Authentication and Encryption</A></H2>
+
+<P>One of the major problems in a print spooler system is providing
+privacy and authentication services for users.  One method is to
+construct a specific set of protocols which will be used for
+providing the privacy or authentication;  another is to provide a
+simple interface to a set of tools that will do the authentication
+and/or encryption.  The LPRng system adopts this latter approach.
+<H2><A NAME="ss12.1">12.1 Authentication</A>
+</H2>
+
+<P>A careful study of the authentication problem shows that it should be done
+during reception of commands and/or jobs from a remote user and/or
+spooler.  At this time the following must be done:
+<OL>
+<LI>The received command must be checked for consistency,  and the
+remote user and host must be determined.</LI>
+<LI>The remote user and host must be authenticated.</LI>
+<LI>The command and/or spooling operation must be carried out.</LI>
+<LI>The results must be returned to the remote system.</LI>
+</OL>
+<P>
+<H2><A NAME="ss12.2">12.2 Identifiers</A>
+</H2>
+
+<P>When a user logs into a system,  they are assigned a user name
+and a corresponding UserID.  This user name is used by the LPRng
+software when transferring jobs to identify the user.
+<P>When we look into the problem of authentication,  we will possibly
+have a more global user identification to deal with, the
+authentication identifier (AuthID).  One way to deal with this problem is to
+give LPRng intimate knowledge of the UserID and AuthID relationship.
+While this is possible,  it may be difficult to deal with in a
+simple and extensible manner.  An alternate solution is to provide
+a mapping service,  where the authentication procedure provides
+a map between the UserID and AuthID.
+<P>
+<H2><A NAME="ss12.3">12.3 RFC1179 Protocol Extensions</A>
+</H2>
+
+<P>The RFC1179 protocol specifies that a LPD server command sent on
+a connection has the form:
+<PRE>
+\nnn[additional fields]\n
+</PRE>
+<P><CODE>\nnn</CODE> is a one octet (byte) value with the following meaning:
+<P>
+<PRE>
+REQ_START   1    start printer
+REQ_RECV    2    transfer a printer job
+REQ_DSHORT  3    print short form of queue status
+REQ_DLONG   4    print long form of queue status
+REQ_REMOVE  5    remove jobs
+</PRE>
+<P>The LPRng system extends the protocol with the following additional
+types:
+<PRE>
+REQ_CONTROL 6    do control operation
+REQ_BLOCK   7    transfer a block format print job
+REQ_SECURE  8    do operation with authentication
+</PRE>
+<P>The REQ_CONTROL allows a remote user to send LPC commands to the
+server.  The REQ_BLOCK provides an alternate method to transfer a
+job.  Rather than transferring the control and data files individually,
+this format transfers one file.  The REQ_AUTH provides a mechanism
+for providing an authentication mechanism and is described in this
+document.
+<P>
+<A NAME="useauth"></A> 
+<A NAME="defaultauth"></A> 
+<A NAME="remoteuser"></A> 
+<A NAME="serveruser"></A> 
+<A NAME="userauthcommand"></A> <H2><A NAME="ss12.4">12.4 Client Operations for Client To lpd Server Authentication</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>use_auth=</CODE><EM>Authentication type</EM></LI>
+<LI> <CODE>default_auth=</CODE><EM>Default authentication type</EM></LI>
+<LI> <CODE>remote_user=</CODE><EM>Remote server identification </EM></LI>
+<LI> <CODE>server_user=</CODE><EM>Server identification</EM></LI>
+<LI> <CODE>user_auth_command=</CODE><EM>User to server authentication program</EM></LI>
+</UL>
+
+<OL>
+<LI>First, the <CODE> use_auth </CODE> option is checked to see if it specifies
+an authentication type.
+If it does, then the <CODE>use_auth</CODE> value is used to identify the
+type of authentication to be done.</LI>
+<LI>If,  by using a command line flag to the <CODE>lpr</CODE>, <CODE>lpq</CODE>,
+etc program,
+the user specifies that an authenticated transfer is to be done
+and the <CODE>use_auth</CODE> value is not set,
+then <CODE>use_auth</CODE> is set to the <CODE>default_auth</CODE> value.</LI>
+<LI>If after the above actions <CODE>use_auth</CODE> has a value,
+then an authenticated transfer will be done.</LI>
+<LI>Some sort of identifier specific  to the remote system must be
+provided to the authentication facility.
+For client to server operations,
+the remote system is identified by the
+<CODE>remote_user</CODE>
+and
+<CODE>server_user</CODE>
+printcap option values.
+If the <CODE>remote_user</CODE> value is not specified, then
+it will be set to <CODE>server_user</CODE>
+(default <CODE>daemon</CODE>).
+As discussed below,
+the <CODE>server_user</CODE> is usually used to identify the
+<CODE>lpd</CODE> server on an originating host,
+but a general form of identification can be used.</LI>
+<LI>The <CODE>userid</CODE> is the value obtained by using the current UID
+of the program as the search value for <CODE>getpwuid()</CODE>.</LI>
+<LI>The client will open a connection to the server
+and sends a command with the following format:
+<PRE>
+\008printer C userid use_auth\n          - for commands
+\008printer C userid use_auth controlfilename\n - for print jobs
+</PRE>
+
+<P>Note that \008 is a one byte code indicating an authenticated
+transfer.  Printer is the spool queue name, C in the character 'C'
+indicating a client request, userid is the login id of the user,
+use_auth is a keyword identifying the authentication type,
+and controlfile name is the name of a controlfile to be transferred.
+</LI>
+<LI>On reception of this command,  the server will send a one byte
+success code.
+If an error is indicated by a non-zero response,
+additional error status may follow
+the non-zero success code byte.  At the end of this information
+the connection will be terminated.
+The values used by LPRng are:
+<PRE>
+   ACK_SUCCESS 0   success
+   ACK_STOP_Q  1   failed; no spooling to the remote queue
+   ACK_RETRY   2   failed; retry later
+   ACK_FAIL    3   failed; job rejected, no retry
+</PRE>
+
+<P>If the success code is zero, the sender or client will start the
+client side authentication program specified by the
+<CODE>user_auth_command</CODE> option.
+This program will be passed the same options as normal filter
+program.
+See
+<A HREF="LPRng-HOWTO-5.html#secfilter">Filters</A> for details.
+The authentication program will have the following IO assignments:
+<PRE>
+FD  Options Purpose
+0  R/W     socket connection to remote host (R/W)
+1  W       pipe or file descriptor,  for responses to client
+2  W       error log
+</PRE>
+<P>Command line arguments:
+<PRE>
+program -C -Pprinter -nuser -asend_auth -Rremote_user -Ttempfile
+</PRE>
+<P>The authenticator program can create additional temporary or working
+files with the pathnames <CODE>tempfile.ext</CODE>;  these will be deleted
+after the authentication process has been completed.
+<P>The command line arguments will undergo replacement of %H and %R
+values.  This means that when authenticating to host <EM>nowhere.com</EM>,
+a <CODE>remote_user=lpr@%R</CODE> will be expanded to
+<CODE>remote_user=lpr@</CODE><EM>nowhere.com</EM>.
+</LI>
+<LI>If the authentication type is for a built-in type,
+then the built-in facilities will be used.
+Commonly built-in facilities are <CODE>kerberos</CODE> authentication.
+The same actions are carried out.</LI>
+<LI>The <CODE> tempfile </CODE> will contain either a command line as would be
+transferred using the standard RFC1179 protocol,
+or a print job in block format.
+See
+<A HREF="LPRng-HOWTO-13.html#rfc1179ref">RFC1179 Protocol</A> for details.
+The client authenticator program will open and transfer
+the contents of <CODE>tempfile</CODE> to the server authenticator,
+using FD 0
+and a format compatible with the underlying authentication mechanism.
+<P>If the transfer fails the client
+authenticator will log error information on FD 2 and then exit
+with error code JFAIL.
+</LI>
+<LI>The server will send the client authentication program
+any error or logging information over the FD 0 connection,
+in a form appropriate to the authentication operation.
+The client authenticator will write this information to FD 1.
+If data transfer or authentication fails,  the authenticator
+will write an error message to FD 2 and exit with error code
+JFAIL</LI>
+<LI>If no error has occured the client authenticator will
+then exit with error code JSUCC.</LI>
+</OL>
+
+<A NAME="serverauthcommand"></A> <H2><A NAME="ss12.5">12.5 Server Operations for Client To lpd Server Authentication</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>server_auth_command=</CODE><EM>Server (lpd) authentication program</EM></LI>
+</UL>
+
+<OL>
+<LI>When an authentication command arrives at the server,
+it has the following form:
+<PRE>
+\008printer C userid use_auth\n          - for commands
+\008printer C userid use_auth controlfilename\n - for print jobs
+</PRE>
+
+<P>The server will decode the various fields,  and set the following permission keys:<BR>
+PRINTER=<CODE>printer</CODE><BR>
+USER=<CODE>user</CODE><BR>
+AUTHTYPE=<CODE>use_auth</CODE><BR>
+AUTH=<CODE>USER</CODE>
+</LI>
+<LI>The server will attempt to find the printcap for the specified printer.
+For some operations this printer will be a dummy entry;
+this will simply cause the following operations to use the default
+information in the <CODE>lpd</CODE> configuration.</LI>
+<LI>If a print job is being performed and the spool queue does not exist,
+then the job will be rejected.
+A non-zero error code will be written to the connection and the operation
+will terminate.</LI>
+<LI>If the AUTHTYPE is not built in,
+and the <CODE>server_auth_command</CODE> value is not specified,
+then authentication will fail.
+<P>An error message will be logged to the server log file,
+and a non-zero error code and message will be written to the connection
+to the remote client program.
+</LI>
+<LI>If the authentication program exists,
+a 0 success code is written to the connection
+and authentication proceeds.
+(Note that the client side of the authentication will use this
+as an indication to start the client side authentication program).</LI>
+<LI>Many authentication programs require that the
+users provide some form of key or identification.
+The <CODE>server_user</CODE> option is used for this purpose.
+If there is no value specified,
+<CODE>server_user</CODE> is set to the <CODE>user</CODE>
+(default <CODE>daemon</CODE>) option value.</LI>
+<LI>The server will start the server authenticator program and provide the
+following open file descriptors for it.  The program
+will run as the same UID as the <CODE>lpd</CODE> server.
+If this is a print job transfer,
+the current directory will be the spool directory of the print queue.
+<PRE>
+FD  Options Purpose
+0  R/W     socket connection to remote host (R/W)
+1  W       pipe or file descriptor,  for information for server
+2  W       error log
+3  R       pipe or file descriptor,  for responses to client
+</PRE>
+
+<P>Command line arguments:
+<PRE>
+program -S -PPRINTER -nUSER -aAUTHTYPE -Rserver_user -Ttempfile
+</PRE>
+<P>The authenticator can create additional temporary or working
+files with the pathnames tempfile.ext;  these will be deleted
+after the authentication process has been completed.
+</LI>
+<LI>After performing the necessary authentication operations,
+the client side authenticator will transfer a file containing either
+commands or a print job to the server side authenticator.
+The server authenticator will put this file in the specified
+<CODE>tempfile</CODE>.
+<P>In order for the LPRng software to perform permissions checking,
+it needs an authenticated identifier for the user.
+The server authenticator will write such an identifier to FD 1.
+This should be a single line, of a maximum of 127 characters
+(LPRng LINEBUFFER maximum size), i.e.:
+<PRE>
+authentication_info\n
+</PRE>
+<P>If the transfer step or authentication fails,  then the server
+authenticator
+will write an error message to FD 2 and exit with error code
+JFAIL.
+</LI>
+<LI>The <CODE>lpd</CODE> server will record the
+authentication information returned by the server in the
+AUTHUSER permissions key.
+<P>If a print job is being transferred, it will also be stored in the control
+file.
+This allows job forwarding as is discussed below.
+</LI>
+<LI>The <CODE>lpd</CODE> server will perform the usual permissions checks,
+with the addition of the indicated permission keys and associated values.
+During this process,
+any error messages or logging information normally returned to client
+programs will be written to the authentication program FD 3.</LI>
+<LI>The <CODE>lpd</CODE> server will carry out either the commands or
+print job specified in the temporary file.
+During this process,
+any error messages or logging information normally returned to client
+programs will be written to the authentication program FD 3.</LI>
+<LI>At the end of the remote servers operations,
+the FD 3 file descriptor will be closed and the <CODE>lpd</CODE> server
+will wait for the authentication process to exit.</LI>
+<LI> The server authentication process will read
+input from FD 3 until the end of input,
+and then transfer the received information to the client
+side authenticator.
+It may use the tempfile to hold the information during the
+reading and transfer process.
+<P>If the transfer of the logging information fails,
+then the authenticator process will exit with
+error code JFAIL, otherwise it will exit with error code JSUCC.
+</LI>
+</OL>
+
+<A NAME="forwardauth"></A> <H2><A NAME="ss12.6">12.6 lpd Server to Server Authentication</A>
+</H2>
+
+<P>Options used:
+<UL>
+<LI> <CODE>forward_auth=</CODE><EM>Server forwarding authentication type</EM></LI>
+</UL>
+<P>The Server to Server authentication procedure is used by one server
+to forward jobs or commands to another server.  It should be noted
+that this forwarding operation puts an implicit trust in the security
+of the client to server to server chain.
+<OL>
+<LI>The <CODE>lpd</CODE> server will perform an authenticated transfer to
+another server when it either needs to transfer a job to a remote printer
+or when it needs to propagate a
+<CODE>lpq</CODE>,
+<CODE>lprm</CODE>,
+or
+<CODE>lprc</CODE> operation.
+The
+<A HREF="LPRng-HOWTO-14.html#remotesupport"> &lt;tt>remote_support&lt;/tt></A>
+command can be used to control this forwarding
+operation.</LI>
+<LI>When propagating a command,
+the server uses the authentication information provided for the remote
+user by the client to server authentication program.
+When propagating or forwarding a job,
+the server will use the authentication information stored in the job
+control or hold file.
+This information will be represented as AUTHUSER in the following discussion.</LI>
+<LI>The identification for the sending server and receiving server for the
+authentication programs is generated.
+For the sending server,
+the <CODE>server_user</CODE> value is used.
+If it is not specified, the <CODE>server_user</CODE> value is set to the
+<CODE>user</CODE> (default <CODE>daemon</CODE>) value.
+For the remote server,
+the <CODE>remote_user</CODE> value is used.
+If it is not specified, the <CODE>remote_user</CODE> value is set to the
+<CODE>user</CODE> (default <CODE>daemon</CODE>) value.</LI>
+<LI>If there is no user authentication information,
+then a normal, non-authenticated transfer will be done.</LI>
+<LI>The <CODE>server_auth_command</CODE> will be used for the forwarding
+operation.
+If it does not have a value,
+then a normal, non-authenticated transfer will be done.</LI>
+<LI>The sending server takes the part of the client, and will
+transfer a job acting similar to a client.  The initial information
+transfer from the sending server will have the format:
+<PRE>
+\008printer F server_user authtype \n          - for commands
+\008printer F server_user authtype controlfilename\n - for print jobs
+</PRE>
+</LI>
+<LI>The sending server will invoke its authenticator with the arguments:
+<PRE>
+server_auth_command -F -Pprinter -nserver_user -aauthtype \
+    -Rremote_user -Ttempfile
+</PRE>
+</LI>
+<LI>The tempfile containing the job or command information to be sent
+will have the form:
+<PRE>
+user_authentication\n
+&lt;normal file contents>
+</PRE>
+
+That is,
+the user authentication information is place in the tempfile.</LI>
+<LI>The tempfile will be transferred to the remote server in the same fashion
+as for a user job.
+Any error or logging information returned will either be written to the
+<CODE>lpd</CODE> log file or to the previous <CODE>lpd</CODE> process in
+the transfer chain.</LI>
+<LI>On the destination server the same operations
+for receiving an authentication request from a client
+is performed.
+The USER and AUTHTYPE values will be the derived from the
+authentication request <CODE>server_user</CODE> and <CODE>authtype</CODE>
+fields in the command sent to the server.
+The <CODE>server_user</CODE> value is obtained as for client to server
+transfers.
+The server side authenticator is invoked with the arguments:
+<PRE>
+server_auth_command -S -Pprinter -nUSER -aAUTHTYPE \
+   -Rremote_user -Ttempfile
+</PRE>
+</LI>
+<LI>As for client to server operations,
+the authenticator will write the authenticated user name on FD 1,
+and the FWDUSER is set to this value.</LI>
+<LI>The <CODE>lpd</CODE> server will remove the first line of the transferred file,
+which contains the user authentication information,
+and set
+AUTHUSER to this value.</LI>
+<LI>Authentication is performed using the indicated values.</LI>
+<LI>If authentication succeeds,
+then the command line or print job control file is processed
+in the normal manner.
+This might now add more permissions values to tags,
+but the authentication information will not be changed.</LI>
+</OL>
+<H2><A NAME="ss12.7">12.7 Permission Checking</A>
+</H2>
+
+<P>The following patterns and values can be used
+to check that a particular type of authentication
+has been used,
+and what the authenticated user information is.
+<UL>
+<LI>AUTH=[NONE,USER,FWD]  - authentication<BR>
+Values can be:
+<PRE>
+AUTH=NONE     - no authentication
+AUTH=USER     - authentication from a client
+AUTH=FWD      - forwarded authentication from a lpd server
+</PRE>
+</LI>
+<LI>AUTHUSER=globmatch<BR>
+<P>For a command received from a client, the value is auth_user information
+returned by the authenticator
+<P>For a command received from a server (i.e.- forwarded by a server),
+the value is the original auth_user_id determined by the remote server.
+</LI>
+<LI>FWDUSER=globmatch<BR>
+<P>For a command received from a server (i.e.- forwarded by a server),
+the value is the the forwarding servers authentication information.
+</LI>
+</UL>
+<P>For example,  to reject non-authenticated operations, the following
+line could be put in the permissions file.
+<PRE>
+REJECT AUTH=NONE
+</PRE>
+<P>To reject server forwarded authentication as well, we use:
+<PRE>
+REJECT AUTH=NONE,FWD
+</PRE>
+<P>If a remote server has id information FFEDBEEFDEAF,  then the
+following will accept only forwarded jobs from this server.  Note
+that AUTHUSER will only match on authenticated transfers;
+FWDUSER will only match on forwarded transfers.
+<PRE>
+ACCEPT FWDUSER=FFEDBEEFDEAF
+REJECT AUTH=FWD
+</PRE>
+<H2><A NAME="ss12.8">12.8 Using PGP for Authentication</A>
+</H2>
+
+<P>PGP is a well known encryption and authentication program.
+For more details see the web site
+<A HREF="http://www.pgp.net">http://www.pgp.net</A>
+or the ftp site
+<A HREF="ftp://ftp.pgp.net">ftp://ftp.pgp.net</A>.
+<H3>authenticate_pgp</H3>
+
+<P>The
+<CODE>LPRng/src/AUTHENTICATOR/authenticate_pgp.sh</CODE>
+program uses the standard <CODE>pgp</CODE> program and
+facilities to do authentication.
+It uses the following <CODE>pgp</CODE> key organization.
+<OL>
+<LI>Each user should have a private keyring in their home directory,
+in the &nbsp;/.pgp directory, i.e. - the default used by PGP.
+The users public key identification should have the format:
+<PRE>
+User Name &lt;userid@host> &lt;userid1@host> ...
+</PRE>
+
+<P><CODE>userid</CODE> must be the userid used for submitting jobs.
+Note that that different userids can be put
+into the key string as long as there is one entry for
+each userid that the user has.
+<P>For example,  suppose that
+user John Smith has several accounts on different hosts:
+john, jsmith, jsmith1. Then his key should have in it:
+<PRE>
+   John Smith &lt;john@whereever> &lt;jsmith@nowhere> &lt;jsmith1@whatever> ...
+</PRE>
+<P>If the user is daring,  then the pass phrase can be put in the file:
+<CODE>  ~/.pgp/clientkey </CODE>.  This file will be read by the
+<CODE>authenticate_pgp</CODE> script and the contents passed to
+PGP as the key.
+<P>This file MUST have 0400 permissions (read only by user)
+and MUST owned by the user.  This is very dangerous;
+but so is setting the PGPPASS environment variable.
+<P>
+</LI>
+<LI>Each server must have a private keyring for user daemon,
+or whatever you run the LPD server as.  This must be in the
+in the <CODE>~daemon/.pgp</CODE> directory, i.e. - the default used by PGP.
+The daemon public key identification should have the format:
+<PRE>
+daemon_hostname daemon &lt;daemon_hostname@hostname>
+</PRE>
+
+<P>In addition,  the pass phrase for the daemon user must be
+put in the file
+<CODE> ~daemon/.pgp/serverkey</CODE>.
+<P>Note: you may have one daemon user with the same key for ALL
+servers, or you may have different ones for different servers.
+</LI>
+<LI>Each user who wants to send jobs to the server must have the
+daemons public key on their public keyring.  The server must
+have their public key on its public keyring.</LI>
+<LI>When a job is submitted,  the server will search for the users
+public key using the username submitted by the LPRng client.
+This will be the same as their login name.</LI>
+<LI>The LPRng software searches the printcap database for the tag
+to be used for the server key lookup.  The :server_user:
+value is checked for first;  if it is not found the configuration
+user value (default 'daemon') is used.</LI>
+</OL>
+<H3>Installing authenticate_pgp</H3>
+
+<P>By default, the
+<CODE>authenticate_pgp</CODE> script and several helper
+programs,  <CODE>readfilecount</CODE> and <CODE>removeoneline</CODE>,
+will be installed in the standard executable locations.
+<H3>Printcap/Configuration Modifications</H3>
+
+<P>You must set the following printcap and/or configuration
+variable to on.  Note that the printcap keys override the
+configuration keys.
+<PRE>
+user_auth_command=/usr/local/.../authenticate_pgp
+use_auth=pgp
+server_auth=pgp
+server_user=daemon_id_for_server
+pass_env=PGPPASS,PGPPATH
+</PRE>
+<P>Example printcap entry:
+<PRE>
+pr: 
+    :lp=pr@wayoff
+    :use_auth=pgp
+    :server_auth=pgp
+    :server_user=daemon_wayoff
+</PRE>
+<P>
+<H3>Permissions Modifications:</H3>
+
+<P>If you wish to enforce the use of authentication,  then you
+should modify the lpd.perms file.  Here are some examples.
+<PRE>
+   # force authentication
+   REJECT AUTH=NONE
+   # in addition to above,
+   # do not accept forwarded authentication
+   REJECT AUTH=FWD
+   # if the above is too strong,  you can
+   # reject forwarded authentication unless from specified server
+   # note: U1, U2, etc. are the userids of the remote server
+   REJECT AUTH=FWD NOT FWDUSER=U1@*,U2@*,U3@*
+   # you can be paranoid and also check to see that that host
+   # agrees with the userid reported.
+   REJECT AUTH=FWD FWDUSER=U1@host1
+</PRE>
+<H3>Client/User Configuration</H3>
+
+<P>The user should either have the PGPPASS environment variable defined,
+or have in his home directory the file &nbsp;/.pgp/clientkey.  This file will
+be read by the script and used for the value of the PGPPASS
+environment variable.  If neither of these is available,  then the
+pgp program will interactively request this information.
+<H3>Checking authenticate_pgp Operation</H3>
+
+<P>
+<OL>
+<LI>In order to use the script in debug mode, you must first create
+the user 'daemon' private keys on your private keyring for
+testing purposes.
+<PRE>
+pgp -kg
+    User ID: daemon_test &lt;daemon_test@host>
+    Pass phrase: daemon_test
+pgp -kg
+    User ID: user_test &lt;user_test@host>
+    Pass phrase: user_test
+</PRE>
+</LI>
+<LI> Put the pass phrases for daemon_test in &nbsp;/.pgp/serverkey
+and the pass phrases for user_test in &nbsp;/.pgp/clientkey
+<PRE>
+echo user_test >~/.pgp/serverkey
+echo user_test >~/.pgp/clientkey
+</PRE>
+</LI>
+<LI>  The first test will ensure that you have the pgp software
+installed in an accessible manner.  Execute the script as a user:
+<PRE>
+sh authenticate_pgp -D -nuser_test -Rdaemon_test
+</PRE>
+
+<P>The output should resemble:
+<PRE>
+server PGPPASS daemon_test
+ORIGKEY PRaTACFJGcQV92TE6bX72W2JHNNGPRIR7
+SERVER AUTH TRANSFERFILE temp.str
+398
+-----BEGIN PGP MESSAGE-----
+Version: 2.6.3i
+...
+-----END PGP MESSAGE-----
+client PGPPASS user_test
+</PRE>
+<P>If there is an error, an error message will be printed.
+</LI>
+</OL>
+<H3>Setting up and Testing Daemon Keys</H3>
+
+<P>The next test will make sure that the daemon user can access its
+public and secret keyring when running as user daemon.
+<OL>
+<LI>As a user, extract your user public key.  As the user do:
+<PRE>
+pgp -kxa userid userid_public_key
+</PRE>
+</LI>
+<LI> You should have a user <CODE>deamon </CODE> with a home directory
+that is owned and readable only by
+<CODE>daemon</CODE>.
+You do not need a password (logon) capabilities for
+<CODE>daemon</CODE>.
+<P>Create the &nbsp;daemon/.pgp directory,  and make sure that
+it has 0700 permissions.
+</LI>
+<LI> Use the SU command to run as <CODE>daemon</CODE>.
+The SU command does not update the $HOME environment variable.
+Do the following to set $HOME:
+<PRE>
+export HOME=`eval echo ~daemon`
+</PRE>
+</LI>
+<LI> Create a pgp key for the daemon.  As user daemon do:
+the following to create the permanent daemon PGP key
+(<CODE>host</CODE> should be the host name for this server).
+Set the pass phrase to a suitable value.
+Make a note of these values - you will need them later.
+<PRE>
+pgp -kg
+   User ID: daemon_host &lt;daemon_host@host>
+   Pass phrase: ....
+</PRE>
+</LI>
+<LI> Extract the public key for daemon_host into
+a file. As user daemon do:
+<PRE>
+pgp -kxa daemon_host daemon_public_key
+</PRE>
+</LI>
+<LI> Add the user's public key to the user daemon public key ring.
+The <CODE>userid_public_key</CODE> was created previously.
+As daemon do:
+<PRE>
+pgp -ka userid_public_key
+</PRE>
+</LI>
+<LI> Add the daemon's public key to the user public key ring.
+As user do:
+<PRE>
+pgp -ka daemon_public_key  (from step 4.5 above).
+</PRE>
+</LI>
+<LI> As user,
+encrypt a message check to see if it can be decoded by daemon.  As user:
+<PRE>
+echo hi >/tmp/msg
+pgp -seat msg daemon_host -u userid -o /tmp/msg.pgp
+chmod 777 /tmp/msg.pgp
+</PRE>
+
+<P>As daemon, check to see if you can decode this message.
+<PRE>
+pgp /tmp/msg.pgp -o /tmp/msg.dec
+diff /tmp/msg /tmp/msg.dec
+</PRE>
+</LI>
+<LI> As user daemon, encode a message for user and see if it can be
+decoded by user.  As daemon:
+<PRE>
+pgp -seat /tmp/msg.dec userid -o /tmp/msg.pgp -u daemon_host
+chmod 777 /tmp/msg.pgp
+</PRE>
+
+<P>As user, decode the message for user.
+<PRE>
+pgp /tmp/msg.pgp -o /tmp/msg.dec2
+diff /tmp/msg.dec2 /tmp/msg
+</PRE>
+</LI>
+</OL>
+<H3>Testing authenticate_pgp</H3>
+
+<P>This test will check the actual authentication process carried
+out by
+<CODE>authenticate_pgp</CODE>.
+<OL>
+<LI>  Compile the
+<CODE>setupauth</CODE>
+program
+and install it in a temporary location.
+Note that
+<CODE>setupauth</CODE>
+is not
+an installed part of the LPRng distribution, but is a
+accessory.
+<PRE>
+cd LPRng/src
+make setupauth
+mv setupauth /tmp/setupauth
+</PRE>
+</LI>
+<LI><CODE>setupauth</CODE> has the command line:
+<PRE>
+setupauth clientid 'client command' serverid 'servercommand'
+</PRE>
+
+<P>For example:
+<PRE>
+/tmp/setupauth \
+   papowell "/bin/ksh -c 'echo CLIENT; printenv ;'" \
+   papowell "/bin/ksh -c 'echo SERVER; printenv ;'"
+</PRE>
+<P>This would display the environment variables set up by
+the setupauth program.  This are similar to those used
+by LPRng.
+</LI>
+<LI>The LPRng/src/AUTHENTICATE/testauth script has some simple
+tests you might want to run.  Uncomment out the
+appropriate ones and substitute the appropriate user
+name for papowell and daemon.
+<PRE>
+#!/bin/sh
+user=${USER:-`whoami`}
+# show environment variables
+#/tmp/setupauth \
+#   "${user}" "/bin/ksh -c 'echo CLIENT; printenv ;'" \
+#   "${user}" "/bin/ksh -c 'echo SERVER; printenv ;'"
+#
+#exit 0;
+#
+# check bidirectionality of data transfer
+#  /tmp/setupauth \
+#   "${user}" "/bin/ksh -c 'echo CLIENT STARTING SENDING 1>&amp;2; echo hi 1>&amp;0;'" \
+#   "${user}" "/bin/ksh -c 'echo SERVER READING; cat ;'" \
+# sleep 3;
+#  /tmp/setupauth \
+#   "${user}" "/bin/ksh -c 'echo CLIENT STARTING READING; cat '" \
+#   "${user}" "/bin/ksh -c 'echo SERVER SENDING 1>&amp;2; echo hi 1>&amp;0'"
+# 
+# check the authenticate pgp operation
+#  Note: you can also use
+#  'sh -x ./authenticate_pcp ...' to see the detailed actions.
+#  Note: you must be root to run the next test.
+#
+rm /tmp/tempc /tmp/temps
+echo Hi $$ >/tmp/tempc
+chmod 777 /tmp/tempc
+/tmp/setupauth \
+    "${user}" './authenticate_pgp -C -n"${user}" -R"${user}" -T/tmp/tempc' \
+    "${user}" './authenticate_pgp -S -n"${user}" -R"${user}" -T/tmp/temps'
+rm /tmp/tempc /tmp/temps
+echo Hi $$ >/tmp/tempc
+chmod 777 /tmp/tempc
+/tmp/setupauth \
+    "${user}" './authenticate_pgp -C -n"${user}" -Rdaemon -T/tmp/tempc' \
+    daemon './authenticate_pgp -S -n"${user}" -Rdaemon -T/tmp/temps'
+</PRE>
+</LI>
+<LI>You must now SU to ROOT,
+as <CODE>testauth</CODE> needs to run as root to change userids.
+As <CODE>root</CODE>,
+Set the USER environment variable to the user you desire to simulate and
+execute the testauth script.
+<PRE>
+USER=myself
+/tmp/testauth
+</PRE>
+
+<P>
+</LI>
+</OL>
+<H3>Testing authentication</H3>
+
+<P>
+<OL>
+<LI>Add the following lines to one of the printcap entries:
+<PRE>
+:user_auth=pgp
+:user_authentication_command=/usr/local/lib/authenticate_pgp
+:server_auth=pgp
+:server_authentication_command=/usr/local/lib/authenticate_pgp
+</PRE>
+</LI>
+<LI>restart the server, using  lpc lpd, to force it to read the
+new printcap information.</LI>
+<LI> test the authentication facilities by using lpr to send a job
+to the appropriate spool queue.</LI>
+</OL>
+<H3>Key distribution</H3>
+
+<P>You can distribute the daemon PGP public key fairly easily -
+see the PGP documentation for key server information.
+<P>Each daemon must have the user's PGP key installed,  or must
+in some way get the key from a trusted server.  This is
+very site dependent and needs to be done by each site administrator.
+<H2><A NAME="ss12.9">12.9 Using Kerberos for Authentication</A>
+</H2>
+
+<P>The LPRng
+use of Kerberos authentication was
+based on the
+Kerberos5-1.0 release as of December 20, 1996.  This was obtained
+from MIT:
+<OL>
+<LI> ftp to ATHENA-DIST.MIT.EDU (18.159.0.42), login anonymous, password
+your_email_address</LI>
+<LI> Change into the directory '/pub/kerberos/</LI>
+<LI> Get the README files and look at the details of using FTP to get
+the distribution.  Note that there are also patches available
+which you might want to use.</LI>
+</OL>
+<P>Note that the distribution has only the most superficial documentation.
+There are no man pages for any of the support libraries, etc. etc.
+<A NAME="kerberoskeytab"></A> 
+<A NAME="kerberoslife"></A> 
+<A NAME="kerberosrenew"></A> 
+<A NAME="kerberosservice"></A> 
+<A NAME="kerberosserverprinciple"></A> <H3>Kerberos Installation Procedure</H3>
+
+<P>
+<OL>
+<LI> Get the Kerberos 5 distribution.</LI>
+<LI> Compile and install the distribution.</LI>
+<LI> Create the /etc/krb5.conf, /usr/local/var/krb5kdc/kdc.conf
+files using templates from the src/conf-files subdirectory.
+See the Installation notes and the System Administrators Guide.</LI>
+<LI> Don't forget to create the /usr/local/var/krb5kdc/kdc.acl file;
+I did and it took me HOURS to figure out what was wrong...</LI>
+<LI> Start up the KDC and KADMIN servers - you might want to put
+the following in your rc.local or equivalent file:
+<PRE>
+if [ -f /etc/krb5.conf -a -f /usr/local/var/krb5kdc/kdc.conf  ]; then
+    echo -n ' krb5kdc ';    /usr/local/sbin/krb5kdc;
+    echo -n ' kadmind ';    /usr/local/sbin/kadmind;
+fi
+</PRE>
+</LI>
+<LI> use kadmin (or kadmin.local) to create principals for your users.</LI>
+<LI> Now you need to create principals for the lprng servers.  I have been
+using:  lpr/hostname.REALM  as a template-
+i.e. lpr/astart1.astart.com@astart.com for an example
+<P>Do this for all the servers.  You should use fully qualified domain names
+for the principals.
+</LI>
+<LI> Now you need to extract the keytab for each of the servers:
+<PRE>
+kadmin ...
+ktadd -k file_for_host  lpr/hostname.REALM
+</PRE>
+
+<P>The 'file_for_host' contains the keytab information, which is the
+equivalent information for the server.
+</LI>
+<LI> Copy the 'file_for_host' to the server (you might want to encrypt
+or use a secure transfer for this).  You need to put this in
+<CODE>/etc/lpd.keytab</CODE>.
+Make sure that this file is readable only by user <CODE>daemon</CODE>,
+as it will try to read the file to get its server key.
+<PRE>
+#> ls -l /etc/lpd.keytab
+-rw-------  1 daemon  wheel  128 Jan 16 11:06 /etc/lpd.keytab
+</PRE>
+</LI>
+<LI> Add the following entries to lpd.conf:
+<PRE>
+use_auth=kerberos
+default_auth=kerberos
+kerberos_keytab=/etc/lpd.keytab
+kerberos_service=lpr
+kerberos_life=
+kerberos_renew=
+</PRE>
+
+<P>The kerberos_keytab entry is the location of the keytab file;
+kerberos_service is the service that will be used to generate
+a server principal name.  This is the "lpr" that
+appears in the above operations.
+<P>kerberos_life and kerberos_renew determine the lifetime and renewability
+of Kerberos tickets.  The lifetime defaults to 10
+hours,  and the ticket will be refreshed when it expires
+if necessary.
+</LI>
+<LI>  You might like to check out the authentication using the sclient and
+sserver test programs.  These link in the kerberos authentication and
+allow you to test it without all of LPD being involved.
+<PRE>
+cd LPRng/src; make sserver sclient
+usage: sserver [-D] [-p port] [-s service] [-S keytab] file
+   -D turns debugging on
+   1. opens TCP   port 'port' (default 1234)
+   2. waits for a connection
+   3. when a connection comes in,  uses 'service' to get the principal
+       name of the server,  and looks up the key in keytab file.
+   4. Goes through the kerberos authentication.
+   5. Copies the input from remote server to 'file'
+   6. exits.
+ usage: sclient [-D] [-p port] [-s service] host file
+   -D turns debugging on
+   1. opens a connection to port on host (i.e. - host%port)
+   2. does the authentication.  You must have done kinit to get
+       for your ticket to be valid.
+   3. sends the file to remote host.
+</PRE>
+
+<P>To test this, start up sserver on one host/window, then run sclient.
+The error messages are pretty straight forward,
+and when in doubt,
+look at the source code which has more than sufficient information.
+</LI>
+</OL>
+<H3>Testing Transfers</H3>
+
+<P>Restart the server,
+and then try getting information using LPQ.
+<P>You can turn on tracing at LPQ to see if authentication is being used
+and is working:
+<PRE>
+lpq -Dnetwork,database 
+</PRE>
+<P>If the lpq works,
+then try send a job and see if the transfer is successful.
+<H3>Explicit Server Principal Name</H3>
+
+<P>If you are using printers in different domains,  then you can
+put the explicit principal name of the server in the printcap file,
+using the server_principal entry.  For example:
+<PRE>
+lp_offsite
+    :lp=printer@erehwon.org
+    :use_auth=kerberos
+    :kerberos_server_principal=lpr/erehwon.org@BLUESKY.ORG
+</PRE>
+
+<A NAME="statusref"></A> 
+<A NAME="stalledtime"></A> <HR>
+<A HREF="LPRng-HOWTO-13.html">Next</A>
+<A HREF="LPRng-HOWTO-11.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc12">Contents</A>
+</BODY>
+</HTML>

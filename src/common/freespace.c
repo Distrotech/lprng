@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -10,7 +10,7 @@
  * PURPOSE:
  **************************************************************************/
 
-static char *const _id = "$Id: freespace.c,v 3.2 1997/01/19 14:34:56 papowell Exp $";
+static char *const _id = "$Id: freespace.c,v 3.4 1997/12/24 20:10:12 papowell Exp $";
 
 /***************************************************************************
  * Check_space()
@@ -41,7 +41,7 @@ static char *const _id = "$Id: freespace.c,v 3.2 1997/01/19 14:34:56 papowell Ex
 #ifdef HAVE_SYS_STATFS_H
 # include <sys/statfs.h>
 #endif
-#ifdef HAVE_SYS_VFS_H
+#if defined(HAVE_SYS_VFS_H) && !defined(SOLARIS)
 # include <sys/vfs.h>
 #endif
 

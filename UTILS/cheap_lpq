@@ -1,0 +1,51 @@
+#!/usr/contrib/bin/perl5
+
+use Socket;
+require "getopts.pl";
+
+$opt_P = $opt_v = $opt_s = "";
+&Getopts('P:sv');
+
+$printer = $opt_P;
+$printer = $ENV{PRINTER} unless $printer;
+$printer = 'pr@localhost' unless $printer;
+$remote = "";
+
+$option = 4;
+$option = 3 if( $opt_s );
+$option = 8 if( $opt_v );
+
+if( $printer =~ /@/ ){
+	($printer,$remote) = $printer =~ m/(.*)@(.*)/;
+}
+$remote="localhost" unless $remote;
+
+if( $remote =~ /%/ ){
+	($remote,$port) = $remote =~ m/(.*)%(.*)/;
+}
+$port = 515 unless $port;
+print "remote='$remote', port='$port', pr='$printer', op='$option'\n";
+
+$SOCK = getconnection( $remote, $port );
+
+printf $SOCK "%c%s\n", $option, $printer;
+while ( <$SOCK> ) { 
+	print $_; 
+} 
+close (SOCK) or die "close: $!"; 
+exit;
+
+sub getconnection {
+	my ($remote,$port) = @_;
+	my ($iaddr,$paddr,$proto);
+	$iaddr = inet_aton($remote) or die "no host: $remote";
+	$paddr = sockaddr_in($port,$iaddr);
+	$proto = getprotobyname('tcp');
+	print "$remote is $remote and port is $port and iaddr is $iaddr and paddr is $paddr\n";
+	socket(SOCK,PF_INET,SOCK_STREAM,$proto) or die "socket: $!";
+	connect(SOCK,$paddr) or die "connect: $!";
+	print "connection made\n";
+	# unbufferred IO
+	select(SOCK); $| = 1; select(STDOUT);
+	SOCK;
+}

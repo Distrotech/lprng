@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -11,7 +11,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: pathname.c,v 3.1 1996/12/28 21:40:17 papowell Exp $";
+"$Id: pathname.c,v 3.2 1997/09/18 19:46:01 papowell Exp $";
 
 #include "lp.h"
 #include "pathname.h"

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.2.1
+.ds VE LPRng-3.4.2
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -189,9 +189,6 @@ and
 .I "FILTERS"
 below for details.
 .TP
-\fBco\fR (default: 20)
-See \fBprintcap\fP(5) for details.
-.TP
 \fBconnect_grace\fR (default: 0 seconds)
 The time to pause before opening a new connection to a printer.
 This allows the printer time to recover from the previous job.
@@ -200,14 +197,14 @@ This allows the printer time to recover from the previous job.
 The time to pause after a failed connection or open
 of the printing device before attempting a new connection or open.
 .TP
-\fBconnect_retry\fR (default: 0)
-The numbers of times to retry making a connection or open
-of the printing device.
-A negative value will cause infinite retries.
-.TP
 \fBconnect_timeout\fR (default: 10 (seconds))
 The time to wait for a device open or connection to complete.
 A zero value is infinite timeout.
+.TP
+\fBretry_nolink\fR (default: true)
+When TRUE and the LPD server is printing or transfering a job,
+then an indefinate number of attempts to connect to or open the IO device
+will be made.
 .TP
 \fBdefault_auth\fR (default: "")
 The default authentication type to be used when requested by a user.
@@ -242,7 +239,8 @@ the user has not specified a printer,
 or there is no printcap information.
 .TP
 \fBdefault_priority\fR (default: "A")
-Default priority for printing jobs.
+Default priority (class) for printing jobs.
+This is also used as the job class.
 .TP
 \fBdefault_remote_host\fR (default: "%H")
 The default remote host to use.
@@ -256,6 +254,9 @@ the hostname to make it into a fully_qualified
 domain name, ie. \fIclass.iona.ie\fR. It will only
 be used if the software cannot determine the domain name
 using other means, such as \fBgethostbyname(3n)\fR.
+.TP
+\fBff\fR (default: \\f)
+Formfeed string.
 .TP
 \fBfilter_ld_path\fR
 (default: /lib:/usr/lib:/usr/5lib:/usr/ucblib)
@@ -280,12 +281,26 @@ and job information.
 The value for the environment variable PATH, both used to find filters
 and passed on to filters run by \fBlpd\fR and \fBlpr\fR.
 .TP
-\fBff\fR (default: \\f)
-Formfeed string.
+\fBfix_bad_job\fR (default: yes)
+Fix a bad job file - usually by ignoring multiple
+U (unlink) entries,  badly formatted file names,
+or other common botches produced by various PC based
+LPR clients.
+.TP
+\fBforce_poll\fR (default: no)
+Some software packages put print jobs directly into the spool queues.
+The
+\fBforce_poll\fR flag forces lpd to periodically poll spool queues
+looking for jobs and no server.
+The
+\fBpoll_time\fR variable sets the interval between polls.
 .TP
 \fBforward_auth\fR (default use_auth value)
 Server uses authentication when forwarding a command.
 Only done if the original command was authenticated.
+.TP
+\fBfull_time\fR (default: no)
+Use full time and date format in logging and error messages.
 .TP
 \fBfx\fR (default: flp)
 See \fBprintcap\fP(5) for details.
@@ -402,6 +417,12 @@ a success mail. (So in addition to the person who made the
 printer request, also this person gets error messages, but
 no success messages.)
 .TP
+\fBmax_status_line\fR (default: 79)
+An integer value specifying the numbers of characters to be
+used for displaying simple job status;  this includes the queue position,
+job identifier,  job contents, size, and time.
+A 0 (zero) value indicates no restrictions.
+.TP
 \fBmax_status_size\fR (default: 10 (Kbytes))
 An integer value specifying (in K bytes)
 the maximum size of the status file
@@ -429,6 +450,12 @@ the file must contain a numerical minimum free value (in Kbytes).
 This value is overriden by the printcap
 .I mi
 field value.
+.TP
+\fBms_time_resolution\fR
+(default: FALSE)
+This flag causes the time information to be printed to millisecond
+accuracy.
+This is overkill for most purposes.
 .TP
 \fBof_filter_options\fR
 (default: "")
@@ -466,6 +493,8 @@ environment variables to any filter programs they start.
 \fBpoll_time\fR (default: 6000)
 Interval in seconds at which LPD checks for queues with jobs and no
 server active.
+See 
+\fBforce_poll\fR as well.
 .TP
 \fBpl\fR (default: 66)
 See \fBprintcap\fP(5) for details.
@@ -480,7 +509,7 @@ If a file or filter does not exist, it is skipped.
 All valid entries in these files will be used.
 See PRINTCAP LOOKUP for details.
 .TP
-\fBprinter_perms_path\fR
+\fBperms_path\fR
 (default: /etc/lpd.perms:/usr/etc/lpd.perms:/var/spool/lpd/lpd.perms.%h)
 The location of the printer permissions database.
 If a file or filter does not exist, it is skipped.
@@ -502,7 +531,7 @@ same manner as the configuration information.
 Save a job in the spool queue if it has an error
 rather than removing it.
 .TP
-\fBsave_on_done\fR
+\fBsave_when_done\fR
 (default: no)
 Save a job in the spool queue after completion
 rather than removing it.
@@ -530,7 +559,7 @@ If the value is a filter,
 then the filter will be invoked and the exit status of the
 filter used to determine the actions.
 .TP
-\fBsend_timeout\fR (default: 6000)
+\fBsend_job_rw_timeout\fR (default: 6000)
 When printing or sending a job to a remote printer,
 use this as a write to the device or remote host timeout value.
 If a timeout occurs,

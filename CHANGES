@@ -1,30 +1,714 @@
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-1995 Patrick Powell, San Diego State University
-#     papowell@sdsu.edu
+# Copyright 1988-1995 Patrick Powell, San Diego, CA
+#     papowell@astart.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Changes
 # PURPOSE: Record Changes
-# $Id: CHANGES,v 3.20 1997/03/24 00:45:58 papowell Exp papowell $
+# $Id: CHANGES,v 3.45 1998/01/18 00:10:32 papowell Exp papowell $
 ###########################################################################
+
+Release LPRng 3.4.2
+  Bug Fixes:
+    Connect_timeout was not used uniformly or documented accurately.
+    (Fixes by: Heinz-Ado Arnolds <arnolds@ifns.de>)
+    configure was too agressive in checking for -lresolv.  Now includes
+     -lresolv only if gethostbyname2 is not found.
+     (Problem reported by: Uri Blumenthal <uri@ibm.net>)
+    It was observed that under heavy load conditions that some files
+      were getting printed twice.  This was due to a race condition.
+      The race condition has been eliminated by introducing another
+      field into the job control information specifying the subserver
+      process id.
+
+Release LPRng 3.4.1
+  New Baseline Release - Stable version
+
+  Enhancements:
+   The configure script now supports setting the installation directories
+    configure --with-lpddir=DIR --with-admindir=DIR
+      - sets the install directory for lpd and lpc/checkpc respectively.
+   (Patches by:  Tim Mooney <mooney@dogbert.cc.ndsu.NoDak.edu>)
+   Added a 'retry_etimedout' flag as well to handle connections to devices
+    that have a very long connection time due to slow network connections
+    over dialup devices.
+   The lpq status now will show 'stalled' when 'stalled_time' is non-zero
+    and the job is active for more than stalled_time seconds.
+    (Suggested by: lots of folks)
+   The check_idle=program facility can now be used to check that a printer
+    is idle before processing jobs.  This is useful when you have multiple
+    server queues. For example:
+     lp:sv=lp1,lp2:...
+     lp1:check_idle=/prog:...
+     lp2:check_idle=/prog:...
+    When the lp server starts up,  it will check the lp1 and lp2 queues,
+     and will only send jobs to the one whose check_idle program reports
+     an idle condition.
+
+  Bug Fixes:
+    Updated LPRng-HOWTO.
+    Fixed missing permission check checkpc.
+    Also (correctly) implemented ${option} expansion in filter commands.
+     This now gets expanded to the printcap option value,  as documented.
+    (Made by: Patrick Powell <papowell@astart.com>
+
+Release LPRng 3-3-7
+
+ Ports:
+   Solaris 2.6.  Also update README.install for new startup/shutdown script
+
+ New functionality:
+
+   reverse_lpq_format : reverse returned lpq status format when from
+      specified host.
+
+    There is a defect in some System V support for RFC1179 printers.
+    The lpq facility will send a 'SHORT' status request when a 'LONG'
+    is desired,  and vice versa.  This results in the wrong status format
+    being returned.
+
+    The reverse_lpq_format=(globhost|ip/mask)+ option allows you to specify
+    that when a request is received from a host whose name or address matches
+    an entry in the list,  then SHORT/LONG format requests will be reversed.
+    When the LPD is acting as an intermediate host,  the reversed request
+    will be sent to the next destination on the list.  For example:
+      reverse_lpq_format=*.eng.com,130.29.0.0/16
+    will select hosts whose FQDN ends in eng.com or in subnet 130.29
+    to have reversed lpq formats.
+
+   return_short_status : return limited length status information
+   short_status_length : number of lines to return
+
+    Some users have expressed a desire to have the LPD server return
+    short (i.e. - limited length) status to the requestor.
+    The return_short_status=(globhost|ip/mask)+ option allows you to specify
+    that when a request is received from a host whose name or address matches
+    an entry in the list,  then only short_status_length (default 3)
+    Status: and Printer_status: lines returned.
+
+   lpc redo command:
+    this forces a job to be totally reprinted, if it has been held
+    in the spool queue.  This command has been added in order to allow
+    the reprinting of jobs that have been printed and held in the spool
+    queue, i.e. - the save_when_done printcap flag is set.
+
+   routing filter 'priority N' output:
+    the routing filter can set the destination, copies, and now the
+    priority of jobs.  If the routing filter output is:
+      dest t1
+      CB
+      priority B
+      copies 2
+      end
+    then two copies of the job will be routed to the destination
+    with priority B, and the C line in the control file will be
+    set to CB.
+
+   safe_chars=nnn  configuration file option.
+    By default, LPRng detects and optionally eliminates suspicious characters
+    from the control file;  the fix_bad_job option will enable removal.
+    The safe_chars=nnn specifies that in addition to the normal safe
+    characters, the indicated ones can be used as well. For example,
+    save_chars=#" will allow # and " to be used in the control file.
+
+Release LPRng 3-3-6
+
+ New functionality:
+
+  Timeouts: send_job_rw_timeout, send_query_rw_timeout replace send_timeout
+
+    The printcap send_job_rw_timeout and send_query_rw_status options
+    now set timeouts on read/write operations when printing or sending
+    jobs to a remote host or doing a status or query operation respectively.
+    If the value is zero, there is no timeout on the operation.
+    These timeout values and the associated read/write operations
+    solve a problem when LPQ or LPR tries to attach to a printer or system
+    which accepts a connection but then does not reply to the request
+    in a reasonable amount of time.  Note that the send_job_rw_timeout
+    should be quite large (6000 or 100 minutes) in order to accommodate
+    transient problems like paper outages on a printer.
+    (Suggested by: Brad Rogers <brad@ast.lmco.com> and
+		Alek Komarnitsky <alek@ast.lmco.com>)
+
+  lpc active, lpd, and reread commands
+    The lpc active command will try to open a connection to the remote
+    server.  This allows non-LPRng remote servers to be polled to see
+    if they are active.
+
+    All of the active, lpd, and rereads now take a printer[@host] argument,
+    allowing the specified server for the printer to be queried.
+    (Deficiency noted by:  James P. Dugal <jpd@usl.edu>)
+
+  stop_on_abort printcap flag (default TRUE)
+    If a filter aborts and this flag is TRUE then all further processing
+    of the queue stops until restarted by some other action and the job
+    will not be removed from the queue.
+
+  max_connect_interval (default 60)
+    maximum interval between attempts to send a job to a remote site.
+
+  user_lpc configuration option, SERVICE=U, and lpc command
+    There was a request to allow a selected set of lpc commands
+    to be performed by users on their individual jobs in a queue.
+    This has been accommodated using the following method.
+
+    1. A new user_lpc=cmd,cmd,... printcap operation enables the
+       SERVICE=U permissions facility.  The cmd can be:
+       hold, release, move, topq, kill, and abort.
+    2. When the lpc command is checked for permissions by the LPD
+       server,  and the cmd is one of the specified in the user_lpc
+       printcap,  rejection is delayed until the point where individual
+       jobs are checked for action.  At this point a check for
+       SERVICE=U is performed on the permission database.  If,
+       at this point the action is rejected OR the default action is
+       to reject,  the action will not be performed.
+    3. While users can perform a kill or abort operation,  they can
+       only do this while their job is active or at the top of the queue.
+    
+Release LPRng 3-3-5
+  HOWTO and README:
+   The HOWTO/LPRng-HOWTO has been extensively editted and extended.
+  This will replace the README.* files in the distribution.
+
+  Enhancements:
+   configuration/printcap flag: force_localhost
+    force_localhost forces client programs (lpq, lpr, lpc, lprm, etc)
+    to connect to the server on the local host, as is done on the
+    BSD LPR system.
+
+    This option has an effect ONLY if you use the destination
+    in the printcap information for the printer.
+
+    If you explicitly specify a printer@host as the destination
+    (-Pprinter@host) then the force_localhost flag is ignored.
+
+    The default is force_localhost = TRUE.
+
+    Question: why this flag?
+
+    Answer: the Most Frequently Asked Question in the LPRng mailing
+    list is from users asking why lpq/lpr/lprm does not send the
+    job to the local server, and why they are sending them directly
+    to the remote printer instead of spooling them.  After having
+    referenced folks to the documentation multiple times,  I have
+    thrown in the towel on this one and have put in this flag.
+
+    Question: what does this change?
+    Answer:  If you are running a server on your system,  jobs will be sent
+    to the server and then spooled.  You may need more spool queue space.
+
+    If you want to use the "lpr_bounce" option,  you will need to turn
+    try_localhost and force_localhost OFF (:try_localhost@:force_localhost@:)
+    to get the old behaviour and not have the job run through the filters
+    by both LPR and LPD.
+
+    Question: Wouldn't it be easier to ask people to read the documentation?
+    Answer: No.
+    I gave up asking.  The LPRng behaviour was too different from the BSD LPD
+    behaviour and folks who wanted a "rip out and replace" solution were
+    too frustrated by the different behaviour.
+
+   User Requested Status Information:
+    lpr -mhost%port  now causes LPD to open a UDP (by default)
+    connection to port on host and send status updates for the job
+    being processed.  The form host%port,TCP  will open a TCP port
+    rather than a TCP port.  Users can now use the monitor program
+    (or a variant) to have job status reporting done.  This has the
+    side effect that mail addresses of the form host%port will
+    not get mail sent to them.
+
+   Routing Filters:
+     During job reception,  the :routing_filter: option specifies that the
+   received job information is to be processed by a routing filter,  which
+   supplies additional destination information or modifications.
+     STDIN of the filter is attached to the control file (read/write)
+   and STDOUT of the filter should be the additional control/routing
+   information.  Note that routing filters that need to modify the
+   control file can now do so by using FD 0 and making the modifications
+   directly to the file.  After processing by the routing filter, the
+   control file will be re-read by the lpd server, and checked for correctness.
+   See the HOWTO (/HOWTO/LPRng-HOWTO.html) for more information.
+     Exit codes for routing filter:
+      JSUCC (0) - processing continues;
+      JHOLD     - job will be held
+      anything else - job will be removed (not accepted for printing)
+
+  socket_linger#secs
+     This option/flag has been added to solve a nasty problem
+   involving closing network connections and process exit.
+     When a process exits, the system will attempt to finish IO
+   operations, flushing pending data to the destination.  However,
+   It has been observed that when the LPD process which is doing
+   the actual printing exits, it will sometimes terminate and the
+   last output is lost.
+     Experiments have shown that when the SO_LINGER flag is set on these
+   connections,  the LPD process will not terminate until the last data
+   has been transferred, which is the desired behavior.
+     The 'socket_linger#nn' flag can be used to force setting the SO_LINGER
+   timeout value.  By default,  this is now set to 10 seconds,  which
+   appears to be compatible with most TCP/IP connections.  Note that the
+   documentation is very blank on what happens when the connection is still
+   "active" but no data is being transferred.
+     If you are having problems with network connections and lost data
+   at the end of jobs, try using:
+	   :socket_linger#120 
+   in the printcap for the printer.
+
+   LPRng executables default to SUID root at installation:
+       By default, LPRng executables are now installed SUID root.
+     This will reduce the number of problems encountered by folks who
+     do not read the README.install instrucutions.
+     (Noted by: Patrick Powell <papowell@astart.com>)
+
+  :remote_support=RMQVC (default)
+    R = lpr, M = lprm, Q = lpq, V = verbose lpq, C = lpc : allowed operation
+    This option specifies the allowed operations to a remote printer.
+    This solves the problem of printer servers 'hanging on lpq', due
+    to their inability to handle multiple requests.  Note that the hang
+    appears to be permanent - i.e. - the printer locks up.  Thus, you
+    should never do a lprm, lpq, or lpc operation to the printer. The
+     :remote_support=R: setting will do this.
+
+  :rg=group[,group] - allow clients to use printer only if user
+    is a member of one of the specified groups.
+    (Requested by: Oved Ben-Aroya <oved@ns.technion.ac.il>)
+
+  Bug Fixes:
+   After a LOOOONG study,  the problem with non-LPRng servers terminating
+   with 'out of space' error status has been resolved,  and hopefully fixed.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   Order of variables in sorted list was incorrect.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   README.pgp_authentication referenced 'client_auth*' names; should be
+    'user_auth*' names.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   The print job transfer (LPD/lpd_rcvjob.c) code has been reviewed,  and
+     the underlying method has been modified to accomodate reception of
+     multiple jobs in a more consistent manner.
+     1. On start of job transmission,  a 'lock file' is created.
+     2. Data and control files are placed in 'temporary files' during transfer.
+     3. At the end of job transfer,  rename() is used to change temporary
+        files to permanent ones.
+     4. The routing filter (if any) is invoked.  Note that the data files
+        are available for reference during this stage.
+     5. The control file is renamed to the final version.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   The plp_waitpid() code has been extensively modified,  together with the
+     fdfork() code,  the killchildren() support,  and the Print_abort()
+     code.  Hopefully,  this will now solve the problems of processes
+     not being terminated and/or zombies accumulating.  This has the
+     (desirable!) side effect that child exits will not cause system calls
+     to terminate with EINTR status.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   By default, LPRng executables are now installed SUID root.
+     This will reduce the number of problems encountered by folks who
+   do not read the README.install instrucutions.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   Race condition with Set_control_info fixed.  Now file locking works
+     correctly.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   For HP configurations and no GCC,  added a -Aa flag to CFLAGS
+     (Suggested by:  Brad Rogers <brad@ast.lmco.com>)
+
+   The logger support was flawed somewhat.  Previously, each process
+     would open a socket (connection) to the logger - this would soon
+     use up a lot of connections.  Now the LPD server opens a connection
+     at initialization,  which is then inherited by the various processes.
+     (Found by: Desmond Macauley <desmondm@eng.dowjones.com>)
+
+   By default, LPRng executables are now installed SUID root.
+     This will reduce the number of problems encountered by folks who
+   do not read the README.install instrucutions.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   The SERVER permissions checking did not handle localhost correctly.
+   (Noted by: Patrick Powell <papowell@astart.com>)
+
+   Passed the PRINTCAP_ENTRY to routing filters and control file filters.
+    (Patch by: George Lindholm <lindholm@ucs.ubc.ca>)
+
+   Only LPD now does killpg() otherwise this effects output from the
+     lpq, lpc, etc., programs.
+     (Noted by: Patrick Powell <papowell@astart.com>)
+
+   Jobs were being thrown away with Send_try#0 
+     (Patch by: George Lindholm <lindholm@ucs.ubc.ca>)
+
+Release LPRng 3-3-4
+  Enhancements:
+    When using routing_filters to cause jobs to be sent to multiple
+     destinations,  you might want LPQ to report the status of the
+     destinations as well.  The 'destinations=pr1,pr2,pr3' will now
+     case LPQ to report the status of destination queues.
+      (Work, patches, and slugging by: George Lindholm <lindholm@ucs.ubc.ca>)
+    LPR and LPRM duplicate arguments:
+      Some users would like LPR's and LPRM's arguments to be 'cumlative', i.e. -
+        lpr -a x -a y   would be identical to lpr -a
+      The allow_duplicate_args configuration flag will now enable this behaviour.
+      Also, by default the class name and the job priority are identical.  The
+        break_classname_priority_link flag breaks this link, and the class can be
+        specified separately from the priority.  Also, the maximum classname
+        size specified by RFC1179 is 32 characters;  the 'classname_length#nnn'
+        (default 31) allows a longer classname to be used.
+      (Patches supplied by: George Lindholm <lindholm@ucs.ubc.ca>)
+
+  Bug Fixes:
+    checkpc -p and -c options were not functioning as documented.
+      (Noted by: Christophe Kalt <kalt@research.bell-labs.com>)
+    README.bouncequeues indicated that exit status returned by
+      the control_filter program was used to control job processing.
+      README and common/fixcontrol.c updated to agree.  When control_
+      filter exits with: JSUCC (0) - normal processing, JHOLD (37)
+      job is held, JREMOVE, job removed, etc.
+      (Noted by:  George Lindholm <lindholm@ucs.ubc.ca>)
+    Generate_banner did not put banner in correct position.
+      (Reported by: Jost Krieger <Jost.Krieger@ruhr-uni-bochum.de>)
+    LPD/lpd_rcvjob.c - control file is now written to a temp file and then
+      renamed as the control file.  This elminates problems with locks.
+      (Suggested by:  George Lindholm <lindholm@ucs.ubc.ca>)
+
+Release LPRng 3-3-3
+  Updated the sample lpd.perm, README's to use the 'REMOTEUSER'
+   rather than USER in the permissions value.
+   (Spotted by:  Chen Shiyuan <csy@hjc.edu.sg>)
+  Cleaned up filter and server killing code - added more robust
+   exit and abort facilities.  This was done in several places
+   in order to try to make sure that processes created for filters would
+   be killed off when the server process exited.
+  Cleaned up logging and some minor error messages.
+  Removed 'intl/po2tbl.sed' and 'po/POTFILES' from distribution.
+   (Noted by: George Lindholm <lindholm@ucs.ubc.ca>)
+
+Release LPRng 3-3-2
+  Thu Oct  9 20:03:30 PDT 1997
+  lpr, lpq,... usage message formats fixed.
+    (Patches by: Jan Barte <yann@plato.uni-paderborn.de>)
+  Autohold support was accidentally removed from LPD/lpd_rcvjob.c
+
+
+Release LPRng 3-3-1
+  New Baseline Tue Oct  7 18:29:55 PDT 1997
+  Comments:
+    README.account updated to show how to use psfilter and CTI-hpif
+    filters and accounting scripts.
+  Bug Fixes:
+    Permissions checking patch did not work correctly. Patcher patched
+     patch to make patchwork code work correctly.
+    (Originator of patch: Simon Wilkinson <sxw@dcs.ed.ac.uk>)
+
+Release LPRng 3-2-12
+  Bug Fixes:
+  The sample lpd.conf file had ff=\\f which confused folks.  Now it
+    has correct syntax.
+  The end of job and Print_abort code has been clean up and modified
+    so that exit is now fast and brutal.  When you do LPRM you now GET
+    LPRM action fast and quick,  and no processes hanging around.
+  The code for reporting fatal 'filter errors' has been modified to put
+    the termination conditions into the LPQ status report.  This will
+    simplify the job of finding out why your job died much easier.
+  Jobs that now exceed their maximum number of print attempts are deleted
+    by default instead of being retried indefinately.  This can be be
+    suppressed by setting retry to 0, as documented.
+  The above bugs/changes were the result of a long standing report of
+    the LPD server being slow to respond when printing bad jobs.
+  (Added by: Patrick Powell <papowell@astart.com>)
+
+Release LPRng 3-2-11
+  Enhancements:
+   printcap/configuration 'network_connect_grace#nnn' variable
+   is similar to the 'connect_grace' variable,  but pauses for
+   the specified time between connections to LPD or other servers.
+   Useful when using LPD prototcol to network based printers that
+   need some recovery time between jobs.
+   (Suggested by: Christian Illinger <illinger@lepsi.in2p3.fr>)
+  Bug Fixes:
+   all:all=p1,p2,p3 did not check correctly for separators.
+    (Reported by: Bertrand Decouty <Bertrand.Decouty@irisa.fr>)
+   configure.in - checks for random() defined in stdlib.h
+    (Suggested by: Bernhard Rosenkraenzer <root@BOL-SubNet.ml.org>)
+   Logging:  the JOBNUMBER is now reported correctly.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+   LPC move:  the job is deleted from the queue after being moved,
+    even if save_when_done is set.
+    (Requested by:  Gary Cender <gcender@eng.dowjones.com>)
+
+Release LPRng 3-2-10
+  Bug Fixes:
+    In cleaning up the routing support in LPD/lpd_jobs.c and
+    LPD/lpd_rcv.c,  I cleaned it up so much that only the first
+    routed job was printed.
+    (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
+
+Release LPRng 3-2-9
+  Bug Fixes:
+    Typo in src/common/linksupport.c caused very wierd error messages to be
+    printed.
+    (Reported by:  lots and lots of people)
+   
+
+Release LPRng 3-2-8
+  Bug Fixes:
+   snprintf used instead of plp_snprintf()
+   (Reported by:  Dirk Wrocklage <dirkw@uni-paderborn.de>
+     and Helmut Jarausch <jarausch@igpm.rwth-aachen.de>)
+   Max_servers code did not function correctly - there was a logic error
+     in the design.  As a result,  it would lock up and refuse incoming
+     jobs.
+	(Reported by: Jim Stosick <Jim.Stosick@Forsythe.Stanford.EDU>)
+   Poll_time:  Under certain very odd conditions,  a spool queue could
+    have a job in it and the LPD server would not fork a process to
+    serve the queue.  The poll_time (default 6000 seconds) is a timer
+    that will scan the print queues for a pending job and no server.
+    The previous version had a race condition in it that would
+    periodically spawn too many servers.  The new code not only fixes
+    this problem,  but also enforces a true idle condition on the
+    lpd server.  If there is no activity and no jobs,  then the server
+    will not periodically wake up and check the spool queues.
+  Force_poll:  Some users have software that places jobs in the
+    spool queues,  and want LPRng to periodically poll the queues
+    for these jobs.  The 'force_poll' flag has been added to provide
+    this functionality.
+
+Release LPRng 3-2-7
+  Major Revisions:
+
+  Hold file names and creation:
+    When the server creates a job in a job queue,  it also creates
+  a hold file along with the data and control file in the spool
+  queue directory.  During job processing the hold file is updated
+  by various processes.  As a result,  this file must be locked
+  and carefully updated.  The implemented method of locking and
+  holding locks for jobs was flawed,  resulting in race conditions,
+  etc.
+
+    The routines responsible for reading and writing hold files are
+  Lock_job_control, Get_job_control and Set_job_control.  These have
+  been modified as follows.
+  0. A Lock_job_control() routine now generates and locks a control
+     file.
+  1.  The Get_job_control() routine may now open the job file in a LOCKED
+     or UNLOCKED mode. It will open the file UNLOCKED if not passed
+     a file descriptor (FD) created by Lock_job_control(),
+     reads the file and then closes the file if not locked.
+  2.  The Set_job_control() file now updates the hold file as follows.
+     a) It creates a temporary file (open, locked).
+        This file has the name _fAnnn, while the lock file is
+        cfAnnn.
+     b) It writes the job file to the temporary file.
+     c) It RENAMES the temporary file to the hold file.
+     d) If it has been passed a FD created by Lock_job_control()
+        it will close the passed FD and return the locked FD;
+        the effect is to maintain the lock on the control file.
+     e) if not passed an FD, it simply closes the FD, effectively
+        releasing the lock.
+
+  This functionality guarantees the following:
+   1. While there might be a race condition in time over a particular
+      control file,  the Get_job_control() routine will always open
+      either a 0 length hold file (i.e. - file is in an initial state)
+      or a VALID COMPLETE non-zero length hold file.
+   2. Get_job_control() (no lock) will always read correct status information
+      or NO status information.
+   3. If a Write operation is needed, Set_job_control() does this correctly
+     and indivisibly.
+   4. If a Read/Modify/Write is needed, Get_job_control() is requested to
+     read and lock the file,  and then Set_job_control is used to modify
+     the information.
+
+   Hold File Name Format:
+     In order to guarantee that jobs placed into the hold file have unique
+   job numbers, i.e. - so you can reference them by job number,  the hold
+   file name format is now hfAnnn.  Note that this means the host name is
+   now not used.  The Find_unique_job_number() routine will attempt to find
+   and create a hold file with a unique job number in the queue.
+
+   Jobs Placed In Queues Always Get Unique Job Numbers:
+     In the previous version of LPRng,  when a job was placed in a queue
+   with an existing job with the same control file name,  the job overwrote
+   the existing job.  This had some interesting side effects, mostly concerned
+   with duplicate jobs.  If you have the 'Save Job After Printing' flag
+   set,  you may run out of job numbers.
+
+   Full_time printcap/lpd.conf flag
+     Specifies that you want to have a full year-mo-dy-hr:... time
+   format in log and status message.
+
+   Binding to random ports
+     The RFC1179 specifies connections must originate from port 721-731;
+   most BSD implementations relax this to 512-1023.  There is a problem
+   when trying to reuse a port and connecting to the same system;
+   TCP/IP requires about a 10 minute timeout on a IP:port/IP:port pair.
+   The code that tried to do connections originally tried the ports in
+   sequential order, leading to long delays.  Now it will try them in
+   RANDOM order, and will try at most 'connect_try' ports at a time
+   before admitting failure.
+
+  Bug Fixes:
+    Minor nit with lpc commands fussing about RemotePrinter values.
+      (Reported and patch by: Martin Pahl <pahl@tnt.uni-hannover.de>)
+    File descriptors are lost if the remote system that we are trying to send
+    a job to doesn't like the printer name we are trying to use.
+      (Reported by: George Lindholm <lindholm@ucs.ubc.ca>)
+    Permissions checking for PRINTER=host,@netgroup was done incorrectly.
+      checking now done by match_pr().
+      (Reported by: Sergio Tessaris <tessaris@ictp.trieste.it>
+        and Warren Marts <warren@nmt.edu>)
+    Problems with Get_perms() when rereading the permissions database.
+      The actual problem was trying to be too tricky and preallocate data
+      structures.  When this was done incorrectly,  you had some very odd
+      results when rereading the same database.
+    LPR: when printing multiple files,  data files were duplicated.
+      i.e. - dfA..., dfB..., ..., dfZ..., dfA...
+      Fixed LPR/lpr_cpyjobs.c so that now we have dfA... dfZ, dfa..., dfz
+      (Reported by: Simon Wilkinson <sxw@dcs.ed.ac.uk>)
+	User detected a bug where the "-r" option to LPR (LPRng 3.2.6)
+	  actually removes files even if the job was not spooled successfully.
+	  my patch to fix this problem.  Updated LPR man page to reflect the dreaded
+	  -r (remove after printing) option.
+	  (Reported and Fixed by: Garrett D'Amore" <garrett@qualcomm.com>)
+    Permissions checks for group did not check the group id, just the
+      user name.
+      (Reported and Fixed by:  Simon Wilkinson <sxw@dcs.ed.ac.uk>)
+    Race conditions src/LPD/lpd_jobs.c between printer server
+      and worker process caused a null pointer reference.
+      (Reported and Fixed by: George Lindholm <lindholm@ucs.ubc.ca>)
+	Checkpc did not use correct lockfile format.
+	  (Reported by: Jan Barte <yann@plato.uni-paderborn.de>)
+    When routing a file,  the route Xnnnn information was not used.
+      Updated Fix_control to use this information as per documentation.
+	  (Reported by: Patrick Powell <papowell@astart.com>)
+    Control file not reparsed after 'control_filter' processing.
+      It is now reparsed,  and only the new contents are sent
+      to the destination.  This includes the data files.  The
+      control file filter MUST remove excess data files.
+    End of job accounting to a remote server was erroneously expecting
+      an 'ACCEPT' reply. Fixed.
+      (Reported by: Markus Fleck <fleck@informatik.uni-bonn.de>)
+
+Release LPRng 3-2-6
+    README.accounting, lpd.8, printcap.5 man pages - accounting file is
+      documented as not being created.
+      (Reported by: Christophe Kalt <kalt@research.bell-labs.com>)
+    LPRM/LPD did not forward remove commands correctly.
+      (Reported by: Paul Zablosky <zablosky@ucs.ubc.ca>)
+    Permissions:  PRINTER attribute can now be a netgroup.  This allows
+      things like:
+       ACCEPT SERVICE=R,P PRINTER=@PRIP_printers REMOTEGROUP=@PRIP_users
+       REJECT SERVICE=X,R,P PRINTER=@PRIP_printers
+      makes management of printers... easier... I suppose.
+      Updated lpd.perms.5 as well.
+      (Suggested by: John R Lane <lanejohn@cps.msu.edu>)
+    Removed mention of "co" flag (obsolete) from lpd.conf man page.
+      (Reported by Klaus Steinberger <Klaus.Steinberger@Physik.Uni-Muenchen.DE>)
+    HP/UX version 10.x needs to use termiox IOCTL call to set
+      hardware handshaking on.
+      (Reported and patches supplied by:
+        Klaus Steinberger <Klaus.Steinberger@Physik.Uni-Muenchen.DE>)
+    lpc printcap command now only needs STATUS (S) privileges.
+       New DEFAULTQ protocol message added.  This allows lpc to request
+       the default queue used by LPD.
+    fix_bad_job flag now ignores duplicate control lines,  and replaces
+       bad characters with blanks in control file.
+
+Release LPRng 3-2-5
+    configure:  now checks to see if inet_ntop() is in resolver
+      library (-lresolv),  and includes it when doing checks for
+      other functions.
+    termclear now uses IS_LINUX instead of __linux__
+      (Reported and fixed by: Horst <horst.fickenscher@it.erlm.siemens.de>)
+    memory leak fix of 3-2-4 interacted with other code in unexpected
+      manner - revised memory fix.
+      (Reported and fixed by:  Patrick Powell <papowell@astart.com>)
+    LPD/lpd_status.c - status display line length now controlled by
+      max_status_line configuration/printcap variable,  which allows
+      the maximum line length to be exceeded if desired.  Default is
+      still 79.
+    src/Makefile.in COMPILATION FLAG: STRICT_RFC1179
+      default originate_port value is now 512 - 1022,
+      rather than RFC1179's 721 - 731.  compiling with -DSTRICT_RFC1179
+      sets the default to 721 - 731.
+
+Release LPRng 3-2-4
+    LPD - pursued and found an extremely minor memory leak that
+      was exercised only under a very unusual set of conditions.
+      (Reported and fixed by:  Patrick Powell <papowell@astart.com>)
+    Batch of patches and errors: Tom Bertelson <tbert@pamd.cig.mot.com>
+      include/portable.h - minor changes in SUNOS prototypes
+      CHECKPC/checkpc_port.c - better check to see if setproctitle worked
+      PAIR() macro has added guards for _PROTO_ problems
+      rw_pipe() has a minor portability problem clean up.
+    LPQ, LPR, LPRM option checks were done incorrectly.
+      (Reported by: Scott Nelson <nelson@canopus.llnl.gov>)
+    umask(0177) should really be umask(0077) to allow correct directory 
+      permissions checking.
+      (Reported and fixed by: Guy Geens <Guy.Geens@elis.rug.ac.be>)
+    lpd - the lpc reread function sends a signal to the LPD server,
+      which then calls 'Read_pc' from a signal handler.  This can cause
+      problems.  In addition, there was a memory leak in the Read_pc()
+      routine.
+      (Reported by: Rainer Schoepf <schoepf@uni-mainz.de>)
+
+Release LPRng 3-2-3
+ BUG FIXES:
+    src/Makefile(Makefile.in), man/Makefile.in did not do 'make install
+      prefix=/xxxx' operations correctly.
+      (Reported by: Chris O'Regan <chris@ECE.concordia.CA>)
+    Get_remote_hostbyaddr() used host_ent when it was undefine/null.
+      (Reported by: Carson Gaspar <carson@lehman.com>)
+    Patch for HAVE_SIGLONGJMP did not include common/timeout.c and
+      include/portable.h.
+      (Reported and fixed by: Guy Geens <Guy.Geens@elis.rug.ac.be>)
+
+Release LPRng 3-2-2
+ BUG FIXES:
+    Not freeing memory allocated by Expand_value().
+    (Reported by: "Todd C. Miller" <Todd.Miller@cs.colorado.edu>)
+    Added logging for non-job related operations.
+    Added finer time resolution on job changes
+      (Requested by: Chao-Wen Young <kiki@eng.dowjones.com>)
+    Added LPDEST environment variable for  printer as well as PRINTER
+      and NGPRINTER
+      (Suggested by: Garrett D'Amore <garrett@qualcomm.com>)
+    Moved Print_flush() to Print_abort().
+      (Motivated by: Gerhard Schneider <gs@ilfb.tuwien.ac.at>)
+    MONITOR/monitor.c had duplicate include references.  This caused some
+      portability problems with systems that did not have 'guards' in their
+      include files for multiple inclusion.
+      (Reported by: John Perkins <john@cs.wisc.edu>)
+    lpstat format fixes.
+      (Reported and Fixes: Carson Gaspar <carson@lehman.com>)
+    common/getqueue() rejects control files with duplicate remove lines -
+      this is not a big problem,  so added code to ignore them.
+      (Reported and Fixes: Frank Terhaar-Yonkers <fty@cisco.com>)
+
+Release LPRng 3-2-1
+    Baseline Release
+
 Release LPRng 3-1-13
     Changed sleep() calls to plp_sleep(), which uses select mechanism,
       to avoid interactions with SIGALRM signal handler in Linux.
     In the waitchild() code,  the signal(SIGCHLD,SIG_IGN) caused
       some systems to automatically perform a 'wait()' on child
-	  processes.  The SIG_DFL only ignored the signal, and the
+      processes.  The SIG_DFL only ignored the signal, and the
       waitpid() would then succeed.  Note that this action is implied
       by the POSIX standard wording for _exit().
     The code for job queue scanning will not report 0 length
       control files as errors until they are older than an hour.
-	The LPD/lpq_status() now ignores jobs being transferred,
+    The LPD/lpq_status() now ignores jobs being transferred,
       and does not report their status.
     LPD/lpd_rcvjob() now allows multiple jobs to be transferred on a single
       connection.  This is a violation of RFC1179 but it is now done.
-	Expanded \xx entries in Banner line, so that very strange
+    Expanded \xx entries in Banner line, so that very strange
       filters that insisted on these characters would get them.
       If a banner line had these characters,  a \n is not appended.
     Bounce queue destinations no longer have to be printer@host,
@@ -33,16 +717,16 @@ Release LPRng 3-1-13
     CHECKPC/checkpc.c - To_root() interferred with Test_code();
       reordered code.
       (Reported by: Todd Rannow <rannow@msc.edu>)
-	common/check_remotehost() - added checks for Is_server, moved some
-	  tests into LPD/lpd_status.c, LPD/lpd_remove.c
-	  (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
+    common/check_remotehost() - added checks for Is_server, moved some
+      tests into LPD/lpd_status.c, LPD/lpd_remove.c
+      (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
     Solaris 2.4 LPD server insists on sending REQ_START messages -
       and gets peeved when it gets an error.  Now messages are NOOPs.
       (Reported and fix suggested by: Jussi Eloranta <eloranta@voimax.voima.jkl.fi>)
-	Read_fd_len_timeout() closed fd on timeout - this was not correct behaviour.
+    Read_fd_len_timeout() closed fd on timeout - this was not correct behaviour.
       (Reported by: Todd Rannow <rannow@msc.edu>)
-	Clients (LPR, LPQ, LPC) were not expanding printcap %P, %H, etc., entries.
-	  (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
+    Clients (LPR, LPQ, LPC) were not expanding printcap %P, %H, etc., entries.
+      (Reported by: Damon W Atkins <zdxa21@gascor.vic.gov.au>)
 
 Release LPRng 3-1-12
     Check_remote modifications exposed logic error in various places-
@@ -61,7 +745,7 @@ Release LPRng 3-1-10
       appropriate places.
       (Reported by: Lee Muh Hwa <cceleemh@dolphin.cc.nus.sg>)
     Problem with bad printer name detection.
-	  (Reported and fixed by: Martin Pahl <pahl@tnt.uni-hannover.de>)
+      (Reported and fixed by: Martin Pahl <pahl@tnt.uni-hannover.de>)
     setstatus() was not sending STATUS information to the logger.
       (Reported by: Chao-Wen Young <kiki@eng.dowjones.com>)
     Bad non-existent printer,  printcap file misconfiguration code.

@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -22,7 +22,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: errormsg.c,v 3.3 1997/01/22 23:09:32 papowell Exp $";
+"$Id: errormsg.c,v 3.5 1997/10/15 04:06:28 papowell Exp $";
 
 #include "lp.h"
 #include "errormsg.h"
@@ -214,7 +214,6 @@ static void log_backend (int kind)
 			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) plp_snprintf(s, n, " %s", logmsg(kind) );
 		}
-		n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 	}
 
 	n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;

@@ -1,8 +1,18 @@
+Read the README.1st and README.install files.  If you do not,
+you will have nothing but problems.  After you have read them,
+then you can follow the instructions outlined here.
+
+  WARNING: see the comments in README.install about setup.
+
+Patrick Powell                 Astart Technologies,
+papowell@astart.com            9475 Chesapeake Drive, Suite D,
+Network and System             San Diego, CA 92123
+  Consulting                   619-874-6543 FAX 619-279-8424 
+LPRng - Print Spooler (http://www.astart.com)
+
 LPRng Installation
 (Based on the AUTOCONF configuration facility)
 =============================================
-
-
    These are generic installation instructions.
 
    The `configure' shell script attempts to guess correct values for

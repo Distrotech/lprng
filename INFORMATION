@@ -1,14 +1,14 @@
  ***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1995 Patrick Powell, San Diego State University
- *     papowell@sdsu.edu
+ * Copyright 1988-1995 Patrick Powell, San Diego, CA
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
  * MODULE: INFORMATION
  * PURPOSE: Overview of Software
- * $Id: INFORMATION,v 3.1 1997/01/22 23:15:25 papowell Exp $
+ * $Id: INFORMATION,v 3.4 1997/12/16 15:06:06 papowell Exp $
  **************************************************************************/
 
 The LPRng software has evolved from the Berkeley LPR software.
@@ -78,7 +78,7 @@ followed by a value.  The keywords are case insensitive, and
 documents the meanings and uses of the various configuration entries.
 Unrecognized entries are ignored.
 
-	default_printer          lp@dickory
+	default_printer          lp@astart.com
 	default_banner_printer   /tmp/LPD/lpbanner
 	lockfile                 /tmp/LPD/lpd.lock.%H
 	logfile                  /tmp/LPD/lpd.log.%H
@@ -88,8 +88,8 @@ Unrecognized entries are ignored.
 	# replace the 'printcap_path' with the filter specification
 	printcap_path            /tmp/LPD/printcap.%H
 	#printcap_path            |/tmp/LPD/dbserver /tmp/LPD/printcap.db.%H
-	#printer_perms-path       /tmp/LPD/printer_perms.%H
-	printer_perms-path         |/tmp/LPD/dbserver /tmp/LPD/printer_perms.db.%H
+	#perms_path       /tmp/LPD/printer_perms.%H
+	perms_path         |/tmp/LPD/dbserver /tmp/LPD/printer_perms.db.%H
 	user                     papowell
 	group                    0
 	# test include facility
@@ -172,35 +172,53 @@ DEFAULT REJECT
 #
 REJECT SERVICE=* NOT IP=130.0.0.56/255.255.0.0
 # allow this person control when he is coming from a privileged port
-ACCEPT SERVICE=C USER=papowell HOST=dickory.sdsu.edu PORT=0-1023
+ACCEPT SERVICE=C REMOTEUSER=papowell HOST=astart1.astart.com PORT=0-1023
 #
-ACCEPT REMOVTEHOST=*.ee.sdsu.edu 
+ACCEPT REMOVTEHOST=*.ee.astart.com 
 
 For each of the following LPR activities,  the following keys
 have a value
 
-Key          Match Connect Job   Job    LPQ  LPRM  LPC
-						 Spool Print
-SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C'
-USER         S             JUSR  JUSR        CUSR  CUSR
-HOST         S     RH      JH    JH     RH   JH    JH
-IP           IP    RIP     JIP   JIP    RIP  JIP   JIP
-PORT         N     PORT    PORT         PORT PORT  PORT
-REMOTEHOST   S     RH      RH    JH     RH   RH    RH
-REMOTEIP     IP    RIP     RIP   JIP    RIP  RIP   RIP
-PRINTER      S             PR    PR     PR   CPR   CPR
-FORWARD                    FW                FW
-SAMEHOST                   SA                SA
-SAMEUSER                                     SU
-
-KEY:
-  RH = REMOTEHOST    connecting host name
-  RIP= REMOTEIP      connecting host IP
-  PORT=              connecting host origination port
-  JH= Job HOST       host name from job
-  JIP= Job HOST IP   host name from job IP address
-Match: S = string with wild card, IP = IPaddress[/netmask],
-  N = low[-high] number range
+## Key          Match Connect Job   Job    LPQ  LPRM  LPC
+##                            Spool Print
+## SERVICE      S     'X'     'R'   'P'    'Q'  'M'   'C,S'
+## USER         S     -       JUSR  JUSR   JUSR JUSR  JUSR
+## HOST         S     RH      JH    JH     JH   JH    JH
+## GROUP        S     -       JUSR  JUSR   JUSR JUSR  JUSR
+## IP           IP    RIP     JIP   JIP    RIP  JIP   JIP
+## PORT         N     PORT    PORT  -      PORT PORT  PORT
+## REMOTEUSER   S     -       JUSR  JUSR   JUSR CUSR  CUSR
+## REMOTEHOST   S     RH      RH    JH     RH   RH    RH
+## REMOTEGROUP  S     -       JUSR  JUSR   JUSR CUSR  CUSR
+## REMOTEIP     IP    RIP     RIP   JIP    RIP  RIP   RIP
+## CONTROLLINE  S     -       CL    CL     CL   CL    CL
+## PRINTER      S     -       PR    PR     PR   PR    PR
+## FORWARD      V     -       SA    -      -    SA    SA
+## SAMEHOST     V     -       SA    -      SA   SA    SA
+## SAMEUSER     V     -       -     -      SU   SU    SU
+## SERVER       V     -       SV    -      SV   SV    SV
+## 
+## KEY:
+##   JH = HOST          host in control file
+##   RH = REMOTEHOST    connecting host name
+##   JUSR = USER        user in control file
+##   CUSR = REMOTEUSER  user from control request
+##   JIP= IP            IP address of host in control file
+##   RIP= REMOTEIP      IP address of requesting host
+##   PORT=              connecting host origination port
+##   CONTROLLINE=       pattern match of control line in control file
+##   FW= IP of source of request = IP of host in control file
+##   SA= IP of source of request = IP of host in control file
+##   SU= user from request = user in control file
+##   SA= IP of source of request = IP of server host
+## 
+## Match: S = string with wild card, IP = IPaddress[/netmask],
+##   N = low[-high] number range, V = exact value match.
+## SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
+##    'P' - print job in queue; 'Q' - lpq request, 'M' - lprm request;
+##    'C' - lpc spool control request; 'S' - lpc spool status request
+## NOTE: when printing (P action), the remote and job check values
+##   (i.e. - RUSR, JUSR) are identical.
 
 A permission line consists of list of tests and an a result value
 If all of the tests succeed,  then a match has been found and the
@@ -237,14 +255,14 @@ Example Permissions
 
 Reject connections all users not on subnet 130.191.0.0
   REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
-Do not allow anybody but root on dickory.sdsu.edu to use control
+Do not allow anybody but root on astart1.astart.com to use control
   facilities.  The first line accepts the user, second rejects
   all others
-  ACCEPT SERVICE=C HOST=dickory.sdsu.edu USER=papowell
+  ACCEPT SERVICE=C HOST=astart1.astart.com USER=papowell
   REJECT SERVICE=C
 
-Allow root on talker.sdsu.edu to control printer hpjet
-  ACCEPT SERVICE=C HOST=talker.sdsu.edu PRINTER=hpjet USER=root
+Allow root on talker.astart.com to control printer hpjet
+  ACCEPT SERVICE=C HOST=talker.astart.com PRINTER=hpjet USER=root
 
 Do not allow forwarded jobs
   REJECT FORWARD

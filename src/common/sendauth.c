@@ -2,7 +2,7 @@
  * LPRng - An Extended Print Spooler System
  *
  * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
+ *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************
@@ -12,7 +12,7 @@
  **************************************************************************/
 
 static char *const _id =
-"$Id: sendauth.c,v 3.7 1997/02/25 04:50:25 papowell Exp $";
+"$Id: sendauth.c,v 3.9 1997/12/16 15:06:32 papowell Exp $";
 
 #include "lp.h"
 #include "sendauth.h"
@@ -151,7 +151,7 @@ int Send_auth_transfer(int logtransfer, char *printer, char *host,
 			auth = User_authentication_command;
 		}
 		if( auth == 0 || *auth == 0 ){
-			fatal( LOG_ERR, "no authention command available");
+			fatal( LOG_ERR, "no authentication command available");
 		}
 	}
 

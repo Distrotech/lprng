@@ -1,0 +1,109 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<TITLE> LPRng-HOWTO: Running the software</TITLE>
+</HEAD>
+<BODY>
+<A HREF="LPRng-HOWTO-11.html">Next</A>
+<A HREF="LPRng-HOWTO-9.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc10">Contents</A>
+<HR>
+<H2><A NAME="s10">10. Running the software</A></H2>
+
+<P>
+<A NAME="checkpc"></A> <H2><A NAME="ss10.1">10.1 LPRng's little helper: checkpc</A>
+</H2>
+
+<P>The program <CODE>checkpc</CODE> (check printcap file) is one of the most
+useful utilities in the LPRng package.
+<P>It will read all the configuration files, printcap files and tests
+whether devices are set up correctly. Optionally, it will also set the
+permissions for spool directories and device files. Additionally, it
+will truncate the accounting and log files to a maximum size. Another
+use for <CODE>checkpc</CODE> is to remove old entries from queue
+directories.
+<P>For a new installation, you will want to run
+<PRE>
+checkpc -f
+</PRE>
+
+to set the permissions right. The <CODE>-f</CODE> flag instructs the
+program to correct file permissions. If you don't run this as
+<CODE>root</CODE>, you'll receive a warning about that fact, and any
+<B>chown(2)</B> calls will (most likely) fail.
+<P>The program reports everything it changes. Since it isn't too clever
+about some thing (dixit the man page), you should keep an eye on the
+output, and if needed, run it again. If it keeps failing, change the
+permissions yourself.
+<P>These are the permissions of my spool directory:
+<PRE>
+drwx--S---   2 lp       lp           1024 Jul 22 21:15 ./
+drwxr-xr-x  16 root     root         1024 May 29 21:55 ../
+-rw-------   1 lp       lp          10222 Jul 23 05:32 acct
+-rw-------   1 lp       lp              0 Feb 14 21:14 control.lp1
+-rw-------   1 lp       lp          10229 Jul 23 05:32 log
+-rw-------   1 lp       lp              5 Jul 22 21:13 lp1
+-rw-------   1 lp       lp           9064 Jul 22 21:15 status.lp1
+-rw-------   1 lp       lp              5 Jul 22 21:13 unspooler.lp1
+</PRE>
+<P>And this is lpd's master directory:
+<PRE>
+drwx--S---   2 lp       lp           1024 May 11 18:44 ./
+drwxr-xr-x  16 root     root         1024 May 29 21:55 ../
+-rw-------   1 lp       lp              0 Feb 18 07:05 lpd.lock.duff
+-rw-------   1 lp       lp              3 Jul 13 22:42 lpd.lock.duff.printer
+-rw-------   1 lp       lp              0 Apr  1 22:40 lpd.log.duff
+</PRE>
+<P>Later, you will want to use <CODE>checkpc</CODE> for the daily
+maintenance of your system. I have this line in user <CODE>lp</CODE>'s
+crontab:
+<PRE>
+32 5 * * * checkpc -t 10K -A3 -r &gt;/dev/null 2&gt;&amp;1
+</PRE>
+
+This job will:
+<OL>
+<LI>truncate all log and accounting files to 10KB (<CODE>-t 10K</CODE>).
+Actually, it will keep the last 10K from the file, starting on a
+complete line.</LI>
+<LI>remove all stale files older than three days (<CODE>-A3 -r</CODE>).</LI>
+</OL>
+
+I'm redirecting output to <CODE>/dev/null</CODE>, because <CODE>checkpc</CODE>
+is a little noisy to my taste. (But too noisy is better than too
+silent :)
+<H2><A NAME="ss10.2">10.2 Starting the daemon</A>
+</H2>
+
+<P>Now comes the moment of truth: will it work? (I hope so, otherwise it
+means there are errors here.)
+Where should I run the daemon?
+<P>In order to work, vanilla LPR needs to be run on all computers on the
+network. This is because a job is first transmitted to the local
+<CODE>lpd</CODE>, and then (if needed) to the remote host.
+<P>LPRng eliminates the local <CODE>lpd</CODE> from this chain, and connects
+directly to the remote daemon (except in the case of a bounce queue).
+Therefore, you won't need to start a daemon on all machines.
+<P>In short: where do you need the daemon? Only on those machines where you have
+spool directories.
+Almost there...
+<P>These are the last steps in the installation:
+<UL>
+<LI>Kill your old lpd/lpsched.</LI>
+<LI>Start the newly installed lpd program.</LI>
+<LI>Print a sample file using the new lpr:
+<PRE>
+lpr /etc/printcap
+</PRE>
+</LI>
+</UL>
+<P>If it works, you can remove your old printing software, and change
+your system startup files to run the new daemon automatically.
+<P>Then, read the rest of the documentation to build whatever complex
+configuration you need.
+<A NAME="accountingref"></A> <HR>
+<A HREF="LPRng-HOWTO-11.html">Next</A>
+<A HREF="LPRng-HOWTO-9.html">Previous</A>
+<A HREF="LPRng-HOWTO.html#toc10">Contents</A>
+</BODY>
+</HTML>
