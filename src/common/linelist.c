@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
+"$Id: linelist.c,v 1.18 2001/09/07 20:12:59 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -3640,7 +3640,7 @@ int Shutdown_or_close( int fd )
 
 	if( fd < 0 || fstat( fd, &statb ) == -1 ){
 		fd = -1;
-	} else if( !(S_ISSOCK(statb.st_mode)) || shutdown( fd, 1 ) == -1 ){
+	} else if( Half_close_DYN || !(S_ISSOCK(statb.st_mode)) || shutdown( fd, 1 ) == -1 ){
 		close(fd);
 		fd = -1;
 	}

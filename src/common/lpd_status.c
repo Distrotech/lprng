@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
+"$Id: lpd_status.c,v 1.18 2001/09/07 20:13:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -1197,7 +1197,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 					Send_query_rw_timeout_DYN, *sock );
 				if( fd >= 0 ){
 					char *tempfile;
-					shutdown( fd, 1 );
+					/* shutdown( fd, 1 ); */
 					tempfd = Make_temp_fd( &tempfile );
 					while( (nx = read(fd,msg,sizeof(msg))) > 0 ){
 						if( Write_fd_len(tempfd,msg,nx) < 0 ) cleanup(0);
@@ -1368,7 +1368,7 @@ void Get_local_or_remote_status( struct line_list *tokens, int *sock,
 		fd = Send_request( 'Q', displayformat, tokens->list, Connect_timeout_DYN,
 			Send_query_rw_timeout_DYN, *sock );
 		if( fd >= 0 ){
-			shutdown( fd, 1 );
+			/* shutdown( fd, 1 ); */
 			tempfd = Make_temp_fd( 0 );
 			while( (n = read(fd,msg,sizeof(msg))) > 0 ){
 				if( Write_fd_len(tempfd,msg,n) < 0 ) cleanup(0);

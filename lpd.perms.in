@@ -16,7 +16,7 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.7.5
+## VERSION=3.7.6
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
@@ -125,21 +125,29 @@
 ## commas. For example USER=john,paul,mark has 3 test values.
 ## 
 ## The Match type specifies how the matching is done.
-## S = glob type string match
+## S = glob type string match OR </path
 ##     Format:  string with wildcards (*) and ranges
 ##              * matches 0 or more chars
 ##              [a-d] matches a or b or c or d
 ##     Character comparison is case insensitive.
 ##     For example - USER=th*s matches uTHS, This, This, Theses
 ##                   USER=[d-f]x matches dx, ex, fx
+##     If the match is </path then the specified file is
+##     opened and read, and the file contents are treated like
+##     S type entries separated by whitespace
+##     
 ## 
 ## IP = IP address and submask.  IP address must be in dotted form.
+##       OR </path
 ##      Format: x.x.x.x[/y.y.y.y]  x.x.x.x is IP address
 ##              y.y.y.y is optional submask, default is 255.255.255.255
 ##      Match is done by converting to 32 bit x, y, and IP value and using:
 ##         success = ((x ^ IP ) & y) == 0   (C language notation)
 ##     i.e.- only bits where mask is non-zero are used in comparison.
 ##     For example - REMOTEIP=130.191.0.0/255.255.0.0 matches all address 130.191.X.X
+##     If the match is </path then the specified file is
+##     opened and read, and the file contents are treated like
+##     S type entries separated by whitespace
 ##          
 ## N = numerical range  -  low-high integer range.
 ##      Format: low[-high]
@@ -179,15 +187,24 @@
 ## DEFAULT ACCEPT
 ## 
 ## #Reject connections from hosts not on subnet 130.191.0.0
-## # or Engineering pc's
+## # or Engineering pc's,  or listed in the /etc/rejecthost file
 ##   REJECT SERVICE=X NOT REMOTEIP=130.191.0.0/255.255.0.0
 ##   REJECT SERVICE=X NOT REMOTEHOST=engpc*
+##   REJECT SERVICE=X NOT REMOTEHOST=</etc/rejecthost
+##     - /etc/rejecthost contains list of entries separated
+##       by whitespace.  For example:
+##            10.0.0.0/8
+##            192.168.10.1  192.168.10.2
 ## 
 ## #Do not allow anybody but root or papowell on
-## #astart1.astart.com or the server to use control
-## #facilities.
+## #astart1.astart.com or listed in the /etc/ok file
+## #to use lpc commands:
 ##   ACCEPT SERVICE=C SERVER REMOTEUSER=root
-##   ACCEPT SERVICE=C REMOTEHOST=astart1.astart.com REMOTEUSER=papowell
+##   ACCEPT SERVICE=C REMOTEHOST=astart1.astart.com \
+##        REMOTEUSER=papowell,</etc/ok
+##     /etc/ok has list of users:
+##         root papowell nobody
+##         user1 user2
 ## 
 ## #Allow root on talker.astart.com to control printer hpjet
 ##   ACCEPT SERVICE=C HOST=talker.astart.com PRINTER=hpjet REMOTEUSER=root

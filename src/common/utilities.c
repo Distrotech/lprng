@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.14 2001/09/02 20:42:16 papowell Exp $";
+"$Id: utilities.c,v 1.18 2001/09/07 20:13:05 papowell Exp $";
 
 #include "lp.h"
 
@@ -1035,7 +1035,6 @@ void Clear_timeout( void )
 	int err = errno;
 	static int SetRootUID;	/* did we set UID to root yet? */
 
-	DaemonUID = Getdaemon(); /* do this each time in case we change it */
 	if( SetRootUID == 0 ){
 		OriginalEUID = geteuid();	
 		OriginalRUID = getuid();	
@@ -1373,6 +1372,7 @@ void Reset_daemonuid(void)
 {
 	uid_t uid;
     uid = Getdaemon();  /* get the config file daemon id */
+    DaemonGID = Getdaemon_group();  /* get the config file daemon id */
     if( uid != DaemonUID ){
         if( uid == 0 ){
             DaemonUID = OriginalRUID;   /* special case for testing */

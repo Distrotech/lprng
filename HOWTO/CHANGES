@@ -11,6 +11,30 @@
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
 
+Release LPRng 3.7.6 Fri Sep  7 05:36:00 PDT 2001
+
+  There was no call to Getdaemon_group so the default daemon group
+  was 0.  This, as they say, was double plus ungood.
+   (Spotted and reported with a cackle of diablical laughter by:
+       Petri Kaukasoina <kaukasoi@elektroni.ee.tut.fi> )
+
+  I added a 'half_close' flag so that you can force a 'close(fd)'
+  rather than a 'shutdown(fd,1)' to be done for those problem child
+  network printers that whoop their TCP/IP stacks and die horrible
+  deaths when they get a half closed connection.  This is,  as they
+  say, a bug in the print server,  but I have encountered worse.
+  The same printers also whoop their cookies when reporting status
+  but I don't seem to be doing a half-close on 'lpq' connections
+  so this doesn't seem to be a problem.  I have modified the 'lpq'
+  code so it does not do a 'half-close'.
+
+   Example:
+     lp:lp=host%9100    # happy, well behaved, print spooler box
+     lpb:lp=host%9100:half_close@  # buggy print spooler box
+
+  Grammar fixed in LPRng-HOWTO.
+    (Red pencil work done by: <Jeffrey.H.Knodel@chase.com>)
+
 Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
 
   I was not closing all open file descriptors.  This caused checkpc and

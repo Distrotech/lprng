@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.14 2001/09/02 20:42:19 papowell Exp $
+ * $Id: lp.h,v 1.18 2001/09/07 20:13:09 papowell Exp $
  ***************************************************************************/
 
 
@@ -329,6 +329,7 @@ EXTERN char* Force_queuename_DYN; /* force the use of this queue name */
 EXTERN char* Form_feed_DYN; /* string to send for a form feed */
 EXTERN char* Formats_allowed_DYN; /* valid output filter formats */
 EXTERN int Full_time_DYN; /* full or complete time format in messages */
+EXTERN int Half_close_DYN; /* do shutdown on socket when sending job */
 EXTERN int Generate_banner_DYN; /* generate a banner when not a bounce queue */
 EXTERN char* IF_Filter_DYN; /* filter command, run on a per-file basis */
 EXTERN int IPV6Protocol_DYN;	/* IPV4 or IPV6 protocol */

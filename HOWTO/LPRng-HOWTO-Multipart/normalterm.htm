@@ -8,7 +8,7 @@
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Job Processing" href="jobsteps.htm">
     <link rel="PREVIOUS" title="Printing Banner At End of Job "
-    href="x7245.htm">
+    href="x7277.htm">
     <link rel="NEXT" title="Abnormal Termination " href=
     "abnormalterm.htm">
   </head>
@@ -19,13 +19,13 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
-          (For LPRng-3.7.5)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 7 Sep 2001
+          (For LPRng-3.7.6)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x7245.htm" accesskey="P">Prev</a></td>
+          "x7277.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           15. Job Processing</td>
@@ -75,8 +75,13 @@
         </li>
 
         <li>
-          <p><tt class="LITERAL">exit_linger_timeout=</tt><i class=
+          <p><tt class="LITERAL">socket_linger</tt><i class=
           "EMPHASIS">socket linger timeout</i></p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">half_close</tt> FLAG <i class=
+          "EMPHASIS">use shutdown() and not close()</i></p>
         </li>
       </ul>
       <br>
@@ -119,13 +124,25 @@
         <li>
           <p>If the device is a socket or network connection, the
           socket linger time is set to <tt class=
-          "LITERAL">job_send_rw_timeout</tt> value if nonzero or
-          the <tt class="LITERAL">exit_linger_timeout</tt> value if
-          nonzero, a write <tt class="LITERAL">shutdown</tt> is
-          done, and if the <tt class="LITERAL">wait_for_eof</tt>
-          option is true (default) then a read is done on the
-          connection until an EOF is found. The device (io_fd) is
-          then closed.</p>
+          "LITERAL">socket_linger</tt> value if nonzero.</p>
+        </li>
+
+        <li>
+          <p>If the <tt class="LITERAL">half_shut</tt> flag is set,
+          then a <tt class="LITERAL">shutdown(fd,WR_DONE)</tt> will
+          be done on the connection. This tells the TCP/IP stack
+          that all data transmission has been completed. Errors or
+          other information can still be read from the connection.
+          If the <tt class="LITERAL">half_shut</tt> flag is clear,
+          then a <tt class="LITERAL">close(fd)</tt> will be done
+          and no errors or other information will be read.</p>
+        </li>
+
+        <li>
+          <p>If the <tt class="LITERAL">wait_for_eof</tt> option is
+          true (default) then a read is done on the connection
+          until an EOF is found. The device (io_fd) is then
+          closed.</p>
         </li>
 
         <li>
@@ -148,7 +165,7 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x7245.htm" accesskey="P">Prev</a></td>
+          "x7277.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>

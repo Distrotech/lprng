@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
+"$Id: krb5_auth.c,v 1.18 2001/09/07 20:12:59 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"

@@ -4,7 +4,7 @@
 #: src/common/lpc.c:267 src/common/lpq.c:521
 msgid ""
 msgstr ""
-"Project-Id-Version: LPRng 3.7.5\n"
+"Project-Id-Version: LPRng 3.7.6\n"
 "POT-Creation-Date: 2001-08-21 16:19-0700\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"

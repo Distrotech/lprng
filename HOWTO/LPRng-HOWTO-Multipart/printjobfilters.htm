@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
-          (For LPRng-3.7.5)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 7 Sep 2001
+          (For LPRng-3.7.6)</th>
         </tr>
 
         <tr>
@@ -850,11 +850,10 @@
         <br>
         <br>
 
-        <p>As you can see, there is a parameters are not visible
-        when printed but still have a command line option value.
-        This is due to the combination of the <tt class=
-        "LITERAL">$'{form}</tt> and using the <tt class=
-        "LITERAL">:filter=(...)</tt> form.</p>
+        <p>As you can see, there are <i class="EMPHASIS">empty</i>
+        parameters passed to the filter. This is due to the
+        combination of the <tt class="LITERAL">$'{form}</tt> and
+        using the <tt class="LITERAL">:filter=(...)</tt> form.</p>
       </div>
 
       <div class="SECT2">
@@ -867,7 +866,7 @@
         file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2416"></a>
+          <a name="AEN2417"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {187} %</tt> <tt class=
 "USERINPUT"><b>cat /tmp/lp</b></tt>
@@ -992,7 +991,7 @@
         replace it with the following:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2459"></a>
+          <a name="AEN2460"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # this is an example of how to use /bin/sh and LPRng
@@ -1114,7 +1113,7 @@
         "FILENAME">/tmp/lp</tt>:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2464"></a>
+          <a name="AEN2465"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {188} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -1181,7 +1180,7 @@
         information in Perl:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2489"></a>
+          <a name="AEN2490"></a>
 <pre class="SCREEN">
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
@@ -1331,7 +1330,7 @@
         job control file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2539"></a>
+          <a name="AEN2540"></a>
 <pre class="SCREEN">
     Hh4.private
     Ppapowell
@@ -1521,7 +1520,7 @@
         selection.</p>
 
         <div class="INFORMALTABLE">
-          <a name="AEN2645"></a>
+          <a name="AEN2646"></a>
 
           <table border="1" class="CALSTABLE">
             <thead>

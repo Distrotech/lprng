@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.14 2001/09/02 20:42:15 papowell Exp $";
+"$Id: sendjob.c,v 1.18 2001/09/07 20:13:04 papowell Exp $";
 
 
 #include "lp.h"
@@ -200,7 +200,7 @@ int Send_job( struct job *job, struct job *logjob,
 
  error:
 
-	if( sock >= 0 ) shutdown(sock,1);
+	if( sock >= 0 ) sock = Shutdown_or_close(sock);
 	if( status ){
 		if( (s = Find_str_value(&job->info,ERROR,Value_sep )) ){
 			SETSTATUS(logjob) "job '%s' transfer to %s@%s failed\n  %s",

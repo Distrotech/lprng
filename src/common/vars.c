@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.14 2001/09/02 20:42:16 papowell Exp $";
+"$Id: vars.c,v 1.18 2001/09/07 20:13:06 papowell Exp $";
 
 
 /* force local definitions */
@@ -227,6 +227,8 @@ struct keywords Pc_var_list[] = {
 { "generate_banner", 0, FLAG_K, &Generate_banner_DYN,0,0},
    /* group to run SUID ROOT programs */
 { "group", 0, STRING_K, &Daemon_group_DYN,1,0,"=" GROUPID},
+   /*  do a 'half close' on socket when sending job to remote printer */
+{ "half_close", 0,  FLAG_K,  &Half_close_DYN,0,0,"=1"},
    /*  print banner after job instead of before */
 { "hl", 0,  FLAG_K,  &Banner_last_DYN,0,0},
    /*  filter command, run on a per-file basis */

@@ -69,7 +69,7 @@ $(DOC).pdf: $(DOC).ps
 	ps2pdf $(DOC).ps $(DOC).pdf
 
 purge:
-	rm -f *.aux *.log *.toc *.fot
+	rm -f *.aux *.log *.toc *.fot *.ps *.dvi *.tex
 
 
 .PHONY: all clean install ci install.zman update purge
@@ -91,7 +91,7 @@ update:
 install:
 	
 clean:
-	-rm -f *.errs HTML.* *.tex *.log *.aux *.toc
+	-rm -f *.errs HTML.* *.tex *.log *.aux *.toc *.dvi *.ps *.tex
 
 mostlyclean distclean:: clean
 

@@ -1,4 +1,4 @@
-VERSION=3.7.5
+VERSION=3.7.6
 RELEASE=1
 RPM=/usr/src/redhat/RPMS/i386/LPRng-${VERSION}-${RELEASE}.i386.rpm
 CONFIGURE_ARGS=--prefix=/usr --sysconfdir=/etc --with-filterdir=/usr/libexec/filters --with-ld_library_path=/lib:/usr/lib:/usr/local/lib --with-filter_path=/bin:/usr/bin:/usr/libexec:/usr/local/libexec:/usr/sbin:/var/spool/bin
@@ -33,8 +33,8 @@ clean:
 
 update:
 	perl -spi -e "\
-		s|^\%define version.*|\%define version ${VERSION}|; \
-		s|^\%define release.*|\%define release ${RELEASE}|; \
+		s|^Version: .*|Version: ${VERSION}|; \
+		s|^Release: .*|Release: ${RELEASE}|; \
 		" LPRng.spec;
 
 checkit: update

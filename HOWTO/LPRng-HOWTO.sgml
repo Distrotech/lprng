@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 2 Sep 2001 (For LPRng-3.7.5)</subtitle>
+<subtitle> 7 Sep 2001 (For LPRng-3.7.6)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.13 2001/09/02 20:42:27 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.17 2001/09/07 20:13:16 papowell Exp $</releaseinfo>
 
 	<legalnotice>
 	 <important>
@@ -4522,8 +4522,7 @@ TRAILER</screen>
 </para>
 
 <para>As you can see,
-there is a parameters are not visible when printed
-but still have a command line option value.
+there are <emphasis/empty/ parameters passed to the filter.
 This is due to the combination of the
 <literal remap=tt>$'{form}</literal>
 and using the <literal>:filter=(...)</literal>
@@ -11026,6 +11025,82 @@ and then do a power up reset of the printer to have it take effect.
 </sect2>
 </sect1>
 
+<sect1><title>Problems With Network Print Servers</title>
+<para>
+Most of the Network Print Servers are implemented using extremely
+simply software.  The following is a list of some problems
+and what options the &LPRng; software uses to handle them.
+</para>
+
+
+<sect2><title>Network Print Server Not Responding</title>
+<para>
+Only a single TCP/IP connection is accepted at a time.
+This means that when one user is sending a job then the
+unit will not accept other connections.
+There is another side effect of this problem,
+which is that some implementations will accept a network
+connection but not read any data from the connection until
+the previous connection is finished.
+</para>
+<para>
+The deal with these problems the <literal/connect_timeout/,
+<literal/send_job_rw_timeout/,
+and
+<literal/send_query_rw_timeout/
+are used to control job transfer and lpq status gathering.
+See
+<link linkend="printingjob">Printing Job Files</link>
+and
+<link linkend="opendevice">Opening the Output Device</link>
+for details.
+</para>
+</sect2>
+
+<sect2><title>Network Print Server Does Not Handle LPQ, LPRM</title>
+<para>
+Some Network Print Servers do not respond to <literal/lpq/ or
+<literal/lprm/ queries correctly.
+The <literal/remote_support/ option can be used to solve this
+problem by specifying what operations the remote print server
+can handle:
+<informalexample>
+<screen>:remote_support=RMQVC
+  R = lpr, M = lprmg, Q = lpq, V = lpq -v, C = lpc
+  :remote_support=R  # printer only handles LPR
+</screen>
+</informalexample>
+</para>
+</sect2>
+
+<sect2><title>Incomplete Job Transfers</title>
+
+<para>
+This is the result of a defective or buggy TCP/IP stacks.
+A common problem is the habit that some
+Network Print Servers occaisionally discard data at the end of a print job
+when a network connection is <emphasis/half-closed/.
+A <emphasis/half-closed/ connection is one where one end of the sending
+connection indicates that no further data will be sent.
+Unfortunately,  the Network Print Server will then try to close the
+connection in the other direction.  When this does not immediately succeed,
+it will terminate the network connection, discarding any unprinted data.
+</para>
+
+<para>
+The <literal/half_close/ flag can be used to solve this problem.
+See
+<link linkend="normalterm">Normal Termination </link>
+for more details.
+<informalexample>
+<screen>lp:lp=lp@remote        # shutdown(fd,WRITE) connection, wait for end
+lp:lp=lp@remote:half_close@    # close() connection and do not wait
+</screen>
+</informalexample>
+</para>
+</sect2>
+</sect1>
+
 <sect1><title>Printing to a SMB (MicroSoft) Printer</title>
 
 <para>Microsoft use the SMB (Simple Message Block) protocol to transfer files
@@ -15029,22 +15104,6 @@ printed due to high loads on the server.</para>
 
 <sect1 id="opendevice"><title>Opening the Output Device
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </title>
 
 <para>Options used:
@@ -15922,7 +15981,11 @@ rather than start.</para>
 </listitem>
 
 <listitem>
-<para> <literal>exit_linger_timeout=</literal><emphasis>socket linger timeout</emphasis></para>
+<para> <literal>socket_linger</literal><emphasis>socket linger timeout</emphasis></para>
+</listitem>
+
+<listitem>
+<para> <literal>half_close</literal> FLAG <emphasis>use shutdown() and not close()</emphasis></para>
 </listitem>
 
 </itemizedlist>
@@ -15978,12 +16041,22 @@ The exit status is used as described above.</para>
 <listitem>
 <para>If the device is a socket or network connection,
 the socket linger time is set to
-<literal>job_send_rw_timeout</literal> value if nonzero or the
-<literal>exit_linger_timeout</literal> value if nonzero,
-a write
-<literal>shutdown</literal>
-is done,
-and if the <literal>wait_for_eof</literal> option is true (default)
+<literal>socket_linger</literal> value if nonzero.
+</para></listitem>
+
+<listitem><para>
+If the <literal/half_shut/ flag is set,
+then a <literal/shutdown(fd,WR_DONE)/ will be done on the connection.
+This tells the TCP/IP stack that all data transmission has been
+completed.  Errors or other information can still be read from the
+connection.
+If the <literal/half_shut/ flag is clear,
+then a <literal/close(fd)/ will be done and
+no errors or other information will be read.
+</para></listitem>
+
+<listitem><para>
+If the <literal>wait_for_eof</literal> option is true (default)
 then a read is done on the connection until an EOF is found.
 The device (io_fd) is then closed.</para>
 </listitem>
@@ -22226,8 +22299,6 @@ default remote host <!-- <br> -->
 default directory for temp files <!-- <br> -->
 </entry></row><row><entry><link linkend="destinations">destinations</link></entry><entry>
 printers that a route filter may return and we should query <!-- <br> -->
-</entry></row><row><entry><link linkend="normalterm">exit_linger_timeout</link></entry><entry>
-connection close linger timeout<!-- <br> -->
 </entry></row><row><entry><link linkend="opendevice">ff</link></entry><entry>
 string to send for a form feed <!-- <br> -->
 </entry></row><row><entry><link linkend="filteroptions">filter_ld_path</link></entry><entry>
@@ -22252,6 +22323,8 @@ use extended time format <!-- <br> -->
 generate banner page for forwarded jobs<!-- <br> -->
 </entry></row><row><entry><link linkend="usergroup">group</link></entry><entry>
 Effective Group ID (EGID) for SUID ROOT programs <!-- <br> -->
+</entry></row><row><entry><link linkend="normalterm">half_close</link></entry><entry>
+Use shutdown(fd,1) when sending job to remote printer instead of close(fd)
 </entry></row><row><entry><link linkend="bannerprinting">hl</link></entry><entry>
 Header (banner) last, at end of job <!-- <br> -->
 </entry></row><row><entry><link linkend="classpriority">ignore_requested_user_priority</link></entry><entry>

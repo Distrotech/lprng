@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
+"$Id: initialize.c,v 1.18 2001/09/07 20:12:59 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -250,8 +250,8 @@ void Setup_configuration()
 
 	Get_config( Is_server || Require_configfiles_DYN, Config_file_DYN );
 
+	Reset_daemonuid();
 	if( Is_server ){
-		Reset_daemonuid();
 		Setdaemon_group();
 		To_daemon();
 		DEBUG1( "DaemonUID %d", DaemonUID );

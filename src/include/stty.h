@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: stty.h,v 1.14 2001/09/02 20:42:23 papowell Exp $
+ * $Id: stty.h,v 1.18 2001/09/07 20:13:12 papowell Exp $
  ***************************************************************************/
 
 

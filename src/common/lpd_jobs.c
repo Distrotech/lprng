@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.18 2001/09/07 20:13:01 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -1420,11 +1420,13 @@ int Local_job( struct job *job, char *id )
 	DEBUG1("Local_job: after shutdown fd %d, status_fd %d", fd, status_fd );
 	if( status_fd > 0 ){
 		/* we shut down this connection as well */
-		shutdown(status_fd,1);
+		status_fd = Shutdown_or_close( status_fd );
 		/* we wait for eof on status_fd */
 		buffer[0] = 0;
-		Get_status_from_OF(job,"LP",pid,
-			status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0 );
+		if( status_fd > 0 ){
+			Get_status_from_OF(job,"LP",pid,
+				status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0 );
+		}
 	}
 	if( fd > 0 ) close( fd ); fd = -1;
 	if( status_fd > 0 ) close( status_fd ); status_fd = -1;

@@ -2,15 +2,15 @@
 <html>
   <head>
     <meta name="generator" content="HTML Tidy, see www.w3.org">
-    <title>Identifiers</title>
+    <title>Complex Permission Checking</title>
     <meta name="GENERATOR" content=
     "Modular DocBook HTML Stylesheet Version 1.71 ">
     <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
     <link rel="UP" title="Permissions and Authentication " href=
     "permsref.htm">
-    <link rel="PREVIOUS" title="Authentication" href="x8736.htm">
-    <link rel="NEXT" title="RFC1179 Protocol Extensions" href=
-    "x8754.htm">
+    <link rel="PREVIOUS" title="Example Permission File" href=
+    "x8735.htm">
+    <link rel="NEXT" title="More Examples" href="x8763.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -19,42 +19,51 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
-          (For LPRng-3.7.5)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 7 Sep 2001
+          (For LPRng-3.7.6)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x8736.htm" accesskey="P">Prev</a></td>
+          "x8735.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           17. Permissions and Authentication</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x8754.htm" accesskey="N">Next</a></td>
+          "x8763.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
     </div>
 
     <div class="SECT1">
-      <h1 class="SECT1"><a name="AEN8748">17.9.
-      Identifiers</a></h1>
+      <h1 class="SECT1"><a name="AEN8748">17.5. Complex Permission
+      Checking</a></h1>
 
-      <p>When a user logs into a system, they are assigned a user
-      name and a corresponding UserID. This user name is used by
-      the <b class="APPLICATION">LPRng</b> software when
-      transferring jobs to identify the user.</p>
+      <p>One of the more useful types of permission checking is to
+      restrict access to your printers from users outside your
+      networks. The IP pattern can specify a list of IP addresses
+      and netmasks to apply to them.</p>
 
-      <p>When we look into the problem of authentication, we will
-      possibly have a more global user identification to deal with,
-      the authentication identifier (AuthID). One way to deal with
-      this problem is to give <b class="APPLICATION">LPRng</b>
-      intimate knowledge of the UserID and AuthID relationship.
-      While this is possible it is difficult to deal with in a
-      simple and extensible manner. An alternate solution is to
-      provide a mapping service, where the authentication procedure
-      provides a map between the UserID and AuthID.</p>
+      <p>For example <tt class="LITERAL">IP=10.3.4.0/24</tt> would
+      match all hosts with the IP addresses <tt class=
+      "LITERAL">IP=10.3.4.0</tt> to <tt class=
+      "LITERAL">IP=10.3.4.255</tt>.</p>
+
+      <p>Similarly, the HOST pattern can specify a set of hostnames
+      or patterns to match against based on the GLOB notation.</p>
+
+      <p>For example <tt class="LITERAL">REMOTEHOST=*.private</tt>
+      would match all hosts with a DNS entry which ended with <tt
+      class="FILENAME">private</tt>.</p>
+
+      <p>The NOT keyword reverses the match sense. For example <tt
+      class="LITERAL">REJECT NOT
+      REMOTEHOST=*.private,*.murphy.com</tt> would reject all
+      requests from hosts which did not have a DNS entry ending in
+      <tt class="FILENAME">private</tt> or <tt class=
+      "FILENAME">murphy.com</tt>.</p>
     </div>
 
     <div class="NAVFOOTER">
@@ -64,24 +73,24 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x8736.htm" accesskey="P">Prev</a></td>
+          "x8735.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x8754.htm" accesskey="N">Next</a></td>
+          "x8763.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>
-          <td width="33%" align="left" valign="top">
-          Authentication</td>
+          <td width="33%" align="left" valign="top">Example
+          Permission File</td>
 
           <td width="34%" align="center" valign="top"><a href=
           "permsref.htm" accesskey="U">Up</a></td>
 
-          <td width="33%" align="right" valign="top">RFC1179
-          Protocol Extensions</td>
+          <td width="33%" align="right" valign="top">More
+          Examples</td>
         </tr>
       </table>
     </div>
