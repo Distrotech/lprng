@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: printjob.h,v 1.71 2004/05/03 20:24:05 papowell Exp $
+ * $Id: printjob.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 

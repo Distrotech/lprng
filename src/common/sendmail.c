@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendmail.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
+"$Id: sendmail.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -36,7 +36,7 @@ void Sendmail_to_user( int retval, struct job *job )
 	 * "your file was printed ok" message
 	 */
 	id = Find_str_value(&job->info,IDENTIFIER);
-	if(!id) id = Find_str_value(&job->info,CFTRANSFERNAME);
+	if(!id) id = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	mailname = Find_str_value(&job->info,MAILNAME);
 	opname = Mail_operator_on_error_DYN;
 	DEBUG2("Sendmail_to_user: user '%s', operator '%s', sendmail '%s'",

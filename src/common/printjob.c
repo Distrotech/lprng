@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
+"$Id: printjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
 
 
 #include "lp.h"
@@ -144,7 +144,7 @@ int Print_job( int output, int status_device, struct job *job,
 	}
 	if(DEBUGL2) Dump_job( "Print_job", job );
 	id = Find_str_value(&job->info,IDENTIFIER);
-	if( id == 0 ) id = Find_str_value(&job->info,CFTRANSFERNAME);
+	if( id == 0 ) id = Find_str_value(&job->info,XXCFTRANSFERNAME);
 
 	DEBUG2("Print_job: OF_Filter_DYN '%s'", OF_Filter_DYN );
 
@@ -306,7 +306,13 @@ int Print_job( int output, int status_device, struct job *job,
 					Pr_program_DYN );
 				goto end_of_job;
 			}
-			close(fd); fd = tempfd;
+			if( tempfd != fd ){
+				if( dup2(tempfd,fd) == -1 ){
+					Errorcode = JABORT;
+					LOGERR(LOG_INFO)"Print_job:  dup2(%d,%d) failed", tempfd, fd );
+				}
+				close(tempfd);
+			}
 			if( fstat(fd, &statb ) == -1 ){
 				Errorcode = JABORT;
 				LOGERR(LOG_INFO)"Print_job: fstat() failed");
@@ -320,6 +326,12 @@ int Print_job( int output, int status_device, struct job *job,
 				LOGERR(LOG_INFO)"Print_job:  lseek tempfd failed");
 				goto end_of_job;
 			}
+			if( fstat(fd, &statb ) == -1 ){
+				Errorcode = JABORT;
+				LOGERR(LOG_INFO)"Print_job: fstat() failed");
+			}
+			DEBUG1("Print_job: copy %d, data file '%s', size now %0.0f", copy,
+				transfername, (double)statb.st_size );
 			if( copies > 1 ){
 				SETSTATUS(job)"doing copy %d of %d", copy+1, copies );
 			}

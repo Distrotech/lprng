@@ -1,3 +1,43 @@
+Version LPRng-3.8.28 - Fri Jul 23 09:01:55 PDT 2004
+
+  MAJOR CHANGES:
+
+  The 'hold file' is now referred to as the 'job ticket' file.
+  This is really what it is.  Reference manual, Cookbook, etc.,
+  will be modified to reflect this change.
+
+  incoming_control_filter:
+   The input to this filter now has the format:
+    X=option  (from original control file)
+    key=option (options for job)
+    
+   Output for changes should have the format:
+      X=   (for option deletion)
+      key= (for option deletion)
+      X=newvalue   (for option modification)
+      key=newvalue (for option modification)
+   
+   The following environment variables are also passed, and have
+   slightly different formats than before.
+   
+      CONTROL - image of the control file.  Note that the
+        data file entries have the form.
+          f/path/to/temporary/file
+      DATAFILES - space separted list of data files.  These
+          are in the format /path/to/temporary/file.
+   
+  Added translations for German.
+   (Translations by: Walter Harms <WHarms@bfs.de>)
+
+  Fixed yet another silly problem with moving jobs from a queue
+   while the queue is busy.  Now the main server will NOT start
+   another process to move the job if it can do the work itself.
+
+  Added a counter to make sure that if a job is moved more than
+   a specified number of times,  that we catch this and stop moving
+   the job.  This code now works (ahem).
+  
+
 Version LPRng-3.8.27 - Wed Apr 21 11:32:41 PDT 2004
 
   Fixed:  'Missing HOLD_FILE' logic error fixed in lpd_rcvjob.c

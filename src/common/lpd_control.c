@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
+"$Id: lpd_control.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
 
 
 #include "lp.h"
@@ -35,8 +35,8 @@
    will happily put out the various control strings you need.
 	USED BY: start/stop, enable/disable, debug, forward, holdall
 
- 2. Individual jobs have a 'hold file' that is read/written by
-   the Get_ job_control and Set_ job_control routines.  These also
+ 2. Individual jobs have a 'job ticket file' that is read/written by
+   the Get_ job_ticket and Set_ job_ticket routines.  These also
    will read/write various control strings.
    USED by topq, hold, release
 
@@ -232,7 +232,7 @@ void Do_printer_work( char *user, int action, int *sock,
  * Do_queue_control()
  * do the actual queue control operations
  * - start, stop, enable, disable are simple
- * - others are more complex, and are handled in Do_control_file
+ * - others are more complex, and are handled in Do_job_ticket_file
  * We have tokens:
  *   printer user printer p1 p2 p3 -> p1 p2 p3
  ***************************************************************************/
@@ -364,7 +364,7 @@ void Do_queue_control( char *user, int action, int *sock,
 		Set_flag_value(&Spool_control,PRINTING_ABORTED, 0);
 		Set_flag_value(&Spool_control,PRINTING_DISABLED, 0);
 	case OP_HOLD:
-		if( Do_control_file( action, sock,
+		if( Do_job_ticket_file( action, sock,
 			tokens, error, errorlen, 0 ) ){
 			goto error;
 		}
@@ -387,7 +387,7 @@ void Do_queue_control( char *user, int action, int *sock,
 	case OP_MOVE:
 		--tokens->count;
 		start = tokens->list[tokens->count];
-		status = Do_control_file( action, sock,
+		status = Do_job_ticket_file( action, sock,
 			tokens, error, errorlen, start );
 		++tokens->count;
 		if( status ) goto error;
@@ -574,17 +574,17 @@ void Do_queue_control( char *user, int action, int *sock,
 
 
 /***************************************************************************
- * Do_control_file:
+ * Do_job_ticket_file:
  *  perform a suitable operation on a control file
  * 1. get the control files
  * 2. check to see if the control file has been selected
- * 3. update the hold file for the control file
+ * 3. update the job ticket file for the control file
  ***************************************************************************/
 
-int Do_control_file( int action, int *sock,
+int Do_job_ticket_file( int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen, char *option )
 {
-	int i, permission, err;		/* ACME! Nothing but the best */
+	int i, permission, err, fd;		/* ACME! Nothing but the best */
 	int status, matchv;			/* status of last IO op */
 	char msg[SMALLBUFFER];		/* message field */
 	char *s, *identifier;
@@ -600,28 +600,30 @@ int Do_control_file( int action, int *sock,
 			0,0,0,0,0,0,0,0) ){
 		err = errno;
 		SNPRINTF(error, errorlen)
-			"Do_control_file: cannot read '%s' - '%s'",
+			"Do_job_ticket_file: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(err) );
 			return(1);
 	}
 
-	DEBUGF(DCTRL4)("Do_control_file: total files %d", Sort_order.count );
-	DEBUGFC(DCTRL2)Dump_line_list("Do_control_file - tokens", tokens);
+	DEBUGF(DCTRL4)("Do_job_ticket_file: total files %d", Sort_order.count );
+	DEBUGFC(DCTRL2)Dump_line_list("Do_job_ticket_file - tokens", tokens);
 
 	/* scan the files to see if there is one which matches */
 
 	status = 0;
+	fd = -1;
 	for( i = 0; status == 0 && i < Sort_order.count; ++i ){
 		/*
 		 * check to see if this entry matches any of the patterns
 		 */
+		if( fd > 0 ) close(fd); fd = -1;
 		Free_job(&job);
-		Get_hold_file( &job, Sort_order.list[i], 0 );
-		DEBUGFC(DCTRL2)Dump_job("Do_control_file - getting info",&job);
+		Get_job_ticket_file( &fd, &job, Sort_order.list[i] );
+		DEBUGFC(DCTRL2)Dump_job("Do_job_ticket_file - getting info",&job);
 		identifier = Find_str_value(&job.info,IDENTIFIER);
-		if( identifier == 0 ) identifier = Find_str_value(&job.info,CFTRANSFERNAME);
+		if( identifier == 0 ) identifier = Find_str_value(&job.info,XXCFTRANSFERNAME);
 		if( identifier == 0 ) continue;
-		DEBUGF(DCTRL4)("Do_control_file: checking id '%s'", identifier );
+		DEBUGF(DCTRL4)("Do_job_ticket_file: checking id '%s'", identifier );
 
 		Perm_check.user = Find_str_value(&job.info,LOGNAME);
 		Perm_check.host = 0;
@@ -630,7 +632,7 @@ int Do_control_file( int action, int *sock,
 			Perm_check.host = &PermHost_IP;
 		}
 		permission = Perms_check( &Perm_line_list, &Perm_check, 0, 1 );
-		DEBUGF(DCTRL1)( "Do_control_file: id '%s', user '%s', host '%s', permission %s",
+		DEBUGF(DCTRL1)( "Do_job_ticket_file: id '%s', user '%s', host '%s', permission %s",
 			identifier, Perm_check.user, s, perm_str(permission) );
 		if( permission == P_REJECT ){
 			SNPRINTF( msg, sizeof(msg))
@@ -660,9 +662,9 @@ int Do_control_file( int action, int *sock,
 		}
 
 		DEBUGFC(DCTRL4){
-			LOGDEBUG("Do_control_file: selected id '%s'", identifier );
+			LOGDEBUG("Do_job_ticket_file: selected id '%s'", identifier );
 			s = Find_str_value(&job.destination,IDENTIFIER);
-			LOGDEBUG("Do_control_file: update_dest %d, id '%s'", update_dest, s );
+			LOGDEBUG("Do_job_ticket_file: update_dest %d, id '%s'", update_dest, s );
 		}
 		
 		/* we report this job being selected */
@@ -725,7 +727,7 @@ int Do_control_file( int action, int *sock,
 		Set_flag_value(&job.info,ERROR_TIME,0);
 		/* record the last update person */
 		Perm_check_to_list(&l, &Perm_check );
-		if( Set_hold_file(&job,&l,0) ){
+		if( Set_job_ticket_file(&job,&l,fd) ){
 			setmessage( &job, TRACE, "LPC failed" );
 			SNPRINTF( msg, sizeof(msg))
 				_("%s: cannot set hold file '%s'\n"),
@@ -737,6 +739,7 @@ int Do_control_file( int action, int *sock,
 			goto next_dest;
 		}
 	}
+	if( fd > 0 ) close(fd); fd = -1;
 	Free_job(&job);
 	Free_line_list(&Sort_order);
 	Free_line_list(&l);

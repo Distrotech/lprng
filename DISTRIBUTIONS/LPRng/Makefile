@@ -6,7 +6,7 @@
 #
 
 PORTNAME=LPRng
-PORTVERSION=3.8.27
+PORTVERSION=3.8.28
 CATEGORIES=	sysutils print
 MASTER_SITES=	ftp://ftp.lprng.com/pub/%SUBDIR%/ \
 		ftp://ftp.cise.ufl.edu/pub/mirrors/%SUBDIR%/ \
@@ -47,7 +47,7 @@ pre-everything::
 	@${ECHO_MSG} "If you want to replace the default FreeBSD lpd software with LPRng, use:"
 	@${ECHO_MSG} "  make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man clean all install"
 	@${ECHO_MSG} " OR"
-	@${ECHO_MSG} "  make CONFIGURE_SCRIPT=STANDARD_configuration clean all install"
+	@${ECHO_MSG} "  make PREFIX=/usr CONFIGURE_SCRIPT=STANDARD_configuration clean all install"
 
 post-install:
 .if !defined(NOPORTSDOCS)

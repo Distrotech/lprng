@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
+"$Id: lpd_status.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
 
 
 #include "lp.h"
@@ -263,7 +263,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	char sizestr[SIZEW+TIMEW+32];
 	char *pr, *s, *t, *path, *identifier,
 		*jobname, *joberror, *class, *priority, *d_identifier,
-		*job_time, *d_error, *d_dest, *openname, *hf_name, *filenames,
+		*job_time, *d_error, *d_dest, *cftransfername, *hf_name, *filenames,
 		*tempfile = 0, *file = 0, *end_of_name;
 	struct line_list outbuf, info, lineinfo, cache, cache_info;
 	int status = 0, len, ix, nx, flag, count, held, move,
@@ -540,7 +540,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		char prclass[32];
 		printable = held = move = 0;
 		Free_job(&job);
-		Get_hold_file(&job, Sort_order.list[count], 0 );
+		Get_job_ticket_file( 0, &job, Sort_order.list[count] );
 		if( job.info.count == 0 ){
 			/* job was removed */
 			continue;
@@ -581,7 +581,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		jobsize = Find_double_value(&job.info,SIZE);
 		job_time = Find_str_value(&job.info,JOB_TIME );
 		destinations = Find_flag_value(&job.info,DESTINATIONS);
-		openname = Find_str_value(&job.info,CFTRANSFERNAME);
+		cftransfername = Find_str_value(&job.info,XXCFTRANSFERNAME);
 		hf_name = Find_str_value(&job.info,HF_NAME);
 
 		/* we report this jobs status */
@@ -746,7 +746,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 						header, joberror );
 				Add_line_list(&outbuf,msg,0,0,0);
 			}
-			if( openname ){
+			if( cftransfername ){
 				SNPRINTF( msg, sizeof(msg)) _("%s CONTROL="), header );
 				Add_line_list(&outbuf,msg,0,0,0);
 				s = Find_str_value(&job.info,CF_OUT_IMAGE);
@@ -755,7 +755,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 			SNPRINTF( msg, sizeof(msg)) _("%s HOLDFILE="), header );
 			Add_line_list(&outbuf,msg,0,0,0);
-			s = Make_hf_image(&job);
+			s = Make_job_ticket_image(&job);
 			Add_line_list(&outbuf,s,0,0,0);
 			if( s ) free(s); s = 0;
 		} else if( displayformat == REQ_DSHORT ){

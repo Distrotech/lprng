@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_jobs.h,v 1.71 2004/05/03 20:24:05 papowell Exp $
+ * $Id: lpd_jobs.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -28,7 +28,7 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *servers
 	/*, struct line_list *order */ );
 int Decode_transfer_failure( int attempt, struct job *job );
-void Update_status( struct job *job, int status );
+void Update_status( int fd, struct job *job, int status );
 int Check_print_perms( struct job *job );
 void Setup_user_reporting( struct job *job );
 void Service_worker( struct line_list *args );
@@ -40,7 +40,7 @@ void Fix_bq_format( int format, struct line_list *datafile );
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
 void Service_queue( struct line_list *args );
 int Remove_done_jobs( void );
-int Move_job(struct job *job, struct line_list *sp,
+int Move_job(int fd, struct job *job, struct line_list *sp,
 	char *errmsg, int errlen );
 
 #endif

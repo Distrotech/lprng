@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
 
 
 #include "lp.h"
@@ -113,7 +113,7 @@ int Receive_job( int *sock, char *input )
 	int temp_fd = -1;				/* used for file opening and locking */
 	int filetype;				/* type of file - control or data */
 	int fd;						/* for log file */
-	int hold_fd = -1;				/* hold file */
+	int job_ticket_fd = -1;				/* job ticket file */
 	int db, dbf, rlen;
 	int fifo_fd = -1;			/* fifo lock file */
 	struct line_list files, info, l;
@@ -201,7 +201,7 @@ int Receive_job( int *sock, char *input )
 	if( Fifo_DYN ){
 		char * path = Make_pathname( Spool_dir_DYN, Fifo_lock_file_DYN );
 		path = safestrdup3( path,"." , RemoteHost_IP.fqdn, __FILE__,__LINE__ );
-		DEBUG1( "Receive_job: checking fifo_lock file '%s'", path );
+		DEBUGF(DRECV1)( "Receive_job: checking fifo_lock file '%s'", path );
 		fifo_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( fifo_fd < 0 ){
 			Errorcode = JABORT;
@@ -224,11 +224,6 @@ int Receive_job( int *sock, char *input )
 
 		DEBUGF(DRECV1)( "Receive_job: read from %s- status %d read %d bytes '%s'",
 				FQDNRemote_FQDN, status, rlen, line );
-#if 0
-		LOGMSG(LOG_INFO) "Receive_job: read from %s- status %d read %d bytes '%s'",
-				FQDNRemote_FQDN, status, rlen, line );
-#endif
-
 
 		if( rlen == 0 || status ){
 			DEBUGF(DRECV1)( "Receive_job: ending reading from remote" );
@@ -254,7 +249,7 @@ int Receive_job( int *sock, char *input )
 			   It occasionally resends the queue selection cmd.
 			   Darian Davis DD 03JUL2000 */
 			status = 0;
-			LOGERR(LOG_ERR)"Recovering from incorrect job submission");
+			LOGMSG(LOG_ERR) _("Recovering from incorrect job submission"));
 			continue;
 		}
 		if( filename ){
@@ -358,10 +353,10 @@ int Receive_job( int *sock, char *input )
 		if( filetype == CONTROL_FILE ){
 			DEBUGF(DRECV2)("Receive_job: receiving new control file, old job.info.count %d, old files.count %d",
 				job.info.count, files.count );
-			if( hold_fd > 0 ){
+			if( job_ticket_fd > 0 ){
 				/* we received another control file, finish this job up */
 				if( !discarding_large_job ){
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 						goto error;
 					}
 				} else {
@@ -372,16 +367,16 @@ int Receive_job( int *sock, char *input )
 					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 					Set_str_value(&job.info,INCOMING_TIME,0);
 					error[0] = 0;
-					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
-							"Error setting up hold file - %s",
+							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 					discarding_large_job = 0;
 				}
-				close( hold_fd ); hold_fd = -1;
+				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 			}
@@ -389,14 +384,14 @@ int Receive_job( int *sock, char *input )
 			Free_job(&job);
 			Set_str_value(&job.info,OPENNAME,tempfile);
 
-			hold_fd = Setup_temporary_hold_file( &job, filename, 1, 0, error, errlen );
-			if( hold_fd < 0 ){
+			job_ticket_fd = Setup_temporary_job_ticket_file( &job, filename, 1, 0, error, errlen );
+			if( job_ticket_fd < 0 ){
 				goto error;
 			}
 			if( files.count ){
 				/* we have datafiles, FOLLOWED by a control file */
 				if( !discarding_large_job ){
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 						goto error;
 					}
 				} else {
@@ -407,16 +402,16 @@ int Receive_job( int *sock, char *input )
 					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 					Set_str_value(&job.info,INCOMING_TIME,0);
 					error[0] = 0;
-					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
-							"Error setting up hold file - %s",
+							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 					discarding_large_job = 0;
 				}
-				close( hold_fd ); hold_fd = -1;
+				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 				Free_job(&job);
@@ -430,9 +425,9 @@ int Receive_job( int *sock, char *input )
 
 	DEBUGF(DRECV2)("Receive_job: eof on transfer, job.info.count %d, files.count %d",
 		job.info.count, files.count );
-	if( hold_fd > 0 ){
+	if( job_ticket_fd > 0 ){
 		if( !discarding_large_job ){
-			if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+			if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 				goto error;
 			}
 		} else {
@@ -443,9 +438,9 @@ int Receive_job( int *sock, char *input )
 			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 			Set_str_value(&job.info,INCOMING_TIME,0);
 			error[0] = 0;
-			if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+			if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 				SNPRINTF( error,errlen)
-					"Error setting up hold file - %s",
+					_("Error setting up job ticket file - %s"),
 					Errormsg( errno ) );
 				goto error;
 			}
@@ -456,7 +451,7 @@ int Receive_job( int *sock, char *input )
 
  error:
 
-	if( hold_fd > 0 ) close(hold_fd); hold_fd = -1;
+	if( job_ticket_fd > 0 ) close(job_ticket_fd); job_ticket_fd = -1;
 	if( temp_fd > 0 ) close(temp_fd); temp_fd = -1;
 	if( fifo_fd > 0 ) close(fifo_fd); fifo_fd = -1;
 
@@ -468,8 +463,7 @@ int Receive_job( int *sock, char *input )
 		if( !ISNULL(s) ) unlink(s);
 		if( ack == 0 ) ack = ACK_FAIL;
 		buffer[0] = ack;
-		SNPRINTF(buffer+1,sizeof(buffer)-1)"%s\n",error);
-		/* LOG( LOG_INFO) "Receive_job: error '%s'", error ); */
+		SNPRINTF(buffer+1,sizeof(buffer)-1) "%s\n",error);
 		DEBUGF(DRECV1)("Receive_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
@@ -583,11 +577,7 @@ int Receive_block_job( int *sock, char *input )
 		Debug = dbf;
 	}
 
-#ifndef NODEBUG 
 	DEBUGF(DRECV1)("Receive_block_job: debug '%s', Debug %d, DbgFlag 0x%x", s, Debug, DbgFlag );
-#endif
-
-
 	DEBUGF(DRECV1)("Receive_block_job: spooling_disabled %d", Sp_disabled(&Spool_control) );
 	if( Sp_disabled(&Spool_control) ){
 		SNPRINTF( error, errlen-4)
@@ -730,7 +720,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 	char *tempfile;				/* name field */
 	int status;
 	int len, count, n;
-	int hold_fd = -1;
+	int job_ticket_fd = -1;
 	struct line_list l, info, files;
 	struct job job;
 	struct stat statb;
@@ -839,28 +829,28 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					Set_str_value(&job.info,ERROR,error);
 					Set_str_value(&job.info,INCOMING_TIME,0);
 					error[0] = 0;
-					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
-							"Error setting up hold file - %s",
+							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 						goto error;
 					}
 					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
-				close( hold_fd ); hold_fd = -1;
+				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 			}
 			Free_job(&job);
 			Set_str_value(&job.info,OPENNAME,tempfile);
 
-			hold_fd = Setup_temporary_hold_file( &job, filename, 1, 0, error, errlen );
-			if( hold_fd < 0 ){
+			job_ticket_fd = Setup_temporary_job_ticket_file( &job, filename, 1, 0, error, errlen );
+			if( job_ticket_fd < 0 ){
 				goto error;
 			}
 			if( files.count ){
@@ -875,20 +865,20 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 					Set_str_value(&job.info,INCOMING_TIME,0);
 					error[0] = 0;
-					if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
-							"Error setting up hold file - %s",
+							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 						goto error;
 					}
 					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
-				close( hold_fd ); hold_fd = -1;
+				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 				Free_job(&job);
@@ -907,15 +897,15 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 			Set_str_value(&job.info,INCOMING_TIME,0);
 			error[0] = 0;
-			if( (status = Set_hold_file( &job, 0, hold_fd )) ){
+			if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 				SNPRINTF( error,errlen)
-					"Error setting up hold file - %s",
+					_("Error setting up job ticket file - %s"),
 					Errormsg( errno ) );
 				goto error;
 			}
 			if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 		} else {
-			if( Check_for_missing_files(&job, &files, error, errlen, 0, hold_fd) ){
+			if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
 				goto error;
 			}
 			Set_str_value(&job.info,INCOMING_TIME,0);
@@ -928,7 +918,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		Remove_job( &job );
 	}
 	Set_str_value(&job.info,INCOMING_TIME,0);
-	if( hold_fd > 0 ) close(hold_fd); hold_fd = -1;
+	if( job_ticket_fd > 0 ) close(job_ticket_fd); job_ticket_fd = -1;
 	if( tempfd > 0 ) close(tempfd); tempfd = -1;
 	Free_line_list(&l);
 	Free_line_list(&info);
@@ -1043,7 +1033,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		LOGERR_DIE(LOG_INFO) "Check_for_missing_files: gettimeofday failed");
 	}
 
-	DEBUG1("Check_for_missing_files: start time 0x%x usec 0x%x",
+	DEBUGF(DRECV1)("Check_for_missing_files: start time 0x%x usec 0x%x",
 		(int)start_time.tv_sec, (int)start_time.tv_usec );
 	if(DEBUGL1)Dump_job("Check_for_missing_files - start", job );
 	if(DEBUGL1)Dump_line_list("Check_for_missing_files- files", files );
@@ -1065,7 +1055,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		char *s = Find_str_value(header_info,AUTHUSER);
 		if( !ISNULL(s) ){
 			Set_str_value( &job->info,LOGNAME,s);
-			DEBUG1("Check_for_missing_files: setting user to authuser '%s'", s );
+			DEBUGF(DRECV1)("Check_for_missing_files: setting user to authuser '%s'", s );
 		}
 	}
 
@@ -1123,7 +1113,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		Init_line_list(&l);
 		Init_line_list(&listv);
 
-		DEBUG1("Check_for_missing_files: Accounting_namefixup '%s'", Accounting_namefixup_DYN );
+		DEBUGF(DRECV1)("Check_for_missing_files: Accounting_namefixup '%s'", Accounting_namefixup_DYN );
 		Split(&listv,Accounting_namefixup_DYN,";",0,0,0,0,0,0);
 		for( i = 0; i < listv.count; ++i ){
 			char *s, *t;
@@ -1131,11 +1121,11 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 			s = listv.list[i];
 			if( (t = safestrpbrk(s,"=")) ) *t++ = 0;
 			Free_line_list(&l);
-			DEBUG1("Check_for_missing_files: hostlist '%s'", s );
+			DEBUGF(DRECV1)("Check_for_missing_files: hostlist '%s'", s );
 			Split(&l,s,",",0,0,0,0,0,0);
 			if( Match_ipaddr_value(&l,&RemoteHost_IP) == 0 ){
 				Free_line_list(&l);
-				DEBUG1("Check_for_missing_files: match, using users '%s'", t );
+				DEBUGF(DRECV1)("Check_for_missing_files: match, using users '%s'", t );
 				Split(&l,t,",",0,0,0,0,0,0);
 				if(DEBUGL1)Dump_line_list("Check_for_missing_files: before Fix_dollars", &l );
 				Fix_dollars(&l,job,0,0);
@@ -1149,7 +1139,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 				break;
 			}
 		}
-		DEBUG1("Check_for_missing_files: accounting_name '%s'", accounting_name );
+		DEBUGF(DRECV1)("Check_for_missing_files: accounting_name '%s'", accounting_name );
 		if( !ISNULL(accounting_name) ){
 			Set_str_value(&job->info,ACCNTNAME,accounting_name );
 		}
@@ -1165,7 +1155,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		family = RemoteHost_IP.h_addrtype;
 		const_s = (char *)inet_ntop( family, RemoteHost_IP.h_addr_list.list[0],
 			buffer, sizeof(buffer) );
-		DEBUG1("Check_for_missing_files: remotehost '%s'", const_s );
+		DEBUGF(DRECV1)("Check_for_missing_files: remotehost '%s'", const_s );
 		Set_str_value(&job->info,FROMHOST,const_s);
 		fromhost = Find_str_value(&job->info,FROMHOST);
 	}
@@ -1279,6 +1269,21 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	Set_str_value(&job->info,HPFORMAT,0);
 	Set_str_value(&job->info,INCOMING_TIME,0);
 
+	if( !ISNULL(Incoming_control_filter_DYN) ){
+		Generate_control_file( job );
+		if( (status = Do_incoming_control_filter( job, error, errlen )) ){
+			DEBUGF(DRECV1)("Check_for_missing_files: error '%s'", error );
+			goto error;
+		}
+	}
+	if( !ISNULL(Routing_filter_DYN) ){
+		Generate_control_file( job );
+		if( (status = Get_route( job, error, errlen )) ){
+			DEBUGF(DRECV1)("Check_for_missing_files: Routing_filter error '%s'", error );
+			goto error;
+		}
+	}
+
 	/* now rename the data files */
 	status = 0;
 	for( count = 0; status == 0 && count < job->datafiles.count; ++count ){
@@ -1286,7 +1291,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		openname = Find_str_value(lp,OPENNAME);
 		if( stat(openname,&statb) ) continue;
 		transfername = Find_str_value(lp,DFTRANSFERNAME);
-		DEBUG1("Check_for_missing_files: renaming '%s' to '%s'",
+		DEBUGF(DRECV1)("Check_for_missing_files: renaming '%s' to '%s'",
 			openname, transfername );
 		if( (status = rename(openname,transfername)) ){
 			SNPRINTF( error,errlen)
@@ -1297,25 +1302,17 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	if( status ) goto error;
 
 
-	Generate_control_file( job );
-	if( Routing_filter_DYN || Incoming_control_filter_DYN ){
-		if( (status = Get_route( job, error, errlen )) ){
-			DEBUG1("Check_for_missing_files: Routing_filter error '%s'", error );
-			goto error;
-		}
-		Generate_control_file( job );
-	}
-
-	if( (status = Set_hold_file( job, 0, holdfile_fd )) ){
+	if( (status = Set_job_ticket_file( job, 0, holdfile_fd )) ){
 		SNPRINTF( error,errlen)
-			"error setting up hold file - %s",
+			_("Error setting up job ticket file - %s"),
 			Errormsg( errno ) );
 		goto error;
 	}
 	if(DEBUGL1)Dump_job("Check_for_missing_files - ending", job );
 
  error:
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	transfername = Find_str_value(&job->info,HF_NAME);
+	if( !transfername ) transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	if( status ){
 		LOGMSG(LOG_INFO) "Check_for_missing_files: FAILED '%s' %s",
 			transfername?transfername:"???", error);
@@ -1343,23 +1340,25 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 }
 
 /***************************************************************************
- * int Setup_temporary_hold_file( struct job *job,
+ * int Setup_temporary_job_ticket_file( struct job *job,
  *	char *error, int errlen )
- *  sets up a hold file and control file
+ *  sets up a job ticket file and control file
  ***************************************************************************/
 
-int Setup_temporary_hold_file( struct job *job, char *filename,
+int Setup_temporary_job_ticket_file( struct job *job, char *filename,
 	int read_control_file,
 	char *cf_file_image,
 	char *error, int errlen  )
 {
 	int fd = -1;
 	/* now we need to assign a control file number */
-	DEBUG1("Setup_temporary_hold_file: starting, filename %s, read_control_file %d, cf_file_image %s",
+	DEBUGF(DRECV1)("Setup_temporary_job_ticket_file: starting, filename %s, read_control_file %d, cf_file_image %s",
 		filename, read_control_file, cf_file_image );
 
 	/* job id collision resolution */
-	Check_format( CONTROL_FILE, filename, job );
+	if( filename ){
+		Check_format( CONTROL_FILE, filename, job );
+	}
 
 	if( (fd = Find_non_colliding_job_number( job )) < 0 ){
 		SNPRINTF(error,errlen)
@@ -1368,19 +1367,19 @@ int Setup_temporary_hold_file( struct job *job, char *filename,
 	}
 
 	/* set up the control file information */
-	Set_hf_from_cf_info( job, cf_file_image, read_control_file );
+	Set_job_ticket_from_cf_info( job, cf_file_image, read_control_file );
 
 	Make_identifier( job );
 	Check_for_hold( job, &Spool_control );
 
-	DEBUG1("Setup_temporary_hold_file: hold file fd '%d'", fd );
+	DEBUGF(DRECV1)("Setup_temporary_job_ticket_file: job ticket file fd '%d'", fd );
 	
 	/* mark as incoming */
 	Set_flag_value(&job->info,INCOMING_TIME,time((void *)0) );
 	/* write status */
-	if( Set_hold_file( job, 0, fd ) ){
+	if( Set_job_ticket_file( job, 0, fd ) ){
 		SNPRINTF( error,errlen)
-			"error setting up hold file - %s",
+			_("Error setting up job ticket file - %s"),
 			Errormsg( errno ) );
 		close(fd); fd = -1;
 		goto error;
@@ -1399,27 +1398,27 @@ int Setup_temporary_hold_file( struct job *job, char *filename,
 
 int Find_non_colliding_job_number( struct job *job )
 {
-	int hold_fd = -1;			/* job hold file fd */
+	int job_ticket_fd = -1;			/* job job ticket file fd */
 	struct stat statb;			/* for status */
 	char hold_file[SMALLBUFFER], *number;
 	int max, n, start;
 
 	/* we set the job number to a reasonable range */
-	hold_fd = -1;
+	job_ticket_fd = -1;
 	number = Fix_job_number(job,0);
 	start = n = strtol(number,0,10);
 	max = 1000;
 	if( Long_number_DYN ) max = 1000000;
-	while( hold_fd < 0 ){
+	while( job_ticket_fd < 0 ){
 		number = Fix_job_number(job,n);
 		SNPRINTF(hold_file,sizeof(hold_file))"hfA%s",number);
 		DEBUGF(DRECV1)("Find_non_colliding_job_number: trying %s", hold_file );
-		hold_fd = Checkwrite(hold_file, &statb,
+		job_ticket_fd = Checkwrite(hold_file, &statb,
 			O_RDWR|O_CREAT, 0, 0 );
-		/* if the hold file locked or is non-zero, we skip to a new one */
-		if( hold_fd < 0 || Do_lock( hold_fd, 0 ) < 0 || statb.st_size ){
-			close( hold_fd );
-			hold_fd = -1;
+		/* if the job ticket file locked or is non-zero, we skip to a new one */
+		if( job_ticket_fd < 0 || Do_lock( job_ticket_fd, 0 ) < 0 || statb.st_size ){
+			close( job_ticket_fd );
+			job_ticket_fd = -1;
 			hold_file[0] = 0;
 			++n;
 			if( n > max ) n = 0;
@@ -1431,126 +1430,160 @@ int Find_non_colliding_job_number( struct job *job )
 		}
 	}
 	DEBUGF(DRECV1)("Find_non_colliding_job_number: fd %d", hold_file );
-	return( hold_fd );
+	return( job_ticket_fd );
 }
+
+
+/*
+ * Do_incoming_control_filter:
+ *   perform incoming control filter actions.
+ *  - if the control file filter wants to remove a line starting with X,
+ *    it puts in X  (no data)
+ *  - it changes values by putting in Xnewvalue
+ */
+
+int Do_incoming_control_filter( struct job *job, char *error, int errlen )
+{
+	int intempfd, tempfd, i;
+	char *cf;
+	int errorcode = 0;
+	struct line_list env, cf_line_list;
+
+	Init_line_list(&env);
+	Init_line_list(&cf_line_list);
+
+	DEBUGF(DRECV1)("Do_incoming_control_filter: control filter '%s'",
+		Incoming_control_filter_DYN );
+	/* we pass the control file through the incoming control filter */
+
+	intempfd = Make_temp_fd(0);
+	Max_open(intempfd);
+	tempfd = Make_temp_fd(0);
+	Max_open(tempfd);
+
+	cf = Find_str_value(&job->info,CF_OUT_IMAGE);
+	Write_fd_str(intempfd,cf);
+	if( lseek( intempfd, 0, SEEK_SET ) == -1 ){
+		SNPRINTF( error, errlen-4)	
+			_("Do_incoming_control_filter: lseek failed '%s'"), Errormsg(errno) );
+		errorcode = JFAIL;
+		goto error;
+	}
+	
+	errorcode = Filter_file( Send_job_rw_timeout_DYN, intempfd, tempfd,
+		"INCOMING_CONTROL_FILTER",
+		Incoming_control_filter_DYN, Filter_options_DYN, job, &env, 0);
+	switch(errorcode){
+		case 0: break;
+		case JHOLD:
+			Set_flag_value(&job->info,HOLD_TIME,time((void *)0) );
+			errorcode = 0;
+			break;
+		case JREMOVE:
+			goto error;
+			break;
+		default:
+			SNPRINTF(error,errlen)"Do_incoming_control_filter: incoming control filter '%s' failed '%s'",
+				Incoming_control_filter_DYN, Server_status(errorcode) );
+			errorcode = JFAIL;
+			goto error;
+	}
+	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
+		SNPRINTF( error, errlen-4)	
+			_("Do_incoming_control_filter: lseek failed '%s'"), Errormsg(errno) );
+		errorcode = JFAIL;
+		goto error;
+	}
+	if( Get_fd_image_and_split(tempfd,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
+		SNPRINTF(error,errlen)
+			"Do_incoming_control_filter: split failed - %s", Errormsg(errno) );
+		errorcode = JFAIL;
+		goto error;
+	}
+	for( i = 0; i < cf_line_list.count; ++i ){
+		char *key = cf_line_list.list[i];
+		int c = cval(key);
+		char *value = strchr(key,'=');
+
+		DEBUGF(DRECV2)("Do_incoming_control_filter: doing CF line '%s'", key );
+		if( isupper(c) || isdigit(c) ){
+			char buffer[2];
+			if( cval(key+1) != '=' ){
+				buffer[0] = c; buffer[1] = 0;
+				value = key+1;
+				key = buffer;
+			}
+			if( value ) *value++ = 0;
+			if( ISNULL(value) ) value = 0;
+			if( c != 'U' && c != 'N' ){
+				DEBUGF(DRECV2)("Do_incoming_control_filter: setting '%s'='%s'",
+					key, value );
+				Set_str_value(&job->info,key,value);
+			}
+		} else {
+			if( value ) *value++ = 0;
+			if( ISNULL(value) ) value = 0;
+			DEBUGF(DRECV2)("Do_incoming_control_filter: setting '%s'='%s'",
+				key, value );
+			Set_str_value(&job->info,key,value);
+		}
+	}
+ error:
+	close(intempfd); intempfd = -1;
+	close(tempfd); tempfd = -1;
+	Free_line_list(&env);
+	Free_line_list(&cf_line_list);
+	return( errorcode );
+}
+
+/*
+ * routing filter
+ *  routing filter just generates 'routing' information
+ *  The control file contents are not changed,  but additional
+ *  routing information can be added to change the values later.
+ *
+ *  A routing entry has the format:
+ *   dest t5    < new destination t5
+ *   Btesting   < change/add B line
+ *   Ktesting   < change/add K line
+ *   
+ *   end        < end of entry
+ *   dest t4    < new destination t1
+ *   
+ *   end
+ *   EOF
+ */
 
 int Get_route( struct job *job, char *error, int errlen )
 {
-	int i, fd, tempfd, count, c;
-	char *tempfile, *openname, *s, *t, *id;
-	char buffer[SMALLBUFFER];
+
+	int intempfd, tempfd, i, count;
+	char *cf, *id, *s;
 	int errorcode = 0;
-	struct line_list info, dest, env, *lp, cf_line_list;
+	struct line_list env, cf_line_list;
 
-	DEBUG1("Get_route: routing filter '%s', control filter '%s'",
-		Routing_filter_DYN, Incoming_control_filter_DYN );
-
-	Init_line_list(&info);
-	Init_line_list(&dest);
 	Init_line_list(&env);
 	Init_line_list(&cf_line_list);
-	tempfd = -1;
-	tempfile = 0;
 
-	/* build up the list of files and initialize the DATAFILES
-	 * environment variable
-	 */
+	DEBUGF(DRECV1)("Get_route: control filter '%s'",
+		Incoming_control_filter_DYN );
+	/* we pass the control file through the incoming control filter */
 
-	s = 0;
-	for( i = 0; i < job->datafiles.count; ++i ){
-		lp = (void *)job->datafiles.list[i];
-		openname = Find_str_value(lp,DFTRANSFERNAME);
-		s = safestrdup3( s,openname," ",__FILE__,__LINE__);
-	}
-	Set_str_value(&env,DATAFILES,s);
-	if( s ) free(s); s = 0;
+	intempfd = Make_temp_fd(0);
+	Max_open(intempfd);
+	tempfd = Make_temp_fd(0);
+	Max_open(tempfd);
 
-	openname = Find_str_value(&job->info,OPENNAME);
-	if( (fd = open(openname,O_RDONLY,0)) < 0 ){
-		SNPRINTF(error,errlen)"Get_route: open '%s' failed '%s'",
-			openname, Errormsg(errno) );
-		errorcode = 1;
+	cf = Find_str_value(&job->info,CF_OUT_IMAGE);
+	Write_fd_str(intempfd,cf);
+	if( lseek( intempfd, 0, SEEK_SET ) == -1 ){
+		SNPRINTF( error, errlen-4)	
+			_("Get_route: lseek failed '%s'"), Errormsg(errno) );
+		errorcode = JFAIL;
 		goto error;
 	}
-	Max_open(fd);
-
-	/* we pass the control file through the incoming control filter */
-	if( Incoming_control_filter_DYN ){
-		tempfd = Make_temp_fd(&tempfile);
-		DEBUG1("Get_route: running '%s'",
-			Incoming_control_filter_DYN );
-		errorcode = Filter_file( Send_job_rw_timeout_DYN, fd, tempfd,
-			"INCOMING_CONTROL_FILTER",
-			Incoming_control_filter_DYN, Filter_options_DYN, job, &env, 0);
-		switch(errorcode){
-			case 0: break;
-			case JHOLD:
-				Set_flag_value(&job->info,HOLD_TIME,time((void *)0) );
-				errorcode = 0;
-				break;
-			case JREMOVE:
-				goto error;
-				break;
-			default:
-				SNPRINTF(error,errlen)"Get_route: incoming control filter '%s' failed '%s'",
-					Incoming_control_filter_DYN, Server_status(errorcode) );
-				errorcode = JFAIL;
-				goto error;
-		}
-		close(fd); close(tempfd); fd = -1; tempfd = -1;
-		if( rename( tempfile, openname ) == -1 ){
-			SNPRINTF(error,errlen)"Get_route: rename '%s' to '%s' failed - %s",
-				tempfile, openname, Errormsg(errno) );
-			errorcode = 1;
-			goto error;
-		}
-		if( (fd = open(openname,O_RDONLY,0)) < 0 ){
-			SNPRINTF(error,errlen)"Get_route: open '%s' failed '%s'",
-				openname, Errormsg(errno) );
-			errorcode = 1;
-			goto error;
-		}
-		Max_open(fd);
-		if( Get_file_image_and_split(openname,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
-            SNPRINTF(error,errlen)
-                "Get_route: open failed - modified control file  %s - %s", openname, Errormsg(errno) );
-			goto error;
-		}
-		for( i = 0; i < cf_line_list.count; ++i ){
-			s = cf_line_list.list[i];
-			/* check for blank line */
-			c = cval(s);
-			if( !c ) break;
-			DEBUG3("Get_route: doing CF line '%s'", s );
-			if( isupper(c) && c != 'U' && c != 'N' ){
-				char *t;
-				buffer[0] = c; buffer[1] = 0;
-				t = Find_str_value(&job->info,buffer);
-				if( safestrcmp(s+1,t) ){
-					DEBUG3("Get_route: update control '%s'='%s'", buffer, s+1 );
-					Set_str_value(&job->info,buffer,s+1);
-				}
-			}
-		}
-		for( ; i < cf_line_list.count; ++i ){
-			char *t;
-			s = cf_line_list.list[i];
-			DEBUG3("Get_route: doing option line '%s'", s );
-			/* check for blank line */
-			t = safestrchr( s, '=');
-			if( t ){
-				*t = 0;
-				DEBUG3("Get_route: update control '%s'='%s'", s, t+1 );
-				Set_str_value(&job->info,s,t+1);
-				*t = '=';
-			}
-		}
-	}
-
-	if( Routing_filter_DYN == 0 ) goto error;
-
-	tempfd = Make_temp_fd(&tempfile);
-	errorcode = Filter_file( Send_query_rw_timeout_DYN, fd, tempfd, "ROUTING_FILTER",
+	
+	errorcode = Filter_file( Send_query_rw_timeout_DYN, intempfd, tempfd, "ROUTING_FILTER",
 		Routing_filter_DYN, Filter_options_DYN, job, &env, 0);
 	if(errorcode)switch(errorcode){
 		case 0: break;
@@ -1567,23 +1600,28 @@ int Get_route( struct job *job, char *error, int errlen )
 			errorcode = JFAIL;
 			goto error;
 	}
-	if( tempfd > 0 ) close(tempfd); tempfd = -1;
-
-	Free_line_list( &env );
-	Get_file_image_and_split(tempfile,0,1,&env,Line_ends,0,0,0,1,0,0);
-	DEBUGFC(DRECV1)Dump_line_list("Get_route: information", &env );
-	Free_line_list(&job->destination);
-
-	id = Find_str_value(&job->info,IDENTIFIER);
-	if(!id){
-		FATAL(LOG_ERR)
-			_("Get_route: no identifier for '%s'"),
-			Find_str_value(&job->info,HF_NAME) );
+	if( Get_fd_image_and_split(tempfd,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
+		SNPRINTF(error,errlen)
+			"Get_route: split failed - %s", Errormsg(errno) );
+		errorcode = JFAIL;
+		goto error;
 	}
+	DEBUGFC(DRECV1)Dump_line_list("Get_route: information", &cf_line_list );
+	Free_line_list(&job->destination);
 	count = 0;
-	for(i = 0; i < env.count; ++i ){
-		s = env.list[i];
-		DEBUG1("Get_route: line '%s'", s );
+	id = Find_str_value(&job->info,IDENTIFIER);
+	if( ISNULL(id) ){
+		SNPRINTF(error,errlen)
+			"Get_route: split failed - %s", Errormsg(errno) );
+		errorcode = JFAIL;
+		goto error;
+	}
+	for(i = 0; i < cf_line_list.count; ++i ){
+		char *s = cf_line_list.list[i];
+		char *t;
+		char buffer[2];
+
+		DEBUGF(DRECV1)("Get_route: line '%s'", s );
 		if( safestrcasecmp(END,s) ){
 			if( isupper(cval(s)) ){
 				buffer[0] = cval(s); buffer[1] = 0;
@@ -1600,7 +1638,7 @@ int Get_route( struct job *job, char *error, int errlen )
 			DEBUGFC(DRECV1)Dump_line_list("Get_route: dest", &job->destination );
 			if( (s = Find_str_value(&job->destination, DEST)) ){
 				int n;
-				DEBUG1("Get_route: destination '%s'", s );
+				DEBUGF(DRECV1)("Get_route: destination '%s'", s );
 				Set_flag_value(&job->destination,DESTINATION,count);
 				n = Find_flag_value(&job->destination,COPIES);
 				if( n < 0 ){
@@ -1619,7 +1657,8 @@ int Get_route( struct job *job, char *error, int errlen )
 	DEBUGFC(DRECV1)Dump_line_list("Get_route: dest", &job->destination );
 	if( (s = Find_str_value(&job->destination, DEST)) ){
 		int n;
-		DEBUG1("Get_route: destination '%s'", s );
+		char buffer[32];
+		DEBUGF(DRECV1)("Get_route: destination '%s'", s );
 		Set_flag_value(&job->destination,DESTINATION,count);
 		n = Find_flag_value(&job->destination,COPIES);
 		if( n < 0 ){
@@ -1637,9 +1676,8 @@ int Get_route( struct job *job, char *error, int errlen )
 	if(DEBUGL1)Dump_job("Get_route: final", job );
 
  error:
-	if( tempfile ) unlink(tempfile);
-	Free_line_list(&info);
-	Free_line_list(&dest);
+	close(intempfd); intempfd = -1;
+	close(tempfd); tempfd = -1;
 	Free_line_list(&env);
 	Free_line_list(&cf_line_list);
 	return( errorcode );
@@ -1648,7 +1686,7 @@ int Get_route( struct job *job, char *error, int errlen )
 
 /*
  * Generate_control_file:
- *  Generate a control file from hold file contents
+ *  Generate a control file from job ticket file contents
  *  Use the X= lines and the DATAFILES entry
  */
 
@@ -1658,19 +1696,13 @@ void Generate_control_file( struct job *job )
 	struct stat statb;
 	int i, fd = -1;
 	char *cf = 0;
-	char *datalines, *openname, *transfername;
-
+	char *openname, *transfername, *datafiles;
+	struct line_list dups, *lp;
 	char *priority = Find_str_value(&job->info,PRIORITY);
 	char *number = Find_str_value( &job->info,NUMBER);
 	char *file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
-	char *s = safestrdup4("cf",priority,number,file_hostname,__FILE__,__LINE__);
 
-	Set_str_value(&job->info,CFTRANSFERNAME,s);
-	if(s) free(s); s = 0;
-	datalines = Find_str_value(&job->info,DATAFILES);
-	openname = Find_str_value(&job->info,OPENNAME); 
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
-
+	Init_line_list( &dups );
 	for( i = 0; i < job->info.count; ++i ){
 		char *t = job->info.list[i];
 		int c;
@@ -1682,9 +1714,45 @@ void Generate_control_file( struct job *job )
 		}
 	}
 
-	DEBUG4("Generate_control_file: cf start '%s'", cf );
-	cf = safeextend2(cf,datalines,__FILE__,__LINE__);
-	DEBUG4("Generate_control_file: cf final '%s'", cf );
+	datafiles = 0;
+	for( i = 0; i < job->datafiles.count; ++i ){
+		char *format, *Nv;
+		int count, j;
+
+		lp = (void *)job->datafiles.list[i];
+		openname = Find_str_value(lp,OPENNAME);
+		transfername = Find_str_value(lp,DFTRANSFERNAME);
+		if( ! transfername ) transfername = openname;
+		format = Find_str_value(lp,FORMAT);
+		Nv = Find_str_value(lp,"N");
+		count = Find_flag_value(lp,COPIES);
+		if( Nv ){
+			cf = safeextend4( cf, "N", Nv,"\n",__FILE__,__LINE__);
+		}
+		for( j = 0; j < count; ++j ){
+			cf = safeextend4( cf, format, transfername,"\n",__FILE__,__LINE__);
+		}
+	}
+	for( i = 0; i < job->datafiles.count; ++i ){
+		lp = (void *)job->datafiles.list[i];
+		openname = Find_str_value(lp,OPENNAME);
+		transfername = Find_str_value(lp,DFTRANSFERNAME);
+		if( !Find_flag_value(&dups,transfername) ){
+			if( openname ){
+				datafiles = safeextend5(datafiles, transfername, "=",openname, " ",__FILE__,__LINE__);
+			}else{
+				datafiles = safeextend3(datafiles, transfername, " ",__FILE__,__LINE__);
+			}
+			cf = safeextend4( cf, "U", transfername,"\n",__FILE__,__LINE__);
+		}
+	}
+
+	DEBUGF(DRECV1)("Generate_control_file: datafiles '%s'", datafiles );
+	Set_str_value(&job->info,DATAFILES,datafiles);
+	if( datafiles ) free(datafiles); datafiles = 0;
+
+	DEBUGF(DRECV1)("Generate_control_file: cf start '%s'", cf );
 	Set_str_value(&job->info,CF_OUT_IMAGE,cf);
+	Free_line_list( &dups );
 	if( cf ) free(cf); cf = 0;
 }

@@ -2929,7 +2929,7 @@ unless banner pages are on different stock or color
 they are usually ignored and thrown away.
 </para>
 
-<sect1><title>Suppressing Banner Pages</title>
+<sect1><title>Suppressing Banner Pages Using the Incoming Control Filter Facility</title>
 <para>
 Most users do not <emphasis/want/ banner pages,
 as they are a waste of paper.
@@ -3002,7 +3002,6 @@ Printcap:
 lp:...
 :incoming_control_filter=/.../nobanner
 
-
 nobanner Script:
 
 #!/usr/bin/perl
@@ -3012,11 +3011,24 @@ See <xref linkend="filtertemplate">
   # read stdin
   my( $file );
   $file = join "", &lt;STDIN>;
-  $file =~ s/^L.*$//m;
+  $file =~ s/^L.*$/L/m;
   print $file;
   exit 0
 </screen>
       </figure>
+<para>
+The
+<literal/incoming_control_filter/
+program is allowed to modify the control by replacing lines
+with new control file lines.
+A control file line with no value following it,
+i.e. <literal/L/,
+will cause the line to be removed.
+The simple script shown above removes the
+<literal/L/ or print banner option line by removing the
+banner printing information.
+
+</para>
 </sect1>
 
 <sect1><title>Forcing Banner Pages</title>
@@ -3562,9 +3574,9 @@ The combinations of options and the need to remember
 their exact order becomes very unweildy.
 </para>
 
-<sect1 id=incoming><title>Adding Options By Modifying Control File</title>
+<sect1 id=incoming><title>Adding Options By Using The Incoming Control Filter Facility</title>
 
-      <figure><title>Diabolically Fiendishly Clever Method</title>
+      <figure><title>Option Modification</title>
 <screen>
 .common=force_localhost:sd=/var/spool/lpd/%P:sh:mx=0
 
@@ -3590,27 +3602,42 @@ h110: {838} % lpr -Plp_landscape_duplex -Zother
       </figure>
 
 <para>
-If you use a <emphasis/wildcard/ in the printer or alias fields in the printcap file,
+If you use a <emphasis/wildcard/ in the printer name or printer alias fields in the printcap file
 the &LPRng; code will first try to match the printer name against the
 non-wildcard printer or aliases fields.  If this fails it will
-then repeat the search using a <emphasis/glob/ type of match.
-</para>
-
-<para>
-When the job is received the requested print queue name will be
-retained as the <literal/Q/ (Queue) information
+then repeat the search using a <emphasis/glob/ type match.
+The job is then put in the appropriate queue.
+The requested print queue name is
+retained as <literal/Q/ (Queue) information
 and is passed as the <literal/-Q/ option to filters.
-The <literal/:incoming_control_filter/ program is given the control
-file on its <literal/STDIN/ and produces
-a set of modified fiels on on <literal/STDOUT/.
 </para>
+      <figure id=newzfmt><title>Incoming Control Filter</title>
+<screen>
 
+filter input:  job control or job ticket
+
+Xoldvalue
+X=oldvalue
+
+filter output:
+
+X            <- delete X option
+X=           <- delete X option
+Xvalue       <- set option X value
+X=xxx        <- alternative set option X value
+</screen>
+      </figure>
 <para>
+When the job arrives
+its options can be modified by using the
+<literal/incoming_control_filter/
+facility.
+The specified filter or program reads the job control file
+on <literal/STDIN/ and writes fields to be modified on <literal/STDOUT/.
 One of the ways to modify the control file is to convert suffixes of the
 print queue name (i.e. - <literal/_option/) to <literal/-Z/ option values and
 append these to the <literal/Z/ line of the control file.
 </para>
-
 
 <para>
 The <literal/-Q/ option or control file <literal/Q/ line is used
@@ -3619,30 +3646,35 @@ The suffixes are then processed in turn. You can either simply append
 them or have a hash translate these values.
 </para>
 
-      <figure id=newzfmt><title>Alternate Option Modification Method</title>
-<screen>
-filter output:
-
-Xvalue       <- modify option X value
-...
-(blank line) <- separator for format change
-
-X=xxx        <- modify option X value
-key=xxx      <- modify key option value
-</screen>
-      </figure>
 <para>
-Newer versions of LPRng allow other fields and information in the
-hold file to be modified.
-The output of the filter has the format shown in
+The
+<literal/incoming_control_filter/
+can also modify other information in the control or job ticket file
 <xref linkend="newzfmt">.
-For historical compatibility, the
-control file format is supported.
-If these entries are followed by a blank separator line,
-then the <literal/key=value/ format  can be used.
-This allows not only the control file values to be modified,
-but also fields in the hold file,
-such as the priority and other information.
+All of the standard control file options start with upper case letters
+followed immediately by either the option value or an equals sign.
+Other options start with lower case letters and have a
+<literal/key=value/ format.
+By writing new or modified option values its output,
+the 
+<literal/incoming_control_filter/
+can change the options for the job.
+Changing the values for options that were not orginally
+part of the control file information,
+i.e. - single upper case character names,
+is dangerous and the effects are unpredictible.
+</para>
+
+<para>
+The
+<literal/incoming_control_filter/
+can also modify the contents of the data files associated with a job.
+While it cannot add data files to a job,
+it can modify the contents of a data file or remove data files.
+If the size of a data file is set to 0,
+then the data file will be treated as removed from the job.
+If all of the data files are removed from a job then an error
+will result.
 </para>
 
 </chapter>

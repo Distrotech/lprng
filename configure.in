@@ -1,6 +1,6 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 1.71 2004/05/03 20:23:55 papowell Exp $
+dnl $Id: configure.in,v 1.74 2004/09/24 20:19:52 papowell Exp $
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.27
+VERSION=3.8.28
 
 
 AC_CONFIG_AUX_DIR(.)

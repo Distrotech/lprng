@@ -1410,7 +1410,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 PACKAGE=LPRng
-VERSION=3.8.27
+VERSION=3.8.28
 
 
 ac_aux_dir=

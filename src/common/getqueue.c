@@ -8,14 +8,14 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
+"$Id: getqueue.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
 
 
 /***************************************************************************
  * Commentary
  * Patrick Powell Thu Apr 27 21:48:38 PDT 1995
  * 
- * The spool directory holds files and other information associated
+ * The spool directory contains files and other information associated
  * with jobs.  Job files have names of the form cfXNNNhostname.
  * 
  * The Scan_queue routine will scan a spool directory, looking for new
@@ -51,9 +51,10 @@
 /**** ENDINCLUDE ****/
 /*
  * We make the following assumption:
- *   a hold file is the thing that LPRng will create.  A control file without
- *   a hold file is an orphan,  and should be disposed of.  We will ignore these
- *   and leave it to the checkpc code to clean them up.
+ *   a job consists of a job ticket file and a set of data files.
+ *   data files without a job ticket file or a job ticket file
+ *   without a data files (unless marked as 'incoming') will be
+ *   considered as a bad job.
  */
 
 int Scan_queue( struct line_list *spool_control,
@@ -63,7 +64,7 @@ int Scan_queue( struct line_list *spool_control,
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
-	char *hf_name;
+	char *job_ticket_name;
 	int c, printable, held, move, error, done, p, h, m, e, dn;
 	int remove_prefix_len = safestrlen( remove_prefix );
 	int remove_suffix_len = safestrlen( remove_suffix );
@@ -84,32 +85,32 @@ int Scan_queue( struct line_list *spool_control,
 		return( 1 );
 	}
 
-	hf_name = 0;
+	job_ticket_name = 0;
 	while( (d = readdir(dir)) ){
-		hf_name = d->d_name;
-		DEBUG5("Scan_queue: found file '%s'", hf_name );
+		job_ticket_name = d->d_name;
+		DEBUG5("Scan_queue: found file '%s'", job_ticket_name );
 		if(
-			(remove_prefix_len && !strncmp( hf_name, remove_prefix, remove_prefix_len ) )
+			(remove_prefix_len && !strncmp( job_ticket_name, remove_prefix, remove_prefix_len ) )
 			|| (remove_suffix_len 
-				&& !strcmp( hf_name+strlen(hf_name)-remove_suffix_len, remove_suffix ))
+				&& !strcmp( job_ticket_name+strlen(job_ticket_name)-remove_suffix_len, remove_suffix ))
 		){
-			DEBUG1("Scan_queue: removing file '%s'", hf_name );
-			unlink( hf_name );
+			DEBUG1("Scan_queue: removing file '%s'", job_ticket_name );
+			unlink( job_ticket_name );
 			continue;
-		} else if(  !(   (cval(hf_name+0) == 'h')
-			&& (cval(hf_name+1) == 'f')
-			&& isalpha(cval(hf_name+2))
-			&& isdigit(cval(hf_name+3))
+		} else if(  !(   (cval(job_ticket_name+0) == 'h')
+			&& (cval(job_ticket_name+1) == 'f')
+			&& isalpha(cval(job_ticket_name+2))
+			&& isdigit(cval(job_ticket_name+3))
 			) ){
 			continue;
 		}
 
-		DEBUG2("Scan_queue: processing file '%s'", hf_name );
+		DEBUG2("Scan_queue: processing file '%s'", job_ticket_name );
 
 		Free_job( &job );
 
 		/* read the hf file and get the information */
-		Get_hold_file( &job, hf_name, 1 );
+		Get_job_ticket_file( 0, &job, job_ticket_name );
 		if(DEBUGL3)Dump_line_list("Scan_queue: hf", &job.info );
 		if( job.info.count == 0 ){
 			continue;
@@ -130,7 +131,7 @@ int Scan_queue( struct line_list *spool_control,
 				if(DEBUGL4)Dump_job("Scan_queue - before Make_sort_key",&job);
 				Make_sort_key( &job );
 				DEBUG5("Scan_queue: sort key '%s'",job.sort_key);
-				Set_str_value(sort_order,job.sort_key,hf_name);
+				Set_str_value(sort_order,job.sort_key,job_ticket_name);
 			}
 		}
 	}
@@ -403,7 +404,7 @@ void Append_Z_value( struct job *job, char *s )
 	}
 }
 
-int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file )
+int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file )
 {
 	char *s;
 	int i, c, n, copies = 0, last_format = 0;
@@ -422,10 +423,10 @@ int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file 
 	hpformat = Find_flag_value(&job->info,HPFORMAT);
 	if( read_cf_file ){
 		s = Find_str_value(&job->info,OPENNAME);
-		DEBUG3("Set_hf_from_cf_info: control file '%s', hpformat '%d'",
+		DEBUG3("Set_job_ticket_from_cf_info: control file '%s', hpformat '%d'",
 			s, hpformat );
 		if( s &&  Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
-				DEBUG3("Set_hf_from_cf_info: missing or empty control file '%s'", s );
+				DEBUG3("Set_job_ticket_from_cf_info: missing or empty control file '%s'", s );
 				SNPRINTF(buffer,sizeof(buffer))
 					"no control file %s - %s", s, Errormsg(errno) );
 				Set_str_value(&job->info,ERROR,buffer);
@@ -448,7 +449,7 @@ int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file 
 		s = cf_line_list.list[i];
 		Clean_meta(s);
 		c = cval(s);
-		DEBUG3("Set_hf_from_cf_info: doing line '%s'", s );
+		DEBUG3("Set_job_ticket_from_cf_info: doing line '%s'", s );
 		if( islower(c) ){
 			t = s;
 			while( (t = strpbrk(t," \t")) ) *t++ = '_';
@@ -470,7 +471,7 @@ int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file 
 
 			Set_str_value(datafile,OTRANSFERNAME,s+1);
 			file_found = Find_str_value(datafile,OTRANSFERNAME);
-			DEBUG4("Set_hf_from_cf_info: doing file '%s', format '%c', copies %d",
+			DEBUG4("Set_job_ticket_from_cf_info: doing file '%s', format '%c', copies %d",
 				file_found, last_format, copies );
 		} else if( c == 'N' ){
 			if( hpformat && cval(s+1) == ' '){
@@ -530,7 +531,7 @@ int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file 
 				}
 			} else if( isupper(c) ){
 				buffer[0] = c; buffer[1] = 0;
-				DEBUG4("Set_hf_from_cf_info: control '%s'='%s'", buffer, s+1 );
+				DEBUG4("Set_job_ticket_from_cf_info: control '%s'='%s'", buffer, s+1 );
 				Set_str_value(&job->info,buffer,s+1);
 			}
 		}
@@ -576,25 +577,33 @@ int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file 
 	if( datafile ) free(datafile); datafile=0;
 	if( names )	free(names); names=0;
 	Free_line_list( &cf_line_list );
-	if(DEBUGL4)Dump_job("Set_hf_from_cf_info - final",job);
+	if(DEBUGL4)Dump_job("Set_job_ticket_from_cf_info - final",job);
 	return(returnstatus);
 }
 
 /*
- * Set the hold file datafile information in the HFDATAFILES line
+ * Set the job ticket file datafile information in the HFDATAFILES line
+ *  This is the information that is PERMANENT, i.e. - after the
+ *  job has been transferred.
+ *  We also generate a DATAFILES line which has the format
+ *   permanent_name[=currentname]
+ *  i.e. - we have a mapping between the file names in the
+ *  HFDATAFILES line and the current file names they go by.
  */
 
-void Set_hf_datafile_info( struct job *job )
+void Set_job_ticket_datafile_info( struct job *job )
 {
 	int linecount, i, len;
-	char *s, *dataline;
+	char *s, *t, *dataline, *datafiles;
 	struct line_list *lp;
+	struct line_list dups;
 
-	dataline = 0;
+	datafiles = dataline = 0;
 
+	Init_line_list(&dups);
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
 		lp = (void *)job->datafiles.list[linecount];
-		if(DEBUGL4)Dump_line_list("Set_hf_datafile_info - info", lp );
+		if(DEBUGL4)Dump_line_list("Set_job_ticket_datafile_info - info", lp );
 		for( i = 0; i < lp->count; ++i ){
 			int c;
 			s = lp->list[i];
@@ -603,23 +612,36 @@ void Set_hf_datafile_info( struct job *job )
 			if( !strncmp(s,"otransfername", 13 ) ) continue;
 			dataline = safeextend3(dataline, s, "\002",__FILE__,__LINE__);
 		}
+		t = Find_str_value(lp,OPENNAME);
+		s = Find_str_value(lp,DFTRANSFERNAME);
+		if( !ISNULL(s) && !Find_flag_value(&dups,s) ){
+			if( t ){
+				datafiles = safeextend5(datafiles,s, "=", t, " ",__FILE__,__LINE__);
+			} else {
+				datafiles = safeextend3(datafiles, s, " ",__FILE__,__LINE__);
+			}
+			Set_flag_value(&dups,s,1);
+		}
 		len = strlen(dataline);
 		if( len ){
 			dataline[len-1] = '\001';
 		}
 	}
 	Set_str_value(&job->info,HFDATAFILES,dataline);
+	Set_str_value(&job->info,DATAFILES,datafiles);
 	if( dataline ) free(dataline); dataline = 0;
+	if( datafiles ) free(datafiles); datafiles = 0;
 }
 
 
-char *Make_hf_image( struct job *job )
+char *Make_job_ticket_image( struct job *job )
 {
 	char *outstr, *s;
 	int i;
 	int len = safestrlen(OPENNAME);
 
 	outstr = 0;
+	Set_job_ticket_datafile_info( job );
 	for( i = 0; i < job->info.count; ++i ){
 		s = job->info.list[i];
 		if( !ISNULL(s) && !safestrpbrk(s,Line_ends) &&
@@ -631,47 +653,47 @@ char *Make_hf_image( struct job *job )
 }
 
 /*
- * Write a hold file
+ * Write a job ticket file
  */
 
-int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
+int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd )
 {
-	char *hf_name, *tempfile, *outstr;
+	char *job_ticket_name, *tempfile, *outstr;
 	int status;
 
 	status = 0;
 	outstr = 0;
 
-	Set_hf_datafile_info( job );
-	if(DEBUGL4)Dump_job("Set_hold_file - init",job);
+	Set_job_ticket_datafile_info( job );
+	if(DEBUGL4)Dump_job("Set_job_ticket_file - init",job);
 	Set_str_value(&job->info,UPDATE_TIME,Time_str(0,0));
-	outstr = Make_hf_image( job );
-	DEBUG4("Set_hold_file: '%s'", outstr );
-	if( !(hf_name = Find_str_value(&job->info,HF_NAME)) ){
+	outstr = Make_job_ticket_image( job );
+	DEBUG4("Set_job_ticket_file: '%s'", outstr );
+	if( !(job_ticket_name = Find_str_value(&job->info,HF_NAME)) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Set_hold_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
+		FATAL(LOG_ERR)"Set_job_ticket_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
 	}
 	if( !fd ){
 		fd = Make_temp_fd( &tempfile );
 		if( Write_fd_str(fd, outstr) < 0 ){
-			LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", tempfile );
+			LOGERR(LOG_INFO)"Set_job_ticket_file: write to '%s' failed", tempfile );
 			status = 1;
 		}
 		close(fd);
-		if( status == 0 && rename( tempfile, hf_name ) == -1 ){
-			LOGERR(LOG_INFO)"Set_hold_file: rename '%s' to '%s' failed",
-				tempfile, hf_name );
+		if( status == 0 && rename( tempfile, job_ticket_name ) == -1 ){
+			LOGERR(LOG_INFO)"Set_job_ticket_file: rename '%s' to '%s' failed",
+				tempfile, job_ticket_name );
 			status = 1;
 		}
 	} else {
 		if( lseek( fd, 0, SEEK_SET ) == -1 ){
-			LOGERR_DIE(LOG_ERR) "Set_hold_file: lseek failed" );
+			LOGERR_DIE(LOG_ERR) "Set_job_ticket_file: lseek failed" );
 		}
 		if( ftruncate( fd, 0 ) ){
-			LOGERR_DIE(LOG_ERR) "Set_hold_file: ftruncate failed" );
+			LOGERR_DIE(LOG_ERR) "Set_job_ticket_file: ftruncate failed" );
 		}
 		if( Write_fd_str(fd, outstr) < 0 ){
-			LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", hf_name );
+			LOGERR(LOG_INFO)"Set_job_ticket_file: write to '%s' failed", job_ticket_name );
 			status = 1;
 		}
 		/* close(fd); */
@@ -698,21 +720,32 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 }
 
 /*
- * Get_hold_file( struct job *job, char *hf_name )
+ * Get_job_ticket_file( struct job *job, char *job_ticket_name )
  *
- *  get hold file contents and initialize job->info hash with them
+ *  get job ticket file contents and initialize job->info hash with them
  */
 
-void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  )
+void Get_job_ticket_file( int *lock_fd, struct job *job, char *job_ticket_name )
 {
 	char *s;
-	if( (s = safestrchr(hf_name, '=')) ){
-		hf_name = s+1;
+	struct stat statb;
+	int fd;
+	if( (s = safestrchr(job_ticket_name, '=')) ){
+		job_ticket_name = s+1;
 	}
-	DEBUG1("Get_hold_file: checking on '%s'", hf_name );
+	DEBUG1("Get_job_ticket_file: checking on '%s'", job_ticket_name );
 
-	Get_file_image_and_split( hf_name, 0, 0,
-		&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
+	if( (fd = Checkwrite( job_ticket_name, &statb, O_RDWR, 0, 0 )) > 0
+		&& !Do_lock(fd, 1 ) ){
+		Get_fd_image_and_split( fd, 0, 0,
+			&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
+		if( lock_fd ){
+			*lock_fd = fd;
+			fd = -1;
+		}
+	}
+	if( fd > 0 ) close(fd);
+	fd = -1;
 	if( &job->info.count ) {
 		struct line_list cf_line_list, *datafile;
 		int i;
@@ -727,7 +760,7 @@ void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  )
 		Check_max(&job->datafiles,cf_line_list.count);
 		for( i = 0; i < cf_line_list.count; ++i ){
 			s = cf_line_list.list[i];
-			DEBUG3("Set_hf_from_cf_info: doing line '%s'", s );
+			DEBUG3("Get_job_ticket_file: doing line '%s'", s );
 			datafile = malloc_or_die(sizeof(datafile[0]),__FILE__,__LINE__);
 			memset(datafile,0,sizeof(datafile[0]));
 			job->datafiles.list[job->datafiles.count++] = (void *)datafile;
@@ -735,7 +768,7 @@ void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  )
 		}
 		Free_line_list( &cf_line_list );
 	}
-	if(DEBUGL4)Dump_job("Get_hold_file",job);
+	if(DEBUGL4)Dump_job("Get_job_ticket_file",job);
 }
 
 /*
@@ -1788,10 +1821,7 @@ char *Fix_datafile_infox( struct job *job, char *number, char *suffix,
 		Set_str_value(lp,NTRANSFERNAME,0);
 	}
 	Free_line_list(&outfiles);
-	Set_str_value(&job->info,DATAFILES,dataline);
-	if( dataline ) free(dataline); dataline = 0;
-	s = Find_str_value(&job->info,DATAFILES);
-	return(s);
+	return(dataline);
 }
 
 int ordercomp(  const void *left, const void *right, const void *orderp)
@@ -1876,7 +1906,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 	if(DEBUGL3) Dump_job( "Fix_control: starting", job );
 
 	/* we set the control file with the single letter values in the
-	   hold job file
+	   job ticket file
 	 */
 	for( i = 0; i < job->info.count; ++i ){
 		int c;
@@ -1925,7 +1955,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 
 	/* fix control file name */
 	s = safestrdup4("cf",pr,number,file_hostname,__FILE__,__LINE__);
-	Set_str_value(&job->info,CFTRANSFERNAME,s);
+	Set_str_value(&job->info,XXCFTRANSFERNAME,s);
 	if(s) free(s); s = 0;
 	if(t) *t = '.';
 
@@ -2033,6 +2063,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 		temp = safeextend2(temp,datalines,__FILE__,__LINE__);
 		Set_str_value(&job->info,CF_OUT_IMAGE,temp);
 		if( temp ) free(temp); temp = 0;
+		if( datalines ) free(datalines); datalines = 0;
 	}
 	
 	if( filter ){

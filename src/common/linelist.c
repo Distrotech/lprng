@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.71 2004/05/03 20:24:02 papowell Exp $";
+"$Id: linelist.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -2265,12 +2265,15 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 		if(u) free(u); u = 0;
 	}
 	if( job ){
+		if( (s = Make_job_ticket_image( job )) ){
+			Set_str_value(env, "HF", s );
+			free(s); s = 0;
+		}
 		if( (s = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
 			Set_str_value(env, "CONTROL", s );
 		}
-		if( (s = Make_hf_image( job )) ){
-			Set_str_value(env, "HF", s );
-			free(s); s = 0;
+		if( (s = Find_str_value(&job->info,DATAFILES)) ){
+			Set_str_value(env, "DATAFILES", s );
 		}
 	}
 
@@ -3314,7 +3317,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 					str = job?Find_str_value(&job->info,NUMBER):0;
 					break;
 				case 'k':
-					str = job?Find_str_value(&job->info,CFTRANSFERNAME):0;
+					str = job?Find_str_value(&job->info,XXCFTRANSFERNAME):0;
 					break;
 				case 'l':
 					kind = INTEGER_K; n = Page_length_DYN; break;

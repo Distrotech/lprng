@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.71 2004/05/03 20:24:04 papowell Exp $";
+"$Id: vars.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
 
 
 /* force local definitions */
@@ -280,7 +280,7 @@ struct keywords Pc_var_list[] = {
 	/* remote server principal for server to server forwarding */
 { "kerberos_forward_principal", 0, STRING_K, &Kerberos_forward_principal_DYN,0,0,0},
 	/* keytab file location for kerberos, used by server */
-{ "kerberos_keytab", 0, STRING_K, &Kerberos_keytab_DYN,0,0,"=/etc/lpd.keytab"},
+{ "kerberos_keytab", 0, STRING_K, &Kerberos_keytab_DYN,0,0,"=/etc/lpd/lpd.keytab"},
 	/* key lifetime for kerberos, used by server */
 { "kerberos_life", 0, STRING_K, &Kerberos_life_DYN,0,0,0},
 	/* key renewal time for kerberos, used by server */

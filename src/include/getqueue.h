@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.71 2004/05/03 20:24:04 papowell Exp $
+ * $Id: getqueue.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -141,7 +141,7 @@ EXTERN const char * SUBSERVER			DEFINE( = "subserver" );
 EXTERN const char * TRACE				DEFINE( = "trace" );
 /* EXTERN const char * TRANSFERNAME		DEFINE( = "transfername" ); */
 EXTERN const char * DFTRANSFERNAME		DEFINE( = "dftransfername" );
-EXTERN const char * CFTRANSFERNAME		DEFINE( = "cftransfername" );
+EXTERN const char * XXCFTRANSFERNAME		DEFINE( = "cftransfername" );
 EXTERN const char * NTRANSFERNAME		DEFINE( = "ntransfername" );
 EXTERN const char * OTRANSFERNAME		DEFINE( = "otransfername" );
 EXTERN const char * UNIXSOCKET			DEFINE( = "unixsocket" );
@@ -170,11 +170,11 @@ int Get_file_image_and_split( const char *file,
 void Check_for_hold( struct job *job, struct line_list *spool_control );
 int Get_hold_class( struct line_list *info, struct line_list *sq );
 void Append_Z_value( struct job *job, char *s );
-int Set_hf_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file );
-void Set_hf_datafile_info( struct job *job );
-char *Make_hf_image( struct job *job );
-int Set_hold_file( struct job *job, struct line_list *perm_check, int fd );
-void Get_hold_file( struct job *job, char *hf_name, int check_for_existence  );
+int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file );
+void Set_job_ticket_datafile_info( struct job *job );
+char *Make_job_ticket_image( struct job *job );
+int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd );
+void Get_job_ticket_file( int *lock_fd, struct job *job, char *job_ticket_name );
 void Get_spool_control( const char *file, struct line_list *info );
 void Set_spool_control( struct line_list *perm_check, const char *file,
 	struct line_list *info );

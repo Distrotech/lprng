@@ -43,14 +43,14 @@ figs: $(FIGS) x_advanced.png
 	touch figs
 
 $(DOC).html: $(DOC).sgml $(DOC).dsl Makefile license.enc
-	fix_html ${DOC}.sgml >${DOC}.htmp
+	perl fix_html ${DOC}.sgml >${DOC}.htmp
 	jade -i output.html -V nochunks -t sgml \
 		$(CATALOGS) ${DSL} $(DOC).htmp >$(DOC).html
 	-tidy -i -m -f /dev/null ${TIDYFLAGS} $@
-	./updateheader $@
+	perl updateheader $@
 
 $(DOC).tex: $(DOC).sgml $(DOC).dsl Makefile
-	fix_ps ${DOC}.sgml >${DOC}.htmp
+	perl fix_ps ${DOC}.sgml >${DOC}.htmp
 	jade -Vtex-backend -ioutput.print -t tex -o $(DOC).tex \
 		$(CATALOGS) ${DSL} $(DOC).htmp
 
@@ -71,11 +71,11 @@ ${DOC}-Multipart/index.htm: $(DOC).sgml $(DOC).dsl Makefile license.enc
 	rm -rf ${DOC}-Multipart;
 	if [ ! -d ${DOC}-Multipart ] ; then mkdir ${DOC}-Multipart; fi
 	cp LPRng.jpg LPRngT-L.jpg ${DOC}-Multipart
-	fix_html ${DOC}.sgml >${DOC}.htmp
+	perl fix_html ${DOC}.sgml >${DOC}.htmp
 	jade -i output.html -V html-manifest -t sgml \
 		$(CATALOGS) ${DSL} $(DOC).htmp
 	-tidy -i -m -f /dev/null ${TIDYFLAGS} `xargs < HTML.manifest`
-	updateheader index.htm
+	perl updateheader index.htm
 	mv *.htm ${DOC}-Multipart
 	cp *.png *.jpg ${DOC}-Multipart
 

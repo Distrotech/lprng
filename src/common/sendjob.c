@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.71 2004/05/03 20:24:03 papowell Exp $";
+"$Id: sendjob.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
 
 
 #include "lp.h"
@@ -97,7 +97,7 @@ int Send_job( struct job *job, struct job *logjob,
 	/* send job to the LPD server for the RemotePrinter_DYN */
 
 	id = Find_str_value( &job->info,IDENTIFIER);
-	if( id == 0 ) id = Find_str_value( &job->info,CFTRANSFERNAME);
+	if( id == 0 ) id = Find_str_value( &job->info,XXCFTRANSFERNAME);
 	DEBUG3("Send_job: '%s'->%s@%s,connect(timeout %d,interval %d)",
 		id, RemotePrinter_DYN, RemoteHost_DYN,
 			connect_timeout_len, connect_interval );
@@ -282,8 +282,8 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 	DEBUG3("Send_normal: send_data_first %d, sock %d, block_fd %d",
 		Send_data_first_DYN, *sock, block_fd );
 
-	id = Find_str_value(&job->info,"A");
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	
 	if( !block_fd ){
 		SETSTATUS(logjob) "requesting printer %s@%s",
@@ -340,7 +340,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 		FATAL(LOG_ERR) "Send_control: LOGIC ERROR! missing CF_OUT_IMAGE");
 	}
 	size = safestrlen(cf);
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 
 	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
 		transfername, size, *sock, block_fd, cf );
@@ -440,8 +440,8 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 	struct stat statb;
 
 	DEBUG3( "Send_data_files: data file count '%d'", job->datafiles.count );
-	id = Find_str_value(&job->info,"identification");
-	if( id == 0 ) id = Find_str_value(&job->info,CFTRANSFERNAME);
+	id = Find_str_value(&job->info,IDENTIFIER);
+	if( id == 0 ) id = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	for( count = 0; count < job->datafiles.count; ++count ){
 		lp = (void *)job->datafiles.list[count];
 		if(DEBUGL3)Dump_line_list("Send_data_files - entries",lp);
@@ -633,17 +633,13 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 
 	error[0] = 0;
 	id = Find_str_value(&job->info,IDENTIFIER);
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
+	transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	if( id == 0 ) id = transfername;
 
 	tempfd = Make_temp_fd( &tempfile );
 	DEBUG1("Send_block: sending '%s' to '%s'", id, tempfile );
 
 	status = Send_normal( &tempfd, job, logjob, transfer_timeout, tempfd, 0 );
-
-	id = Find_str_value(&job->info,IDENTIFIER);
-	transfername = Find_str_value(&job->info,CFTRANSFERNAME);
-	if( id == 0 ) id = transfername;
 
 	DEBUG1("Send_block: sendnormal of '%s' returned '%s'", id, Server_status(status) );
 	if( status ) return( status );

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: fileopen.h,v 1.71 2004/05/03 20:24:04 papowell Exp $
+ * $Id: fileopen.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 
