@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: linksupport.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -216,7 +216,7 @@ int connect_timeout( int timeout,
 	return( status );
 }
 
-int getconnection ( char *hostname, char *dest_port,
+int getconnection ( char *xhostname,
 	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path )
 {
 	int sock;	         /* socket */
@@ -234,13 +234,19 @@ int getconnection ( char *hostname, char *dest_port,
 	char *use_host;
 	int address_count = 0;
 	int incoming_port;
+	char *dest_port = 0;
 	static int last_port_used;
+	char hostname[256];
 
 	/*
 	 * find the address
 	 */
-	DEBUGF(DNW1)("getconnection: START host %s, timeout %d, connection_type %d",
-		hostname, timeout, connection_type );
+	safestrncpy(hostname,xhostname);
+	if( (dest_port = strchr(hostname,'%')) ){
+		*dest_port++ = 0;
+	}
+	DEBUGF(DNW1)("getconnection: START host %s, port %s, timeout %d, connection_type %d",
+		hostname, dest_port, timeout, connection_type );
 	euid = geteuid();
 	sock = -1;
 	memset(&dest_sin, 0, sizeof (dest_sin));
@@ -785,31 +791,31 @@ int Unix_link_listen( char *unix_socket_path )
 	return (sock);
 }
 
-int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto,
+int Link_open(char *host, int timeout, struct sockaddr *bindto,
 	char *unix_socket_path )
 {
 	int sock;
-	DEBUGF(DNW4) ("Link_open: host '%s', port '%s', timeout %d",
-		host,port,timeout);
-	sock = Link_open_type( host, port, timeout, SOCK_STREAM, bindto, unix_socket_path );
+	DEBUGF(DNW4) ("Link_open: host '%s', timeout %d",
+		host, timeout);
+	sock = Link_open_type( host, timeout, SOCK_STREAM, bindto, unix_socket_path );
 	DEBUGF(DNW4) ("Link_open: socket %d", sock );
 	return(sock);
 }
 
-int Link_open_type(char *host, char *port, int timeout, int connection_type,
+int Link_open_type(char *host, int timeout, int connection_type,
 	struct sockaddr *bindto, char * unix_socket_path )
 {
 	int sock = -1;
 	DEBUGF(DNW4)(
-		"Link_open_type: host '%s', port '%s', timeout %d, type %d",
-		host,port, timeout, connection_type );
-	sock = getconnection( host, port, timeout, connection_type, bindto, unix_socket_path );
+		"Link_open_type: host '%s', timeout %d, type %d",
+		host, timeout, connection_type );
+	sock = getconnection( host, timeout, connection_type, bindto, unix_socket_path );
 	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
 }
 
 int Link_open_list( char *hostlist, char **result,
-	char *port, int timeout, struct sockaddr *bindto, char *unix_socket_path )
+	int timeout, struct sockaddr *bindto, char *unix_socket_path )
 {
 	int sock = -1, i, err = 0;
 	struct line_list list;
@@ -817,15 +823,15 @@ int Link_open_list( char *hostlist, char **result,
 	Init_line_list( &list );
 	DEBUGFC(DNW4){
 		LOGDEBUG(
-	"Link_open_line_list_type: hostlist '%s', port '%s', timeout %d, bindto 0x%lx",
-		hostlist, port, timeout, Cast_ptr_to_long(bindto) );
+	"Link_open_line_list_type: hostlist '%s', timeout %d, bindto 0x%lx",
+		hostlist, timeout, Cast_ptr_to_long(bindto) );
 	}
 	if( result ) *result = 0;
 	Split(&list,hostlist,Host_sep,0,0,0,0,0,0);
 	err = errno = 0;
 	for( i = 0; sock < 0 && i < list.count; ++i ){
 		DEBUGF(DNW4) ("Link_open_list: host trying '%s'", list.list[i] );
-		sock = getconnection( list.list[i], port, timeout, SOCK_STREAM, bindto, unix_socket_path );
+		sock = getconnection( list.list[i], timeout, SOCK_STREAM, bindto, unix_socket_path );
 		err = errno;
 		DEBUGF(DNW4) ("Link_open_list: result host '%s' socket %d", list.list[i], sock );
 		if( sock >= 0 ){

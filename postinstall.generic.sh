@@ -26,18 +26,16 @@ fix () {
 		sh mkinstalldirs $d
 	fi
 	if [ -f $v.sample ] ; then
-		if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
+		if [ $v.sample != $p.sample ] ; then ${INSTALL} -m 644 $v.sample $p.sample; fi
 	elif [ -f $v ] ; then
-		if [ $v != $p.sample ] ; then cp $v $p.sample; fi
+		if [ $v != $p.sample ] ; then ${INSTALL} $v $p.sample; fi
 	else
 		echo "Do not have $v.sample or $v"
 	fi
 	if [ ! -f $p.sample ] ; then
 		echo "Do not have $p.sample"
 	elif [ ! -f $p ] ; then
-		chmod 644 $p.sample
-		cp $p.sample $p;
-		chmod 644 $p;
+		${INSTALL} -m 644 $p.sample $p;
 	fi;
 }
 if [ "X$MAKEINSTALL" = "XYES" ] ; then

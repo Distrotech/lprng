@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: utilities.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
 
 #include "lp.h"
 
@@ -1462,32 +1462,32 @@ void Reset_daemonuid(void)
 #  define plp_struct_statfs struct statvfs
 #  define statfs(path, buf) statvfs(path, buf)
 #  define USING "STATVFS"
-#  define BLOCKSIZE(f) (unsigned long)(f.f_frsize?f.f_frsize:f.f_bsize)
-#  define BLOCKS(f)    (unsigned long)f.f_bavail
+#  define BLOCKSIZE(f) (double)(f.f_frsize?f.f_frsize:f.f_bsize)
+#  define BLOCKS(f)    (double)f.f_bavail
 # endif
 
 # if USE_STATFS_TYPE == ULTRIX_STATFS
 #  define plp_statfs(path,buf) statfs(path,buf)
 #  define plp_struct_statfs struct fs_data
 #  define USING "ULTRIX_STATFS"
-#  define BLOCKSIZE(f) (unsigned long)f.fd_bsize
-#  define BLOCKS(f)    (unsigned long)f.fd_bfree
+#  define BLOCKSIZE(f) (double)f.fd_bsize
+#  define BLOCKS(f)    (double)f.fd_bfree
 # endif
 
 # if USE_STATFS_TYPE ==  SVR3_STATFS
 #  define plp_struct_statfs struct statfs
 #  define plp_statfs(path,buf) statfs(path,buf,sizeof(struct statfs),0)
 #  define USING "SV3_STATFS"
-#  define BLOCKSIZE(f) (unsigned long)f.f_bsize
-#  define BLOCKS(f)    (unsigned long)f.f_bfree
+#  define BLOCKSIZE(f) (double)f.f_bsize
+#  define BLOCKS(f)    (double)f.f_bfree
 # endif
 
 # if USE_STATFS_TYPE == STATFS
 #  define plp_struct_statfs struct statfs
 #  define plp_statfs(path,buf) statfs(path,buf)
 #  define USING "STATFS"
-#  define BLOCKSIZE(f) (unsigned long)f.f_bsize
-#  define BLOCKS(f)    (unsigned long)f.f_bavail
+#  define BLOCKSIZE(f) (double)f.f_bsize
+#  define BLOCKS(f)    (double)f.f_bavail
 # endif
 
 

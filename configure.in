@@ -1,6 +1,6 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 1.49 2003/04/15 23:37:40 papowell Exp $
+dnl $Id: configure.in,v 1.58 2003/09/05 20:07:14 papowell Exp $
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
@@ -8,27 +8,28 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.21
+VERSION=3.8.22
 
 
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_HEADER(config.h)
 
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package])
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version])
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 ALL_LINGUAS="fr"
 
-WITH_CCOPTS dnl
-WITH_CPPOPTS dnl
-WITH_LDOPTS dnl
 if test -z "$LOCALEDIR" ; then
     LOCALEDIR='${prefix}/share/locale'
 fi;
 WITH_LOCALEDIR dnl
 export LOCALEDIR
+
+WITH_CCOPTS dnl
+WITH_CPPOPTS dnl
+WITH_LDOPTS dnl
 
 AC_PREFIX_DEFAULT(/usr/local)
 AC_SUBST(INSTALL)
@@ -44,6 +45,8 @@ AC_SUBST(LDCC)
 dnl check for awk
 AC_PROG_AWK
 AC_SUBST(AWK)
+AC_PATH_PROG(SED,sed)dnl
+AC_SUBST(SED)dnl
 AC_PATH_PROG(PERL,perl)dnl
 AC_SUBST(PERL)dnl
 AC_PATH_PROG(CHOWN,chown)dnl
@@ -56,7 +59,7 @@ AC_PATH_PROG(OPENSSL,openssl)dnl
 AC_SUBST(OPENSSL)dnl
 AC_PATH_PROG(PGP_PATH,pgp)dnl
 AC_SUBST(PGP_PATH)dnl
-AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH")
+AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH",[pgp path])
 
 
 dnl ----------------------------------------------------------------------------
@@ -125,7 +128,7 @@ fi
 ]
 )
 AC_MSG_RESULT($v)
-AC_DEFINE_UNQUOTED(FORCE_LOCALHOST,"$FORCE_LOCALHOST")
+AC_DEFINE_UNQUOTED(FORCE_LOCALHOST,"$FORCE_LOCALHOST",[Force Localhost (force_localhost)])
 
 dnl check to see if clients require lpd.conf and printcap
 AC_MSG_CHECKING(require_configfiles default)
@@ -151,7 +154,7 @@ AC_ARG_ENABLE( kerberos,
 [  --enable-kerberos                 enable kerberos support],
 [
 if test "$enableval" = "yes" ; then
-	v=enabled;  KERBEROS=1;AC_DEFINE_UNQUOTED(KERBEROS,"$KERBEROS")
+	v=enabled;  KERBEROS=1;AC_DEFINE_UNQUOTED(KERBEROS,"$KERBEROS",[kerberos])
 else
 	v=disabled; KERBEROS=;
 fi
@@ -169,7 +172,7 @@ AC_ARG_ENABLE( mit_kerberos4,
 [  --enable-mit_kerberos4            enable MIT Kerberos 4 support],
 [
 if test "$enableval" = "yes" ; then
-	v=enabled; MIT_KERBEROS4=1;AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4")
+	v=enabled; MIT_KERBEROS4=1;AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4",[kerberos 4 support])
 else
 	v=disabled; MIT_KERBEROS4=;
 fi
@@ -197,6 +200,8 @@ fi
 ]
 )
 AC_MSG_RESULT($v (KERBEROS_CHECKS $KERBEROS_CHECKS));dnl
+lpd_dir=/lpd
+export lpd_dir
 
 dnl Specify install dir for lpd
 AC_MSG_CHECKING(where to install the lpd binary)
@@ -211,9 +216,9 @@ AC_SUBST(LPD_DIR)
 dnl  lpd.conf location
 AC_MSG_CHECKING(lpd.conf location)
 AC_ARG_WITH(lpd_conf_path,
-[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}${lpd_dir}/lpd.conf)],
+[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/lpd/lpd.conf)],
 LPD_CONF_PATH=$withval,
-LPD_CONF_PATH=\${sysconfdir}${lpd_dir}/lpd.conf,
+LPD_CONF_PATH=\${sysconfdir}/lpd/lpd.conf,
 )
 AC_MSG_RESULT($LPD_CONF_PATH)
 AC_SUBST(LPD_CONF_PATH)
@@ -222,9 +227,9 @@ dnl  lpd.perms location
 dnl
 AC_MSG_CHECKING(lpd.perms location)
 AC_ARG_WITH(lpd_perms_path,
-[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}${lpd_dir}/lpd.perms)],
+[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/lpd/lpd.perms)],
 LPD_PERMS_PATH=$withval,
-LPD_PERMS_PATH=\${sysconfdir}${lpd_dir}/lpd.perms,
+LPD_PERMS_PATH=\${sysconfdir}/lpd/lpd.perms,
 )
 AC_MSG_RESULT($LPD_PERMS_PATH)
 AC_SUBST(LPD_PERMS_PATH)
@@ -244,9 +249,9 @@ dnl  lpd_printcap location
 dnl
 AC_MSG_CHECKING(lpd_printcap location)
 AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}${lpd_dir}/lpd_printcap)],
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd/lpd_printcap)],
 LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=\${sysconfdir}${lpd_dir}/lpd_printcap,
+LPD_PRINTCAP_PATH=\${sysconfdir}/lpd/lpd_printcap,
 )
 AC_MSG_RESULT($LPD_PRINTCAP_PATH)
 AC_SUBST(LPD_PRINTCAP_PATH)
@@ -344,7 +349,7 @@ AC_ARG_WITH(chooser_routine,
 [  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file ],
 [
 CHOOSER_ROUTINE="$withval"
-AC_DEFINE_UNQUOTED(CHOOSER_ROUTINE,$CHOOSER_ROUTINE)
+AC_DEFINE_UNQUOTED(CHOOSER_ROUTINE,$CHOOSER_ROUTINE,[Chooser routine])
 ]
 )
 AC_MSG_RESULT("$CHOOSER_ROUTINE")
@@ -356,7 +361,7 @@ AC_ARG_WITH(order_routine,
 [  --with-order_routine=NAME         queue order routine name in user object file ],
 [
 ORDER_ROUTINE="$withval"
-AC_DEFINE_UNQUOTED(ORDER_ROUTINE,"$ORDER_ROUTINE")
+AC_DEFINE_UNQUOTED(ORDER_ROUTINE,"$ORDER_ROUTINE",[job order routine])
 ]
 )
 AC_MSG_RESULT("$ORDER_ROUTINE")
@@ -378,7 +383,7 @@ AC_ARG_WITH(user_include,
 [  --with-user_include=NAME          include file with function prototypes for user object file ],
 [
 USER_INCLUDE="$withval"
-AC_DEFINE_UNQUOTED(USER_INCLUDE,"$USER_INCLUDE")
+AC_DEFINE_UNQUOTED(USER_INCLUDE,"$USER_INCLUDE",[user specified include files])
 ]
 )
 AC_MSG_RESULT("$USER_INCLUDE")
@@ -395,7 +400,7 @@ if test -z "$CLEAR" ; then
 fi
 if test "$CLEAR" = "no" ; then CLEAR= ; fi
 if test -n "$CLEAR" ; then
-	AC_DEFINE_UNQUOTED(CLEAR,"$CLEAR")
+	AC_DEFINE_UNQUOTED(CLEAR,"$CLEAR",[screen clear program])
 fi
 
 dnl  ps -what options
@@ -475,9 +480,9 @@ osword=`echo $target_os | sed -e 's/[0-9].*//'`; export osword
 changequote([, ])dnl
 AC_MSG_RESULT([Target is $target, arch $target_cpu, os $target_os, release $release, version $version])
 
-AC_DEFINE_UNQUOTED(TARGETARCHITECTURE,"$target_cpu")
-AC_DEFINE_UNQUOTED(OSNAME,"$osword")
-AC_DEFINE_UNQUOTED(OSVERSION,$version)
+AC_DEFINE_UNQUOTED(TARGETARCHITECTURE,"$target_cpu",[target CPU])
+AC_DEFINE_UNQUOTED(OSNAME,"$osword",[OS name])
+AC_DEFINE_UNQUOTED(OSVERSION,$version,[OS version])
 OSNAME=$osword
 OSVERSION=$version
 AC_SUBST(OSNAME)dnl
@@ -511,6 +516,7 @@ fi;
 
 LDCC="$CC"
 
+AC_DISABLE_SHARED
 AM_PROG_LIBTOOL
 
 AC_C_CONST
@@ -552,7 +558,7 @@ AC_TRY_COMPILE([
 ac_cv_long_long=yes, ac_cv_long_long=no)
 ])
 if test $ac_cv_long_long = yes; then
-  AC_DEFINE(HAVE_LONG_LONG)
+  AC_DEFINE(HAVE_LONG_LONG,1,[have long long])
 fi
 
 AC_CACHE_CHECK(checking for long double,
@@ -565,7 +571,7 @@ AC_TRY_COMPILE([
 ac_cv_long_double=yes, ac_cv_long_double=no)
 ])
 if test $ac_cv_long_double = yes; then
-  AC_DEFINE(HAVE_LONG_DOUBLE)
+  AC_DEFINE(HAVE_LONG_DOUBLE,1,[have long double])
 fi
 
 AC_CACHE_CHECK(checking for quad_t,
@@ -578,7 +584,7 @@ AC_TRY_COMPILE([
 ac_cv_quad_t=yes, ac_cv_quad_t=no)
 ])
 if test $ac_cv_quad_t = yes; then
-  AC_DEFINE(HAVE_QUAD_T)
+  AC_DEFINE(HAVE_QUAD_T,1,[have quad_t])
 fi
 
 
@@ -592,10 +598,12 @@ case $target_os in
 changequote(, )dnl
 		2.2.1[0-5]* )
 changequote([, ])dnl
-			AC_DEFINE(SETUID_CHECK)
+			AC_DEFINE(SETUID_CHECK,1,[run setuid check])
 			AC_MSG_WARN([Kernel may have SETUID compromise.  Update kernel])
 			;;
 		esac
+		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64"
+		CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64"
 		;;
 	 *bsdi* )
 		LDCC=shlicc
@@ -611,34 +619,34 @@ changequote([, ])dnl
 		;;
 	 *irix6* )
 		checklibs=no
-		AC_DEFINE_UNQUOTED(IRIX,$version)
+		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
 		;;
 	 *irix5* )
 		checklibs=no
-		AC_DEFINE(HAVE_BROKEN_TIOCEXCL)
-		AC_DEFINE(SVR4)
-		AC_DEFINE_UNQUOTED(IRIX,$version)
+		AC_DEFINE(HAVE_BROKEN_TIOCEXCL,1,[IRIX broken TIOCEXL])
+		AC_DEFINE(SVR4,1,[SVR4])
+		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
 		;;
 	 *irix* )
 		checklibs=no
-		AC_DEFINE_UNQUOTED(IRIX,$version)
+		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
 		;;
 	*solaris* )
-		AC_DEFINE(SVR4)
-		AC_DEFINE_UNQUOTED(SOLARIS,$version)
+		AC_DEFINE(SVR4,1,[SVR4])
+		AC_DEFINE_UNQUOTED(SOLARIS,$version,[Solaris version])
 		no_resolv_lib=yes;
 		;;
 	*hpux* )
-		AC_DEFINE(_HPUX_SOURCE)
+		AC_DEFINE(_HPUX_SOURCE,1,[_HPUX_SOURCE])
 		CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE=1"
 		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
-		AC_DEFINE_UNQUOTED(HPUX,$version)
+		AC_DEFINE_UNQUOTED(HPUX,$version,[HPUX version])
 		;;
 	*sunos* )
-		AC_DEFINE_UNQUOTED(SUNOS,$version)
+		AC_DEFINE_UNQUOTED(SUNOS,$version,[Sun OS])
 		;;
 	osf* )
-		AC_DEFINE_UNQUOTED(DECALPHA,$version)
+		AC_DEFINE_UNQUOTED(DECALPHA,$version,[DEC Alpha])
 		if test "$ac_cv_prog_gcc" != yes; then
 			CPPFLAGS="$CPPFLAGS -std";
 			CFLAGS="$CFLAGS -std";
@@ -773,18 +781,18 @@ if test -z "$ac_cv_struct_term" ; then
 fi
 ])
 if test "$ac_cv_struct_term" = "sgttyb"; then
-	AC_DEFINE(USE_SGTTYB)
-	AC_DEFINE(USE_STTY,SGTTYB)
+	AC_DEFINE(USE_SGTTYB,1,[use sgttyb])
+	AC_DEFINE(USE_STTY,SGTTYB,[use sgttyb])
 fi
 if test "$ac_cv_struct_term" = "termio"; then
-	AC_DEFINE(USE_TERMIO)
-	AC_DEFINE(USE_STTY,TERMIO)
+	AC_DEFINE(USE_TERMIO,1,[use termio])
+	AC_DEFINE(USE_STTY,TERMIO,[use termio])
 fi
 if test "$ac_cv_struct_term" = "termios"; then
-	AC_DEFINE(USE_TERMIOS)
-	AC_DEFINE(USE_STTY,TERMIOS)
+	AC_DEFINE(USE_TERMIOS,1,[use termios])
+	AC_DEFINE(USE_STTY,TERMIOS,[use termios])
 	if test "$ac_cv_header_sys_termiox_h" = yes; then
-		AC_DEFINE(USE_TERMIOX)
+		AC_DEFINE(USE_TERMIOX,1,[use termiox])
 	fi
 fi
 
@@ -802,7 +810,7 @@ if test "$ac_cv_header_a_out_h" != no ; then
 fi
 ])
 if test "$ac_cv_struct_exec" = yes; then
-  AC_DEFINE(HAVE_STRUCT_EXEC)
+  AC_DEFINE(HAVE_STRUCT_EXEC,1,[have struct exec])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -818,7 +826,7 @@ AC_TRY_COMPILE([
 ac_cv_long_long=yes, ac_cv_long_long=no)
 ])
 if test "$ac_cv_long_long" = yes; then
-  AC_DEFINE(HAVE_LONG_LONG)
+  AC_DEFINE(HAVE_LONG_LONG,1,[have long long])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -842,7 +850,7 @@ AC_TRY_COMPILE([
 ac_cv_lseek_proto=no, ac_cv_lseek_proto=yes)
 ])
 if test "$ac_cv_lseek_proto" = yes; then
-  AC_DEFINE(HAVE_LSEEK_PROTO)
+  AC_DEFINE(HAVE_LSEEK_PROTO,1,[have lseek definition])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -951,16 +959,16 @@ ac_cv_struct_fstype=$fstype
 ])
 
 if test "$ac_cv_struct_fstype" = SVR3-statfs; then
-	AC_DEFINE(USE_STATFS_TYPE,SVR3_STATFS)
+	AC_DEFINE(USE_STATFS_TYPE,SVR3_STATFS,[svr3 statfs])
 fi
 if test "$ac_cv_struct_fstype" = Ultrix-statfs; then
-	AC_DEFINE(USE_STATFS_TYPE,ULTRIX_STATFS)
+	AC_DEFINE(USE_STATFS_TYPE,ULTRIX_STATFS,[ultix statfs])
 fi
 if test "$ac_cv_struct_fstype" = statfs; then
-	AC_DEFINE(USE_STATFS_TYPE,STATFS)
+	AC_DEFINE(USE_STATFS_TYPE,STATFS,[plain statfs])
 fi
 if test "$ac_cv_struct_fstype" = statvfs; then
-	AC_DEFINE(USE_STATFS_TYPE,STATVFS)
+	AC_DEFINE(USE_STATFS_TYPE,STATVFS,[statvfs statfs])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -973,7 +981,7 @@ AC_TRY_LINK(,[extern int errno; return (errno);],
 	ac_cv_errno=yes, ac_cv_errno=no)
 ])
 if test "$ac_cv_errno" = yes; then
-	AC_DEFINE(HAVE_ERRNO)
+	AC_DEFINE(HAVE_ERRNO,1,[have errno])
 	AC_CACHE_CHECK(for errno declaration,
 	ac_cv_decl_errno,
 	[
@@ -991,7 +999,7 @@ if test "$ac_cv_errno" = yes; then
 		ac_cv_decl_errno=yes, ac_cv_decl_errno=no)
 	])
 	if test "$ac_cv_decl_errno" = yes; then
-		AC_DEFINE(HAVE_DECL_ERRNO)
+		AC_DEFINE(HAVE_DECL_ERRNO,1,[have errno declaration])
 	fi;
 fi
 
@@ -1002,7 +1010,7 @@ AC_TRY_LINK(,[extern int sys_nerr; return (sys_nerr);],
 	ac_cv_sys_nerr=yes, ac_cv_sys_nerr=no)
 ])
 if test "$ac_cv_sys_nerr" = yes; then
-	AC_DEFINE(HAVE_SYS_NERR)
+	AC_DEFINE(HAVE_SYS_NERR,1,[have sys_nerr])
 	AC_CACHE_CHECK(for sys_nerr declaration,
 	ac_cv_decl_sys_nerr,
 	[
@@ -1017,7 +1025,7 @@ if test "$ac_cv_sys_nerr" = yes; then
 	ac_cv_decl_sys_nerr_def=yes, ac_cv_decl_sys_nerr_def=no)
 	])
 	if test "$ac_cv_decl_sys_nerr" = yes; then
-		AC_DEFINE(HAVE_DECL_SYS_NERR)
+		AC_DEFINE(HAVE_DECL_SYS_NERR,1,[have sys_nerr declaration])
 	fi
 fi
 
@@ -1028,7 +1036,7 @@ ac_cv_sys_errlist,
 	ac_cv_sys_errlist=yes, ac_cv_sys_errlist=no)
 ])
 if test "$ac_cv_sys_errlist" = yes; then
-	AC_DEFINE(HAVE_SYS_ERRLIST)
+	AC_DEFINE(HAVE_SYS_ERRLIST,1,[have sys_errlist])
 	AC_CACHE_CHECK(for sys_errlist declaration,
 	ac_cv_sys_errlist_def,
 	[AC_TRY_COMPILE([
@@ -1043,7 +1051,7 @@ if test "$ac_cv_sys_errlist" = yes; then
 	ac_cv_decl_sys_errlist=yes, ac_cv_decl_sys_errlist=no)
 	])
 	if test "$ac_cv_decl_sys_errlist" = yes; then
-		AC_DEFINE(HAVE_DECL_SYS_ERRLIST)
+		AC_DEFINE(HAVE_DECL_SYS_ERRLIST,1,[sys_errlist declared])
 	fi
 fi
 
@@ -1065,7 +1073,7 @@ ac_cv_decl_setproctitle_def,
 ac_cv_decl_setproctitle_def=no, ac_cv_decl_setproctitle_def=yes)
 ])
 if test "$ac_cv_decl_setproctitle_def" = yes; then
-    AC_DEFINE(HAVE_SETPROCTITLE_DEF)
+    AC_DEFINE(HAVE_SETPROCTITLE_DEF,1,[setproctitle defined])
 fi
 
 
@@ -1088,7 +1096,7 @@ ac_cv_decl_sys_siglist_def,
 ac_cv_decl_sys_siglist_def=yes, ac_cv_decl_sys_siglist_def=no)
 ])
 if test "$ac_cv_decl_sys_siglist_def" = yes; then
-    AC_DEFINE(HAVE_SYS_SIGLIST_DEF)
+    AC_DEFINE(HAVE_SYS_SIGLIST_DEF,1,[sys_siglist defined])
 	ac_cv_sys_siglist=yes
 fi
 
@@ -1108,7 +1116,7 @@ ac_cv_decl__sys_siglist_def,
 ac_cv_decl__sys_siglist_def=yes, ac_cv_decl__sys_siglist_def=no)
 ])
 if test "$ac_cv_decl__sys_siglist_def" = yes; then
-    AC_DEFINE(HAVE__SYS_SIGLIST_DEF)
+    AC_DEFINE(HAVE__SYS_SIGLIST_DEF,1,[_sys_siglist defined])
 	ac_cv__sys_siglist=yes
 fi
 
@@ -1120,7 +1128,7 @@ ac_cv_sys_siglist,
 ac_cv_sys_siglist=yes, ac_cv_sys_siglist=no)
 ])
 if test "$ac_cv_sys_siglist" = yes; then
-    AC_DEFINE(HAVE_SYS_SIGLIST)
+    AC_DEFINE(HAVE_SYS_SIGLIST,1,[have sys_syslist])
 fi
 
 AC_CACHE_CHECK(for _sys_siglist array,
@@ -1131,56 +1139,7 @@ ac_cv__sys_siglist,
 ac_cv__sys_siglist=yes, ac_cv__sys_siglist=no)
 ])
 if test "$ac_cv__sys_siglist" = yes; then
-    AC_DEFINE(HAVE__SYS_SIGLIST)
-fi
-
-dnl ----------------------------------------------------------------------------
-dnl check to see if you have getpgrp(0) or getpgrp()
-dnl
-dnl POSIX `getpgrp(void)'  define HAVE_GETPGRP_0
-dnl BSD   `getpgrp(int)' - takes 0 as argument
-dnl                        define HAVE_GETPGRP_0 0
-
-dnl check to see if you have getpgrp(0) or getpgrp()
-
-AC_CACHE_CHECK([for getprgp() or getpgrp(0) form],
-ac_cv_func_getpgrp_0,
-[AC_TRY_COMPILE([
-#ifdef HAVE_CTYPES_H
-#include <ctypes.h>
-#endif
-#include <sys/types.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif],[getpgrp(0);],
-ac_cv_func_getpgrp_0=getpgrp_0, ac_cv_func_getpgrp_0=getpgrp)
-])
-if test "$ac_cv_func_getpgrp_0" = getpgrp_0; then
-AC_DEFINE(HAVE_GETPGRP_0,0)
-else
-AC_DEFINE(HAVE_GETPGRP_0,)
-fi
-
-dnl ----------------------------------------------------------------------------
-dnl check to see if you have setpgrp(n,m) or setpgrp()
-
-AC_CACHE_CHECK(for setprgp form,
-ac_cv_func_setpgrp_0,
-[AC_TRY_COMPILE([
-#ifdef HAVE_CTYPES_H
-#include <ctypes.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-],[setpgrp(0,0);],
-	ac_cv_func_setpgrp_0=setpgrp_0, ac_cv_func_setpgrp_0=setpgrp)
-])
-if test "$ac_cv_func_setpgrp_0" = setpgrp_0; then
-	AC_DEFINE(HAVE_SETPGRP_0)
+    AC_DEFINE(HAVE__SYS_SIGLIST,1,[have _sys_siglist])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1206,7 +1165,7 @@ AC_TRY_COMPILE([
 ac_cv_unionwait=yes, ac_cv_unionwait=no)
 ])
 if test "$ac_cv_unionwait" = yes; then
-	AC_DEFINE(HAVE_UNION_WAIT)
+	AC_DEFINE(HAVE_UNION_WAIT,1,[have union wait])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1230,7 +1189,7 @@ ac_cv_decl_gethostname_def,
 ac_cv_decl_gethostname_def=no, ac_cv_decl_gethostname_def=yes)
 ])
 if test "$ac_cv_decl_gethostname_def" = yes; then
-    AC_DEFINE(HAVE_GETHOSTNAME_DEF)
+    AC_DEFINE(HAVE_GETHOSTNAME_DEF,1,[have gethostname definition])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1259,7 +1218,7 @@ ac_cv_decl_innetgr_def=no, ac_cv_decl_innetgr_def=yes )
 ]
 )
 if test "$ac_cv_decl_innetgr_def" = yes; then
-  AC_DEFINE(HAVE_INNETGR_DEF)
+  AC_DEFINE(HAVE_INNETGR_DEF,1,[use innetgr(1)])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1281,7 +1240,7 @@ ac_cv_decl_openlog_def,
 ac_cv_decl_openlog_def=yes, ac_cv_decl_openlog_def=no)
 ])
 if test "$ac_cv_decl_openlog_def" = yes; then
-    AC_DEFINE(HAVE_OPENLOG_DEF)
+    AC_DEFINE(HAVE_OPENLOG_DEF,1,[have openlog definition])
 fi
 
 
@@ -1301,7 +1260,7 @@ ac_cv_decl_syslog_def,
 ac_cv_decl_syslog_def=yes, ac_cv_decl_syslog_def=no)
 ])
 if test "$ac_cv_decl_syslog_def" = yes; then
-    AC_DEFINE(HAVE_SYSLOG_DEF)
+    AC_DEFINE(HAVE_SYSLOG_DEF,1,[have syslog definition])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1320,7 +1279,7 @@ ac_cv_decl_in6_addr_def,
 ac_cv_decl_in6_addr_def=yes, ac_cv_decl_in6_addr_def=no)
 ])
 if test "$ac_cv_decl_in6_addr_def" = yes; then
-    AC_DEFINE(IN6_ADDR)
+    AC_DEFINE(IN6_ADDR,1,[in6_addr defined])
 fi
 
 
@@ -1336,7 +1295,7 @@ ac_cv_decl_in_addr6_def,
 ac_cv_decl_in_addr6_def=yes, ac_cv_decl_in_addr6_def=no)
 ])
 if test "$ac_cv_decl_in_addr6_def" = yes; then
-    AC_DEFINE(IN_ADDR6)
+    AC_DEFINE(IN_ADDR6,1,[in_addr6 defined])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1359,7 +1318,7 @@ ac_cv_decl_st_mtimespec_tv_nsec=yes,
 ac_cv_decl_st_mtimespec_tv_nsec=no)
 ])
 if test "$ac_cv_decl_st_mtimespec_tv_nsec" = yes; then
-    AC_DEFINE_UNQUOTED(ST_MTIMESPEC_TV_NSEC,1)
+    AC_DEFINE_UNQUOTED(ST_MTIMESPEC_TV_NSEC,1,[stat st_mtimespec.tv_nsec present])
 fi
 
 AC_CACHE_CHECK(for struct stat has st_mtimensec,
@@ -1377,7 +1336,7 @@ ac_cv_decl_st_mtimensec=yes,
 ac_cv_decl_st_mtimensec=no)
 ])
 if test "$ac_cv_decl_st_mtimensec" = yes; then
-    AC_DEFINE_UNQUOTED(ST_MTIMENSEC,1)
+    AC_DEFINE_UNQUOTED(ST_MTIMENSEC,1,[struct st_mtimensec present])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1402,7 +1361,7 @@ ac_cv_decl_strcasecmp=no,
 ac_cv_decl_strcasecmp=yes)
 ])
 if test "$ac_cv_decl_strcasecmp" = yes; then
-    AC_DEFINE_UNQUOTED(HAVE_STRCASECMP_DEF,1)
+    AC_DEFINE_UNQUOTED(HAVE_STRCASECMP_DEF,1,[have strcasecmp definition])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1427,7 +1386,7 @@ ac_cv_decl_flock=no,
 ac_cv_decl_flock=yes)
 ])
 if test "$ac_cv_decl_flock" = yes; then
-    AC_DEFINE_UNQUOTED(HAVE_FLOCK_DEF,1)
+    AC_DEFINE_UNQUOTED(HAVE_FLOCK_DEF,1,[have flock definition])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1442,35 +1401,47 @@ AC_MSG_CHECKING(for shell)
 SHELL=/bin/sh
 AC_MSG_RESULT(using $SHELL (FORCED))
 
-AM_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
 
+dnl XX AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
+dnl XX  if test "${USE_NLS}" = yes; then
+dnl XX    AC_MSG_RESULT([Using NLS, localedir ${LOCALEDIR}, need intl/libintl.a - "${USE_INCLUDED_LIBINTL}" ])
+dnl XX    if test "${USE_INCLUDED_LIBINTL}" = yes ; then
+dnl XX       CPPFLAGS="$CPPFLAGS -I \${top_builddir}/intl"
+dnl XX 	  AC_MSG_RESULT([using \${top_builddir}/intl])
+dnl XX 	  if test "$nls_cv_force_use_gnu_gettext" = no ; then
+dnl XX 		echo "NLS enabled and requested system gettext support not available."
+dnl XX 		echo " You may need to use:"
+dnl XX 		echo "  configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'"
+dnl XX 		echo " See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
+dnl XX 		exit 1;
+dnl XX       fi
+dnl XX 	  if test ! -f ${srcdir}/intl/gettext.h ; then
+dnl XX 		echo "gettext code is not in the ${srcdir}/intl directory."
+dnl XX 		echo "See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
+dnl XX 		exit 1;
+dnl XX 	  fi
+dnl XX    fi
+dnl XX    LIBS="$INTLLIBS $LIBS"
+dnl XX  else
+dnl XX    AC_MSG_RESULT([No NLS])
+dnl XX  fi   
+dnl XX  if test "$XGETTEXT" = "" ; then
+dnl XX 	 XGETTEXT=xgettext;
+dnl XX  fi
+dnl XX  AC_MSG_RESULT(using XGETTEXT $XGETTEXT)
+
+
+if test "${enable_nls}" = yes -a "$nls_cv_force_use_gnu_gettext" != yes \
+	-a "$gt_use_preinstalled_gnugettext" != "yes" ; then
+	   AC_MSG_ERROR([
+NLS enabled and requested system gettext support not available.
+You may need to use:
+configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'
+See ABOUT-NLS.LPRng in the LPRng distribution for details.
+])
+fi
 AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
- if test "${USE_NLS}" = yes; then
-   AC_MSG_RESULT([Using NLS, localedir ${LOCALEDIR}, need intl/libintl.a - "${USE_INCLUDED_LIBINTL}" ])
-   if test "${USE_INCLUDED_LIBINTL}" = yes ; then
-      CPPFLAGS="$CPPFLAGS -I \${top_builddir}/intl"
-	  AC_MSG_RESULT([using \${top_builddir}/intl])
-	  if test "$nls_cv_force_use_gnu_gettext" = no ; then
-		echo "NLS enabled and requested system gettext support not available."
-		echo " You may need to use:"
-		echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
-		echo " See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
-		exit 1;
-      fi
-	  if test ! -f ${srcdir}/intl/gettext.h ; then
-		echo "gettext code is not in the ${srcdir}/intl directory."
-		echo "See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
-		exit 1;
-	  fi
-   fi
-   LIBS="$INTLLIBS $LIBS"
- else
-   AC_MSG_RESULT([No NLS])
- fi   
- if test "$XGETTEXT" = "" ; then
-	 XGETTEXT=xgettext;
- fi
- AC_MSG_RESULT(using XGETTEXT $XGETTEXT)
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- END OF GENERAL CONFIGURATION   ---------------------------
@@ -1483,7 +1454,7 @@ AC_ARG_ENABLE( tcpwrappers,
 if test "$enableval" = "yes" ; then
  v=yes
  AC_CHECK_HEADERS(tcpd.h,
-  [AC_DEFINE(HAVE_TCPD_H)],
+  [AC_DEFINE(HAVE_TCPD_H,1,[have tcpd])],
   [AC_MSG_ERROR(tcpd.h not found);
    v=no;
   ]
@@ -1504,7 +1475,7 @@ fi
 )
 
 if test "$v" = "yes" ; then
-	 AC_DEFINE(TCPWRAPPERS)
+	 AC_DEFINE(TCPWRAPPERS,1,[tcpwrappers])
 fi
 AC_MSG_RESULT($v);dnl
 
@@ -1601,14 +1572,14 @@ if test "$SSL_ENABLE" != ""; then
 	done
 	if test "$ac_found_openssl_lib_dir" != "no"; then
 	   	echo "found in $ac_found_openssl_lib_dir"
-		CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir "
+		CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir " ;
 	else
 		echo "not found."
 		SSL_ENABLE=""
 	fi
 fi
 
-test "$SSL_ENABLE" != "" && AC_DEFINE(SSL_ENABLE)
+test "$SSL_ENABLE" != "" && AC_DEFINE(SSL_ENABLE,1,[ssl enabled])
 
 
 dnl  ssl certificate authority CERT file
@@ -1683,7 +1654,7 @@ dnl ---------------- START OF KERBEROS -----------------------------------------
 dnl Kerberos stuff again
 
 if test -n "$KERBEROS" ; then
-	echo "Kerberos checks with CFLAGS '$CFLAGS', LDFLAGS '$LDFLAGS"
+	echo "Kerberos checks with CFLAGS '$CFLAGS', CPPFLAGS '$CPPFLAGS',  LDFLAGS '$LDFLAGS"
 	if test -d /usr/kerberos/include; then
 		CPPFLAGS="$CPPFLAGS -I/usr/kerberos/include"
 	fi
@@ -1698,7 +1669,7 @@ if test -n "$KERBEROS" ; then
 Kerberos 5 support wanted and cannot find krb5.h include file
 use configure --disable-kerberos-checks or check your Kerberos 5 installation
 If you have installed kerberos in /usr/local/{lib,include} then use
-configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L/usr/local/lib
+configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib
 ])
 	fi
 	if test "$MIT_KERBEROS4" != "" ; then
@@ -1722,7 +1693,8 @@ configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L
 		], [printf("%d",sizeof(HostAddress));],
 		heimdal=yes, heimdal=no)
 		if test $heimdal = yes; then
-			AC_MSG_ERROR(You must use MIT Kerberos with LPRng)
+		    AC_MSG_WARN(compiling with CFLAGS $CFLAGS, CPPFLAGS $CPPFLAGS)
+			AC_MSG_ERROR(You appear to be using the Heimdal Kerberos krb5.h file. You must use MIT Kerberos with LPRng)
 		fi
 
 		dnl we check for the library we need to use
@@ -1743,30 +1715,28 @@ dnl X		fi;
 dnl X		if test "$found" = "" ; then
 dnl X			echo "Kerberos 5 encryption support library not found."
 dnl X			echo " You may need to use:"
-dnl X			echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
+dnl X			echo "  configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'"
 dnl X			exit 1
 dnl X		fi
 
 		SAVELIBS=$LIBS
 
-		found= 
-		if test "$found" = "" ; then
+		found=no
+		if test "$found" "!=" "yes" ; then
+			found=yes
 			LIBS=" -lkrb5 -lcrypto -lcom_err $SAVELIBS"
 			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
-			AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
-			if test "$found" = "yes" ; then
-				AC_TRY_LINK_FUNC(krb5_read_message,found="yes",found="")
-			fi
+			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
+			AC_TRY_LINK_FUNC(krb5_read_message,,found="no")
 		fi;
-		if test "$found" = "" ; then
+		if test "$found" "!=" "yes" ; then
+			found=yes
 			LIBS=" -lkrb5 -lk5crypto -lcom_err $SAVELIBS"
 			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
-			AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
-			if test "$found" = "yes" ; then
-				AC_TRY_LINK_FUNC(krb5_read_message,found="yes",found="")
-			fi
+			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
+			AC_TRY_LINK_FUNC(krb5_read_message,,found="no")
 		fi;
-		if test "$found" = "" ; then
+		if test "$found" "!=" "yes" ; then
 			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context or krb5_read_message )
 			  AC_MSG_WARN(use configure --disable-kerberos or check your Kerberos 5 installation)
 			  exit 1
@@ -1798,6 +1768,7 @@ dnl X		fi
 	AC_CACHE_CHECK(for krb5_xfree,
 	ac_cv_krb5_xfree,
 	[AC_TRY_LINK([
+	# define KRB5_DEPRECATED 1
 	#if defined(HAVE_KRB5_H)
 	#include <krb5.h>
 	#endif
@@ -1806,12 +1777,13 @@ dnl X		fi
 	ac_cv_krb5_xfree=no)
 	])
 	if test "$ac_cv_krb5_xfree" = yes; then
-		AC_DEFINE_UNQUOTED(HAVE_KRB5_XFREE,1)
+		AC_DEFINE_UNQUOTED(HAVE_KRB5_XFREE,1,[have krb5_xfree])
 	fi
 
 	AC_CACHE_CHECK(for krb_xfree,
 	ac_cv_krb_xfree,
 	[AC_TRY_LINK([
+	# define KRB5_DEPRECATED 1
 	#if defined(HAVE_KRB5_H)
 	#include <krb5.h>
 	#endif
@@ -1820,26 +1792,30 @@ dnl X		fi
 	ac_cv_krb_xfree=no)
 	])
 	if test "$ac_cv_krb_xfree" = yes; then
-		AC_DEFINE_UNQUOTED(HAVE_KRB_XFREE,1)
+		AC_DEFINE_UNQUOTED(HAVE_KRB_XFREE,1,[have krb_xfree])
 	fi
 
 	AC_CACHE_CHECK(for kerberos 4 krb_sendauth definition,
 	ac_cv_decl_krb_sendauth_def,
 	[AC_TRY_COMPILE([
+	# define KRB5_DEPRECATED 1
+	#if defined(HAVE_KRB5_H)
+	#include <krb5.h>
+	#endif
 	#if defined(HAVE_KRB_H)
 	#include <krb.h>
 	#include <des.h>
 	#endif
-	#if defined(HAVE_KERVEROSIV_KRB_H)
+	#if defined(HAVE_KERBEROSIV_KRB_H)
 	#include <kerberosIV/krb.h>
-	#endif
 	#include <kerberosIV/des.h>
-	],[krb_sendauth(1);],
+	#endif
+	],[printf("%d",krb_sendauth(1));],
 	ac_cv_decl_krb_sendauth_def=no,
 	ac_cv_decl_krb_sendauth_def=yes)
 	])
 	if test "$ac_cv_decl_krb_sendauth_def" = yes; then
-		AC_DEFINE_UNQUOTED(HAVE_KRB_AUTH_DEF,1)
+		AC_DEFINE_UNQUOTED(HAVE_KRB_AUTH_DEF,1,[have krb_sendauth defined])
 	fi
 
 fi;
@@ -1857,10 +1833,10 @@ if test "$ac_cv_prog_gcc" = yes; then
 	CPPFLAGS="$CPPFLAGS -g -W -Wall $werror -Wno-unused "
 fi;
 
-AC_OUTPUT(
+AC_OUTPUT( po/Makefile.in 
 [
 Makefile
-HOWTO/Makefile
+DOCS/Makefile
 TESTSUPPORT/Makefile
 DISTRIBUTIONS/Makefile
 UTILS/LPRng.pm
@@ -1886,7 +1862,6 @@ src/Makefile
 src/pclbanner
 src/psbanner
 po/Makefile.in
-intl/Makefile
 ],
 [
 for i in  \

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: getqueue.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -2037,7 +2037,6 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	s = 0;
 
 	{
-		int s;
 		char *datalines;
 		char *temp = Join_line_list(&controlfile,"\n");
 		DEBUG3( "Fix_control: control info '%s'", temp );
@@ -2090,10 +2089,8 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 
 /************************************************************************
  * Create_control:
- *  Create the control file,  setting the various entries
- *  to be compatible with transfer to the remote location
- * 1. info will have fromhost, priority, and number information
- *   if not, you will need to add it.
+ *  Create the control file,  setting the various entries.  This is done
+ *  on job submission.
  *
  ************************************************************************/
 
@@ -2114,6 +2111,59 @@ int Create_control( struct job *job, char *error, int errlen,
 		Set_str_value(&job->info,FROMHOST,FQDNRemote_FQDN);
 		fromhost = Find_str_value(&job->info,FROMHOST,Value_sep);
 	}
+	/*
+	 * accounting name fixup
+	 * change the accounting name ('R' field in control file)
+	 * based on hostname
+	 *  hostname(,hostname)*=($K|value)*(;hostname(,hostname)*=($K|value)*)*
+	 *  we have a semicolon separated list of entrires
+	 *  the RemoteHost_IP is compared to these.  If a match is found then the
+	 *    user name (if any) is used for the accounting name.
+	 *  The user name list has the format:
+	 *  ${K}  - value from control file or printcap entry - you must use the
+	 *          ${K} format.
+	 *  username  - user name value to substitute.
+	 */
+	if( Accounting_namefixup_DYN ){
+		struct line_list l, listv;
+		char *accounting_name = 0;
+		Init_line_list(&l);
+		Init_line_list(&listv);
+
+		DEBUG1("Create_control: Accounting_namefixup '%s'", Accounting_namefixup_DYN );
+		Split(&listv,Accounting_namefixup_DYN,";",0,0,0,0,0,0);
+		for( i = 0; i < listv.count; ++i ){
+			char *s, *t;
+			int j;
+			s = listv.list[i];
+			if( (t = safestrpbrk(s,"=")) ) *t++ = 0;
+			Free_line_list(&l);
+			DEBUG1("Create_control: hostlist '%s'", s );
+			Split(&l,s,",",0,0,0,0,0,0);
+			if( Match_ipaddr_value(&l,&RemoteHost_IP) ){
+				Free_line_list(&l);
+				DEBUG1("Create_control: match, using users '%s'", t );
+				Split(&l,t,",",0,0,0,0,0,0);
+				if(DEBUGL1)Dump_line_list("Create_control: before Fix_dollars", &l );
+				Fix_dollars(&l,job,0,0);
+				if(DEBUGL1)Dump_line_list("Create_control: after Fix_dollars", &l );
+				for( j = 0; j < l.count; ++j ){
+					if( !ISNULL(l.list[j]) ){
+						accounting_name = l.list[j];
+						break;
+					}
+				}
+				break;
+			}
+		}
+		DEBUG1("Create_control: accounting_name '%s'", accounting_name );
+		if( !ISNULL(accounting_name) ){
+			Set_str_value(&job->info,ACCNTNAME,accounting_name );
+		}
+		Free_line_list(&l);
+		Free_line_list(&listv);
+	}
+
 	if( Force_IPADDR_hostname_DYN ){
 		char buffer[SMALLBUFFER];
 		const char *const_s;

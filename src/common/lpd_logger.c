@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: lpd_logger.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -163,7 +163,7 @@ int Dump_queue_status(int outfd)
 
 void Logger( struct line_list *args )
 {
-	char *port, *s, *path, *tempfile;
+	char *s, *path, *tempfile;
 	int writefd,m, timeout, readfd;
 	time_t start_time, current_time;
 	int elapsed, left, err;
@@ -191,11 +191,10 @@ void Logger( struct line_list *args )
 	/* we copy to a local buffer */
 	host[0] = 0;
 	safestrncpy(host, Logger_destination_DYN );
-	port = "2001";
 	/* OK, we try to open a connection to the logger */
-	if( (s = safestrchr( host, '%')) ){
-		*s++ = 0;
-		port = s;
+	if( !(s = safestrchr( host, '%')) ){
+		int len = strlen(host);
+		SNPRINTF(host+len, sizeof(host)-len) "%2001" );
 	}
 
 	readfd = Find_flag_value(args,INPUT,Value_sep);
@@ -205,7 +204,7 @@ void Logger( struct line_list *args )
 	/* now we set up the IO file */
 	Set_nonblock_io(readfd);
 	
-	DEBUGF(DLOG2)("Logger: host '%s', port %s", host, port );
+	DEBUGF(DLOG2)("Logger: host '%s'", host );
 
 	time( &start_time );
 	status_fd = Make_temp_fd( &tempfile );
@@ -261,9 +260,8 @@ void Logger( struct line_list *args )
 			DEBUGF(DLOG2)("Logger: writefd fd %d, max timeout %d, left %d",
 					writefd, timeout, left );
 			if( left <= 0 || writefd == -2 ){
-				writefd = Link_open(host, port, Connect_timeout_DYN, 0, 0 );
-				DEBUGF(DLOG2)("Logger: open fd %d, host '%s', port '%s'",
-						writefd, host, port );
+				writefd = Link_open(host, Connect_timeout_DYN, 0, 0 );
+				DEBUGF(DLOG2)("Logger: open fd %d", writefd );
 				if( writefd >= 0 ){
 					Set_nonblock_io( writefd );
 					if( lseek( status_fd, 0, SEEK_SET) == -1 ){

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: accounting.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -123,14 +123,11 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			close(fd);
 		} else if( isalnum(cval(Accounting_file_DYN))
 			&& safestrchr( Accounting_file_DYN, '%' ) ){
-			char *host, *port;
 			/* now try to open a connection to a server */
-			host = safestrdup(Accounting_file_DYN,__FILE__,__LINE__);
-			port = safestrchr( host, '%' );
-			*port++ = 0;
+			char *host = Accounting_file_DYN;
 			
-			DEBUG2("Do_accounting: connecting to '%s'%%'%s'",host,port);
-			if( (tempfd = Link_open(host,port,timeout,0, 0 )) < 0 ){
+			DEBUG2("Do_accounting: connecting to '%s'",host);
+			if( (tempfd = Link_open(host,timeout,0, 0 )) < 0 ){
 				err = errno;
 				Errorcode= JFAIL;
 				LOGERR_DIE(LOG_INFO)
@@ -138,7 +135,6 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 					Accounting_file_DYN, Errormsg(err) );
 			}
 			DEBUG2("Setup_accounting: socket %d", tempfd );
-			if( host ) free(host); host = 0;
 			if( Write_fd_str( tempfd, args.list[0] ) < 0 ){
 				Errorcode= JFAIL;
 				LOGERR_DIE(LOG_INFO)"Do_accounting: write to '%s' failed", command);

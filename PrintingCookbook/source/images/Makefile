@@ -1,3 +1,3 @@
 all:
-	fiximages *.png
+	./fiximages *.png
 	cp x_* ..

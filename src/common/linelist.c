@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: linelist.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -2125,7 +2125,6 @@ void Expand_hash_values( struct line_list *hash )
 {
 	char *u, *s;
 	int i;
-	struct keywords *var;
 
 	/* check to see if you need to expand */
 	for( i = 0; i < hash->count; ++i ){
@@ -3202,8 +3201,9 @@ void Fix_Z_opts( struct job *job )
  *  $X   with -X<value>
  *  $0X  with -X <value>
  *  $-X  with  <value>
- *  $0-X with  <value>
- *  ${ss}  with value of printcap option ss 
+ *  $0-X with  <value> (same as $-X)
+ *  ${s}   with value of control file parameter s (must be upper case)
+ *  ${ss}  with value of printcap option ss
  *  $'{ss} with quoted value of printcap option ss
  *
  *  nosplit - do not split the option value over two entries
@@ -3274,7 +3274,11 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 					break;
 				}
 				*rest++ = 0;
-				str = Find_value( &PC_entry_line_list, s, Value_sep );
+				if( !cval(s+1) && isupper(cval(s)) ){
+					str = job?Find_str_value( &job->info,s,Value_sep):0;
+				} else {
+					str = Find_value( &PC_entry_line_list, s, Value_sep );
+				}
 				notag = 1;
 				space = 0;
 			} else {

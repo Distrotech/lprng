@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: krb5_auth.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -24,6 +24,14 @@
 
 #if defined(KERBEROS)
 
+/*
+ * deprecated: krb5_auth_con_initivector, krb5_get_in_tkt_with_keytab
+ * WARNING: the current set of KRB5 support examples are not compatible
+ * with the legacy LPRng use of the KRB utility functions.  This means
+ * that sooner or later it will be necessary to severly upgrade LPRng
+ * or to use an older version of Kerberos
+ */
+# define KRB5_DEPRECATED 1
 # include <krb5.h>
 # include <com_err.h>
 
@@ -42,6 +50,9 @@
 #  endif
 # endif
 
+#if !defined(KRB5_PROTOTYPE)
+#define KRB5_PROTOTYPE(X) X
+#endif
  extern krb5_error_code krb5_read_message 
 	KRB5_PROTOTYPE((krb5_context,
 		   krb5_pointer, 
@@ -1004,12 +1015,11 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 # if defined(MIT_KERBEROS4)
 #  if defined(HAVE_KRB_H)
 #   include <krb.h>
-#   include <des.h>
-#  else
-#   if defined(HAVE_KERBEROSIV_KRB_H)
-#    include <kerberosIV/krb.h>
-#    include <kerberosIV/des.h>
-#   endif
+/* #   "des.h" */
+#  endif
+#  if defined(HAVE_KERBEROSIV_KRB_H)
+#   include <kerberosIV/krb.h>
+#   include <kerberosIV/des.h>
 #  endif
 
 #  if !defined(HAVE_KRB_AUTH_DEF)

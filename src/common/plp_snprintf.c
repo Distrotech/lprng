@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 1994-2002 Patrick Powell, San Diego, CA <papowell@lprng.com>
+ * Copyright 1994-2003 Patrick Powell, San Diego, CA <papowell@lprng.com>
  **************************************************************************/
 
 /*
@@ -485,7 +485,7 @@
  
  
  static char *const _id = "plp_snprintf V2000.08.18 Copyright Patrick Powell 1988-2000 "
- "$Id: plp_snprintf.c,v 1.48 2003/04/15 23:37:42 papowell Exp $"
+ "$Id: plp_snprintf.c,v 1.57 2003/09/05 20:07:19 papowell Exp $"
  " LOCAL REVISIONS: <NONE>";
 
 /* varargs declarations: */
@@ -683,7 +683,13 @@
 				return;
 			case '-': ljust = 1; goto nextch;
 			case '.': set_precision = 1; precision = 0; goto nextch;
-			case '*': len = va_arg( args, int ); goto nextch;
+			case '*':
+				if( set_precision ){
+					precision = va_arg( args, int );
+				} else {
+					len = va_arg( args, int );
+				}
+				goto nextch;
 			case '0': /* set zero padding if len not set */
 				if(len==0 && set_precision == 0 ) zpad = '0';
 			case '1': case '2': case '3':

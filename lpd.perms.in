@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms.in,v 1.49 2003/04/15 23:37:41 papowell Exp $
+# $Id: lpd.perms.in,v 1.58 2003/09/05 20:07:15 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -16,7 +16,7 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.8.21
+## VERSION=3.8.22
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
@@ -222,6 +222,10 @@
 ## #Do not allow forwarded jobs or requests
 ##   REJECT SERVICE=R,C,M FORWARD
 ## 
+
+##  If you want to have connections only from programs on
+##  the local host,  then uncomment the next line:
+#REJECT NOT SERVER 
 
 ## You can make sure that connections come from a privileged port.
 ## Default is to allow them from any port so that non-setuid programs

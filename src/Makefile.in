@@ -51,7 +51,7 @@ SHELL = @SHELL@
 LDCC=@LDCC@
 
 # any libs that need to be used to get these programs to compile:
-LIBS= @LIBS@
+LIBS= @LIBS@ @LTLIBINTL@
 
 # what libtool
 LIBTOOL=@LIBTOOL@
@@ -213,6 +213,9 @@ ALL_OBJS = $(LIBLPR_OBJS) \
 	$(CHECKPC_OBJS) $(LPF_OBJS) $(LPRACCNT_OBJS) $(MONITOR_OBJS) $(LPBANNER_OBJS)
 
 all: $(TARGET)
+
+relink:
+	rm -f ${TARGET}
 
 defs.h: Makefile
 	cp /dev/null $@
@@ -435,7 +438,6 @@ depend: /tmp/dep /tmp/order
 	cat /tmp/dep; ) >/tmp/Makefile
 	mv ${SRC}/Makefile ${SRC}/Makefile.old
 	cp /tmp/Makefile ${SRC}/Makefile
-
 
 /tmp/dep:: Makefile
 /tmp/dep:: $(ALL_OBJS)

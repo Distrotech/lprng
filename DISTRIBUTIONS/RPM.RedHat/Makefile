@@ -1,6 +1,7 @@
-VERSION=3.8.21
+PACKAGE=LPRng
+VERSION=3.8.22
 RELEASE=1
-RPM=/usr/src/redhat/RPMS/i386/LPRng-${VERSION}-${RELEASE}.i386.rpm
+RPM=/usr/src/redhat/RPMS/i386/${PACKAGE}-${VERSION}-${RELEASE}.i386.rpm
 CONFIGURE_ARGS=--prefix=/usr --sysconfdir=/etc --with-filterdir=/usr/libexec/filters --with-ld_library_path=/lib:/usr/lib:/usr/local/lib --with-filter_path=/bin:/usr/bin:/usr/libexec:/usr/local/libexec:/usr/sbin:/var/spool/bin
 
 COPY_HERE=
@@ -16,27 +17,27 @@ rpm:	${RPM}
 testi:
 	rpm -i --test ${RPM}
 testu:
-	rpm -U --test ${RPM}
+	rpm -U --test ${RPM} || echo $$?
 dou:
-	rpm -U  ${RPM}
+	rpm -U  ${RPM} || echo ERROR $$?
 doU:
-	rpm -U --force ${RPM}
+	rpm -U --force ${RPM} || echo ERROR $$?
 undo:
-	rpm -e --nodeps LPRng
+	rpm -e --nodeps ${PACKAGE}
 
-${RPM}: LPRng.spec
+${RPM}: ${PACKAGE}.spec
 	cp lpd.init /usr/src/redhat/SOURCES/lpd.init
-	rpm -ba LPRng.spec
+	rpmbuild -ba ${PACKAGE}.spec
 
 clean:
 	rm -f *.tgz
-	rm -rf /usr/src/redhat/BUILD/LPRng-*
+	rm -rf /usr/src/redhat/BUILD/${PACKAGE}-*
 
 update:
 	perl -spi -e "\
 		s|^Version: .*|Version: ${VERSION}|; \
 		s|^Release: .*|Release: ${RELEASE}|; \
-		" LPRng.spec;
+		" ${PACKAGE}.spec;
 
 checkit: update
 	chown root.bin *

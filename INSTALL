@@ -291,14 +291,16 @@ have are still present:
     /????/lpd         # start up LPD
     lpq;    # test it with LPQ
 
-If you are running on Solaris, see the Solaris section in the
-LPRng-HOWTO for further instructions on integration with the LP subsystem.
+If you are running on Solaris, see the Solaris section in the LPRng
+Reference Manual for further instructions on integration with the
+LP subsystem.
 
 PRINTCAP FILES:
 
 Read the comments in the /etc/printcap.sample for details on
 how to set up a simple set of printcap entries.  You may also
-want to read the LPRng HOWTO documentation.
+want to read the LPRng Reference Manual and the Printing Cookbook
+documentation.
 
 SECURITY WARNINGS:
 
@@ -337,9 +339,9 @@ SECURITY WARNINGS:
        remote print spooler.  This now reduces the problem
        to a much more manageable level.
 
-  If you are truly paranoid then you should read the LPRng HOWTO
-  section on Authentication,  and add either PGP or Kerberos authentication
-  to your system.
+  If you are truly paranoid then you should read the LPRng Refernece
+  Manual and the Printing Cookbook sections on Authentication,  and
+  add either PGP or Kerberos authentication to your system.
 
 KERBEROS:
 
@@ -359,8 +361,8 @@ KERBEROS:
   where the Kerberos libraries are and /usr/local/include where the include
   files are.
 
-    --with-ldopts="-L/usr/local/lib" \
-     --with-cppopts="-I/usr/local/include"
+    --LDFLAGS="-L/usr/local/lib" \
+     --CPPFLAGS="-I/usr/local/include"
 
          --- CONFIGURE (autoconf) DOCUMENTATION ---
 

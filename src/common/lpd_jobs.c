@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -195,7 +195,8 @@ int cmp_server( const void *left, const void *right, const void *p )
 	tr = Find_flag_value(r,DONE_TIME,Value_sep);
 	if(DEBUGL5)Dump_line_list("cmp_server - l",l);
 	if(DEBUGL5)Dump_line_list("cmp_server - r",r);
-	DEBUG5("cmp_server: tl %d, tr %d, cmp %d", tl, tr, tl - tr );
+	DEBUG5("cmp_server: tl %d, tr %d, cmp %d, p %d",
+		tl, tr, tl - tr, (int)(p!=0) );
 	return( tl - tr );
 }
 
@@ -2156,22 +2157,21 @@ void Setup_user_reporting( struct job *job )
 	host = safestrdup(host,__FILE__,__LINE__);
 	/* OK, we try to open a connection to the logger */
 	if( (s = safestrchr( host, '%')) ){
-		*s++ = 0;
+		/* *s++ = 0; */
 		port = s;
 	}
 	if( (s = safestrchr( port, ',')) ){
 		*s++ = 0;
 		protocol = s;
-	}
-
-	if( protocol && safestrcasecmp( protocol, "TCP" ) == 0 ){
-		protocol = "UDP";
-		prot_num = SOCK_STREAM;
+		if( safestrcasecmp( protocol, "TCP" ) == 0 ){
+			protocol = "TCP";
+			prot_num = SOCK_STREAM;
+		}
 	}
 		
 	DEBUG3("setup_logger_fd: host '%s', port '%s', protocol %d",
 		host, port, prot_num );
-	Mail_fd = Link_open_type(host, port, 10, prot_num, 0, 0 );
+	Mail_fd = Link_open_type(host, 10, prot_num, 0, 0 );
 	DEBUG3("Setup_user_reporting: Mail_fd '%d'", Mail_fd );
 
 	if( Mail_fd > 0 && prot_num == SOCK_STREAM && Exit_linger_timeout_DYN > 0 ){
@@ -2368,7 +2368,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	struct stat statb;
 	time_t tm;
 	char tm_str[32];
-	char *s, *host, *port, *filter;
+	char *host, *port, *filter;
 	struct line_list args;
 
 	Init_line_list(&args);
@@ -2462,19 +2462,14 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 		default:
 			if( safestrchr( lp_device, '%' ) ){
 				/* we have a host%port form */
-				if( host == 0 ){
-					host = safestrdup(lp_device, __FILE__,__LINE__);
-					s = safestrchr(host,'%');
-					*s++ = 0;
-					port = s;
-				}
+				host = lp_device;
 			} else {
 				Errorcode = JABORT;
 				FATAL(LOG_ERR) "Printer_open: printer '%s', bad 'lp' entry '%s'", 
 					Printer_DYN, lp_device );
 			}
 			DEBUG1( "Printer_open: doing link open '%s'", lp_device );
-			*status_fd = device_fd = Link_open( host, port, connect_tmout, 0, 0 );
+			*status_fd = device_fd = Link_open( host, connect_tmout, 0, 0 );
             err = errno;
 			break;
 		}
@@ -2535,7 +2530,6 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			*poll_for_status = 1;
 		}
 	}
-	if( host ) free( host ); host = 0;
 
 	DEBUG1 ("Printer_open: '%s' is fd %d", lp_device, device_fd);
 	return( device_fd );
@@ -2877,9 +2871,9 @@ int Remove_done_jobs( void )
 {
 	struct job job;
 	char *id;
-	time_t tm, when;
 	int removed = 0;
-	int job_index, info_index, pid, printable, held, move, remove, error, done, i, number, incoming;
+	time_t tm;
+	int job_index, info_index, pid, remove, error, done, incoming;
 	struct line_list info;
 	char tval[SMALLBUFFER];
 
@@ -2923,7 +2917,6 @@ int Remove_done_jobs( void )
 			/* Setup_cf_info( &job, 0 ); */
 			Remove_job( &job );
 		} else if( Done_jobs_DYN > 0 ){
-			char *s;
 			SNPRINTF(tval,sizeof(tval)) "0x%08x", remove );
 			Set_str_value(&info, tval, hold_file );
 		}

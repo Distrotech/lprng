@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.48 2003/04/15 23:37:43 papowell Exp $
+ * $Id: getqueue.h,v 1.57 2003/09/05 20:07:20 papowell Exp $
  ***************************************************************************/
 
 
@@ -16,6 +16,7 @@ EXTERN char *CTRL_A_str DEFINE( = "\001" );
 
 /* SSL */
 EXTERN const char * ACTION				DEFINE( = "action" );
+EXTERN const char * ACCNTNAME			DEFINE( = "R" );
 EXTERN const char * ACTIVE_TIME			DEFINE( = "active_time" );
 EXTERN const char * ADDR				DEFINE( = "addr" );
 EXTERN const char * ALL					DEFINE( = "all" );

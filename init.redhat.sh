@@ -15,10 +15,10 @@
 # Source networking configuration and check that networking is up.
 if [ -f /etc/sysconfig/network ] ; then
 	. /etc/sysconfig/network
-	[ ${NETWORKING} = "no" ] && exit 0
+	[ "${NETWORKING}" = "no" ] && exit 0
 fi
 
-[ -x ${LPD_PATH} ] || exit 0
+[ -x "${LPD_PATH}" ] || exit 0
 
 prog=lpd
 

@@ -30,33 +30,31 @@ fix () {
         mkdir -p $d
     fi
     if [ -f $v.sample ] ; then
-        if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
+        if [ $v.sample != $p.sample ] ; then ${INSTALL} $v.sample $p.sample; fi
     elif [ -f $v ] ; then
-        if [ $v != $p.sample ] ; then cp $v $p.sample; fi
+        if [ $v != $p.sample ] ; then ${INSTALL} $v $p.sample; fi
     else
         echo "Do not have $v.sample or $v"
     fi
     if [ ! -f $p.sample ] ; then
         echo "Do not have $p.sample"
     elif [ ! -f $p ] ; then
-        chmod 644 $p.sample
-        cp $p.sample $p;
-        chmod 644 $p;
+        ${INSTALL} -m 644 $p.sample $p;
     fi;
 }
 # we use the /usr/local/etc/rc.d method to start
 # lpd
 # we have to take them from one place and put in another
 if [ "X$MAKEPACKAGE" = "XYES" ] ; then
-    hold=${DESTDIR}${PREFIX}/etc
+    hold=${DESTDIR}${PREFIX}/etc/lpd
     echo "Setting up configuration files path for package" ${hold}
     # we put files into the destination
     if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
-    cp lpd.perms ${hold}/lpd.perms.sample
-    cp lpd.conf ${hold}/lpd.conf.sample
-    cp printcap ${hold}/printcap.sample
+    ${INSTALL} lpd.perms ${hold}/lpd.perms.sample
+    ${INSTALL} lpd.conf ${hold}/lpd.conf.sample
+    ${INSTALL} printcap ${hold}/printcap.sample
     if [ "$INIT" != no ] ; then
-        cp init.freebsd ${hold}/lprng.sh
+        ${INSTALL} -m 755 init.freebsd ${hold}/lprng.sh
     fi
 elif [ "X$MAKEINSTALL" = XYES ] ; then
 	# we have the port pre-install operation
@@ -66,12 +64,12 @@ elif [ "X$MAKEINSTALL" = XYES ] ; then
 		echo "Creating symbolic link from /usr/man to /usr/share/man"
 		v=`ln -s ${DESTDIR}/usr/share/man ${DESTDIR}/usr/man`;
 	fi
+    hold=${DESTDIR}${PREFIX}/etc/lpd
     echo "Setting up configuration files path for installation" ${hold}
-    hold=${DESTDIR}${PREFIX}/etc
     if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
-    cp lpd.perms ${hold}/lpd.perms.sample
-    cp lpd.conf ${hold}/lpd.conf.sample
-    cp printcap ${hold}/printcap.sample
+    ${INSTALL} lpd.perms ${hold}/lpd.perms.sample
+    ${INSTALL} lpd.conf ${hold}/lpd.conf.sample
+    ${INSTALL} printcap ${hold}/printcap.sample
 
     fix ${hold}/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
     fix ${hold}/lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
@@ -81,13 +79,12 @@ elif [ "X$MAKEINSTALL" = XYES ] ; then
 		if [ -f /etc/rc.conf ] ; then
 			perl -spi.bak -e 's/^lpd_enable/#lpd_enable/;' ${DESTDIR}/etc/rc.conf 
 		fi
-		cp init.freebsd ${hold}/lprng.sh
+		${INSTALL} -m 755 init.freebsd ${hold}/lprng.sh
 		init=${DESTDIR}/usr/local/etc/rc.d/lprng.sh
 		echo "Setting up init script $init using init.freebsd"
 		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
 		rm -f $init
-		cp init.freebsd $init
-		chmod 744 $init
+		${INSTALL} -m 755 init.freebsd $init
 
 		echo "Stopping LPD"
 		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
@@ -101,15 +98,14 @@ elif [ "X$MAKEINSTALL" = XYES ] ; then
     fi
 elif [ "X$2" = "XPOST-INSTALL" ] ; then
     # when doing an install from a package we get the file from the package
-    hold=etc
+    hold=etc/lpd
     if [ -f ${hold}/lpd.perms.sample ] ; then
         fix ${hold}/lpd.perms "${LPD_PERMS_PATH}"
         fix ${hold}/lpd.conf "${LPD_CONF_PATH}"
         fix ${hold}/printcap "${PRINTCAP_PATH}"
 		if [ "$INIT" != no ] ; then
 			init=/usr/local/etc/rc.d/lprng.sh
-			cp ${hold}/lprng.sh $init;
-			chmod 755 $init;
+			${INSTALL} -m 755 ${hold}/lprng.sh $init;
 			if [ -f /etc/rc.conf ] ; then
 				perl -spi.bak -e 's/^lpd_enable/#lpd_enable/;' /etc/rc.conf 
 			fi

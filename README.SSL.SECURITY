@@ -381,7 +381,7 @@ Example:
   ${HOME}/.ssl_password file.
     The LPD server uses the ssl_server_password_file option to specify
   the location of a file containing the password.
-    See the LPRng HOWTO for details, or the printcap(5) man page.
+    See the LPRng Refernce Manual for details, or the printcap(5) man page.
   
   key file is /etc/lpd/ssl.ca/ca.key
   Encrypt the private key now? [Y/n]: y
@@ -445,7 +445,7 @@ Example:
   ${HOME}/.ssl_password file.
     The LPD server uses the ssl_server_password_file option to specify
   the location of a file containing the password.
-    See the LPRng HOWTO for details, or the printcap(5) man page.
+    See the LPRng Refernce Manual for details, or the printcap(5) man page.
   
   key file is /etc/lpd/ssl.certs/papowell.key
   Encrypt the private key now? [Y/n]: y
@@ -512,7 +512,7 @@ CREATE A SIGNING CERT
   ${HOME}/.ssl_password file.
     The LPD server uses the ssl_server_password_file option to specify
   the location of a file containing the password.
-    See the LPRng HOWTO for details, or the printcap(5) man page.
+    See the LPRng Refernce Manual for details, or the printcap(5) man page.
   
   key file is /etc/lpd/ssl.ca/signer-02.key
   Encrypt the private key now? [Y/n]:

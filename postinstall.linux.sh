@@ -24,37 +24,34 @@ fix () {
 		mkdir -p $d;
 	fi
 	if [ -f $v.sample ] ; then
-		if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
+		if [ $v.sample != $p.sample ] ; then ${INSTALL} -m 644 $v.sample $p.sample; fi
 	elif [ -f $v ] ; then
-		if [ $v != $p.sample ] ; then cp $v $p.sample; fi
+		if [ $v != $p.sample ] ; then ${INSTALL} -m 644 $v $p.sample; fi
 	else
 		echo "Do not have $v.sample or $v"
 	fi
 	if [ ! -f $p.sample ] ; then
 		echo "Do not have $p.sample"
 	elif [ ! -f $p ] ; then
-		chmod 644 $p.sample
-		cp $p.sample $p;
-		chmod 644 $p;
+		${INSTALL} -m 644 $p.sample $p;
 	fi;
 }
 echo "Installing configuration files"
 init=${DESTDIR}/etc/rc.d/init.d/lpd
 if [ "X$MAKEINSTALL" = "XYES" ] ; then
-	if [ "$INIT" != "no" ] ; then
-		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-        if [ -f /etc/redhat-release ] ; then
-			cp init.redhat $init;
-		elif [ -d /lib/lsb ] ; then
-			cp init.linuxsb $init;
-		else
-			cp init.linux $init;
-		fi
-		chmod 744 $init
-	fi;
 	fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
 	fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
 	fix printcap "${DESTDIR}${PRINTCAP_PATH}"
+	if [ "$INIT" != "no" ] ; then
+		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
+        if [ -f /etc/redhat-release ] ; then
+			${INSTALL} -m 755 init.redhat $init;
+		elif [ -d /lib/lsb ] ; then
+			${INSTALL} -m 755 init.linuxsb $init;
+		else
+			${INSTALL} -m 755 init.linux $init;
+		fi
+	fi;
 else
 	fix "${LPD_PERMS_PATH}" "${DESTDIR}${LPD_PERMS_PATH}"
 	fix "${LPD_CONF_PATH}" "${DESTDIR}${LPD_CONF_PATH}"

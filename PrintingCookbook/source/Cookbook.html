@@ -1,10 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
 <html>
   <head>
     <meta name="generator" content="HTML Tidy, see www.w3.org">
     <title>The Printing Cookbook</title>
     <meta name="GENERATOR" content=
-    "Modular DocBook HTML Stylesheet Version 1.73 ">
+    "Modular DocBook HTML Stylesheet Version 1.7">
   </head>
 
   <body class="BOOK" bgcolor="#FFFFFF" text="#000000" link=
@@ -27,20 +28,22 @@
         <h1 class="TITLE"><a name="AEN2">The Printing
         Cookbook</a></h1>
 
-        <h3 class="AUTHOR"><a name="AEN4">Patrick A Powell</a></h3>
+        <h3 class="AUTHOR"><a name="AEN4"></a>Patrick A Powell</h3>
 
         <div class="AFFILIATION">
           <div class="ADDRESS">
-            <p class="ADDRESS">papowell@lprng.com<br>
+            <p class="ADDRESS"><code class="EMAIL">&lt;<a href=
+            "mailto:papowell@lprng.com">papowell@lprng.com</a>&gt;</code><br>
+
             AStArt&nbsp;Technologies<br>
-            9475&nbsp;Chesapeake&nbsp;Dr,&nbsp;Suite&nbsp;D,<br>
-            San&nbsp;Diego,&nbsp;CA&nbsp;92123<br>
+            6741&nbsp;Convoy&nbsp;Court,<br>
+            San&nbsp;Diego,&nbsp;CA&nbsp;92111<br>
             Phone&nbsp;858-874-6543<br>
-            Fax&nbsp;858-279-8424</p>
+            Fax&nbsp;858-751-2435</p>
           </div>
         </div>
 
-        <p class="COPYRIGHT">Copyright &copy; 2001 by Patrick
+        <p class="COPYRIGHT">Copyright &copy; 2001 Patrick
         Powell</p>
 
         <div>
@@ -191,8 +194,8 @@
               <dt>7.1. <a href="#AEN1205">Implementing Smart Load
               Balancing</a></dt>
 
-              <dt>7.2. <a href="#AEN1234">Using <tt class=
-              "LITERAL">:chooser</tt> Exit Codes</a></dt>
+              <dt>7.2. <a href="#AEN1234">Using <var class=
+              "LITERAL">:chooser</var> Exit Codes</a></dt>
             </dl>
           </dd>
 
@@ -440,8 +443,8 @@
           <dt>2-23. <a href="#AEN357">Setting Queue Debug
           Options</a></dt>
 
-          <dt>2-24. <a href="#AEN364"><tt class="LITERAL">log</tt>
-          File</a></dt>
+          <dt>2-24. <a href="#AEN364"><var class=
+          "LITERAL">log</var> File</a></dt>
 
           <dt>3-1. <a href="#AEN373">Printer Types</a></dt>
 
@@ -477,8 +480,8 @@
           <dt>3-14. <a href="#WRAPPER">Samba <b class=
           "APPLICATION">smbclient</b> Wrapper</a></dt>
 
-          <dt>3-15. <a href="#PC"><tt class=
-          "LITERAL">$PRINTCAP_ENTRY</tt></a></dt>
+          <dt>3-15. <a href="#PC"><var class=
+          "LITERAL">$PRINTCAP_ENTRY</var></a></dt>
 
           <dt>3-16. <a href="#AEN697">Novell and Appletalk
           Wrappers</a></dt>
@@ -606,8 +609,8 @@
           <dt>6-1. <a href="#NB1">Changing JetDirect
           Configuration</a></dt>
 
-          <dt>6-2. <a href="#AEN1085">Printcap Option <tt class=
-          "LITERAL">:sh</tt> and <b class="APPLICATION">lpr</b> -h
+          <dt>6-2. <a href="#AEN1085">Printcap Option <var class=
+          "LITERAL">:sh</var> and <b class="APPLICATION">lpr</b> -h
           (No Header) Option</a></dt>
 
           <dt>6-3. <a href="#AEN1096">Removing Banner
@@ -657,14 +660,14 @@
 
           <dt>8-2. <a href="#AEN1253">Not So Evil Way</a></dt>
 
-          <dt>8-3. <a href="#AEN1262">Add Options Using <tt class=
-          "LITERAL">:append_z</tt></a></dt>
+          <dt>8-3. <a href="#AEN1262">Add Options Using <var class=
+          "LITERAL">:append_z</var></a></dt>
 
           <dt>8-4. <a href="#AEN1270">Diabolically Fiendishly
           Clever Method</a></dt>
 
-          <dt>8-5. <a href="#UPDATEZ">Using <tt class=
-          "LITERAL">update_z</tt></a></dt>
+          <dt>8-5. <a href="#UPDATEZ">Using <var class=
+          "LITERAL">update_z</var></a></dt>
 
           <dt>9-1. <a href="#AEN1300">Hold Queues</a></dt>
 
@@ -687,8 +690,8 @@
           <dt>9-8. <a href="#AEN1346">The <b class=
           "APPLICATION">update_class</b> Filter</a></dt>
 
-          <dt>10-1. <a href="#AEN1359">Using <tt class=
-          "LITERAL">:bk</tt> (Berkeley Kompatible) Flag</a></dt>
+          <dt>10-1. <a href="#AEN1359">Using <var class=
+          "LITERAL">:bk</var> (Berkeley Kompatible) Flag</a></dt>
 
           <dt>11-1. <a href="#AEN1368">Templates in
           Printcaps</a></dt>
@@ -738,7 +741,7 @@
       <div class="PREFACE">
         <hr>
 
-        <h1><a name="AEN21">Preface</a></h1>
+        <h1><a name="AEN21"></a>Preface</h1>
 
         <p>A good cookbook will provide the reader not only with a
         set of recipes that sound delicious but also with a set of
@@ -771,8 +774,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN34">1.
-          Acknowledgements</a></h1>
+          <h2 class="SECT1"><a name="AEN34">1.
+          Acknowledgements</a></h2>
 
           <p>I would like to thank all of the <b class=
           "APPLICATION">LPRng</b> users who so relentlessly tried
@@ -786,7 +789,7 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN40">2. Conventions</a></h1>
+          <h2 class="SECT1"><a name="AEN40">2. Conventions</a></h2>
 
           <p>Many examples will show commands run by ordinary or
           privleged users. The prompt character will indicate the
@@ -795,29 +798,30 @@
           <div class="INFORMALTABLE">
             <a name="AEN43"></a>
 
-            <table border="0" class="CALSTABLE">
+            <table border="0" frame="void" class="CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">User</th>
+                  <th>User</th>
 
-                  <th align="LEFT" valign="TOP">Prompt</th>
+                  <th>Prompt</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">Normal user</td>
+                  <td>Normal user</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "PROMPT">host {20} % su</tt></td>
+                  <td><samp class="PROMPT">host {20} %
+                  su</samp></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">root</tt></td>
+                  <td><var class="LITERAL">root</var></td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "PROMPT">host {2} #</tt></td>
+                  <td><samp class="PROMPT">host {2} #</samp></td>
                 </tr>
               </tbody>
             </table>
@@ -855,7 +859,7 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN67">3. Disclaimer</a></h1>
+          <h2 class="SECT1"><a name="AEN67">3. Disclaimer</a></h2>
 
           <p>THIS DOCUMENTATION AND THE DESCRIBED SOFTWARE AND
           PROCEDURES IS PROVIDED BY THE AUTHORS "AS IS" AND ANY
@@ -877,8 +881,8 @@
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN70">Chapter 1. Introduction - The Basics
-        and Variations</a></h1>
+        <h1><a name="AEN70"></a>Chapter 1. Introduction - The
+        Basics and Variations</h1>
 
         <div class="FIGURE">
           <a name="FG1"></a>
@@ -930,10 +934,10 @@
         "FILENAME">/etc/printcap</tt> file defines a set of spool
         queues, each of which holds print jobs. The a print job
         consists of a <span class="emphasis"><i class=
-        "EMPHASIS">control</i></span> file (<tt class=
-        "LITERAL">cfAnnnHHHHHHH</tt>) and one or more data files
-        (<tt class="LITERAL">dfAnnnHHHHHHH</tt> <tt class=
-        "LITERAL">dfBnnnHHHHHHH</tt>, etc); the control file
+        "EMPHASIS">control</i></span> file (<var class=
+        "LITERAL">cfAnnnHHHHHHH</var>) and one or more data files
+        (<var class="LITERAL">dfAnnnHHHHHHH</var> <var class=
+        "LITERAL">dfBnnnHHHHHHH</var>, etc); the control file
         contains information such as the user name, file names, and
         printing options, while the data files contain the data to
         be printed.</p>
@@ -967,24 +971,24 @@
 
         <p>&#13;The <tt class="FILENAME">/etc/printcap</tt> file
         format is very simple in appearance but complex in
-        information. By convention, lines starting with <tt class=
-        "LITERAL">#</tt> are comments; a printcap entry starts with
-        the entry name followed by one or more <span class=
+        information. By convention, lines starting with <var class=
+        "LITERAL">#</var> are comments; a printcap entry starts
+        with the entry name followed by one or more <span class=
         "emphasis"><i class="EMPHASIS">aliases</i></span>, followed
         by options.</p>
 
-        <p>The <tt class="LITERAL">:tc</tt> option specifies a
+        <p>The <var class="LITERAL">:tc</var> option specifies a
         printcap entry for inclusion; there can be more than one
         entry and they are processed in order that they appear in
-        the <tt class="LITERAL">:tc</tt> list. The other options
+        the <var class="LITERAL">:tc</var> list. The other options
         are processed <span class="emphasis"><i class=
-        "EMPHASIS">after</i></span> the <tt class=
-        "LITERAL">:tc</tt> list; this means that the printcap
-        options overide the ones from the <tt class=
-        "LITERAL">:tc</tt> list. If a entry name starts with a
-        period (<tt class="LITERAL">.</tt>), then the <b class=
-        "APPLICATION">LPRng</b> system uses it only for <tt class=
-        "LITERAL">:tc</tt> lists. This is similar to the use of
+        "EMPHASIS">after</i></span> the <var class=
+        "LITERAL">:tc</var> list; this means that the printcap
+        options overide the ones from the <var class=
+        "LITERAL">:tc</var> list. If a entry name starts with a
+        period (<var class="LITERAL">.</var>), then the <b class=
+        "APPLICATION">LPRng</b> system uses it only for <var class=
+        "LITERAL">:tc</var> lists. This is similar to the use of
         <span class="emphasis"><i class=
         "EMPHASIS">hidden</i></span> files, i.e. - files whose
         names start with a period are not displayed by the <b
@@ -1062,13 +1066,13 @@
         "APPLICATION">lprm</b>, <b class="APPLICATION">lpq</b>, and
         <b class="APPLICATION">lpc</b> use the <tt class=
         "FILENAME">/etc/lpd.conf</tt>, <tt class=
-        "FILENAME">/etc/printcap</tt> and <tt class=
-        "LITERAL">${HOME}/.printap</tt> files (if they exist) (<a
-        href="#FG6">Figure 1-6</a>). The values in the <tt class=
-        "LITERAL">${HOME}/.printcap</tt> file are used to override
+        "FILENAME">/etc/printcap</tt> and <var class=
+        "LITERAL">${HOME}/.printap</var> files (if they exist) (<a
+        href="#FG6">Figure 1-6</a>). The values in the <var class=
+        "LITERAL">${HOME}/.printcap</var> file are used to override
         the values in the <tt class="FILENAME">/etc/printcap</tt>
-        file, and the first printcap entry in the <tt class=
-        "LITERAL">${HOME}/.printap</tt> file becomes the default
+        file, and the first printcap entry in the <var class=
+        "LITERAL">${HOME}/.printap</var> file becomes the default
         printer for the user (see <a href="#FG7">Figure
         1-7</a>).</p>
 
@@ -1096,8 +1100,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN160">1.1. Checking the
-          Printing System</a></h1>
+          <h2 class="SECT1"><a name="AEN160">1.1. Checking the
+          Printing System</a></h2>
 
           <div class="FIGURE">
             <a name="FG8"></a>
@@ -1139,8 +1143,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN168">1.2. Fixing the
-          Problems</a></h1>
+          <h2 class="SECT1"><a name="AEN168">1.2. Fixing the
+          Problems</a></h2>
 
           <div class="FIGURE">
             <a name="FG9"></a>
@@ -1165,8 +1169,8 @@
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">checkpc -f</tt> (<tt class=
-          "LITERAL">-f</tt> for <span class="emphasis"><i class=
+          <p>The <var class="LITERAL">checkpc -f</var> (<var class=
+          "LITERAL">-f</var> for <span class="emphasis"><i class=
           "EMPHASIS">fix</i></span>) will make <b class=
           "APPLICATION">checkpc</b> attempt create missing files,
           set permissions, and take basic corrective actions. If it
@@ -1179,7 +1183,7 @@
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN181">Chapter 2. Simple Spooling</a></h1>
+        <h1><a name="AEN181"></a>Chapter 2. Simple Spooling</h1>
 
         <p>This section covers the basic facilities that you will
         probably encounter when trying to set up a print queue. We
@@ -1207,8 +1211,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN187">2.1. Setting Up The
-          Print Queues</a></h1>
+          <h2 class="SECT1"><a name="AEN187">2.1. Setting Up The
+          Print Queues</a></h2>
 
           <div class="FIGURE">
             <a name="AEN189"></a>
@@ -1233,7 +1237,7 @@
 </pre>
           </div>
 
-          <p>First, you run <tt class="LITERAL">checkpc -f</tt>.
+          <p>First, you run <var class="LITERAL">checkpc -f</var>.
           This will tell you if something is wrong with the
           printcap.</p>
 
@@ -1368,8 +1372,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN226">2.2. Diagnostics for
-          Spooling Problems</a></h1>
+          <h2 class="SECT1"><a name="AEN226">2.2. Diagnostics for
+          Spooling Problems</a></h2>
 
           <div class="FIGURE">
             <a name="AEN228"></a>
@@ -1391,8 +1395,8 @@
           </div>
 
           <p>The first line of defense is to see what is happening
-          when you try to spool a job. The <tt class="LITERAL">lpr
-          -V</tt> (<tt class="LITERAL">-V</tt> for <span class=
+          when you try to spool a job. The <var class="LITERAL">lpr
+          -V</var> (<var class="LITERAL">-V</var> for <span class=
           "emphasis"><i class="EMPHASIS">Verbose</i></span>) will
           show a simple high level trace.</p>
 
@@ -1439,8 +1443,8 @@
 </pre>
           </div>
 
-          <p>Use the <tt class="LITERAL">-=</tt> option to see the
-          available options.</p>
+          <p>Use the <var class="LITERAL">-=</var> option to see
+          the available options.</p>
 
           <div class="FIGURE">
             <a name="AEN242"></a>
@@ -1455,7 +1459,7 @@
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">-D=</tt> option shows the
+          <p>The <var class="LITERAL">-D=</var> option shows the
           debugging flags available.</p>
 
           <div class="FIGURE">
@@ -1482,12 +1486,13 @@
 </pre>
           </div>
 
-          <p>The <b class="APPLICATION">lpr</b> <tt class=
-          "LITERAL">-D1</tt> (diagnostic level 1) shows a summary
+          <p>The <b class="APPLICATION">lpr</b> <var class=
+          "LITERAL">-D1</var> (diagnostic level 1) shows a summary
           of the various steps taken to send the job. If you want
-          more detail, try <b class="APPLICATION">lpr</b> <tt
-          class="LITERAL">-D2</tt>; or even <b class=
-          "APPLICATION">lpr</b> <tt class="LITERAL">-D3</tt>;.</p>
+          more detail, try <b class="APPLICATION">lpr</b> <var
+          class="LITERAL">-D2</var>; or even <b class=
+          "APPLICATION">lpr</b> <var class=
+          "LITERAL">-D3</var>;.</p>
 
           <div class="FIGURE">
             <a name="AEN258"></a>
@@ -1535,14 +1540,14 @@
 </pre>
           </div>
 
-          <p>The <b class="APPLICATION">lpr</b> <tt class=
-          "LITERAL">-Dnetwork</tt> (network diagnostic level 1)
+          <p>The <b class="APPLICATION">lpr</b> <var class=
+          "LITERAL">-Dnetwork</var> (network diagnostic level 1)
           shows the network operations performed by <b class=
           "APPLICATION">lpr</b>. If you want more detail, try <b
-          class="APPLICATION">lpr</b> <tt class=
-          "LITERAL">-Dnetwork+2</tt> or even <b class=
-          "APPLICATION">lpr</b> <tt class=
-          "LITERAL">-Dnetwork+3</tt>.</p>
+          class="APPLICATION">lpr</b> <var class=
+          "LITERAL">-Dnetwork+2</var> or even <b class=
+          "APPLICATION">lpr</b> <var class=
+          "LITERAL">-Dnetwork+3</var>.</p>
 
           <div class="FIGURE">
             <a name="AEN270"></a>
@@ -1584,16 +1589,16 @@
 
           <p>The <b class="APPLICATION">lpq</b>, <b class=
           "APPLICATION">lprm</b>, and <b class=
-          "APPLICATION">lpc</b> applications also support the <tt
-          class="LITERAL">-=</tt> and <tt class="LITERAL">-D</tt>
-          (debug) options.</p>
+          "APPLICATION">lpc</b> applications also support the <var
+          class="LITERAL">-=</var> and <var class=
+          "LITERAL">-D</var> (debug) options.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN280">2.3. What Went Wrong
-          With My Job?</a></h1>
+          <h2 class="SECT1"><a name="AEN280">2.3. What Went Wrong
+          With My Job?</a></h2>
 
           <div class="FIGURE">
             <a name="AEN282"></a>
@@ -1618,15 +1623,16 @@
           <p>The first thing to do is check the status of your job
           with <b class="APPLICATION">lpq</b>. This will show the
           current jobs in the queue and <b class=
-          "APPLICATION">lpd</b> server. The <tt class=
-          "LITERAL">Server</tt> value is the process that is
+          "APPLICATION">lpd</b> server. The <var class=
+          "LITERAL">Server</var> value is the process that is
           responsible for sending jobs to the printer. It starts
-          the <tt class="LITERAL">Unspooler</tt> process that does
-          the actual transfer to the remote system. Each time a job
-          is processed a new <tt class="LITERAL">Unspooler</tt>
-          process is created. The <tt class="LITERAL">Server</tt>
-          process stays active until there is no further work to be
-          done for the print queue.</p>
+          the <var class="LITERAL">Unspooler</var> process that
+          does the actual transfer to the remote system. Each time
+          a job is processed a new <var class=
+          "LITERAL">Unspooler</var> process is created. The <var
+          class="LITERAL">Server</var> process stays active until
+          there is no further work to be done for the print
+          queue.</p>
 
           <div class="FIGURE">
             <a name="AEN293"></a>
@@ -1664,15 +1670,15 @@
 </pre>
           </div>
 
-          <p>The <b class="APPLICATION">lpq</b> <tt class=
-          "LITERAL">-l</tt> (<span class="emphasis"><i class=
+          <p>The <b class="APPLICATION">lpq</b> <var class=
+          "LITERAL">-l</var> (<span class="emphasis"><i class=
           "EMPHASIS">longer</i></span>) option increases the number
-          of <tt class="LITERAL">Status</tt> and <tt class=
-          "LITERAL">Filter_status</tt> lines shown. These lines
-          come from the <tt class="LITERAL">status.%P</tt> and <tt
-          class="LITERAL">status</tt> files in the spool queue.
-          Adding more <tt class="LITERAL">-l</tt> options increases
-          the amount of status shown.</p>
+          of <var class="LITERAL">Status</var> and <var class=
+          "LITERAL">Filter_status</var> lines shown. These lines
+          come from the <var class="LITERAL">status.%P</var> and
+          <var class="LITERAL">status</var> files in the spool
+          queue. Adding more <var class="LITERAL">-l</var> options
+          increases the amount of status shown.</p>
 
           <div class="FIGURE">
             <a name="AEN306"></a>
@@ -1710,8 +1716,8 @@
           </div>
 
           <p>If you want to see <span class="emphasis"><i class=
-          "EMPHASIS">LOTS</i></span> of status, use <tt class=
-          "LITERAL">lpq -L</tt>, which shows all the avilable
+          "EMPHASIS">LOTS</i></span> of status, use <var class=
+          "LITERAL">lpq -L</var>, which shows all the avilable
           status information.</p>
 
           <div class="FIGURE">
@@ -1750,8 +1756,8 @@
 </pre>
           </div>
 
-          <p>When your job is finished, you can use the <tt class=
-          "LITERAL">lpq -lll</tt> options to see the final results
+          <p>When your job is finished, you can use the <var class=
+          "LITERAL">lpq -lll</var> options to see the final results
           of processing the job.</p>
 
           <div class="FIGURE">
@@ -1775,26 +1781,26 @@
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">lpq -s</tt> (<span class=
+          <p>The <var class="LITERAL">lpq -s</var> (<span class=
           "emphasis"><i class="EMPHASIS">short</i></span> status)
-          shows a single summary line for status. Adding the <tt
-          class="LITERAL">-a</tt> (<span class="emphasis"><i class=
-          "EMPHASIS">all</i></span> queues) will print information
-          for all the print queues.</p>
+          shows a single summary line for status. Adding the <var
+          class="LITERAL">-a</var> (<span class="emphasis"><i
+          class="EMPHASIS">all</i></span> queues) will print
+          information for all the print queues.</p>
 
-          <p>The <tt class="LITERAL">lpc status</tt> command
+          <p>The <var class="LITERAL">lpc status</var> command
           queries the <b class="APPLICATION">lpd</b> server and
           reports the status of the queues operated by the <b
-          class="APPLICATION">lpd</b> server. The <tt class=
-          "LITERAL">lpd status all</tt> will show the status of all
-          the print queues.</p>
+          class="APPLICATION">lpd</b> server. The <var class=
+          "LITERAL">lpd status all</var> will show the status of
+          all the print queues.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN331">2.4. Diagnostics for
-          <b class="APPLICATION">lpd</b> Problems</a></h1>
+          <h2 class="SECT1"><a name="AEN331">2.4. Diagnostics for
+          <b class="APPLICATION">lpd</b> Problems</a></h2>
 
           <div class="FIGURE">
             <a name="AEN334"></a>
@@ -1897,11 +1903,11 @@
 
           <p>The <b class="APPLICATION">checkpc</b> program creates
           a standard set of files in each spool queue, including
-          the <tt class="LITERAL">log</tt> file. The <tt class=
-          "LITERAL">:db=</tt><span class="emphasis"><i class=
+          the <var class="LITERAL">log</var> file. The <var class=
+          "LITERAL">:db=</var><span class="emphasis"><i class=
           "EMPHASIS">DebugOptions</i></span> enables debugging
           output for the specified operation. Information is sent
-          to the <tt class="LITERAL">log</tt> file as soon as the
+          to the <var class="LITERAL">log</var> file as soon as the
           print queue directory and debug flags for the spool queue
           are determined.</p>
 
@@ -1919,15 +1925,15 @@
 </pre>
           </div>
 
-          <p>Edit the printcap. You can then use <tt class=
-          "LITERAL">lpc reread</tt> to signal the <b class=
+          <p>Edit the printcap. You can then use <var class=
+          "LITERAL">lpc reread</var> to signal the <b class=
           "APPLICATION">lpd</b> process to read the new <tt class=
           "FILENAME">/etc/printcap</tt> file.</p>
 
           <div class="FIGURE">
             <a name="AEN364"></a>
 
-            <p><b>Figure 2-24. <tt class="LITERAL">log</tt>
+            <p><b>Figure 2-24. <var class="LITERAL">log</var>
             File</b></p>
 <pre class="SCREEN">
     2001-10-18-06:11:30.349 h110 [8216] RECV
@@ -1944,19 +1950,19 @@
 </pre>
           </div>
 
-          <p>You can now use the <tt class="LITERAL">log</tt> file
-          to see the individual queue operations. The size of the
-          log file is determined by the <tt class=
-          "LITERAL">max_log_file_size</tt> (default is 1000Kbytes);
-          when the log file exceeds this it is truncted to 25% of
-          its maximum length.</p>
+          <p>You can now use the <var class="LITERAL">log</var>
+          file to see the individual queue operations. The size of
+          the log file is determined by the <var class=
+          "LITERAL">max_log_file_size</var> (default is
+          1000Kbytes); when the log file exceeds this it is
+          truncted to 25% of its maximum length.</p>
         </div>
       </div>
 
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN371">Chapter 3. Printers</a></h1>
+        <h1><a name="AEN371"></a>Chapter 3. Printers</h1>
 
         <div class="FIGURE">
           <a name="AEN373"></a>
@@ -1989,8 +1995,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN381">3.1.
-          Interface</a></h1>
+          <h2 class="SECT1"><a name="AEN381">3.1.
+          Interface</a></h2>
 
           <div class="FIGURE">
             <a name="AEN383"></a>
@@ -2021,8 +2027,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN388">3.2. Parallel
-          Port</a></h1>
+          <h2 class="SECT1"><a name="AEN388">3.2. Parallel
+          Port</a></h2>
 
           <div class="FIGURE">
             <a name="P2"></a>
@@ -2040,11 +2046,11 @@
           "EMPHASIS">bidirectional</i></span> communications
           channel. The parallel port interface found on the
           original X86 PC/XT/ATX systems was write only. However,
-          there were a couple of signals (<tt class="LITERAL">OUT
-          OF PAPER</tt>, <tt class="LITERAL">ERROR</tt>, etc.) that
-          provided status information to the computer system. By
-          monitoring these signals the host computer could tell the
-          user that there were problems with the printer.
+          there were a couple of signals (<var class="LITERAL">OUT
+          OF PAPER</var>, <var class="LITERAL">ERROR</var>, etc.)
+          that provided status information to the computer system.
+          By monitoring these signals the host computer could tell
+          the user that there were problems with the printer.
           Fiendishly clever engineers discovered that they could
           use these signals to implement a <span class=
           "emphasis"><i class="EMPHASIS">bidirectional data
@@ -2139,13 +2145,13 @@
           <span class="emphasis"><i class="EMPHASIS">device
           probe</i></span> functions. You can use the command shown
           in <a href="#P3">Figure 3-5</a> to load the modules; the
-          <tt class="LITERAL">echo &lt;/dev/lp0</tt> command tries
-          to open the device in <tt class="LITERAL">read</tt> mode,
-          and then exits after reading nothing... which might
-          suggest that you cannot get status from the device. If
-          you have the <tt class="LITERAL">/proc</tt> system
-          installed, then you can see what the IEEE1284 probe
-          function returned.</p>
+          <var class="LITERAL">echo &lt;/dev/lp0</var> command
+          tries to open the device in <var class=
+          "LITERAL">read</var> mode, and then exits after reading
+          nothing... which might suggest that you cannot get status
+          from the device. If you have the <var class=
+          "LITERAL">/proc</var> system installed, then you can see
+          what the IEEE1284 probe function returned.</p>
 
           <div class="FIGURE">
             <a name="P4"></a>
@@ -2184,8 +2190,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN439">3.3. Network
-          Ports</a></h1>
+          <h2 class="SECT1"><a name="AEN439">3.3. Network
+          Ports</a></h2>
 
           <div class="FIGURE">
             <a name="N1"></a>
@@ -2226,8 +2232,8 @@
           </div>
 
           <p>The printcap for a network printer is shown in <a
-          href="#N2">Figure 3-8</a>. You can use the <tt class=
-          "LITERAL">:rp:rm</tt> options if you want.</p>
+          href="#N2">Figure 3-8</a>. You can use the <var class=
+          "LITERAL">:rp:rm</var> options if you want.</p>
 
           <div class="FIGURE">
             <a name="N3"></a>
@@ -2271,362 +2277,294 @@
             <p><b>Table 3-1. Network Print Server Configuration
             Information</b></p>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Manufacturer</th>
+                  <th>Manufacturer</th>
 
-                  <th align="LEFT" valign="TOP">Model</th>
+                  <th>Model</th>
 
-                  <th align="LEFT" valign="TOP">RFC1179 Port Name
-                  (rp=XXX)</th>
+                  <th>RFC1179 Port Name (rp=XXX)</th>
 
-                  <th align="LEFT" valign="TOP">Send to TCP
-                  port</th>
+                  <th>Send to TCP port</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.cannon.com/" target="_top">Cannon
-                  Printer</a></td>
+                  <td><a href="http://www.cannon.com/" target=
+                  "_top">Cannon Printer</a></td>
 
-                  <td align="LEFT" valign="TOP">Cannon 460 PS, no
-                  hard drive</td>
+                  <td>Cannon 460 PS, no hard drive</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">xjdirect</tt></td>
+                  <td><var class="LITERAL">xjdirect</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Cannon 460 PS hard
-                  drive</td>
+                  <td>Cannon 460 PS hard drive</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">xjprint</tt> - print immediately,<tt
-                  class="LITERAL">xjhold</tt> - print later</td>
+                  <td><var class="LITERAL">xjprint</var> - print
+                  immediately,<var class="LITERAL">xjhold</var> -
+                  print later</td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.digprod.com/" target="_top">Digital
-                  Products Inc.</a></td>
+                  <td><a href="http://www.digprod.com/" target=
+                  "_top">Digital Products Inc.</a></td>
 
-                  <td align="LEFT" valign="TOP">NETPrint Print
-                  Server</td>
+                  <td>NETPrint Print Server</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PORT</tt><tt class="LITERAL">n</tt>,
-                  where <tt class="LITERAL">n</tt> is port on
-                  server</td>
+                  <td><var class="LITERAL">PORT</var><var class=
+                  "LITERAL">n</var>, where <var class=
+                  "LITERAL">n</var> is port on server</td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.efi.com/" target="_top">Electronics
-                  For Imaging Inc.</a></td>
+                  <td><a href="http://www.efi.com/" target=
+                  "_top">Electronics For Imaging Inc.</a></td>
 
-                  <td align="LEFT" valign="TOP">Fiery RIP i
-                  series</td>
+                  <td>Fiery RIP i series</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">normalq</tt> or <tt class=
-                  "LITERAL">urgentq</tt></td>
+                  <td><var class="LITERAL">normalq</var> or <var
+                  class="LITERAL">urgentq</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Fiery RIP XJ
-                  series</td>
+                  <td>Fiery RIP XJ series</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">xjprint</tt></td>
+                  <td><var class="LITERAL">xjprint</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Fiery RIP XJ+ and
-                  SI series</td>
+                  <td>Fiery RIP XJ+ and SI series</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">print_</tt><tt class=
-                  "LITERAL">Model</tt>, e.g. <tt class=
-                  "LITERAL">print_DocuColor</tt></td>
+                  <td><var class="LITERAL">print_</var><var class=
+                  "LITERAL">Model</var>, e.g. <var class=
+                  "LITERAL">print_DocuColor</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Fiery models
-                  ZX2100, ZX3300, X2, X2e</td>
+                  <td>Fiery models ZX2100, ZX3300, X2, X2e</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">print</tt></td>
+                  <td><var class="LITERAL">print</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.emulex.com/" target="_top">Emulex
-                  Corp.</a></td>
+                  <td><a href="http://www.emulex.com/" target=
+                  "_top">Emulex Corp.</a></td>
 
-                  <td align="LEFT" valign="TOP">NETJet/NETQue print
-                  server</td>
+                  <td>NETJet/NETQue print server</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PASSTHRU</tt></td>
+                  <td><var class="LITERAL">PASSTHRU</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.extendsys.com/" target=
+                  <td><a href="http://www.extendsys.com/" target=
                   "_top">Extended Systems Inc.</a></td>
 
-                  <td align="LEFT" valign="TOP">ExtendNet Print
-                  Server</td>
+                  <td>ExtendNet Print Server</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">Printer<tt class=
-                  "REPLACEABLE"><i>n</i></tt></tt>, where <tt
-                  class="LITERAL">n</tt> is port on server</td>
+                  <td><var class="LITERAL">Printer<var class=
+                  "REPLACEABLE">n</var></var>, where <var class=
+                  "LITERAL">n</var> is port on server</td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.hp.com/" target=
+                  <td><a href="http://www.hp.com/" target=
                   "_top">Hewlett-Packard</a></td>
 
-                  <td align="LEFT" valign="TOP">JetDirect interface
-                  card</td>
+                  <td>JetDirect interface card</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">raw</tt></td>
+                  <td><var class="LITERAL">raw</var></td>
 
-                  <td align="LEFT" valign="TOP">9100</td>
+                  <td>9100</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.hp.com/" target=
+                  <td><a href="http://www.hp.com/" target=
                   "_top">Hewlett-Packard</a></td>
 
-                  <td align="LEFT" valign="TOP">JetDirect Multiport
-                  Server</td>
+                  <td>JetDirect Multiport Server</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">port 1 - raw1, port 2 - raw2,
-                  etc.</tt></td>
+                  <td><var class="LITERAL">port 1 - raw1, port 2 -
+                  raw2, etc.</var></td>
 
-                  <td align="LEFT" valign="TOP">port 1 - 9100, port
-                  2 - 9101, etc.</td>
+                  <td>port 1 - 9100, port 2 - 9101, etc.</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.i-data.com/" target=
+                  <td><a href="http://www.i-data.com/" target=
                   "_top">I-Data</a></td>
 
-                  <td align="LEFT" valign="TOP">Easycom 10
-                  Printserver</td>
+                  <td>Easycom 10 Printserver</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">par1</tt> (parallel port 1)</td>
+                  <td><var class="LITERAL">par1</var> (parallel
+                  port 1)</td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Easycom 100
-                  Printserver</td>
+                  <td>Easycom 100 Printserver</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">LPDPRT1</tt></td>
+                  <td><var class="LITERAL">LPDPRT1</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.printers.ibm.com/" target=
-                  "_top">IBM</a></td>
+                  <td><a href="http://www.printers.ibm.com/"
+                  target="_top">IBM</a></td>
 
-                  <td align="LEFT" valign="TOP">Network Printer 12,
-                  17, 24, and 24PS</td>
+                  <td>Network Printer 12, 17, 24, and 24PS</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PASS</tt></td>
+                  <td><var class="LITERAL">PASS</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.lantronix.com/" target=
+                  <td><a href="http://www.lantronix.com/" target=
                   "_top">Lantronix</a></td>
 
-                  <td align="LEFT" valign="TOP">EPS1, EPS2</td>
+                  <td>EPS1, EPS2</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">EPS_<tt class="LITERAL">X_S1 (serial)
-                  port 1, EPS_X</tt>_P1 (parallel) port 2</tt>,
-                  etc.</td>
+                  <td><var class="LITERAL">EPS_<var class=
+                  "LITERAL">X_S1 (serial) port 1, EPS_X</var>_P1
+                  (parallel) port 2</var>, etc.</td>
 
-                  <td align="LEFT" valign="TOP">3001 (port 1), 3002
-                  (port 2), etc.</td>
+                  <td>3001 (port 1), 3002 (port 2), etc.</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.qms.com/" target="_top">QMS</a></td>
+                  <td><a href="http://www.qms.com/" target=
+                  "_top">QMS</a></td>
 
-                  <td align="LEFT" valign="TOP">Various Models</td>
+                  <td>Various Models</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">RAW</tt></td>
+                  <td><var class="LITERAL">RAW</var></td>
 
-                  <td align="LEFT" valign="TOP">35 (AppSocket)</td>
+                  <td>35 (AppSocket)</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.tek.com/color_printers/" target=
-                  "_top">Tektronix</a></td>
+                  <td><a href="http://www.tek.com/color_printers/"
+                  target="_top">Tektronix</a></td>
 
-                  <td align="LEFT" valign="TOP">Tektronix printer
-                  network cards</td>
+                  <td>Tektronix printer network cards</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PS</tt> (PostScript), <tt class=
-                  "LITERAL">PCL</tt> (PCL), or <tt class=
-                  "LITERAL">AUTO</tt>(Auto-selection between PS,
-                  PCL, or HPGL). Not reliable.</td>
+                  <td><var class="LITERAL">PS</var> (PostScript),
+                  <var class="LITERAL">PCL</var> (PCL), or <var
+                  class="LITERAL">AUTO</var>(Auto-selection between
+                  PS, PCL, or HPGL). Not reliable.</td>
 
-                  <td align="LEFT" valign="TOP">9100 (AppSocket on
-                  some models)</td>
+                  <td>9100 (AppSocket on some models)</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.rosel.com" target="_top">Rose
-                  Electronics</a></td>
+                  <td><a href="http://www.rosel.com" target=
+                  "_top">Rose Electronics</a></td>
 
-                  <td align="LEFT" valign="TOP">Microserve Print
-                  Servers</td>
+                  <td>Microserve Print Servers</td>
 
-                  <td align="LEFT" valign="TOP">lp</td>
+                  <td>lp</td>
 
-                  <td align="LEFT" valign="TOP">9100</td>
+                  <td>9100</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><a href=
-                  "http://www.xerox.com/" target=
+                  <td><a href="http://www.xerox.com/" target=
                   "_top">Xerox</a></td>
 
-                  <td align="LEFT" valign="TOP">Models 4505, 4510,
-                  4517, 4520</td>
+                  <td>Models 4505, 4510, 4517, 4520</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PASSTHRU</tt></td>
+                  <td><var class="LITERAL">PASSTHRU</var></td>
 
-                  <td align="LEFT" valign="TOP">2501 (AppSocket on
-                  some models)</td>
+                  <td>2501 (AppSocket on some models)</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Model 4512</td>
+                  <td>Model 4512</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PORT1</tt></td>
+                  <td><var class="LITERAL">PORT1</var></td>
 
-                  <td align="LEFT" valign="TOP">10001
-                  (programmable)</td>
+                  <td>10001 (programmable)</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Model N17</td>
+                  <td>Model N17</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">RAW</tt></td>
+                  <td><var class="LITERAL">RAW</var></td>
 
-                  <td align="LEFT" valign="TOP">9100</td>
+                  <td>9100</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Models N24 and
-                  N32</td>
+                  <td>Models N24 and N32</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">RAW</tt></td>
+                  <td><var class="LITERAL">RAW</var></td>
 
-                  <td align="LEFT" valign="TOP">2000</td>
+                  <td>2000</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Models 4900, 4915,
-                  4925, C55</td>
+                  <td>Models 4900, 4915, 4925, C55</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">PS</tt></td>
+                  <td><var class="LITERAL">PS</var></td>
 
-                  <td align="LEFT" valign="TOP">2000</td>
+                  <td>2000</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">&nbsp;</td>
+                  <td>&nbsp;</td>
 
-                  <td align="LEFT" valign="TOP">Document Centre
-                  DC220/230</td>
+                  <td>Document Centre DC220/230</td>
 
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">lp</tt></td>
+                  <td><var class="LITERAL">lp</var></td>
 
-                  <td align="LEFT" valign="TOP">- Unknown if
-                  supported -</td>
+                  <td>- Unknown if supported -</td>
                 </tr>
               </tbody>
             </table>
@@ -2639,8 +2577,8 @@
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN647">3.4. Sending To SMB
-          (Samba, Microsoft) Printer, Novell, Appletalk</a></h1>
+          <h2 class="SECT1"><a name="AEN647">3.4. Sending To SMB
+          (Samba, Microsoft) Printer, Novell, Appletalk</a></h2>
 
           <div class="FIGURE">
             <a name="AEN649"></a>
@@ -2656,13 +2594,13 @@
           <p>There are a wide number of other print spooling
           systems that have been developed over the years. Most of
           these use proprietary or arcane protocols to transfer
-          files. These include the <span class="ACRONYM">SMB</span>
-          protocol used by Microsoft, the Novell print spooler
-          support, and the Apple corporation Appletalk (Copyright,
-          Trademarks where applicable). These systems usually run
-          on or with non-UNIX Operating Systems or on proprietary
-          hardware. But over the years packages have been developed
-          to interface to these systems.</p>
+          files. These include the <acronym class=
+          "ACRONYM">SMB</acronym> protocol used by Microsoft, the
+          Novell print spooler support, and the Apple corporation
+          Appletalk (Copyright, Trademarks where applicable). These
+          systems usually run on or with non-UNIX Operating Systems
+          or on proprietary hardware. But over the years packages
+          have been developed to interface to these systems.</p>
 
           <div class="FIGURE">
             <a name="AEN656"></a>
@@ -2714,9 +2652,9 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
           <p>You can specify a <span class="emphasis"><i class=
           "EMPHASIS">program</i></span> to do the transfer to the
           remote host. The program will connect to the remote
-          system and transfer <tt class="LITERAL">STDIN</tt> to the
-          printer. Errors will be written to <tt class=
-          "LITERAL">STDERR</tt> and be put in the log by <b class=
+          system and transfer <var class="LITERAL">STDIN</var> to
+          the printer. Errors will be written to <var class=
+          "LITERAL">STDERR</var> and be put in the log by <b class=
           "APPLICATION">LPRng</b>.</p>
 
           <div class="FIGURE">
@@ -2762,21 +2700,21 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
           </div>
 
           <p>The <b class="APPLICATION">smbprint</b> script is run
-          with the <tt class="LITERAL">$PRINTCAP_ENTRY</tt>
+          with the <var class="LITERAL">$PRINTCAP_ENTRY</var>
           environment variable set to the printcap (See <a href=
-          "#PC">Figure 3-15</a>). The value is scanned for the <tt
-          class="LITERAL">:options</tt> line and then this line is
-          used with <tt class="LITERAL">eval</tt> to set variables.
-          This is a slight security risk and you should not have
-          any metacharacters in the options field, so you can
-          optionally strain them out or you can trust in your
+          "#PC">Figure 3-15</a>). The value is scanned for the <var
+          class="LITERAL">:options</var> line and then this line is
+          used with <var class="LITERAL">eval</var> to set
+          variables. This is a slight security risk and you should
+          not have any metacharacters in the options field, so you
+          can optionally strain them out or you can trust in your
           editting skills in the printcap.</p>
 
           <div class="FIGURE">
             <a name="PC"></a>
 
-            <p><b>Figure 3-15. <tt class=
-            "LITERAL">$PRINTCAP_ENTRY</tt></b></p>
+            <p><b>Figure 3-15. <var class=
+            "LITERAL">$PRINTCAP_ENTRY</var></b></p>
 <pre class="SCREEN">
     lp:
       :lp=|/usr/local/lib/filters/smbprint
@@ -2786,18 +2724,18 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
 
           <p>There older versions of the <b class=
           "APPLICATION">smbclient</b> required the user name and
-          password on the command line. Unfortunately, the <tt
-          class="LITERAL">ps</tt> command would show the command
+          password on the command line. Unfortunately, the <var
+          class="LITERAL">ps</var> command would show the command
           line options, allowing users to see the password. Newer
           versions can read username and password from an
           authentication file. We can use either version by setting
-          the <tt class="LITERAL">oldversion</tt> option.</p>
+          the <var class="LITERAL">oldversion</var> option.</p>
 
           <p>Finally, we echo the command for logging purposes
-          (note that <tt class="LITERAL">$password</tt> is <span
+          (note that <var class="LITERAL">$password</var> is <span
           class="emphasis"><i class="EMPHASIS">not</i></span>
-          displayed and then run the <tt class=
-          "LITERAL">smbclient</tt> command.</p>
+          displayed and then run the <var class=
+          "LITERAL">smbclient</var> command.</p>
 
           <div class="FIGURE">
             <a name="AEN697"></a>
@@ -2834,8 +2772,8 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN703">3.5. Serial
-          Port</a></h1>
+          <h2 class="SECT1"><a name="AEN703">3.5. Serial
+          Port</a></h2>
 
           <div class="FIGURE">
             <a name="S1"></a>
@@ -2849,20 +2787,21 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
 
           <p>A serial line is usually bidirectional in operation,
           but there are very few printers that will return status
-          information. The most notable exception to this are <tt
-          class="LITERAL">PostScript</tt> printers. If you use a
+          information. The most notable exception to this are <var
+          class="LITERAL">PostScript</var> printers. If you use a
           serial port printer, it is absolutely essential that you
           implement <span class="emphasis"><i class="EMPHASIS">flow
-          control</i></span>, and almost mandatory that you use <tt
-          class="LITERAL">hardware</tt> or <tt class=
-          "LITERAL">RTS-CTS</tt> (Request To Send and Clear To
+          control</i></span>, and almost mandatory that you use
+          <var class="LITERAL">hardware</var> or <var class=
+          "LITERAL">RTS-CTS</var> (Request To Send and Clear To
           Send) flow control. Finally, you need to have the serial
-          line operate in <tt class="LITERAL">RAW</tt> mode, so
+          line operate in <var class="LITERAL">RAW</var> mode, so
           that the serial line driver does not abuse the output
-          stream by introducing extraneous <tt class=
-          "LITERAL">CR-LF</tt> sequences, and changing control
-          characters such as <tt class="LITERAL">ESC</tt> (Escape)
-          into <tt class="LITERAL">^E</tt> sequences.</p>
+          stream by introducing extraneous <var class=
+          "LITERAL">CR-LF</var> sequences, and changing control
+          characters such as <var class="LITERAL">ESC</var>
+          (Escape) into <var class="LITERAL">^E</var>
+          sequences.</p>
 
           <div class="FIGURE">
             <a name="S2"></a>
@@ -2877,13 +2816,13 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">:stty=...</tt> option is used
-          to set line characteristics and takes a subset of the <b
-          class="APPLICATION">stty</b> application parameters. You
-          need to set the line speed and mode. If you need to get
-          status information back from the printer, you should add
-          the <tt class="LITERAL">:rw</tt> (Open Read-Write)
-          flag.</p>
+          <p>The <var class="LITERAL">:stty=...</var> option is
+          used to set line characteristics and takes a subset of
+          the <b class="APPLICATION">stty</b> application
+          parameters. You need to set the line speed and mode. If
+          you need to get status information back from the printer,
+          you should add the <var class="LITERAL">:rw</var> (Open
+          Read-Write) flag.</p>
 
           <p>As you might suspect, the serial port is limited by
           the line speed. In addition, it has a higher rate of
@@ -2897,8 +2836,8 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN728">Chapter 4. Printer Job
-        Formats</a></h1>
+        <h1><a name="AEN728"></a>Chapter 4. Printer Job
+        Formats</h1>
 
         <div class="FIGURE">
           <a name="AEN730"></a>
@@ -2971,8 +2910,8 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN745">4.1.
-          PostScript</a></h1>
+          <h2 class="SECT1"><a name="AEN745">4.1.
+          PostScript</a></h2>
 
           <div class="FIGURE">
             <a name="AEN747"></a>
@@ -3027,8 +2966,8 @@ target="_top">http://sourceforge.net/projects/netatalk</a>
           </div>
 
           <p>The quick way to generate a test page is use <b class=
-          "APPLICATION">groff</b>. The <tt class="LITERAL">groff
-          -Tps</tt> outputs PostScript.</p>
+          "APPLICATION">groff</b>. The <var class="LITERAL">groff
+          -Tps</var> outputs PostScript.</p>
 
           <div class="FIGURE">
             <a name="AEN757"></a>
@@ -3148,15 +3087,15 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">^D</tt> (<tt class=
-          "LITERAL">CTRL-D</tt>) character is evil - it usually
+          <p>The <var class="LITERAL">^D</var> (<var class=
+          "LITERAL">CTRL-D</var>) character is evil - it usually
           should not be put into raw files.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN788">4.2. PCL</a></h1>
+          <h2 class="SECT1"><a name="AEN788">4.2. PCL</a></h2>
 
           <div class="FIGURE">
             <a name="AEN790"></a>
@@ -3172,7 +3111,7 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           </div>
 
           <p>This is an example of a PCL file. Note that the file
-          starts with <tt class="LITERAL">^[E</tt>, or the reset
+          starts with <var class="LITERAL">^[E</var>, or the reset
           configuration string. All PCL jobs should start with this
           so that the previous job does not cause a problem.</p>
 
@@ -3189,17 +3128,17 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           </div>
 
           <p>The quick way to generate a test page is use <b class=
-          "APPLICATION">groff</b>. The <tt class="LITERAL">groff
-          -Tlj4</tt> outputs PCL level 5. Again, watch out for the
-          evil <tt class="LITERAL">^D</tt> (<tt class=
-          "LITERAL">CTRL-D</tt>) characters.</p>
+          "APPLICATION">groff</b>. The <var class="LITERAL">groff
+          -Tlj4</var> outputs PCL level 5. Again, watch out for the
+          evil <var class="LITERAL">^D</var> (<var class=
+          "LITERAL">CTRL-D</var>) characters.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN803">4.3. Printer Job
-          Language (PJL) and PostScript, PCL</a></h1>
+          <h2 class="SECT1"><a name="AEN803">4.3. Printer Job
+          Language (PJL) and PostScript, PCL</a></h2>
 
           <div class="FIGURE">
             <a name="AEN805"></a>
@@ -3242,8 +3181,8 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           printer on how to handle job items not specified by the
           PostScript or PCL language.</p>
 
-          <p>The PJL Reset command <tt class=
-          "LITERAL">^[%-12345X</tt> performs a Print Job lanaguage
+          <p>The PJL Reset command <var class=
+          "LITERAL">^[%-12345X</var> performs a Print Job lanaguage
           independent reset. This allows PJL to be used with
           PostScript or PCL.</p>
         </div>
@@ -3251,8 +3190,8 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN811">4.4. Text
-          Files</a></h1>
+          <h2 class="SECT1"><a name="AEN811">4.4. Text
+          Files</a></h2>
 
           <div class="FIGURE">
             <a name="AEN813"></a>
@@ -3277,13 +3216,13 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           </div>
 
           <p>Text is usually just ASCII characters. Unix lines are
-          terminated with new line (<tt class="LITERAL">NL</tt> or
-          <tt class="LITERAL">\012</tt>, and when sent to a printer
-          result in <span class="emphasis"><i class="EMPHASIS">The
-          Jaggies</i></span>. You need to have carriage returns
-          (<tt class="LITERAL">CR</tt> or <tt class=
-          "LITERAL">\015</tt> added to the file. You need to fix
-          this by one of several methods.</p>
+          terminated with new line (<var class="LITERAL">NL</var>
+          or <var class="LITERAL">\012</var>, and when sent to a
+          printer result in <span class="emphasis"><i class=
+          "EMPHASIS">The Jaggies</i></span>. You need to have
+          carriage returns (<var class="LITERAL">CR</var> or <var
+          class="LITERAL">\015</var> added to the file. You need to
+          fix this by one of several methods.</p>
 
           <div class="FIGURE">
             <a name="AEN822"></a>
@@ -3308,8 +3247,8 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN826">4.5. Magical Mystery
-          Proprietary Format</a></h1>
+          <h2 class="SECT1"><a name="AEN826">4.5. Magical Mystery
+          Proprietary Format</a></h2>
 
           <div class="FIGURE">
             <a name="AEN828"></a>
@@ -3329,9 +3268,9 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           </div>
 
           <p>You should try and see if your printer understands
-          PCL. Try using GhostScript with the <tt class=
-          "LITERAL">hpdj</tt>, <tt class="LITERAL">ljet3</tt> or
-          <tt class="LITERAL">ljet4</tt>.</p>
+          PCL. Try using GhostScript with the <var class=
+          "LITERAL">hpdj</var>, <var class="LITERAL">ljet3</var> or
+          <var class="LITERAL">ljet4</var>.</p>
 
           <div class="FIGURE">
             <a name="AEN835"></a>
@@ -3386,9 +3325,9 @@ target="_top">http://www.dcs.ed.ac.uk/home/ajcd/psutils/</a>
           </div>
 
           <p>GhostScript converts PostScript to a wide range of
-          output device formats. The interesting ones are <tt
-          class="LITERAL">ljet4</tt>, <tt class=
-          "LITERAL">lj5mono</tt>, <tt class="LITERAL">hpdj</tt>,
+          output device formats. The interesting ones are <var
+          class="LITERAL">ljet4</var>, <var class=
+          "LITERAL">lj5mono</var>, <var class="LITERAL">hpdj</var>,
           and so forth. These are Ink Jet printers with various
           strange behaviors.</p>
 
@@ -3425,8 +3364,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN859">4.6. Printing Test
-          Pages</a></h1>
+          <h2 class="SECT1"><a name="AEN859">4.6. Printing Test
+          Pages</a></h2>
 
           <div class="FIGURE">
             <a name="AEN861"></a>
@@ -3488,7 +3427,7 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN872">Chapter 5. Filters</a></h1>
+        <h1><a name="AEN872"></a>Chapter 5. Filters</h1>
 
         <div class="FIGURE">
           <a name="AEN874"></a>
@@ -3527,8 +3466,8 @@ target=
         </div>
 
         <p>The legacy BSD printing system required you to specify a
-        filter for all input types. LPRng uses <tt class=
-        "LITERAL">:filter</tt> to specify a default filter. Much
+        filter for all input types. LPRng uses <var class=
+        "LITERAL">:filter</var> to specify a default filter. Much
         more in line with modern printing.</p>
 
         <div class="FIGURE">
@@ -3561,14 +3500,14 @@ target=
 </pre>
         </div>
 
-        <p>The <b class="APPLICATION">lpr</b> <tt class=
-        "LITERAL">-Fx</tt> (<span class="emphasis"><i class=
-        "EMPHASIS">Filter</i></span> <tt class="LITERAL">x</tt>)
+        <p>The <b class="APPLICATION">lpr</b> <var class=
+        "LITERAL">-Fx</var> (<span class="emphasis"><i class=
+        "EMPHASIS">Filter</i></span> <var class="LITERAL">x</var>)
         option allows you to specify the filter type. Which, of
-        course, if you use the <tt class="LITERAL">:filter</tt>
-        option is ignored. The Binary or Literal (<tt class=
-        "LITERAL">-b</tt> or <tt class="LITERAL">-l</tt> requests
-        <span class="emphasis"><i class="EMPHASIS">Pass
+        course, if you use the <var class="LITERAL">:filter</var>
+        option is ignored. The Binary or Literal (<var class=
+        "LITERAL">-b</var> or <var class="LITERAL">-l</var>
+        requests <span class="emphasis"><i class="EMPHASIS">Pass
         Through</i></span> treatment from the filter. The filter is
         still used, but it is passed a special flag.</p>
 
@@ -3612,18 +3551,19 @@ target=
 </pre>
         </div>
 
-        <p>The <tt class="LITERAL">PRINTCAP_PATH</tt> environment
-        variable has new lines before every colon (<tt class=
-        "LITERAL">:</tt>) so you can split it up easily in the
+        <p>The <var class="LITERAL">PRINTCAP_PATH</var> environment
+        variable has new lines before every colon (<var class=
+        "LITERAL">:</var>) so you can split it up easily in the
         filter. See <a href="#WRAPPER">Figure 3-14</a> for an
-        example of this use. The <tt class="LITERAL">CONTROL</tt>
+        example of this use. The <var class="LITERAL">CONTROL</var>
         value is the job control file. The control file contains
         the job print request sent to <b class=
-        "APPLICATION">lpd</b>. The output device is opened <tt
-        class="LITERAL">Read-Write</tt> if the <tt class=
-        "LITERAL">:rw</tt> flag is set and it is a real device.
+        "APPLICATION">lpd</b>. The output device is opened <var
+        class="LITERAL">Read-Write</var> if the <var class=
+        "LITERAL">:rw</var> flag is set and it is a real device.
         Also, if the output is a filter or network connection then
-        then the output is <tt class="LITERAL">Read-Write</tt>.</p>
+        then the output is <var class=
+        "LITERAL">Read-Write</var>.</p>
 
         <div class="FIGURE">
           <a name="AEN915"></a>
@@ -3657,14 +3597,14 @@ target=
         <p>The filter command line options are really agressive due
         to history and feeping creaturism. All of the lines in the
         control file with a capital letter are passed as shown, the
-        <tt class="LITERAL">-F</tt> is used for the print job
-        format, and the <tt class="LITERAL">-c</tt> is set if the
-        job format was <tt class="LITERAL">l</tt> (Binary or
-        Literal). The <tt class="LITERAL">-f</tt> also is the name
-        of the data file. <tt class="LITERAL">STDIN</tt> is set to
-        the data file and <tt class="LITERAL">STDOUT</tt> to the
-        output device or network connection. Just to make life
-        interesting, the name of the accounting file (if it is
+        <var class="LITERAL">-F</var> is used for the print job
+        format, and the <var class="LITERAL">-c</var> is set if the
+        job format was <var class="LITERAL">l</var> (Binary or
+        Literal). The <var class="LITERAL">-f</var> also is the
+        name of the data file. <var class="LITERAL">STDIN</var> is
+        set to the data file and <var class="LITERAL">STDOUT</var>
+        to the output device or network connection. Just to make
+        life interesting, the name of the accounting file (if it is
         specified in the printcap or if it has a default value) is
         passed as the last parameter.</p>
 
@@ -3683,19 +3623,19 @@ target=
         </div>
 
         <p>The filter program exit codes can be used to control how
-        the job is processed. The <tt class="LITERAL">JSUCC</tt>
-        (0) value is the normal successful exit code. The <tt
-        class="LITERAL">JFAIL</tt> (1) value is used to indicate
+        the job is processed. The <var class="LITERAL">JSUCC</var>
+        (0) value is the normal successful exit code. The <var
+        class="LITERAL">JFAIL</var> (1) value is used to indicate
         some sort of temporary failure and the job should be
-        retried again. The <tt class="LITERAL">JABORT</tt> (2) is
+        retried again. The <var class="LITERAL">JABORT</var> (2) is
         more serious, and indicates some system error. The job
-        should not be retried and printing should stop. The <tt
-        class="LITERAL">JREMOVE</tt> (3) code simply removes the
+        should not be retried and printing should stop. The <var
+        class="LITERAL">JREMOVE</var> (3) code simply removes the
         job. This is useful if the job is unprintable. Finally, the
-        <tt class="LITERAL">JHOLD</tt> sets the job <tt class=
-        "LITERAL">HOLD</tt> flag. The job will not be released for
-        printing until the <b class="APPLICATION">lpc</b> <tt
-        class="LITERAL">release</tt> command releases it.</p>
+        <var class="LITERAL">JHOLD</var> sets the job <var class=
+        "LITERAL">HOLD</var> flag. The job will not be released for
+        printing until the <b class="APPLICATION">lpc</b> <var
+        class="LITERAL">release</var> command releases it.</p>
 
         <div class="FIGURE">
           <a name="AEN941"></a>
@@ -3746,8 +3686,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN951">5.1. Writing Your Own
-          Filter</a></h1>
+          <h2 class="SECT1"><a name="AEN951">5.1. Writing Your Own
+          Filter</a></h2>
 
           <p>If you want to write your own filter you can start
           with the following simple examples. In practice you have
@@ -3800,8 +3740,8 @@ target=
           variables and command line options and put them into
           handy <span class="emphasis"><i class=
           "EMPHASIS">hashes</i></span> for easy access. You should
-          note the special treatment of the <tt class=
-          "LITERAL">-c</tt> option and the arguments at the end of
+          note the special treatment of the <var class=
+          "LITERAL">-c</var> option and the arguments at the end of
           the command line. The last argument is the name of the
           accounting file (if any).</p>
 
@@ -3833,12 +3773,12 @@ target=
           <p>To determine the file type we use the <b class=
           "APPLICATION">file</b> application. This reads the first
           part of the input file and then writes out the determined
-          file type on its <tt class="LITERAL">STDOUT</tt>. We
+          file type on its <var class="LITERAL">STDOUT</var>. We
           check to see if the file is a PostScript file and then
-          run the <tt class="LITERAL">psnup</tt> command. If it is
-          not, then we simply write copy <tt class=
-          "LITERAL">STDIN</tt> to <tt class=
-          "LITERAL">STDOUT</tt>.</p>
+          run the <var class="LITERAL">psnup</var> command. If it
+          is not, then we simply write copy <var class=
+          "LITERAL">STDIN</var> to <var class=
+          "LITERAL">STDOUT</var>.</p>
 
           <div class="FIGURE">
             <a name="FPC"></a>
@@ -3854,11 +3794,11 @@ target=
 </pre>
           </div>
 
-          <p>We set make a printcap entry. Note the use of <tt
-          class="LITERAL">force_localhost</tt> to make sure that
+          <p>We set make a printcap entry. Note the use of <var
+          class="LITERAL">force_localhost</var> to make sure that
           the print jobs are sent to the right print queue! The
-          filter output will then be sent to <tt class=
-          "LITERAL">lp@localhost</tt> for final printing.</p>
+          filter output will then be sent to <var class=
+          "LITERAL">lp@localhost</var> for final printing.</p>
 
           <div class="FIGURE">
             <a name="FDB"></a>
@@ -3879,7 +3819,7 @@ target=
           </div>
 
           <p><a href="#FDB">Figure 5-12</a> shows the status output
-          when we set the <tt class="LITERAL">$debug=1</tt>. This
+          when we set the <var class="LITERAL">$debug=1</var>. This
           is recommended when you are testing your filters.</p>
 
           <div class="FIGURE">
@@ -3897,16 +3837,16 @@ target=
           </div>
 
           <p><a href="#FNODB">Figure 5-13</a> shows the status
-          output when we set the <tt class="LITERAL">$debug=0</tt>.
-          As you can see, it is less chatty and just as informative
-          to most users.</p>
+          output when we set the <var class=
+          "LITERAL">$debug=0</var>. As you can see, it is less
+          chatty and just as informative to most users.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN991">5.2. The <b class=
-          "APPLICATION">LPRng</b> IFHP Filter</a></h1>
+          <h2 class="SECT1"><a name="AEN991">5.2. The <b class=
+          "APPLICATION">LPRng</b> IFHP Filter</a></h2>
 
           <div class="FIGURE">
             <a name="AEN994"></a>
@@ -3953,8 +3893,8 @@ target=
           &#13;<br>
           <br>
 
-          <p>Each printer type has an entry in the <tt class=
-          "LITERAL">ifhp.conf</tt> configuration file. For
+          <p>Each printer type has an entry in the <var class=
+          "LITERAL">ifhp.conf</var> configuration file. For
           convenience these are put at the start of the file.</p>
 
           <div class="FIGURE">
@@ -3992,9 +3932,9 @@ target=
           printer capabilities are defined, the user options that
           are available are specified, and the magic cookies that
           need to be sent to the printer to have the operations
-          happen are defined. The <tt class="LITERAL">default</tt>
-          entry species the set of defaults for all the
-          printers.</p>
+          happen are defined. The <var class=
+          "LITERAL">default</var> entry species the set of defaults
+          for all the printers.</p>
 
           <div class="FIGURE">
             <a name="AEN1016"></a>
@@ -4032,11 +3972,11 @@ target=
           </div>
 
           <p>Here is an example of a PostScript only printer. The
-          <tt class="LITERAL">pjl@</tt> <tt class=
-          "LITERAL">pcl@</tt> and <tt class="LITERAL">text@</tt>
+          <var class="LITERAL">pjl@</var> <var class=
+          "LITERAL">pcl@</var> and <var class="LITERAL">text@</var>
           entries turn off PJL, PCL, and TEXT for the printer.</p>
 
-          <p>The <tt class="LITERAL">file_output_match</tt> entry
+          <p>The <var class="LITERAL">file_output_match</var> entry
           is used to implement a simple conversion facility that
           will try to find a conversion from one file type to
           another. It is deliberately simple minded, on the grounds
@@ -4063,9 +4003,9 @@ target=
           &#13;<br>
           <br>
 
-          <p>The <tt class="LITERAL">:ifhp=</tt> option is used to
-          pass options to ifhp. You can also use <tt class=
-          "LITERAL">ifhp -Toption</tt> as well. In this example we
+          <p>The <var class="LITERAL">:ifhp=</var> option is used
+          to pass options to ifhp. You can also use <var class=
+          "LITERAL">ifhp -Toption</var> as well. In this example we
           specify a PostScript printer that does not return
           status.</p>
 
@@ -4110,9 +4050,9 @@ target=
 
           <p>As you can see the information produced by the <b
           class="APPLICATION">ifhp</b> filter is more than adequate
-          for tracing its steps. You might want to try adding <tt
-          class="LITERAL">:ifhp=debug=1</tt>, <tt class=
-          "LITERAL">:ifhp=debug=2</tt>, or even for the customary
+          for tracing its steps. You might want to try adding <var
+          class="LITERAL">:ifhp=debug=1</var>, <var class=
+          "LITERAL">:ifhp=debug=2</var>, or even for the customary
           debugging information.</p>
 
           <div class="FIGURE">
@@ -4147,10 +4087,11 @@ target=
 </pre>
           </div>
 
-          <p>Job formatting options are passed to <tt class=
-          "LITERAL">ifhp</tt> using the <b class=
-          "APPLICATION">lpr</b> <tt class="LITERAL">-Z</tt>. These
-          are put into the control file with the -Z option.</p>
+          <p>Job formatting options are passed to <var class=
+          "LITERAL">ifhp</var> using the <b class=
+          "APPLICATION">lpr</b> <var class="LITERAL">-Z</var>.
+          These are put into the control file with the -Z
+          option.</p>
 
           <div class="FIGURE">
             <a name="AEN1050"></a>
@@ -4194,29 +4135,29 @@ target=
           </div>
 
           <p>You can test <b class="APPLICATION">ifhp</b> and see
-          what it does by using the <tt class="LITERAL">-T</tt>
+          what it does by using the <var class="LITERAL">-T</var>
           command line option. This is equivalent to using the <tt
-          class="FILENAME">/etc/printcap</tt> <tt class=
-          "LITERAL">ifhp</tt> option.&#13;</p>
+          class="FILENAME">/etc/printcap</tt> <var class=
+          "LITERAL">ifhp</var> option.&#13;</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1059">5.3. Taming the Wild
-          Phaser Printer</a></h1>
+          <h2 class="SECT1"><a name="AEN1059">5.3. Taming the Wild
+          Phaser Printer</a></h2>
 
           <p>There are several printers that have network
           interfaces but which require very special treatment.
-          Among these printers are the Tektronics <tt class=
-          "LITERAL">Phaser</tt> printers, some legacy Xerox
+          Among these printers are the Tektronics <var class=
+          "LITERAL">Phaser</var> printers, some legacy Xerox
           printers, and some plotters. These devices require that
           the network connection be opened and closed multiple
           times when sending a job. In order to handle this we have
           the <span class="emphasis"><i class=
           "EMPHASIS">filter</i></span> open the connection. This
-          type of operations is called the <tt class=
-          "LITERAL">appsocket</tt> protocol.</p>
+          type of operations is called the <var class=
+          "LITERAL">appsocket</var> protocol.</p>
 
           <div class="FIGURE">
             <a name="AEN1065"></a>
@@ -4241,17 +4182,17 @@ target=
           <br>
 
           <p>You need to specify the remote host and port to use to
-          the <tt class="LITERAL">ifhp</tt> filter, as well as the
-          <tt class="LITERAL">appsocket</tt> option. You should
-          test this first using the offline test mode.</p>
+          the <var class="LITERAL">ifhp</var> filter, as well as
+          the <var class="LITERAL">appsocket</var> option. You
+          should test this first using the offline test mode.</p>
         </div>
       </div>
 
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1071">Chapter 6. Banner Pages and
-        Accounting</a></h1>
+        <h1><a name="AEN1071"></a>Chapter 6. Banner Pages and
+        Accounting</h1>
 
         <p>Banner pages are usually a waste of paper unless you
         need to make sure that user jobs are separated clearly.
@@ -4261,15 +4202,16 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1074">6.1. Suppressing
-          Banner Pages</a></h1>
+          <h2 class="SECT1"><a name="AEN1074">6.1. Suppressing
+          Banner Pages</a></h2>
 
           <p>Most users do not <span class="emphasis"><i class=
           "EMPHASIS">want</i></span> banner pages, as they are a
           waste of paper. Some printers, especially the HP family
           of printers, will generate a banner page when you send a
-          job to them using the <tt class="LITERAL">lpd</tt>
-          protocol (i.e. <tt class="LITERAL">lp=port@host</tt>.</p>
+          job to them using the <var class="LITERAL">lpd</var>
+          protocol (i.e. <var class=
+          "LITERAL">lp=port@host</var>.</p>
 
           <div class="FIGURE">
             <a name="NB1"></a>
@@ -4310,8 +4252,8 @@ target=
           <div class="FIGURE">
             <a name="AEN1085"></a>
 
-            <p><b>Figure 6-2. Printcap Option <tt class=
-            "LITERAL">:sh</tt> and lpr -h (No Header)
+            <p><b>Figure 6-2. Printcap Option <var class=
+            "LITERAL">:sh</var> and lpr -h (No Header)
             Option</b></p>
 <pre class="SCREEN">
     Printcap:
@@ -4324,12 +4266,12 @@ target=
 </pre>
           </div>
 
-          <p>The banner printing is triggered by the <tt class=
-          "LITERAL">L</tt> (Login name?) line in the control file.
-          You can use the printcap <tt class="LITERAL">:sh</tt>
+          <p>The banner printing is triggered by the <var class=
+          "LITERAL">L</var> (Login name?) line in the control file.
+          You can use the printcap <var class="LITERAL">:sh</var>
           (suppress header pages or banner pages) or the command
-          line <b class="APPLICATION">lpr</b> <tt class=
-          "LITERAL">-h</tt> option to prevent <b class=
+          line <b class="APPLICATION">lpr</b> <var class=
+          "LITERAL">-h</var> option to prevent <b class=
           "APPLICATION">lpr</b> from putting this line into the
           control file.</p>
 
@@ -4362,10 +4304,10 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1100">6.2. Forcing Banner
-          Pages</a></h1>
+          <h2 class="SECT1"><a name="AEN1100">6.2. Forcing Banner
+          Pages</a></h2>
 
-          <p>The <tt class="LITERAL">:ab</tt> (always print a
+          <p>The <var class="LITERAL">:ab</var> (always print a
           banner page) is used by the <b class=
           "APPLICATION">lpd</b> server to force banner page
           generation. Even if the user tries to suppress it, it
@@ -4387,8 +4329,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1108">6.3. Generating
-          Banner Pages</a></h1>
+          <h2 class="SECT1"><a name="AEN1108">6.3. Generating
+          Banner Pages</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1110"></a>
@@ -4411,15 +4353,15 @@ target=
           <p>If you want to have a banner page printed you need to
           have two additional <b class="APPLICATION">lpd</b>
           facilities in the printcap entry: a banner printing
-          program (<tt class="LITERAL">:bp=...</tt>) and a filter
-          to handle banner printing (<tt class=
-          "LITERAL">:of=...</tt>). The <tt class="LITERAL">bp</tt>
-          causes the banner to be put at the start of the job, the
-          <tt class="LITERAL">be</tt> at the end of the job
-          (overrides <tt class="LITERAL">bp</tt>), and you can use
-          <tt class="LITERAL">bs</tt> and <tt class=
-          "LITERAL">be</tt> to have banners at both start and end
-          of jobs.</p>
+          program (<var class="LITERAL">:bp=...</var>) and a filter
+          to handle banner printing (<var class=
+          "LITERAL">:of=...</var>). The <var class=
+          "LITERAL">bp</var> causes the banner to be put at the
+          start of the job, the <var class="LITERAL">be</var> at
+          the end of the job (overrides <var class=
+          "LITERAL">bp</var>), and you can use <var class=
+          "LITERAL">bs</var> and <var class="LITERAL">be</var> to
+          have banners at both start and end of jobs.</p>
 
           <p>The banner printing programs are run exactly as a
           normal filter program, and the output is used as the
@@ -4433,7 +4375,7 @@ target=
           <p>If your printer requires special setup or
           conditioning, then you will have to specify a filter for
           the banner program. Historically this is done using the
-          <tt class="LITERAL">of</tt> option. This filter is
+          <var class="LITERAL">of</var> option. This filter is
           started, the banner page sent to it, and then the filter
           is suspended (don't ask), the job is printed, and then
           the filter is restarted. Finally, if a banner is needed
@@ -4443,8 +4385,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1130">6.4.
-          Accounting</a></h1>
+          <h2 class="SECT1"><a name="AEN1130">6.4.
+          Accounting</a></h2>
 
           <p>For a detailed discussion of accounting, please
           consult the <b class="APPLICATION">LPRng</b> HOWTO
@@ -4471,15 +4413,16 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">:af</tt> entry specifies
+          <p>The <var class="LITERAL">:af</var> entry specifies
           either a file, a network connection, or a program to run.
           If a file, then accounting information is written to the
           file; if a program, then the program is run; if a network
           connection then a TCP/IP connection is made to the
-          specified host and port. The <tt class="LITERAL">:as</tt>
-          and <tt class="LITERAL">:ae</tt> entries specify the
-          format of the line to print or a program to run at the
-          start and end of the job respectively.</p>
+          specified host and port. The <var class=
+          "LITERAL">:as</var> and <var class="LITERAL">:ae</var>
+          entries specify the format of the line to print or a
+          program to run at the start and end of the job
+          respectively.</p>
 
           <div class="FIGURE">
             <a name="AEN1141"></a>
@@ -4514,14 +4457,14 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">filestart</tt> and <tt class=
-          "LITERAL">fileend</tt> lines were written by the <b
-          class="APPLICATION">ifhp</b> filter. The <tt class=
-          "LITERAL">-p</tt> (pagecounter) values are the starting
+          <p>The <var class="LITERAL">filestart</var> and <var
+          class="LITERAL">fileend</var> lines were written by the
+          <b class="APPLICATION">ifhp</b> filter. The <var class=
+          "LITERAL">-p</var> (pagecounter) values are the starting
           and ending values for the physical page counter on the
-          printer. The <tt class="LITERAL">-b</tt> value is the
-          number of pages used and the <tt class="LITERAL">-T</tt>
-          the number of seconds used.</p>
+          printer. The <var class="LITERAL">-b</var> value is the
+          number of pages used and the <var class=
+          "LITERAL">-T</var> the number of seconds used.</p>
 
           <p>Remember that <b class="APPLICATION">ifhp</b> can only
           get accurate page counting information if there is a
@@ -4534,7 +4477,7 @@ target=
           manner and reflect the number of pages used by each
           job.</p>
 
-          <p>The <tt class="LITERAL">:achk</tt> checks to see if
+          <p>The <var class="LITERAL">:achk</var> checks to see if
           the user has permission to print. At the start of the
           job, if the accounting destination is a program or
           network connection, after writing the information <b
@@ -4547,8 +4490,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1162">6.5. Accounting
-          Gotchas</a></h1>
+          <h2 class="SECT1"><a name="AEN1162">6.5. Accounting
+          Gotchas</a></h2>
 
           <div class="FIGURE">
             <a name="AC3"></a>
@@ -4582,8 +4525,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1170">6.6. Accounting
-          Including Banner Pages</a></h1>
+          <h2 class="SECT1"><a name="AEN1170">6.6. Accounting
+          Including Banner Pages</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1172"></a>
@@ -4597,7 +4540,7 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">:of</tt> filter is used to
+          <p>The <var class="LITERAL">:of</var> filter is used to
           print the banner pages. Now the information in the
           accounting file inclues the banner pages as well as the
           job pages.</p>
@@ -4607,8 +4550,8 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1177">Chapter 7. Printer Pools and Load
-        Sharing</a></h1>
+        <h1><a name="AEN1177"></a>Chapter 7. Printer Pools and Load
+        Sharing</h1>
 
         <div class="FIGURE">
           <a name="PP1"></a>
@@ -4644,10 +4587,10 @@ target=
         </div>
 
         <p>The printcap for setting up spooling is shown in <a
-        href="#PP2">Figure 7-2</a>. The <tt class=
-        "LITERAL">:sv</tt> option marks this queue as the input
-        queue for load balancing and the <tt class=
-        "LITERAL">:ss</tt> option specifies that this queue is the
+        href="#PP2">Figure 7-2</a>. The <var class=
+        "LITERAL">:sv</var> option marks this queue as the input
+        queue for load balancing and the <var class=
+        "LITERAL">:ss</var> option specifies that this queue is the
         destination for load balancing. The server queues must have
         an associated device and send the jobs to the associated
         device.</p>
@@ -4676,17 +4619,17 @@ target=
 </pre>
         </div>
 
-        <p>The <tt class="LITERAL">:chooser</tt> value is an
+        <p>The <var class="LITERAL">:chooser</var> value is an
         executable program that is provided a list of destinations,
-        by using the <tt class="LITERAL">:destinations</tt> value
-        in the <tt class="LITERAL">$PRINTCAP_ENTRY</tt>. We will
+        by using the <var class="LITERAL">:destinations</var> value
+        in the <var class="LITERAL">$PRINTCAP_ENTRY</var>. We will
         show how to use this in the next section.</p>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1205">7.1. Implementing
-          Smart Load Balancing</a></h1>
+          <h2 class="SECT1"><a name="AEN1205">7.1. Implementing
+          Smart Load Balancing</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1207"></a>
@@ -4704,16 +4647,16 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">PrinterAvailable</tt> function
-          would determine the availability of the destination
-          printer by an appropriate method - <b class=
+          <p>The <var class="LITERAL">PrinterAvailable</var>
+          function would determine the availability of the
+          destination printer by an appropriate method - <b class=
           "APPLICATION">lpq</b> query, testing to see if a
           connection can be made to the device, etc.</p>
 
-          <p>If you specify a <tt class="LITERAL">:chooser</tt> for
-          a <tt class="LITERAL">:sv</tt> type of load balance
+          <p>If you specify a <var class="LITERAL">:chooser</var>
+          for a <var class="LITERAL">:sv</var> type of load balance
           queue, then the chooser program can also be used. Lets
-          look at a simple <tt class="LITERAL">chooser</tt>
+          look at a simple <var class="LITERAL">chooser</var>
           implementation.</p>
 
           <div class="FIGURE">
@@ -4791,11 +4734,11 @@ target=
 </pre>
           </div>
 
-          <p>We first get the list of destinations - from <tt
-          class="LITERAL">STDIN</tt> if we have helping an <tt
-          class="LITERAL">:sv</tt> load balance queue, or from the
-          <tt class="LITERAL">:destinations</tt> printcap entry. In
-          the later case we randomize the list so that we spread
+          <p>We first get the list of destinations - from <var
+          class="LITERAL">STDIN</var> if we have helping an <var
+          class="LITERAL">:sv</var> load balance queue, or from the
+          <var class="LITERAL">:destinations</var> printcap entry.
+          In the later case we randomize the list so that we spread
           the load over different printers rather than sending to
           the first printer in the list. We then run a command or
           application that gets the print queue status or whatever
@@ -4805,10 +4748,10 @@ target=
           and decide if we can use the printer.</p>
 
           <p>If no printer is available then nothing is printed on
-          <tt class="LITERAL">STDOUT</tt>, and the <b class=
+          <var class="LITERAL">STDOUT</var>, and the <b class=
           "APPLICATION">lpd</b> process will wait until either a
           printer becomes available or for a timeout specified by
-          the <tt class="LITERAL">:chooser_interval</tt> value
+          the <var class="LITERAL">:chooser_interval</var> value
           (default 10 seconds) in the printcap entry or <tt class=
           "FILENAME">/etc/lpd.conf</tt> file.</p>
         </div>
@@ -4816,8 +4759,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1234">7.2. Using <tt class=
-          "LITERAL">:chooser</tt> Exit Codes</a></h1>
+          <h2 class="SECT1"><a name="AEN1234">7.2. Using <var
+          class="LITERAL">:chooser</var> Exit Codes</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1237"></a>
@@ -4835,19 +4778,19 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">:chooser</tt> program exit
-          codes can be used to control printing. The <tt class=
-          "LITERAL">JHOLD</tt> and <tt class="LITERAL">JREMOVE</tt>
-          exit codes are job specific; they can be used to hold or
-          remove a job.</p>
+          <p>The <var class="LITERAL">:chooser</var> program exit
+          codes can be used to control printing. The <var class=
+          "LITERAL">JHOLD</var> and <var class=
+          "LITERAL">JREMOVE</var> exit codes are job specific; they
+          can be used to hold or remove a job.</p>
         </div>
       </div>
 
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1244">Chapter 8. Wildcards, Bounce Queues,
-        and Forwarding</a></h1>
+        <h1><a name="AEN1244"></a>Chapter 8. Wildcards, Bounce
+        Queues, and Forwarding</h1>
 
         <p>One of the things you might want to do is have a set of
         queues that massage the various jobs and then send them to
@@ -4881,8 +4824,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1251">8.1. Bounce
-          Queues</a></h1>
+          <h2 class="SECT1"><a name="AEN1251">8.1. Bounce
+          Queues</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1253"></a>
@@ -4917,14 +4860,14 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1260">8.2. Adding -Z
-          Options Using Bounce Queues</a></h1>
+          <h2 class="SECT1"><a name="AEN1260">8.2. Adding -Z
+          Options Using Bounce Queues</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1262"></a>
 
-            <p><b>Figure 8-3. Add Options Using <tt class=
-            "LITERAL">:append_z</tt></b></p>
+            <p><b>Figure 8-3. Add Options Using <var class=
+            "LITERAL">:append_z</var></b></p>
 <pre class="SCREEN">
     landscape:tc=.common
       :append_z=landscape
@@ -4944,16 +4887,16 @@ target=
 
           <p>Now you can add one option at a time. But what if you
           want to do landscape and duplex mode at the same time?
-          You need to create a <tt class=
-          "LITERAL">landscape_duplex</tt> queue. The combinations
+          You need to create a <var class=
+          "LITERAL">landscape_duplex</var> queue. The combinations
           become very unweildy.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="INCOMING">8.3. Adding Options
-          By Modifying Control File</a></h1>
+          <h2 class="SECT1"><a name="INCOMING">8.3. Adding Options
+          By Modifying Control File</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1270"></a>
@@ -4993,26 +4936,27 @@ target=
           "EMPHASIS">glob</i></span> type of match.</p>
 
           <p>When the job is received the name that was used to
-          send the job will be put into the control file as the <tt
-          class="LITERAL">Q</tt> line and is passed as a <tt class=
-          "LITERAL">-Q</tt> option to and filters. The <tt class=
-          "LITERAL">:incoming_control_filter</tt> is passed the
-          original control file on its <tt class=
-          "LITERAL">STDIN</tt> and sends a modified version on <tt
-          class="LITERAL">STDOUT</tt>. This allows the control file
-          to be modified as it is received.</p>
+          send the job will be put into the control file as the
+          <var class="LITERAL">Q</var> line and is passed as a <var
+          class="LITERAL">-Q</var> option to and filters. The <var
+          class="LITERAL">:incoming_control_filter</var> is passed
+          the original control file on its <var class=
+          "LITERAL">STDIN</var> and sends a modified version on
+          <var class="LITERAL">STDOUT</var>. This allows the
+          control file to be modified as it is received.</p>
 
           <p>One of the ways to modify the control file is to
-          convert suffixes of the print queue name (i.e. - <tt
-          class="LITERAL">_option</tt>) to <tt class=
-          "LITERAL">-Z</tt> option values and append these to the
-          <tt class="LITERAL">Z</tt> line of the control file.</p>
+          convert suffixes of the print queue name (i.e. - <var
+          class="LITERAL">_option</var>) to <var class=
+          "LITERAL">-Z</var> option values and append these to the
+          <var class="LITERAL">Z</var> line of the control
+          file.</p>
 
           <div class="FIGURE">
             <a name="UPDATEZ"></a>
 
-            <p><b>Figure 8-5. Using <tt class=
-            "LITERAL">update_z</tt></b></p>
+            <p><b>Figure 8-5. Using <var class=
+            "LITERAL">update_z</var></b></p>
 <pre class="SCREEN">
     #!/usr/bin/perl
     ...
@@ -5053,10 +4997,10 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">-Q</tt> option or control file
-          <tt class="LITERAL">Q</tt> line is used to get the name
-          of the print queue. The suffixes are then processed in
-          turn. You can either simply append them or have a hash
+          <p>The <var class="LITERAL">-Q</var> option or control
+          file <var class="LITERAL">Q</var> line is used to get the
+          name of the print queue. The suffixes are then processed
+          in turn. You can either simply append them or have a hash
           translate these values.</p>
         </div>
       </div>
@@ -5064,8 +5008,8 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1295">Chapter 9. Form Support and Hold
-        Queues</a></h1>
+        <h1><a name="AEN1295"></a>Chapter 9. Form Support and Hold
+        Queues</h1>
 
         <p>Sometimes jobs require a special setup on a printer, and
         jobs cannot be printed unless it is done. There are several
@@ -5074,8 +5018,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1298">9.1. Hold
-          Queues</a></h1>
+          <h2 class="SECT1"><a name="AEN1298">9.1. Hold
+          Queues</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1300"></a>
@@ -5120,7 +5064,7 @@ target=
 </pre>
           </div>
 
-          <p>When we print jobs to a <tt class="LITERAL">:ah</tt>
+          <p>When we print jobs to a <var class="LITERAL">:ah</var>
           or always hold queue, the job is not processed until
           released. We can release one or all the jobs that are
           being held.</p>
@@ -5151,8 +5095,8 @@ target=
           the main queue for printing.</p>
 
           <p>We can also set up <span class="emphasis"><i class=
-          "EMPHASIS">Time Release</i></span> queues using the <tt
-          class="LITERAL">cron</tt> time scheduling system.</p>
+          "EMPHASIS">Time Release</i></span> queues using the <var
+          class="LITERAL">cron</var> time scheduling system.</p>
 
           <div class="FIGURE">
             <a name="AEN1315"></a>
@@ -5175,10 +5119,10 @@ target=
           <p>You can also use the <b class="APPLICATION">LPRng</b>
           <span class="emphasis"><i class=
           "EMPHASIS">class</i></span> facility. The <b class=
-          "APPLICATION">lpr</b> <tt class="LITERAL">-Cclass</tt>
-          option sets the <tt class="LITERAL">Cclass</tt> line in
+          "APPLICATION">lpr</b> <var class="LITERAL">-Cclass</var>
+          option sets the <var class="LITERAL">Cclass</var> line in
           the control file. You can then use the <b class=
-          "APPLICATION">lpc</b> <tt class="LITERAL">class</tt>
+          "APPLICATION">lpc</b> <var class="LITERAL">class</var>
           facility to select job classes to print.</p>
 
           <div class="FIGURE">
@@ -5214,12 +5158,13 @@ target=
           </div>
 
           <p>You can specify a current list of classes to be
-          printed using the <b class="APPLICATION">lpc</b> <tt
-          class="LITERAL">class</tt> command. As shown in <a href=
+          printed using the <b class="APPLICATION">lpc</b> <var
+          class="LITERAL">class</var> command. As shown in <a href=
           "#HOLDCLASS">Figure 9-5</a>. the jobs not in the current
           classes are held until explicitly released or until the
           class is changed. You can disable the job class facility
-          by setting the class to <tt class="LITERAL">off</tt>.</p>
+          by setting the class to <var class=
+          "LITERAL">off</var>.</p>
 
           <div class="FIGURE">
             <a name="AEN1334"></a>
@@ -5251,9 +5196,9 @@ target=
           </div>
 
           <p>You can also put a class value into the control file
-          using the <tt class=
-          "LITERAL">incoming_control_filter</tt> facility described
-          in <a href="#INCOMING">Section 8.3</a>.</p>
+          using the <var class=
+          "LITERAL">incoming_control_filter</var> facility
+          described in <a href="#INCOMING">Section 8.3</a>.</p>
 
           <div class="FIGURE">
             <a name="AEN1340"></a>
@@ -5269,8 +5214,9 @@ target=
 </pre>
           </div>
 
-          <p>The <tt class="LITERAL">:incoming_control_filter</tt>
-          will now update the class to whatever you want.</p>
+          <p>The <var class=
+          "LITERAL">:incoming_control_filter</var> will now update
+          the class to whatever you want.</p>
 
           <div class="FIGURE">
             <a name="AEN1346"></a>
@@ -5317,27 +5263,27 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1351">Chapter 10. Interfacing to Vintage,
-        Legacy, and SunOS Print Spoolers</a></h1>
+        <h1><a name="AEN1351"></a>Chapter 10. Interfacing to
+        Vintage, Legacy, and SunOS Print Spoolers</h1>
 
         <p>Some legacy, vintage, and other print spoolers do not
         meet the RFC1179 requirements, or accept only control files
         with options used by the original BSD (1984 vintage) print
         spooler and only in the order used by the original BSD
-        (1984 vintage) print spooler. The <tt class=
-        "LITERAL">:bk</tt> (<span class="emphasis"><i class=
+        (1984 vintage) print spooler. The <var class=
+        "LITERAL">:bk</var> (<span class="emphasis"><i class=
         "EMPHASIS">Berkely Kompatible</i></span>) option causes <b
         class="APPLICATION">lpd</b> to generate control files
         compatible with this format. If you encounter problems with
-        transferring files to these systems, try using the <tt
-        class="LITERAL">:bk</tt> option first.</p>
+        transferring files to these systems, try using the <var
+        class="LITERAL">:bk</var> option first.</p>
 
         <p>&#13;</p>
 
         <div class="FIGURE">
           <a name="AEN1359"></a>
 
-          <p><b>Figure 10-1. Using <tt class="LITERAL">:bk</tt>
+          <p><b>Figure 10-1. Using <var class="LITERAL">:bk</var>
           (Berkeley Kompatible) Flag</b></p>
 <pre class="SCREEN">
     lp:force_localhost@     # make control files berkeley
@@ -5352,8 +5298,8 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1363">Chapter 11. Managing Enterprise Level
-        Printing Systems</a></h1>
+        <h1><a name="AEN1363"></a>Chapter 11. Managing Enterprise
+        Level Printing Systems</h1>
 
         <p>If you are doing management of more than 20 printers,
         then you already know the headaches. You need to make the
@@ -5366,8 +5312,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1366">11.1. Templates and
-          Standard Configurations</a></h1>
+          <h2 class="SECT1"><a name="AEN1366">11.1. Templates and
+          Standard Configurations</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1368"></a>
@@ -5420,20 +5366,20 @@ target=
 </pre>
           </div>
 
-          <p>You can use <tt class="LITERAL">lpc client all</tt> to
-          see the printcap information as the <b class=
+          <p>You can use <var class="LITERAL">lpc client all</var>
+          to see the printcap information as the <b class=
           "APPLICATION">LPRng</b> clients would see it. This allows
           you to check out the various printcaps before you use
-          them. You can also use <tt class="LITERAL">lpc server
-          all</tt> to see the printcap information as the <b class=
-          "APPLICATION">lpd</b> server would see it.</p>
+          them. You can also use <var class="LITERAL">lpc server
+          all</var> to see the printcap information as the <b
+          class="APPLICATION">lpd</b> server would see it.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1383">11.2. Master Print
-          Servers, One User Printcap</a></h1>
+          <h2 class="SECT1"><a name="AEN1383">11.2. Master Print
+          Servers, One User Printcap</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1385"></a>
@@ -5451,17 +5397,17 @@ target=
           </div>
 
           <p>This will allow you to send jobs directly to the print
-          server. You use the <tt class="LITERAL">lp=%Q@server</tt>
-          form for the destination. Note that you will need <b
-          class="APPLICATION">LPRng</b> version 3.8.0 or later for
-          this to work.</p>
+          server. You use the <var class=
+          "LITERAL">lp=%Q@server</var> form for the destination.
+          Note that you will need <b class="APPLICATION">LPRng</b>
+          version 3.8.0 or later for this to work.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1391">11.3. Master Print
-          Servers, Local Spooling</a></h1>
+          <h2 class="SECT1"><a name="AEN1391">11.3. Master Print
+          Servers, Local Spooling</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1393"></a>
@@ -5480,17 +5426,17 @@ target=
           </div>
 
           <p>Observe that you have two queues, one per print
-          server. You use the <tt class="LITERAL">lp=%Q@server</tt>
-          form of the destination. Note that you will need <b
-          class="APPLICATION">LPRng</b> version 3.8.0 or later for
-          this to work.</p>
+          server. You use the <var class=
+          "LITERAL">lp=%Q@server</var> form of the destination.
+          Note that you will need <b class="APPLICATION">LPRng</b>
+          version 3.8.0 or later for this to work.</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1399">11.4. Master Print
-          Servers, Selection by User</a></h1>
+          <h2 class="SECT1"><a name="AEN1399">11.4. Master Print
+          Servers, Selection by User</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1401"></a>
@@ -5513,22 +5459,22 @@ target=
 </pre>
           </div>
 
-          <p>You can use the <tt class="LITERAL">:oh=</tt><span
+          <p>You can use the <var class="LITERAL">:oh=</var><span
           class="emphasis"><i class="EMPHASIS">Pattern</i></span>
           to select the set of printcap entries that can be used on
           a host. The <span class="emphasis"><i class=
           "EMPHASIS">Pattern</i></span> can be IP Address/netmask
-          (<tt class="LITERAL">10.0.0.0/24</tt> or <tt class=
-          "LITERAL">10.0.0.0/255.255.255.0</tt>) or a wildcard
-          match for the DNS resovled host name (<tt class=
-          "LITERAL">*.eng.private</tt>).</p>
+          (<var class="LITERAL">10.0.0.0/24</var> or <var class=
+          "LITERAL">10.0.0.0/255.255.255.0</var>) or a wildcard
+          match for the DNS resovled host name (<var class=
+          "LITERAL">*.eng.private</var>).</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1411">11.5. The Great Grand
-          Dad Of All Printcap Files</a></h1>
+          <h2 class="SECT1"><a name="AEN1411">11.5. The Great Grand
+          Dad Of All Printcap Files</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1413"></a>
@@ -5557,8 +5503,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1417">11.6. Using Printcap
-          Filters and Central Databases</a></h1>
+          <h2 class="SECT1"><a name="AEN1417">11.6. Using Printcap
+          Filters and Central Databases</a></h2>
 
           <div class="FIGURE">
             <a name="AEN1419"></a>
@@ -5576,14 +5522,14 @@ target=
 </pre>
           </div>
 
-          <p>If the <tt class="FILENAME">/etc/lpd.conf</tt> <tt
-          class="LITERAL">printcap_path</tt> value is a filter,
+          <p>If the <tt class="FILENAME">/etc/lpd.conf</tt> <var
+          class="LITERAL">printcap_path</var> value is a filter,
           then the <b class="APPLICATION">LPRng</b> application
-          will write the name of the requested printer to the <tt
-          class="LITERAL">STDIN</tt> of the filter program and
-          expect to read one or more printcap entries from <tt
-          class="LITERAL">STDOUT</tt>. If the printcap entry
-          contains a <tt class="LITERAL">:tc</tt> reference, then
+          will write the name of the requested printer to the <var
+          class="LITERAL">STDIN</var> of the filter program and
+          expect to read one or more printcap entries from <var
+          class="LITERAL">STDOUT</var>. If the printcap entry
+          contains a <var class="LITERAL">:tc</var> reference, then
           this entry will be looked up in turn.</p>
 
           <div class="FIGURE">
@@ -5605,8 +5551,8 @@ target=
 </pre>
           </div>
 
-          <p>The exercise of building the necessary <tt class=
-          "LITERAL">LDAP</tt> database, extracting the information
+          <p>The exercise of building the necessary <var class=
+          "LITERAL">LDAP</var> database, extracting the information
           in a printcap form using the Perl</p>
         </div>
       </div>
@@ -5614,8 +5560,8 @@ target=
       <div class="CHAPTER">
         <hr>
 
-        <h1><a name="AEN1434">Chapter 12. <b class=
-        "APPLICATION">LPRngTool</b></a></h1>
+        <h1><a name="AEN1434"></a>Chapter 12. <b class=
+        "APPLICATION">LPRngTool</b></h1>
 
         <div class="FIGURE">
           <a name="AEN1437"></a>
@@ -5701,8 +5647,8 @@ target=
       <div class="APPENDIX">
         <hr>
 
-        <h1><a name="SECFEATURES">Appendix A. <b class=
-        "APPLICATION">LPRng</b></a></h1>
+        <h1><a name="SECFEATURES"></a>Appendix A. <b class=
+        "APPLICATION">LPRng</b></h1>
 
         <p>The <b class="APPLICATION">LPRng</b> print spooler
         software was developed to be robust, reliable, secure,
@@ -5761,9 +5707,9 @@ target=
         and would allow non-licensed sites to fix and patch
         problems. From 1988 to 1992 individuals and groups added
         features, hacked, slashed, and modified the PLP code,
-        coordinated largely by Justin Mason (<tt class=
+        coordinated largely by Justin Mason (<code class=
         "EMAIL">&lt;<a href=
-        "mailto:jmason@iona.ie">jmason@iona.ie</a>&gt;</tt>) who
+        "mailto:jmason@iona.ie">jmason@iona.ie</a>&gt;</code>) who
         started the <b class="APPLICATION">LPRng</b> mailing
         list.</p>
 
@@ -5798,8 +5744,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="MAILLIST">A.1.
-          Documentation</a></h1>
+          <h2 class="SECT1"><a name="MAILLIST">A.1.
+          Documentation</a></h2>
 
           <p>The main <b class="APPLICATION">LPRng</b>
           documentation is the LPRng-HOWTO, which is available in
@@ -5839,8 +5785,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1548">A.2.
-          Installation</a></h1>
+          <h2 class="SECT1"><a name="AEN1548">A.2.
+          Installation</a></h2>
 
           <p>It is recommended that installation be done from the
           source distribution, and that the files be put in the <tt
@@ -5875,7 +5821,7 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1560">A.3. License</a></h1>
+          <h2 class="SECT1"><a name="AEN1560">A.3. License</a></h2>
 
           <p>The <b class="APPLICATION">LPRng</b> Print Spooler and
           the ifhp Print Filter software are distributed under the
@@ -5891,8 +5837,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1566">A.4. Commercial
-          Support</a></h1>
+          <h2 class="SECT1"><a name="AEN1566">A.4. Commercial
+          Support</a></h2>
 
           <p><a href="http://www.astart.com" target="_top">AStArt
           Technologies</a> provides commercial support and
@@ -5905,8 +5851,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="LPRNGDIST">A.5. Web Site, FTP
-          Site, and Mirrors</a></h1>
+          <h2 class="SECT1"><a name="LPRNGDIST">A.5. Web Site, FTP
+          Site, and Mirrors</a></h2>
 
           <p>Web Page: <a href="http://www.lprng.com" target=
           "_top">http://www.lprng.com</a></p>
@@ -6030,8 +5976,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1607">A.6. Mailing
-          List</a></h1>
+          <h2 class="SECT1"><a name="AEN1607">A.6. Mailing
+          List</a></h2>
 
           <p>To join the <b class="APPLICATION">LPRng</b> mailing
           list, please send mail to <a href=
@@ -6047,8 +5993,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="FAQREF">A.7. PGP Public
-          Key</a></h1>
+          <h2 class="SECT1"><a name="FAQREF">A.7. PGP Public
+          Key</a></h2>
 
           <p>The <b class="APPLICATION">LPRng</b> distributions
           have an MD5 checksum calculated, which is then signed
@@ -6088,8 +6034,8 @@ target=
       <div class="APPENDIX">
         <hr>
 
-        <h1><a name="AEN1621">Appendix B. References and
-        Standards</a></h1>
+        <h1><a name="AEN1621"></a>Appendix B. References and
+        Standards</h1>
 
         <p>The following references and standards have been used in
         the development of the <b class="APPLICATION">LPRng</b>
@@ -6098,7 +6044,7 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1625">B.1. RFCs</a></h1>
+          <h2 class="SECT1"><a name="AEN1625">B.1. RFCs</a></h2>
 
           <p>During the early development of the Internet
           developers did not want to go through the laborious
@@ -6135,8 +6081,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="POSTSCRIPT">B.2.
-          PostScript</a></h1>
+          <h2 class="SECT1"><a name="POSTSCRIPT">B.2.
+          PostScript</a></h2>
 
           <p>PostScript is one of the <span class="emphasis"><i
           class="EMPHASIS">de facto</i></span> standards for print
@@ -6176,7 +6122,7 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="PCL">B.3. HP PCL 5</a></h1>
+          <h2 class="SECT1"><a name="PCL">B.3. HP PCL 5</a></h2>
 
           <p>The Hewlett-Packard (HP) PCL Printer Language is the
           second de-facto standard for print jobs. Currently,
@@ -6190,7 +6136,7 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="PJL">B.4. HP PJL</a></h1>
+          <h2 class="SECT1"><a name="PJL">B.4. HP PJL</a></h2>
 
           <p>The Hewlett-Packard (HP) Printer Job Language is used
           to control various features of HP printers. The [<span
@@ -6204,20 +6150,20 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN1668">B.5. PDF</a></h1>
+          <h2 class="SECT1"><a name="AEN1668">B.5. PDF</a></h2>
 
-          <p>The Portable Document Format (<tt class=
-          "LITERAL">pdf</tt>) was developed by Adobe to be a more
+          <p>The Portable Document Format (<var class=
+          "LITERAL">pdf</var>) was developed by Adobe to be a more
           useful method of distributing documentation for view by
           online systems and software. The [<span class=
           "CITATION">Portable Document Format Reference
           Manual</span>] is available from Adobe (<a href=
           "http://www.adobe.com" target=
-          "_top">http://www.adobe.com</a>). While <tt class=
-          "LITERAL">pdf</tt> is not used directly as a print job
+          "_top">http://www.adobe.com</a>). While <var class=
+          "LITERAL">pdf</var> is not used directly as a print job
           language, it is one of the more common formats for files
           that need to be printed. It can be converted to
-          PostScript by most <tt class="LITERAL">pdf</tt> viewers
+          PostScript by most <var class="LITERAL">pdf</var> viewers
           such as GhostScript and Adobe Acrobat.</p>
         </div>
       </div>
@@ -6225,8 +6171,8 @@ target=
       <div class="APPENDIX">
         <hr>
 
-        <h1><a name="RFC1179REF">Appendix C. RFC 1179 - Line
-        Printer Daemon Protocol</a></h1>
+        <h1><a name="RFC1179REF"></a>Appendix C. RFC 1179 - Line
+        Printer Daemon Protocol</h1>
 
         <p>RFC1179 can be obtained from the <b class=
         "APPLICATION">LPRng</b> distribution, in the
@@ -6249,45 +6195,45 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="LPDPORT">C.1. Ports and
-          Connections</a></h1>
+          <h2 class="SECT1"><a name="LPDPORT">C.1. Ports and
+          Connections</a></h2>
 
           <p>Options used:</p>
 
           <ul>
             <li>
-              <p><tt class="LITERAL">lpd_port=</tt><span class=
+              <p><var class="LITERAL">lpd_port=</var><span class=
               "emphasis"><i class="EMPHASIS">Port for <b class=
               "APPLICATION">lpd</b> to accept
               connection</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">originate_port=</tt><span
+              <p><var class="LITERAL">originate_port=</var><span
               class="emphasis"><i class="EMPHASIS">Ports to
               originate connections on</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">reuse_addr</tt> FLAG <span
+              <p><var class="LITERAL">reuse_addr</var> FLAG <span
               class="emphasis"><i class="EMPHASIS">Set SO_REUSEADDR
               flag on connection</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">retry_econnrefused</tt> FLAG
+              <p><var class="LITERAL">retry_econnrefused</var> FLAG
               <span class="emphasis"><i class="EMPHASIS">Retry on
               connect ECONNREFUSED error</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">retry_nolink</tt> FLAG <span
+              <p><var class="LITERAL">retry_nolink</var> FLAG <span
               class="emphasis"><i class="EMPHASIS">Retry on device
               open or connection ffailure</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">socket_linger=</tt><span
+              <p><var class="LITERAL">socket_linger=</var><span
               class="emphasis"><i class="EMPHASIS">socket linger
               timeout</i></span></p>
             </li>
@@ -6331,8 +6277,8 @@ target=
 
           <p>As experience has shown, for security purposes, the
           fewer programs that need to have privileged status, the
-          better. <b class="APPLICATION">LPRng</b> uses the <tt
-          class="LITERAL">lpd_port=printer</tt> configuration
+          better. <b class="APPLICATION">LPRng</b> uses the <var
+          class="LITERAL">lpd_port=printer</var> configuration
           option to set the actual port to be use. By default, this
           is port 515, but can be set to other values.</p>
 
@@ -6341,17 +6287,18 @@ target=
           concerned with avoiding communications problems resulting
           from the arrival of old or <span class="emphasis"><i
           class="EMPHASIS">stale</i></span> packets. When a
-          connection between <tt class="LITERAL">sourcehost,
-          sourceport</tt> and <tt class="LITERAL">desthost,
-          destport</tt> is made, a set of sequence numbers is
+          connection between <var class="LITERAL">sourcehost,
+          sourceport</var> and <var class="LITERAL">desthost,
+          destport</var> is made, a set of sequence numbers is
           established and used for sending and acknowledgement of
           data. When the connection terminates, the TCP/IP protocol
           restricts the establishment of a new connection between
-          <tt class="LITERAL">sourcehost, sourceport</tt> and <tt
-          class="LITERAL">desthost, destport</tt> for a period long
-          enough for all <span class="emphasis"><i class=
-          "EMPHASIS">stale</i></span> packets to be removed from
-          the system. This is approximately 10 minutes long.</p>
+          <var class="LITERAL">sourcehost, sourceport</var> and
+          <var class="LITERAL">desthost, destport</var> for a
+          period long enough for all <span class="emphasis"><i
+          class="EMPHASIS">stale</i></span> packets to be removed
+          from the system. This is approximately 10 minutes
+          long.</p>
 
           <p>In order to simplify assignments of ports, timing out
           connections, and other matters, many TCP/IP packages do
@@ -6370,25 +6317,28 @@ target=
           relatively small number of port numbers. Observe what
           happens when host 1 tries to send a large number of jobs
           to a server 2. The following connections are established
-          and terminated: <tt class="LITERAL">host 1, port 721</tt>
-          and <tt class="LITERAL">host 2, port 515</tt> <tt class=
-          "LITERAL">host 1, port 722</tt> and <tt class=
-          "LITERAL">host 2, port 515</tt> <tt class="LITERAL">host
-          1, port 723</tt> and <tt class="LITERAL">host 2, port
-          515</tt> <tt class="LITERAL">host 1, port 724</tt> and
-          <tt class="LITERAL">host 2, port 515</tt> <tt class=
-          "LITERAL">host 1, port 725</tt> and <tt class=
-          "LITERAL">host 2, port 515</tt> <tt class="LITERAL">host
-          1, port 726</tt> and <tt class="LITERAL">host 2, port
-          515</tt> <tt class="LITERAL">host 1, port 727</tt> and
-          <tt class="LITERAL">host 2, port 515</tt> <tt class=
-          "LITERAL">host 1, port 728</tt> and <tt class=
-          "LITERAL">host 2, port 515</tt> <tt class="LITERAL">host
-          1, port 729</tt> and <tt class="LITERAL">host 2, port
-          515</tt> <tt class="LITERAL">host 1, port 730</tt> and
-          <tt class="LITERAL">host 2, port 515</tt> <tt class=
-          "LITERAL">host 1, port 731</tt> and <tt class=
-          "LITERAL">host 2, port 515</tt></p>
+          and terminated: <var class="LITERAL">host 1, port
+          721</var> and <var class="LITERAL">host 2, port 515</var>
+          <var class="LITERAL">host 1, port 722</var> and <var
+          class="LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 723</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 724</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 725</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 726</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 727</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 728</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 729</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 730</var> and <var class=
+          "LITERAL">host 2, port 515</var> <var class=
+          "LITERAL">host 1, port 731</var> and <var class=
+          "LITERAL">host 2, port 515</var></p>
 
           <p>Now according to the RFC1179 rules and the TCP/IP
           protocol, we will have to wait until one of these
@@ -6403,12 +6353,12 @@ target=
 
           <p>The <b class="APPLICATION">LPRng</b> code has tried to
           provide several methods to deal with these problems.
-          Firstly, the <tt class="LITERAL">originate_port=512
-          1023</tt> option specifies the range of ports used to
+          Firstly, the <var class="LITERAL">originate_port=512
+          1023</var> option specifies the range of ports used to
           originate connections when the software is running either
           as ROOT or SETUID root. By strict RFC1179 rules, this
-          should be <tt class="LITERAL">originate_port=721
-          731</tt>, but it turns out that most BSD <b class=
+          should be <var class="LITERAL">originate_port=721
+          731</var>, but it turns out that most BSD <b class=
           "APPLICATION">lpd</b> based implementations only check
           for a <span class="emphasis"><i class=
           "EMPHASIS">reserved</i></span> originating port. By using
@@ -6419,65 +6369,67 @@ target=
           for a large number of printers even increasing this port
           range is insufficient, and steps need to be taken use the
           originating port numbers more efficiently. The Berkeley
-          TCP/IP implementation <tt class=
-          "FUNCTION">getsockopt()</tt> and <tt class=
-          "FUNCTION">setsockopt()</tt> allows the user to
+          TCP/IP implementation <code class=
+          "FUNCTION">getsockopt()</code> and <code class=
+          "FUNCTION">setsockopt()</code> allows the user to
           manipulate some of the underlying timeouts and options of
           the TCP/IP network. When a TCP/IP connection is
-          established, the <tt class="FUNCTION">setsockopt()</tt>
-          facility can be used to set the <tt class=
-          "LITERAL">SO_REUSEADDR</tt> flag on the connection. This
-          flag effectively sets the timeout value on the ports and
-          connections to 0, allowing immediate reuse of the ports.
-          When done on an originating end of a connection, this
-          will allow the originating port number to be reused
-          immediately.</p>
+          established, the <code class=
+          "FUNCTION">setsockopt()</code> facility can be used to
+          set the <var class="LITERAL">SO_REUSEADDR</var> flag on
+          the connection. This flag effectively sets the timeout
+          value on the ports and connections to 0, allowing
+          immediate reuse of the ports. When done on an originating
+          end of a connection, this will allow the originating port
+          number to be reused immediately.</p>
 
-          <p>It would appear that by setting <tt class=
-          "LITERAL">SO_REUSEADDR</tt> on the originating end that
+          <p>It would appear that by setting <var class=
+          "LITERAL">SO_REUSEADDR</var> on the originating end that
           we have solved our problems. However, unless the
-          destination end of the connection sets its <tt class=
-          "LITERAL">SO_REUSEADDR</tt> flag on the connection, it
+          destination end of the connection sets its <var class=
+          "LITERAL">SO_REUSEADDR</var> flag on the connection, it
           will still do a timeout. Thus when we try to make a
           connection from a port that was active within a short
           period of time to the same host, then it will reject the
           connection until the timeout is over.</p>
 
-          <p>The <tt class="LITERAL">reuse_addr</tt> flag (default
-          off) forces the <b class="APPLICATION">LPRng</b> software
-          to set the <tt class="LITERAL">SO_REUSEADDR</tt> flag on
-          originating connections. As indicated, this will allow
-          ports to be reused immediately for outgoing connections,
-          rather than waiting for a timeout.</p>
+          <p>The <var class="LITERAL">reuse_addr</var> flag
+          (default off) forces the <b class="APPLICATION">LPRng</b>
+          software to set the <var class=
+          "LITERAL">SO_REUSEADDR</var> flag on originating
+          connections. As indicated, this will allow ports to be
+          reused immediately for outgoing connections, rather than
+          waiting for a timeout.</p>
 
-          <p>While the <tt class="LITERAL">reuse_addr</tt> flag
+          <p>While the <var class="LITERAL">reuse_addr</var> flag
           usually allows us to reuse ports, there is still the
           problem of dealing with connections failing due to the
           remote site rejecting the connection due to a pending
           timeout from a previous connection. A careful study of
           the original BSD TCP/IP network code and of some others
           indicates that when a connection fails due to a pending
-          timeout, an ECONNREFUSED error code is returned to a <tt
-          class="FUNCTION">connect()</tt> system call. If this
-          happens and we suspect that the remote site is rejecting
-          the connection due to a timeout problem, then we should
-          retry making the connection but from a new port, and
-          continue retrying until all possible ports are used.</p>
+          timeout, an ECONNREFUSED error code is returned to a
+          <code class="FUNCTION">connect()</code> system call. If
+          this happens and we suspect that the remote site is
+          rejecting the connection due to a timeout problem, then
+          we should retry making the connection but from a new
+          port, and continue retrying until all possible ports are
+          used.</p>
 
-          <p>The <tt class="LITERAL">retry_econnrefused</tt>
+          <p>The <var class="LITERAL">retry_econnrefused</var>
           (default on) flag is used to specify that we retry
-          connections in this manner. When this is set, a <tt
-          class="LITERAL">connection refused</tt> error causes the
+          connections in this manner. When this is set, a <var
+          class="LITERAL">connection refused</var> error causes the
           connection to be retried using a new port. This will be
           repeated until all available ports have been tried.</p>
 
           <p>When printing a job and the <b class=
           "APPLICATION">lpd</b> server connection to a remote site
-          or device open fails, the <tt class=
-          "LITERAL">retry_nolink</tt> (default on) will cause the
+          or device open fails, the <var class=
+          "LITERAL">retry_nolink</var> (default on) will cause the
           attempt to be retried indefinitely. The combination of
-          <tt class="LITERAL">retry_econnrefused</tt> and <tt
-          class="LITERAL">retry_nolink</tt> will provide robust
+          <var class="LITERAL">retry_econnrefused</var> and <var
+          class="LITERAL">retry_nolink</var> will provide robust
           connection attempts to remote systems.</p>
 
           <p>While the above problems cause difficulties when
@@ -6489,39 +6441,39 @@ target=
           problems on systems which terminate a process it has
           received an abnormal (signal caused) termination.</p>
 
-          <p>The <tt class="FUNCTION">setsockopt()</tt> SO_LINGER
-          option allows the user to specify that when a socket is
-          closed normally, that the process should block until
-          pending data is flushed or for the <tt class=
-          "LITERAL">socket_linger</tt> period. If <tt class=
-          "LITERAL">socket_linger</tt> is 0, then no SO_LINGER
+          <p>The <code class="FUNCTION">setsockopt()</code>
+          SO_LINGER option allows the user to specify that when a
+          socket is closed normally, that the process should block
+          until pending data is flushed or for the <var class=
+          "LITERAL">socket_linger</var> period. If <var class=
+          "LITERAL">socket_linger</var> is 0, then no SO_LINGER
           operation is done.</p>
 
           <p>In summary, if you experience problems with connection
           failures due to port exhaustion, first try setting the
-          <tt class="LITERAL">reuse_port</tt> flag, and you should
-          see a reduction. Check to ensure that the <tt class=
-          "LITERAL">retry_econnrefused</tt> and <tt class=
-          "LITERAL">retry_nolink</tt> flags are set, and the error
+          <var class="LITERAL">reuse_port</var> flag, and you
+          should see a reduction. Check to ensure that the <var
+          class="LITERAL">retry_econnrefused</var> and <var class=
+          "LITERAL">retry_nolink</var> flags are set, and the error
           code in the log and status files. If the failures
           continue, then the problem is caused by the remote end
           having timeout limitations and there is little you can do
-          except to set a very long <tt class=
-          "LITERAL">connect_retry</tt> interval, say <tt class=
-          "LITERAL">connect_retry=120</tt> (2 minutes).</p>
+          except to set a very long <var class=
+          "LITERAL">connect_retry</var> interval, say <var class=
+          "LITERAL">connect_retry=120</var> (2 minutes).</p>
         </div>
 
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="REMOTESUPPORT">C.2. Protocol
-          Requests and Replies</a></h1>
+          <h2 class="SECT1"><a name="REMOTESUPPORT">C.2. Protocol
+          Requests and Replies</a></h2>
 
           <p>Options used:</p>
 
           <ul>
             <li>
-              <p><tt class="LITERAL">remote_support=</tt><span
+              <p><var class="LITERAL">remote_support=</var><span
               class="emphasis"><i class="EMPHASIS">Remote
               operations supported</i></span></p>
             </li>
@@ -6541,128 +6493,114 @@ target=
 
             <p><b>Table C-1. RFC1179 Commands</b></p>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">NNN</th>
+                  <th>NNN</th>
 
-                  <th align="LEFT" valign="TOP">RFC1179</th>
+                  <th>RFC1179</th>
 
-                  <th align="LEFT" valign="TOP">Operation</th>
+                  <th>Operation</th>
 
-                  <th align="LEFT" valign="TOP">program</th>
+                  <th>program</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">1</td>
+                  <td>1</td>
 
-                  <td align="LEFT" valign="TOP">yes</td>
+                  <td>yes</td>
 
-                  <td align="LEFT" valign="TOP">start print</td>
+                  <td>start print</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpc</b></td>
+                  <td><b class="APPLICATION">lpc</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">2</td>
+                  <td>2</td>
 
-                  <td align="LEFT" valign="TOP">yes</td>
+                  <td>yes</td>
 
-                  <td align="LEFT" valign="TOP">transfer a printer
-                  job</td>
+                  <td>transfer a printer job</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpr</b></td>
+                  <td><b class="APPLICATION">lpr</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">3</td>
+                  <td>3</td>
 
-                  <td align="LEFT" valign="TOP">yes</td>
+                  <td>yes</td>
 
-                  <td align="LEFT" valign="TOP">print short form of
-                  queue status</td>
+                  <td>print short form of queue status</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpr</b></td>
+                  <td><b class="APPLICATION">lpr</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">4</td>
+                  <td>4</td>
 
-                  <td align="LEFT" valign="TOP">yes</td>
+                  <td>yes</td>
 
-                  <td align="LEFT" valign="TOP">print long form of
-                  queue status</td>
+                  <td>print long form of queue status</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpr</b></td>
+                  <td><b class="APPLICATION">lpr</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">5</td>
+                  <td>5</td>
 
-                  <td align="LEFT" valign="TOP">yes</td>
+                  <td>yes</td>
 
-                  <td align="LEFT" valign="TOP">remove jobs</td>
+                  <td>remove jobs</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lprm</b></td>
+                  <td><b class="APPLICATION">lprm</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">6</td>
+                  <td>6</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">do control
-                  operation</td>
+                  <td>do control operation</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpc</b></td>
+                  <td><b class="APPLICATION">lpc</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">7</td>
+                  <td>7</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">transfer a block
-                  format print job</td>
+                  <td>transfer a block format print job</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpr</b></td>
+                  <td><b class="APPLICATION">lpr</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">8</td>
+                  <td>8</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">secure command
-                  transfer</td>
+                  <td>secure command transfer</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpc</b></td>
+                  <td><b class="APPLICATION">lpc</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">9</td>
+                  <td>9</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">verbose status
-                  information</td>
+                  <td>verbose status information</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpr</b></td>
+                  <td><b class="APPLICATION">lpr</b></td>
                 </tr>
               </tbody>
             </table>
@@ -6708,20 +6646,20 @@ target=
 
             <li>
               <p>You can specify that a network printer is non-<b
-              class="APPLICATION">LPRng</b> by using the <tt class=
-              "LITERAL">remote_support=RQVMC</tt> option and
+              class="APPLICATION">LPRng</b> by using the <var
+              class="LITERAL">remote_support=RQVMC</var> option and
               specify the operations supported by the printer. The
               letters R, Q, M, and C stand for <b class=
               "APPLICATION">lpr</b>, <b class=
               "APPLICATION">lpq</b>, <b class=
               "APPLICATION">lprm</b>, and <b class=
               "APPLICATION">lpc</b> operations respectively, and
-              indicate that these are supported. If <tt class=
-              "LITERAL">remote_support</tt> does not allow a
+              indicate that these are supported. If <var class=
+              "LITERAL">remote_support</var> does not allow a
               particular operation, then the <b class=
               "APPLICATION">LPRng</b> software will not send a
               corresponding request to the printer. For example,
-              <tt class="LITERAL">remote_support=R</tt> would
+              <var class="LITERAL">remote_support=R</var> would
               restrict operations to spooling jobs only, and the <b
               class="APPLICATION">LPRng</b> software would not
               query the printer for status.</p>
@@ -6734,27 +6672,27 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="JOBTRANSFER">C.3. Job
-          Transfer</a></h1>
+          <h2 class="SECT1"><a name="JOBTRANSFER">C.3. Job
+          Transfer</a></h2>
 
           <p>Options used:</p>
 
           <ul>
             <li>
-              <p><tt class="LITERAL">longnumber</tt> FLAG <span
+              <p><var class="LITERAL">longnumber</var> FLAG <span
               class="emphasis"><i class="EMPHASIS">Long job number
               (6 digits)</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">send_data_first</tt> FLAG
+              <p><var class="LITERAL">send_data_first</var> FLAG
               <span class="emphasis"><i class="EMPHASIS">Send data
               files first</i></span></p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">use_shorthost</tt><span class=
-              "emphasis"><i class="EMPHASIS">Use short
+              <p><var class="LITERAL">use_shorthost</var><span
+              class="emphasis"><i class="EMPHASIS">Use short
               hostname</i></span></p>
             </li>
           </ul>
@@ -6771,36 +6709,36 @@ target=
           <div class="INFORMALTABLE">
             <a name="AEN1924"></a>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Command</th>
+                  <th>Command</th>
 
-                  <th align="LEFT" valign="TOP">Purpose</th>
+                  <th>Purpose</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">\001\n</td>
+                  <td>\001\n</td>
 
-                  <td align="LEFT" valign="TOP">abort</td>
+                  <td>abort</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\002nnnn
-                  cfname</td>
+                  <td>\002nnnn cfname</td>
 
-                  <td align="LEFT" valign="TOP">control file
-                  transfer</td>
+                  <td>control file transfer</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\003nnnn
-                  dfname</td>
+                  <td>\003nnnn dfname</td>
 
-                  <td align="LEFT" valign="TOP">data file
-                  transfer</td>
+                  <td>data file transfer</td>
                 </tr>
               </tbody>
             </table>
@@ -6821,28 +6759,30 @@ target=
           <div class="INFORMALTABLE">
             <a name="AEN1942"></a>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Status</th>
+                  <th>Status</th>
 
-                  <th align="LEFT" valign="TOP">Purpose</th>
+                  <th>Purpose</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">\000</td>
+                  <td>\000</td>
 
-                  <td align="LEFT" valign="TOP">Accepted,
-                  proceed</td>
+                  <td>Accepted, proceed</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\nnn</td>
+                  <td>\nnn</td>
 
-                  <td align="LEFT" valign="TOP">Rejected with error
-                  code</td>
+                  <td>Rejected with error code</td>
                 </tr>
               </tbody>
             </table>
@@ -6869,42 +6809,42 @@ target=
           <div class="INFORMALTABLE">
             <a name="AEN1961"></a>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Code</th>
+                  <th>Code</th>
 
-                  <th align="LEFT" valign="TOP">Error</th>
+                  <th>Error</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">\000</td>
+                  <td>\000</td>
 
-                  <td align="LEFT" valign="TOP">Accepted,
-                  proceed</td>
+                  <td>Accepted, proceed</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\001</td>
+                  <td>\001</td>
 
-                  <td align="LEFT" valign="TOP">Queue not accepting
-                  jobs</td>
+                  <td>Queue not accepting jobs</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\002</td>
+                  <td>\002</td>
 
-                  <td align="LEFT" valign="TOP">Queue temporarily
-                  full, retry later</td>
+                  <td>Queue temporarily full, retry later</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">\003</td>
+                  <td>\003</td>
 
-                  <td align="LEFT" valign="TOP">Bad job format, do
-                  not retry</td>
+                  <td>Bad job format, do not retry</td>
                 </tr>
               </tbody>
             </table>
@@ -6913,10 +6853,10 @@ target=
           <br>
 
           <p>When the sender gets the reply indicating success, it
-          sends the <tt class="LITERAL">nnnn</tt> bytes of the
-          control or data file, followed by a <tt class=
-          "LITERAL">\000</tt> octet. The receiver will then reply
-          as above; a single <tt class="LITERAL">\000</tt> octet
+          sends the <var class="LITERAL">nnnn</var> bytes of the
+          control or data file, followed by a <var class=
+          "LITERAL">\000</var> octet. The receiver will then reply
+          as above; a single <var class="LITERAL">\000</var> octet
           indicating success.</p>
 
           <p>The above procedure is carried out until all data
@@ -6945,8 +6885,8 @@ target=
           whether they are sent control or data files first. By
           default, it sends the control file first, followed by the
           data file. If the destination system requires that the
-          data files be sent first, the <tt class=
-          "LITERAL">send_data_first</tt> printcap option can be
+          data files be sent first, the <var class=
+          "LITERAL">send_data_first</var> printcap option can be
           used to force data files to be sent first.</p>
 
           <p>RFC1179 states that: <a name="AEN1996"></a></p>
@@ -6971,10 +6911,10 @@ target=
               <p>The restriction to 3 digits means that at most
               1000 jobs can be in a queue. Strangely, some systems
               generate far more than 1000 jobs a day, and need to
-              archive them on a regular basis. The <tt class=
-              "LITERAL">longnumber</tt> option will allow <b class=
-              "APPLICATION">LPRng</b> to use a 6 digit job number
-              for files in the print queue.</p>
+              archive them on a regular basis. The <var class=
+              "LITERAL">longnumber</var> option will allow <b
+              class="APPLICATION">LPRng</b> to use a 6 digit job
+              number for files in the print queue.</p>
             </li>
 
             <li>
@@ -6983,20 +6923,20 @@ target=
               name, while others think it is the fully qualified
               domain name (FQDN). <b class="APPLICATION">LPRng</b>,
               by default, will use the FQDN host name. However, the
-              <tt class="LITERAL">use_shorthost</tt> option will
+              <var class="LITERAL">use_shorthost</var> option will
               force it to use short host names in control and data
               files.</p>
             </li>
 
             <li>
-              <p>The <tt class="LITERAL">cfA</tt> control file name
-              was modified to allow the job priority to be used as
-              the A letter of the control file. By default, this is
-              A (lowest, i.e. <tt class="LITERAL">cfA</tt>) and but
-              can range to Z (highest, i.e. <tt class=
-              "LITERAL">cfZ</tt>). All known spoolers except <b
-              class="APPLICATION">LPRng</b> seem to ignore the
-              actual value of the letter.</p>
+              <p>The <var class="LITERAL">cfA</var> control file
+              name was modified to allow the job priority to be
+              used as the A letter of the control file. By default,
+              this is A (lowest, i.e. <var class=
+              "LITERAL">cfA</var>) and but can range to Z (highest,
+              i.e. <var class="LITERAL">cfZ</var>). All known
+              spoolers except <b class="APPLICATION">LPRng</b> seem
+              to ignore the actual value of the letter.</p>
             </li>
           </ol>
           <br>
@@ -7006,8 +6946,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN2015">C.4. Data File
-          Transfer</a></h1>
+          <h2 class="SECT1"><a name="AEN2015">C.4. Data File
+          Transfer</a></h2>
 
           <p>As mentioned before a data file is transferred using
           the command below.</p>
@@ -7015,22 +6955,24 @@ target=
           <div class="INFORMALTABLE">
             <a name="AEN2018"></a>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Command</th>
+                  <th>Command</th>
 
-                  <th align="LEFT" valign="TOP">Purpose</th>
+                  <th>Purpose</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">\003nnnn
-                  dfname</td>
+                  <td>\003nnnn dfname</td>
 
-                  <td align="LEFT" valign="TOP">data file
-                  transfer</td>
+                  <td>data file transfer</td>
                 </tr>
               </tbody>
             </table>
@@ -7064,10 +7006,10 @@ target=
               the BSD <b class="APPLICATION">lpr</b> and other
               print spoolers process jobs with multiple data files.
               By convention, these data files have names of the
-              form <tt class="LITERAL">dfA</tt>, <tt class=
-              "LITERAL">dfB</tt>, ... <tt class="LITERAL">dfZ</tt>,
-              <tt class="LITERAL">dfa</tt>, <tt class=
-              "LITERAL">dfz</tt>.</p>
+              form <var class="LITERAL">dfA</var>, <var class=
+              "LITERAL">dfB</var>, ... <var class=
+              "LITERAL">dfZ</var>, <var class="LITERAL">dfa</var>,
+              <var class="LITERAL">dfz</var>.</p>
             </li>
 
             <li>
@@ -7109,8 +7051,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN2051">C.5. Control File
-          Contents</a></h1>
+          <h2 class="SECT1"><a name="AEN2051">C.5. Control File
+          Contents</a></h2>
 
           <p>The control file consists of a set of lines which
           either provide printing information or specify data files
@@ -7144,381 +7086,362 @@ target=
 
             <p><b>Table C-2. Control File Lines and Purpose</b></p>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Letter</th>
+                  <th>Letter</th>
 
-                  <th align="LEFT" valign="TOP">Defined</th>
+                  <th>Defined</th>
 
-                  <th align="LEFT" valign="TOP">Purpose</th>
+                  <th>Purpose</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">A</td>
+                  <td>A</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">Identifier for
-                  job</td>
+                  <td>Identifier for job</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">C</td>
+                  <td>C</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Class for banner
-                  page</td>
+                  <td>Class for banner page</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">H</td>
+                  <td>H</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Host name</td>
+                  <td>Host name</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">I</td>
+                  <td>I</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Indent
-                  Printing</td>
+                  <td>Indent Printing</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">J</td>
+                  <td>J</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Job name for banner
-                  page</td>
+                  <td>Job name for banner page</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">L</td>
+                  <td>L</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print banner
-                  page</td>
+                  <td>Print banner page</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">M</td>
+                  <td>M</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Mail When
-                  Printed</td>
+                  <td>Mail When Printed</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">N</td>
+                  <td>N</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Name of source
-                  file</td>
+                  <td>Name of source file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">P</td>
+                  <td>P</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">User
-                  identification</td>
+                  <td>User identification</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">Q</td>
+                  <td>Q</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">Queue name</td>
+                  <td>Queue name</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">R</td>
+                  <td>R</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">Accounting
-                  info</td>
+                  <td>Accounting info</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">S</td>
+                  <td>S</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Symbolic link
-                  data</td>
+                  <td>Symbolic link data</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">T</td>
+                  <td>T</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Title for pr</td>
+                  <td>Title for pr</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">U</td>
+                  <td>U</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Unlink data
-                  file</td>
+                  <td>Unlink data file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">W</td>
+                  <td>W</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Width of
-                  output</td>
+                  <td>Width of output</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">Z</td>
+                  <td>Z</td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">LPRng</b></td>
+                  <td><b class="APPLICATION">LPRng</b></td>
 
-                  <td align="LEFT" valign="TOP">Filter options</td>
+                  <td>Filter options</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">1</td>
+                  <td>1</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">troff R font</td>
+                  <td>troff R font</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">2</td>
+                  <td>2</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">troff I font</td>
+                  <td>troff I font</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">3</td>
+                  <td>3</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">troff B font</td>
+                  <td>troff B font</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">4</td>
+                  <td>4</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">troff S font</td>
+                  <td>troff S font</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">c</td>
+                  <td>c</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Plot CIF file</td>
+                  <td>Plot CIF file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">d</td>
+                  <td>d</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print DVI file</td>
+                  <td>Print DVI file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">f</td>
+                  <td>f</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print formatted
-                  file</td>
+                  <td>Print formatted file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">g</td>
+                  <td>g</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Plot file</td>
+                  <td>Plot file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">k</td>
+                  <td>k</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Reserved for use by
-                  Kerberized <b class="APPLICATION">LPRng</b>
-                  clients and servers.</td>
+                  <td>Reserved for use by Kerberized <b class=
+                  "APPLICATION">LPRng</b> clients and servers.</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">l</td>
+                  <td>l</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print file leaving
-                  control characters</td>
+                  <td>Print file leaving control characters</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">n</td>
+                  <td>n</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print ditroff
-                  output file</td>
+                  <td>Print ditroff output file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">o</td>
+                  <td>o</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print Postscript
-                  output file</td>
+                  <td>Print Postscript output file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">p</td>
+                  <td>p</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print file with
-                  'pr' format</td>
+                  <td>Print file with 'pr' format</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">t</td>
+                  <td>t</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print troff output
-                  file</td>
+                  <td>Print troff output file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">v</td>
+                  <td>v</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Print raster
-                  file</td>
+                  <td>Print raster file</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP">z</td>
+                  <td>z</td>
 
-                  <td align="LEFT" valign="TOP">RFC1179</td>
+                  <td>RFC1179</td>
 
-                  <td align="LEFT" valign="TOP">Reserved for future
-                  use with the Palladium print system.</td>
+                  <td>Reserved for future use with the Palladium
+                  print system.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <p>The <tt class="LITERAL">A</tt> (Identifier) line was
+          <p>The <var class="LITERAL">A</var> (Identifier) line was
           introduced to record a unique system wide job identifier
           for <b class="APPLICATION">LPRng</b> submitted jobs. This
           is basically formed from the user name, job number, and
-          host at the time of submission. For example: <tt class=
-          "LITERAL">papowell@h4+955</tt> is job number 995
+          host at the time of submission. For example: <var class=
+          "LITERAL">papowell@h4+955</var> is job number 995
           submitted by papowell from host h4.</p>
 
-          <p>The <tt class="LITERAL">C</tt> (Class) line is set by
-          the <tt class="COMMAND">lpr -C class</tt> option, and the
-          value can be used to control printing. For example, the
-          <tt class="COMMAND">lpc class zone</tt> command would
-          restrict job printing to only jobs with class <tt class=
-          "LITERAL">zone</tt>.</p>
+          <p>The <var class="LITERAL">C</var> (Class) line is set
+          by the <tt class="COMMAND">lpr -C class</tt> option, and
+          the value can be used to control printing. For example,
+          the <tt class="COMMAND">lpc class zone</tt> command would
+          restrict job printing to only jobs with class <var class=
+          "LITERAL">zone</var>.</p>
 
-          <p>The <tt class="LITERAL">H</tt> (hostname), <tt class=
-          "LITERAL">P</tt> (username), and <tt class=
-          "LITERAL">J</tt> (jobname) fields are used to identify
+          <p>The <var class="LITERAL">H</var> (hostname), <var
+          class="LITERAL">P</var> (username), and <var class=
+          "LITERAL">J</var> (jobname) fields are used to identify
           the host and user which sent the job, and to provide
           information to be displayed by <b class=
           "APPLICATION">lpq</b> when reporting job status.</p>
 
-          <p>The <tt class="LITERAL">L</tt> (print banner page)
+          <p>The <var class="LITERAL">L</var> (print banner page)
           field is one that has caused many problems for users.
           RFC1179 indicates that its presence causes the banner
           page to be printed, and its absence suppresses banner
           pages. The <tt class="COMMAND">lpr -h</tt> option
           suppresses putting this line into the control file.
-          Usually the <tt class="LITERAL">L</tt> field is a
-          duplicate of the <tt class="LITERAL">P</tt> field.</p>
+          Usually the <var class="LITERAL">L</var> field is a
+          duplicate of the <var class="LITERAL">P</var> field.</p>
 
-          <p>The <tt class="LITERAL">M</tt> (mail information)
+          <p>The <var class="LITERAL">M</var> (mail information)
           field supplies a mail address for <b class=
           "APPLICATION">LPRng</b> to send mail to when a job is
           completed.</p>
 
-          <p>The <tt class="LITERAL">N</tt> (file name) field is
+          <p>The <var class="LITERAL">N</var> (file name) field is
           usually provided to identify the file name corresponding
           to the data file. This can be used to print names on page
           separators, etc. <b class="APPLICATION">LPRng</b> largely
           ignores this line.</p>
 
-          <p>The <tt class="LITERAL">I</tt> (indent) and <tt class=
-          "LITERAL">W</tt> (width) fields are supposed to specify a
-          page indent and width for printing. These fields are
-          passed to filters if they are present.</p>
+          <p>The <var class="LITERAL">I</var> (indent) and <var
+          class="LITERAL">W</var> (width) fields are supposed to
+          specify a page indent and width for printing. These
+          fields are passed to filters if they are present.</p>
 
-          <p>The <tt class="LITERAL">Q</tt> (queue name) field is
+          <p>The <var class="LITERAL">Q</var> (queue name) field is
           an <b class="APPLICATION">LPRng</b> extension, and
           contains the name of the print queue the job was
           originally sent to.&#13;</p>
 
-          <p>The <tt class="LITERAL">R</tt> (accounting info) field
-          was added by <b class="APPLICATION">LPRng</b> to allow a
-          specified account to be billed for job printing. The <tt
-          class="COMMAND">lpr -Rname</tt> option can be used to
-          specify the accounting name.</p>
+          <p>The <var class="LITERAL">R</var> (accounting info)
+          field was added by <b class="APPLICATION">LPRng</b> to
+          allow a specified account to be billed for job printing.
+          The <tt class="COMMAND">lpr -Rname</tt> option can be
+          used to specify the accounting name.</p>
 
-          <p>The <tt class="LITERAL">S</tt> (symbolic link) and <tt
-          class="LITERAL">U</tt> (unlink after printing) lines were
-          used by the original BSD <b class="APPLICATION">lpd</b>
-          print system to control how it passed files to the print
-          server. <b class="APPLICATION">LPRng</b> ignores these
-          lines. In fact, it will remove <tt class="LITERAL">S</tt>
-          lines and force the <tt class="LITERAL">U</tt> lines to
-          refer only to job data files. This closes a nasty
-          security loophole on non-<b class="APPLICATION">LPRng</b>
-          print spoolers.</p>
+          <p>The <var class="LITERAL">S</var> (symbolic link) and
+          <var class="LITERAL">U</var> (unlink after printing)
+          lines were used by the original BSD <b class=
+          "APPLICATION">lpd</b> print system to control how it
+          passed files to the print server. <b class=
+          "APPLICATION">LPRng</b> ignores these lines. In fact, it
+          will remove <var class="LITERAL">S</var> lines and force
+          the <var class="LITERAL">U</var> lines to refer only to
+          job data files. This closes a nasty security loophole on
+          non-<b class="APPLICATION">LPRng</b> print spoolers.</p>
 
-          <p>The <tt class="LITERAL">T</tt> (pr job title) is used
-          with the <tt class="COMMAND">lpr -p</tt> operation to
-          supply a banner to the <tt class="LITERAL">pr</tt>
+          <p>The <var class="LITERAL">T</var> (pr job title) is
+          used with the <tt class="COMMAND">lpr -p</tt> operation
+          to supply a banner to the <var class="LITERAL">pr</var>
           program.</p>
 
-          <p>The <tt class="LITERAL">Z</tt> (filter options) value
-          is specified with <tt class="COMMAND">lpr -Zoption</tt>
-          and is passed to the data file filters during the
-          printing operation.</p>
+          <p>The <var class="LITERAL">Z</var> (filter options)
+          value is specified with <tt class="COMMAND">lpr
+          -Zoption</tt> and is passed to the data file filters
+          during the printing operation.</p>
 
           <p>All of the lower case letters are reserved for format
           specifications for data files. In the control file, these
@@ -7531,8 +7454,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN2250">C.6. <b class=
-          "APPLICATION">lpq</b> Requests</a></h1>
+          <h2 class="SECT1"><a name="AEN2250">C.6. <b class=
+          "APPLICATION">lpq</b> Requests</a></h2>
 
           <p>The RFC1179 protocol specifies that <b class=
           "APPLICATION">lpq</b> print status requests can be sent
@@ -7561,13 +7484,13 @@ target=
           Even the BSD <b class="APPLICATION">lpq</b> status format
           has been changed from different versions.</p>
 
-          <p>The <tt class="LITERAL">id</tt> values are used to
+          <p>The <var class="LITERAL">id</var> values are used to
           select the jobs to be displayed. <b class=
           "APPLICATION">LPRng</b> displays any job whose ID,
           hostname, or user name information from the control file
-          <tt class="LITERAL">A</tt>, <tt class="LITERAL">H</tt>,
-          or <tt class="LITERAL">P</tt> fields match any of the id
-          values.</p>
+          <var class="LITERAL">A</var>, <var class=
+          "LITERAL">H</var>, or <var class="LITERAL">P</var> fields
+          match any of the id values.</p>
 
           <p>Note that since there is no identification of the
           information requestor, then restriction of information is
@@ -7577,8 +7500,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN2270">C.7. <b class=
-          "APPLICATION">lprm</b> Requests</a></h1>
+          <h2 class="SECT1"><a name="AEN2270">C.7. <b class=
+          "APPLICATION">lprm</b> Requests</a></h2>
 
           <p>The RFC1179 protocol specifies that <b class=
           "APPLICATION">lprm</b> job removal requests can be sent
@@ -7597,8 +7520,8 @@ target=
           <p>The <b class="APPLICATION">lpd</b> print server will
           search the specified print queue and remove any job whose
           ID, hostname, or user name information from the control
-          file <tt class="LITERAL">A</tt>, <tt class=
-          "LITERAL">H</tt>, or <tt class="LITERAL">P</tt> fields
+          file <var class="LITERAL">A</var>, <var class=
+          "LITERAL">H</var>, or <var class="LITERAL">P</var> fields
           match any of the id values and for which the user has
           permission to perform a removal operation.</p>
 
@@ -7612,8 +7535,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="LPCREREAD">C.8. LPC
-          Requests</a></h1>
+          <h2 class="SECT1"><a name="LPCREREAD">C.8. LPC
+          Requests</a></h2>
 
           <p><b class="APPLICATION">LPRng</b> has extended the
           RFC1179 protocol to allow queue and printer control
@@ -7636,228 +7559,203 @@ target=
 
             <p><b>Table C-3. LPC Commands</b></p>
 
-            <table border="1" class="CALSTABLE">
+            <table border="1" frame="border" rules="all" class=
+            "CALSTABLE">
+              <col>
+              <col>
+
               <thead>
                 <tr>
-                  <th align="LEFT" valign="TOP">Command</th>
+                  <th>Command</th>
 
-                  <th align="LEFT" valign="TOP">Operation</th>
+                  <th>Operation</th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
-                  <td align="LEFT" valign="TOP">Command</td>
+                  <td>Command</td>
 
-                  <td align="LEFT" valign="TOP">Operation</td>
+                  <td>Operation</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">active [printer[@host]]</tt></td>
+                  <td><var class="LITERAL">active
+                  [printer[@host]]</var></td>
 
-                  <td align="LEFT" valign="TOP">check to see if
-                  server accepting connections</td>
+                  <td>check to see if server accepting
+                  connections</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">abort (printer[@host] | all)</tt> </td>
+                  <td><var class="LITERAL">abort (printer[@host] |
+                  all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">terminate server
-                  process printing job</td>
+                  <td>terminate server process printing job</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">disable (printer[@host] | all)</tt>
-                  </td>
+                  <td><var class="LITERAL">disable (printer[@host]
+                  | all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">disable
-                  queueing</td>
+                  <td>disable queueing</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">debug (printer[@host] | all)
-                  debugparms</tt> </td>
+                  <td><var class="LITERAL">debug (printer[@host] |
+                  all) debugparms</var> </td>
 
-                  <td align="LEFT" valign="TOP">set debug level for
-                  printer</td>
+                  <td>set debug level for printer</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">enable (printer[@host] | all)</tt>
-                  </td>
+                  <td><var class="LITERAL">enable (printer[@host] |
+                  all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">enable
-                  queueing</td>
+                  <td>enable queueing</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">hold (printer[@host] | all)
-                  (name[@host] | job | all)*</tt> </td>
+                  <td><var class="LITERAL">hold (printer[@host] |
+                  all) (name[@host] | job | all)*</var> </td>
 
-                  <td align="LEFT" valign="TOP">hold job</td>
+                  <td>hold job</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">holdall (printer[@host] | all)</tt>
-                  </td>
+                  <td><var class="LITERAL">holdall (printer[@host]
+                  | all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">hold all jobs
-                  on</td>
+                  <td>hold all jobs on</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">kill (printer[@host] | all)</tt> </td>
+                  <td><var class="LITERAL">kill (printer[@host] |
+                  all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">stop and restart
+                  <td>stop and restart server</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">lpd
+                  [printer[@host]]</var> </td>
+
+                  <td>get <b class="APPLICATION">lpd</b> PID for
                   server</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">lpd [printer[@host]]</tt> </td>
+                  <td><var class="LITERAL">lpq (printer[@host] |
+                  all) (name[@host] | job | all)*</var> </td>
 
-                  <td align="LEFT" valign="TOP">get <b class=
-                  "APPLICATION">lpd</b> PID for server</td>
+                  <td>invoke <b class="APPLICATION">lpq</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">lpq (printer[@host] | all) (name[@host]
-                  | job | all)*</tt> </td>
+                  <td><var class="LITERAL">lprm (printer[@host] |
+                  all) (name[@host]|host|job| all)*</var> </td>
 
-                  <td align="LEFT" valign="TOP">invoke <b class=
-                  "APPLICATION">lpq</b></td>
+                  <td>invoke <b class="APPLICATION">lprm</b></td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">lprm (printer[@host] | all)
-                  (name[@host]|host|job| all)*</tt> </td>
+                  <td><var class="LITERAL">move printer
+                  (user|jobid)* target</var> </td>
 
-                  <td align="LEFT" valign="TOP">invoke <b class=
-                  "APPLICATION">lprm</b></td>
+                  <td>move jobs to new queue</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">move printer (user|jobid)* target</tt>
-                  </td>
+                  <td><var class="LITERAL">noholdall
+                  (printer[@host] | all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">move jobs to new
-                  queue</td>
+                  <td>hold all jobs off</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">noholdall (printer[@host] | all)</tt>
-                  </td>
+                  <td><var class="LITERAL">printcap (printer[@host]
+                  | all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">hold all jobs
-                  off</td>
+                  <td>report printcap values</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">printcap (printer[@host] | all)</tt>
-                  </td>
+                  <td><var class="LITERAL">quit</var> </td>
 
-                  <td align="LEFT" valign="TOP">report printcap
-                  values</td>
+                  <td>exit LPC</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">quit</tt> </td>
+                  <td><var class="LITERAL">redirect (printer[@host]
+                  | all) (printer@host | off )*</var> </td>
 
-                  <td align="LEFT" valign="TOP">exit LPC</td>
+                  <td>redirect jobs</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">redirect (printer[@host] | all)
-                  (printer@host | off )*</tt> </td>
+                  <td><var class="LITERAL">release (printer[@host]
+                  | all) (name[@host] | job | all)*</var> </td>
 
-                  <td align="LEFT" valign="TOP">redirect jobs</td>
+                  <td>release job</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">release (printer[@host] | all)
-                  (name[@host] | job | all)*</tt> </td>
+                  <td><var class="LITERAL">reread
+                  [printer[@host]]</var></td>
 
-                  <td align="LEFT" valign="TOP">release job</td>
+                  <td><b class="APPLICATION">lpd</b> reread
+                  database information</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">reread [printer[@host]]</tt></td>
+                  <td><var class="LITERAL">start (printer[@host] |
+                  all)</var> </td>
 
-                  <td align="LEFT" valign="TOP"><b class=
-                  "APPLICATION">lpd</b> reread database
+                  <td>start printing</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">status (printer[@host] |
+                  all)</var> </td>
+
+                  <td>status of printers</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">stop (printer[@host] |
+                  all)</var> </td>
+
+                  <td>stop printing</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">topq (printer[@host] |
+                  all) (name[@host] | job | all)*</var> </td>
+
+                  <td>reorder job</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">defaultq</var> </td>
+
+                  <td>default queue for <b class=
+                  "APPLICATION">lpd</b> server</td>
+                </tr>
+
+                <tr>
+                  <td><var class="LITERAL">local (printer |
+                  all)</var> </td>
+
+                  <td>client printcap and configuration
                   information</td>
                 </tr>
 
                 <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">start (printer[@host] | all)</tt> </td>
+                  <td><var class="LITERAL">server (printer |
+                  all)</var> </td>
 
-                  <td align="LEFT" valign="TOP">start printing</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">status (printer[@host] | all)</tt>
-                  </td>
-
-                  <td align="LEFT" valign="TOP">status of
-                  printers</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">stop (printer[@host] | all)</tt> </td>
-
-                  <td align="LEFT" valign="TOP">stop printing</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">topq (printer[@host] | all)
-                  (name[@host] | job | all)*</tt> </td>
-
-                  <td align="LEFT" valign="TOP">reorder job</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">defaultq</tt> </td>
-
-                  <td align="LEFT" valign="TOP">default queue for
-                  <b class="APPLICATION">lpd</b> server</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">local (printer | all)</tt> </td>
-
-                  <td align="LEFT" valign="TOP">client printcap and
-                  configuration information</td>
-                </tr>
-
-                <tr>
-                  <td align="LEFT" valign="TOP"><tt class=
-                  "LITERAL">server (printer | all)</tt> </td>
-
-                  <td align="LEFT" valign="TOP">server printcap and
-                  configuration information</td>
+                  <td>server printcap and configuration
+                  information</td>
                 </tr>
               </tbody>
             </table>
@@ -7871,15 +7769,15 @@ target=
 
           <ul>
             <li>
-              <p><tt class="LITERAL">start, stop, enable,
-              disable</tt> Start and stop will start and stop
+              <p><var class="LITERAL">start, stop, enable,
+              disable</var> Start and stop will start and stop
               printing for a specified queue. Enable and disable
               enable and disable sending and/or accepting jobs for
               the queue.</p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">abort, kill</tt> Abort will
+              <p><var class="LITERAL">abort, kill</var> Abort will
               cause the process doing the actual job printing to be
               terminated. Kill does an abort, and then restarts the
               printing process. These commands are used to restart
@@ -7887,12 +7785,12 @@ target=
             </li>
 
             <li>
-              <p><tt class="LITERAL">topq</tt> Places selected jobs
-              at the top of the print queue.</p>
+              <p><var class="LITERAL">topq</var> Places selected
+              jobs at the top of the print queue.</p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">status</tt> Shows a status
+              <p><var class="LITERAL">status</var> Shows a status
               display of the print spools on the server.</p>
             </li>
           </ul>
@@ -7905,13 +7803,13 @@ target=
 
           <ul>
             <li>
-              <p><tt class="LITERAL">lpq, lprm</tt> Invokes the lpq
-              or lprm program from lpc. Useful when in the
+              <p><var class="LITERAL">lpq, lprm</var> Invokes the
+              lpq or lprm program from lpc. Useful when in the
               interactive mode.</p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">hold, holdall, release</tt>
+              <p><var class="LITERAL">hold, holdall, release</var>
               The hold command will cause the selected jobs to be
               held until released. The holdall jobs sets all jobs
               submitted to the queue to be held until released. The
@@ -7921,7 +7819,7 @@ target=
             </li>
 
             <li>
-              <p><tt class="LITERAL">move, redirect</tt> The move
+              <p><var class="LITERAL">move, redirect</var> The move
               command will move selected jobs to the specified
               spool queue. The redirect command sends all jobs
               submitted to the queue to be sent to the specified
@@ -7929,7 +7827,7 @@ target=
             </li>
 
             <li>
-              <p><tt class="LITERAL">active, lpd, reread</tt> The
+              <p><var class="LITERAL">active, lpd, reread</var> The
               active command will connect to the server for the
               printer. This is used to check to see if non-<b
               class="APPLICATION">LPRng</b> print servers are
@@ -7947,25 +7845,25 @@ target=
             </li>
 
             <li>
-              <p><tt class="LITERAL">debug</tt> This is a
+              <p><var class="LITERAL">debug</var> This is a
               desperation facility for developers that allows
               dynamic enabling of debug information generation. Not
               normally used in general operation.</p>
             </li>
 
             <li>
-              <p><tt class="LITERAL">local, server</tt> These
+              <p><var class="LITERAL">local, server</var> These
               commands will print out the configuration information
               in the local <tt class="FILENAME">lpd.conf</tt> file,
               as well as the printcap information for the specified
-              printers; <tt class="LITERAL">client</tt> prints what
-              the <b class="APPLICATION">LPRng</b> clients (<tt
-              class="LITERAL">lpr, lpq, ...</tt>) would use while
-              <tt class="LITERAL">server</tt> prints what the <b
-              class="APPLICATION">LPRng</b> server (<b class=
-              "APPLICATION">lpd</b>) would use if running on this
-              host. This is an extremely useful diagnostic tool for
-              administrators. Not normally used in general
+              printers; <var class="LITERAL">client</var> prints
+              what the <b class="APPLICATION">LPRng</b> clients
+              (<var class="LITERAL">lpr, lpq, ...</var>) would use
+              while <var class="LITERAL">server</var> prints what
+              the <b class="APPLICATION">LPRng</b> server (<b
+              class="APPLICATION">lpd</b>) would use if running on
+              this host. This is an extremely useful diagnostic
+              tool for administrators. Not normally used in general
               operation.</p>
             </li>
           </ul>
@@ -7976,14 +7874,14 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="SENDBLOCKFORMAT">C.9. Block
-          Job Transfer</a></h1>
+          <h2 class="SECT1"><a name="SENDBLOCKFORMAT">C.9. Block
+          Job Transfer</a></h2>
 
           <p>Options used:</p>
 
           <ul>
             <li>
-              <p><tt class="LITERAL">send_block_format</tt> FLAG
+              <p><var class="LITERAL">send_block_format</var> FLAG
               <span class="emphasis"><i class="EMPHASIS">Transfer
               job as a block</i></span></p>
             </li>
@@ -7994,10 +7892,11 @@ target=
           <p>In normal job transfer operations, the sender and
           receiver have a handshake interaction in order to
           transfer a print job. Each file is sent individually. The
-          <tt class="LITERAL">send_block_format</tt> option forces
-          a Block Job Transfer operation. This causes the sender to
-          transfer a single file containing all the job printing
-          information, including control file and data files.</p>
+          <var class="LITERAL">send_block_format</var> option
+          forces a Block Job Transfer operation. This causes the
+          sender to transfer a single file containing all the job
+          printing information, including control file and data
+          files.</p>
 
           <p>The transfer command line has the form:</p>
 
@@ -8027,8 +7926,8 @@ target=
         <div class="SECT1">
           <hr>
 
-          <h1 class="SECT1"><a name="AEN2472">C.10. Authenticated
-          Transfer</a></h1>
+          <h2 class="SECT1"><a name="AEN2472">C.10. Authenticated
+          Transfer</a></h2>
 
           <p>RFC1179 does not provide any authentication or
           encryption mechanism for the transfer of jobs or commands

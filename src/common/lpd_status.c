@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: lpd_status.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -127,7 +127,7 @@ int Job_status( int *sock, char *input )
 		Split(&listv,Force_lpq_status_DYN,";",0,0,0,0,0,0);
 		for(i = 0; i < listv.count; ++i ){
 			s = listv.list[i];
-			if( (t = safestrpbrk(s,Value_sep)) ) *t++ = 0;
+			if( (t = safestrpbrk(s,File_sep)) ) *t++ = 0;
 			Free_line_list(&l);
 			Split(&l,t,Value_sep,0,0,0,0,0,0);
 			DEBUGF(DLPQ1)("Job_status: Force_lpq_status '%s'='%s'", s,t);

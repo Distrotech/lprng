@@ -24,7 +24,7 @@ if [ -f /etc/sysconfig/network ] ; then
 fi
 
 # Check that networking is up.
-[ ${NETWORKING} = "no" ] && exit 0
+[ "${NETWORKING}" = "no" ] && exit 0
 [ -f "${LPD_PATH}" ] || exit 0
 [ -f /etc/printcap ] || exit 0
 

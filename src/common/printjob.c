@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: printjob.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
 
 
 #include "lp.h"
@@ -194,7 +194,7 @@ int Print_job( int output, int status_device, struct job *job,
 		if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
 			job, id, 0,
-			msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
+			msgbuffer, sizeof(msgbuffer)-1 ) ){
 			goto exit;
 		}
 	} else if( Outlen ){
@@ -344,7 +344,7 @@ int Print_job( int output, int status_device, struct job *job,
 					if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 						output, &Outbuf, &Outmax, &Outlen,
 						job, id, 0,
-						msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
+						msgbuffer, sizeof(msgbuffer)-1 ) ){
 						goto exit;
 					}
 				} else {
@@ -510,7 +510,7 @@ int Print_job( int output, int status_device, struct job *job,
 		if( Run_OF_filter( send_job_rw_timeout, &of_pid, &of_stdin, &of_stderr,
 			output, &Outbuf, &Outmax, &Outlen,
 			job, id, 1,
-			msgbuffer, sizeof(msgbuffer)-1 ), Status_file_DYN ){
+			msgbuffer, sizeof(msgbuffer)-1 ) ){
 			goto exit;
 		}
 	} else {

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: vars.c,v 1.57 2003/09/05 20:07:20 papowell Exp $";
 
 
 /* force local definitions */
@@ -104,6 +104,8 @@ struct keywords Pc_var_list[] = {
 /* XXSTARTXX */
    /*  always print banner, ignore lpr -h option */
 { "ab", 0,  FLAG_K,  &Always_banner_DYN,0,0,0},
+   /*  set accounting name in control file based on host name */
+{ "accounting_namefixup", 0,  STRING_K,  &Accounting_namefixup_DYN,0,0,0},
    /*  query accounting server when connected */
 { "achk", 0,  FLAG_K,  &Accounting_check_DYN,0,0,0},
    /*  accounting at end (see also af, la, ar, as) */
@@ -175,7 +177,7 @@ struct keywords Pc_var_list[] = {
    /* connection timeout for remote printers */
 { "connect_timeout", 0, INTEGER_K, &Connect_timeout_DYN,0,0,"=10"},
    /* control file line order */
-{ "control_file_line_order", 0, STRING_K, &Control_filter_DYN,0,0,0},
+{ "control_file_line_order", 0, STRING_K, &Control_file_line_order_DYN,0,0,0},
    /* control file filter */
 { "control_filter", 0, STRING_K, &Control_filter_DYN,0,0,0},
    /* create files in spool directory */
@@ -210,10 +212,10 @@ struct keywords Pc_var_list[] = {
 { "fakelargefile", 0,  INTEGER_K,  &Fake_large_file_DYN,0,0,0},
    /*  string to send for a form feed */
 { "ff", 0,  STRING_K,  &Form_feed_DYN,0,0,"=\\f"},
-   /*  string to send for a form feed */
-{ "ff_separator", 0,  STRING_K,  &FF_separator_DYN,0,0,0},
-   /* enforce FIFO (first in, first out) order */
-{ "fifo", 0, STRING_K, &Fifo_DYN,0,0,0},
+   /*  send a form feed (value set by ff) between files of a job */
+{ "ff_separator", 0,  FLAG_K,  &FF_separator_DYN,0,0,0},
+   /* enforce FIFO (first in, first out) sequential job printing order */
+{ "fifo", 0, FLAG_K, &Fifo_DYN,0,0,0},
    /* FIFO lock file */
 { "fifo_lock_file", 0, STRING_K, &Fifo_lock_file_DYN,0,0,"=fifo.lock"},
    /* default filter */

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: lpf.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -84,11 +84,10 @@
  * -Tdebug - increment debug level
  * -Tcrlf  - turn LF to CRLF translation off
  *
- *	The functions fatal(), logerr(), and logerr_die() can be used to report
+ *	The functions logerr(), and logerr_die() can be used to report
  *	status. The variable errorcode can be set by the user before calling
  *	these functions, and will be the exit value of the program. Its default
  *	value will be 2 (abort status).
- *	fatal() reports a fatal message, and terminates.
  *	logerr() reports a message, appends information indicated by errno
  *	(see perror(2) for details), and then returns.
  *	logerr_die() will call logerr(), and then will exit with errorcode
@@ -188,10 +187,8 @@ int  accounting_fd;
 int crlf;	/* change lf to CRLF */
 
 void getargs( int argc, char *argv[], char *envp[] );
-void log( char *msg, ... );
 void logerr( char *msg, ... );
 void logerr_die( char *msg, ... );
-void fatal( char *msg, ... );
 extern void banner( void );
 extern void doaccnt( void );
 extern void filter_pgm( char * );
@@ -309,59 +306,6 @@ const char * Errormsg ( int err )
     }
 #endif
     return (cp);
-}
-
-#ifdef HAVE_STDARGS
-void log(char *msg, ...)
-#else
-void log( va_alist ) va_dcl
-#endif
-{
-#ifndef HAVE_STDARGS
-	char *msg;
-#endif
-	int err = errno;
-	int n;
-	char buf[1024];
-	VA_LOCAL_DECL
-	VA_START(msg);
-	VA_SHIFT(msg, char *);
-
-	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
-	n = strlen(buf);
-	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
-	n = strlen(buf);
-	(void)SNPRINTF(buf+n,sizeof(buf)-n) "\n" );
-	Write_fd_str(2,buf);
-	VA_END;
-	errno = err;
-}
-
-
-#ifdef HAVE_STDARGS
-void fatal(char *msg, ...)
-#else
-void fatal( va_alist ) va_dcl
-#endif
-{
-#ifndef HAVE_STDARGS
-	char *msg;
-#endif
-	int err = errno;
-	int n;
-	char buf[1024];
-	VA_LOCAL_DECL
-	VA_START(msg);
-	VA_SHIFT(msg, char *);
-
-	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
-	n = strlen(buf);
-	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
-	n = strlen(buf);
-	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
-	Write_fd_str(2,buf);
-	VA_END;
-	exit(errorcode);
 }
 
 #ifdef HAVE_STDARGS

@@ -20,18 +20,16 @@ fix () {
 		mkdir -p $d;
 	fi
 	if [ -f $v.sample ] ; then
-		if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
+		if [ $v.sample != $p.sample ] ; then ${INSTALL} -m 644 $v.sample $p.sample; fi
 	elif [ -f $v ] ; then
-		if [ $v != $p.sample ] ; then cp $v $p.sample; fi
+		if [ $v != $p.sample ] ; then ${INSTALL} -m 644 $v $p.sample; fi
 	else
 		echo "Do not have $v.sample or $v"
 	fi
 	if [ ! -f $p.sample ] ; then
 		echo "Do not have $p.sample"
 	elif [ ! -f $p ] ; then
-		chmod 644 $p.sample
-		cp $p.sample $p;
-		chmod 644 $p;
+		${INSTALL} -m 644 $p.sample $p;
 	fi;
 }
 echo "Installing configuration files"
@@ -48,8 +46,7 @@ fix "${DESTDIR}${PRINTCAP_PATH}" "${DESTDIR}${PRINTCAP_PATH}"
 if [ "$INIT" != no ] ; then
 	if [ -f init.solaris ] ; then
 		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		cp init.solaris $init
-		chmod 755 $init
+		${INSTALL} -m 755 init.solaris $init
 	fi
 	for i in rc2.d/S80lprng rc1.d/K39lprng \
 		rc0.d/K39lprng rcS.d/K39lprng ; do
@@ -62,7 +59,7 @@ if [ "$INIT" != no ] ; then
 	if [ "$MAKEPACKAGE" != "YES" ]; then
 		if grep '^printer' /etc/inetd.conf >/dev/null; then
 			echo "Removing printer service from inetd.conf"
-			cp /etc/inetd.conf /etc/inetd.conf.orig
+			${INSTALL} -m 644 /etc/inetd.conf /etc/inetd.conf.orig
 			sed -e 's/^printer/#printer/' < /etc/inetd.conf.orig >/etc/inetd.conf
 			echo "Restarting inetd" 
 			kill -HUP `ps ${PSHOWALL} | awk '/inetd/{ print $1;}'` >/dev/null 2>&1

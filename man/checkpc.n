@@ -30,8 +30,6 @@ It is useful when installing a new printcap database and cleaning up
 existing printer spoolers.
 .IP "\fB\-a\fI" 5
 Do not create accounting files (:lf).
-.IP "\fB\-c\fI" 5
-Print verbose configuration information.
 .IP "\fB\-f\fI" 5
 The fix flag will cause the checkpc program create and fix
 various files and permissions.

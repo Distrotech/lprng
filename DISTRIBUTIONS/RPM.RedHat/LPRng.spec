@@ -58,17 +58,17 @@ CFLAGS="$RPM_OPT_FLAGS" ; export CFLAGS
 %configure --enable-nls \
 	--with-userid=lp \
 	--with-groupid=lp \
-%{!?nokerberos:--enable-kerberos --with-ldopts="-L/usr/kerberos/lib" --with-cppopts="-I/usr/kerberos/include" }
+%{!?nokerberos:--enable-kerberos LDFLAGS="-L/usr/kerberos/lib" CPPFLAGS="-I/usr/kerberos/include" }
 make MAKEPACKAGE=YES
 
 %install
 rm -rf %{buildroot}
 
 # Installation of locales is broken... Work around it!
-perl -pi -e "s,prefix =.*,prefix = ${RPM_BUILD_ROOT}%{_prefix},g" po/Makefile
-perl -pi -e "s,datadir =.*,datadir = ${RPM_BUILD_ROOT}%{_prefix}/share,g" po/Makefile
-perl -pi -e "s,localedir =.*,localedir = ${RPM_BUILD_ROOT}%{_prefix}/share/locale,g" po/Makefile
-perl -pi -e "s,gettextsrcdir =.*,gettextsrcdir = ${RPM_BUILD_ROOT}%{_prefix}/share/gettext/po,g" po/Makefile
+#perl -pi -e "s,prefix =.*,prefix = ${RPM_BUILD_ROOT}%{_prefix},g" po/Makefile
+#perl -pi -e "s,datadir =.*,datadir = ${RPM_BUILD_ROOT}%{_prefix}/share,g" po/Makefile
+#perl -pi -e "s,localedir =.*,localedir = ${RPM_BUILD_ROOT}%{_prefix}/share/locale,g" po/Makefile
+#perl -pi -e "s,gettextsrcdir =.*,gettextsrcdir = ${RPM_BUILD_ROOT}%{_prefix}/share/gettext/po,g" po/Makefile
 
 make SUID_ROOT_PERMS=" 04755" DESTDIR=${RPM_BUILD_ROOT} MAKEPACKAGE=YES mandir=%{_mandir} install
 %__cp src/monitor ${RPM_BUILD_ROOT}%{_prefix}/sbin/monitor
@@ -111,8 +111,12 @@ fi
 
 %files
 %defattr(-,root,root)
-%attr(644,root,root) %config(noreplace) %{_sysconfdir}/lpd.conf
-%attr(644,root,root) %config(noreplace) %{_sysconfdir}/lpd.perms
+%config %{_sysconfdir}/lpd/lpd.conf
+%config %{_sysconfdir}/lpd/lpd.perms
+%config %{_sysconfdir}/printcap
+%attr(644,root,root) %{_sysconfdir}/lpd/lpd.conf.sample
+%attr(644,root,root) %{_sysconfdir}/lpd/lpd.perms.sample
+%attr(644,root,root) %{_sysconfdir}/printcap.sample
 %attr(755,root,root) %{_libdir}/*
 %config %{_sysconfdir}/rc.d/init.d/lpd
 %attr(755,lp,lp) %{_bindir}/lpq
@@ -123,14 +127,17 @@ fi
 %{_bindir}/cancel
 %attr(755,lp,lp) %{_sbindir}/lpc
 %attr(755,root,root)  %{_sbindir}/lpd
+%attr(755,root,root)  %{_sbindir}/lprng_certs
+%attr(755,root,root)  %{_sbindir}/lprng_index_certs
 %attr(755,root,root)  %{_sbindir}/checkpc
 %attr(755,root,root)  %{_sbindir}/monitor
 %attr(755,root,root)  /usr/libexec/filters/*
 %dir /usr/libexec/filters
 %{_mandir}/*/*
+%attr(755,root,root) %{_prefix}/share/locale/*
 %doc CHANGES CONTRIBUTORS COPYRIGHT INSTALL LICENSE 
 %doc README* VERSION Y2KCompliance
-%doc HOWTO/*.html HOWTO/*.jpg HOWTO/*.pdf
+%doc DOCS/*.html DOCS/*.jpg DOCS/*.pdf PrintingCookbook/HTML/* PrintingCookbook/PDF/*
 
 %changelog
 * Tue Aug 21 2001 Patrick Powell <papowell@astart.com> 3.7.5-1

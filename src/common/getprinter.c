@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: getprinter.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -109,11 +109,9 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			*s++ = 0;
 			Set_DYN(&RemoteHost_DYN, s );
 			if( (s = safestrchr(RemoteHost_DYN,'%')) ){
-				*s++ = 0;
-				Set_DYN(&Lpd_port_DYN,s);
+				Set_DYN(&Unix_socket_path_DYN, 0 );
 			}
 			/* force connection via TCP/IP */
-			Set_DYN(&Unix_socket_path_DYN, 0 );
 			goto done;
 		}
 		/* we search for the values in the printcap */
@@ -173,8 +171,6 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				*s++ = 0;
 				Set_DYN(&RemoteHost_DYN, s );
 				if( (s = safestrchr(RemoteHost_DYN,'%')) ){
-					*s++ = 0;
-					Set_DYN(&Lpd_port_DYN,s);
 					Set_DYN(&Unix_socket_path_DYN, 0 );
 				}
 				goto done;
@@ -194,8 +190,6 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				*s++ = 0;
 				Set_DYN(&RemoteHost_DYN, s );
 				if( (s = safestrchr(RemoteHost_DYN+1,'%')) ){
-					*s++ = 0;
-					Set_DYN(&Lpd_port_DYN,s);
 					Set_DYN(&Unix_socket_path_DYN, 0 );
 				}
 			}
@@ -255,8 +249,6 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		if( *s == 0 ) s = 0;
 		Set_DYN(&RemoteHost_DYN, s );
 		if( (s = safestrchr(RemoteHost_DYN,'%')) ){
-			*s++ = 0;
-			Set_DYN(&Lpd_port_DYN,s);
 			Set_DYN(&Unix_socket_path_DYN, 0 );
 		}
 		Set_DYN(&Lp_device_DYN,0);

@@ -1,17 +1,14 @@
-       LPRng, Internationalization and gettext 
+       Internationalization and gettext 
               Patrick Powell
-         Sun Aug 20 15:50:24 PDT 2000
+        Fri Sep  5 13:01:06 PDT 2003
 
-Internationalization in LPRng is done using the gettext
+Internationalization is done using the gettext
 packages.   There are three possibilities to use this
 functionality:
 
 a)  no internationalization (default)
       ./configure
-b)  installating and compiling the gettext support library
-    as part of LPRng:
-      ./configure --enable-nls --with-included-gettext
-c)  nationalization if system supports it and gettext installed
+b)  nationalization if system supports it and gettext installed
     on your system:
       ./configure --enable-nls
 
@@ -19,18 +16,16 @@ You may discover that system support for NLS has been put into
 /usr/local/{include,lib}.  Sometimes the C compiler does not
 search these directories by default and you will need to use:
 
- configure '--with-cppopts=-I/usr/local/include' \
-   '--with-ldopts=-L/usr/local/lib'
+ configure 'CPPFLAGS=-I/usr/local/include' \
+   'LDFLAGS=-L/usr/local/lib' --enable-nls
 
-If your system does not have the gettext code installed,
-then you can simply install the necessary libraries as
-described below.
+
 
 How to Install the gettext software:
 
 1. Get the gettext distribution and install it on your local system
 
-   ftp://prep.ai.mit.edu/pub/gnu/gettext/gettext-<version>
+   ftp://prep.ai.mit.edu/pub/gnu/gettext-<version>
 
    Unpack it by using:
 
@@ -40,101 +35,6 @@ How to Install the gettext software:
    Read the documentation.  It is pretty straight forward with
    respect to installation.
 
-2. If you want to install the distribution on your system
-   configure, make and install the distribution.  The
-   following is an outline of the commands:
-
-        tar zxvf gettext-<version>.tgz
-        cd gettext-<version>
-        ./configure --prefix=/usr --with-included-gettext
-        make
-        su
-        make install
-
-   Now reconfigure and remake LPRng:
-        cd .../LPRng
-        rm -f config.cache
-        configure --enable-nls
-
-3. If you do not want to install the gettext distribution
-   on your system, you will have to do a bit more work.
-
-   First unpack the distribution and then
-   copy the intl directories and contents
-   to LPRng/intl:
-
-        tar zxvf gettext-<version>.tgz
-        cd gettext-<version>
-        tar cf - intl | (cd ..../LPRng; tar xvf -)
-        cd .../LPRng
-        rm -f config.cache
-        ./configure --enable-nls --with-included-gettext ....
-
-UPDATES TO GETTEXT
-
-If there has been a major update in the gettext distributution
-then you will need to modify the gettext support files:
-
-1. po/Makefile.in.in:
-
-  Copy the gettext/po/Makefile.in.in file from
-  the gettext distribution to the po directory:
-  
-       cp .../gettext-<version>/po/Makefile.in.in /tmp
-       cd .../LPRng
-       cp /tmp/Makefile.in.in po
-       configure
-  
-  Modify the localedir information so the top level configure
-  can update it:
-  
-  ORIGINAL:
-    localedir = $(prefix)/share/locale
-  
-  NEW:
-    localedir = @LOCALEDIR@
-  
-
-2. aclocal.m4
-
-  The aclocal.m4 file uses the aclocal.m4 macros from the
-  gettext-0.10.39 distribution.
-
-  The default has been changed to NO nls support:
-
-   ORIGINAL:
-      AC_ARG_ENABLE(nls,
-        [  --disable-nls           do not use Native Language Support],
-        USE_NLS=$enableval, USE_NLS=yes)
-
-   NEW:
-
-      AC_ARG_ENABLE(nls,
-        [  --enable-nls           use Native Language Support],
-        USE_NLS=$enableval, USE_NLS=no)
-
-  You can do this by the following steps:
-     
-       cp aclocal.m4 aclocal.bak
-
-       edit aclocal.m4 and truncate it at the start of the NLS macros
-       ....
-          #  NLS Support
-       .... (truncate after the comments)
-
-  concatenate the new gettext aclocal macros to the end
-     of this file:
-
-       cat .../gettext-xxx/aclocal.m4 >>aclocal.m4
-
-  Edit the new aclocal.m4 and change:
-
-      AC_ARG_ENABLE(nls,
-        [  --disable-nls           do not use Native Language Support],
-        USE_NLS=$enableval, USE_NLS=yes)
-
-      to:
-
-      AC_ARG_ENABLE(nls,
-        [  --enable-nls           use Native Language Support],
-        USE_NLS=$enableval, USE_NLS=no)
+2. Create and/or update the configuration information using the
+   CREATE_CONFIGURE script in the source directory:
+   sh CREATE_CONFIGURE

@@ -1,20 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: lpq.c,v 1.57 2003/09/05 20:07:19 papowell Exp $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
@@ -554,6 +554,7 @@ void Get_parms(int argc, char *argv[] )
  N_("  -s           - short (summary) format\n"),
  N_("  -tsleeptime  - sleeptime between updates\n"),
  N_("  -V           - print version information\n"),
+ N_("  -v           - print in key: value format\n"),
  0 };
  
 void usage(void)

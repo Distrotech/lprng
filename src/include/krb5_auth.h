@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: krb5_auth.h,v 1.48 2003/04/15 23:37:43 papowell Exp $
+ * $Id: krb5_auth.h,v 1.57 2003/09/05 20:07:20 papowell Exp $
  ***************************************************************************/
 
 

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 1.48 2003/04/15 23:37:42 papowell Exp $";
+"$Id: gethostinfo.c,v 1.57 2003/09/05 20:07:18 papowell Exp $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)

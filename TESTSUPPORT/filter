@@ -27,7 +27,7 @@ do
 		-delay*) delay=`echo $i |sed -e 's/-delay//'` ;;
 		-interval*) interval=`echo $i |sed -e 's/-interval//'` ;;
 		-error*) error=`echo $i |sed -e 's/-error//'` ;;
-		-s* ) statusfile=`expr $i : '-s\(.*\)'` ;;
+		-s*) statusfile=`echo $i |sed -e 's/-s//'` ;;
 		-*) ;;
 		*) file=$i ;;
 	esac

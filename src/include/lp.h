@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2002, Patrick Powell, San Diego, CA
+ * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.48 2003/04/15 23:37:43 papowell Exp $
+ * $Id: lp.h,v 1.57 2003/09/05 20:07:21 papowell Exp $
  ***************************************************************************/
 
 
@@ -231,7 +231,6 @@ xxx error - you have already defined ISNULL
 EXTERN char *ShortHost_FQDN;		/* Short hostname for logging */
 EXTERN char *FQDNHost_FQDN;		/* FQDN hostname */
 EXTERN char* FQDNRemote_FQDN;    /* FQDN of Remote host */
-EXTERN char* FQDNRemote_FQDN;    /* FQDN of Remote host */
 EXTERN char* ShortRemote_FQDN;   /* Short form of Remote host */
 /* EXTERN char* Auth_client_id_DYN;	/ * client sent/received authentication info */
 
@@ -240,6 +239,7 @@ EXTERN int Drop_root_DYN;				/* drop root permissions */
 EXTERN int Accounting_check_DYN; /* check accounting at start */
 EXTERN char* Accounting_end_DYN;/* accounting at start (see also af, la, ar) */
 EXTERN char* Accounting_file_DYN; /* name of accounting file (see also la, ar) */
+EXTERN char* Accounting_namefixup_DYN; /* fix up accounting name */
 EXTERN int Accounting_remote_DYN; /* write remote transfer accounting (if af is set) */
 EXTERN char* Accounting_start_DYN;/* accounting at start (see also af, la, ar) */
 EXTERN char* Allow_user_setting_DYN;	/* allow users to set job submitter */

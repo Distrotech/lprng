@@ -12,8 +12,8 @@ Patrick Powell
 
 + INSTALL         - installation instructions
 
-+ HOWTO/LPRng-HOWTO.html - the LPRng HOWTO - the LPRng
-  documentation.
++ DOCS/LPRng-Refernece.html, DOCS/LPRng-Refernece.pdf,
+   the LPRng Reference Manual
 
 + PrintingCookbook - a set of 'printing recipes' or setups and
      procedures that are commonly encountered.
@@ -56,9 +56,9 @@ support for the LPRng software.
 
 WHERE TO GET THE SOFTWARE:
 
-Web Page and HOWTO in HTML format:
+Web Page and Refernce Manual in HTML format:
    http://www.lprng.com/LPRng.html
-   and the HOWTO/ directory in the distribution
+   and the Reference/ directory in the distribution
 
 The software may be obtained from
    ftp://ftp.lprng.com/pub/LPRng  (Main site)
@@ -89,8 +89,8 @@ The LPRng software distribution has the following structure:
  README*     - various README files
  INSTALL      - Installation information
 
- HOWTO/       - LPRng-HOWTO.html
-     Use a Web Browser and read the Install section
+ DOCS/       - LPRng Reference. manual
+ PrintingCookbook/       - LPRng Printing Cookbook
 
  configure, Makefile.in, ... - configuration and installation
      scripts.

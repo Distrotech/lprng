@@ -75,6 +75,7 @@ ${PAGES}: ${RAW} Makefile
 	for i in ${PAGES} ; do \
 		v=`expr "$$i" : "\(.*\).[0-9]"` ; \
 		echo ${SRC}/$$i; \
+		rm -f $$i; \
 		sed \
 		 -e "s!_PRINTCAP_PATH_!${PRINTCAP_PATH}!" \
 		 -e "s!_LPD_PERMS_PATH_!${LPD_PERMS_PATH}!" \
