@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendmail.c,v 1.2 2002/01/23 01:01:21 papowell Exp $";
+"$Id: sendmail.c,v 1.4 2002/02/09 03:37:35 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"

@@ -2,7 +2,7 @@
 if [ -d /usr/share/man ] ; then
 	mandir="--mandir=/usr/share/man"
 fi
-./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared --enable-unixsocket
+./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared 
 
 # --with-ldopts="-L/usr/local/lib" --with-cppopts="-I/usr/local/include" # --enable-nls --with-included-gettext
 #	--with-chooser_routine=test_chooser  --with-user_objs=user_objs.o  --with-user_include=user_objs.h

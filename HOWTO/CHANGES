@@ -1,3 +1,69 @@
+Version LPRng-3.8.6 - Fri Feb  8 19:31:52 PST 2002
+
+  HF_NAME not getting set when hold file read and it is not
+  in file.  This makes updates miserable.
+  (Problem spotted by: Helmut Jarausch <jarausch@igpm.rwth-aachen.de>)
+
+  Fixed typeo in configure where I had unixsocket and unixsocketpath
+  instead of unix_socket and unix_socket_path...
+  (Pointed out by: Craig Small csmall@eye-net.com.au)
+
+  Modified the host/printer lookup behavior when clients
+  are using 'force_localhost'.  You now use the 'original'
+  queue name rather than the 'destination' queue name.
+  Wonder how long this has been there.
+  (Prompted by a problem report from: Andrew Gray" <grayaw@egr.unlv.edu>)
+
+  Missed a 'AF_UNIX' definition.  Now guarded with ifdefs.
+ 
+  Corrected LPRngHOWTO accounting information:
+   (Error reported by: "Dirk Krause" <d.krause@fh-sm.de>)
+
+    Example:
+     lpd generates:  
+      jobstart  - from the lpd.conf 'as=' option
+      jobend    - from the lpd.conf 'ae=' option
+        -H   - host name
+        -n   - user name
+        -P   - printer
+        -k   - control file name
+        -b   - byte count of job/file
+        -t   - current printing time
+        -J   - Jobname (if present in control file)
+        -C   - class (if present in control file)
+        -M   - mailname (if present in control file)
+    
+     ifhp filter generates:
+       start/end         - of filter, for entire job
+       filestart/fileend - if or other filter, for each file
+       (options above are same)
+        -A  - identifier information (if present in control file)
+        -q  - process id of filter
+        -p  - current value of page counter, 0 indicates no
+              page counter on printer or it is not readable
+    
+    jobstart '-Hh110.private' '-nroot' '-Plp' \
+       '-kcfA129h110.private' '-b48780' '-t2001-10-19-09:36:36.000'
+                               ^^^ bytes in file
+    
+    start '-q26130' '-p105340' '-t2001-10-19-09:36:38.330' \
+                     ^^^^^^^  starting page counter value for job
+        '-Aroot@h110+129' '-nroot' '-Plp' 
+    filestart '-q26132' '-p105340' '-t2001-10-19-09:36:38.350' \
+                          ^^^^^^^  starting page counter value for file
+        '-Aroot@h110+129' '-nroot' '-Plp' 
+    fileend '-b19' '-T435' '-q26132' '-p105359' '-t2001-10-19-09:43:51.504'
+                                      ^^^^^^^  ending page countvalue for file
+             ^^^ number of pages printed for this file
+        '-Aroot@h110+129' '-nroot' '-Plp'
+    end '-b19' '-T435' '-q26130' '-p105359' '-t2001-10-19-09:43:51.504'
+                                      ^^^^^^^  ending page countvalue for job
+         ^^^ number of pages printed for this job
+        '-Aroot@h110+129' '-nroot' '-Plp'
+    jobend '-Hh110.private' '-nroot' '-Plp' \
+        '-kcfA129h110.private' '-b48780' '-t2001-10-19-09:43:51.000'
+                               ^^^ bytes in file
+
 Version LPRng-3.8.5 - Tue Jan 22 15:58:46 PST 2002
 
   Added a minor fix to lpq so that it will check all queues.
@@ -77,9 +143,9 @@ Version LPRng-3.8.4 - Thu Dec 13 08:25:17 PST 2001
      (Spotted by: (Craig Small) csmall@eye-net.com.au)
 
    Added the following to the pass_env options:
-	LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
-	LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
-	LC_IDENTIFICATION LC_ALL
+    LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+    LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+    LC_IDENTIFICATION LC_ALL
     This should help with LOCALE support.
 
 Version LPRng-3.8.3 - Mon Dec 10 20:40:02 PST 2001
@@ -103,11 +169,11 @@ Version LPRng-3.8.3 - Mon Dec 10 20:40:02 PST 2001
 
    Fixed up a problem with global variable Name.
       From:  Rick Cochran <rcc2@cornell.edu>
-	I got LPRng to build under OSX.  It required only one patch which
-	seems to be due to the fact that "Name" is declared "extern" all
-	over the place, but is only defined in getopt.c.  Since lpstat
-	doesn't use getopt, ld complains.  I'm not sure why GNU ld should
-	complain under OSX and not on other platforms.
+    I got LPRng to build under OSX.  It required only one patch which
+    seems to be due to the fact that "Name" is declared "extern" all
+    over the place, but is only defined in getopt.c.  Since lpstat
+    doesn't use getopt, ld complains.  I'm not sure why GNU ld should
+    complain under OSX and not on other platforms.
      (Patch by:  Rick Cochran <rcc2@cornell.edu>)
 
    Editted the lpr man page.  Updated the information about
@@ -172,12 +238,12 @@ Version LPRng-3.8.2 - Mon Dec  3 12:26:52 PST 2001
     :done_jobs_max_age=N  - jobs with status older than N seconds removed
 
   This is best explained by:
-	On job completion:
-	if( (no error && save_when_done)
-	   || (error && save_on_error)
-	   || done_jobs > 0 || done_jobs_max_age > 0 ){
-	  do not remove job
-	}
+    On job completion:
+    if( (no error && save_when_done)
+       || (error && save_on_error)
+       || done_jobs > 0 || done_jobs_max_age > 0 ){
+      do not remove job
+    }
 
     When queue updated:
     if( !(save_on_error || save_when_done) ){
@@ -322,10 +388,10 @@ Release LPRng 3.7.7 Fri Sep 14 15:54:48 PDT 2001
 
   The 'bq_format' option was not being handled correctly
   for defaults.  This option has the value:
-	bq_format=IoIo...D
-	   I = original input format (or '*' for wildcard match)
-	   o = filter output format
-	   D = default (if present),  otherwise keep original
+    bq_format=IoIo...D
+       I = original input format (or '*' for wildcard match)
+       o = filter output format
+       D = default (if present),  otherwise keep original
   It now handles the case where no translation is required
   correctly.
   (Prompted by a question from:
@@ -388,16 +454,16 @@ Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
         be consistent with the patch.
     LPRng-3.7.4-jobfilescan.patch, LPRng-3.7.4-lockfile.patch
         a little less agressive checkpc operation.  Checkpc
-		now does not NOT update the targets of symbolic links.
-		This solves the problem of various tools creating
-		files in the spool directory as well as symbolic links
-		to filters.  The FILES need to be accessible by
-		filters running as the LPD user, the targets of the
-		symbolic links should not be touched.
+        now does not NOT update the targets of symbolic links.
+        This solves the problem of various tools creating
+        files in the spool directory as well as symbolic links
+        to filters.  The FILES need to be accessible by
+        filters running as the LPD user, the targets of the
+        symbolic links should not be touched.
     LPRng-3.7.4-kerb5.patch - not used, do not want to hardwire
         paths into configure.  Modified RPM config file to add
         /usr/kerberos/{include,lib} instead
-	LPRng-3.7.4-lockfile.patch - lockfile created now
+    LPRng-3.7.4-lockfile.patch - lockfile created now
     LPRng-3.7.4-manpage.patch - typo in lpr.1 fixed
     LPRng-3.7.4-nointl.patch - configure using wrong -lintl
         value.
@@ -408,14 +474,14 @@ Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
         for this purpose.
     LPRng-3.7.4-s390.patch, LPRng-3.7.4-setgroups.patch
         This is a fiddle, not a major problem.  The only
-		exploit possible is if the lpd server is started
-		with "extra" groups besides the default one.  If
-		you do not install lpd SETUID root (which is the default)
-		then you have to be root to start this (su root OR login
-		as root),  and this means that either login or su is
-		not setting up the group membership correctly.
-		But it is better to err on the side of paranoia than
-		be careless.
+        exploit possible is if the lpd server is started
+        with "extra" groups besides the default one.  If
+        you do not install lpd SETUID root (which is the default)
+        then you have to be root to start this (su root OR login
+        as root),  and this means that either login or su is
+        not setting up the group membership correctly.
+        But it is better to err on the side of paranoia than
+        be careless.
     LPRng-3.7.4-shutdown.patch
         Note: the 'shutdown()' patch was NOT applied as it breaks
         a slew of other things.  Clearly we have some problem
@@ -593,7 +659,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
             lpr -Plp file  (:direct is effectively the same as -Y)
 
           Effectively:
-			( for i in file1 file2 ; do ${filter} <$i; done ) > h14%9100
+            ( for i in file1 file2 ; do ${filter} <$i; done ) > h14%9100
           where ${filter} is chosen from the printcap entry.
 
           Note: if you do not specify a file then this reduces to reading
@@ -625,7 +691,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
           lpr -Plp file1 file2
              Effectively:
-			for i in file1 file2; do filter $i >temp.$i ; done
+            for i in file1 file2; do filter $i >temp.$i ; done
              lpr -Ppr@host temp.file1 temp.file2 ...
 
       USER SPECIFIED FILTER:
@@ -850,7 +916,7 @@ Release LPRng 3.6.23 - Fri Aug 11 08:03:23 PDT 2000
     b) Corresponding to each query is a file containg the status
        for the query.  If the status is 'stale', that is,
        older than 'lpq_status_stale' seconds,  then the lookup
-	   is redone.
+       is redone.
 
     c) When a job is submitted to a queue,  or the status of a job
        changes,  or a control operation is performed on the queue,
@@ -1341,7 +1407,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
   Makefile.bsd  is now a VERY small makefile:
     # List the things you want to generate:
     all clean install uninstall:
-	   gmake $(MAKEFLAGS) $@
+       gmake $(MAKEFLAGS) $@
 
     I know that some of the BSD folks will hate me for this,  but
    I have decided that trying to support both types of Makefiles
@@ -1401,16 +1467,16 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
      INSTALL_PREFIX=/var/tmp/LPRng  #note that you do NOT export this
      (
-  	cd $INSTALL_PREFIX;
+    cd $INSTALL_PREFIX;
       mkdir usr/local/bin usr/local/sbin /usr/local/libexec /etc /usr/local/etc/rc.d
         ....
      )
      make; make install INSTALL_PREFIX=${INSTALL_PREFIX}
      (cd $INSTALL_PREFIX;
      find . -type f | sed -e '/man[0-9]/d' \
-  		-e '/\/info\//'d -e 's/..//'  >/tmp/files
+        -e '/\/info\//'d -e 's/..//'  >/tmp/files
      find . -type f | sed -n -e '/man[0-9]/s,.*man[0-9]/,,p' \
-  		-e 's/..//'  >/tmp/manpages
+        -e 's/..//'  >/tmp/manpages
 
    You can now find the non-doc files, manpages, etc. etc. etc.
    and then update the various locations as you need.  Clearly this
@@ -1427,15 +1493,15 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
   lpr -U option did not work correctly when UID was root.
     (Patch happily submitted after a long search by:
-		Roberto Togneri <roberto@ee.uwa.edu.au>)
+        Roberto Togneri <roberto@ee.uwa.edu.au>)
   lpd was mangling jobs with more than 26 files - caseless compare
      strikes again.
     (Found with great consternation by: Peter Scheurer <scheurer@sopra-gmbh.de>)
   permissions and filters:
-	When you use a filter for "perms_path" was not executed when a
-	connection to the lpd is made. So there are no rules then and the
-	result of the permission check simply is the default_permission (and
-	it results in having no rules for the 'R'-check as well)
+    When you use a filter for "perms_path" was not executed when a
+    connection to the lpd is made. So there are no rules then and the
+    result of the permission check simply is the default_permission (and
+    it results in having no rules for the 'R'-check as well)
     By convention,  a line containing the name of the printer for which
     permission is wanted.  Now a blank line is written for 'X' rules.
     Added capability of filter getting permissions to Setup_printer().
@@ -1462,11 +1528,11 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
       connect_grace: minumum time between attempts - default 0
       connect_interval: interval between attempts - default 10 sec
       max_connect_interval: maximum time to wait - default 60 sec
-		if( attempt > 0 && max_connect_interval > 0 ){
-			n = connect_interval * (1 << (attempt-1)) + connect_grace;
-			if( n > max_connect_interval ) n = max_connect_interval;
-			sleep(n);
-		}
+        if( attempt > 0 && max_connect_interval > 0 ){
+            n = connect_interval * (1 << (attempt-1)) + connect_grace;
+            if( n > max_connect_interval ) n = max_connect_interval;
+            sleep(n);
+        }
     (Discovered by: Christof Drescher <drescher@pro-image.de>)
   Default filter options were missing '$b'.
     (Pointed out by: Jose Carlos Rodrigues Lopes <jrl@europa.fcee.ucp.pt>)
@@ -1685,14 +1751,14 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
         I also locate a 'preremove' script and do the same selection.
       There is a default 'postinstall' and 'preremove' script as well.
 
-		OSNAME=${OSNAME}; case "$${OSNAME}" in *linux* ) OSNAME=linux;; esac; \
-		echo "OSNAME orig $(OSNAME) '$${OSNAME}'"; \
-		s=`ls postinstall.$${OSNAME} 2>/dev/null`; \
-		echo POSTINSTALL "'$$s'"; \
-		if test -n "$$s" ; then cp $$s postinstall; fi; \
-		s=`ls preremove.$${OSNAME} 2>/dev/null`; \
-		echo PREREMOVE "'$$s'"; \
-		if test -n "$$s" ; then cp $$s preremove; fi;
+        OSNAME=${OSNAME}; case "$${OSNAME}" in *linux* ) OSNAME=linux;; esac; \
+        echo "OSNAME orig $(OSNAME) '$${OSNAME}'"; \
+        s=`ls postinstall.$${OSNAME} 2>/dev/null`; \
+        echo POSTINSTALL "'$$s'"; \
+        if test -n "$$s" ; then cp $$s postinstall; fi; \
+        s=`ls preremove.$${OSNAME} 2>/dev/null`; \
+        echo PREREMOVE "'$$s'"; \
+        if test -n "$$s" ; then cp $$s preremove; fi;
 
      b) postinstall script execution
         If the POSTINSTALL option is not NO, then I execute the postinstall
@@ -1796,34 +1862,34 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
      fix () {
         v=`echo $1 | sed -e 's/[:;].*//'`;
         p=`echo $2 | sed -e 's/[:;].*//'`; d=`dirname $p`;
-		if expr "$p" : "|" >/dev/null; then
-			echo "$v destination is filter - '$p'"
-			exit 0;
-		fi
+        if expr "$p" : "|" >/dev/null; then
+            echo "$v destination is filter - '$p'"
+            exit 0;
+        fi
          echo "Checking for $p in $d"
-     	if [ ! -d "$d" ] ; then
-     		echo "Directory $d does not exist!"
-     		mkdir -p $d
-     	fi
-     	if [ -f $v.sample ] ; then
-     		if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
-     	elif [ -f $v ] ; then
-     		if [ $v != $p.sample ] ; then cp $v $p.sample; fi
-     	else
-     		echo "Do not have $v.sample or $v"
-     	fi
-     	if [ ! -f $p.sample ] ; then
-     		echo "Do not have $p.sample"
-     	elif [ ! -f $p ] ; then
-     		cp $p.sample $p;
-     		chmod 644 $p;
-     	fi;
+        if [ ! -d "$d" ] ; then
+            echo "Directory $d does not exist!"
+            mkdir -p $d
+        fi
+        if [ -f $v.sample ] ; then
+            if [ $v.sample != $p.sample ] ; then cp $v.sample $p.sample; fi
+        elif [ -f $v ] ; then
+            if [ $v != $p.sample ] ; then cp $v $p.sample; fi
+        else
+            echo "Do not have $v.sample or $v"
+        fi
+        if [ ! -f $p.sample ] ; then
+            echo "Do not have $p.sample"
+        elif [ ! -f $p ] ; then
+            cp $p.sample $p;
+            chmod 644 $p;
+        fi;
      }
      # we use the /usr/local/etc/rc.d method to start lpd
      echo "Installing configuration files, cwd " `pwd`
      # we have to take them from one place and put in another
      if [ "X$PACKAGE" = "XYES" ] ; then
-     	# we put files into the destination
+        # we put files into the destination
       ****  when we make a package,  we need to put the files in the
       ****  ${PREFIX}/.... location to be FreeBSD standards compatible
          fix lpd.perms "${INSTALL_PREFIX}${PREFIX}/etc/lpd.perms"
@@ -1832,7 +1898,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
          init=${INSTALL_PREFIX}${PREFIX}/etc/rc.d/lprng.sh
          echo "Setting up init script $init using init.freebsd"
          if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-     	cp init.freebsd $init
+        cp init.freebsd $init
      elif [ "X$MAKEINSTALL" = "XYES" ] ; then
       ****  OK, now we are doing a make install - this could be a
       ****  real install by the user,  or the deadly 'make install'
@@ -1850,18 +1916,18 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
          init=${INSTALL_PREFIX}${PREFIX}/etc/rc.d/lprng.sh
          echo "Setting up init script $init using init.freebsd"
          if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-     	cp init.freebsd $init
+        cp init.freebsd $init
          chmod 744 $init
-     	echo "Stopping LPD"
-     	pid=`cat ${LOCKFILE}* 2>/dev/null`;
-     	if [ -n "$pid" ] ; then kill -INT "$pid" 2>/dev/null; fi
-     	if [ -n "${KILLALL}" ] ; then ${KILLALL} 2>/dev/null; fi
-     	# check the printcap information
-     	echo "Checking Printcap Info and fixing permissions"
-     	${SBINDIR}/checkpc -f
-     	# restart the server
-     	echo "Restarting server"
-     	sh $init start
+        echo "Stopping LPD"
+        pid=`cat ${LOCKFILE}* 2>/dev/null`;
+        if [ -n "$pid" ] ; then kill -INT "$pid" 2>/dev/null; fi
+        if [ -n "${KILLALL}" ] ; then ${KILLALL} 2>/dev/null; fi
+        # check the printcap information
+        echo "Checking Printcap Info and fixing permissions"
+        ${SBINDIR}/checkpc -f
+        # restart the server
+        echo "Restarting server"
+        sh $init start
      else
        ****  OK, this is done when we do a package install.  You will
        ****  be amazed to discover that the ./etc/lpd.perms file is now
@@ -1871,7 +1937,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
        ****  trenches to find out where and if the file location has
        ****  changed.
 
-     	# when doing an install from a package we get the file from the package
+        # when doing an install from a package we get the file from the package
          if [ -f etc/lpd.perms.sample ] ; then
              fix etc/lpd.perms "${LPD_PERMS_PATH}"
              fix etc/lpd.conf "${LPD_CONF_PATH}"
@@ -1891,43 +1957,43 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
   Here is the postinstall.linux.sh:
 
-	# LINUX/RedHat Source Installation Convenience Script
-	# -- START --
-	# CHANGES,v 1.1 2001/08/21 20:33:14 root Exp
+    # LINUX/RedHat Source Installation Convenience Script
+    # -- START --
+    # CHANGES,v 1.1 2001/08/21 20:33:14 root Exp
       *** same as above
-	fix () {
+    fix () {
       *** same as above
-	}
-	echo "Installing configuration files"
-	init=${INSTALL_PREFIX}/etc/rc.d/init.d/lprng
-	if [ "X$MAKEINSTALL" = "XYES" ] ; then
-		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		cp init.linux $init;
-		chmod 744 $init
-		fix lpd.perms "${LPD_PERMS_PATH}"
-		fix lpd.conf "${LPD_CONF_PATH}"
-		fix printcap "${PRINTCAP_PATH}"
-	else
-		*** this is tricky ....
-		fix "${LPD_PERMS_PATH}" "${LPD_PERMS_PATH}"
-		fix "${LPD_CONF_PATH}" "${LPD_CONF_PATH}"
-		fix "${PRINTCAP_PATH}" "${PRINTCAP_PATH}"
-	fi
-	if [ "X$PACKAGE" != "XYES" ] ; then
-		echo "Configuring startup scripts"
-		if [ ! -f $init ] ; then
-			echo "Missing $init";
-		fi
-		if [ -f /etc/redhat-release -a -f /sbin/chkconfig ] ; then
-			echo "RedHat Linux - running chkconfig"
-			/sbin/chkconfig --del lpr
-			/sbin/chkconfig --add lprng
-			echo "Starting Printer"
-			sh $init start
-		else
-			echo "Hand install the configuration files"
-		fi;
-	fi;
+    }
+    echo "Installing configuration files"
+    init=${INSTALL_PREFIX}/etc/rc.d/init.d/lprng
+    if [ "X$MAKEINSTALL" = "XYES" ] ; then
+        if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
+        cp init.linux $init;
+        chmod 744 $init
+        fix lpd.perms "${LPD_PERMS_PATH}"
+        fix lpd.conf "${LPD_CONF_PATH}"
+        fix printcap "${PRINTCAP_PATH}"
+    else
+        *** this is tricky ....
+        fix "${LPD_PERMS_PATH}" "${LPD_PERMS_PATH}"
+        fix "${LPD_CONF_PATH}" "${LPD_CONF_PATH}"
+        fix "${PRINTCAP_PATH}" "${PRINTCAP_PATH}"
+    fi
+    if [ "X$PACKAGE" != "XYES" ] ; then
+        echo "Configuring startup scripts"
+        if [ ! -f $init ] ; then
+            echo "Missing $init";
+        fi
+        if [ -f /etc/redhat-release -a -f /sbin/chkconfig ] ; then
+            echo "RedHat Linux - running chkconfig"
+            /sbin/chkconfig --del lpr
+            /sbin/chkconfig --add lprng
+            echo "Starting Printer"
+            sh $init start
+        else
+            echo "Hand install the configuration files"
+        fi;
+    fi;
 
    Cleaned up the 'Make_passthrough' use by having a single
     'Filter_file' routine.  Problems of unclosed file descriptors
@@ -1977,7 +2043,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
   The printcap 'x:' is now a real printcap.  You use the default
     entry values for it.  Strange how this one did not get caught
     earlier.  The 'lpc client x' and 'lpc server x' now looks up the
-	wildcard as well as the normal information.  And finally, checkpc
+    wildcard as well as the normal information.  And finally, checkpc
     will squawk if you try to use a wildcard as a queue name,
     rather than an alias.
 
@@ -2139,18 +2205,18 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
     entry would have:
         auth=kerberos
         kerberos_id=lpr/lpr@server.host  OR
-		kerberos_server_principal=lpr/lpr@server.host
-		kerberos_service=lpr
-		kerberos_life=...   (this are usually not used)
-		kerberos_renew=...  (this are usually not used)
+        kerberos_server_principal=lpr/lpr@server.host
+        kerberos_service=lpr
+        kerberos_life=...   (this are usually not used)
+        kerberos_renew=...  (this are usually not used)
 
     The server printcap entry would have:  (note no 'auth=' stuff used)
         forward_auth=kerberos    (to use kerberos to forward)
         kerberos_id=lpr/lpr@server.host  OR
-		kerberos_server_principal=lpr/lpr@server.host
-		kerberos_service=lpr
-		kerberos_life=...   (this are usually not used)
-		kerberos_renew=...  (this are usually not used)
+        kerberos_server_principal=lpr/lpr@server.host
+        kerberos_service=lpr
+        kerberos_life=...   (this are usually not used)
+        kerberos_renew=...  (this are usually not used)
         kerberos_keytab=/etc/krb5.keytab
         kerberos_forward_id=lpr/lpr@anotherserver.host
 
@@ -2162,16 +2228,16 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
       Client Configuration:
         auth=pgp
         pgp_id = pgp id of the server, used to get server key from key ring
-		pgp_path = /...  - path to PGP executable on user system
+        pgp_path = /...  - path to PGP executable on user system
 
       Server Configuration
         pgp_id = pgp id of the server, used to get server key from key ring
-		pgp_path = /...  - path to PGP executable on server system
+        pgp_path = /...  - path to PGP executable on server system
         pgp_server_passphrasefile = file containing passphrase to be used by server
            to unlock key file
          Server keyring files are in the server user home directory,
         i.e. - if server runs as 'daemon' it is ~daemon/.pgp/pubring.pgp and
-		~daemon/.pgp/secring.pgp.  Don't fight it.
+        ~daemon/.pgp/secring.pgp.  Don't fight it.
 
     Note that user level authentication using shell scripts is still there,
     but I am making it hard to use.  Don't use it.  Evil.  Bad.  See the
@@ -2180,7 +2246,7 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
    And I have added some interesting code to use md5 authentication and
     shared secrets:
       CLIENTS:  use environment variables
-		MD5KEYFILE  - file containing md5 keys format is:  name=key.
+        MD5KEYFILE  - file containing md5 keys format is:  name=key.
       keys are currently 16 chars long - the ASCII values are used
       to set the 'key' value.  Yes, yes, I know there are only approx
       76**16 = 5 * 10*29 possible keys using this.  Tough.  A key for the
@@ -2189,33 +2255,33 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
          Example:
          User Keyfile
            # from the configuration information: md5_id=key
-		   # we use 'key' to look up the host information
-	       # the entry has the format '[user_auth] salt'
-		   #  if user_auth is present then it will be used as the
-		   #  'from' or 'client' information.  The recipient will use
-		   # this value to look up the corresponding hash key value in
-		   # servers keyfile
-		   #key  = user_auth   salt
+           # we use 'key' to look up the host information
+           # the entry has the format '[user_auth] salt'
+           #  if user_auth is present then it will be used as the
+           #  'from' or 'client' information.  The recipient will use
+           # this value to look up the corresponding hash key value in
+           # servers keyfile
+           #key  = user_auth   salt
            lpr@h4=papowell-h4  xx01223750adfj9098789sdfadf
            lpr@h5=papowell-h5  asdfu189asdfasdfasdfasdfasd
 
         Server Keyfile (host h4)
-		   #key  = user_auth   salt
-		   # user key
+           #key  = user_auth   salt
+           # user key
            papowell-h4=xx01223750adfj9098789sdfadf
            # key for forward transfer to host h5
-		   lpr@h5=lpr-h4 adfa9ipioasdfasdfjklsf
+           lpr@h5=lpr-h4 adfa9ipioasdfasdfjklsf
            # key for forward transfer from host h5
-		   lpr-h5=adfa9ipioasdfasdfjklsf
+           lpr-h5=adfa9ipioasdfasdfjklsf
 
         Server Keyfile (host h5)
-		   #key  = user_auth   salt
-		   # user key
+           #key  = user_auth   salt
+           # user key
            papowell-h5=asdfu189asdfasdfasdfasdfasd
            # key for forward transfer to host h4
-		   lpr@h4=lpr-h5 adfa9ipioasdfasdfjklsf
+           lpr@h4=lpr-h5 adfa9ipioasdfasdfjklsf
            # key for forward transfer from host h4
-		   lpr-h4=adfa9ipioasdfasdfjklsf
+           lpr-h4=adfa9ipioasdfasdfjklsf
 
         Configuration:
           auth=md5
@@ -2463,7 +2529,7 @@ Release LPRng 3.6.8 Fri Aug 27 17:06:10 PDT 1999
 
   Updated configuration to be a little more consistent with other packages
    default installation directories:
-	 ${prefix}  is usually /usr/local
+     ${prefix}  is usually /usr/local
      ${bindir}  is usually ${prefix}/bin, (/usr/local/bin)
      ${sbindir} is usually ${prefix}/sbin (/usr/local/sbin)
      ${libexecdir} is usually ${prefix}/libexec (/usr/local/libexec)
@@ -2579,7 +2645,7 @@ Release LPRng 3.6.6 Sun Aug 22 10:42:20 PDT 1999
     then lpd now do a shutdown(port,1) on the socket.  Now we get
     into the really odd stuff.  We first set the linger value to
     'read_write_timeout' if nonzero otherwise the 'exit_linger_timeout'.
-	IF the 'wait_for_eof' flag (default TRUE) is set,  we try
+    IF the 'wait_for_eof' flag (default TRUE) is set,  we try
     READING from the socket until we get an eof.  We then close
     (with the linger) the socket.
 

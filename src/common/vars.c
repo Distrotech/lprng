@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.2 2002/01/23 01:01:22 papowell Exp $";
+"$Id: vars.c,v 1.4 2002/02/09 03:37:36 papowell Exp $";
 
 
 /* force local definitions */
@@ -106,7 +106,7 @@ struct keywords Pc_var_list[] = {
    /*  query accounting server when connected */
 { "achk", 0,  FLAG_K,  &Accounting_check_DYN,0,0},
    /*  accounting at end (see also af, la, ar, as) */
-{ "ae", 0,  STRING_K,  &Accounting_end_DYN,0,0,"=jobend $H $n $P $k $b $t"},
+{ "ae", 0,  STRING_K,  &Accounting_end_DYN,0,0,"=jobend $H $n $P $k $b $t $'C $'J $'M"},
    /*  name of accounting file (see also la, ar) */
 { "af", 0,  STRING_K,  &Accounting_file_DYN,0,0,"=acct"},
    /*  automatically hold all jobs */
@@ -124,7 +124,7 @@ struct keywords Pc_var_list[] = {
    /* host architecture */
 { "architecture", 0, STRING_K, &Architecture_DYN,1,0,ARCHITECTURE},
    /*  accounting at start (see also af, la, ar) */
-{ "as", 0,  STRING_K,  &Accounting_start_DYN,0,0,"=jobstart $H $n $P $k $b $t"},
+{ "as", 0,  STRING_K,  &Accounting_start_DYN,0,0,"=jobstart $H $n $P $k $b $t $'C $'J $'M"},
 	/* authentication type for client to server */
 { "auth", 0,  STRING_K, &Auth_DYN,0,0 },
    /*  client to server authentication filter */

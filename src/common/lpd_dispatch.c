@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.2 2002/01/23 01:01:17 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.4 2002/02/09 03:37:33 papowell Exp $";
 
 
 #include "lp.h"
@@ -176,8 +176,21 @@ void Service_connection( struct line_list *args )
 		LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
 	}
 
-	DEBUG1("Service_connection: family %d, AF_LOCAL %d, AF_UNIX %d",
-		sinaddr.sa_family, AF_LOCAL, AF_UNIX );
+	DEBUG1("Service_connection: family %d, "
+#ifdef AF_LOCAL
+		"AF_LOCAL %d,"
+#endif
+#ifdef AF_UNIX
+		"AF_UNIX %d"
+#endif
+	"%s" , sinaddr.sa_family,
+#ifdef AF_LOCAL
+	AF_LOCAL,
+#endif
+#ifdef AF_UNIX
+	AF_UNIX,
+#endif
+	"");
 	if( sinaddr.sa_family == AF_INET ){
 		port = ((struct sockaddr_in *)&sinaddr)->sin_port;
 #if defined(IPV6)

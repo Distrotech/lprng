@@ -1,0 +1,49 @@
+***************
+*** 8,14 ****
+   ***************************************************************************/
+  
+   static char *const _id =
+! "$Id: lpq.c.rej,v 1.3 2002/02/09 03:37:33 papowell Exp $";
+  
+  
+  /***************************************************************************
+--- 8,14 ----
+   ***************************************************************************/
+  
+   static char *const _id =
+! "$Id: lpq.c.rej,v 1.3 2002/02/09 03:37:33 papowell Exp $";
+  
+  
+  /***************************************************************************
+***************
+*** 184,189 ****
+  		} else {
+  			/* set up configuration */
+  			Get_printer();
+  			Show_status(argv);
+  		}
+  		DEBUG1("lpq: done");
+--- 184,190 ----
+  		} else {
+  			/* set up configuration */
+  			Get_printer();
++ 			Fix_Rm_Rp_info(0,0);
+  			Show_status(argv);
+  		}
+  		DEBUG1("lpq: done");
+***************
+*** 208,214 ****
+  	char msg[LINEBUFFER];
+  
+  	DEBUG1("Show_status: start");
+- 	Fix_Rm_Rp_info(0,0);
+  
+  	if( ISNULL(RemotePrinter_DYN) ){
+  		SNPRINTF( msg, sizeof(msg))
+--- 209,214 ----
+  	char msg[LINEBUFFER];
+  
+  	DEBUG1("Show_status: start");
+  
+  	if( ISNULL(RemotePrinter_DYN) ){
+  		SNPRINTF( msg, sizeof(msg))

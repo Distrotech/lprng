@@ -27,17 +27,6 @@ AC_PROG_CC
 ])dnl
 dnl
 
-dnl set $(LD) from --with-linker=value
-dnl
-define(WITH_LINKER,[
-AC_ARG_WITH([linker],
-[  --with-linker=LINKER    select linker to use],
-AC_MSG_RESULT(LD=$withval)
-LD=$withval,
-if test -z "$LD" ; then LD=$CC; fi
-[AC_MSG_RESULT(LD defaults to $LD)])dnl
-AC_SUBST([LD])])dnl
-
 dnl
 dnl set $(CCOPTS) from --with-ccopts=value
 dnl

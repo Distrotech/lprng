@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.2 2002/01/23 01:01:15 papowell Exp $";
+"$Id: getprinter.c,v 1.4 2002/02/09 03:37:30 papowell Exp $";
 
 
 #include "lp.h"
@@ -100,18 +100,20 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 	Set_DYN(&RemotePrinter_DYN, 0 );
 	Set_DYN(&RemoteHost_DYN, 0 );
 
-	if( (s = safestrchr( Printer_DYN, '@' ))  ){
-		Set_DYN(&RemotePrinter_DYN, Printer_DYN );
-		*s = 0;
-		Set_DYN(&Queue_name_DYN, Printer_DYN );
-		s = safestrchr( RemotePrinter_DYN, '@');
-		*s++ = 0;
-		Set_DYN(&RemoteHost_DYN, s );
-		if( (s = safestrchr(RemoteHost_DYN,'%')) ){
+	if( !Is_server ){
+		if( (s = safestrchr( Printer_DYN, '@' ))  ){
+			Set_DYN(&RemotePrinter_DYN, Printer_DYN );
+			*s = 0;
+			Set_DYN(&Queue_name_DYN, Printer_DYN );
+			s = safestrchr( RemotePrinter_DYN, '@');
 			*s++ = 0;
-			Set_DYN(&Lpd_port_DYN,s);
+			Set_DYN(&RemoteHost_DYN, s );
+			if( (s = safestrchr(RemoteHost_DYN,'%')) ){
+				*s++ = 0;
+				Set_DYN(&Lpd_port_DYN,s);
+			}
+			goto done;
 		}
-	} else {
 		/* we search for the values in the printcap */
 		Set_DYN(&Queue_name_DYN, Printer_DYN );
 		s = 0;
@@ -150,63 +152,108 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		/* if a client and have direct, then we need to use
 		 * the LP values
 		 */
-		if( !Is_server && Direct_DYN
-			&& strchr( "/|", cval(Lp_device_DYN)) ){
-			Set_DYN(&RemotePrinter_DYN, 0 );
-			Set_DYN(&RemoteHost_DYN, 0 );
+		if( Direct_DYN ){
+			if( strchr( "/|", cval(Lp_device_DYN)) ){
+				Set_DYN(&RemotePrinter_DYN, 0 );
+				Set_DYN(&RemoteHost_DYN, 0 );
+				goto done;
+			}
+			if( (s = safestrchr( Lp_device_DYN, '@' ))  ){
+				Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
+				*s = 0;
+				Set_DYN(&Queue_name_DYN, Printer_DYN );
+				s = safestrchr( RemotePrinter_DYN, '@');
+				*s++ = 0;
+				Set_DYN(&RemoteHost_DYN, s );
+				if( (s = safestrchr(RemoteHost_DYN,'%')) ){
+					*s++ = 0;
+					Set_DYN(&Lpd_port_DYN,s);
+				}
+				goto done;
+			}
+		}
+		if( Force_localhost_DYN ){
+			Set_DYN( &RemoteHost_DYN, LOCALHOST );
+			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
+			Set_DYN( &Lp_device_DYN, 0 );
 			goto done;
 		}
-		/* are we a client? then we have to use the lp=pr@xx,
-		 * and then the 'rp' value
-		 */
-		if( !Is_server && !Direct_DYN && Force_localhost_DYN ){
-			/* we force a connection to the localhost using
-			 * the print queue primary name
-			 */
-			if( !ISNULL(Lp_device_DYN) && safestrchr( Lp_device_DYN, '@' ) ){
-				Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
-				s = safestrchr( RemotePrinter_DYN, '@');
-				if( s ) *s++ = 0;
-			} else if( ISNULL( RemotePrinter_DYN ) ){
-				Set_DYN( &RemotePrinter_DYN, Printer_DYN );
-			}
-			Set_DYN( &RemoteHost_DYN, LOCALHOST );
-			Set_DYN( &Lp_device_DYN, 0 );
-		} else if( safestrchr( Lp_device_DYN, '@' ) ){
-			Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
-			s = safestrchr( RemotePrinter_DYN, '@');
-			if( s ) *s++ = 0;
-			if( *s == 0 ) s = 0;
-			Set_DYN(&RemoteHost_DYN, s );
-			if( (s = safestrchr(RemoteHost_DYN,'%')) ){
-				*s++ = 0;
-				Set_DYN(&Lpd_port_DYN,s);
-			}
-			Set_DYN(&Lp_device_DYN,0);
-			goto set_default;
-		} else if( Lp_device_DYN && Is_server ){
-			Set_DYN(&RemoteHost_DYN,0);
-			Set_DYN(&RemotePrinter_DYN,0);
-		} else if( RemoteHost_DYN && Is_server ){
-			if( RemotePrinter_DYN == 0 || *RemotePrinter_DYN == 0 ){
-				Set_DYN( &RemotePrinter_DYN, Printer_DYN );
-			}
-		} else if( Is_server && Server_names_DYN == 0 ){
-			if( report_conflict ){
-				SNPRINTF(report_conflict,report_len)
-					"no :rm, :lp, or :sv entry" );
-			}
-		} else {
-   set_default:
-			if( RemoteHost_DYN == 0 || *RemoteHost_DYN == 0 ){
-				Set_DYN( &RemoteHost_DYN, Default_remote_host_DYN );
-			}
-			if( RemoteHost_DYN == 0 || *RemoteHost_DYN == 0 ){
-				Set_DYN( &RemoteHost_DYN, FQDNHost_FQDN );
-			}
-			if( RemotePrinter_DYN == 0 || *RemotePrinter_DYN == 0 ){
-				Set_DYN( &RemotePrinter_DYN, Printer_DYN );
-			}
+		if( RemoteHost_DYN == 0 || *RemoteHost_DYN == 0 ){
+			Set_DYN( &RemoteHost_DYN, Default_remote_host_DYN );
+		}
+		if( RemoteHost_DYN == 0 || *RemoteHost_DYN == 0 ){
+			Set_DYN( &RemoteHost_DYN, FQDNHost_FQDN );
+		}
+		if( RemotePrinter_DYN == 0 || *RemotePrinter_DYN == 0 ){
+			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
+		}
+		goto done;
+	}
+	/* we are a server */
+	/* we search for the values in the printcap */
+	s = 0;
+	Set_DYN(&Queue_name_DYN, Printer_DYN );
+	if(
+		(s = Select_pc_info(Printer_DYN,
+		&PC_entry_line_list,
+		&PC_alias_line_list,
+		&PC_names_line_list, &PC_order_line_list,
+		&PC_info_line_list, 0, 1 ))
+		||
+		(s = Select_pc_info("*",
+		&PC_entry_line_list,
+		&PC_alias_line_list,
+		&PC_names_line_list, &PC_order_line_list,
+		&PC_info_line_list, 0, 0 ))
+	){
+		if( !safestrcmp( s, "*" ) ){
+			s = Queue_name_DYN;
+		}
+		Set_DYN(&Printer_DYN,s);
+
+		DEBUG2("Fix_Rm_Rp_info: found '%s'", Printer_DYN );
+	}
+	if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_alias_line_list",
+		&PC_alias_line_list );
+	if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_entry_line_list",
+		&PC_entry_line_list );
+	Set_var_list( Pc_var_list, &PC_entry_line_list);
+	if( RemoteHost_DYN && Lp_device_DYN && report_conflict ){
+		SNPRINTF(report_conflict,report_len)
+			"conflicting printcap entries :lp=%s:rm=%s",
+			Lp_device_DYN, RemoteHost_DYN );
+	}
+	if( safestrchr( Lp_device_DYN, '@' ) ){
+		Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
+		s = safestrchr( RemotePrinter_DYN, '@');
+		if( s ) *s++ = 0;
+		if( *s == 0 ) s = 0;
+		Set_DYN(&RemoteHost_DYN, s );
+		if( (s = safestrchr(RemoteHost_DYN,'%')) ){
+			*s++ = 0;
+			Set_DYN(&Lpd_port_DYN,s);
+		}
+		Set_DYN(&Lp_device_DYN,0);
+	} else if( Lp_device_DYN ){
+		Set_DYN(&RemoteHost_DYN,0);
+		Set_DYN(&RemotePrinter_DYN,0);
+	} else if( RemoteHost_DYN ){
+		; /* we use defaults */
+	} else if( Server_names_DYN == 0 ){
+		if( report_conflict ){
+			SNPRINTF(report_conflict,report_len)
+				"no :rm, :lp, or :sv entry" );
+		}
+	}
+	if( !Lp_device_DYN ){
+		if( ISNULL(RemoteHost_DYN) ){
+			Set_DYN( &RemoteHost_DYN, Default_remote_host_DYN );
+		}
+		if( ISNULL(RemoteHost_DYN) ){
+			Set_DYN( &RemoteHost_DYN, FQDNHost_FQDN );
+		}
+		if( ISNULL(RemotePrinter_DYN) ){
+			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 		}
 	}
  done:

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# lpd.perms,v 3.7 1998/03/24 02:43:22 papowell Exp
+# $Id: lpd.perms.in,v 1.4 2002/02/09 03:37:20 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -16,18 +16,16 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.8.5
+## VERSION=3.8.6
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
 ## are: /etc/lpd.perms,  /usr/etc/lpd.perms, and  /var/spool/lpd/lpd.perms.
 ## The locations of these files are set by the perms_path entry
-## in the lpd.conf file or by compile time defaults in the src/common/defaults.c
-## file.  In addition to the global permissions files,  each spool queue
-## can also have a permissions file.  This file is searched when information
-## or operations on a specific printer is requested.
+## in the lpd.conf file or by compile time defaults in the
+## src/common/defaults.c file.
 ## 
-## Each time the lpd server is given a user request or carries out an unspooling
+## Each time the lpd server is given a user request or carries out an
 ## operation,  it searches to the perms files to determine if the action
 ## is ACCEPT or REJECT.  The first ACCEPT or REJECT found terminates the search.
 ## If none is found,  then the last DEFAULT action is used.
@@ -76,11 +74,12 @@
 ##   SV= IP of source of request = IP of server host or server Localhost
 ##   LPC= lpc command globmatched against values
 ##   AU= Authorization check on transfer
-##       AUTH will match (true) if authenticated transfer
-##       AUTHTYPE will match authentication type
-##       AUTHUSER will match client authentication type
-##       AUTHFROM will match server authentication type and is NULL if not from server
-##       AUTHSAMEUSER will match client authentication to save authentication in job
+##       AUTH will be true (match) if authenticated request
+##       AUTHTYPE will match authentication type of request to pattern
+##       AUTHUSER will match client authentication id to pattern
+##       AUTHFROM will match request originator authentication id to pattern
+##       AUTHSAMEUSER will match requestor authentication id
+##              to authentication id in job
 ## 
 ## Match: S = globmatch, IP = IPaddress[/netmask],
 ##   N = low[-high] number range, V= matching or compatible values
@@ -186,15 +185,22 @@
 ## # All operations allowed except those specifically forbidden
 ## DEFAULT ACCEPT
 ## 
-## #Reject connections from hosts not on subnet 130.191.0.0
-## # or Engineering pc's,  or listed in the /etc/rejecthost file
-##   REJECT SERVICE=X NOT REMOTEIP=130.191.0.0/255.255.0.0
-##   REJECT SERVICE=X NOT REMOTEHOST=engpc*
-##   REJECT SERVICE=X NOT REMOTEHOST=</etc/rejecthost
+## # Accept connections from hosts on subnet 130.191.0.0 or
+## # from the server.
+##   ACCEPT SERVICE=X REMOTEIP=130.191.0.0/255.255.0.0,\
+##              128.0.0.0/8
+## # from a named set of sites
+##   ACCEPT SERVICE=X REMOTEHOST=engpc*
+## # listed in the /etc/accepthost file
+##   ACCEPT SERVICE=X REMOTEHOST=</etc/accepthost
 ##     - /etc/rejecthost contains list of entries separated
 ##       by whitespace.  For example:
-##            10.0.0.0/8
+##            10.0.0.0/8 128.0.0.0/8
 ##            192.168.10.1  192.168.10.2
+##   # don't take them from this particular host
+##   REJECT SERVICE=X REMOTEHOST=badhost.eng.com
+## # Reject all others
+##   REJECT SERVICE=X
 ## 
 ## #Do not allow anybody but root or papowell on
 ## #astart1.astart.com or listed in the /etc/ok file

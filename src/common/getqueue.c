@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.2 2002/01/23 01:01:16 papowell Exp $";
+"$Id: getqueue.c,v 1.4 2002/02/09 03:37:30 papowell Exp $";
 
 
 /***************************************************************************
@@ -742,6 +742,9 @@ void Get_hold_file( struct job *job, char *hf_name )
 	if( !status ) {
 		Get_file_image_and_split( hf_name, 0, 0,
 			&job->info, Line_ends, 1, Value_sep,1,1,1,0);
+	}
+	if( !Find_str_value(&job->info,HF_NAME,Value_sep) ){
+		Set_str_value(&job->info,HF_NAME,hf_name);
 	}
 }
 

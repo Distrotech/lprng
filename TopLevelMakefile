@@ -56,8 +56,8 @@ filterdir=/usr/libexec/filters
 all_config=--prefix=/usr --mandir=/usr/share/man --sysconfdir=${sysconfdir} --with-filterdir=${filterdir} --disable-shared
 
 # LPRng 
-#   --enable-unixsocket               add unix socket for localhost connections
-#   --with-unixsocketpath=DIR         unix socket path (default /var/run/lprng)
+#   --enable-unix_socket              add unix socket for localhost connections
+#   --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)
 #   --disable-setuid                  do not install client executables setuid root
 #   --enable-priv_ports               require connections from privileged ports
 #   --disable-force_localhost         disable force_localhost default

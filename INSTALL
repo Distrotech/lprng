@@ -213,12 +213,12 @@ CONFIGURATION OPTIONS
   --with-filter_path=PATH     subprocess PATH environment variable
                               (default: /usr/bin:/usr/local/bin)
   --with-filterdir=DIR        filter directory (default ${libexecdir}/filters)
-  --with-unixsocketpath=DIR         unix socket path (default /dev/lprng)
+  --with-unix_socket_path=DIR         unix socket path (default /dev/lprng)
 
      OPERATION:
 
   --disable-setuid        disable setuid root client and server executables
-  --enable-unixsocket         add unix socket for localhost connections
+  --disable-unix_socket       use unix socket for localhost connections
   --enable-priv_ports         require connections to be from privileged ports
   --disable-force_localhost   disable force_localhost default
   --disable-require_configfiles  client programs will not require lpd.conf
