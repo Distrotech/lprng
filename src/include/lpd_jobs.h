@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_jobs.h,v 1.28 2001/11/16 16:06:49 papowell Exp $
+ * $Id: lpd_jobs.h,v 1.34 2001/12/03 22:08:21 papowell Exp $
  ***************************************************************************/
 
 
@@ -15,7 +15,7 @@
 /* PROTOTYPES */
 void Update_spool_info( struct line_list *sp );
 int cmp_server( const void *left, const void *right, const void *arg );
-int Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time );
+void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time );
 void Dump_subserver_info( char *title, struct line_list *l);
 void Get_subserver_info( struct line_list *order,
 	char *list, char *old_order);
@@ -38,5 +38,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 void Add_banner_to_job( struct job *job );
 void Fix_bq_format( int format, struct line_list *datafile );
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
+void Service_queue( struct line_list *args );
+void Remove_done_jobs( void );
 
 #endif

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: fileopen.c,v 1.28 2001/11/16 16:06:38 papowell Exp $";
+"$Id: fileopen.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
 
 
 #include "lp.h"
@@ -18,14 +18,14 @@
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
-Commentary:
-Patrick Powell Mon May  1 05:37:02 PDT 1995
+  Commentary:
+  Patrick Powell Mon May  1 05:37:02 PDT 1995
+   
+  These routines were created in order to centralize all file open
+  and checking.  Hopefully,  if there are portability problems, these
+  routines will be the only ones to change.
  
-These routines were created in order to centralize all file open
-and checking.  Hopefully,  if there are portability problems, these
-routines will be the only ones to change.
- 
- ***************************************************************************/
+***************************************************************************/
 
 /***************************************************************************
  * int Checkread( char *file, struct stat *statb )

@@ -8,24 +8,29 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
+"$Id: lpd.c,v 1.34 2001/12/03 22:08:12 papowell Exp $";
 
 
 #include "lp.h"
 #include "child.h"
 #include "fileopen.h"
-#include "gethostinfo.h"
-#include "getopt.h"
-#include "getprinter.h"
-#include "getqueue.h"
+#include "errorcodes.h"
 #include "initialize.h"
 #include "linksupport.h"
-#include "patchlevel.h"
-#include "permission.h"
+#include "lpd_logger.h"
+#include "getqueue.h"
+#include "getopt.h"
 #include "proctitle.h"
-#include "errorcodes.h"
+#if 0
+#include "patchlevel.h"
+#include "gethostinfo.h"
+#include "getprinter.h"
+#include "permission.h"
 #include "krb5_auth.h"
 #include "lpd_secure.h"
+#include "lpd_jobs.h"
+#include "lpd_dispatch.h"
+#endif
 
 /* force local definitions */
 #undef EXTERN
@@ -37,13 +42,6 @@
 #define DEFS
 
 #include "lpd.h"
-#include "lpd_remove.h"
-#include "lpd_logger.h"
-#include "lpd_jobs.h"
-#include "lpd_rcvjob.h"
-#include "lpd_control.h"
-#include "lpd_status.h"
-
 
 /**** ENDINCLUDE ****/
 
@@ -152,17 +150,26 @@ int main(int argc, char *argv[], char *envp[])
 	Initialize(argc, argv, envp, 'D' );
 	DEBUG1("Get_parms: UID_root %d, OriginalRUID %d", UID_root, OriginalRUID);
 
-	if( UID_root && OriginalRUID ){
+	if( UID_root && (OriginalRUID != ROOTUID) ){
 		FATAL(LOG_ERR) "lpd installed SETUID root and started by user %d! Possible hacker attack", OriginalRUID);
 	}
 
 	Setup_configuration();
 
+#if 0
 	if( Worker_LPD ){
-		Lpd_worker(argv,argc,Optind);
+		struct line_list args;
+		Name = "LPD_WORKER";
+		DEBUG1("Lpd_worker: argc %d, optind %d", argc, Optind );
+		Init_line_list( &args );
+		while( Optind < argc ){
+			Add_line_list(&args,argv[Optind++],Value_sep,1,1);
+		}
+		if(DEBUGL1)Dump_line_list("Lpd_worker - args", &args );
+		Do_work(0,Worker_LPD,args);
 		cleanup(0);
 	}
-
+#endif
 
 	/* get the maximum number of servers allowed */
 	max_servers = Get_max_servers();
@@ -185,6 +192,9 @@ int main(int argc, char *argv[], char *envp[])
 	 * root in order to open a socket
 	 */
 
+	if( Lpd_port_arg ){
+		Set_DYN( &Lpd_port_DYN, Lpd_port_arg );
+	}
 	sock = Link_listen();
 	DEBUG1("lpd: listening socket fd %d",sock);
 	if( sock < 0 ){
@@ -378,8 +388,7 @@ int main(int argc, char *argv[], char *envp[])
 			s = Servers_line_list.list[0];
 			DEBUG1("lpd: starting server '%s'", s );
 			Set_str_value(&args,PRINTER,s);
-			Set_str_value(&args,CALL,QUEUE);
-			last_fork_pid_value = pid = Start_worker( &args, 0 );
+			last_fork_pid_value = pid = Start_worker( "queue",&args, 0 );
 			Fork_error( last_fork_pid_value );
 			Free_line_list(&args);
 			if( pid > 0 ){
@@ -470,8 +479,7 @@ int main(int argc, char *argv[], char *envp[])
 			err = errno;
 			DEBUG1("lpd: connection fd %d", newsock );
 			if( newsock > 0 ){
-				Set_str_value(&args,CALL,SERVER);
-				pid = Start_worker( &args, newsock );
+				pid = Start_worker( "server", &args, newsock );
 				if( pid < 0 ){
 					LOGERR(LOG_INFO) _("lpd: fork() failed") );
 					Write_fd_str( newsock, "\002Server load too high\n");
@@ -539,147 +547,6 @@ void Setup_log(char *logfile )
 }
 
 /***************************************************************************
- * Service_connection( struct line_list *args )
- *  Service the connection on the talk socket
- * 1. fork a connection
- * 2. Mother:  close talk and return
- * 2  Child:  close listen
- * 2  Child:  read input line and decide what to do
- *
- ***************************************************************************/
-
-void Service_connection( struct line_list *args )
-{
-	char input[SMALLBUFFER];
-	char buffer[LINEBUFFER];	/* for messages */
-	int len, talk;
-	int status;		/* status of operation */
-	int permission;
-	int port = 0;
-	struct sockaddr sinaddr;
-
-	Name = "SERVER";
-	setproctitle( "lpd %s", Name );
-	(void) plp_signal (SIGHUP, cleanup );
-
-	if( !(talk = Find_flag_value(args,INPUT,Value_sep)) ){
-		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Service_connection: no talk fd"); 
-	}
-
-	DEBUG1("Service_connection: listening fd %d", talk );
-
-	Free_line_list(args);
-
-	/* make sure you use blocking IO */
-	Set_block_io(talk);
-
-	len = sizeof( sinaddr );
-	if( getpeername( talk, &sinaddr, &len ) ){
-		LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
-	}
-
-	if( sinaddr.sa_family == AF_INET ){
-		port = ((struct sockaddr_in *)&sinaddr)->sin_port;
-#if defined(IPV6)
-	} else if( sinaddr.sa_family == AF_INET6 ){
-		port = ((struct sockaddr_in6 * )&sinaddr)->sin6_port;
-#endif
-	} else {
-		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
-	}
-
-	DEBUG2("Service_connection: socket %d, ip '%s' port %d", talk,
-		inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ), ntohs( port ) );
-
-	/* get the remote name and set up the various checks */
-	Perm_check.addr = &sinaddr;
-
-	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr, 0 );
-	Perm_check.remotehost  =  &RemoteHost_IP;
-	Perm_check.host = &RemoteHost_IP;
-	Perm_check.port =  ntohs(port);
-
-	len = sizeof( input ) - 1;
-	memset(input,0,sizeof(input));
-	DEBUG1( "Service_connection: starting read on fd %d", talk );
-
-	status = Link_line_read(ShortRemote_FQDN,&talk,
-		Send_job_rw_timeout_DYN,input,&len);
-	if( len >= 0 ) input[len] = 0;
-	DEBUG1( "Service_connection: read status %d, len %d, '%s'",
-		status, len, input );
-	if( len == 0 ){
-		DEBUG3( "Service_connection: zero length read" );
-		cleanup(0);
-	}
-	if( status ){
-		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request") );
-	}
-	if( len < 2 ){
-		FATAL(LOG_INFO) _("Service_connection: bad request line '%s'"), input );
-	}
-
-	/* read the permissions information */
-
-	if( Perm_filters_line_list.count ){
-		Free_line_list(&Perm_line_list);
-		Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
-		Filterprintcap( &Perm_line_list, &Perm_filters_line_list, "");
-	}
-   
-	Perm_check.service = 'X';
-
-	permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
-	if( permission == P_REJECT ){
-		DEBUG1("Service_connection: talk socket '%d' no connect perms", talk );
-		Write_fd_str( talk, _("\001no connect permissions\n") );
-		cleanup(0);
-	}
-	Dispatch_input(&talk,input);
-	cleanup(0);
-}
-
-void Dispatch_input(int *talk, char *input )
-{
-	switch( input[0] ){
-		default:
-			FATAL(LOG_INFO)
-				_("Dispatch_input: bad request line '%s'"), input );
-			break;
-		case REQ_START:
-			/* simply send a 0 ACK and close connection - NOOP */
-			Write_fd_len( *talk, "", 1 );
-			break;
-		case REQ_RECV:
-			Receive_job( talk, input );
-			break;
-		case REQ_DSHORT:
-		case REQ_DLONG:
-		case REQ_VERBOSE:
-			Job_status( talk, input );
-			break;
-		case REQ_REMOVE:
-			Job_remove( talk, input );
-			break;
-		case REQ_CONTROL:
-			Job_control( talk, input );
-			break;
-		case REQ_BLOCK:
-			Receive_block_job( talk, input );
-			break;
-		case REQ_SECURE:
-			Receive_secure( talk, input );
-			break;
-#if defined(MIT_KERBEROS4)
-		case REQ_K4AUTH:
-			Receive_k4auth( talk, input );
-			break;
-#endif
-	}
-}
-
-/***************************************************************************
  * Reinit()
  * Reinitialize the database/printcap/permissions information
  * 1. free any allocated memory
@@ -736,6 +603,11 @@ void Set_lpd_pid(void)
 	if( lockfd < 0 ){
 		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open '%s'"), path );
 	} else {
+		int euid = geteuid();
+		To_euid_root();
+		fchown( lockfd, DaemonUID, DaemonGID );
+		fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
+		To_euid(euid);
 		/* we write our PID */
 		Server_pid = getpid();
 		DEBUG1( "lpd: writing lockfile '%s' fd %d with pid '%d'",path,lockfd,Server_pid );
@@ -819,6 +691,7 @@ int Read_server_status( int fd )
 	N_("               Example: -D10,remote=5\n"),
 	N_(" -L logfile  - append log information to logfile\n"),
 	N_(" -V          - show version info\n"),
+	N_(" -p port     - listen on this port\n"),
 	0,
 };
 
@@ -837,7 +710,7 @@ void usage(void)
 }
 
  char LPD_optstr[] 	/* LPD options */
- = "D:FL:VX" ;
+ = "D:FL:VX:p:" ;
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -848,8 +721,9 @@ void Get_parms(int argc, char *argv[] )
 		case 'D': Parse_debug(Optarg, 1); break;
 		case 'F': Foreground_LPD = 1; break;
 		case 'L': Logfile_LPD = Optarg; break;
-		case 'V': ++verbose; continue;
-		case 'X': Worker_LPD = 1; break;
+		case 'V': ++verbose; break;
+        case 'X': Worker_LPD = Optarg; break;
+		case 'p': Lpd_port_arg = Optarg; break;
 		default: usage(); break;
 		}
 	}
@@ -862,20 +736,6 @@ void Get_parms(int argc, char *argv[] )
 		exit(0);
 	}
 }
-
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{&LOGGER,Logger},		/* used by LPD to do logging for remote sites */
-	{&ALL,Service_all},			/* used by LPD for Start_all() operation */
-	{&SERVER,Service_connection},	/* used by LPD to handle a connection */
-	{&QUEUE,Service_queue},		/* used by LPD to handle a queue */
-	{&PRINTER,Service_worker},	/* used by LPD queue manager to do actual printing */
-	{0,0}
-};
 
 int Start_all( int first_scan )
 {
@@ -894,14 +754,14 @@ int Start_all( int first_scan )
 	DEBUG1( "Start_all: fd p(%d,%d)",p[0],p[1]);
 
 	Setup_lpd_call( &passfd, &args );
-	Set_str_value(&args,CALL,ALL);
+	Set_str_value(&args,CALL,"all");
 
 	Check_max(&passfd,2);
 	Set_decimal_value(&args,INPUT,passfd.count);
 	passfd.list[passfd.count++] = Cast_int_to_voidstar(p[1]);
 	Set_decimal_value(&args,FIRST_SCAN,first_scan);
 
-	pid = Make_lpd_call( &passfd, &args );
+	pid = Make_lpd_call( "all", &passfd, &args );
 
 	Free_line_list( &args );
 	passfd.count = 0;
@@ -913,79 +773,6 @@ int Start_all( int first_scan )
 	}
 	DEBUG1("Start_all: pid %d, fd %d", pid, p[0] );
 	return(p[0]);
-}
-
-void Service_all( struct line_list *args )
-{
-	int i, reportfd, fd, printable, held, move, printing_enabled,
-		server_pid, change;
-	char buffer[SMALLBUFFER], *pr, *forwarding;
-	struct stat statb;
-	int first_scan;
-	
-	/* we start up servers while we can */
-	Name = "STARTALL";
-	setproctitle( "lpd %s", Name );
-
-	first_scan = Find_flag_value(args,FIRST_SCAN,Value_sep);
-	reportfd = Find_flag_value(args,INPUT,Value_sep);
-	Free_line_list(args);
-
-	if(All_line_list.count == 0 ){
-		Get_all_printcap_entries();
-	}
-	for( i = 0; i < All_line_list.count; ++i ){
-		Set_DYN(&Printer_DYN,0);
-		Set_DYN(&Spool_dir_DYN,0);
-		pr = All_line_list.list[i];
-		DEBUG1("Service_all: checking '%s'", pr );
-		if( Setup_printer( pr, buffer, sizeof(buffer), 0) ) continue;
-		/* now check to see if there is a server and unspooler process active */
-		server_pid = 0;
-		if( (fd = Checkread( Printer_DYN, &statb ) ) > 0 ){
-			server_pid = Read_pid( fd, (char *)0, 0 );
-			close( fd );
-		}
-		DEBUG3("Service_all: printer '%s' checking server pid %d", Printer_DYN, server_pid );
-		if( server_pid > 0 && kill( server_pid, 0 ) == 0 ){
-			DEBUG3("Get_queue_status: server %d active", server_pid );
-			continue;
-		}
-		change = Find_flag_value(&Spool_control,CHANGE,Value_sep);
-		printing_enabled = !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
-
-		Free_line_list( &Sort_order );
-		if( Scan_queue( &Spool_control, &Sort_order,
-				&printable,&held,&move, 1, first_scan, 0 ) ){
-			continue;
-		}
-		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
-		if( change || move || (printable && (printing_enabled||forwarding)) ){
-			if( Server_queue_name_DYN ){
-				pr = Server_queue_name_DYN;
-			} else {
-				pr = Printer_DYN;;
-			}
-			DEBUG1("Service_all: starting '%s'", pr );
-			SNPRINTF(buffer,sizeof(buffer))"%s\n",pr );
-			if( Write_fd_str(reportfd,buffer) < 0 ) cleanup(0);
-		}
-	}
-	Free_line_list( &Sort_order );
-	Errorcode = 0;
-	cleanup(0);
-}
-
-void Service_queue( struct line_list *args )
-{
-	int subserver;
-
-	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER,Value_sep) );
-	subserver = Find_flag_value( args, SUBSERVER, Value_sep );
-
-	Free_line_list(args);
-	Do_queue_jobs( Printer_DYN, subserver );
-	cleanup(0);
 }
 
 plp_signal_t sigchld_handler (int signo)

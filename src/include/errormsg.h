@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: errormsg.h,v 1.28 2001/11/16 16:06:47 papowell Exp $
+ * $Id: errormsg.h,v 1.34 2001/12/03 22:08:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -53,9 +53,9 @@ void Message();
 #endif
 
 /* PROTOTYPES */
-const char * Errormsg( int err );
-const char *Sigstr(int n);
-const char *Decode_status(plp_status_t *status);
+const char * Errormsg ( int err );
+const char *Sigstr (int n);
+const char *Decode_status (plp_status_t *status);
 char *Server_status( int d );
 
 #endif

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: stty.c,v 1.28 2001/11/16 16:06:45 papowell Exp $";
+"$Id: stty.c,v 1.34 2001/12/03 22:08:17 papowell Exp $";
 
 
 #include "lp.h"
@@ -110,9 +110,9 @@
  *  such as "pass8" and "parity".
  */
 
-struct tchars termctrl;
-struct ltchars linectrl;
-struct sgttyb mode;
+ struct tchars termctrl;
+ struct ltchars linectrl;
+ struct sgttyb mode;
 
  static struct {
     char *string;
@@ -347,7 +347,7 @@ void Do_stty( int fd )
     { (char *) 0, 0, 0 }
 };
 
-struct termio tio;
+ struct termio tio;
  static struct {
     char *string;
     int iset;
@@ -677,7 +677,7 @@ void Do_stty( int fd )
 	{ (char *) 0, 0, 0 }
 };
 
-struct s_term_dat {
+ struct s_term_dat {
 	char *name;
 	uint or_dat;
 	uint and_dat;
@@ -901,10 +901,10 @@ struct s_term_dat {
 	{"-CTSXON", 0, CTSXON}
 };
 
-struct termiox tx_dat;
+ struct termiox tx_dat;
 #endif /* USE_TERMIOX */
 
-struct termios t_dat;
+ struct termios t_dat;
 
  static struct special {
 	char *name;

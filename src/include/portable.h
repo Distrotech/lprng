@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.28 2001/11/16 16:06:51 papowell Exp $
+ * $Id: portable.h,v 1.34 2001/12/03 22:08:23 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -636,7 +636,7 @@ XX ** NO VARARGS ** XX
  */
 
 #define NONBLOCK (O_NDELAY|O_NONBLOCK)
-#if defined(HPUX) && HPUX<1100
+#if defined(HPUX) && HPUX<110
 #  undef NONBLOCK
 #  define NONBLOCK (O_NONBLOCK)
 #  undef FD_SET_FIX
@@ -706,6 +706,16 @@ const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 # define N_(Text) Text
 # define textdomain(Domain)
 # define bindtextdomain(Package, Directory)
+#endif
+
+
+/**********************************************************************
+ *  Cygwin Definitions
+ **********************************************************************/
+#ifdef __CYGWIN__
+#define ROOTUID 18
+#else
+#define ROOTUID 0
 #endif
 
 

@@ -1,3 +1,84 @@
+Version LPRng-3.8.2 - Mon Dec  3 12:26:52 PST 2001
+
+  MAJOR CONFIGURATION CHANGE:
+
+  LPRng can retain status of last N completed jobs
+     configure --with-done_jobs=N
+         - set done_jobs value, default 1
+     configure --with-done_jobs_max_age =N
+          - set done_jobs_max_age value, default = 0 (no expiry)
+
+     Or in the printcap/lpd.conf:
+       :done_jobs=1
+       :done_jobs_max_age=1
+
+   Example:
+    Printer: t1@h110 'Test Printer 1'
+     Queue: no printable jobs in queue
+     Server: no server active
+     Status: job 'cfA231h110.private' removed at 18:25:36.281
+     Rank   Owner/ID         Class Job Files             Size Time
+    done   papowell            A   278 /tmp/hi              3 18:25:31
+
+  Controlled by:
+    :save_on_error        - all jobs with error saved, status not removed
+    :save_when_done       - all jobs with no error saved, status not removed
+    :done_jobs=N          - last N jobs completed (error or no error) saved
+    :done_jobs_max_age=N  - jobs with status older than N seconds removed
+
+  This is best explained by:
+	On job completion:
+	if( (no error && save_when_done)
+	   || (error && save_on_error)
+	   || done_jobs > 0 || done_jobs_max_age > 0 ){
+	  do not remove job
+	}
+
+    When queue updated:
+    if( !(save_on_error || save_when_done) ){
+       while( done_jobs_max_age >= 0
+         && the time since completion of oldest done job > done_jobs_max_age ){
+               remove the oldest done job
+       }
+       while( done_jobs >= 0 && total number of done jobs > done_jobs ){
+          remove the oldest done job
+       }
+    }
+
+  Fixed up the order of 'require_explicit_q' in the variable list.
+
+  Added 'lpd -p port' so that lpd port can be specified at run time.
+   (Suggested by: Chris J. Herbst <chris@herbst.com>)
+
+  Added 'PrintingCookbook' to the distribution.
+
+  The 'shorthost' DNS lookup result was not being set correctly 
+  if DNS lookup failed and you had to drop back to using IP address.
+  Clearly the shorthost form of IP10.0.0.1 is IP10.0.0.1, not
+  IP10.
+
+  Added patches to help support Win32 porting using Cygwin:
+  UID 0 is now ROOTUID instead of 0 value.
+  ROOTUID is set by ifdef in portable.h
+
+  checkpc -f no longer puts out the annoying '/var/run/lpd.515
+   does not exist' message.
+
+  List_sep (which is only used in Check_for_rg_group) needs
+  a comma.
+    (Discovered by: Graeme Wood <Graeme.Wood@ed.ac.uk>)
+
+  Reworked the 'start lpd subprocess' code so that it is a little more
+  civilized.
+
+  Modified portable.h so that LPRng compiles properly on HPUX 11.xx
+  systems.
+
+  lpc help fixed up - 'redo - reprints jobs'
+
+  Cleaned up the 'Make_sort_key' code so it does not do needless
+   malloc.
+
 Version LPRng-3.8.1 - Thu Nov 15 16:08:41 PST 2001
 
   The original default actions and values for the LPD_PRINTCAP_PATH
@@ -23,7 +104,7 @@ Version LPRng-3.8.1 - Thu Nov 15 16:08:41 PST 2001
      with a little help from Dan Escapa)
 
   Grrr... left in a line of code when I was doing some testing of the
-  setuid functions ih Win32 and screwed up the setuid stuff.
+  setuid functions in Win32 and screwed up the setuid stuff.
 
   Fixed up a silly problem with file descriptor 0 not bound to
   /dev/null in lpd subprocesses.

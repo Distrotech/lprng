@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 1.28 2001/11/16 16:06:42 papowell Exp $";
+"$Id: lpd_status.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 #include "lp.h"
@@ -270,7 +270,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		printable, dcount, destinations = 0,
 		d_copies, d_copy_done, permission, jobsize, jobnumber, db, dbflag,
 		matches, tempfd, savedfd, lockfd, delta, err, cache_index,
-		total_held, total_move;
+		total_held, total_move, jerror, jdone;
 	struct stat statb;
 	struct job job;
 	time_t modified = 0;
@@ -508,7 +508,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	/* get the spool entries */
 	Free_line_list( &outbuf );
-	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 1 );
+	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 1, 0, 0 );
 
 	DEBUGF(DLPQ3)("Get_queue_status: total files %d", Sort_order.count );
 	DEBUGFC(DLPQ3)Dump_line_list("Get_queue_status- Sort_order", &Sort_order );
@@ -534,9 +534,9 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		printable = held = move = 0;
 		Free_job(&job);
 		Get_hold_file(&job, Sort_order.list[count] );
-		Job_printable(&job,&Spool_control, &printable,&held,&move);
-		DEBUGF(DLPQ3)("Get_queue_status: printable %d, held %d, move %d",
-			printable, held, move );
+		Job_printable(&job,&Spool_control, &printable,&held,&move,&jerror,&jdone);
+		DEBUGF(DLPQ3)("Get_queue_status: printable %d, held %d, move %d, error %d, done %d",
+			printable, held, move, jerror, jdone );
 		DEBUGFC(DLPQ4)Dump_job("Get_queue_status - info", &job );
 		if( job.info.count == 0 ) continue;
 

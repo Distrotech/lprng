@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpr.h,v 1.28 2001/11/16 16:06:50 papowell Exp $
+ * $Id: lpr.h,v 1.34 2001/12/03 22:08:22 papowell Exp $
  ***************************************************************************/
 
 
@@ -47,10 +47,11 @@ EXTERN int Job_number;
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
 void Get_parms(int argc, char *argv[] );
+void prmsg( char **msg );
 void usage(void);
 int Make_job( struct job *job );
 void get_job_number( struct job *job );
-double Copy_stdin( struct job *job );
+double Copy_STDIN( struct job *job );
 double Check_files( struct job *job );
 int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
 int is_exec( char *buf, int n);
@@ -59,6 +60,5 @@ void Dienoarg(int option);
 void Check_int_dup (int option, int *value, char *arg, int maxvalue);
 void Check_str_dup(int option, char **value, char *arg, int maxlen );
 void Check_dup(int option, int *value);
-int Start_worker( struct line_list *l, int fd );
 
 #endif

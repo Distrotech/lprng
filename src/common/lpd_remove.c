@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 1.28 2001/11/16 16:06:42 papowell Exp $";
+"$Id: lpd_remove.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 #include "lp.h"
@@ -204,7 +204,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	Write_fd_str( *sock, msg );
 
 	Free_line_list( &Sort_order );
-	Scan_queue( &Spool_control, &Sort_order,0,0,0,0,0, 1 );
+	Scan_queue( &Spool_control, &Sort_order,0,0,0,0,0, 1, 0, 0 );
 	DEBUGF(DLPRM2)("Get_queue_remove: total files %d", Sort_order.count );
 
 	/* scan the files to see if there is one which matches */

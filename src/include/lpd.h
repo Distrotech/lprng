@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd.h,v 1.28 2001/11/16 16:06:49 papowell Exp $
+ * $Id: lpd.h,v 1.34 2001/12/03 22:08:21 papowell Exp $
  ***************************************************************************/
 
 
@@ -34,7 +34,7 @@ union val{
 };
 
 EXTERN int Foreground_LPD;
-EXTERN int Worker_LPD;
+EXTERN char *Worker_LPD;
 EXTERN char *Logfile_LPD;
 EXTERN int Reread_config;
 EXTERN int Started_server;
@@ -42,26 +42,16 @@ EXTERN int Started_server;
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
 void Setup_log(char *logfile );
-void Service_connection( struct line_list *args );
-void Dispatch_input(int *talk, char *input );
 void Reinit(void);
 int Get_lpd_pid(void);
 void Set_lpd_pid(void);
 int Read_server_status( int fd );
 void usage(void);
 void Get_parms(int argc, char *argv[] );
-void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
-int Make_lpd_call( struct line_list *passfd, struct line_list *args );
-void Do_work( struct line_list *args );
-void Lpd_worker( char **argv, int argc, int optindv  );
-int Start_logger( int log_fd );
-int Start_worker( struct line_list *parms, int fd  );
 int Start_all( int first_scan );
-void Service_all( struct line_list *args );
-void Service_queue( struct line_list *args );
 plp_signal_t sigchld_handler (int signo);
 void Setup_waitpid (void);
 void Setup_waitpid_break (void);
-void Fork_error( int fork_failed );
+void Fork_error( int last_fork_pid_value );
 
 #endif

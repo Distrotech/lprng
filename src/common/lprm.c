@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.28 2001/11/16 16:06:43 papowell Exp $";
+"$Id: lprm.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 /***************************************************************************
@@ -328,36 +328,36 @@ void Get_parms(int argc, char *argv[] )
 }
 
  char *clean_msg[] = {
-N_(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"),
-N_("  -A           - use authentication\n"),
-N_("  -Ddebuglevel - debug level\n"),
-N_("  user           removes user jobs\n"),
-N_("  all            removes all jobs\n"),
-N_("  jobid          removes job number jobid\n"),
-N_(" Example:\n"),
-N_("    'clean 30 lp' removes job 30 on printer lp\n"),
-N_("    'clean'       removes first job on default printer\n"),
-N_("    'clean all'      removes all your jobs on default printer\n"),
-N_("    'clean all all'  removes all your jobs on all printers\n"),
-N_("  Note: clean removes only jobs for which you have removal permission\n"),
+ N_(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"),
+ N_("  -A           - use authentication\n"),
+ N_("  -Ddebuglevel - debug level\n"),
+ N_("  user           removes user jobs\n"),
+ N_("  all            removes all jobs\n"),
+ N_("  jobid          removes job number jobid\n"),
+ N_(" Example:\n"),
+ N_("    'clean 30 lp' removes job 30 on printer lp\n"),
+ N_("    'clean'       removes first job on default printer\n"),
+ N_("    'clean all'      removes all your jobs on default printer\n"),
+ N_("    'clean all all'  removes all your jobs on all printers\n"),
+ N_("  Note: clean removes only jobs for which you have removal permission\n"),
 	0 };
 
-char *lprm_msg[] =  {
-N_(" usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"),
-N_("  -a           - all printers\n"),
-N_("  -A           - use authentication\n"),
-N_("  -Pprinter    - printer (default PRINTER environment variable)\n"),
-N_("  -Uuser       - impersonate this user (root or privileged user only)\n"),
-N_("  -Ddebuglevel - debug level\n"),
-N_("  -V           - show version information\n"),
-N_("  user           removes user jobs\n"),
-N_("  all            removes all jobs\n"),
-N_("  jobid          removes job number jobid\n"),
-N_(" Example:\n"),
-N_("    'lprm -Plp 30' removes job 30 on printer lp\n"),
-N_("    'lprm -a'      removes all your jobs on all printers\n"),
-N_("    'lprm -a all'  removes all jobs on all printers\n"),
-N_("  Note: lprm removes only jobs for which you have removal permission\n"),
+ char *lprm_msg[] =  {
+ N_(" usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"),
+ N_("  -a           - all printers\n"),
+ N_("  -A           - use authentication\n"),
+ N_("  -Pprinter    - printer (default PRINTER environment variable)\n"),
+ N_("  -Uuser       - impersonate this user (root or privileged user only)\n"),
+ N_("  -Ddebuglevel - debug level\n"),
+ N_("  -V           - show version information\n"),
+ N_("  user           removes user jobs\n"),
+ N_("  all            removes all jobs\n"),
+ N_("  jobid          removes job number jobid\n"),
+ N_(" Example:\n"),
+ N_("    'lprm -Plp 30' removes job 30 on printer lp\n"),
+ N_("    'lprm -a'      removes all your jobs on all printers\n"),
+ N_("    'lprm -a all'  removes all jobs on all printers\n"),
+ N_("  Note: lprm removes only jobs for which you have removal permission\n"),
 	0 };
 
 void pr_msg( char **msg )
@@ -382,13 +382,3 @@ void usage(void)
 	}
 	exit(1);
 }
-
- void Dispatch_input(int *talk, char *input ){}
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: monitor.c,v 1.28 2001/11/16 16:06:43 papowell Exp $";
+"$Id: monitor.c,v 1.34 2001/12/03 22:08:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -423,12 +423,3 @@ int tcp_open( int port )
 	}
 	return( fd );
 }
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- void Dispatch_input(int *talk, char *input ){}
- struct call_list Calls[] = {
-	{0,0}
-};

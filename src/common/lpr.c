@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.28 2001/11/16 16:06:43 papowell Exp $";
+"$Id: lpr.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 #include "lp.h"
@@ -629,75 +629,75 @@ void Get_parms(int argc, char *argv[] )
 
  char *LPR_msg [] =
 {
-N_("Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"),
-N_("   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]\n"),
-N_("   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w width ] [-r]\n"),
-N_("   [-Ddebugopt ] [--] [ filenames ...  ]\n"),
-N_(" -A          - use authentication specified by AUTH environment variable\n"),
-N_(" -B          - filter files and reduce job to single file before sending\n"),
-N_(" -C class    - job class\n"),
-N_(" -D debugopt - debugging flags\n"),
-N_(" -F format   - job format\n"),
-N_("   -b,-l        - binary or literal format\n"),
-N_("    c,d,f,g,l,m,p,t,v are also format options\n"),
-N_(" -G          - filter individual job files before sending\n"),
-N_(" -J info     - banner and job information\n"),
-N_(" -K copies, -# copies   - number of copies\n"),
-N_(" -P printer[@host] - printer on host\n"),
-N_(" -Q          - put 'queuename' in control file\n"),
-N_(" -Raccntname - accounting information\n"),
-N_(" -T title    - title for 'pr' (-p) formatting\n"),
-N_(" -U username - override user name (restricted)\n"),
-N_(" -V          - Verbose information during spooling\n"),
-N_(" -X path     - user specified filter for job files\n"),
-N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
-N_(" -Z options  - options to pass to filter\n"),
-N_(" -h          - no header or banner page\n"),
-N_(" -i indent   - indentation\n"),
-N_(" -k          - do not use tempfile when sending to server\n"),
-N_(" -m mailaddr - mail final status to mailaddr\n"),
-N_(" -r          - remove files after spooling\n"),
-N_(" -w width    - width to use\n"),
-N_(" --          - end of options, files follow\n"),
-N_(" filename '-'  reads from STDIN\n"),
-N_(" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default printer.\n"),
+ N_("Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"),
+ N_("   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]\n"),
+ N_("   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w width ] [-r]\n"),
+ N_("   [-Ddebugopt ] [--] [ filenames ...  ]\n"),
+ N_(" -A          - use authentication specified by AUTH environment variable\n"),
+ N_(" -B          - filter files and reduce job to single file before sending\n"),
+ N_(" -C class    - job class\n"),
+ N_(" -D debugopt - debugging flags\n"),
+ N_(" -F format   - job format\n"),
+ N_("   -b,-l        - binary or literal format\n"),
+ N_("    c,d,f,g,l,m,p,t,v are also format options\n"),
+ N_(" -G          - filter individual job files before sending\n"),
+ N_(" -J info     - banner and job information\n"),
+ N_(" -K copies, -# copies   - number of copies\n"),
+ N_(" -P printer[@host] - printer on host\n"),
+ N_(" -Q          - put 'queuename' in control file\n"),
+ N_(" -Raccntname - accounting information\n"),
+ N_(" -T title    - title for 'pr' (-p) formatting\n"),
+ N_(" -U username - override user name (restricted)\n"),
+ N_(" -V          - Verbose information during spooling\n"),
+ N_(" -X path     - user specified filter for job files\n"),
+ N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
+ N_(" -Z options  - options to pass to filter\n"),
+ N_(" -h          - no header or banner page\n"),
+ N_(" -i indent   - indentation\n"),
+ N_(" -k          - do not use tempfile when sending to server\n"),
+ N_(" -m mailaddr - mail final status to mailaddr\n"),
+ N_(" -r          - remove files after spooling\n"),
+ N_(" -w width    - width to use\n"),
+ N_(" --          - end of options, files follow\n"),
+ N_(" filename '-'  reads from STDIN\n"),
+ N_(" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default printer.\n"),
  0 };
 
  char *LP_msg [] = {
-N_("Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"),
-N_("  [-f form-name] [-H special-handling]\n"),
-N_("  [-n number] [-o options] [-P page-list]\n"),
-N_("  [-q priority-level] [-S character-set]\n"),
-N_("  [-S print-wheel] [-t title]\n"),
-N_("  [-T content-type [-r]] [-y mode-list]\n"),
-N_("  [-Ddebugopt ] [ filenames ...  ]\n"),
-N_(" lp simulator using LPRng,  functionality may differ slightly\n"),
-N_(" -A          - use authentication specified by AUTH environment variable\n"),
-N_(" -B          - filter files and reduce job to single file before sending\n"),
-N_(" -c          - (make copy before printing - ignored)\n"),
-N_(" -d printer[@host]  - printer on host\n"),
-N_(" -D debugflags  - debugging flags\n"),
-N_(" -f formname - first letter used as job format\n"),
-N_(" -G          - filter individual job files before sending\n"),
-N_(" -H handling - (passed as -Z handling)\n"),
-N_(" -m          - mail sent to $USER on completion\n"),
-N_(" -n copies   - number of copies\n"),
-N_(" -o option     nobanner, width recognized\n"),
-N_("               (others passed as -Z option)\n"),
-N_(" -P pagelist - (print page list - ignored)\n"),
-N_(" -p          - (notification on completion - ignored)\n"),
-N_(" -q          - priority - 0 -> Z (highest), 25 -> A (lowest)\n"),
-N_(" -s          - (suppress messages - ignored)\n"),
-N_(" -S charset  - (passed as -Z charset)\n"),
-N_(" -t title    - job title\n"),
-N_(" -T content  - (passed as -Z content)\n"),
-N_(" -w          - (write message on completion - ignored)\n"),
-N_(" -X path     - user specified filter for job files\n"),
-N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
-N_(" -y mode     - (passed as -Z mode)\n"),
-N_(" --          - end of options, files follow\n"),
-N_(" filename '-'  reads from STDIN\n"),
-N_(" PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default printer.\n"),
+ N_("Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"),
+ N_("  [-f form-name] [-H special-handling]\n"),
+ N_("  [-n number] [-o options] [-P page-list]\n"),
+ N_("  [-q priority-level] [-S character-set]\n"),
+ N_("  [-S print-wheel] [-t title]\n"),
+ N_("  [-T content-type [-r]] [-y mode-list]\n"),
+ N_("  [-Ddebugopt ] [ filenames ...  ]\n"),
+ N_(" lp simulator using LPRng,  functionality may differ slightly\n"),
+ N_(" -A          - use authentication specified by AUTH environment variable\n"),
+ N_(" -B          - filter files and reduce job to single file before sending\n"),
+ N_(" -c          - (make copy before printing - ignored)\n"),
+ N_(" -d printer[@host]  - printer on host\n"),
+ N_(" -D debugflags  - debugging flags\n"),
+ N_(" -f formname - first letter used as job format\n"),
+ N_(" -G          - filter individual job files before sending\n"),
+ N_(" -H handling - (passed as -Z handling)\n"),
+ N_(" -m          - mail sent to $USER on completion\n"),
+ N_(" -n copies   - number of copies\n"),
+ N_(" -o option     nobanner, width recognized\n"),
+ N_("               (others passed as -Z option)\n"),
+ N_(" -P pagelist - (print page list - ignored)\n"),
+ N_(" -p          - (notification on completion - ignored)\n"),
+ N_(" -q          - priority - 0 -> Z (highest), 25 -> A (lowest)\n"),
+ N_(" -s          - (suppress messages - ignored)\n"),
+ N_(" -S charset  - (passed as -Z charset)\n"),
+ N_(" -t title    - job title\n"),
+ N_(" -T content  - (passed as -Z content)\n"),
+ N_(" -w          - (write message on completion - ignored)\n"),
+ N_(" -X path     - user specified filter for job files\n"),
+ N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
+ N_(" -y mode     - (passed as -Z mode)\n"),
+ N_(" --          - end of options, files follow\n"),
+ N_(" filename '-'  reads from STDIN\n"),
+ N_(" PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default printer.\n"),
 	0 };
 
 void prmsg( char **msg )
@@ -1403,13 +1403,3 @@ void Check_dup(int option, int *value)
 {
 	*value = 1;
 }
-
- void Dispatch_input(int *talk, char *input ){}
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 1.28 2001/11/16 16:06:39 papowell Exp $";
+"$Id: initialize.c,v 1.34 2001/12/03 22:08:11 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -52,7 +52,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
 	 * remove the slightest possibility of NLSPATH being used in a root
 	 * environment
 	 */
-	if( getuid() == 0 || geteuid() == 0 ){
+	if( getuid() == ROOTUID || geteuid() == ROOTUID ){
 #if defined(HAVE_UNSETENV)
 		unsetenv("NLSPATH");
 #elif defined(HAVE_SETENV)
@@ -186,7 +186,7 @@ void Setup_configuration()
 
     /* get the configuration file information if there is any */
     if( Allow_getenv_DYN ){
-		if( getuid() == 0 || geteuid() == 0 ){
+		if( getuid() == ROOTUID || geteuid() == ROOTUID ){
 			FPRINTF( STDERR,
 			"%s: WARNING- LPD_CONF environment variable option enabled\n"
 			"  and running as root!  You have an exposed security breach!\n"

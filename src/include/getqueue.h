@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.28 2001/11/16 16:06:48 papowell Exp $
+ * $Id: getqueue.h,v 1.34 2001/12/03 22:08:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -48,9 +48,11 @@ EXTERN const char * DF_NAME				DEFINE( = "df_name" );
 EXTERN const char * DMALLOC_OPTIONS		DEFINE( = "DMALLOC_OPTIONS" );
 EXTERN const char * DMALLOC_OUTFILE		DEFINE( = "dmalloc_outfile" );
 EXTERN const char * DONE_TIME			DEFINE( = "done_time" );
+EXTERN const char * DONE_REMOVE			DEFINE( = "done_remove" );
 EXTERN const char * DUMP				DEFINE( = "dump" );
 EXTERN const char * END					DEFINE( = "end" );
 EXTERN const char * ERROR				DEFINE( = "error" );
+EXTERN const char * ERROR_TIME			DEFINE( = "error_time" );
 EXTERN const char * ESC_ID				DEFINE( = "esc_id" );
 EXTERN const char * FILENAMES			DEFINE( = "filenames" );
 EXTERN const char * FILE_HOSTNAME		DEFINE( = "file_hostname" );
@@ -86,7 +88,6 @@ EXTERN const char * LOGNAME				DEFINE( = "P" );
 EXTERN const char * LP					DEFINE( = "lp" );
 EXTERN const char * LPC					DEFINE( = "lpc" );
 EXTERN const char * LPD					DEFINE( = "lpd" );
-EXTERN const char * LPD_ACK_FD			DEFINE( = "lpd_ack_fd" );
 EXTERN const char * LPD_CONF			DEFINE( = "LPD_CONF" );
 EXTERN const char * LPD_PORT			DEFINE( = "lpd_port" );
 EXTERN const char * LPD_REQUEST			DEFINE( = "lpd_request" );
@@ -142,7 +143,7 @@ EXTERN const char * VALUE				DEFINE( = "value" );
 /* PROTOTYPES */
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
-		int only_pr_and_move, int create_db, int write_db );
+		int only_queue_process, int create_db, int write_db, int *perr, int *pdone );
 char *Get_fd_image( int fd, int maxsize );
 char *Get_file_image( const char *file, int maxsize );
 int Get_fd_image_and_split( int fd,
@@ -167,13 +168,13 @@ void Get_hold_file( struct job *job, char *hf_name );
 void Get_spool_control( const char *file, struct line_list *info );
 void Set_spool_control( struct line_list *perm_check, const char *file,
 	struct line_list *info );
-char *intval( const char *key, struct line_list *list, char *cmpstr );
-char * revintval( const char *key, struct line_list *list, char *cmpstr );
-char * strzval( const char *key, struct line_list *list, char *cmpstr );
-char * strnzval( const char *key, struct line_list *list, char *cmpstr );
-char * strval( const char *key, struct line_list *list, char *cmpstr,
+void intval( const char *key, struct line_list *list, struct job *job );
+void revintval( const char *key, struct line_list *list, struct job *job );
+void strzval( const char *key, struct line_list *list, struct job *job );
+void strnzval( const char *key, struct line_list *list, struct job *job );
+void strval( const char *key, struct line_list *list, struct job *job,
 	int reverse );
-char *Make_sort_key( struct job *job );
+void Make_sort_key( struct job *job );
 int Setup_printer( char *prname, char *error, int errlen, int subserver );
 int Read_pid( int fd, char *str, int len );
 void Write_pid( int fd, int pid, char *str );
@@ -195,7 +196,7 @@ char *Fix_job_number( struct job *job, int n );
 char *Make_identifier( struct job *job );
 void Dump_job( char *title, struct job *job );
 void Job_printable( struct job *job, struct line_list *spool_control,
-	int *pprintable, int *pheld, int *pmove );
+	int *pprintable, int *pheld, int *pmove, int *perr, int *pdone );
 int Server_active( char *file );
 void Update_destination( struct job *job );
 int Get_destination( struct job *job, int n );

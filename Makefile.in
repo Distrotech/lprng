@@ -224,7 +224,7 @@ update:
 	perl -spi -e 's,.*,"Project-Id-Version: $(PACKAGE) $(VERSION)\\n", if(/^"Project-Id/);' \
 		po/*.po
 	sh CREATE_CONFIGURE
-	./configure
+	sh STANDARD_configuration
 #	ci $(CI) -l -f -mUpdate -t-Initial Makefile HOWTO/Makefile src/Makefile
 	for i in HOWTO man ; do \
 		(cd $$i ; $(MAKE) $@ ); \

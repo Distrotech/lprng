@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.28 2001/11/16 16:06:40 papowell Exp $";
+"$Id: linelist.c,v 1.34 2001/12/03 22:08:11 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -18,6 +18,10 @@
 #include "fileopen.h"
 #include "getqueue.h"
 #include "getprinter.h"
+#include "lpd_logger.h"
+#include "lpd_dispatch.h"
+#include "lpd_jobs.h"
+#include "linelist.h"
 
 /**** ENDINCLUDE ****/
 
@@ -2424,7 +2428,7 @@ int Check_for_rg_group( char *user )
 
 	Init_line_list(&l);
 
-	s = Find_str_value(&PC_entry_line_list,"rg",Value_sep );
+	s = RestrictToGroupMembers_DYN;
 	DEBUG3("Check_for_rg_group: name '%s', restricted_group '%s'",
 		user, s );
 	if( s ){
@@ -4065,7 +4069,7 @@ void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
  *  returns: pid of child or -1 if fork failed.
  */
 
-int Make_lpd_call( struct line_list *passfd, struct line_list *args )
+int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args )
 {
 	int pid, fd, i, n, newfd;
 	struct line_list env;
@@ -4118,27 +4122,6 @@ int Make_lpd_call( struct line_list *passfd, struct line_list *args )
 				fd, i );
 		}
 	}
-	if( Lpd_path_DYN ){
-		/* we really do the execv */
-		Setup_env_for_process(&env,0);
-#ifdef DMALLOC
-		Set_str_value(&env,DMALLOC_OPTIONS,getenv(DMALLOC_OPTIONS));
-#endif
-		Set_str_value(&env,LPD_CONF,getenv(LPD_CONF));
-		Check_max(args,10);
-		args->list[args->count] = 0;
-		for( i = args->count; i >= 0; --i ){
-			args->list[i+2] = args->list[i];
-		}
-		args->list[0] = safestrdup(Lpd_path_DYN,__FILE__,__LINE__);
-		args->list[1] = safestrdup("-X",__FILE__,__LINE__);
-		args->count += 2;
-		if(DEBUGL2)Dump_line_list("Make_lpd_call: args", args );
-		close_on_exec(passfd->count);
-		execve(args->list[0],args->list,env.list);
-		LOGERR_DIE(LOG_ERR)"Make_lpd_call: execve '%s' failed",
-			Lpd_path_DYN );
-	}
 	/* close other ones to simulate close_on_exec() */
 	n = Max_fd+10;
 	for( i = passfd->count ; i < n; ++i ){
@@ -4146,20 +4129,13 @@ int Make_lpd_call( struct line_list *passfd, struct line_list *args )
 	}
 	passfd->count = 0;
 	Free_line_list( passfd );
-	Do_work( args );
+	Do_work( name, args );
 	return(0);
 }
 
-/*
- *  Do_work- called to dispatch process to the appropriate function
- */
-
-void Do_work( struct line_list *args )
+void Do_work( char *name, struct line_list *args )
 {
-	const char **ps;
-	char *name;
-	int i;
-
+	void  (*proc)() = 0;
 	Logger_fd = Find_flag_value(args, LOGGER,Value_sep);
 	Status_fd = Find_flag_value(args, STATUS_FD,Value_sep);
 	Mail_fd = Find_flag_value(args, MAIL_FD,Value_sep);
@@ -4174,69 +4150,14 @@ void Do_work( struct line_list *args )
 		_dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE,Value_sep);
 	}
 #endif
-	name = Find_str_value(args,CALL,Value_sep);
-	DEBUG3("Do_work: calling '%s'", name );
-	ps = 0;
-	for( i = 0; name && (ps = Calls[i].id) && safestrcasecmp(*ps,name); ++i);
-	if( ps ){
-		DEBUG3("Do_work: found '%s'", name );
-		(Calls[i].p)(args);
-	} else {
-		Errorcode = JABORT;
-		DEBUG3("Do_work: did not find '%s'", name );
-	}
+	if( !safestrcasecmp(name,"logger") ) proc = Logger;
+	else if( !safestrcasecmp(name,"all") ) proc = Service_all;
+	else if( !safestrcasecmp(name,"server") ) proc = Service_connection;
+	else if( !safestrcasecmp(name,"queue") ) proc = Service_queue;
+	else if( !safestrcasecmp(name,"printer") ) proc = Service_worker;
+	DEBUG3("Do_work: '%s', proc 0x%lx ", name, Cast_ptr_to_long(proc) );
+	(proc)(args);
 	cleanup(0);
-}
-
-/*
- * Lpd_worker - called by LPD on startup when it discovers
- *  the -X flag on the command line.
- */
-
-void Lpd_worker( char **argv, int argc, int optindv  )
-{
-	struct line_list args;
-
-	Name = "LPD_WORKER";
-	DEBUG1("Lpd_worker: argc %d, optind %d", argc, optindv );
-	Init_line_list( &args );
-	while( optindv < argc ){
-		Add_line_list(&args,argv[optindv++],Value_sep,1,1);
-	}
-	if(DEBUGL1)Dump_line_list("Lpd_worker - args", &args );
-	Do_work( &args );
-	cleanup(0);
-}
-
-/*
- * Start_logger - helper function to setup logger process
- */
-
-int Start_logger( int log_fd )
-{
-	struct line_list args, passfd;
-	int fd = Logger_fd;
-	int pid;
-
-	Init_line_list(&passfd);
-	Init_line_list(&args);
-
-	Logger_fd = -1;
-	Setup_lpd_call( &passfd, &args );
-	Logger_fd = fd;
-
-	Set_str_value(&args,CALL,LOGGER);
-
-	Check_max(&passfd,2);
-	Set_decimal_value(&args,INPUT,passfd.count);
-	passfd.list[passfd.count++] = Cast_int_to_voidstar(log_fd);
-
-	pid = Make_lpd_call( &passfd, &args );
-	passfd.count = 0;
-	Free_line_list( &args );
-	Free_line_list( &passfd );
-	DEBUG1("Start_logger: log_fd %d, status_pid %d", log_fd, pid );
-	return(pid);
 }
 
 /*
@@ -4244,9 +4165,9 @@ int Start_logger( int log_fd )
  *   - adds an input FD
  */
 
-int Start_worker( struct line_list *parms, int fd  )
+int Start_worker( char *name, struct line_list *parms, int fd )
 {
-	struct line_list args, passfd;
+	struct line_list passfd, args;
 	int pid;
 
 	Init_line_list(&passfd);
@@ -4264,11 +4185,10 @@ int Start_worker( struct line_list *parms, int fd  )
 		passfd.list[passfd.count++] = Cast_int_to_voidstar(fd);
 	}
 
-	pid = Make_lpd_call( &passfd, &args );
+	pid = Make_lpd_call( name, &passfd, &args );
 	Free_line_list( &args );
 	passfd.count = 0;
 	Free_line_list( &passfd );
 	DEBUG1("Start_worker: pid %d", pid );
 	return(pid);
 }
-

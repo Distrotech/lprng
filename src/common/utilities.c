@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.28 2001/11/16 16:06:46 papowell Exp $";
+"$Id: utilities.c,v 1.34 2001/12/03 22:08:17 papowell Exp $";
 
 #include "lp.h"
 
@@ -1046,20 +1046,20 @@ void Setup_uid(void)
 			OriginalEGID, OriginalRGID );
 		/* we now make sure that we are able to use setuid() */
 		/* notice that setuid() will work if EUID or RUID is 0 */
-		if( OriginalEUID == 0 || OriginalRUID == 0 ){
+		if( OriginalEUID == ROOTUID || OriginalRUID == ROOTUID ){
 			/* set RUID/EUID to ROOT - possible if EUID or UID is 0 */
 			if(
 #				ifdef HAVE_SETEUID
-					setuid( (uid_t)0 ) || seteuid( OriginalRUID )
+					setuid( (uid_t)ROOTUID ) || seteuid( OriginalRUID )
 #				else
-					setuid( (uid_t)0 ) || setreuid( 0, OriginalRUID )
+					setuid( (uid_t)ROOTUID ) || setreuid( ROOTUID, OriginalRUID )
 #				endif
 				){
 				FATAL(LOG_ERR)
 					"Setup_uid: RUID/EUID Start %d/%d seteuid failed",
 					OriginalRUID, OriginalEUID);
 			}
-			if( getuid() ){
+			if( getuid() != ROOTUID ){
 				FATAL(LOG_ERR)
 				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
 					OriginalRUID, OriginalEUID, 
@@ -1092,7 +1092,7 @@ void Setup_uid(void)
 		OriginalRUID, OriginalEUID, DaemonUID, UID_root );
 	if( UID_root ){
 		/* be brutal: set both to root */
-		if( setuid( 0 ) ){
+		if( setuid( ROOTUID ) ){
 			LOGERR_DIE(LOG_ERR)
 			"seteuid_wrapper: setuid() failed!!");
 		}
@@ -1102,7 +1102,7 @@ void Setup_uid(void)
 			"seteuid_wrapper: seteuid() failed!!");
 		}
 #else
-		if( setreuid( 0, to) ){
+		if( setreuid( ROOTUID, to) ){
 			LOGERR_DIE(LOG_ERR)
 			"seteuid_wrapper: setreuid() failed!!");
 		}
@@ -1132,7 +1132,7 @@ void Setup_uid(void)
 		OriginalRUID, OriginalEUID, DaemonUID, UID_root );
 	if( UID_root ){
 		/* be brutal: set both to root */
-		if( setuid( 0 ) ){
+		if( setuid( ROOTUID ) ){
 			LOGERR_DIE(LOG_ERR)
 			"setruid_wrapper: setuid() failed!!");
 		}
@@ -1142,9 +1142,14 @@ void Setup_uid(void)
 			"setruid_wrapper: setruid() failed!!");
 		}
 #elif defined(HAVE_SETREUID)
-		if( setreuid( to, 0) ){
+		if( setreuid( to, ROOTUID) ){
 			LOGERR_DIE(LOG_ERR)
 			"setruid_wrapper: setreuid() failed!!");
+		}
+#elif defined(__CYGWIN__)
+		if( seteuid( to ) ){
+			LOGERR_DIE(LOG_ERR)
+			"setruid_wrapper: seteuid() failed!!");
 		}
 #else
 # error - you do not have a way to set ruid
@@ -1167,7 +1172,7 @@ void Setup_uid(void)
  */
 int To_euid_root(void)
 {
-	return( seteuid_wrapper( 0 )	);
+	return( seteuid_wrapper( ROOTUID )	);
 }
 
  static int To_daemon_called;
@@ -1208,8 +1213,8 @@ int setuid_wrapper(int to)
 	int err = errno;
 	if( UID_root ){
 		/* Note: you MUST use setuid() to force saved_setuid correctly */
-		if( setuid( (uid_t)0 ) ){
-			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(0) failed!!");
+		if( setuid( (uid_t)ROOTUID ) ){
+			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(ROOTUID) failed!!");
 		}
 		if( setuid( (uid_t)to ) ){
 			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(%d) failed!!", to);
@@ -1231,8 +1236,8 @@ int Full_daemon_perms(void)
 int Full_root_perms(void)
 {
 	Setup_uid();
-	Set_full_group( 0, 0 );
-	return(setuid_wrapper( 0 ));
+	Set_full_group( ROOTUID, ROOTUID );
+	return(setuid_wrapper( ROOTUID ));
 }
 
 int Full_user_perms(void)
@@ -1269,7 +1274,7 @@ int Getdaemon(void)
 		}
 	}
 	DEBUG4( "Getdaemon: uid '%d'", uid );
-	if( uid == 0 ) uid = getuid();
+	if( uid == ROOTUID ) uid = getuid();
 	DEBUG4( "Getdaemon: final uid '%d'", uid );
 	return( uid );
 }
@@ -1315,7 +1320,7 @@ int Getdaemon_group(void)
 
 int Set_full_group( int euid, int gid )
 {
-	int status;
+	int status=0;
 	int err;
 	struct passwd *pw = 0;
 
@@ -1324,7 +1329,7 @@ int Set_full_group( int euid, int gid )
 	/* get the user we want to set the groups for */
 	pw = getpwuid(euid);
 	if( UID_root ){
-		setuid(0);	/* set RUID/EUID to root */
+		setuid(ROOTUID);	/* set RUID/EUID to root */
 #if defined(HAVE_INITGROUPS)
 		if( pw ){
 			/* froth froth... initgroups() uses the same buffer as
@@ -1385,7 +1390,7 @@ void Reset_daemonuid(void)
     uid = Getdaemon();  /* get the config file daemon id */
     DaemonGID = Getdaemon_group();  /* get the config file daemon id */
     if( uid != DaemonUID ){
-        if( uid == 0 ){
+        if( uid == ROOTUID ){
             DaemonUID = OriginalRUID;   /* special case for testing */
         } else {
             DaemonUID = uid;

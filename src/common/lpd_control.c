@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
+"$Id: lpd_control.c,v 1.34 2001/12/03 22:08:13 papowell Exp $";
 
 
 #include "lp.h"
@@ -22,8 +22,6 @@
 #include "globmatch.h"
 #include "permission.h"
 #include "gethostinfo.h"
-
-#include "lpd.h"
 #include "lpd_control.h"
 
 /**** ENDINCLUDE ****/
@@ -580,7 +578,7 @@ int Do_control_file( char *user, int action, int *sock,
 	Init_job(&job);
 	Free_line_list(&Sort_order);
 	if( Scan_queue( &Spool_control, &Sort_order,
-			0,0,0,0,0,1) ){
+			0,0,0,0,0,1,0,0) ){
 		err = errno;
 		SNPRINTF(error, errorlen)
 			"Do_control_file: cannot read '%s' - '%s'",
@@ -703,6 +701,7 @@ int Do_control_file( char *user, int action, int *sock,
 			Printer_DYN, identifier );
 		if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
 		Set_str_value(&job.info,ERROR,0 );
+		Set_flag_value(&job.info,ERROR_TIME,0);
 		/* record the last update person */
 		Perm_check_to_list(&l, &Perm_check );
 		if( Set_hold_file(&job,&l,0) ){
@@ -785,13 +784,13 @@ int Do_control_status( char *user, int action, int *sock,
 	int serverpid, unspoolerpid;	/* server and unspooler */
 	int len;
 	char *s;
-	int printable, held, move;
+	int printable, held, move, err, done;
 
 	/* get the job files */
 	Free_line_list(&Spool_control);
 	Get_spool_control( Queue_control_file_DYN, &Spool_control );
 	if( Scan_queue( &Spool_control, &Sort_order, &printable,
-			&held, &move,1,0,0) ){
+			&held, &move,1,0,0,&err,&done) ){
 		SNPRINTF( error, errorlen)
 			"Do_control_status: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(errno) );
@@ -799,8 +798,8 @@ int Do_control_status( char *user, int action, int *sock,
 	}
 	Free_line_list(&Sort_order);
 
-	DEBUGF(DCTRL1)( "Do_control_status: printable %d, held %d, move",
-		printable, held, move );
+	DEBUGF(DCTRL1)( "Do_control_status: printable %d, held %d, move %d, err %d, done %d",
+		printable, held, move, error, done );
 
 	/* now check to see if there is a server and unspooler process active */
 	serverpid = Server_active( Printer_DYN );

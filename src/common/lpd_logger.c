@@ -8,12 +8,10 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
+"$Id: lpd_logger.c,v 1.34 2001/12/03 22:08:13 papowell Exp $";
 
 
 #include "lp.h"
-#include "lpd.h"
-
 #include "child.h"
 #include "errorcodes.h"
 #include "fileopen.h"
@@ -35,6 +33,38 @@
  *     kill the logger to get it to accept a new destination.
  ***************************************************************************/
 
+
+
+/*
+ * Start_logger - helper function to setup logger process
+ */
+
+int Start_logger( int log_fd )
+{
+	struct line_list args, passfd;
+	int fd = Logger_fd;
+	int pid;
+
+	Init_line_list(&passfd);
+	Init_line_list(&args);
+
+	Logger_fd = -1;
+	Setup_lpd_call( &passfd, &args );
+	Logger_fd = fd;
+
+	Set_str_value(&args,CALL,"logger");
+
+	Check_max(&passfd,2);
+	Set_decimal_value(&args,INPUT,passfd.count);
+	passfd.list[passfd.count++] = Cast_int_to_voidstar(log_fd);
+
+	pid = Make_lpd_call( "logger", &passfd, &args );
+	passfd.count = 0;
+	Free_line_list( &args );
+	Free_line_list( &passfd );
+	DEBUG1("Start_logger: log_fd %d, status_pid %d", log_fd, pid );
+	return(pid);
+}
 
 int Dump_queue_status(int outfd)
 {
@@ -61,7 +91,7 @@ int Dump_queue_status(int outfd)
 		DEBUGF(DLOG2)("Dump_queue_status: checking '%s'", pr );
 		if( Setup_printer( pr, buffer, sizeof(buffer), 0 ) ) continue;
 		Free_line_list( &Sort_order );
-		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0 ) ){
+		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0, 0, 0 ) ){
 			continue;
 		}
 		Free_line_list(&info);

@@ -8,10 +8,9 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.28 2001/11/16 16:06:44 papowell Exp $";
+"$Id: sendauth.c,v 1.34 2001/12/03 22:08:16 papowell Exp $";
 
 #include "lp.h"
-#include "lpd.h"
 #include "sendauth.h"
 #include "sendjob.h"
 #include "globmatch.h"
@@ -216,6 +215,7 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 		if( job ){
 			SETSTATUS(logjob)"Send_auth_transfer: %s", error );
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 		}
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
 			Errorcode = JFAIL;

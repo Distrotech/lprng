@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.28 2001/11/16 16:06:37 papowell Exp $";
+"$Id: checkpc.c,v 1.34 2001/12/03 22:08:09 papowell Exp $";
 
 
 
@@ -196,14 +196,23 @@ int main( int argc, char *argv[], char *envp[] )
 				}
 			}
 			*s = '/';
+#if 0
 			if( stat( path, &statb ) ){
 				WARNMSG( "  LPD Lockfile '%s' does not exist!", path);
 				if( Fix ){
+					int euid = geteuid();
 					To_euid_root();
-					Make_write_file( path, 0 );
+					lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
+					if( lockfd > 0 ){
+						fchown( lockfd, DaemonUID, DaemonGID );
+						fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
+					}
+					To_euid(euid);
 				}
 			}
+#endif
 		}
+		if( path ) free( path ); path = 0;
 		Spool_file_perms_DYN = oldfile;
 	}
 
@@ -477,7 +486,7 @@ void Scan_printer(void)
 	}
 	Free_line_list( &Sort_order );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue before maxfd %d", fdx); close(fdx); }
-	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 1, 0 );
+	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 1, 0, 0, 0 );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue after maxfd %d", fdx); close(fdx); }
 
 	/*
@@ -790,7 +799,7 @@ int Fix_owner( char *path )
 	To_euid_root();
 	WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
 	chown( path, DaemonUID, DaemonGID );
-	if( geteuid() == 0 ){
+	if( geteuid() == ROOTUID ){
 		WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
 		status = chown( path, DaemonUID, DaemonGID );
 		err = errno;
@@ -960,14 +969,14 @@ void Test_port(int ruid, int euid, char *serial_line )
 
 	Spool_file_perms_DYN = 000600;
 	Spool_dir_perms_DYN =  042700;
-	if( ( ruid == 0 && euid == 0 ) || (ruid != 0 && euid != 0 ) ){
+	if( ( ruid == ROOTUID && euid == ROOTUID ) || (ruid != ROOTUID && euid != ROOTUID ) ){
 			FPRINTF( STDERR,
 				"*******************************************************\n" );
 			FPRINTF( STDERR, "***** not SETUID, skipping setuid checks\n" );
 			FPRINTF( STDERR,
 				"*******************************************************\n" );
 			goto freespace;
-	} else if( ( ruid == 0 || euid == 0 ) ){
+	} else if( ( ruid == ROOTUID || euid == ROOTUID ) ){
 		if( UID_root == 0 ){
 		FPRINTF( STDERR,
 			"checkpc: setuid code failed!! Portability problems\n" );
@@ -1463,12 +1472,3 @@ int Check_path_list( char *plist, int allow_missing )
 	Free_line_list(&values);
 	return(found_pc);
 }
- void Dispatch_input(int *talk, char *input ){}
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};

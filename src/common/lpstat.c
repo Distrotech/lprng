@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 1.28 2001/11/16 16:06:43 papowell Exp $";
+"$Id: lpstat.c,v 1.34 2001/12/03 22:08:15 papowell Exp $";
 
 
 /***************************************************************************
@@ -478,7 +478,7 @@ void Get_parms(int argc, char *argv[] )
 	Name = name;
 
 /*
-SYNOPSIS
+ SYNOPSIS
      lpstat [-A] [ -d ] [ -r ] [ -R ] [ -s ] [ -t ] [ -a [list] ]
           [ -c [list] ] [ -f [list] [ -l ] ] [ -o [list] ]
           [ -p [list] [ -D] [ -l ] ] [ -P ] [ -S [list] [ -l ] ]
@@ -645,13 +645,3 @@ void usage(void)
 }
 
 #endif
-
- void Dispatch_input(int *talk, char *input ){}
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};

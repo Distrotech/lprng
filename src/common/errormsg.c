@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: errormsg.c,v 1.28 2001/11/16 16:06:38 papowell Exp $";
+"$Id: errormsg.c,v 1.34 2001/12/03 22:08:09 papowell Exp $";
 
 
 #include "lp.h"
@@ -549,106 +549,106 @@ const char * Errormsg ( int err )
  struct signame signals[] = {
 { "NO SIGNAL", 0 },
 #ifdef SIGHUP
-PAIR(SIGHUP),
+ PAIR(SIGHUP),
 #endif
 #ifdef SIGINT
-PAIR(SIGINT),
+ PAIR(SIGINT),
 #endif
 #ifdef SIGQUIT
-PAIR(SIGQUIT),
+ PAIR(SIGQUIT),
 #endif
 #ifdef SIGILL
-PAIR(SIGILL),
+ PAIR(SIGILL),
 #endif
 #ifdef SIGTRAP
-PAIR(SIGTRAP),
+ PAIR(SIGTRAP),
 #endif
 #ifdef SIGIOT
-PAIR(SIGIOT),
+ PAIR(SIGIOT),
 #endif
 #ifdef SIGABRT
-PAIR(SIGABRT),
+ PAIR(SIGABRT),
 #endif
 #ifdef SIGEMT
-PAIR(SIGEMT),
+ PAIR(SIGEMT),
 #endif
 #ifdef SIGFPE
-PAIR(SIGFPE),
+ PAIR(SIGFPE),
 #endif
 #ifdef SIGKILL
-PAIR(SIGKILL),
+ PAIR(SIGKILL),
 #endif
 #ifdef SIGBUS
-PAIR(SIGBUS),
+ PAIR(SIGBUS),
 #endif
 #ifdef SIGSEGV
-PAIR(SIGSEGV),
+ PAIR(SIGSEGV),
 #endif
 #ifdef SIGSYS
-PAIR(SIGSYS),
+ PAIR(SIGSYS),
 #endif
 #ifdef SIGPIPE
-PAIR(SIGPIPE),
+ PAIR(SIGPIPE),
 #endif
 #ifdef SIGALRM
-PAIR(SIGALRM),
+ PAIR(SIGALRM),
 #endif
 #ifdef SIGTERM
-PAIR(SIGTERM),
+ PAIR(SIGTERM),
 #endif
 #ifdef SIGURG
-PAIR(SIGURG),
+ PAIR(SIGURG),
 #endif
 #ifdef SIGSTOP
-PAIR(SIGSTOP),
+ PAIR(SIGSTOP),
 #endif
 #ifdef SIGTSTP
-PAIR(SIGTSTP),
+ PAIR(SIGTSTP),
 #endif
 #ifdef SIGCONT
-PAIR(SIGCONT),
+ PAIR(SIGCONT),
 #endif
 #ifdef SIGCHLD
-PAIR(SIGCHLD),
+ PAIR(SIGCHLD),
 #endif
 #ifdef SIGCLD
-PAIR(SIGCLD),
+ PAIR(SIGCLD),
 #endif
 #ifdef SIGTTIN
-PAIR(SIGTTIN),
+ PAIR(SIGTTIN),
 #endif
 #ifdef SIGTTOU
-PAIR(SIGTTOU),
+ PAIR(SIGTTOU),
 #endif
 #ifdef SIGIO
-PAIR(SIGIO),
+ PAIR(SIGIO),
 #endif
 #ifdef SIGPOLL
-PAIR(SIGPOLL),
+ PAIR(SIGPOLL),
 #endif
 #ifdef SIGXCPU
-PAIR(SIGXCPU),
+ PAIR(SIGXCPU),
 #endif
 #ifdef SIGXFSZ
-PAIR(SIGXFSZ),
+ PAIR(SIGXFSZ),
 #endif
 #ifdef SIGVTALRM
-PAIR(SIGVTALRM),
+ PAIR(SIGVTALRM),
 #endif
 #ifdef SIGPROF
-PAIR(SIGPROF),
+ PAIR(SIGPROF),
 #endif
 #ifdef SIGWINCH
-PAIR(SIGWINCH),
+ PAIR(SIGWINCH),
 #endif
 #ifdef SIGLOST
-PAIR(SIGLOST),
+ PAIR(SIGLOST),
 #endif
 #ifdef SIGUSR1
-PAIR(SIGUSR1),
+ PAIR(SIGUSR1),
 #endif
 #ifdef SIGUSR2
-PAIR(SIGUSR2),
+ PAIR(SIGUSR2),
 #endif
 {0,0}
     /* that's all */

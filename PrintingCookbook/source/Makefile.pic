@@ -1,0 +1,18 @@
+# convert PIC figures to eps and png
+# Example:
+# FIGS=existing.eps existing.png
+# figs: ${FIGS}
+
+.SUFFIXES: .pic .fig .eps .png
+
+.pic.fig:
+	pic2fig $<
+	perl -spi.bak -e 'if( /\\\\/ ) { \
+		s/\\\\fP//; \
+		if( s/\\\\fB// ) { s/ 16 / 18 /; } \
+		if( s/\\\\fI// ) { s/ 16 / 17 /; } \
+		} ' $@
+.fig.eps:
+	fig2dev -Leps $< $@
+.fig.png:
+	fig2dev -Lpng $< $@

@@ -61,6 +61,10 @@ HPUX Users:
    add some additional flags to allow ANSI C compatibility.  The
    -Aa and -Ae are candidates,  but you will have to check your
    particular compiler for details.
+
+   Ryan Novosielski <novosirj@umdnj.edu> suggests that
+   for HP-UX 11.0 and 11.11 you may need to use
+   --with-linker=/usr/bin/ld 
    
      You have been warned.
 

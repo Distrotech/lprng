@@ -1,4 +1,4 @@
-.ds VE LPRng-3.8.1
+.ds VE LPRng-3.8.2
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -26,7 +26,7 @@ lpd.8,v 3.45 1998/03/29 18:37:49 papowell Exp
 lpd \- line printer daemon
 .SH SYNOPSIS
 .B lpd
-[\-Llogfile] [\-F] [\-V] [\-Ddebugopt] 
+[\-Llogfile] [\-F] [\-V] [\-Ddebugopt] [-p port]
 .SH DESCRIPTION
 .PP
 The lpd program is the printer server program of the LPRng software
@@ -58,6 +58,8 @@ or
 to set an overall default value.
 The available facilities can be determined by
 invoking LPD with the \-D= parameter.
+.IP "\fB\-p\fI port" 5
+Bind to the specified port rather than port 515 specfied by RFC1179.
 .SH OPERATION
 .PP
 .I Lpd

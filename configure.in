@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.1
+VERSION=3.8.2
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -243,6 +243,27 @@ GROUPID="$withval", GROUPID="daemon",
 )
 AC_MSG_RESULT("$GROUPID")
 AC_SUBST(GROUPID)
+
+
+dnl  done_jobs value
+dnl
+AC_MSG_CHECKING(retain status for N jobs)
+AC_ARG_WITH(done_jobs,
+[  --with-done_jobs=N                retain last N job status, default 1],
+DONE_JOBS="$withval", DONE_JOBS="1",
+)
+AC_MSG_RESULT("$DONE_JOBS")
+AC_SUBST(DONE_JOBS)
+
+dnl  done_jobs_max_age value
+dnl
+AC_MSG_CHECKING(retain status for jobs less than N seconds old, default 0 - no expiry)
+AC_ARG_WITH(done_jobs,
+[  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry],
+DONE_JOBS_MAX_AGE="$withval", DONE_JOBS_MAX_AGE="0",
+)
+AC_MSG_RESULT("$DONE_JOBS_MAX_AGE")
+AC_SUBST(DONE_JOBS_MAX_AGE)
 
 dnl  chooser routine
 dnl

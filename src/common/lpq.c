@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.28 2001/11/16 16:06:43 papowell Exp $";
+"$Id: lpq.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 /***************************************************************************
@@ -533,21 +533,21 @@ void Get_parms(int argc, char *argv[] )
 }
 
  char *lpq_msg[] = {
-N_("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"),
-N_("  -A           - use authentication specified by AUTH environment variable\n"),
-N_("  -a           - all printers\n"),
-N_("  -c           - clear screen before update\n"),
-N_("  -l           - increase (lengthen) detailed status information\n"),
-N_("                 additional l flags add more detail.\n"),
-N_("  -L           - maximum detailed status information\n"),
-N_("  -n linecount - linecount lines of detailed status information\n"),
-N_("  -Ddebuglevel - debug level\n"),
-N_("  -Pprinter    - specify printer\n"),
-N_("  -s           - short (summary) format\n"),
-N_("  -tsleeptime  - sleeptime between updates\n"),
-N_("  -V           - print version information\n"),
-0 };
-
+ N_("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"),
+ N_("  -A           - use authentication specified by AUTH environment variable\n"),
+ N_("  -a           - all printers\n"),
+ N_("  -c           - clear screen before update\n"),
+ N_("  -l           - increase (lengthen) detailed status information\n"),
+ N_("                 additional l flags add more detail.\n"),
+ N_("  -L           - maximum detailed status information\n"),
+ N_("  -n linecount - linecount lines of detailed status information\n"),
+ N_("  -Ddebuglevel - debug level\n"),
+ N_("  -Pprinter    - specify printer\n"),
+ N_("  -s           - short (summary) format\n"),
+ N_("  -tsleeptime  - sleeptime between updates\n"),
+ N_("  -V           - print version information\n"),
+ 0 };
+ 
 void usage(void)
 {
 	char *s;
@@ -562,19 +562,9 @@ void usage(void)
 	exit(1);
 }
 
- void Dispatch_input(int *talk, char *input ){}
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};
-
 #if 0
 
 #include "permission.h"
-#include "lpd.h"
 #include "lpd_status.h"
 /* int Send_request( */
 	int class,					/* 'Q'= LPQ, 'C'= LPC, M = lprm */

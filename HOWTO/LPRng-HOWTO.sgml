@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 16 Nov 2001 (For LPRng-3.8.1)</subtitle>
+<subtitle> 3 Dec 2001 (For LPRng-3.8.2)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,11 +37,11 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.27 2001/11/16 16:06:55 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.33 2001/12/03 22:08:29 papowell Exp $</releaseinfo>
 
-	<legalnotice>
-	 <important>
-	<para>
+    <legalnotice>
+     <important>
+    <para>
 <!-- <mediaobject> -->
 <!-- <imageobject> -->
 <!-- <imagedata fileref="somegraphic.eps"> -->
@@ -50,19 +50,19 @@ Fax <fax>858-279-8424</fax>
 <!-- <imagedata fileref="somegraphic.jpg"> -->
 <!-- </imageobject> -->
 <!-- </mediaobject> -->
-		THIS DOCUMENTATION AND THE DESCRIBED SOFTWARE IS PROVIDED BY
+        THIS DOCUMENTATION AND THE DESCRIBED SOFTWARE IS PROVIDED BY
       THE AUTHORS "AS IS" AND ANY
-	  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-	  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-	  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
-	  ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-	  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-	  BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-	  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-	  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-	  DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-	  DAMAGE.</para>
+      EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+      IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+      PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
+      ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+      CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+      SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+      BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+      LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+      NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+      DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+      DAMAGE.</para>
       </important>
     </legalnotice>
 
@@ -152,101 +152,101 @@ led to the development of the software.
 <sect1><title>Shell Prompts</title>
 
       <para>The following table shows the default system prompt and superuser
-	prompt. The examples will use this prompt to indicate which user you
-	should be running the example as.</para>
+    prompt. The examples will use this prompt to indicate which user you
+    should be running the example as.</para>
 
       <informaltable frame="none">
-	<tgroup cols="2">
-	  <thead>
-	    <row>
-	      <entry>User</entry>
-	      <entry>Prompt</entry>
-	    </row>
-	  </thead>
+    <tgroup cols="2">
+      <thead>
+        <row>
+          <entry>User</entry>
+          <entry>Prompt</entry>
+        </row>
+      </thead>
 
-	  <tbody>
-	    <row>
-	      <entry>Normal user</entry>
-	      <entry><prompt>%</prompt></entry>
-	    </row>
+      <tbody>
+        <row>
+          <entry>Normal user</entry>
+          <entry><prompt>%</prompt></entry>
+        </row>
 
-	    <row>
-	      <entry><literal>root</literal></entry>
-	      <entry><prompt>#</prompt></entry>
-	    </row>
-	  </tbody>
-	</tgroup>
+        <row>
+          <entry><literal>root</literal></entry>
+          <entry><prompt>#</prompt></entry>
+        </row>
+      </tbody>
+    </tgroup>
       </informaltable>
     </sect1>
 
 <sect1><title>Typographic Conventions</title>
 
       <para>The following table describes the typographic conventions used in
-	this book.</para>
+    this book.</para>
 
       <informaltable frame="none">
-	<tgroup cols="2">
-	  <thead>
-	    <row>
-	      <entry>Meaning</entry>
-	      <entry>Examples</entry>
-	    </row>
-	  </thead>
+    <tgroup cols="2">
+      <thead>
+        <row>
+          <entry>Meaning</entry>
+          <entry>Examples</entry>
+        </row>
+      </thead>
 
-	  <tbody>
-	    <row>
-	      <entry>The name of commands, files, and directories. On screen
-		computer output.</entry>
-	      <entry><para>Edit your <filename>.login</filename>
-		  file.</para><para>Use <command>ls -a</command> to list all
-		  files.</para><para><screen>You have mail.</screen>
-		</para></entry>
-	    </row>
+      <tbody>
+        <row>
+          <entry>The name of commands, files, and directories. On screen
+        computer output.</entry>
+          <entry><para>Edit your <filename>.login</filename>
+          file.</para><para>Use <command>ls -a</command> to list all
+          files.</para><para><screen>You have mail.</screen>
+        </para></entry>
+        </row>
 
-	    <row>
-	      <entry>What you type, when contrasted with on-screen computer
-		output.</entry>
+        <row>
+          <entry>What you type, when contrasted with on-screen computer
+        output.</entry>
 
-	      <entry><screen><prompt>%</prompt> <userinput>su</userinput>
+          <entry><screen><prompt>%</prompt> <userinput>su</userinput>
 Password:</screen></entry>
-	    </row>
+        </row>
 
-	    <row>
-	      <entry>Manual page references.</entry>
+        <row>
+          <entry>Manual page references.</entry>
 
-	      <entry>Use <citerefentry>
-		  <refentrytitle>su</refentrytitle>
-		  <manvolnum>1</manvolnum>
-		</citerefentry> to change user names.</entry>
-	    </row>
+          <entry>Use <citerefentry>
+          <refentrytitle>su</refentrytitle>
+          <manvolnum>1</manvolnum>
+        </citerefentry> to change user names.</entry>
+        </row>
 
-	    <row>
-	      <entry>User and group names</entry>
+        <row>
+          <entry>User and group names</entry>
 
-	      <entry>Only <literal>root</literal> can do this.</entry>
-	    </row>
+          <entry>Only <literal>root</literal> can do this.</entry>
+        </row>
 
-	    <row>
-	      <entry>Emphasis</entry>
+        <row>
+          <entry>Emphasis</entry>
 
-	      <entry>You <emphasis>must</emphasis>
+          <entry>You <emphasis>must</emphasis>
 do this.</entry>
-	    </row>
+        </row>
 
-	    <row>
-	      <entry>Command line variables; replace with the real name or
-		variable.</entry>
+        <row>
+          <entry>Command line variables; replace with the real name or
+        variable.</entry>
 
-	      <entry>To delete a file, type <command>rm <filename><replaceable>filename</replaceable></filename></command></entry>
-	    </row>
+          <entry>To delete a file, type <command>rm <filename><replaceable>filename</replaceable></filename></command></entry>
+        </row>
 
-	    <row>
-	      <entry>Environment variables</entry>
+        <row>
+          <entry>Environment variables</entry>
 
-	      <entry><envar>$HOME</envar> is your home directory.</entry>
-	    </row>
-	  </tbody>
-	</tgroup>
+          <entry><envar>$HOME</envar> is your home directory.</entry>
+        </row>
+      </tbody>
+    </tgroup>
       </informaltable>
     </sect1>
 
@@ -255,22 +255,22 @@ do this.</entry>
       <para>Within the text appear notes, warnings, and examples.</para>
 
       <note>
-	<para>Notes are represented like this, and contain information that
-	  you should take note of, as it may affect what you do.</para>
+    <para>Notes are represented like this, and contain information that
+      you should take note of, as it may affect what you do.</para>
       </note>
 
       <warning>
-	<para>Warnings are represented like this, and contain information
-	  warning you about possible damage if you do not follow the
-	  instructions. This damage may be physical, to your hardware or to
-	  you, or it may be non-physical, such as the inadvertent deletion of
-	  important files.</para>
+    <para>Warnings are represented like this, and contain information
+      warning you about possible damage if you do not follow the
+      instructions. This damage may be physical, to your hardware or to
+      you, or it may be non-physical, such as the inadvertent deletion of
+      important files.</para>
       </warning>
 
       <informalexample>
-	<para>Examples are represented like this, and typically contain
-	  examples you should walk through, or show you what the results of a
-	  particular action should be.</para>
+    <para>Examples are represented like this, and typically contain
+      examples you should walk through, or show you what the results of a
+      particular action should be.</para>
       </informalexample>
     </sect1>
 
@@ -1070,19 +1070,7 @@ for more details about this option.</para>
 </listitem>
 </varlistentry>
 
-<varlistentry><term><literal> --disable-gdbm </literal></term>
-
-<listitem>
-<para>
-Do not use the GDBM database library.
-This library is used to speed up storage and retrieval of job information.
-This is especially useful when there are a large number of jobs in the
-system which need to be accessed.
-</para>
-</listitem>
-</varlistentry>
-
-<varlistentry><term><literal> --enable-priv_ports.  </literal></term>
+<varlistentry><term><literal> --enable-priv_ports  </literal></term>
 
 <listitem>
 <para>Require connections to the <application>lpd</application> server
@@ -1255,6 +1243,24 @@ allowing multiple &LPRng; servers to run on a single host.</para>
 </listitem>
 </varlistentry>
 
+<varlistentry><term><literal> --with-done_jobs=N </literal></term>
+
+<listitem>
+<para>retain status of last N done jobs.</para>
+
+
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal> --with-done_jobs_max_age=N </literal></term>
+
+<listitem>
+<para>remove status of done jobs older than N seconds.</para>
+
+
+</listitem>
+</varlistentry>
+
 <varlistentry><term><literal>--with-chooser_routine=NAME </literal></term>
 
 <listitem>
@@ -1296,6 +1302,7 @@ For debugging and diagnostic purposes.</para>
 
 </listitem>
 </varlistentry>
+
 </variablelist>
 </para>
 
@@ -1707,7 +1714,7 @@ Next,
 run <application>lpd</application> in foreground mode:
 <informalexample>
 <screen><prompt>h4: {17} # </prompt><userinput>ps -aux | grep lpd </userinput>
-daemon   240  0.0  0.0  1292    0  ??  IWs  -         0:00.00 lpd: lpd Waiting
+daemon   240  0.0  0.0  1292  0  ??  IWs  -     0:00.00 lpd: lpd Waiting
 <prompt>h4: {18} # </prompt><userinput>kill 240</userinput>
 <prompt>h4: {19} # </prompt><userinput>checkpc -f</userinput>
 <prompt>h4: {20} # </prompt><userinput>/usr/local/bin/lpd -F -D1</userinput>
@@ -2576,8 +2583,8 @@ system for pr: servername
 lp accepting requests since Mon Aug  6 12:00:00 PST 2000
 Printer: pr@servername  'Hp : Laserwriter' (printing disabled)
  Queue: 1 printable job
- Rank   Owner/ID                  Class Job Files                 Size Time
-1      papowell@h4+207              A   207 h4.023205                3 18:24:54</screen>
+ Rank  Owner/ID            Class Job Files            Size Time
+1      papowell@h4+207       A   207 h4.023205           3 18:24:54</screen>
 </informalexample>
 </para>
 <para>
@@ -2638,7 +2645,8 @@ install the software.
 Use the following configuration options
 which correspond to Linux:
 <informalexample>
-<screen><prompt>h4: {72} # </prompt><userinput>./configure --prefix=/usr --sysconfdir=/etc --mandir=/usr/share/man</userinput>
+<screen><prompt>h4: {72} # </prompt><userinput>./configure --prefix=/usr \
+  --sysconfdir=/etc --mandir=/usr/share/man</userinput>
 <prompt>h4: {73} # </prompt><userinput>make clean all install</userinput>
 <prompt>h4: {74} # </prompt><userinput>checkpc -f</userinput></screen>
 </informalexample>
@@ -3494,20 +3502,20 @@ stop and start printing (or transfers) of jobs in the print queue.</para>
 <para>Let's look at the status displayed when we use these commands:
 <informalexample>
 <screen><prompt>h4: {120} % </prompt><userinput>lpc status</userinput>
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    0    none    none
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    0    none    none
 <prompt>h4: {121} % </prompt><userinput>lpc status all</userinput>
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    0    none    none
-lp2@h4              enabled  enabled    0    none    none
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    0    none    none
+lp2@h4     enabled  enabled    0    none    none
 <prompt>h4: {122} % </prompt><userinput>lpc</userinput>
 lpc&gt;status
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    0    none    none
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    0    none    none
 lpc&gt;status all
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    0    none    none
-lp2@h4              enabled  enabled    0    none    none
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    0    none    none
+lp2@h4     enabled  enabled    0    none    none
 lpc&gt;quit
 </screen>
 </informalexample>
@@ -3605,12 +3613,12 @@ lp@h4.private: stopped
 Printer: lp@h4  (printing disabled)
  Queue: 2 printable jobs
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
-2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30
+ Rank   Owner/ID               Class Job Files            Size Time
+1      papowell@h4+17920         A 17920 /tmp/hi             3 18:14:22
+2      papowell@h4+17922         A 17922 /tmp/hi,/tmp/there  9 18:14:30
 <prompt>h4: {135} % </prompt><userinput>lpc status</userinput>
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               disable  enabled    2    none    none</screen>
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4     disabled  enabled    2    none    none</screen>
 </informalexample>
 </para>
 
@@ -3654,9 +3662,9 @@ Printer: lp@h4
  Server: pid 17928 active
  Unspooler: pid 17929 active
  Status: opening device '/tmp/lp' at 18:14:43.921
- Rank   Owner/ID                  Class Job Files               Size Time
-active papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
-2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30
+ Rank   Owner/ID             Class Job Files            Size Time
+active papowell@h4+17920       A 17920 /tmp/hi             3 18:14:22
+2      papowell@h4+17922       A 17922 /tmp/hi,/tmp/there  9 18:14:30
 <prompt>h4: {138} % </prompt><userinput>lpq -ll</userinput>
 Printer: lp@h4
  Queue: 2 printable jobs
@@ -3665,9 +3673,9 @@ Printer: lp@h4
  Status: printing job 'papowell@h4+17920' at 18:14:43.921
  Status: no banner at 18:14:43.921
  Status: printing data file 'dfA017920h4.private', size 57 at 18:14:43.922
- Rank   Owner/ID                  Class Job Files               Size Time
-active papowell@h4+17920            A 17920 /tmp/hi                 3 18:14:22
-2      papowell@h4+17922            A 17922 /tmp/hi,/tmp/there      9 18:14:30</screen>
+ Rank   Owner/ID             Class Job Files            Size Time
+active papowell@h4+17920       A 17920 /tmp/hi             3 18:14:22
+2      papowell@h4+17922       A 17922 /tmp/hi,/tmp/there  9 18:14:30</screen>
 </informalexample>
 </para>
 
@@ -3697,26 +3705,26 @@ Printer: lp@h4  (printing disabled)
  Queue: 3 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
-2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
-3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+ Rank   Owner/ID            Class Job Files           Size Time
+1      papowell@h4+17959      A 17959 (stdin)            3 18:23:24
+2      papowell@h4+17962      A 17962 (stdin)            6 18:23:30
+3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
 <prompt>h4: {144} % </prompt><userinput>lpq 17970</userinput>
 Printer: lp@h4  (printing disabled)
  Queue: 3 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+ Rank   Owner/ID            Class Job Files           Size Time
+3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
 <prompt>h4: {145} % </prompt><userinput>lpq papowell</userinput>
 Printer: lp@h4  (printing disabled)
  Queue: 3 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
-2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
-3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+ Rank   Owner/ID            Class Job Files           Size Time
+1      papowell@h4+17959      A 17959 (stdin)            3 18:23:24
+2      papowell@h4+17962      A 17962 (stdin)            6 18:23:30
+3      papowell@h4+17970      A 17970 (stdin)            5 18:23:35
 <prompt>h4: {146} % </prompt><userinput>lpq -s 17970</userinput>
 lp@h4  1 jobs
 <prompt>h4: {147} % </prompt><userinput>lpq -s papowell</userinput>
@@ -3748,12 +3756,12 @@ mode:
 <informalexample>
 <screen><prompt>h4: {151} % </prompt><userinput>lpc</userinput>
 lpc&gt;status
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    3    17990   17993
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    3    17990   17993
 lpc&gt;status all
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    3    17990   17993
-lp2@h4              enabled  enabled    3    none    none
+ Printer  Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
+lp@h4      enabled  enabled    3    17990   17993
+lp2@h4     enabled  enabled    3    none    none
 lpc&gt;stop lp
 Printer: lp@h4
 lp@h4.private: stopped
@@ -3780,10 +3788,10 @@ lp@h4.private: started
 Printer: lp@h4
  Queue: 3 printable jobs
  Server: pid 17999 active
- Rank   Owner/ID                  Class Job Files               Size Time
-active papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
-1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
-2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30</screen>
+ Rank   Owner/ID          Class Job Files      Size Time
+active papowell@h4+17970    A 17970 (stdin)      5 18:23:35
+1      papowell@h4+17959    A 17959 (stdin)      3 18:23:24
+2      papowell@h4+17962    A 17962 (stdin)      6 18:23:30</screen>
 </informalexample>
 </para>
 
@@ -3800,10 +3808,10 @@ Printer: lp@h4  (printing disabled)
  Queue: 3 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17959            A 17959 (stdin)                  3 18:23:24
-2      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
-3      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+ Rank   Owner/ID          Class Job Files      Size Time
+1      papowell@h4+17959    A 17959 (stdin)       3 18:23:24
+2      papowell@h4+17962    A 17962 (stdin)       6 18:23:30
+3      papowell@h4+17970    A 17970 (stdin)       5 18:23:35
 <prompt>h4: {155} % </prompt><userinput>lprm</userinput>
 Printer lp@h4:
   checking perms 'papowell@h4+17959'
@@ -3813,9 +3821,9 @@ Printer: lp@h4  (printing disabled)
  Queue: 2 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
-2      papowell@h4+17970            A 17970 (stdin)                  5 18:23:35
+ Rank   Owner/ID          Class Job Files      Size Time
+1      papowell@h4+17962    A 17962 (stdin)       6 18:23:30
+2      papowell@h4+17970    A 17970 (stdin)       5 18:23:35
 <prompt>h4: {157} % </prompt><userinput>lprm 17970</userinput>
 Printer lp@h4:
   checking perms 'papowell@h4+17970'
@@ -3825,8 +3833,8 @@ Printer: lp@h4  (printing disabled)
  Queue: 1 printable job
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30</screen>
+ Rank   Owner/ID          Class Job Files     Size Time
+1      papowell@h4+17962    A 17962 (stdin)      6 18:23:30</screen>
 </informalexample>
 </para>
 
@@ -3847,10 +3855,10 @@ Printer: lp@h4  (printing disabled)
  Queue: 3 printable jobs
  Server: no server active
  Status: job 'papowell@h4+17922' removed at 18:15:13.981
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+17962            A 17962 (stdin)                  6 18:23:30
-2      papowell@h4+18499            A 18499 /tmp/hi                  3 18:56:00
-3      papowell@h4+18501            A 18501 /tmp/there               6 18:56:02
+ Rank   Owner/ID          Class Job Files     Size Time
+1      papowell@h4+17962    A 17962 (stdin)      6 18:23:30
+2      papowell@h4+18499    A 18499 /tmp/hi      3 18:56:00
+3      papowell@h4+18501    A 18501 /tmp/there   6 18:56:02
 <prompt>h4: {160} % </prompt><userinput>lprm papowell</userinput>
 Printer lp@h4:
   checking perms 'papowell@h4+17962'
@@ -4064,13 +4072,15 @@ Printer: lp@h4
  Status: opening device '/tmp/lp' at 21:39:21.909
  Status: printing job 'papowell@h4+26681' at 21:39:21.909
  Status: no banner at 21:39:21.909
- Status: printing data file 'dfA026681h4.private', size 3, IF filter 'testf' at
-21:39:21.909
- Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04
--11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/v
-ar/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 -kcfA026681h
-4.private -l66 -npapowell -sstatus -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct'
-at 21:39:21.914
+ Status: printing data file 'dfA026681h4.private', size 3, \
+    IF filter 'testf' at 21:39:21.909
+ Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+26681 \
+     -CA -D2000-04 -11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi \
+      -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+      -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 \
+      -kcfA026681h4.private -l66 -npapowell -sstatus \
+      -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct' \
+       at 21:39:21.914
  Status: IF filter finished at 21:39:22.070
  Status: printing done 'papowell@h4+26681' at 21:39:22.070
  Status: accounting at end at 21:39:22.070
@@ -4079,10 +4089,11 @@ at 21:39:21.914
  Status: lp@h4.private: job 'papowell@h4+26681' printed at 21:39:22.072
  Status: job 'papowell@h4+26681' removed at 21:39:22.085
 <prompt>h4: {168} % </prompt><userinput>more /tmp/lp</userinput>
-TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04-11-21:39:21.877 -Ff
--Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp
--edfA026681h4.private -f/tmp/hi -hh4.private -j026681 -kcfA026681h4.private
--l66 -npapowell -sstatus -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct
+TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04-11-21:39:21.877 \
+ -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 \
+ -d/var/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private \
+ -j026681 -kcfA026681h4.private -l66 -npapowell -sstatus \
+ -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct
 ENV
 USER=papowell
 LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
@@ -4440,7 +4451,8 @@ the <application>lpq</application> status:
 <prompt>h4: {180} % </prompt><userinput>lpq -llll</userinput>
 Printer: lp@h4
  ....
- Status: printing data file 'dfA018881h4.private', size 3, IF filter 'echo' at 09:22:11.476
+ Status: printing data file 'dfA018881h4.private', size 3, \
+   IF filter 'echo' at 09:22:11.476
  Status: IF filter msg - 'TESTF /tmp/testf' at 09:22:11.510
  Status: IF filter finished at 09:22:11.514</screen>
 </informalexample>
@@ -4478,8 +4490,9 @@ Printer: lp@h4
  Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+18941 \
    -CA -D2000-04-29-09:27:30.700 -Ff -Hh4.private -J/tmp/hi \
    -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
-   -edfA018941h4.private -f/tmp/hi -hh4.private -j018941 -kcfA018941h4.private \
-   -l66 -npapowell -sstatus -t2000-04-29-09:27:30.864 -w80 -x0 -y0 acct' at 09:27:30.879</screen>
+   -edfA018941h4.private -f/tmp/hi -hh4.private -j018941 \
+   -kcfA018941h4.private -l66 -npapowell -sstatus \
+   -t2000-04-29-09:27:30.864 -w80 -x0 -y0 acct' at 09:27:30.879</screen>
 </informalexample>
 </para>
 
@@ -5358,7 +5371,7 @@ Here is an example of the output of the script:
 <informalexample>
 <screen><prompt>h4: {198} % </prompt><userinput>/tmp/majik &lt;test.ps.gz</userinput>
 TYPE standard_input:_gzip_compressed_data,_deflated...
-COMPRESSED TYPE standard_input:_postscript_document_text_conforming_at_level_3.0
+COMPRESSED TYPE standard_input:_postscript_document_level_3.0
 gunzip -c | /usr/local/bin/gs -dSAFER -dNOPAUSE -q -sDEVICE=djet500 \
    -sOutputFile=/dev/fd/3 - 3&gt;&amp;1 1&gt;&amp;2
 <prompt>h4: {199} % </prompt><userinput>/tmp/majik &lt;/tmp/hi</userinput>
@@ -5896,11 +5909,16 @@ and observe the results:
 <prompt>h4: {210} % </prompt><userinput>lpq -lll</userinput>
 Printer: lp@h4 (dest lp2@localhost)
  Queue: no printable jobs in queue
- Status: sending control file 'cfA029h4.private' to lp2@localhost at 09:39:57.719
- Status: completed sending 'cfA029h4.private' to lp2@localhost at 09:39:57.724
- Status: sending data file 'dfA029h4.private' to lp2@localhost at 09:39:57.727
- Status: completed sending 'dfA029h4.private' to lp2@localhost at 09:39:57.925
- Status: done job 'papowell@h4+29' transfer to lp2@localhost at 09:39:57.926
+ Status: sending control file 'cfA029h4.private' \
+    to lp2@localhost at 09:39:57.719
+ Status: completed sending 'cfA029h4.private' \
+    to lp2@localhost at 09:39:57.724
+ Status: sending data file 'dfA029h4.private' \
+    to lp2@localhost at 09:39:57.727
+ Status: completed sending 'dfA029h4.private' \
+    to lp2@localhost at 09:39:57.925
+ Status: done job 'papowell@h4+29' transfer \
+    to lp2@localhost at 09:39:57.926
  Status: subserver pid 29031 exit status 'JSUCC' at 09:39:57.953
  Status: lp@h4.private: job 'papowell@h4+29' printed at 09:39:57.961
  Status: job 'papowell@h4+29' removed at 09:39:57.993
@@ -5982,18 +6000,24 @@ and observe the results:
 Printer: lp@h4 (dest lp2@localhost)
  Queue: no printable jobs in queue
  Status: no banner at 09:55:53.681
- Status: printing data file 'dfA086h4.private', size 3, IF filter 'testf' at 09:55:53.683
+ Status: printing data file 'dfA086h4.private', size 3, \
+    IF filter 'testf' at 09:55:53.683
  Status: IF filter finished at 09:55:53.713
  Status: printing done 'papowell@h4+86' at 09:55:53.714
  Status: sending job 'papowell@h4+86' to lp2@localhost at 09:55:53.734
  Status: connecting to 'localhost', attempt 1 at 09:55:53.735
  Status: connected to 'localhost' at 09:55:53.739
  Status: requesting printer lp2@localhost at 09:55:53.740
- Status: sending control file 'cfA086h4.private' to lp2@localhost at 09:55:53.752
- Status: completed sending 'cfA086h4.private' to lp2@localhost at 09:55:53.757
- Status: sending data file 'dfA086h4.private' to lp2@localhost at 09:55:53.758
- Status: completed sending 'dfA086h4.private' to lp2@localhost at 09:55:53.939
- Status: done job 'papowell@h4+86' transfer to lp2@localhost at 09:55:53.940
+ Status: sending control file 'cfA086h4.private' 
+      to lp2@localhost at 09:55:53.752
+ Status: completed sending 'cfA086h4.private' 
+      to lp2@localhost at 09:55:53.757
+ Status: sending data file 'dfA086h4.private' 
+      to lp2@localhost at 09:55:53.758
+ Status: completed sending 'dfA086h4.private' 
+      to lp2@localhost at 09:55:53.939
+ Status: done job 'papowell@h4+86' transfer 
+      to lp2@localhost at 09:55:53.940
  Status: subserver pid 29088 exit status 'JSUCC' at 09:55:53.980
  Status: lp@h4.private: job 'papowell@h4+86' printed at 09:55:53.983
  Status: job 'papowell@h4+86' removed at 09:55:53.998
@@ -6914,8 +6938,8 @@ lp2@h4.private: stopped
 Printer: lp@h4  (printing disabled)
  Queue: 1 printable job
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+659              A   659 /tmp/hi                  3 08:04:03
+ Rank   Owner/ID           Class Job Files      Size Time
+1      papowell@h4+659       A   659 /tmp/hi       3 08:04:03
 Printer: lp2@h4  (printing disabled)
  Queue: no printable jobs in queue
 <prompt>h4: {241} % </prompt><userinput>lpc move lp papowell lp2</userinput>
@@ -6929,8 +6953,8 @@ Printer: lp@h4  (printing disabled)
 Printer: lp2@h4  (printing disabled)
  Queue: 1 printable job
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+659              A   659 /tmp/hi                  3 08:19:24</screen>
+ Rank   Owner/ID           Class Job Files       Size Time
+1      papowell@h4+659       A   659 /tmp/hi        3 08:19:24</screen>
 </informalexample>
 </para>
 
@@ -6968,8 +6992,8 @@ Printer: lp@h4  (printing disabled) (redirect lp2)
 Printer: lp2@h4  (printing disabled)
  Queue: 1 printable job
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+935              A   935 /tmp/hi                  3 09:08:21</screen>
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+935       A   935 /tmp/hi         3 09:08:21</screen>
 </informalexample>
 </para>
 
@@ -7053,8 +7077,8 @@ Printer: lp@h4  (classes red)
  Queue: no printable jobs in queue
  Holding: 1 held jobs in queue
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-holdclass papowell@h4+82            A    82 /tmp/hi                  3 09:29:52
+ Rank   Owner/ID           Class Job Files        Size Time
+holdclass papowell@h4+82     A    82 /tmp/hi         3 09:29:52
 <prompt>h4: {253} % </prompt><userinput>lpr -Cred /tmp/hi</userinput>
 <prompt>h4: {254} % </prompt><userinput>lpq</userinput>
 Printer: lp@h4  (classes red)
@@ -7062,8 +7086,8 @@ Printer: lp@h4  (classes red)
  Holding: 1 held jobs in queue
  Server: no server active
  Status: job 'papowell@h4+89' removed at 09:30:13.569
- Rank   Owner/ID                  Class Job Files               Size Time
-holdclass papowell@h4+82            A    82 /tmp/hi                  3 09:29:52</screen>
+ Rank   Owner/ID           Class Job Files        Size Time
+holdclass papowell@h4+82     A    82 /tmp/hi         3 09:29:52</screen>
 </informalexample>
 </para>
 
@@ -7151,8 +7175,8 @@ Printer: lp@h4  (holdall)
  Queue: no printable jobs in queue
  Holding: 1 held jobs in queue
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-hold   papowell@h4+213              A   213 /tmp/hi                  3 09:45:05
+ Rank   Owner/ID           Class Job Files        Size Time
+hold   papowell@h4+213       A   213 /tmp/hi         3 09:45:05
 <prompt>h4: {260} % </prompt><userinput>lpc release lp 213</userinput>
 Printer: lp@h4
 lp: selected 'papowell@h4+213'
@@ -7210,9 +7234,9 @@ Printer: lp@h4  (printing disabled)
 Printer: lp@h4  (printing disabled)
  Queue: 2 printable jobs
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+459              A   459 /tmp/hi                  3 10:40:32
-2      papowell@h4+461              A   461 /tmp/hi                  3 10:40:34
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+459       A   459 /tmp/hi         3 10:40:32
+2      papowell@h4+461       A   461 /tmp/hi         3 10:40:34
 <prompt>h4: {268} % </prompt><userinput>lpc hold lp 459</userinput>
 Printer: lp@h4
 lp: selected 'papowell@h4+459'
@@ -7222,9 +7246,9 @@ Printer: lp@h4  (printing disabled)
  Queue: 1 printable job
  Holding: 1 held jobs in queue
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+461              A   461 /tmp/hi                  3 10:40:34
-hold   papowell@h4+459              A   459 /tmp/hi                  3 10:40:32</screen>
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+461       A   461 /tmp/hi         3 10:40:34
+hold   papowell@h4+459       A   459 /tmp/hi         3 10:40:32</screen>
 </informalexample>
 </para>
 
@@ -7243,8 +7267,8 @@ Printer: lp@h4
  Holding: 1 held jobs in queue
  Server: no server active
  Status: job 'papowell@h4+461' removed at 10:41:24.873
- Rank   Owner/ID                  Class Job Files               Size Time
-hold   papowell@h4+459              A   459 /tmp/hi                  3 10:40:32
+ Rank   Owner/ID           Class Job Files        Size Time
+hold   papowell@h4+459       A   459 /tmp/hi         3 10:40:32
 <prompt>h4: {272} % </prompt><userinput>lpc release lp 459</userinput>
 Printer: lp@h4
 lp: selected 'papowell@h4+459'
@@ -7343,8 +7367,8 @@ Printer: lp@h4  (subservers lp2, lp3)
  Queue: 1 printable job
  Server: pid 4063 active
  Status: waiting for subserver to finish at 07:31:08.074
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+62               A    62 /tmp/hi                  3 07:31:07
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+62        A    62 /tmp/hi         3 07:31:07
 Server Printer: lp2@h4  (serving lp)
  Queue: no printable jobs in queue
 Server Printer: lp3@h4  (serving lp)
@@ -7500,8 +7524,10 @@ exit 0</screen>
 Printer: lp@h4  (subservers lp2, lp3)
  Queue: no printable jobs in queue
  Status: CHOOSER selected 'lp3' at 14:02:50.605
- Status: transferring 'papowell@h4+178' to subserver 'lp3' at 14:02:50.614
- Status: transfer 'papowell@h4+178' to subserver 'lp3' finished at 14:02:50.624
+ Status: transferring 'papowell@h4+178' 
+      to subserver 'lp3' at 14:02:50.614
+ Status: transfer 'papowell@h4+178' 
+      to subserver 'lp3' finished at 14:02:50.624
  Status: job 'papowell@h4+178' removed at 14:02:50.632
  Status: starting subserver 'lp3' at 14:02:50.632
  Status: waiting for server queue process to exit at 14:02:50.651
@@ -7535,9 +7561,9 @@ Let us look at the <filename>/tmp/chooser</filename> file and see how the
 <filename>chooser.script</filename> program was run:
 <informalexample>
 <screen>CHOOSER -Apapowell@h4+113 -CA -D2000-06-01-14:02:13.313 -Hh4.private \
-   -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp -hh4.private \
-   -j113 -kcfA113h4.private -l66 -npapowell -sstatus -t2000-06-01-14:02:13.379
-    -w80 -x0 -y0 acct
+   -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+   -hh4.private -j113 -kcfA113h4.private -l66 -npapowell -sstatus \
+   -t2000-06-01-14:02:13.379 -w80 -x0 -y0 acct
 USER=papowell
 LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
 HOME=/home/papowell
@@ -7720,7 +7746,7 @@ lp2@h4.private: stopped
 Printer: lp3@h4
 lp3@h4.private: stopped
 <prompt>h4: {283} % </prompt><userinput>lpq</userinput>
-Printer: lp@h4 (dest lp@localhost) (printing disabled) (destinations lp2, lp3)
+Printer: lp@h4 (dest lp@localhost) (printing disabled) (dest lp2, lp3)
  Queue: no printable jobs in queue
 Printer: lp2@h4  (printing disabled)
  Queue: no printable jobs in queue
@@ -7728,13 +7754,13 @@ Printer: lp3@h4  (printing disabled)
  Queue: no printable jobs in queue
 <prompt>h4: {284} % </prompt><userinput>lpr /tmp/hi</userinput>
 <prompt>h4: {285} % </prompt><userinput>lpq</userinput>
-Printer: lp@h4 (dest lp@localhost) (printing disabled) (destinations lp2, lp3)
+Printer: lp@h4 (dest lp@localhost) (printing disabled) (dest lp2, lp3)
  Queue: 1 printable job
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+235              A   235 /tmp/hi                  3 16:14:22
- -          papowell@h4+235.1              -&gt;lp2 &lt;cpy 0/2&gt;
- -          papowell@h4+235.2              -&gt;lp3
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+235       A   235 /tmp/hi         3 16:14:22
+ -          papowell@h4+235.1       -&gt;lp2 &lt;cpy 0/2&gt;
+ -          papowell@h4+235.2       -&gt;lp3
 Printer: lp2@h4  (printing disabled)
  Queue: no printable jobs in queue
 Printer: lp3@h4  (printing disabled)
@@ -7762,14 +7788,14 @@ Printer: lp@h4 (dest lp@localhost) (destinations lp2, lp3)
 Printer: lp2@h4  (printing disabled)
  Queue: 2 printable jobs
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+235.1C1          A   235 /tmp/hi                  3 16:14:36
-2      papowell@h4+235.1C2          A   236 /tmp/hi                  3 16:14:37
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+235.1C1   A   235 /tmp/hi         3 16:14:36
+2      papowell@h4+235.1C2   A   236 /tmp/hi         3 16:14:37
 Printer: lp3@h4  (printing disabled)
  Queue: 1 printable job
  Server: no server active
- Rank   Owner/ID                  Class Job Files               Size Time
-1      papowell@h4+235.2            A   237 /tmp/hi                  3 16:14:37
+ Rank   Owner/ID           Class Job Files        Size Time
+1      papowell@h4+235.2     A   237 /tmp/hi         3 16:14:37
 <prompt>h4: {288} % </prompt><userinput>more /var/spool/lpd/lp2/cfA235*</userinput>
 Hh4.private
 Ppapowell
@@ -7966,7 +7992,7 @@ For example:
 <informalexample>
 <screen>landscape:lp=%P@server
 landscape:server:tc=.common
-	:lp=raw@server:append_z=landscape:delete_z=portrait
+  :lp=raw@server:append_z=landscape:delete_z=portrait
 raw:server:tc=.common:lp=....
   :filter=/usr/local/libexec/filters/ifhp
 .common:sd=/var/spool/lpd/%P</screen>
@@ -8004,10 +8030,10 @@ For example:
 <informalexample>
 <screen># System V to LPRng - S and O to Z options
 convert:server:tc=.common
-	:lp=raw@server:prefix_option_to_option=S,O Z
+  :lp=raw@server:prefix_option_to_option=S,O Z
 # LPRng to System V O options
 convert:server:tc=.common
-	:lp=raw@server:prefix_option_to_option=Z O</screen>
+    :lp=raw@server:prefix_option_to_option=Z O</screen>
 </informalexample>
 </para>
 </sect2>
@@ -8022,16 +8048,16 @@ legal or ledger size paper:
 <screen>
 landscape:lp=%P@server
 landscape:server:tc=.common
-	:lp=raw@server:append_z=landscape
+    :lp=raw@server:append_z=landscape
 duplex:lp=%P@server
 duplex:server:tc=.common
-	:lp=raw@server:append_z=duplex
+    :lp=raw@server:append_z=duplex
 ledger:lp=%P@server
 ledger:server:tc=.common
-	:lp=raw@server:append_z=ledger
+    :lp=raw@server:append_z=ledger
 legal:lp=%P@server
 legal:server:tc=.common
-	:lp=raw@server:append_z=legal
+    :lp=raw@server:append_z=legal
 raw:server:tc=.common:lp=....
   :filter=/usr/local/libexec/filters/ifhp
 .common:sd=/var/spool/lpd/%P</screen>
@@ -8130,24 +8156,24 @@ $Zopts = "";
 $Q = $args{"Q"};
 if( not $Q and (($Q) = grep(/^Q/,@file)) ){
    # next use control file Queue name
-	chomp $Q if $Q;
+    chomp $Q if $Q;
 }
 # now we split up the name and use as parameters for Z options
 while( $Q =~ /_([^_]+)/g ){
-	# you can add them or test and then add them
-	if( $1 eq "landscape"
-		or $1 eq "legal"
-		or $1 eq "ledger" ){
-		$Zopts .= ",$1"
-	}
+    # you can add them or test and then add them
+    if( $1 eq "landscape"
+        or $1 eq "legal"
+        or $1 eq "ledger" ){
+        $Zopts .= ",$1"
+    }
 }
 if( $Zopts ){
-	# remove leading comma
-	$Zopts = substr( $Zopts, 1 );
-	#replace or prefix Z options
-	if( not (grep { s/$/,$Zopts/ if /^Z/; } @file) ){
-		print "Z" . $Zopts . "\n";
-	}
+    # remove leading comma
+    $Zopts = substr( $Zopts, 1 );
+    #replace or prefix Z options
+    if( not (grep { s/$/,$Zopts/ if /^Z/; } @file) ){
+        print "Z" . $Zopts . "\n";
+    }
 }
 print @file if( @file );
 exit 0
@@ -8181,11 +8207,11 @@ options into longer ones:
 
 <informalexample>
 <screen>while( $Q =~ /_([^_]+)/g ){
-	# you can add them or test and then add them
-	Zopts .= ",landscape" if( $1 eq "ld" );
-	Zopts .= ",ledger" if( $1 eq "11" );
-	Zopts .= ",legal" if( $1 eq "15" );
-	Zopts .= ",a4" if( $1 eq "a4" );
+    # you can add them or test and then add them
+    Zopts .= ",landscape" if( $1 eq "ld" );
+    Zopts .= ",ledger" if( $1 eq "11" );
+    Zopts .= ",legal" if( $1 eq "15" );
+    Zopts .= ",a4" if( $1 eq "a4" );
 }</screen>
 </informalexample>
 </para>
@@ -8318,14 +8344,13 @@ sending data file 'dfA981h4.private' to lp@localhost
 completed sending 'dfA981h4.private' to lp@localhost
 done job 'papowell@h4+981' transfer to lp@localhost
 <prompt>h4: {294} % </prompt><userinput>lpr -D1 /tmp/hi</userinput>
-2000-06-02-09:38:08.707 h4 [13991] lpr  Get_printer: original printer '&lt;NULL&gt;'
-2000-06-02-09:38:08.708 h4 [13991] lpr  Get_all_printcap_entries: starting
-2000-06-02-09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for 'all', depth 0
-2000-06-02-09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
-2000-06-02-09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for '*', depth 0
-2000-06-02-09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
-2000-06-02-09:38:08.708 h4 [13991] lpr  Dump_line_list: Get_all_printcap_entries- \
-   All_line_list - 0x8094384, coun
+09:38:08.707 h4 [13991] lpr  Get_printer: original printer '&lt;NULL&gt;'
+09:38:08.708 h4 [13991] lpr  Get_all_printcap_entries: starting
+09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for 'all', depth 0
+09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
+09:38:08.708 h4 [13991] lpr  Select_pc_info: looking for '*', depth 0
+09:38:08.708 h4 [13991] lpr  Select_pc_info: returning '&lt;NULL&gt;'
+09:38:08.708 h4 [13991] lpr  Dump_line_list: Get_all_printcap_entries
 ...</screen>
 </informalexample>
 </para>
@@ -8418,16 +8443,23 @@ using the C Shell.
 <screen><prompt>h4: {296} % </prompt><userinput>lpd -F -D1 &gt;&amp;/tmp/logfile &amp;</userinput>
 [2] 14299
 <prompt>h4: {297} % </prompt><userinput>tail -f /tmp/logfile</userinput>
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Read_server_status: select status 1
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Read_server_status: read status 1
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Dump_line_list: Read_server_status \
-   - input - 0x8047980, count 0, max 0, list 0x0
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Read_server_status: select status 0
-2000-06-02-09:53:39.716 h4 [14300] Waiting  lpd: LOOP START
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Get_max_servers: getrlimit returns 64
-2000-06-02-09:53:39.716 h4 [14300] Waiting  Get_max_servers: returning 32
-2000-06-02-09:53:39.716 h4 [14300] Waiting  lpd: max_servers 32, active 0
-2000-06-02-09:53:39.716 h4 [14300] Waiting  lpd: starting select timeout 'yes'
+2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                         select status 1
+2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                         read status 1
+2000-06-02-09:53:39.716 h4 [1200] Waiting Dump_line_list: \
+    Read_server_status - input - 0x8047980, count 0, max 0, list 0x0
+2000-06-02-09:53:39.716 h4 [1200] Waiting Read_server_status: \
+                         select status 0
+2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: LOOP START
+2000-06-02-09:53:39.716 h4 [1200] Waiting Get_max_servers: \ 
+                         getrlimit returns 64
+2000-06-02-09:53:39.716 h4 [1200] Waiting Get_max_servers: \
+                         returning 32
+2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: \
+                         max_servers 32, active 0
+2000-06-02-09:53:39.716 h4 [1200] Waiting lpd: \
+                         starting select timeout 'yes'
 
 ^C
 <prompt>h4: {298} % </prompt><userinput>jobs</userinput>
@@ -8536,16 +8568,22 @@ Printer: lp@h4
 debugging override set to '1'
 lp@h4.private: updated
 <prompt>h4: {302} % </prompt><userinput>lpc status</userinput>
- Printer           Printing Spooling Jobs  Server Subserver Redirect Status/(Debug)
-lp@h4               enabled  enabled    0    none    none          (1)
+ Printer Printing Spooling Jobs Server Subserver Redirect Status/(Debug)
+lp@h4    enabled  enabled    0    none    none          (1)
 <prompt>h4: {303} % </prompt><userinput>lpr /tmp/hi</userinput>
 <prompt>h4: {304} % </prompt><userinput>more /var/spool/lpd/lp2/log</userinput>
-2000-06-02-10:10:50.589 h4 [14496] (Server)  lp: Update_spool_info: printer 'lp'
-2000-06-02-10:10:50.590 h4 [14496] (Server)  lp: Do_queue_jobs: printable 1, held 0, move 0
-2000-06-02-10:10:50.590 h4 [14496] (Server)  lp: Do_queue_jobs: after Scan_queue next fd 5
-2000-06-02-10:10:50.590 h4 [14496] (Server)  lp: Do_queue_jobs: MAIN LOOP
-2000-06-02-10:10:50.590 h4 [14496] (Server)  lp: Do_queue_jobs: Susr1 before scan 0
-2000-06-02-10:10:50.591 h4 [14496] (Server)  lp: Do_queue_jobs: chooser '&lt;NULL&gt;', chooser_routine 0</screen>
+2000-06-02-10:10:50.589 h4 [1201] (Server) lp: \
+   Update_spool_info: printer 'lp'
+2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+   Do_queue_jobs: printable 1, held 0, move 0
+2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+   Do_queue_jobs: after Scan_queue next fd 5
+2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+   Do_queue_jobs: MAIN LOOP
+2000-06-02-10:10:50.590 h4 [1201] (Server) lp: \
+   Do_queue_jobs: Susr1 before scan 0
+2000-06-02-10:10:50.591 h4 [1201] (Server) lp: \
+   Do_queue_jobs: chooser '&lt;NULL&gt;', chooser_routine 0</screen>
 </informalexample>
 </para>
 
@@ -8861,13 +8899,13 @@ the <literal>force_localhost@</literal> flag.
 <screen># default:
 lp:lp=lp@10.0.0.1:...
   lpr -Plp -&gt;
-	lp:lp=lp@localhost:...
+    lp:lp=lp@localhost:...
   lpr -Plp@10.0.0.1 -&gt;
-	lp:lp=lp@10.0.0.1  (no other options)
+    lp:lp=lp@10.0.0.1  (no other options)
 
 lp:lp=lp@10.0.0.1:force_localhost@:...
   lpr -Plp -&gt;
-	lp:lp=lp@10.0.0.1:...
+    lp:lp=lp@10.0.0.1:...
 
 To disable at compile time:
   configure --disable-force_localhost</screen>
@@ -8950,10 +8988,10 @@ the following command:
 <informalexample>
 <screen><prompt>h4: {305} % </prompt><userinput>lpr -=</userinput>
 lpr: Illegal option '='
- usage summary: lpr [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-Jinfo]
-   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]
-   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w num ] [-r]
-   [-Ddebugopt ] [ filenames ...  ]
+ usage summary: lpr [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat]
+   [-Jinfo] [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]
+   [-Uuser[@host]] [-V] [-Zoptions] [-b] [-m mailaddr] [-h]
+   [-i indent] [-l] [-w num ] [-r] [-Ddebugopt ] [ filenames ...  ]
  -A          - use authentication specified by AUTH environment variable
  -B          - filter job before sending
  -C class    - job class
@@ -9700,8 +9738,8 @@ Printer: t1@astart110  'Test Printer 1' (printing disabled)
  Queue: 1 printable job
  Server: no server active
  Status: finished operations at 09:44:00
- Rank   Owner/ID                   Class Job  Files             Size Time
-1       papowell@lprng110+202228663    A 10663 /tmp/hi               3 20:22:29
+ Rank   Owner/ID            Class Job  Files         Size Time
+1       papowell@lprng110+202228663 A 10663 /tmp/hi     3 20:22:29
 Printer: t2@astart110  'Test Printer 2' (routed/bounce to t1@h10.private)
  Queue: no printable jobs in queue
  Status: finished operations at 16:30:08
@@ -9746,7 +9784,8 @@ Printer: t1@astart110
  Queue: 1 printable job
  Server: no server active
  Status: accounting at end 'papowell@lprng110+094352860' at 09:44:00
- Status: printing 'papowell@lprng110+094352860', closing device at 09:44:00
+ Status: printing 'papowell@lprng110+094352860', \
+            closing device at 09:44:00
  Status: printing 'papowell@lprng110+094352860', finished  at 09:44:00
  Status: subserver status 'JSUCC' for 'papowell@lprng110+094352860' \
             on attempt 1 at 09:44:00
@@ -10023,33 +10062,33 @@ usage: lpc [-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]
   -Uuser       - identify command as coming from user
   -V           - increase information verbosity
  commands:
- active    (printer[@host])        - check for active server
- abort     (printer[@host] | all)  - stop server
- class     printer[@host] (class | off)      - show/set class printing
- disable   (printer[@host] | all)  - disable queueing
- debug     (printer[@host] | all) debugparms - set debug level for printer
- down      (printer[@host] | all)  - disable printing and queueing
- enable    (printer[@host] | all)  - enable queueing
- hold      (printer[@host] | all) (name[@host] | job | all)*   - hold job
- holdall   (printer[@host] | all)  - hold all jobs on
- kill      (printer[@host] | all)  - stop and restart server
- lpd       (printer[@host]) - get LPD PID
- lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke <application/lpq/
- lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke <application/lprm/
- msg printer message text  - set status message
+ active  (printer[@host])        - check for active server
+ abort   (printer[@host] | all)  - stop server
+ class   printer[@host] (class | off) - show/set class printing
+ disable (printer[@host] | all)  - disable queueing
+ debug   (printer[@host] | all) debugparms - set debug level for printer
+ down    (printer[@host] | all)  - disable printing and queueing
+ enable  (printer[@host] | all)  - enable queueing
+ hold    (printer[@host] | all) (name[@host] | job | all)* - hold job
+ holdall (printer[@host] | all)  - hold all jobs on
+ kill    (printer[@host] | all)  - stop and restart server
+ lpd     (printer[@host]) - get LPD PID
+ lpq     (printer[@host] | all) (name[@host] | job | all)*   - run <application/lpq/
+ lprm    (printer[@host] | all) (name[@host]|host|job| all)* - run <application/lprm/
+ msg printer message text- set status message
  move printer (user|jobid)* target - move jobs to new queue
- noholdall (printer[@host] | all)  - hold all jobs off
- printcap  (printer[@host] | all)  - report printcap values
- quit                              - exit LPC
- redirect  (printer[@host] | all) (printer@host | off )*       - redirect jobs
- redo      (printer[@host] | all) (name[@host] | job | all)*   - release job
- release   (printer[@host] | all) (name[@host] | job | all)*   - release job
- reread    (printer[@host])        - LPD reread database information
- start     (printer[@host] | all)  - start printing
- status    (printer[@host] | all)  - status of printers
- stop      (printer[@host] | all)  - stop  printing
- topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder job
- up        (printer[@host] | all) - enable printing and queueing
+ noholdall (printer[@host] | all)- hold all jobs off
+ printcap(printer[@host] | all)  - report printcap values
+ quit                            - exit LPC
+ redirect(printer[@host] | all) (printer@host | off )*     - redirect jobs
+ redo    (printer[@host] | all) (name[@host] | job | all)* - redo jobs
+ release (printer[@host] | all) (name[@host] | job | all)* - release jobs
+ reread  (printer[@host])        - LPD reread database information
+ start   (printer[@host] | all)  - start printing
+ status  (printer[@host] | all)  - status of printers
+ stop    (printer[@host] | all)  - stop  printing
+ topq    (printer[@host] | all) (name[@host] | job | all)*  - reorder job
+ up      (printer[@host] | all) - enable printing and queueing
    diagnostic:
       defaultq               - show default queue for LPD server
       defaults               - show default configuration values
@@ -10737,7 +10776,7 @@ is port on server</entry><entry>- Unknown if supported -</entry></row>
 <row><entry><ulink URL="http://www.printers.ibm.com/">IBM</ulink></entry><entry>Network Printer 12, 17, 24, and 24PS</entry><entry><acronym>PASS</acronym></entry><entry>- Unknown if supported -</entry></row>
 <row><entry><ulink URL="http://www.lantronix.com/">Lantronix</ulink></entry><entry>EPS1, EPS2</entry><entry><literal remap=tt>EPS_<literal>X_S1 (serial) port 1, EPS_X</literal>_P1 (parallel) port 2</literal>, etc.</entry><entry>3001 (port 1), 3002 (port 2), etc.</entry></row>
 <row><entry><ulink URL="http://www.qms.com/">QMS</ulink></entry><entry>Various Models</entry><entry><acronym>RAW</acronym></entry><entry>35 (AppSocket)</entry></row>
-<row><entry><ulink URL="http://www.tek.com/color_printers/">Tektronix</ulink></entry><entry>Tektronix printer network cards</entry><entry><acronym>PS</acronym> (PostScript), <acronym>PCL</acronym> (PCL), or <acronym>AUTO</acronym>(Auto-selection between PS, PCL, or HPGL). Not reliable.</entry><entry>9100 (AppSocket on some models)</entry></row>
+<row><entry><ulink URL="http://www.tek.com">Tektronix</ulink></entry><entry>Tektronix printer network cards</entry><entry><acronym>PS</acronym> (PostScript), <acronym>PCL</acronym> (PCL), or <acronym>AUTO</acronym>(Auto-selection between PS, PCL, or HPGL). Not reliable.</entry><entry>9100 (AppSocket on some models)</entry></row>
 <row><entry><ulink URL="http://www.rosel.com">Rose Electronics</ulink></entry><entry>Microserve Print Servers</entry><entry>lp</entry><entry>9100</entry></row>
 <row><entry><ulink URL="http://www.xerox.com/">Xerox</ulink></entry><entry>Models 4505, 4510, 4517, 4520</entry><entry><acronym>PASSTHRU</acronym></entry><entry>2501 (AppSocket on some models)</entry></row>
 <row><entry></entry><entry>Model 4512</entry><entry><literal remap=tt>PORT1</literal></entry><entry>10001 (programmable)</entry></row>
@@ -10870,8 +10909,9 @@ enabled.  Here is a sample bootptab entry.
 #       to -- time offset (seconds)
 #       ts -- time servers
 #
-# Be careful about including backslashes where they're needed.  Weird (bad)
-# things can happen when a backslash is omitted where one is intended.
+# Be careful about including backslashes where they're needed.
+# Weird (bad) things can happen when a backslash is omitted
+# where one is intended.
 #
 peripheral1:
 :hn:ht=ether:vm=rfc1048:
@@ -10894,39 +10934,42 @@ the HP Direct distribution is included below.
 # Comments begin with '#' and end at the end of the line.
 # Blank lines are ignored.  Entries cannot span lines.
 
-# Name is the peripheral (or node) name.  It is displayed on the peripheral's
-# self-test page or configuration plot, and when sysName is obtained through
-# SNMP.  This name can be provided in the BOOTP response or can be specified
-# in the NPI configuration file to prevent the BOOTP response from overflowing
-# the packet.  The domain portion of the name is not necessary because the
-# peripheral does not perform Domain Name System (DNS) searches.  Name is
-# limited to 64 characters.
+# Name is the peripheral (or node) name.  It is displayed on the
+# peripheral's self-test page or configuration plot, and when sysName
+# is obtained through SNMP.  This name can be provided in the BOOTP
+# response or can be specified in the NPI configuration file to
+# prevent the BOOTP response from overflowing the packet.  The domain
+# portion of the name is not necessary because the peripheral does
+# not perform Domain Name System (DNS) searches.  Name is limited to
+# 64 characters.
 
 name: picasso
 
-# Location describes the physical location of the peripheral.  This is the
-# value used by the interface for the MIB-II sysLocation object.  The default
-# location is undefined.  Only printable ASCII characters are allowed.
-# Maximum length is 64 characters.
+# Location describes the physical location of the peripheral.  This
+# is the value used by the interface for the MIB-II sysLocation
+# object.  The default location is undefined.  Only printable ASCII
+# characters are allowed.  Maximum length is 64 characters.
 
 location: 1st floor, south wall
 
-# Contact is the name of the person who administers or services the peripheral
-# and may include how to contact this person.  It is limited to 64 characters.
-# This is the value used by the interface for the MIB-II sysContact object.
-# The default contact is undefined.  Only printable ASCII characters are
-# allowed.  Maximum length is 64 characters.
+# Contact is the name of the person who administers or services the
+# peripheral and may include how to contact this person.  It is
+# limited to 64 characters.  This is the value used by the interface
+# for the MIB-II sysContact object.  The default contact is undefined.
+# Only printable ASCII characters are allowed.  Maximum length is 64
+# characters.
 
 contact: Phil, ext 1234
 
-# The host access list contains the list of hosts or networks of hosts
-# that are allowed to connect to the peripheral.  The format is
-# "allow: netnum [mask]", where netnum is a network number or a host IP
-# address.  Mask is an address mask of bits to apply to the network number
-# and connecting host's IP address to verify access to the peripheral.
-# The mask usually matches the network or subnet mask, but this is not
-# required.  If netnum is a host IP address, the mask 255.255.255.255 can
-# be omitted.  Up to ten access list entries are permitted.
+# The host access list contains the list of hosts or networks of
+# hosts that are allowed to connect to the peripheral.  The format
+# is "allow: netnum [mask]", where netnum is a network number or a
+# host IP address.  Mask is an address mask of bits to apply to the
+# network number and connecting host's IP address to verify access
+# to the peripheral.  The mask usually matches the network or subnet
+# mask, but this is not required.  If netnum is a host IP address,
+# the mask 255.255.255.255 can be omitted.  Up to ten access list
+# entries are permitted.
 
 # to allow all of network 10 to access the peripheral:
 allow: 10.0.0.0  255.0.0.0
@@ -10940,34 +10983,39 @@ allow: 15.1.2.3
 
 idle-timeout: 120
 
-# A community name is a password that allows SNMP access to MIB values on
-# the network peripheral.  Community names are not highly secure; they are
-# not encrypted across the network.  The get community name determines which
-# SNMP GetRequests are responded to.  By default, the network peripheral
-# responds to all GetRequests.  The get community name is limited to 32
-# characters.
+# A community name is a password that allows SNMP access to MIB
+# values on the network peripheral.
+# Community names are not highly secure;
+# they are not encrypted across the network.  The get community name
+# determines which SNMP GetRequests are responded to.  By default,
+# the network peripheral responds to all GetRequests.  The get
+# community name is limited to 32 characters.
+
 #
 # For hpnpstat and hpnpadmin, the community name can be stored in
 # /usr/lib/hpnp/hpnpsnmp.
 
 get-community-name: blue
 
-# The set community name is similar to the get community name.  The set
-# community name determines which SNMP SetRequests are responded to.  In
-# addition, SetRequests are only honored if the sending host is on the
-# host access list.  By default, the network peripheral does not respond
-# to any SetRequests.  The set community name is limited to 32 characters.
+# The set community name is similar to the get community name.  The
+# set community name determines which SNMP SetRequests are responded
+# to.  In addition, SetRequests are only honored if the sending host
+# is on the host access list.  By default, the network peripheral
+# does not respond to any SetRequests.  The set community name is
+# limited to 32 characters.
 #
-# The set community name can come from /usr/lib/hpnp/hpnpsnmp
-# if it is the same as the get community name.  We recommend that the
-# set community name be different from the get community name though.
+# The set community name can come from /usr/lib/hpnp/hpnpsnmp if it
+# is the same as the get community name.  We recommend that the set
+# community name be different from the get community name though.
 
 set-community-name: yellow
 
-# SNMP traps are asynchronous notifications of some event that has occurred.
-# SNMP traps are useful only with network management software.  Traps are
-# sent to specific hosts and include a trap community name.  Up to four
-# hosts can be sent SNMP traps.   The trap community name is limited to
+# SNMP traps are asynchronous notifications of some event
+# that has occurred.
+# SNMP traps are useful only with network management software.
+# Traps are sent to specific hosts and include a trap community
+# name.  Up to four hosts can be sent SNMP traps.
+# The trap community name is limited to
 # 32 characters.  The default name is public.
 
 trap-community-name: red
@@ -10979,42 +11027,46 @@ trap-community-name: red
 trap-dest: 15.1.2.3
 trap-dest: 15.2.3.4
 
-# The SNMP authentication trap parameter enables or disables the sending
-# of SNMP authentication traps.  Authentication traps indicate that an SNMP
-# request was received and the community name check failed.  By default,
-# the parameter is off.
+# The SNMP authentication trap parameter enables or disables the
+# sending of SNMP authentication traps.  Authentication traps indicate
+# that an SNMP request was received and the community name check
+# failed.  By default, the parameter is off.
 
 authentication-trap: on
 
-# The syslog-facility parameter sets the source facility identifier that the
-# card uses when issuing syslog messages.  Other facilities, for example,
-# include the kernel (LOG_KERN), the mail system (LOG_MAIL), and the spooling
-# system (LOG_LPR).  The card only allows its syslog facility to be configured
-# to one of the local user values (LOG_LOCAL0 through LOG_LOCAL7).  The
-# selectible option strings, local0 through local7 (configured to LOG_LOCAL0
-# through LOG_LOCAL7, respectively) are case insensitive.  The default
-# syslog-facility for the card is LOG_LPR.
+# The syslog-facility parameter sets the source facility identifier
+# that the card uses when issuing syslog messages.  Other facilities,
+# for example, include the kernel (LOG_KERN), the mail system
+# (LOG_MAIL), and the spooling system (LOG_LPR).  The card only allows
+# its syslog facility to be configured to one of the local user values
+# (LOG_LOCAL0 through LOG_LOCAL7).  The selectible option strings,
+# local0 through local7 (configured to LOG_LOCAL0 through LOG_LOCAL7,
+# respectively) are case insensitive.  The default syslog-facility
+# for the card is LOG_LPR.
 
 syslog-facility: local2
 
-# This parameter allows the card to treat hosts on other subnets as if the
-# hosts were on the card's subnet.  This parameter determines the TCP
-# Maximum Segment Size (MSS) advertised by the card to hosts on other subnets
-# and affects the card's initial receive-window size.  The card will use a
-# TCP MSS of 1460 bytes for local hosts, and 536 bytes for a non-local host.
-# The default is off, that is, the card will use the maximum packet sizes
-# only on the card's configured subnet.
+# This parameter allows the card to treat hosts on other subnets as
+# if the hosts were on the card's subnet.  This parameter determines
+# the TCP Maximum Segment Size (MSS) advertised by the card to hosts
+# on other subnets and affects the card's initial receive-window
+# size.  The card will use a TCP MSS of 1460 bytes for local hosts,
+# and 536 bytes for a non-local host.  The default is off, that is,
+# the card will use the maximum packet sizes only on the card's
+# configured subnet.
 #
-# The configuration utility does not allow access to this parameter.  If you
-# want to configure it, you must manually edit the NPI configuration file
-# and add it to the bottom of the entry for the network peripheral.
+# The configuration utility does not allow access to this parameter.
+# If you want to configure it, you must manually edit the NPI
+# configuration file and add it to the bottom of the entry for the
+# network peripheral.
 
 subnets-local: on
 
-# This parameter affects how the card handles TCP connection requests from
-# the host.  By default, the JetDirect MPS card will accept a TCP connection
-# even if the peripheral is off-line.  If this parameter is set to "on", then
-# the card will only accept a TCP connection when the peripheral is on-line.
+# This parameter affects how the card handles TCP connection requests
+# from the host.  By default, the JetDirect MPS card will accept a
+# TCP connection even if the peripheral is off-line.  If this parameter
+# is set to "on", then the card will only accept a TCP connection
+# when the peripheral is on-line.
 
 old-idle-mode: off</screen>
 </informalexample>
@@ -11153,7 +11205,7 @@ The following is a sample
 Shell Script script which you can use:
 <informalexample>
 <screen>#!/bin/sh -x
-# This script is an input filter for printcap printing on a unix machine. It
+# This script is an input filter for printing on a unix machine. It
 # uses the smbclient program to print the file to the specified smb-based
 # server and service.
 # The 'smb' printcap entry below shows how to configure LPRng
@@ -13636,9 +13688,12 @@ done
 <listitem>
 <para>Now test the YP arrangement:
 <informalexample>
-<screen><prompt>h4: {316} # </prompt> cd /var/yp; make # this should create the printcap map
-<prompt>h4: {317} # </prompt> ypcat printcap # should provide the whole normalized printcap
-<prompt>h4: {318} # </prompt> echo lp1 |/usr/lib/yp/match_printcap # yields lp1 printcap</screen>
+<screen><prompt>h4: {316} # </prompt> cd /var/yp; make
+    # this should create the printcap map
+<prompt>h4: {317} # </prompt> ypcat printcap
+    # should provide the whole normalized printcap
+<prompt>h4: {318} # </prompt> echo lp1 |/usr/lib/yp/match_printcap
+    # yields lp1 printcap</screen>
 </informalexample>
 </para>
 </listitem>
@@ -13694,34 +13749,36 @@ Subject: Re: [LPRng] ifhp with Lexmark Optra N printer
 
 On Wed, 21 Jan 1998, Simon Greaves wrote:
 
-&gt; Apologies in advance if this is way off mark, but we've been evaluating a
-&gt; commercial print charging package (Geomica) which works by talking to the
-&gt; printer in what I think is a similar way to the ifhp filters. Lexmarks are
-&gt; currently a big headache because they seem to fail to return the message
-&gt; that they have finished printing which screws things up somewhat. In our
-&gt; case, it is believed to be a problem with the Lexmark firmware which they
-&gt; are looking into.
+&gt; Apologies in advance if this is way off mark, but we've been
+&gt; evaluating a commercial print charging package (Geomica) which
+&gt; works by talking to the printer in what I think is a similar way
+&gt; to the ifhp filters. Lexmarks are currently a big headache because
+&gt; they seem to fail to return the message that they have finished
+&gt; printing which screws things up somewhat. In our case, it is believed
+&gt; to be a problem with the Lexmark firmware which they are looking
+&gt; into.
 
-There is a fix for that...it is originally from the Lexmark 4039 series,
-but it still works on the Optra S 1650 machines that we have (and should
-work on the rest of the optra line).  Just send this little chunk of
-postscript to the printer once:
+There is a fix for that...it is originally from the Lexmark 4039
+series, but it still works on the Optra S 1650 machines that we
+have (and should work on the rest of the optra line).  Just send
+this little chunk of postscript to the printer once:
 
 -----------snip----------
-%! Postscript utility file to set the 4039 printer into synchronous mode
+%! Postscript to set the 4039 printer into synchronous mode
 serverdict begin 0 exitserver
 statusdict begin true setenginesync end
 -----------snip----------
 
-Basically, it causes the printer to wait until it is finished printing
-before actually reporting that it is done.  I've got 3 Optra S printers
-running with ifhp right now with no extra options (just defaults).
+Basically, it causes the printer to wait until it is finished
+printing before actually reporting that it is done.  I've got 3
+Optra S printers running with ifhp right now with no extra options
+(just defaults).
 
----------------------------------------------------------------------
-- Matt White                         whitem@arts.usask.ca           -
-- Network Technical Support          http://arts.usask.ca/~whitem   -
-- College of Arts &amp; Science          University of Saskatchewan     -
----------------------------------------------------------------------</screen>
+-----------------------------------------------------------
+- Matt White                  whitem@arts.usask.ca
+- Network Technical Support   http://arts.usask.ca/~whitem
+- College of Arts &amp; Science  University of Saskatchewan
+-----------------------------------------------------------</screen>
 </informalexample>
 </para>
 
@@ -16005,6 +16062,14 @@ rather than start.</para>
 </listitem>
 
 <listitem>
+<para> <literal>save_on_error</literal> FLAG <emphasis>Do not delete on error</emphasis></para>
+</listitem>
+
+<listitem>
+<para> <literal>done_jobs=N</literal><emphasis>Save status of last N jobs</emphasis></para>
+</listitem>
+
+<listitem>
 <para> <literal>wait_for_eof</literal> FLAG <emphasis>Wait for EOF before closing device</emphasis></para>
 </listitem>
 
@@ -16094,9 +16159,24 @@ The device (io_fd) is then closed.</para>
 </listitem>
 
 <listitem>
-<para>If the <literal>save_when_done</literal> flag is not specified,
+<para>
+If the <literal>save_when_done</literal> flag is clear
+and the <literal>done_jobs</literal> and
+<literal>done_jobs_max_age</literal> values are zero (0), 
 the job is removed.</para>
 </listitem>
+
+<listitem>
+<para>
+If the <literal>done_jobs</literal> or
+<literal>done_jobs_max_age</literal> values are nonzero,
+the spool queue is periodically checked and for an excess number
+of jobs or jobs with old status.
+This action is suppressed if either the <literal/save_when_done/ or <literal/save_on_error/
+flag is set.
+</para>
+</listitem>
+
 
 </orderedlist>
 </para>
@@ -16123,6 +16203,14 @@ the job is removed.</para>
 
 <listitem>
 <para> <literal>save_on_error</literal> FLAG <emphasis>Do not delete on error</emphasis></para>
+</listitem>
+
+<listitem>
+<para> <literal>done_jobs=N</literal><emphasis>Save status of last N jobs</emphasis></para>
+</listitem>
+
+<listitem>
+<para> <literal>done_jobs_max_age=N</literal><emphasis>Remove status when older than N seconds</emphasis></para>
 </listitem>
 
 <listitem>
@@ -16205,7 +16293,9 @@ The job is not removed from the queue.</para>
 
 <listitem>
 <para>If the error status indicates removal,
-and the <literal>save_on_error</literal> flag is clear
+the <literal>save_on_error</literal> flag is clear,
+and the <literal>done_jobs</literal> and
+<literal>done_jobs_max_age</literal> values are zero (0), 
 then the job is removed from the spool queue.</para>
 </listitem>
 
@@ -18721,9 +18811,9 @@ The special form <literal>auth@</literal> specifies no authentication.</para>
 <para>The authenticated transfer request sent to a server has one of the
 following forms, depending on the originator:
 <informalexample>
-<screen>\008printer C user_id authtype \n     - for commands (lpq, lpc, etc.)
+<screen>\008printer C user_id authtype \n  - for commands (lpq, lpc, etc.)
 \008printer C user_id authtype size\n - for print jobs (lpr)
-\008printer F server_id authtype \n     - forwarded commands (lpq, lpc, etc.)
+\008printer F server_id authtype \n - forwarded commands (lpq, lpc, etc.)
 \008printer F server_id authtype size\n - forwarded print jobs (lpr)</screen>
 </informalexample>
 
@@ -19162,9 +19252,10 @@ and then how to configure &LPRng; to use Kerberos.</para>
 <para>The following <literal/configure/ options are used to enable
 Kerberos support:
 <informalexample>
-<screen> --enable-kerberos                 enable kerberos support
---enable-mit_kerberos4            enable MIT Kerberos 4 support
---disable-kerberos_checks         disable kerberos library location and checking for support
+<screen>
+--enable-kerberos         enable Kerberos V support
+--enable-mit_kerberos4    enable MIT Kerberos 4 support
+--disable-kerberos_checks disable Kerberos sanity checks
 </screen>
 </informalexample>
 </para>
@@ -19992,8 +20083,8 @@ For example:
 
 <informalexample>
 <screen>:as=|/usr/local/libexec/jobstart $H $n $P $k $b $t
-  /usr/local/libexec/jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
-    '-b1093' '-tNov  5 19:39:25'
+  /usr/local/libexec/jobstart '-Hh4.private' '-nroot' \
+  '-Pps' '-kcfA938h4.private' '-b1093' '-tNov  5 19:39:25'
 :ae=jobend $H $n $P $k $b $t
   jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
     '-b1093' '-tNov  5 19:39:59'</screen>
@@ -22080,9 +22171,12 @@ where
 indicates the message type.
 For example:
 <informalexample>
-<screen>dump=host=h4.private%0aprinter=t1%0aprocess=1613%0aupdate_time=1999-03-2
-  3-20:32:17.148%0avalue=queue=holdall 0%25250aprinting_aborted=0x0%25250aprinting
-  _disabled=0x0%25250aspooling_disabled=0x0%25250a%250a%0a</screen>
+<screen>
+dump=host=h4.private%0aprinter=t1%0aprocess=1613%0a
+update_time=1999-03-23-20:32:17.148%0a\
+value=queue=holdall 0%25250aprinting_aborted=0x0%25250a\
+printing_disabled=0x0%25250aspooling_disabled=\
+0x0%25250a%250a%0a</screen>
 </informalexample>
 </para>
 
@@ -22105,8 +22199,8 @@ the decoded dump message from the previous section would be:
 printer=t1
 process=1613
 update_time=1999-03-23-20:32:17.148
-value=queue=holdall 0%250aprinting_aborted=0x0%250aprinting_disabled=0x0%250aspo
-  oling_disabled=0x0%250a%0a</screen>
+value=queue=holdall 0%250aprinting_aborted=0x0%250a\
+printing_disabled=0x0%250aspooling_disabled=0x0%250a%0a</screen>
 </informalexample>
 </para>
 
@@ -22127,8 +22221,8 @@ is the value of the report.</para>
 <literal>value</literal>
 of the above report is:
 <informalexample>
-<screen>queue='holdall 0%0aprinting_aborted=0x0%0aprinting_disabled=0x0%0aspooling_dis
-  abled=0x0%0a</screen>
+<screen>queue='holdall 0%0aprinting_aborted=0x0%0aprinting_disabled=0x0%0a\
+spooling_disabled=0x0%0a</screen>
 </informalexample>
 </para>
 
@@ -22327,6 +22421,10 @@ default remote host <!-- <br> -->
 default directory for temp files <!-- <br> -->
 </entry></row><row><entry><link linkend="destinations">destinations</link></entry><entry>
 printers that a route filter may return and we should query <!-- <br> -->
+</entry></row><row><entry><link linkend="normalterm">done_jobs</link></entry><entry>
+save status for last N jobs <!-- <br> -->
+</entry></row><row><entry><link linkend="normalterm">done_jobs_max_age</link></entry><entry>
+remove status older than N seconds <!-- <br> -->
 </entry></row><row><entry><link linkend="opendevice">ff</link></entry><entry>
 string to send for a form feed <!-- <br> -->
 </entry></row><row><entry><link linkend="filteroptions">filter_ld_path</link></entry><entry>

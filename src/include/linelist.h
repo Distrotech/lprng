@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.28 2001/11/16 16:06:48 papowell Exp $
+ * $Id: linelist.h,v 1.34 2001/12/03 22:08:20 papowell Exp $
  ***************************************************************************/
 
 
@@ -16,6 +16,7 @@
  * arrays of pointers to lines
  */
 
+
 #define cval(x) (int)(*(unsigned const char *)(x))
 
 struct line_list {
@@ -24,11 +25,15 @@ struct line_list {
 	int max;		/* maximum number of entries */
 };
 
+typedef void (WorkerProc)();
+
 /*
  * data structure for job
  */
 
 struct job{
+	char sort_key[512]; /* sort key for job */
+
 	/* information about job in key=value format */
 	struct line_list info;
 
@@ -116,7 +121,7 @@ EXTERN struct line_list *Allocs[]
  */
 EXTERN char *Value_sep DEFINE( = " \t=#@" );
 EXTERN char *Whitespace DEFINE( = " \t\n\f" );
-EXTERN char *List_sep DEFINE( = "[] \t\n\f" );
+EXTERN char *List_sep DEFINE( = "[] \t\n\f," );
 EXTERN char *Linespace DEFINE( = " \t" );
 EXTERN char *File_sep DEFINE( = " \t,;:" );
 EXTERN char *Strict_file_sep DEFINE( = ";:" );
@@ -293,10 +298,8 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 	char *error, int errlen, char *esc_from_id, char *esc_to_id,
 	int *pgp_exit_code );
 void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
-int Make_lpd_call( struct line_list *passfd, struct line_list *args );
-void Do_work( struct line_list *args );
-void Lpd_worker( char **argv, int argc, int optindv  );
-int Start_logger( int log_fd );
-int Start_worker( struct line_list *parms, int fd  );
+int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args );
+void Do_work( char *name, struct line_list *args );
+int Start_worker( char *name, struct line_list *parms, int fd );
 
 #endif

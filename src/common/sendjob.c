@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.28 2001/11/16 16:06:44 papowell Exp $";
+"$Id: sendjob.c,v 1.34 2001/12/03 22:08:16 papowell Exp $";
 
 
 #include "lp.h"
@@ -92,6 +92,7 @@ int Send_job( struct job *job, struct job *logjob,
 
 
 	Set_str_value(&job->info,ERROR,0);
+	Set_flag_value(&job->info,ERROR_TIME,0);
 	/* send job to the LPD server for the RemotePrinter_DYN */
 
 	id = Find_str_value( &job->info,IDENTIFIER,Value_sep);
@@ -105,6 +106,7 @@ int Send_job( struct job *job, struct job *logjob,
 	if( error[0] ){
 		status = JFAIL;
 		Set_str_value(&job->info,ERROR,error);
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
 		error[0] = 0;
 		goto error;
 	}
@@ -112,6 +114,7 @@ int Send_job( struct job *job, struct job *logjob,
 		status = JABORT;
 		Set_str_value(&job->info,ERROR,
 			"Cannot have user filter with secure or block format transfer");
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
 		goto error;
 	}
 
@@ -122,6 +125,7 @@ int Send_job( struct job *job, struct job *logjob,
  retry_connect:
 	error[0] = 0;
 	Set_str_value(&job->info,ERROR,0);
+	Set_flag_value(&job->info,ERROR_TIME,0);
 	SETSTATUS(logjob) "connecting to '%s', attempt %d",
 		RemoteHost_DYN, errcount+1 );
 	if( (Is_server || errcount) && Network_connect_grace_DYN > 0 ){
@@ -135,6 +139,7 @@ int Send_job( struct job *job, struct job *logjob,
 		if( error[0] ){
 			status = JFAIL;
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			error[0] = 0;
 			goto error;
 		}
@@ -205,6 +210,7 @@ int Send_job( struct job *job, struct job *logjob,
 		if( (s = Find_str_value(&job->info,ERROR,Value_sep )) ){
 			SETSTATUS(logjob) "job '%s' transfer to %s@%s failed\n  %s",
 				id, RemotePrinter_DYN, RemoteHost_DYN, s );
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 		}
 		DEBUG2("Send_job: sock is %d", sock);
 		if( sock >= 0 ){
@@ -302,6 +308,7 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 					RemotePrinter_DYN, RemoteHost_DYN );
 			}
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			return(status);
 		}
 	}
@@ -367,6 +374,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 				Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 			}
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			status = JFAIL;
 			goto error;
 		}
@@ -397,6 +405,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 					RemotePrinter_DYN, RemoteHost_DYN );
 			}
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			status = JFAIL;
 			goto error;
 		}
@@ -417,6 +426,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 		"job '%s' write to temporary file failed '%s'",
 		transfername, Errormsg( err ) );
 	Set_str_value(&job->info,ERROR,error);
+	Set_flag_value(&job->info,ERROR_TIME,time(0));
 	status = JFAIL;
  error:
 	return(status);
@@ -467,6 +477,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 			SNPRINTF(error,sizeof(error))
 				"cannot open '%s' - '%s'", openname, Errormsg(err) );
 			Set_str_value(&job->info,ERROR,error);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			goto error;
 		}
 
@@ -496,6 +507,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 					Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 				}
 				Set_str_value(&job->info,ERROR,error);
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
 
@@ -533,6 +545,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 					RemotePrinter_DYN, RemoteHost_DYN );
 				}
 				Set_str_value(&job->info,ERROR,error);
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
 			SETSTATUS(logjob) "completed sending '%s' to %s@%s",
@@ -558,6 +571,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 					id, transfername );
 				status = JFAIL;
 				Set_str_value(&job->info,ERROR,error);
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
 		}
@@ -571,6 +585,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 		"job '%s' write to temporary file failed '%s'",
 		id, Errormsg( err ) );
 	Set_str_value(&job->info,ERROR,error);
+	Set_flag_value(&job->info,ERROR_TIME,time(0));
 	status = JFAIL;
 
  error:
@@ -666,6 +681,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 			Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 		}
 		Set_str_value(&job->info,ERROR,error);
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
 		return(status);
 	}
 
@@ -693,6 +709,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 				Link_err_str(status), id, RemotePrinter_DYN, RemoteHost_DYN );
 		}
 		Set_str_value(&job->info,ERROR,error);
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
 		return(status);
 	} else {
 		SETSTATUS(logjob) "completed sending '%s' to %s@%s",

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.28 2001/11/16 16:06:39 papowell Exp $";
+"$Id: getqueue.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
 
 
 /***************************************************************************
@@ -58,22 +58,23 @@
 
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
-		int only_pr_and_move, int create_db, int write_db )
+		int only_queue_process, int create_db, int write_db, int *perr, int *pdone )
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
 	struct line_list directory_files;
-	char *hf_name, *sort_key, *outstr;
-	int c, printable, held, move, p, h, m;
+	char *hf_name;
+	int c, printable, held, move, error, done, p, h, m, e, dn;
 	struct job job;
 
-	sort_key = outstr = 0;
-	c = printable = held = move = 0;
+	c = printable = held = move = error = done = 0;
 	Init_job( &job );
 	Init_line_list(&directory_files);
 	if( pprintable ) *pprintable = 0;
 	if( pheld ) *pheld = 0;
 	if( pmove ) *pmove = 0;
+	if( perr ) *perr = 0;
+	if( pdone ) *pdone = 0;
 
 	Free_line_list(sort_order);
 
@@ -116,37 +117,27 @@ int Scan_queue( struct line_list *spool_control,
 
 		/* get the data file from the control file */
 		Setup_cf_info( &job, 1 );
-		Job_printable(&job,spool_control, &p,&h,&m);
+		Job_printable(&job,spool_control, &p,&h,&m,&e,&dn);
 		if( p ) ++printable;
 		if( h ) ++held;
 		if( m ) ++move;
-
-		if( outstr ) free(outstr); outstr = 0;
-		outstr = Make_hf_image( &job );
+		if( e ) ++error;
+		if( dn ) ++done;
 
 		/* now generate the sort key */
-		if(DEBUGL4)Dump_job("Scan_queue - before Make_sort_key",&job);
-		sort_key = Make_sort_key( &job );
-		DEBUG5("Scan_queue: sort key '%s'",sort_key);
-		DEBUG4("Scan_queue: p %d, m %d, only_pr_and_move %d",
-			p, m, only_pr_and_move );
+		DEBUG4("Scan_queue: p %d, m %d, e %d, dn %d, only_queue_process %d",
+			p, m, e, dn, only_queue_process );
 		if( sort_order ){
-			if( only_pr_and_move ){
-				if( p || m ){
-					Set_str_value(sort_order,sort_key,hf_name);
-				}
-			} else {
-				Set_str_value(sort_order,sort_key,hf_name);
+			if( !only_queue_process || (p || m || e || dn) ){
+				if(DEBUGL4)Dump_job("Scan_queue - before Make_sort_key",&job);
+				Make_sort_key( &job );
+				DEBUG5("Scan_queue: sort key '%s'",job.sort_key);
+				Set_str_value(sort_order,job.sort_key,hf_name);
 			}
 		}
-
-		if(sort_key) free(sort_key); sort_key = 0;
-		if(outstr) free(outstr); outstr = 0;
 	}
 	closedir(dir);
 
-	if(sort_key) free(sort_key); sort_key = 0;
-	if(outstr) free(outstr); outstr = 0;
 	Free_job(&job);
 	Free_line_list(&directory_files);
 
@@ -157,8 +148,10 @@ int Scan_queue( struct line_list *spool_control,
 	if( pprintable ) *pprintable = printable;
 	if( pheld ) *pheld = held;
 	if( pmove ) *pmove = move;
-	DEBUG3("Scan_queue: printable %d, held %d, move %d", printable,
-		held, move );
+	if( perr ) *perr = error;
+	if( pdone ) *pdone = done;
+	DEBUG3("Scan_queue: final printable %d, held %d, move %d, error %d, done %d",
+		printable, held, move, error, done );
 	return(0);
 }
 
@@ -510,6 +503,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 			SNPRINTF(buffer,sizeof(buffer))
 				"no control file %s - %s", s, Errormsg(errno) );
 			Set_str_value(&job->info,ERROR,buffer);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
 			returnstatus = 1;
 			goto done;
 		}
@@ -562,6 +556,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 					SNPRINTF(buffer,sizeof(buffer))
 						"missing data file %s - %s", file_found, Errormsg(errno) );
 					Set_str_value(&job->info,ERROR,buffer);
+					Set_flag_value(&job->info,ERROR_TIME,time(0));
 					returnstatus = 1;
 					goto done;
 				}
@@ -825,55 +820,55 @@ void Set_spool_control( struct line_list *perm_check, const char *file,
 	if(t) free(t); t = 0;
 }
 
-char *intval( const char *key, struct line_list *list, char *cmpstr )
+void intval( const char *key, struct line_list *list, struct job *job )
 {
-	char buffer[SMALLBUFFER];
 	int i = Find_flag_value(list,key,Value_sep);
-	SNPRINTF(buffer,sizeof(buffer))"%s.0x%08x",key,i&0xffffffff);
-	DEBUG5("intval: '%s'", buffer );
-	return( safeextend3(cmpstr,"|",buffer,__FILE__,__LINE__) );
+	int len = strlen(job->sort_key);
+	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+    "|%s.0x%08x",key,i&0xffffffff);
+	DEBUG5("intval: '%s'", job->sort_key );
 }
 
-char * revintval( const char *key, struct line_list *list, char *cmpstr )
+void revintval( const char *key, struct line_list *list, struct job *job )
 {
-	char buffer[SMALLBUFFER];
 	int i = Find_flag_value(list,key,Value_sep);
-	SNPRINTF(buffer,sizeof(buffer))"%s.0x%08x",key,(~i)&0xffffffff);
-	DEBUG5("intval: '%s'", buffer );
-	return( safeextend3(cmpstr,"|",buffer,__FILE__,__LINE__) );
+	int len = strlen(job->sort_key);
+	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	"|%s.0x%08x",key,(~i)&0xffffffff);
+	DEBUG5("revintval: '%s'", job->sort_key );
 }
 
-char * strzval( const char *key, struct line_list *list, char *cmpstr )
+void strzval( const char *key, struct line_list *list, struct job *job )
 {
-	char buffer[SMALLBUFFER];
 	char *s = Find_str_value(list,key,Value_sep);
-	SNPRINTF(buffer,sizeof(buffer))"%s.%d",key,s!=0);
-	DEBUG5("strzval: '%s'", buffer );
-	return( safeextend3(cmpstr,"|",buffer,__FILE__,__LINE__) );
+	int len = strlen(job->sort_key);
+	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	"|%s.%d",key,s!=0);
+	DEBUG5("strzval: '%s'", job->sort_key );
 }
 
-char * strnzval( const char *key, struct line_list *list, char *cmpstr )
+void strnzval( const char *key, struct line_list *list, struct job *job )
 {
-	char buffer[SMALLBUFFER];
 	char *s = Find_str_value(list,key,Value_sep);
-	SNPRINTF(buffer,sizeof(buffer))"%s.%d",key,(s==0 || *s == 0));
-	DEBUG5("strzval: '%s'", buffer );
-	return( safeextend3(cmpstr,"|",buffer,__FILE__,__LINE__) );
+	int len = strlen(job->sort_key);
+	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	"|%s.%d",key,(s==0 || *s == 0));
+	DEBUG5("strnzval: '%s'", job->sort_key );
 }
 
-char * strval( const char *key, struct line_list *list, char *cmpstr,
+void strval( const char *key, struct line_list *list, struct job *job,
 	int reverse )
 {
-	char buffer[SMALLBUFFER];
 	char *s = Find_str_value(list,key,Value_sep);
+	int len = strlen(job->sort_key);
 	int c = 0;
 
 	if(s) c = cval(s);
 	if( reverse ) c = -c;
 	c = 0xFF & (-c);
-	SNPRINTF(buffer,sizeof(buffer))"%s.%02x",key,c);
-	DEBUG5("strval: '%s'", buffer );
-	return( safeextend3(cmpstr,"|",buffer,__FILE__,__LINE__) );
+	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	"|%s.%02x",key,c);
+	DEBUG5("strval: '%s'", job->sort_key );
 }
 
 
@@ -881,45 +876,41 @@ char * strval( const char *key, struct line_list *list, char *cmpstr,
  * Make_sort_key
  *   Make a sort key from the image information
  */
-char *Make_sort_key( struct job *job )
+void Make_sort_key( struct job *job )
 {
-	char *cmpstr = 0;
+	job->sort_key[0] = 0;
 	if( Order_routine_DYN ){
 #if defined(ORDER_ROUTINE)
 		extern char *ORDER_ROUTINE( struct job *job );
-		cmpstr = ORDER_ROUTINE( &job );
+		ORDER_ROUTINE( &job );
 #else
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Make_sort_key: order_routine requested and ORDER_ROUTINE undefined");
 #endif
 	} else {
 		/* first key is DONE_TIME - done jobs come last */
-		cmpstr = intval(DONE_TIME,&job->info,cmpstr);
+		intval(DONE_TIME,&job->info,job);
 		/* next key is REMOVE_TIME - removed jobs come before last */
-		cmpstr = intval(REMOVE_TIME,&job->info,cmpstr);
+		intval(REMOVE_TIME,&job->info,job);
 		/* next key is ERROR - error jobs jobs come before removed */
-		cmpstr = strzval(ERROR,&job->info,cmpstr);
+		intval(ERROR_TIME,&job->info,job);
 		/* next key is HOLD - before the error jobs  */
-		cmpstr = intval(HOLD_CLASS,&job->info,cmpstr);
-		cmpstr = intval(HOLD_TIME,&job->info,cmpstr);
+		intval(HOLD_CLASS,&job->info,job);
+		intval(HOLD_TIME,&job->info,job);
 		/* next key is MOVE - before the held jobs  */
-		cmpstr = strnzval(MOVE,&job->info,cmpstr);
+		strnzval(MOVE,&job->info,job);
 		/* now by priority */
 		if( Ignore_requested_user_priority_DYN == 0 ){
-			cmpstr = strval(PRIORITY,&job->info,cmpstr,Reverse_priority_order_DYN);
+			strval(PRIORITY,&job->info,job,Reverse_priority_order_DYN);
 		}
 		/* now we do TOPQ */
-		cmpstr = revintval(PRIORITY_TIME,&job->info,cmpstr);
+		revintval(PRIORITY_TIME,&job->info,job);
 		/* now we do FirstIn, FirstOut */
-		cmpstr = intval(JOB_TIME,&job->info,cmpstr);
-		cmpstr = intval(JOB_TIME_USEC,&job->info,cmpstr);
+		intval(JOB_TIME,&job->info,job);
+		intval(JOB_TIME_USEC,&job->info,job);
 		/* now we do by job number if two at same time (very unlikely) */
-		cmpstr = intval(NUMBER,&job->info,cmpstr);
+		intval(NUMBER,&job->info,job);
 	}
-
-	DEBUG4("Make_sort_key: cmpstr '%s'", cmpstr );
-
-	return(cmpstr);
 }
 
 /*
@@ -1405,12 +1396,12 @@ void Dump_job( char *title, struct job *job )
 
 
 void Job_printable( struct job *job, struct line_list *spool_control,
-	int *pprintable, int *pheld, int *pmove )
+	int *pprintable, int *pheld, int *pmove, int *perr, int *pdone )
 {
 	char *s;
 	char buffer[SMALLBUFFER];
 	char destbuffer[SMALLBUFFER];
-	int n, printable = 0, held = 0, move = 0, destination, destinations;
+	int n, printable = 0, held = 0, move = 0, error = 0, done = 0,destination, destinations;
 
 	if(DEBUGL4)Dump_job("Job_printable - job info",job);
 	if(DEBUGL4)Dump_line_list("Job_printable - spool control",spool_control);
@@ -1418,14 +1409,14 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	buffer[0] = 0;
 	if( job->info.count == 0 ){
 		SNPRINTF(buffer,sizeof(buffer)) "removed" );
-	} else if( Find_str_value(&job->info,ERROR,Value_sep) ){
+	} else if( (error = Find_flag_value(&job->info,ERROR_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "error" );
 	} else if( Find_flag_value(&job->info,HOLD_TIME,Value_sep) ){
 		SNPRINTF(buffer,sizeof(buffer)) "hold" );
 		held = 1;
 	} else if( Find_flag_value(&job->info,REMOVE_TIME,Value_sep) ){
 		SNPRINTF(buffer,sizeof(buffer)) "remove" );
-	} else if( Find_flag_value(&job->info,DONE_TIME,Value_sep) ){
+	} else if( (done = Find_flag_value(&job->info,DONE_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "done" );
 	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))
 		&& kill( n, 0 ) == 0 ){
@@ -1459,7 +1450,7 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 			Get_destination(job,destination);
 			if(DEBUGL4)Dump_job("Job_destination_printable - job",job);
 			destbuffer[0] = 0;
-			if( Find_str_value(&job->destination,ERROR,Value_sep) ){
+			if( Find_flag_value(&job->destination,ERROR_TIME,Value_sep) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "error" );
 			} else if( Find_flag_value(&job->destination,HOLD_TIME,Value_sep) ){
 				SNPRINTF(destbuffer,sizeof(destbuffer)) "hold" );
@@ -1507,8 +1498,10 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	if( pprintable ) *pprintable = printable;
 	if( pheld ) *pheld = held;
 	if( pmove ) *pmove = move;
-	DEBUG3("Job_printable: printable %d, held %d, move '%d', status '%s'",
-		printable, held, move, buffer );
+	if( perr ) *perr = error;
+	if( pdone ) *pdone = done;
+	DEBUG3("Job_printable: printable %d, held %d, move '%d', error '%d', done '%d', status '%s'",
+		printable, held, move, error, done, buffer );
 }
 
 int Server_active( char *file )

@@ -8,12 +8,11 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.28 2001/11/16 16:06:37 papowell Exp $";
+"$Id: accounting.c,v 1.34 2001/12/03 22:08:08 papowell Exp $";
 
 
 #include "lp.h"
 #include "accounting.h"
-#include "lpd.h"
 #include "getqueue.h"
 #include "errorcodes.h"
 #include "child.h"
@@ -22,12 +21,12 @@
 /**** ENDINCLUDE ****/
 
 /*
-Do_accounting is called with:
+ Do_accounting is called with:
    status = Do_accounting( 0, Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
   OR
    status = Do_accounting( 0, Accounting_end_DYN, job, Send_job_rw_timeout_DYN );
 
-The general approach is:
+ The general approach is:
 
   You are going to do accounting.  You either write accounting information to a
   file,  or to a program.   If the 'achk' flag is set then you write it to

@@ -8,12 +8,11 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.28 2001/11/16 16:06:42 papowell Exp $";
+"$Id: lpd_secure.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
 
 
 #include "lp.h"
-#include "lpd.h"
-#include "lpd_secure.h"
+#include "lpd_dispatch.h"
 #include "getopt.h"
 #include "getqueue.h"
 #include "proctitle.h"
@@ -26,6 +25,7 @@
 #include "globmatch.h"
 #include "lpd_jobs.h"
 #include "krb5_auth.h"
+#include "lpd_secure.h"
 
 /**** ENDINCLUDE ****/
 
@@ -362,8 +362,6 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 	DEBUGF(DRECV1)("Do_secure_work: returning %d", status );
 	return( status );
 }
-
-
 
  extern struct security ReceiveSecuritySupported[];
 

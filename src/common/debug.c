@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: debug.c,v 1.28 2001/11/16 16:06:38 papowell Exp $";
+"$Id: debug.c,v 1.34 2001/12/03 22:08:09 papowell Exp $";
 
 
 /*************************************************************
@@ -27,7 +27,7 @@
 #include "child.h"
 /**** ENDINCLUDE ****/
 
-struct keywords debug_vars[]		/* debugging variables */
+ struct keywords debug_vars[]		/* debugging variables */
  = {
 #if !defined(NODEBUG)
     { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
@@ -73,13 +73,13 @@ struct keywords debug_vars[]		/* debugging variables */
 
 /*
 
-Parse_debug (char *dbgstr, struct keywords *list, int interactive );
-Input string:  value,key=value,flag,flag@,...
+ Parse_debug (char *dbgstr, struct keywords *list, int interactive );
+ Input string:  value,key=value,flag,flag@,...
 
-1. crack the input line at the ','
-2. crack each option at = 
-3. search for key words
-4. assign value to variable
+ 1. crack the input line at the ','
+ 2. crack each option at = 
+ 3. search for key words
+ 4. assign value to variable
 
 */
 

@@ -8,19 +8,19 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getopt.c,v 1.28 2001/11/16 16:06:38 papowell Exp $";
+"$Id: getopt.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
 
 
 #include "lp.h"
 /**** ENDINCLUDE ****/
 
-int Optind;                 /* next argv to process */
-int Opterr = 1;                 /* Zero disables errors msgs */
-char *Optarg;               /* Pointer to option argument */
-char *next_opt;			    /* pointer to next option char */
-char *Name;					/* Name of program */
-char **Argv_p;
-int Argc_p;
+ int Optind;                 /* next argv to process */
+ int Opterr = 1;                 /* Zero disables errors msgs */
+ char *Optarg;               /* Pointer to option argument */
+ char *next_opt;			    /* pointer to next option char */
+ char *Name;					/* Name of program */
+ char **Argv_p;
+ int Argc_p;
 
 int Getopt (int argc, char *argv[], char *optstring)
 {

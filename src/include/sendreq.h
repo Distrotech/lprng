@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: sendreq.h,v 1.28 2001/11/16 16:06:51 papowell Exp $
+ * $Id: sendreq.h,v 1.34 2001/12/03 22:08:25 papowell Exp $
  ***************************************************************************/
 
 
@@ -17,7 +17,7 @@ int Send_request(
 	int class,					/* 'Q'= LPQ, 'C'= LPC, M = lprm */
 	int format,					/* X for option */
 	char **options,				/* options to send */
-	int connect_tmout,		/* timeout on connection */
+	int connnect_timeout,		/* timeout on connection */
 	int transfer_timeout,		/* timeout on transfer */
 	int output					/* output on this FD */
 	);

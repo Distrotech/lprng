@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: stty.h,v 1.28 2001/11/16 16:06:52 papowell Exp $
+ * $Id: stty.h,v 1.34 2001/12/03 22:08:26 papowell Exp $
  ***************************************************************************/
 
 
@@ -13,7 +13,8 @@
 #define _STTY_H_ 1
 
 /* PROTOTYPES */
-
+void Do_stty( int fd );
+void Do_stty( int fd );
 void Do_stty( int fd );
 
 #endif

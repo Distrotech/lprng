@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.28 2001/11/16 16:06:46 papowell Exp $";
+"$Id: vars.c,v 1.34 2001/12/03 22:08:18 papowell Exp $";
 
 
 /* force local definitions */
@@ -75,6 +75,12 @@ Put all of the variables in a separate file.
 #endif
 #if !defined(GROUPID)
 #error Missing GROUPID definition
+#endif
+#if !defined(DONE_JOBS)
+#error Missing DONE_JOBS definition
+#endif
+#if !defined(DONE_JOBS_MAX_AGE)
+#error Missing DONE_JOBS_MAX_AGE definition
 #endif
 
 /*
@@ -187,6 +193,10 @@ struct keywords Pc_var_list[] = {
 { "destinations", 0, STRING_K, &Destinations_DYN,0,0},
    /* allow LPR to make direct socket connection to printer */
 { "direct", 0, FLAG_K, &Direct_DYN,0,0},
+   /* keep the last NN done jobs for status purposes */
+{ "done_jobs", 0, INTEGER_K, &Done_jobs_DYN,0,0,"=" DONE_JOBS},
+   /* keep done jobs for at most max age seconds */
+{ "done_jobs_max_age", 0, INTEGER_K, &Done_jobs_max_age_DYN,0,0,"=" DONE_JOBS_MAX_AGE},
    /* drop root permissions after binding to listening port */
 { "drop_root", 0, FLAG_K, &Drop_root_DYN,0,0},
    /* exit linger timeout to wait for socket to close */
@@ -391,10 +401,10 @@ struct keywords Pc_var_list[] = {
 { "remove_z", 0, STRING_K, &Remove_Z_DYN,0,0},
    /*  report server as this value for LPQ status */
 { "report_server_as", 0,  STRING_K,  &Report_server_as_DYN,0,0},
-   /* require default queue to be explicitly set */
-{ "require_explicit_q", 0, FLAG_K, &Require_explicit_Q_DYN,0,0,"0"},
    /*  client requires lpd.conf, printcap */
 { "require_configfiles", 0,  FLAG_K,  &Require_configfiles_DYN,0,0,"=" REQUIRE_CONFIGFILES},
+   /* require default queue to be explicitly set */
+{ "require_explicit_q", 0, FLAG_K, &Require_explicit_Q_DYN,0,0,"0"},
    /*  retry on ECONNREFUSED error */
 { "retry_econnrefused", 0,  FLAG_K,  &Retry_ECONNREFUSED_DYN,0,0,"1"},
    /*  retry making connection even when link is down */
@@ -407,6 +417,8 @@ struct keywords Pc_var_list[] = {
 { "reverse_lpq_status", 0,  STRING_K,  &Reverse_lpq_status_DYN,0,0},
    /*  reverse priority order, z-aZ-A, i.e.- A is highest, z is lowest */
 { "reverse_priority_order", 0,  FLAG_K,  &Reverse_priority_order_DYN,0,0},
+   /*  restrict queue use to members of specified user groups */
+{ "rg", 0,  STRING_K,  &RestrictToGroupMembers_DYN,0,0},
    /*  remote-queue machine (hostname) (with rp) */
 { "rm", 0,  STRING_K,  &RemoteHost_DYN,0,0},
    /*  routing filter, returns destinations */

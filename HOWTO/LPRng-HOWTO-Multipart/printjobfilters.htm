@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 16 Nov 2001
-          (For LPRng-3.8.1)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 3 Dec 2001
+          (For LPRng-3.8.2)</th>
         </tr>
 
         <tr>
@@ -93,7 +93,7 @@
       specification:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2124"></a>
+        <a name="AEN2129"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :filter=/usr/local/lib/filters/ifhp
@@ -113,7 +113,7 @@
       class="FILENAME">/tmp/testf</tt> file as shown below.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2133"></a>
+        <a name="AEN2138"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # /tmp/testf - test filter for LPRng
@@ -156,7 +156,7 @@
       <p>We can test our script, with the results shown below:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2152"></a>
+        <a name="AEN2157"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {163} %</tt> <tt class=
 "USERINPUT"><b>chmod 755 /tmp/testf</b></tt>
@@ -184,7 +184,7 @@
       restart the <b class="APPLICATION">lpd</b> server.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2163"></a>
+        <a name="AEN2168"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -199,7 +199,7 @@
       "FILENAME">/tmp/hi</tt> file and observe the results:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2167"></a>
+        <a name="AEN2172"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {165} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -216,13 +216,15 @@
      Status: opening device '/tmp/lp' at 21:39:21.909
      Status: printing job 'papowell@h4+26681' at 21:39:21.909
      Status: no banner at 21:39:21.909
-     Status: printing data file 'dfA026681h4.private', size 3, IF filter 'testf' at
-    21:39:21.909
-     Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04
-    -11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/v
-    ar/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 -kcfA026681h
-    4.private -l66 -npapowell -sstatus -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct'
-    at 21:39:21.914
+     Status: printing data file 'dfA026681h4.private', size 3, \
+        IF filter 'testf' at 21:39:21.909
+     Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+26681 \
+         -CA -D2000-04 -11-21:39:21.877 -Ff -Hh4.private -J/tmp/hi \
+          -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
+          -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 \
+          -kcfA026681h4.private -l66 -npapowell -sstatus \
+          -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct' \
+           at 21:39:21.914
      Status: IF filter finished at 21:39:22.070
      Status: printing done 'papowell@h4+26681' at 21:39:22.070
      Status: accounting at end at 21:39:22.070
@@ -232,10 +234,11 @@
      Status: job 'papowell@h4+26681' removed at 21:39:22.085
     <tt class="PROMPT">h4: {168} %</tt> <tt class=
 "USERINPUT"><b>more /tmp/lp</b></tt>
-    TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04-11-21:39:21.877 -Ff
-    -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp
-    -edfA026681h4.private -f/tmp/hi -hh4.private -j026681 -kcfA026681h4.private
-    -l66 -npapowell -sstatus -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct
+    TESTF /tmp/testf -Apapowell@h4+26681 -CA -D2000-04-11-21:39:21.877 \
+     -Ff -Hh4.private -J/tmp/hi -Lpapowell -Plp -Qlp -aacct -b3 \
+     -d/var/tmp/LPD/lp -edfA026681h4.private -f/tmp/hi -hh4.private \
+     -j026681 -kcfA026681h4.private -l66 -npapowell -sstatus \
+     -t2000-04-11-21:39:21.000 -w80 -x0 -y0 acct
     ENV
     USER=papowell
     LD_LIBRARY_PATH=/lib:/usr/lib:/usr/5lib:/usr/ucblib
@@ -320,7 +323,7 @@
         control file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2201"></a>
+          <a name="AEN2206"></a>
 <pre class="SCREEN">
     Hh4.private
     Ppapowell
@@ -509,7 +512,7 @@
         starting with upper case letters:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2302"></a>
+          <a name="AEN2307"></a>
 <pre class="SCREEN">
     /tmp/testf -Apapowell@h4+26681 -CA \
        -D2000-04-11-21:39:21.877 -Ff -Hh4.private ....
@@ -531,7 +534,7 @@
         following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2308"></a>
+          <a name="AEN2313"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -547,7 +550,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2313"></a>
+          <a name="AEN2318"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {169} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -571,7 +574,7 @@
         the following format:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2324"></a>
+          <a name="AEN2329"></a>
 <pre class="SCREEN">
     Option    Value Expansion
     $X        -X&lt;value&gt;
@@ -615,7 +618,7 @@
         shown below.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2338"></a>
+          <a name="AEN2343"></a>
 <pre class="SCREEN">
     printcap:
     lp:sd=/var/spool/lpd/%P
@@ -649,7 +652,7 @@
         the printcap entry to have the following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2350"></a>
+          <a name="AEN2355"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -666,7 +669,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2355"></a>
+          <a name="AEN2360"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {175} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -699,7 +702,7 @@
         using:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2371"></a>
+          <a name="AEN2376"></a>
 <pre class="SCREEN">
     ${shell} -c "( ${if} )"
 </pre>
@@ -713,7 +716,7 @@
         printcap entry to have the following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2375"></a>
+          <a name="AEN2380"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -729,7 +732,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2380"></a>
+          <a name="AEN2385"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {178} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -739,7 +742,8 @@
 "USERINPUT"><b>lpq -llll</b></tt>
     Printer: lp@h4
      ....
-     Status: printing data file 'dfA018881h4.private', size 3, IF filter 'echo' at 09:22:11.476
+     Status: printing data file 'dfA018881h4.private', size 3, \
+       IF filter 'echo' at 09:22:11.476
      Status: IF filter msg - 'TESTF /tmp/testf' at 09:22:11.510
      Status: IF filter finished at 09:22:11.514
 </pre>
@@ -751,7 +755,7 @@
         we find:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2390"></a>
+          <a name="AEN2395"></a>
 <pre class="SCREEN">
     PREAMBLE
     TESTF /tmp/testf
@@ -774,7 +778,7 @@
         contents, then you will see:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2393"></a>
+          <a name="AEN2398"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -790,8 +794,9 @@
      Status: IF filter msg - 'TESTF /tmp/testf -Apapowell@h4+18941 \
        -CA -D2000-04-29-09:27:30.700 -Ff -Hh4.private -J/tmp/hi \
        -Lpapowell -Plp -Qlp -aacct -b3 -d/var/tmp/LPD/lp \
-       -edfA018941h4.private -f/tmp/hi -hh4.private -j018941 -kcfA018941h4.private \
-       -l66 -npapowell -sstatus -t2000-04-29-09:27:30.864 -w80 -x0 -y0 acct' at 09:27:30.879
+       -edfA018941h4.private -f/tmp/hi -hh4.private -j018941 \
+       -kcfA018941h4.private -l66 -npapowell -sstatus \
+       -t2000-04-29-09:27:30.864 -w80 -x0 -y0 acct' at 09:27:30.879
 </pre>
         </div>
         <br>
@@ -804,7 +809,7 @@
         and execute the following commands:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2401"></a>
+          <a name="AEN2406"></a>
 <pre class="SCREEN">
     printcap:
       lp:sd=/var/spool/lpd/%P
@@ -866,7 +871,7 @@
         file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2418"></a>
+          <a name="AEN2423"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {187} %</tt> <tt class=
 "USERINPUT"><b>cat /tmp/lp</b></tt>
@@ -991,7 +996,7 @@
         replace it with the following:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2461"></a>
+          <a name="AEN2466"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # this is an example of how to use /bin/sh and LPRng
@@ -1113,7 +1118,7 @@
         "FILENAME">/tmp/lp</tt>:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2466"></a>
+          <a name="AEN2471"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {188} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -1180,7 +1185,7 @@
         information in Perl:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2491"></a>
+          <a name="AEN2496"></a>
 <pre class="SCREEN">
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
@@ -1330,7 +1335,7 @@
         job control file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2541"></a>
+          <a name="AEN2546"></a>
 <pre class="SCREEN">
     Hh4.private
     Ppapowell
@@ -1520,7 +1525,7 @@
         selection.</p>
 
         <div class="INFORMALTABLE">
-          <a name="AEN2647"></a>
+          <a name="AEN2652"></a>
 
           <table border="1" class="CALSTABLE">
             <thead>

@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.28 2001/11/16 16:06:49 papowell Exp $
+ * $Id: lp.h,v 1.34 2001/12/03 22:08:20 papowell Exp $
  ***************************************************************************/
 
 
@@ -111,14 +111,20 @@ EXTERN uid_t UID_root;     /* UID is root */
 EXTERN gid_t DaemonGID;    /* Daemon GID */
 EXTERN int Max_fd DEFINE(=4);	   /* Maximum FD opened */
 
+EXTERN char* Lpd_port_arg;	/* command line port value */
+
 extern void Max_open(int fd);
 
+
+#if 0
+typepdef void (*WorkerProc)( struct line_list *args );
 struct call_list{
-	const char * *id;
+	const char *id;
 	void (*p)( struct line_list *args );
 };
-
 extern struct call_list Calls[];
+#endif
+
 
 
 #ifdef HAVE_STDARGS
@@ -310,6 +316,8 @@ EXTERN char* Default_priority_DYN;	/* default priority */
 EXTERN char* Default_remote_host_DYN;
 EXTERN char* Default_tmp_dir_DYN;	/* default temporary file directory */
 EXTERN char* Destinations_DYN; /* printers that a route filter may return and we should query */
+EXTERN int   Done_jobs_DYN;        /* keep the last NN done jobs */
+EXTERN int   Done_jobs_max_age_DYN; /* keep the done jobs for at least max age seconds */
 EXTERN int Direct_DYN;		/* allow LPR to send jobs to a socket */
 EXTERN int Exit_linger_timeout_DYN;	/* we set this timeout on all of the sockets */
 EXTERN int FF_on_close_DYN; /* print a form feed when device is closed */
@@ -421,6 +429,7 @@ EXTERN char* Remove_Z_DYN; /* remove -Z options on outgoing or filter*/
 EXTERN char* Report_server_as_DYN; /* report server name as this value */
 EXTERN int Require_configfiles_DYN; /* require lpd.conf, printcap, lpd.perms files */
 EXTERN int Require_explicit_Q_DYN; /* require default queue to be explicitly defined */
+EXTERN char* RestrictToGroupMembers_DYN;	/* restrict to group members */
 EXTERN int Retry_ECONNREFUSED_DYN; /* retry on ECONNREFUSED  */
 EXTERN int Retry_NOLINK_DYN; /* retry on link connection failure */
 EXTERN char* Return_short_status_DYN;	/* return short status */

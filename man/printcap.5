@@ -1,4 +1,4 @@
-.ds VE LPRng-3.8.1
+.ds VE LPRng-3.8.2
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -159,7 +159,7 @@ achk	D	bool false
 				destination a resply will be read.  The value of the
 				reply determines how the job is to be handled. 
 ae	D	str		accounting format for end of job or a program to run
-                to record accounting information (see also af, la, ar
+				to record accounting information (see also af, la, ar
 				and Accounting).
 af	D	str	NULL
 				accounting file, filter, or remote accounting server
@@ -196,7 +196,7 @@ ar	D	bool	true	write remote transfer accounting (if af, and as/ae set)
 architecture	A	str	(compile time)
 				architecture the software was compiled for. (Obsolete.)
 as	D	str		accounting format for start of job or a program to run
-                to record accounting information (see also af, la, ar
+				to record accounting information (see also af, la, ar
 				and Accounting).
 auth	R	str	NULL
 				client to server authentication type
@@ -272,6 +272,10 @@ destinations	D	str	NULL
 				find a job that has been processed by a router
 				script (see README.routing)
 df	D	str	NULL	tex data filter (DVI format)
+done_jobs	D	num	1
+				retain status for last N jobs
+done_jobs_max_age	num	0
+				remove status older than N seconds (0 - no removal)
 exit_linger_timeout	A	num	10
 				socket SO_LINGER timeout value
 fd	D	bool	false	if true, no forwarded jobs accepted
@@ -508,6 +512,9 @@ reverse_lpq_status	D	str	NULL
 reverse_priority_order	D	bool	false
 				Make highest priority A, lowest Z
 rf	D	str	NULL	filter for printing FORTRAN style text files
+rg	A	str	NULL	(restrict to group members)
+				Restrict use of queue to users which are members of
+				specified groups.
 rm	A	str	NULL	remote-queue machine (hostname) (with rp)
 router	D	str	NULL	script that dynamically re-routes a job
 				(see README.routing)

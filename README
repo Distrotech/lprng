@@ -12,9 +12,11 @@ Patrick Powell
 
 + INSTALL         - installation instructions
 
-+ HOWTO/LPRng-HOWTO.html - the LPRng HOWTO - provides answers
-  to many questions and much of the information that was
-  previously in README files.
++ HOWTO/LPRng-HOWTO.html - the LPRng HOWTO - the LPRng
+  documentation.
+
++ PrintingCookbook - a set of 'printing recipes' or setups and
+     procedures that are commonly encountered.
 
 OVERVIEW
 

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.8.1
+.ds VE LPRng-3.8.2
 .TH LPC 1 \*(VE "LPRng"
 .ig
 lpc.1,v 3.36 1998/03/29 18:37:49 papowell Exp
@@ -260,7 +260,7 @@ Action: updates job holdfile
 field with time that job was held.
 A 0 value release job for printing.
 .TP
-holdall { all | printer* }
+holdall { all | printer ... }
 .br
 Turn on automatic job holding of new jobs.
 New jobs will be marked as held,
@@ -310,7 +310,7 @@ program.
 Not all options are supported - this form requires
 the printer name and jobid to be specified explicitly.
 .TP
-move printer { jobid }  destinationPrinter
+move printer jobid  destinationPrinter
 .br
 Send the specified jobs to the destination printer and remove them
 from the printer queue.

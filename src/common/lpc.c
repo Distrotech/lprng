@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
+"$Id: lpc.c,v 1.34 2001/12/03 22:08:12 papowell Exp $";
 
 
 /***************************************************************************
@@ -422,49 +422,50 @@ void Get_parms(int argc, char *argv[] )
 }
 
  char *msg[] ={
-N_("usage: %s [-a][-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]\n"),
-N_(" with no command, reads from STDIN\n"),
-N_("  -a           - alias for -Pall\n"),
-N_("  -Ddebuglevel - debug level\n"),
-N_("  -Pprinter    - printer or printer@host\n"),
-N_("  -Shost       - connect to lpd server on host\n"),
-N_("  -Uuser       - identify command as coming from user\n"),
-N_("  -V           - increase information verbosity\n"),
-N_(" commands:\n"),
-N_(" active    (printer[@host])        - check for active server\n"),
-N_(" abort     (printer[@host] | all)  - stop server\n"),
-N_(" class     printer[@host] (class | off)      - show/set class printing\n"),
-N_(" disable   (printer[@host] | all)  - disable queueing\n"),
-N_(" debug     (printer[@host] | all) debugparms - set debug level for printer\n"),
-N_(" down      (printer[@host] | all)  - disable printing and queueing\n"),
-N_(" enable    (printer[@host] | all)  - enable queueing\n"),
-N_(" flush     (printer[@host] | all)  - flush cached status\n"),
-N_(" hold      (printer[@host] | all) (name[@host] | job | all)*   - hold job\n"),
-N_(" holdall   (printer[@host] | all)  - hold all jobs on\n"),
-N_(" kill      (printer[@host] | all)  - stop and restart server\n"),
-N_(" lpd       (printer[@host]) - get LPD PID \n"),
-N_(" lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke LPQ\n"),
-N_(" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke LPRM\n"),
-N_(" msg printer message text  - set status message\n"),
-N_(" move printer (user|jobid)* target - move jobs to new queue\n"),
-N_(" noholdall (printer[@host] | all)  - hold all jobs off\n"),
-N_(" printcap  (printer[@host] | all)  - report printcap values\n"),
-N_(" quit                              - exit LPC\n"),
-N_(" redirect  (printer[@host] | all) (printer@host | off )*       - redirect jobs\n"),
-N_(" redo      (printer[@host] | all) (name[@host] | job | all)*   - release job\n"),
-N_(" release   (printer[@host] | all) (name[@host] | job | all)*   - release job\n"),
-N_(" reread    (printer[@host])        - LPD reread database information\n"),
-N_(" start     (printer[@host] | all)  - start printing\n"),
-N_(" status    (printer[@host] | all)  - status of printers\n"),
-N_(" stop      (printer[@host] | all)  - stop  printing\n"),
-N_(" topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder job\n"),
-N_(" up        (printer[@host] | all) - enable printing and queueing\n"),
-N_("   diagnostic:\n"),
-N_("      defaultq               - show default queue for LPD server\n"),
-N_("      defaults               - show default configuration values\n"),
-N_("      lang                   - show current i18n (iNTERNATIONALIZATIONn) support\n"),
-N_("      client (printer | all) - client config and printcap information\n"),
-N_("      server (printer | all) - server config and printcap\n"),
+ N_("usage: %s [-a][-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]\n"),
+ N_(" with no command, reads from STDIN\n"),
+ N_("  -a           - alias for -Pall\n"),
+ N_("  -Ddebuglevel - debug level\n"),
+ N_("  -Pprinter    - printer\n"),
+ N_("  -Pprinter@host - printer on lpd server on host\n"),
+ N_("  -Shost       - connect to lpd server on host\n"),
+ N_("  -Uuser       - identify command as coming from user\n"),
+ N_("  -V           - increase information verbosity\n"),
+ N_(" commands:\n"),
+ N_(" active    (printer[@host])        - check for active server\n"),
+ N_(" abort     (printer[@host] | all)  - stop server\n"),
+ N_(" class     printer[@host] (class | off)      - show/set class printing\n"),
+ N_(" disable   (printer[@host] | all)  - disable queueing\n"),
+ N_(" debug     (printer[@host] | all) debugparms - set debug level for printer\n"),
+ N_(" down      (printer[@host] | all)  - disable printing and queueing\n"),
+ N_(" enable    (printer[@host] | all)  - enable queueing\n"),
+ N_(" flush     (printer[@host] | all)  - flush cached status\n"),
+ N_(" hold      (printer[@host] | all) (name[@host] | job | all)*   - hold job\n"),
+ N_(" holdall   (printer[@host] | all)  - hold all jobs on\n"),
+ N_(" kill      (printer[@host] | all)  - stop and restart server\n"),
+ N_(" lpd       (printer[@host])        - get LPD PID \n"),
+ N_(" lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke LPQ\n"),
+ N_(" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke LPRM\n"),
+ N_(" msg       printer message text  - set status message\n"),
+ N_(" move      printer (user|jobid)* target - move jobs to new queue\n"),
+ N_(" noholdall (printer[@host] | all)  - hold all jobs off\n"),
+ N_(" printcap  (printer[@host] | all)  - report printcap values\n"),
+ N_(" quit                              - exit LPC\n"),
+ N_(" redirect  (printer[@host] | all) (printer@host | off )*       - redirect jobs\n"),
+ N_(" redo      (printer[@host] | all) (name[@host] | job | all)*   - reprint jobs\n"),
+ N_(" release   (printer[@host] | all) (name[@host] | job | all)*   - release jobs\n"),
+ N_(" reread                            - LPD reread database information\n"),
+ N_(" start     (printer[@host] | all)  - start printing\n"),
+ N_(" status    (printer[@host] | all)  - status of printers\n"),
+ N_(" stop      (printer[@host] | all)  - stop  printing\n"),
+ N_(" topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder jobs\n"),
+ N_(" up        (printer[@host] | all) - enable printing and queueing\n"),
+ N_("   diagnostic:\n"),
+ N_("      defaultq               - show default queue for LPD server\n"),
+ N_("      defaults               - show default configuration values\n"),
+ N_("      lang                   - show current i18n (iNTERNATIONALIZATIONn) support\n"),
+ N_("      client (printer | all) - client config and printcap information\n"),
+ N_("      server (printer | all) - server config and printcap\n"),
 	0} ;
 
 void use_msg(void)
@@ -484,12 +485,3 @@ void usage(void)
 	use_msg();
 	exit(1);
 }
-void Dispatch_input(int *talk, char *input ){}
-
-/*
- * Calls[] = list of dispatch functions 
- */
-
- struct call_list Calls[] = {
-	{0,0}
-};

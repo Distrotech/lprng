@@ -8,11 +8,9 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.28 2001/11/16 16:06:41 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.34 2001/12/03 22:08:13 papowell Exp $";
 
 #include "lp.h"
-#include "lpd.h"
-
 #include "accounting.h"
 #include "child.h"
 #include "errorcodes.h"
@@ -200,13 +198,13 @@ int cmp_server( const void *left, const void *right, const void *arg )
 }
 
 
-int Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time )
+void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time )
 {
-	int printable, held, move, status;
+	int printable, held, move, err, done;
 	char *path;
 	char buffer[SMALLBUFFER];
 
-	printable = held = move = status = 0;
+	printable = held = move = err = done = 0;
 
 	DEBUG1("Get_subserver_pc: '%s'", printer );
 	buffer[0] = 0;
@@ -224,16 +222,21 @@ int Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_
 	Update_spool_info( subserver_info );
 
 	DEBUG1("Get_subserver_pc: scanning '%s'", Spool_dir_DYN );
-	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, 0, 0);
+	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, 0, 0,&err, &done);
 	Set_flag_value(subserver_info,PRINTABLE,printable);
 	Set_flag_value(subserver_info,HELD,held);
 	Set_flag_value(subserver_info,MOVE,move);
 	Set_flag_value(subserver_info,DONE_TIME,done_time);
+	if( !(Save_when_done_DYN || Save_on_error_DYN )
+		&& (Done_jobs_DYN || Done_jobs_max_age_DYN)
+		&& (err || done ) ){
+		Set_flag_value(subserver_info,DONE_REMOVE,1);
+	}
 
-	DEBUG1("Get_subserver_pc: printable %d, held %d, move %d, fowarding '%s'",
-		printable, held, move, Find_str_value(subserver_info,FORWARDING,Value_sep) );
-
-	return(status);
+	DEBUG1("Get_subserver_pc: printable %d, held %d, move %d, done_remove %d, fowarding '%s'",
+		printable, held, move,
+		Find_flag_value(subserver_info,DONE_REMOVE,Value_sep),
+		Find_str_value(subserver_info,FORWARDING,Value_sep) );
 }
 
 /***************************************************************************
@@ -262,7 +265,7 @@ void Get_subserver_info( struct line_list *order,
 	char *list, char *old_order)
 {
 	struct line_list server_order, server, *pl;
-	int i, j;
+	int i;
 	char *s;
 
 	Init_line_list(&server_order);
@@ -274,7 +277,6 @@ void Get_subserver_info( struct line_list *order,
 	if(DEBUGL1)Dump_line_list("Get_subserver_info - starting",&server_order);
 
 	/* get the info of printers */
-	pl = 0;
 	for( i = 0; i < server_order.count; ++i ){
 		s = server_order.list[i];
 		DEBUG1("Get_subserver_info: doing '%s'",s);
@@ -282,19 +284,14 @@ void Get_subserver_info( struct line_list *order,
 			DEBUG1("Get_subserver_info: already done '%s'",s);
 			continue;
 		}
-		if( pl == 0 ) pl = malloc_or_die(sizeof(pl[0]),__FILE__,__LINE__);
+		pl = malloc_or_die(sizeof(pl[0]),__FILE__,__LINE__);
 		Init_line_list(pl);
-		if( Get_subserver_pc( s, pl, i+1 ) ){
-			Free_line_list( pl );
-			free(pl); pl = 0;
-		} else {
-			Check_max(order,1);
-			DEBUG1("Get_subserver_info: adding to list '%s' at %d",s,order->count);
-			order->list[order->count++] = (char *)pl;
-			Set_str_value(&server,s,s);
-			pl = 0;
-		}
-		++j;
+		Get_subserver_pc( s, pl, i+1 );
+		Check_max(order,1);
+		DEBUG1("Get_subserver_info: adding to list '%s' at %d",s,order->count);
+		order->list[order->count++] = (char *)pl;
+		Set_str_value(&server,s,s);
+		pl = 0;
 	}
 	Free_line_list(&server_order);
 	Free_line_list(&server);
@@ -365,7 +362,7 @@ int Do_queue_jobs( char *name, int subserver )
 	int i, j, mod, fd, pid, printable, held, move, destinations,
 		destination, use_subserver, job_to_do, working, printing_enabled,
 		all_done, fail, job_index, change, in_tempfd, out_tempfd, len,
-		chooser_did_not_find_server;
+		chooser_did_not_find_server, error, done, done_remove, check_for_done;
 	struct line_list servers, tinfo, *sp, *datafile, chooser_list, chooser_env;
 	plp_block_mask oblock;
 	struct job job;
@@ -539,7 +536,10 @@ int Do_queue_jobs( char *name, int subserver )
 			change = Find_flag_value(sp,CHANGE,Value_sep);
 			DEBUG1("Do_queue_jobs: subserver '%s', printable %d, move %d, forwarding '%s'",
 				pr, printable, move, forwarding );
-			if( printable || move || change || forwarding ){
+			/* now see if we need to clean up the old jobs */
+			done_remove = Find_flag_value(sp,DONE_REMOVE,Value_sep);
+
+			if( printable || move || change || forwarding || done_remove ){
 				pid = Fork_subserver( &servers, i, 0 );
 			}
 			Set_flag_value(sp,CHANGE,0);
@@ -553,13 +553,13 @@ int Do_queue_jobs( char *name, int subserver )
 		LOGDEBUG("Do_queue_jobs: after subservers next fd %d",fdx);close(fdx);};
 	/* get new job values */
 	if( Scan_queue( &Spool_control, &Sort_order,
-			&printable, &held, &move, 1, 0, 0 ) ){
+			&printable, &held, &move, 1, 0, 0, &error, &done ) ){
 		LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 			Spool_dir_DYN );
 	}
 
-	DEBUG1( "Do_queue_jobs: printable %d, held %d, move %d",
-		printable, held, move );
+	DEBUG1( "Do_queue_jobs: printable %d, held %d, move %d, err %d, done %d",
+		printable, held, move, error, done );
 
 	if(DEBUGL1){ i = dup(0);
 		LOGDEBUG("Do_queue_jobs: after Scan_queue next fd %d", i); close(i); }
@@ -600,6 +600,8 @@ int Do_queue_jobs( char *name, int subserver )
 
 
 	Free_job(&job);
+
+	check_for_done = 1;
 	
 	while(1){
 		DEBUG1( "Do_queue_jobs: MAIN LOOP" );
@@ -613,16 +615,17 @@ int Do_queue_jobs( char *name, int subserver )
 
 		DEBUG1( "Do_queue_jobs: Susr1 before scan %d", Susr1 );
 		while( Susr1 ){
+			Susr1 = 0;
 			DEBUG1( "Do_queue_jobs: rescanning" );
 
 			Get_spool_control( Queue_control_file_DYN, &Spool_control);
 			if( Scan_queue( &Spool_control, &Sort_order,
-					&printable, &held, &move, 1, 0, 0 ) ){
+					&printable, &held, &move, 1, 0, 0, &error, &done ) ){
 				LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 					Spool_dir_DYN );
 			}
-			DEBUG1( "Do_queue_jobs: printable %d, held %d, move %d",
-				printable, held, move );
+			DEBUG1( "Do_queue_jobs: printable %d, held %d, move %d, error %d, done %d",
+				printable, held, move, error, done );
 
 			for( i = 0; i < servers.count; ++i ){
 				sp = (void *)servers.list[i];
@@ -637,16 +640,26 @@ int Do_queue_jobs( char *name, int subserver )
 			if(DEBUGL1) Dump_subserver_info( "Do_queue_jobs - rescan",
 				&servers );
 
-			Susr1 = 0;
 			/* check for changes to spool control information */
 			plp_unblock_all_signals( &oblock);
 			plp_set_signal_mask( &oblock, 0);
 			DEBUG1( "Do_queue_jobs: Susr1 at end of scan %d", Susr1 );
+			/* now check to see if you remove jobs */
+			check_for_done = 0;
+			if( !(Save_when_done_DYN || Save_on_error_DYN )
+				&& (Done_jobs_DYN || Done_jobs_max_age_DYN)
+				&& (error || done) ){
+				check_for_done = 1;
+			}
 		}
 
 		if(DEBUGL4) Dump_line_list("Do_queue_jobs - sort order printable",
 			&Sort_order );
 
+		if( check_for_done ){
+			Remove_done_jobs();
+			check_for_done = 0;
+		}
 		/* make sure you can print */
 		printing_enabled
 			= !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
@@ -694,14 +707,15 @@ int Do_queue_jobs( char *name, int subserver )
 
 			/* get printable status */
 			Setup_cf_info( &job, 1 );
-			Job_printable(&job,&Spool_control,&printable,&held,&move);
+			Job_printable(&job,&Spool_control,&printable,&held,&move,&error,&done);
 			if( (!(printable && (printing_enabled || forwarding)) && !move) || held ){
 				DEBUG3("Do_queue_jobs: [%d] not processable", job_index );
-				free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
+				/* free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0; */
 				continue;
 			}
 			if( Check_print_perms(&job) == P_REJECT ){
 				Set_str_value(&job.info,ERROR,"no permission to print");
+				Set_flag_value(&job.info,ERROR_TIME,time(0));
 				if( Set_hold_file( &job, 0, 0 ) ){
 					/* you cannot update hold file!! */
 					setstatus( &job, _("cannot update hold file for '%s'"),
@@ -710,11 +724,11 @@ int Do_queue_jobs( char *name, int subserver )
 						_("Do_queue_jobs: cannot update hold file for '%s'"), 
 						id);
 				}
-				if( !Save_on_error_DYN ){
+				if( !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
 					setstatus( &job, _("removing job '%s' - no permissions"), id);
 					Remove_job( &job );
+					free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 				}
-				free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 				continue;
 			}
 
@@ -734,7 +748,7 @@ int Do_queue_jobs( char *name, int subserver )
 						++all_done;
 						continue;
 					}
-					if( Find_str_value(&job.destination,ERROR,Value_sep)
+					if( Find_flag_value(&job.destination,ERROR_TIME,Value_sep)
 						|| Find_flag_value(&job.destination,HOLD_TIME,Value_sep) ){
 						continue;
 					}
@@ -1059,6 +1073,7 @@ int Do_queue_jobs( char *name, int subserver )
 				SNPRINTF(buffer,sizeof(buffer))"cannot copy '%s' to subserver '%s' queue directory '%s'",
 					id, pr, sd );
 				Set_str_value(&job.info,ERROR,buffer);
+				Set_flag_value(&job.info,ERROR_TIME,time(0));
 				setstatus(&job, "%s", buffer);
 				path = Find_str_value(&jcopy.info,OPENNAME,Value_sep);
 				if( path ) unlink(path);
@@ -1097,6 +1112,7 @@ int Do_queue_jobs( char *name, int subserver )
 				SNPRINTF(buffer,sizeof(buffer))"transfer '%s' to subserver '%s' failed - %s",
 					id, pr, errormsg );
 				Set_str_value(&job.info,ERROR,buffer);
+				Set_flag_value(&job.info,ERROR_TIME,time(0));
 				setstatus(&job, "%s", buffer);
 				Update_status(&job, JFAIL);
 				continue;
@@ -1109,7 +1125,7 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(sp,IDENTIFIER,id);
 			setstatus(&job, "transfer '%s' to subserver '%s' finished", id, pr );
 			setmessage(&job,STATE,"COPYTO %s",pr);
-			if( !Save_when_done_DYN ){
+			if( !(Save_when_done_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
 				if( Remove_job( &job ) ){
 					setstatus( &job, _("could not remove job '%s'"), id);
 				} else {
@@ -1144,8 +1160,10 @@ int Do_queue_jobs( char *name, int subserver )
 		}
 	}
 
+	Remove_done_jobs();
 
 	/* now we reset the server order */
+
 	Errorcode = JSUCC;
 	Free_job(&job);
 	Free_line_list(&tinfo);
@@ -1207,6 +1225,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 
 	Set_str_value(&job->info,PRSTATUS,0);
 	Set_str_value(&job->info,ERROR,0);
+	Set_flag_value(&job->info,ERROR_TIME,0);
 
 	Setup_user_reporting(job);
 
@@ -1224,7 +1243,10 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	case JFAIL: break;
 	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
 	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
-	default: Set_str_value(&job->info,ERROR,buffer); break;
+	default:
+			Set_str_value(&job->info,ERROR,buffer);
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
+			break;
 			}
 			Set_hold_file(job, 0, 0 );
 			goto exit;
@@ -1313,8 +1335,12 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	s = 0;
 	if( status ){
 		s = Find_str_value(&jcopy.info,ERROR,Value_sep);
+		if( !s ){
+			s = "Mystery error from Send_job";
+		}
+		Set_str_value(&job->info,ERROR,s);
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
 	}
-	Set_str_value(&job->info,ERROR,s);
 	s = 0;
 
 	Free_job(&jcopy);
@@ -1344,8 +1370,13 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		status = JFAIL;
 		break;
 	}
-	if( s && !Find_str_value(&job->info,ERROR,s) ){
-		Set_str_value(&job->info,ERROR,s);
+	if( s ){
+		if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+			Set_str_value(&job->info,ERROR,s);
+		}
+		if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+			Set_flag_value(&job->info,ERROR_TIME,time(0));
+		}
 	}
 
 	Set_str_value(&job->info,PRSTATUS,Server_status(status));
@@ -1380,6 +1411,7 @@ int Local_job( struct job *job, char *id )
 	Errorcode = status = 0;
 	Set_str_value(&job->info,PRSTATUS,0);
 	Set_str_value(&job->info,ERROR,0);
+	Set_flag_value(&job->info,ERROR_TIME,0);
 
 	Setup_user_reporting(job);
 
@@ -1401,7 +1433,10 @@ int Local_job( struct job *job, char *id )
 	case JFAIL: break;
 	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
 	case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
-	default: Set_str_value(&job->info,ERROR,buffer); break;
+	default:
+		Set_str_value(&job->info,ERROR,buffer);
+		Set_flag_value(&job->info,ERROR_TIME,time(0));
+		break;
 			}
 			Set_hold_file(job, 0, 0 );
 			goto exit;
@@ -1485,15 +1520,13 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 	pr = Find_str_value(sp,PRINTER,Value_sep);
 	Set_str_value(parms,PRINTER,pr);
 	Set_flag_value(parms,SUBSERVER,use_subserver);
+	DEBUG1( "Fork_subserver: starting '%s'", pr );
 	if( use_subserver > 0 ){
-		Set_str_value(parms,CALL,QUEUE);
+		pid = Start_worker( "queue",parms, 0 );
 	} else {
-		Set_str_value(parms,CALL,PRINTER);
+		pid = Start_worker( "printer",parms, 0 );
 	}
 
-	DEBUG1( "Fork_subserver: starting '%s'", pr );
-
-	pid = Start_worker( parms, 0 );
 	if( pid > 0 ){
 		Set_decimal_value(sp,SERVER,pid);
 	} else {
@@ -1850,7 +1883,7 @@ void Update_status( struct job *job, int status )
 			if( hf_name ){
 				Set_hold_file( job, 0, 0 );
 				if(DEBUGL3)Dump_job("Update_status - done_job", job );
-				if( !Save_when_done_DYN ){
+				if( !(Save_when_done_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
 					if( Remove_job( job ) ){
 						setstatus( job, _("could not remove job '%s'"), id);
 					} else {
@@ -1913,9 +1946,11 @@ void Update_status( struct job *job, int status )
 			}
 			if( destination ){
 				Set_str_value(destination,ERROR,0);
+				Set_flag_value(destination,ERROR_TIME,0);
 				Set_str_value(destination,PRSTATUS,0);
 			} else {
 				Set_str_value(&job->info,ERROR,0);
+				Set_flag_value(&job->info,ERROR_TIME,0);
 				Set_str_value(&job->info,PRSTATUS,0);
 			}
 			Set_hold_file( job, 0, 0 );
@@ -1932,6 +1967,9 @@ void Update_status( struct job *job, int status )
 			if( !Find_str_value(destination,ERROR,Value_sep) ){
 				Set_str_value(destination,ERROR,buffer);
 			}
+			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+				Set_flag_value(destination,ERROR_TIME,time(0));
+			}
 			Set_flag_value(destination,ATTEMPT,attempt);
 			Update_destination(job);
 			Set_hold_file( job, 0, 0 );
@@ -1942,10 +1980,13 @@ void Update_status( struct job *job, int status )
 			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
 				Set_str_value(&job->info,ERROR,buffer);
 			}
+			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
+			}
 			Set_hold_file( job, 0, 0 );
 			Sendmail_to_user( status, job );
 		}
-		if( destination == 0 && !Save_on_error_DYN ){
+		if( destination == 0 && !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
 			setstatus( job, _("removing job '%s' - failed, no retry"), id);
 			Remove_job( job );
 		}
@@ -1959,6 +2000,9 @@ void Update_status( struct job *job, int status )
 			if( !Find_str_value(destination,ERROR,Value_sep) ){
 				Set_str_value(destination,ERROR,buffer);
 			}
+			if( !Find_flag_value(destination,ERROR_TIME,Value_sep) ){
+				Set_flag_value(destination,ERROR_TIME,time(0));
+			}
 			strv = Find_str_value(destination,ERROR,Value_sep);
 			Update_destination(job);
 			setstatus( job, "job '%s', destination '%s', error '%s'",
@@ -1967,12 +2011,15 @@ void Update_status( struct job *job, int status )
 			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
 				Set_str_value(&job->info,ERROR,buffer);
 			}
+			if( !Find_flag_value(&job->info,ERROR_TIME,Value_sep) ){
+				Set_flag_value(&job->info,ERROR_TIME,time(0));
+			}
 			strv = Find_str_value(&job->info,ERROR,Value_sep);
 			setstatus( job, "job '%s' error '%s'",id, strv);
 			Sendmail_to_user( status, job );
 		}
 		Set_hold_file( job, 0, 0 );
-		if( destination == 0 && !Save_on_error_DYN ){
+		if( destination == 0 && !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
 			setstatus( job, _("removing job '%s' - ABORT"), id);
 			Remove_job( job );
 		}
@@ -1995,18 +2042,27 @@ void Update_status( struct job *job, int status )
 			Update_destination(job);
 			Set_hold_file( job, 0, 0 );
 		} else {
-			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
-				SNPRINTF( buffer, sizeof(buffer))
-					_("removing job due to errors") );
-				Set_str_value(&job->info,ERROR,buffer);
-			}
-			Set_flag_value(&job->info,DONE_TIME, time( (void *)0) );
-			Set_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
-			Set_hold_file( job, 0, 0 );
-			Sendmail_to_user( status, job );
-			if( !Save_on_error_DYN ){
+			if( !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+				if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+					SNPRINTF( buffer, sizeof(buffer))
+						_("removing job due to errors") );
+					Set_str_value(&job->info,ERROR,buffer);
+				}
+				Set_flag_value(&job->info,DONE_TIME, time( (void *)0) );
+				Set_flag_value(&job->info,REMOVE_TIME, time( (void *)0) );
+				Set_hold_file( job, 0, 0 );
+				Sendmail_to_user( status, job );
 				setstatus( job, _("removing job '%s' - JREMOVE"), id );
 				Remove_job( job );
+			} else {
+				if( !Find_str_value(&job->info,ERROR,Value_sep) ){
+					SNPRINTF( buffer, sizeof(buffer))
+						_("job removal requested") );
+					Set_str_value(&job->info,ERROR,buffer);
+				}
+				Set_flag_value(&job->info,ERROR_TIME, time( (void *)0) );
+				Set_hold_file( job, 0, 0 );
+				setstatus( job, _("keeping error job '%s'"), id );
 			}
 		}
 		break;
@@ -2755,4 +2811,77 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
         }
     }
 	if(DEBUGL3)Dump_job("Filter_files_in_job", job);
+}
+
+void Service_queue( struct line_list *args )
+{
+	int subserver;
+
+	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER,Value_sep) );
+	subserver = Find_flag_value( args, SUBSERVER, Value_sep );
+
+	Free_line_list(args);
+	Do_queue_jobs( Printer_DYN, subserver );
+	cleanup(0);
+}
+
+
+void Remove_done_jobs( void )
+{
+	struct job job;
+	char *id;
+	time_t tm;
+	int job_index, pid, printable, held, move, error, done, remove_count;
+	if( Save_when_done_DYN || Save_on_error_DYN
+		|| !(Done_jobs_DYN > 0 || Done_jobs_max_age_DYN > 0) ){
+		return;
+	}
+
+	time( &tm );
+	remove_count = Done_jobs_DYN;
+	if( remove_count <= 0 ){
+		remove_count = -1;
+	}
+
+	DEBUG1( "Remove_done_jobs: checking for removal - remove_count %d", remove_count );
+
+	Init_job(&job);
+	for( job_index = 0; job_index < Sort_order.count; ++job_index ){
+		Free_job(&job);
+		if( !Sort_order.list[job_index] ) continue;
+		DEBUG3("Remove_done_jobs: done_jobs - job_index [%d] '%s'", job_index,
+			Sort_order.list[job_index] );
+		Get_hold_file( &job, Sort_order.list[job_index] );
+		if(DEBUGL4)Dump_job("Remove_done_jobs: done_jobs - job ",&job);
+		if( job.info.count == 0 ) continue;
+		/* check to see if active */
+		if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) ){
+			DEBUG3("Remove_done_jobs: [%d] active %d", job_index, pid );
+			continue;
+		}
+		/* get printable status */
+		Setup_cf_info( &job, 1 );
+		Job_printable(&job,&Spool_control,&printable,&held,&move,&error,&done);
+		if( !(error || done) ) continue;
+		if( Done_jobs_max_age_DYN > 0
+			&& ( (error && (tm - error) > Done_jobs_max_age_DYN)
+			   || (done && (tm - done) > Done_jobs_max_age_DYN) ) ){
+			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+			setstatus( &job, _("job '%s' removed- status expired"), id );
+			Remove_job( &job );
+			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
+			continue;
+		}
+		if( remove_count > 0 ){
+			--remove_count;
+		} else if( remove_count == 0 ){
+			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+			setstatus( &job, _("job '%s' removed"), id );
+			Remove_job( &job );
+			free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
+		}
+	}
+	Free_job(&job);
 }

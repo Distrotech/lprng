@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 1.28 2001/11/16 16:06:38 papowell Exp $";
+"$Id: gethostinfo.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)
@@ -150,7 +150,7 @@ char *Fixup_fqdn( const char *shorthost, struct host_information *info,
 	 */
 	fqdn = 0;
 	if( safestrchr( host_ent->h_name, '.' ) ){
-		fqdn = host_ent->h_name;
+		fqdn = (char *)host_ent->h_name;
 	} else if( (list = host_ent->h_aliases) ){
 		for( ; *list && !safestrchr(*list,'.'); ++list );
 		fqdn = *list;
@@ -191,22 +191,22 @@ char *Fixup_fqdn( const char *shorthost, struct host_information *info,
 
 	if( fqdn == 0 ){
 		if( safestrchr( host_ent->h_name, '.' ) ){
-			fqdn = host_ent->h_name;
+			fqdn = (char *)host_ent->h_name;
 		} else if( (list = host_ent->h_aliases) ){
 			for( ; *list && !safestrchr(*list,'.'); ++list );
 			fqdn = *list;
 		}
-		if( fqdn == 0 ) fqdn = host_ent->h_name;
+		if( fqdn == 0 ) fqdn = (char *)host_ent->h_name;
 	}
 
 	info->h_addrtype = host_ent->h_addrtype;
 	info->h_length = host_ent->h_length;
 	/* put the names in the database */
-	info->fqdn = safestrdup(fqdn,__FILE__,__LINE__);
+	fqdn = info->fqdn = safestrdup(fqdn,__FILE__,__LINE__);
 	info->shorthost = safestrdup(fqdn,__FILE__,__LINE__);
 	if( (s = safestrchr(info->shorthost,'.')) ) *s = 0;
 
-	Add_line_list(&info->host_names,host_ent->h_name,0,0,0 );
+	Add_line_list(&info->host_names,(char *)host_ent->h_name,0,0,0 );
 	for( list = host_ent->h_aliases; list && (s = *list); ++list ){
 		Add_line_list(&info->host_names,s,0,0,0 );
 	}
@@ -364,9 +364,9 @@ char *Get_hostinfo_byaddr( struct host_information *info,
 		info->h_addr_list.list[info->h_addr_list.count] = 0;
 
 		const_s = inet_ntop_sockaddr( sinaddr, buffer, sizeof(buffer) );
-		info->fqdn = safestrdup(const_s,__FILE__,__LINE__);
+		fqdn = info->fqdn = safestrdup(const_s,__FILE__,__LINE__);
+		info->shorthost = safestrdup(fqdn,__FILE__,__LINE__);
 		Add_line_list( &info->host_names,info->fqdn,0,0,0);
-		info->shorthost = safestrdup(s,__FILE__,__LINE__);
 	}
 	return( fqdn );
 }
