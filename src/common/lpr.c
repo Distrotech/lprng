@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 5.26 2000/12/25 01:51:11 papowell Exp papowell $";
+"$Id: lpr.c,v 1.14 2001/09/02 20:42:13 papowell Exp $";
 
 
 #include "lp.h"
@@ -184,6 +184,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	s = 0;
 	if( (Direct_JOB || Direct_DYN) ){
+		Force_localhost_DYN = 0;
 		Lpr_bounce_DYN = Lpr_bounce_JOB = 0;
 		/* check to see if we have a socket connection specified */
 		s = Printer_JOB;
@@ -217,6 +218,7 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = Print_job( fd, status_fd, &prjob, Send_job_rw_timeout_DYN, poll_for_status, User_filter_JOB );
 		/* we close close device */
 		DEBUG1("lpr: shutting down fd %d", fd );
+		if(s) free(s); s = 0;
 
 		fd = Shutdown_or_close( fd );
 		DEBUG1("lpr: after shutdown fd %d, status_fd %d", fd, status_fd );
@@ -237,6 +239,7 @@ int main(int argc, char *argv[], char *envp[])
 		DEBUG1("lpr: status %s", Server_status(Errorcode) );
 	} else {
 		/* do we flatten job ? */
+		if(s) free(s); s = 0;
 		if( Lpr_bounce_DYN || Lpr_bounce_JOB ){
 			int tempfd;
 			struct stat statb;
@@ -632,7 +635,7 @@ void Get_parms(int argc, char *argv[] )
 {
 N_("Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"),
 N_("   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]\n"),
-N_("   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w num ] [-r]\n"),
+N_("   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w width ] [-r]\n"),
 N_("   [-Ddebugopt ] [--] [ filenames ...  ]\n"),
 N_(" -A          - use authentication specified by AUTH environment variable\n"),
 N_(" -B          - filter files and reduce job to single file before sending\n"),
@@ -651,10 +654,11 @@ N_(" -T title    - title for 'pr' (-p) formatting\n"),
 N_(" -U username - override user name (restricted)\n"),
 N_(" -V          - Verbose information during spooling\n"),
 N_(" -X path     - user specified filter for job files\n"),
-N_(" -Y          - connect and send to TCP/IP port\n"),
+N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
 N_(" -Z options  - options to pass to filter\n"),
 N_(" -h          - no header or banner page\n"),
 N_(" -i indent   - indentation\n"),
+N_(" -k          - do not use tempfile when sending to server\n"),
 N_(" -m mailaddr - mail final status to mailaddr\n"),
 N_(" -r          - remove files after spooling\n"),
 N_(" -w width    - width to use\n"),
@@ -693,7 +697,7 @@ N_(" -t title    - job title\n"),
 N_(" -T content  - (passed as -Z content)\n"),
 N_(" -w          - (write message on completion - ignored)\n"),
 N_(" -X path     - user specified filter for job files\n"),
-N_(" -Y          - connect and send to TCP/IP port\n"),
+N_(" -Y          - connect and send to TCP/IP port (direct mode)\n"),
 N_(" -y mode     - (passed as -Z mode)\n"),
 N_(" --          - end of options, files follow\n"),
 N_(" filename '-'  reads from STDIN\n"),
@@ -841,7 +845,7 @@ int Make_job( struct job *job )
 			DEBUG2("Make_job: checking '%s' for -U perms",
 				Allow_user_setting_DYN );
 			Init_line_list(&user_list);
-			Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0);
+			Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0,0);
 			
 			found = 0;
 			for( i = 0; !found && i < user_list.count; ++i ){

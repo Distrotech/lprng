@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_status.c,v 5.25 2000/12/25 01:51:11 papowell Exp papowell $";
+"$Id: lpd_status.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -103,7 +103,7 @@ int Job_status( int *sock, char *input )
 	if( Reverse_lpq_status_DYN
 		&& (displayformat == REQ_DSHORT || displayformat==REQ_DLONG)  ){
 		Free_line_list(&l);
-		Split(&l,Reverse_lpq_status_DYN,File_sep,0,0,0,0,0);
+		Split(&l,Reverse_lpq_status_DYN,File_sep,0,0,0,0,0,0);
 		if( Match_ipaddr_value( &l, &RemoteHost_IP ) == 0 ){
 			DEBUGF(DLPQ1)("Job_status: reversing status sense");
 			if( displayformat == REQ_DSHORT ){
@@ -122,12 +122,12 @@ int Job_status( int *sock, char *input )
 	DEBUGF(DLPQ1)("Job_status: Force_lpq_status_DYN '%s'", Force_lpq_status_DYN);
 	if( Force_lpq_status_DYN ){
 		Free_line_list(&listv);
-		Split(&listv,Force_lpq_status_DYN,";",0,0,0,0,0);
+		Split(&listv,Force_lpq_status_DYN,";",0,0,0,0,0,0);
 		for(i = 0; i < listv.count; ++i ){
 			s = listv.list[i];
 			if( (t = safestrpbrk(s,Value_sep)) ) *t++ = 0;
 			Free_line_list(&l);
-			Split(&l,t,Value_sep,0,0,0,0,0);
+			Split(&l,t,Value_sep,0,0,0,0,0,0);
 			DEBUGF(DLPQ1)("Job_status: Force_lpq_status '%s'='%s'", s,t);
 			if( Match_ipaddr_value( &l, &RemoteHost_IP ) == 0 ){
 				DEBUGF(DLPQ1)("Job_status: forcing status '%s'", s);
@@ -150,10 +150,10 @@ int Job_status( int *sock, char *input )
 
 	if( Return_short_status_DYN && displayformat == REQ_DLONG ){
 		Free_line_list(&l);
-		Split(&l,Return_short_status_DYN,File_sep,0,0,0,0,0);
+		Split(&l,Return_short_status_DYN,File_sep,0,0,0,0,0,0);
 		if( Match_ipaddr_value( &l, &RemoteHost_IP ) == 0 ){
 			status_lines = Short_status_length_DYN;
-			DEBUGF(DLPQ1)("Get_queue_status: truncating status to %d",
+			DEBUGF(DLPQ1)("Job_status: truncating status to %d",
 				status_lines);
 		}
 		Free_line_list(&l);
@@ -161,12 +161,13 @@ int Job_status( int *sock, char *input )
 
 	DEBUGF(DLPQ1)("Job_status: doing '%s'", input );
 	Free_line_list(&l);
-	Split(&l,input,Whitespace,0,0,0,0,0);
+	Split(&l,input,Whitespace,0,0,0,0,0,0);
 	if( l.count == 0 ){
 		SNPRINTF( error, sizeof(error)) "zero length command line");
 		goto error;
 	}
 
+	/* save l.list[0] */
 	name = l.list[0];
 	
 	if( (s = Is_clean_name( name )) ){
@@ -183,18 +184,23 @@ int Job_status( int *sock, char *input )
 	/* we have the hash key */
 	hash_key = Join_line_list_with_sep(&l,"_");
 	for( s = hash_key; (s = strpbrk(s,Whitespace)); ) *s = '_';
+	
+	DEBUGF(DLPQ1)("Job_status: arg '%s'", s );
+	/* now we put back the l.list[0] value */
+
 	l.list[0] = name;
+	/* free the values l.list[0] */
 	Remove_line_list( &l, 0 );
 	name = Printer_DYN;
 
 	if( l.count && (s = l.list[0]) && s[0] == '-' ){
-		DEBUGF(DLPQ1)("Get_queue_status: arg '%s'", s );
+		DEBUGF(DLPQ1)("Job_status: arg '%s'", s );
 		Free_line_list(&listv);
-		Split(&listv,s+1,Arg_sep,1,Value_sep,1,1,0);
+		Split(&listv,s+1,Arg_sep,1,Value_sep,1,1,0,0);
 		Remove_line_list( &l, 0 );
-		DEBUGFC(DLPQ1)Dump_line_list( "Get_queue_status: args", &listv );
+		DEBUGFC(DLPQ1)Dump_line_list( "Job_status: args", &listv );
 		if( (n = Find_flag_value(&listv,"lines",Value_sep)) ) status_lines = n;
-		DEBUGF(DLPQ1)("Get_queue_status: status_lines '%d'", status_lines );
+		DEBUGF(DLPQ1)("Job_status: status_lines '%d'", status_lines );
 		Free_line_list(&listv);
 	}
 	if( safestrcasecmp( name, ALL ) ){
@@ -256,13 +262,14 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	char *pr, *s, *t, *path, *identifier,
 		*jobname, *joberror, *class, *priority, *d_identifier,
 		*job_time, *d_error, *d_dest, *openname, *hf_name, *filenames,
-		*tempfile = 0, *file = 0;
+		*tempfile = 0, *file = 0, *end_of_name;
 	struct line_list outbuf, info, lineinfo, cache, cache_info;
 	int status = 0, len, ix, nx, flag, count, held, move,
 		server_pid, unspooler_pid, fd, nodest,
 		printable, dcount, destinations = 0,
 		d_copies, d_copy_done, permission, jobsize, jobnumber, db, dbflag,
-		matches, tempfd, savedfd, lockfd, delta, err, cache_index;
+		matches, tempfd, savedfd, lockfd, delta, err, cache_index,
+		total_held, total_move;
 	struct stat statb;
 	struct job job;
 	time_t modified = 0;
@@ -396,7 +403,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		DEBUGF(DLPQ3)("Get_queue_status: found in cache '%s'", file );
 		fd = -1;
 		if( file ){
-			Split(&cache_info,file,Arg_sep,1,Value_sep,1,1,0);
+			Split(&cache_info,file,Arg_sep,1,Value_sep,1,1,0,0);
 			file = Find_str_value(&cache_info,FILENAMES,Value_sep);
 		}
 		DEBUGFC(DLPQ3)Dump_line_list("Get_queue_status: cache_info", &cache_info );
@@ -454,6 +461,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		*sock = tempfd;
 	}
 
+	end_of_name = 0;
 	if( displayformat != REQ_DSHORT ){
 		SNPRINTF( header, sizeof(header)) "%s: ",
 			Server_queue_name_DYN?"Server Printer":"Printer" );
@@ -465,6 +473,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		len = strlen(header);
 		SNPRINTF( header+len, sizeof(header)-len) _("(originally %s) "), buffer );
 	}
+	end_of_name = header+strlen(header);
 
 	if( status ){
 		len = strlen( header );
@@ -498,7 +507,6 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	/* get the spool entries */
 	Free_line_list( &outbuf );
-	/* lock the dbm file while working on it */
 	Scan_queue( &Spool_control, &Sort_order, &printable,&held,&move, 0, 0, 1 );
 
 	DEBUGF(DLPQ3)("Get_queue_status: total files %d", Sort_order.count );
@@ -518,9 +526,16 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	error[0] = 0;
 
 	matches = 0;
+	total_held = 0;
+	total_move = 0;
 	for( count = 0; count < Sort_order.count; ++count ){
+		int printable, held, move;
+		printable = held = move = 0;
 		Free_job(&job);
 		Get_hold_file(&job, Sort_order.list[count] );
+		Job_printable(&job,&Spool_control, &printable,&held,&move);
+		DEBUGF(DLPQ3)("Get_queue_status: printable %d, held %d, move %d",
+			printable, held, move );
 		DEBUGFC(DLPQ4)Dump_job("Get_queue_status - info", &job );
 		if( job.info.count == 0 ) continue;
 
@@ -736,14 +751,34 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			s = Get_file_image(hf_name,0);
 			Add_line_list(&outbuf,s,0,0,0);
 			if( s ) free(s); s = 0;
-		} if( displayformat == REQ_DSHORT ){
-			if( Find_flag_value(&job.info, PRINTABLE, Value_sep ) ){
+		} else if( displayformat == REQ_DSHORT ){
+			if( printable ){
 				++matches;
+			} else if( held ){
+				++total_held;
+			} else if( move ){
+				++total_move;
 			}
 		}
-
 	}
-	Close_gdbm();
+	DEBUGF(DLPQ3)("Get_queue_status: matches %d", matches );
+	/* this gives a short 1 line format with minimum info */
+	if( displayformat == REQ_DSHORT ){
+		len = strlen( header );
+		SNPRINTF( header+len, sizeof(header)-len) _(" %d job%s"),
+			matches, (matches == 1)?"":"s" );
+		if( total_held ){
+			len = strlen( header );
+			SNPRINTF( header+len, sizeof(header)-len) _(" (%d held)"), 
+				total_held );
+		}
+		if( total_move ){
+			len = strlen( header );
+			SNPRINTF( header+len, sizeof(header)-len) _(" (%d move)"), 
+				total_move );
+		}
+	}
+	len = strlen( header );
 
 	DEBUGFC(DLPQ4)Dump_line_list("Get_queue_status: job status",&outbuf);
 
@@ -777,7 +812,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 				Pr_disabled(&Spool_control)?"yes":"no",
 				Pr_aborted(&Spool_control)?"yes":"no",
 				Sp_disabled(&Spool_control)?"yes":"no");
-	} else if( displayformat == REQ_DLONG ){
+	} else if( displayformat == REQ_DLONG || displayformat == REQ_DSHORT ){
 		flag = 0;
 		if( Pr_disabled(&Spool_control) || Sp_disabled(&Spool_control) || Pr_aborted(&Spool_control) ){
 			SNPRINTF( header+len, sizeof(header)-len) " (" );
@@ -810,7 +845,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	 * by the server.
 	 */
 	if( (s = Server_names_DYN) || (s = Destinations_DYN) ){
-		Split( &info, s, File_sep, 0,0,0,0,0);
+		Split( &info, s, File_sep, 0,0,0,0,0,0);
 		len = strlen( header );
 		if( displayformat == REQ_VERBOSE ){
 			if ( Server_names_DYN ) {
@@ -908,13 +943,6 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			SNPRINTF( header+len, sizeof(header)-len)
 				_(" (message: %s)"), s );
 		}
-	}
-
-	/* this gives a short 1 line format with minimum info */
-	if( displayformat == REQ_DSHORT ){
-		len = strlen( header );
-		SNPRINTF( header+len, sizeof(header)-len) _(" %d job%s"),
-			matches, (matches == 1)?"":"s" );
 	}
 	safestrncat( header, "\n" );
 	if( Write_fd_str( *sock, header ) < 0 ) cleanup(0);
@@ -1042,7 +1070,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 			DEBUGF(DLPQ3)("Get_queue_status: [%d] '%s'", ix, s );
 			Free_line_list(&cache_info);
 			if( s && (t = strchr(s,'=')) ){
-				Split(&cache_info,t+1,Arg_sep,1,Value_sep,1,1,0);
+				Split(&cache_info,t+1,Arg_sep,1,Value_sep,1,1,0,0);
 				if( (file = Find_str_value(&cache_info,FILENAMES,Value_sep)) ){
 					/* we need to get the age of the file */
 					if( stat( file,&statb ) ){
@@ -1123,7 +1151,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	}
 	if( Server_names_DYN ){
 		Free_line_list(&info);
-		Split(&info, Server_names_DYN, File_sep, 0,0,0,0,0);
+		Split(&info, Server_names_DYN, File_sep, 0,0,0,0,0,0);
 		for( ix = 0; ix < info.count; ++ix ){
 			DEBUGF(DLPQ3)("Get_queue_status: getting subserver status '%s'", 
 				info.list[ix] );
@@ -1135,7 +1163,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		}
 	} else if( Destinations_DYN ){
 		Free_line_list(&info);
-		Split(&info, Destinations_DYN, File_sep, 0,0,0,0,0);
+		Split(&info, Destinations_DYN, File_sep, 0,0,0,0,0,0);
 		for( ix = 0; ix < info.count; ++ix ){
 			DEBUGF(DLPQ3)("Get_queue_status: getting destination status '%s'", 
 				info.list[ix] );
@@ -1192,7 +1220,6 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	DEBUGF(DLPQ1)("Get_queue_status: error msg '%s'", header );
 	if( Write_fd_str( *sock, header ) < 0 ) cleanup(0);
  done:
-	Close_gdbm();
 	if( savedfd > 0 ) *sock = savedfd;
 	Free_line_list(&info);
 	Free_line_list(&lineinfo);
@@ -1217,15 +1244,15 @@ void Print_status_info( int *sock, char *file,
 		i = (status_lines * 100)/1024;
 		if( i == 0 ) i = 1;
 		image = Get_file_image(file, i);
-		Split(&l,image,Line_ends,0,0,0,0,0);
+		Split(&l,image,Line_ends,0,0,0,0,0,0);
 		if( l.count < status_lines ){
 			if( image ) free( image ); image = 0;
 			image = Get_file_image(file, 0);
-			Split(&l,image,Line_ends,0,0,0,0,0);
+			Split(&l,image,Line_ends,0,0,0,0,0,0);
 		}
 	} else {
 		image = Get_file_image(file, max_size);
-		Split(&l,image,Line_ends,0,0,0,0,0);
+		Split(&l,image,Line_ends,0,0,0,0,0,0);
 	}
 
 	DEBUGF(DLPQ1)("Print_status_info: line count %d", l.count );

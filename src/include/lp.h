@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 5.27 2000/12/25 01:51:19 papowell Exp papowell $
+ * $Id: lp.h,v 1.14 2001/09/02 20:42:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -92,6 +92,7 @@ extern char *Copyright[];	/* Copyright info */
 extern char *Name;			/* Program name */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
+EXTERN int Server_pid;		/* PID of server */
 EXTERN int Is_lpr;			/* LPR sets to non-zero */
 EXTERN int Logger_fd;		/* for logger */
 EXTERN int Mail_fd;			/* for mail */
@@ -104,6 +105,7 @@ EXTERN int Status_fd;		/* Status file descriptor for spool queue */
 EXTERN char *Outbuf, *Inbuf;	/* buffer */
 EXTERN int Outlen, Outmax, Inlen, Inmax;	/* max and current len of buffer */
 EXTERN uid_t OriginalEUID, OriginalRUID;   /* original EUID, RUID values */
+EXTERN uid_t OriginalEGID, OriginalRGID;   /* original EGID, RGID values */
 EXTERN uid_t DaemonUID;    /* Daemon UID */
 EXTERN uid_t UID_root;     /* UID is root */
 EXTERN gid_t DaemonGID;    /* Daemon GID */

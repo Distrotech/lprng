@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 5.20 2000/12/25 01:51:08 papowell Exp papowell $";
+"$Id: lpc.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 
 /***************************************************************************
@@ -151,7 +151,7 @@ int main(int argc, char *argv[], char *envp[])
 		DEBUG2("lpc: checking '%s' for -U perms",
 			Allow_user_setting_DYN );
 		Init_line_list(&user_list);
-		Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0);
+		Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0,0);
 		
 		found = 0;
 		for( i = 0; !found && i < user_list.count; ++i ){
@@ -191,7 +191,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( (s = safestrchr( msg, '\n' )) ) *s = 0;
 		DEBUG1("lpc: '%s'", msg );
 		Free_line_list(&args);
-		Split(&args,msg,Whitespace,0,0,0,0,0);
+		Split(&args,msg,Whitespace,0,0,0,0,0,0);
 		Check_max(&args,2);
 		args.list[args.count] = 0;
 		if(DEBUGL1)Dump_line_list("lpc - args", &args );
@@ -241,6 +241,14 @@ void doaction( struct line_list *args )
 	} else {
 		Fix_Rm_Rp_info(0,0);
 	}
+	if( ISNULL(RemotePrinter_DYN) ){
+		SNPRINTF( msg, sizeof(msg))
+			_("Printer: %s - cannot get status from device '%s'\n"),
+			Printer_DYN, Lp_device_DYN );
+		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+		return;
+	}
+
 	if( Auth ){
 		Set_DYN(&Auth_DYN, getenv("AUTH"));
 	}
@@ -392,16 +400,15 @@ void Get_parms(int argc, char *argv[] )
 
 	while ((option = Getopt (argc, argv, LPC_optstr )) != EOF) {
 		switch (option) {
-		case 'A': Auth = 1;
-		case 'a':
-			Set_DYN(&Printer_DYN,"all"); break;
+		case 'A': Auth = 1; break;
+		case 'a': Set_DYN(&Printer_DYN,"all"); break;
 		case 'D': /* debug has already been done */
 			Parse_debug( Optarg, 1 );
 			break;
 		case 'P': if( Optarg == 0 ) usage();
 			Set_DYN(&Printer_DYN,Optarg); break;
 		case 'V':
-			Verbose = !Verbose;
+			++Verbose;
 			break;
 		case 'S':
 			Server = Optarg;

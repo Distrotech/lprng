@@ -1,20 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 5.18 2000/12/25 01:51:11 papowell Exp papowell $";
+"$Id: lpq.c,v 1.14 2001/09/02 20:42:13 papowell Exp $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
@@ -210,6 +210,14 @@ void Show_status(char **argv)
 	Get_printer();
 	Fix_Rm_Rp_info(0,0);
 
+	if( ISNULL(RemotePrinter_DYN) ){
+		SNPRINTF( msg, sizeof(msg))
+			_("Printer: %s - cannot get status from device '%s'\n"),
+			Printer_DYN, Lp_device_DYN );
+		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+		return;
+	}
+
 	if( Displayformat != REQ_DSHORT
 		&& safestrcasecmp(Printer_DYN, RemotePrinter_DYN) ){
 		SNPRINTF( msg, sizeof(msg)) _("Printer: %s is %s@%s\n"),
@@ -274,12 +282,13 @@ int Read_status_info( char *host, int sock,
 	DEBUG1("Read_status_info: output %d, timeout %d, dspfmt %d",
 		output, timeout, displayformat );
 	DEBUG1("Read_status_info: status_line_count %d", status_line_count );
+	DEBUG1("Read_status_info: displayformat %d, Show_all %d",displayformat, Show_all );
 
 	/*
 	 * Do not try to be fancy - the overhead is not high unless lots
 	 * of data and then something is wrong.
 	 */
-	if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT ){
+	if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT || Show_all ){
 		do{ 
 			if( (n = read( sock, buffer, sizeof(buffer)-1)) ){
 				buffer[n] = 0;
@@ -313,18 +322,37 @@ int Read_status_info( char *host, int sock,
 	for( line = 0; line < l.count; ){
 		/* we start by looking at the first line and seeing if it is
 		 * for a printer that we have already found
+		 * if look_for_pr is 1 then we have just started the search
+		 *    - we assume that any non-blank line not containing a Printer:
+		 *      line is a 'proper' entry.
+		 * if look_for_pr is 2 then we assume that we are looking for
+		 *    the end of a printer entry and we look for a line with
+		 *    Printer: in it that we have not seen 
 		 */
 		while( look_for_pr && line < l.count ){
 			s = l.list[line];
-			if( s == 0 || isspace(cval(s))
+			/* we do not want a line starting with a space or a blank line */
+			if( ISNULL(s) ){
+				look_for_pr = 1;
+			} else if( look_for_pr == 1 &&
+				!(strstr(s,"Printer:") || strstr(s,_("Printer:")) ) ){
+				look_for_pr = 0;
+			} else if( isspace(cval(s))
+				/* if line starts with a space */
+				/*  line does not contain Printer: */
 				|| !(strstr(s,"Printer:") || strstr(s,_("Printer:")) )
+				/* or that already is in the list */ 
 				|| Find_exists_value(&Printer_list,s,0) ){
-				;
+				look_for_pr = 2;
 			} else {
+				look_for_pr = 0;
+			}
+			if( look_for_pr == 0 ){
 				if( Write_fd_str( output, s ) < 0
 					|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-				look_for_pr = 0;
-				Add_line_list(&Printer_list,s,0,1,0);
+				if( strstr(s,"Printer:") || strstr(s,_("Printer:")) ){
+					Add_line_list(&Printer_list,s,0,1,0);
+				}
 				DEBUG1("Read_status_info: pr [%d] '%s'", line, s );
 			}
 			++line;
@@ -388,7 +416,7 @@ int Read_status_info( char *host, int sock,
 	}
 	DEBUG1("Read_status_info: after checks look_for_pr %d, line %d, last_line %d",
 		look_for_pr, line, last_line);
-	if( !look_for_pr ){
+	if( !look_for_pr && last_line >= 0 ){
 		n = l.count - status_line_count;
 		if( n < last_line ) n = last_line;
 		for( ; n < l.count; ++n ){

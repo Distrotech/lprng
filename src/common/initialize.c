@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: initialize.c,v 5.25 2000/12/25 01:51:07 papowell Exp papowell $";
+"$Id: initialize.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
 
 #include "lp.h"
 #include "initialize.h"
@@ -253,6 +253,7 @@ void Setup_configuration()
 	if( Is_server ){
 		Reset_daemonuid();
 		Setdaemon_group();
+		To_daemon();
 		DEBUG1( "DaemonUID %d", DaemonUID );
 	} else {
 		s = Get_user_information();
@@ -289,8 +290,10 @@ void Setup_configuration()
 	Free_line_list( &raw );
 
 	/* now we get the user level information */
+	DEBUG2("Setup_configuration: User_printcap '%s'", User_printcap_DYN );
 	if( !Is_server && User_printcap_DYN && (s = getenv("HOME")) ){
 		s = Make_pathname( s, User_printcap_DYN );
+		DEBUG2("Setup_configuration: User_printcap '%s'", s );
 		Getprintcap_pathlist( 0, &raw, 0, s );
 		Build_printcap_info( &User_PC_names_line_list, &User_PC_order_line_list,
 			&User_PC_info_line_list, &raw, &Host_IP );

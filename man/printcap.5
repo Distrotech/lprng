@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.4
+.ds VE LPRng-3.7.5
 .TH PRINTCAP 5 \*(VE "LPRng"
 .SH NAME
 printcap \- printer capability data base
@@ -14,27 +14,38 @@ Entries in the
 .I printcap
 Each entry in the data base is used to define various options and
 values to control the printing and spooling of print jobs.
-.SH "USER AND SYSTEM PRINTCAP FILES"
-The system printcap file is usually in
-/etc/printcap,
-and contains information common to all users and the LPRng printing
+.SH "LPD.CONF, SYSTEM AND USER PRINTCAP FILES"
+Default configuration values are read from the
+LPRng configuration file
+/etc/lpd.conf;
+consult the lpd.conf(5) man page for details about them.
+The system printcap file
+/etc/printcap
+contains information common to all users and the LPRng printing
 system.
-User printcap files are usually in
-${HOME}/.printcap,
+Finally,
+the user printcap files is in
+${HOME}/.printcap
 and contain user configurable information for printer information.
+The values in the user printcap file override values in the
+/etc/printcap,
+which override the default values in the /etc/lpd.conf file.
 .LP
-The user printcap file is used only by client programs such as
+The user printcap file is used by client programs such as
 .I lpr ,
 .I lprm ,
 .I lpq ,
 and
-.I lpq .
-The information in the user printcap file overrides the
-information in the system printcap file.
+.I lpq
+to allow the user to define either a special set of printers,
+provide additional configuration information,
+or to modify default settings in the /etc/printcap
+or /etc/lpd.conf file.
 .SH CAPABILITIES
-The database is a simplified form of the
+The printcap database files format is based on the
 .I termcap (5)
-database.
+database format,
+modified as follows.
 Leading whitespace on each line is discarded,
 and blank lines or lines which then start with a
 comment character (#) are discarded.
@@ -46,6 +57,8 @@ historical printcap file formats.
 Trailing blanks and tabs (whitespace) for an option value
 are deleted unless the last one is escaped with a backslash
 (``\\'').
+If a colon character value is required then the \e:
+escape sequence can be used, e.g.: dest=ftp\e://address/file.
 .LP
 A printer definition starts with a  primary printer name,
 followed by zero or more alternative printer names,
@@ -140,19 +153,28 @@ Xf	D	str	NULL	output filter for format X (used by lpd).
 				'filter' sets default filter
 ab	D	bool	false	always print banner, ignore lpr -h option
 achk	D	bool false
-				If TRUE LPD will check for a 'ACCEPT' reply to the initial
-				accounting information written to a filter at the start
-				of a job.
+				If TRUE LPD and the :as specifies a remote host or
+				filter or the :af specifies a remote host or filter
+				then after writing the accounting information to the
+				destination a resply will be read.  The value of the
+				reply determines how the job is to be handled. 
 ae	D	str		accounting format for end of job or a program to run
                 to record accounting information (see also af, la, ar
 				and Accounting).
 af	D	str	NULL
-				name of accounting file or server (see also la, ar, as, ae)
-				If the format is host%port,  a tcp socket connection will
-				be made to port on host.  The as and ae strings
-				will be printed to the specified destination.
-				The accounting file will not be created, it must exist for
-				LPD to append data to it.
+				accounting file, filter, or remote accounting server
+				(see also la, ar, as, ae, achk). If format is |/path then
+				the program will be started and accounting information
+				will be written to the program STDIN.  If the format
+				host%port, a tcp/ip connection will be made to port
+				on host and the accounting information written to the
+				remote host.  In both of these cases the write operation
+				must succeed or an error will result.  If the format
+				is neither of these cases then the value will be treated
+				as a file and accounting information appended to the file
+				if it exists.  The accounting file will not be created,
+				it must exist for LPD to append data to it.
+				The :as and :ae fields have the accounting information.
 ah	D	bool	false	auto-hold - job held until explicitly released
 all	A	str	NULL	a list of all printers; (see ALL PRINTERS)
 allow_duplicate_flags	A	bool	false
@@ -260,7 +282,7 @@ filter_ld_path	D	str	(see source)
 				the LD_LIBARY_PATH environment variable value for filters
 filter_options	D	str	(see source code)
 				when bk flag clear, options for non OF print filters
-filter_path	D	str	(see source)	
+filter_path	D	str	(default '/bin:/usr/bin')
 				the PATH environment variable value for filters
 filter_poll_interval	D	num	30
 				interval to poll OF filter 
@@ -270,7 +292,7 @@ filter_stderr_to_status_file	D	bool	false
 fo	D	bool	false	print a form feed when device is opened
 force_fqdn_hostname	A	bool	FALSE
 				Force a fully qualified host name in control file
-force_localhost	A	bool	FALSE
+force_localhost	A	bool	TRUE
 				Forces the clients programs (lpr, lpc, etc.)
 				to send all print jobs and requests to the server running
 				on the localhost entry for action.  This flag effectively
@@ -337,7 +359,8 @@ longnumber	D	bool	false
 				use 6 digit job numbers
 lp	D	str	NULL	device name or pipe to send output to
 lpd_bounce	A	bool	FALSE
-				Forces lpd to filter jobs and then forward them.
+				Forces lpd to filter jobs and then forward them
+				as a single file
 				(See Bounce Queues)
 lpd_force_poll	A	bool	FALSE
 				Forces lpd to periodically poll lpd queues.
@@ -745,7 +768,7 @@ destinations	D	str	NULL
 				(see README.routing)
 forward_auth	D	str	NULL
 				server to server authentication type, e.g. pgp, kerberos
-force_localhost	A	bool	FALSE
+force_localhost	A	bool	TRUE
 				Forces the clients programs (lpr, lpc, etc.)
 				to send all print jobs and requests to the server running
 				on the localhost entry for action.  This flag effectively
@@ -998,90 +1021,119 @@ all:all=lp1,lp2,lp3,lp4
 .fi
 .SH ACCOUNTING
 .PP
-Accounting is done by writing information to an accounting file
-or TCP/IP connection specified by the
-af printcap entry.
-If the af value has the form host%port
-then a tcp socket is opened to the specified port on the remote host
-and all accounting information is sent on the socket.
-If the achk flag is set,
-then after the string specified by the as field has been sent
-then no output or a reply of the form ACCEPT will cause the job to be printed,
-HOLD will hold the job,  REMOVE will remove the job,
-and ABORT will cause printing to be aborted.
+Accounting in the LPRng package has evolved over time
+to accommodate new requirements.
+The general approach is to use either a simple
+.B "log to file"
+method in which the accounting information is written
+to a log file or a more complex
+.B "log to program"
+method in which the accounting information is written
+to a program.
+The information and method and actions taken
+are specified by the following entries:
+.nf
+:as  - start of job accounting
+:ae  - end of job accounting
+:af  - default job accounting
+:achk - used accounting for authorization.
+.fi
 .PP
-The printcap as and ae specify the format of the accounting
-information sent at the start and end of job printing
-respectively,
-or filters to be used to generate and/or report accounting information.
-If as and ae specify filters, the filters are run
-with STDIN set to /dev/null and the filter should write
-information to its STDOUT.
-The filters are passed the command line options specified by the
-filter_options configuration variable (see lpd.conf(5)), and
-|-$ filter will suppress adding options.
-The as filter should exit with 0 (JSUCC) status if successful and the
-job can be printed,
-nonzero status JABORT for abnormal queue termination,
-JREMOVE if the job cannot be printed,
-and
-JRETRY if the job should be retried.
+The value of the :as and :ae options are either
+a string which is used as the accounting information
+or a program which is executed to log or save the accounting
+information.
+If a program is executed then the value of the
+:af entry is ignored and the program is run to record
+the job accounting information.
+For example:
+.nf
+# string for information logging
+:as=jobend $H $n $P $k $b $t
+:ae=jobstart $H $n $P $k $b $t
+
+:as=|/usr/local/libexec/logjobstart $H $n $P $k $b $t
+:ae=|/usr/local/libexec/logjobend $H $n $P $k $b $t
+.fi
+.PP
+If the
+:as or :ae value is a string then the :af information
+is used to record the accounting information:
+.nf
+af=|/path    - run program, :as or :ae written to
+               program STDIN
+af=host%port - tcp/ip connection to port on host, 
+               :as or :ae written to connection
+af=path      - treat path as a file pathname,
+               if file exists append :as or :ae
+               to file.
+.PP
+If the :achk flag is set then this is modified as follows.
+If the :as entry specifies a program or :af entry specifies a 
+program or remote host (i.e. - logging using program) then
+after accounting information has been written to the
+program or connection a response will be read from the program
+STDOUT or the connection.
+This reponse is expected to be an ASCII string.
+If the line is blank or starts with ACCEPT then the job will be printed,
+HOLD will hold the job,  REMOVE will remove the job,
+and ABORT or a non-recognizable response will cause printing to be aborted.
+.PP
+If the output is written to a program then the exit status
+of the program can be used as well. 
+If the program exits with nonzero status then the
+exit code controls the disposition:
+JHOLD, JREMOVE, and JABORT will hold, remove,
+or abort the job respectively.
 If the exit status is 0, then
 the filter's STDOUT will be read and processed as described above.
-The filter's STDERR output is logged as error messages.
 .SH "BOUNCE QUEUES AND PRINT FORMATS"
 .PP
-Bounce queues are designed to allow users to have their files
-preprocessed by a set of filters before being sent to the final
-destination.
-If a queue is being used as a bounce queue,
-then the
-lp printcap entry
-.B must
-be set to the name of the printer on the server,
-and the
-bq entry 
-.B must
-be the destination after filtering.
-This will cause all jobs to be sent to the bounce queue,
-rather than directly to the final destination.
-For example,
-pr:lp=pr@host:bq=destpr@desthost.
-.PP
-An alternative method is to set the
-\&:lpd_bounce
-flag.
-This should only be done in server printcap entries.
-.PP
-The filters used by the bounce queue are those that would normally be
-used by the LPD server for printing a job.
-For example,
-the :if: entry would specify the filter for the f format.
-Each job file is processed individually.
-The
-lpr -p option will cause the LPD server to process job files by
-the program specified by the pr
-printcap entry (default is /bin/pr) and then pass through the if filter.
-However,
-if a bounce queue is used the format of the output data may be changed.
-To accomodate this action,
-the translate_format value can be used to reconfigure the format.
-The value has the form SdSdSd...,
+If the lp option value has the format
+.B ":lp=pr@host"
+or job forwarding is specified by
+.B ":rp=pr:rm=host"
+then the normal operation is simple to store and forward
+the print jobs.
+If filters are specified then the job files are first
+filtered and then the output of the filters is sent to the destination.
+For historical reasons, a spool queue that does filtering and
+forwarding is called a
+.IR "bounce queue" .
+The 
+.B bounce_queue_format
+(default 'f')
+specifies the output for the filtered files.
+If this is not desireable the
+.B translate_format
+option can be used to specify a format.
+The option has the form SdSdSdN,
 where S is the original format and d is the final format.
-This is similar to the format used  by the UNIX tr(1) utility.
-For example, the value pfml would convert format specifications
-p to f and m to l,
-but only in the job information sent to a remote destination.
-Note that the original format would still be supplied to any filters,
-and that the p filter would need to provide any options and/or values
-to be used to do formatting.
+If none of the formats match and there is an odd number of formats
+then the last one is used.
+For example,
+.B pfmlf
+would convert formats
+p to f, m to l, and v to f.
+.PP
+The
+\&:lpd_bounce
+flag concatenate the output of the filters
+and the result will be sent as a single job file to the destination.
+This facility is useful when handling legacy print spooler
+applications that do not understand the RFC1179 copy,
+etc., options.
+The first letter of the
+.B bounce_queue_format
+(default 'f')
+is used as the output file format.
 .PP
 The
 .B lpr_bounce
-printcap flag can be used to cause LPR to do bounce queue filtering,
-rather than the server.
-This should be used with caution,
-as missing filters can cause unexpected behaviour.
+printcap flag can be used to cause LPR to do bounce queue filtering
+in exactly the same manner as the server.
+This should be used with caution
+as missing filters on the client system can cause unexpected behaviour.
 .SH "KERBEROS, PGP, AND OTHER AUTHENTICATION METHODS"
 .PP
 LPRng supports built in kerberos authentication.

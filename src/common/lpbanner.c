@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpbanner.c,v 5.7 2000/12/25 01:51:08 papowell Exp papowell $";
+"$Id: lpbanner.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 #include "lp.h"
 
@@ -23,7 +23,7 @@
  *      -Kcontrolfilename -Lbnrname \
  *      [-iindent] \
  *		[-Zoptions] [-Cclass] [-Jjob] [-Raccntname] -nlogin -hHost  \
- *      -Fformat -Ddebug [affile]
+ *      -Fformat -Tdebug [affile]
  * 
  *  1. Parameters can be in different order than the above.
  *  2. Optional parameters can be missing
@@ -170,7 +170,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 		switch(c){
 			case 'C': class = optargv; break; 
-			case 'D': debug = atoi( optargv ); break; 
+			case 'T': debug = atoi( optargv ); break;
 			case 'F': format = optargv; break; 
 			case 'J': job = optargv; break; 
 			case 'K': controlfile = optargv; break; 
@@ -210,7 +210,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 	}
 	if( verbose || debug ){
-		FPRINTF(STDERR, "%s command: ", name );
+		FPRINTF(STDERR, "%s command: verbose %d, debug %d ", name, verbose, debug );
 		for( i = 0; i < argc; ++i ){
 			FPRINTF(STDERR, "%s ", argv[i] );
 		}

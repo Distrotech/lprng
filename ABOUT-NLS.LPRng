@@ -8,53 +8,29 @@ functionality:
 
 a)  no internationalization (default)
       ./configure
-b)  nationalization if system supports it and gettext installed
-    on your system:
-      ./configure --enable-nls
-c)  installating and compiling the gettext support library
+b)  installating and compiling the gettext support library
     as part of LPRng:
       ./configure --enable-nls --with-included-gettext
+c)  nationalization if system supports it and gettext installed
+    on your system:
+      ./configure --enable-nls
+
+You may discover that system support for NLS has been put into
+/usr/local/{include,lib}.  Sometimes the C compiler does not
+search these directories by default and you will need to use:
+
+ configure '--with-cppopts=-I/usr/local/include' \
+   '--with-ldopts=-L/usr/local/lib'
 
 If your system does not have the gettext code installed,
 then you can simply install the necessary libraries as
-described below.  This installation is based on the
-gettext-0.10.35 distribution.  The following dependencies
-on the gettext distribution are known:
-
-  a)  the aclocal.m4 file uses the configure macros from the gettext
-     distribution.  These macros set the following variables
-     that are used in the configure script:
-
-     USE_NLS = yes or no  - if NLS is enabled
-     USE_INCLUDED_LIBINTL = yes or no
-       if yes, then INTLLIBS=intl/libintl.a
-       otherwise we set INTLLIBS=-lintl.a
-
-   The default has been changed to NO nls support.
-   This is done by changing:
-
-    AC_ARG_ENABLE(nls,
-      [  --disable-nls           do not use Native Language Support],
-      USE_NLS=$enableval, USE_NLS=yes)
-
-    to:
-
-    AC_ARG_ENABLE(nls,
-      [  --enable-nls           use Native Language Support],
-      USE_NLS=$enableval, USE_NLS=no)
-
-
-  b)  the intl/Makefile.in.in has been modified so that we have:
-    localedir=@LOCALEDIR@ 
-
-    If you replace this file with new version, you MUST update
-    this so the correct location is used for the locale information.
+described below.
 
 How to Install the gettext software:
 
 1. Get the gettext distribution and install it on your local system
 
-   ftp://prep.ai.mit.edu/pub/gnu/gettext-<version>
+   ftp://prep.ai.mit.edu/pub/gnu/gettext/gettext-<version>
 
    Unpack it by using:
 
@@ -64,11 +40,9 @@ How to Install the gettext software:
    Read the documentation.  It is pretty straight forward with
    respect to installation.
 
-2. If you want to install the distribution on your system,
-   to use option a) above:
-
-   Configure, make and install the distribution.  You should
-   use the following options so that compilation will succeed.
+2. If you want to install the distribution on your system
+   configure, make and install the distribution.  The
+   following is an outline of the commands:
 
         tar zxvf gettext-<version>.tgz
         cd gettext-<version>
@@ -80,65 +54,87 @@ How to Install the gettext software:
    Now reconfigure and remake LPRng:
         cd .../LPRng
         rm -f config.cache
-        configure
+        configure --enable-nls
 
 3. If you do not want to install the gettext distribution
    on your system, you will have to do a bit more work.
 
-   First unpack the distribution.
+   First unpack the distribution and then
+   copy the intl directories and contents
+   to LPRng/intl:
 
         tar zxvf gettext-<version>.tgz
         cd gettext-<version>
-
-   Now copy the intl directories and contents
-   to LPRng/intl and LPRng/po respectively:
-
-        cd gettext-<version>
         tar cf - intl | (cd ..../LPRng; tar xvf -)
-
-   At this point you can now use c) with LPRng
-
         cd .../LPRng
         rm -f config.cache
-        ./configure --with-included-gettext ....
+        ./configure --enable-nls --with-included-gettext ....
 
-4. If there has been a major update in the gettext distributution
-   then you may need to resinstall the po/Makefile.in.in file
-   as well.  You can simply copy the Makefile.in.in file from
-   the new gettext distribution to the po directory. After this,
-   you should modify the Makefile.in.in so that it has
-      localedir=@LOCALEDIR@
-   This will make sure that the LPRng installation and the gettext
-   code will use the same places for the translation files:
-     cp .../gettext-<version>/po/Makefile.in.in /tmp
-     cd .../LPRng
-     cp /tmp/Makefile.in.in po
-     edit po/Makefile.in.in and set localedir as described above
-     configure
+UPDATES TO GETTEXT
 
-   You should also update the aclocal.m4 macros with the latest version.
-   You can do this by the following steps:
-   
-   cp aclocal.m4 aclocal.bak
-   cp aclocal.m4 aclocal.tmp
-   edit aclocal.m4 and truncate it at the start of the NLS macros
-     ....
-        #  NLS Support
-     .... (truncate after the comments)
+If there has been a major update in the gettext distributution
+then you will need to modify the gettext support files:
 
-   then concatenate the new gettext aclocal macros to the end
-   of this file:
-   cat aclocal.tmp .../aclocal/* >aclocal.m4
+1. po/Makefile.in.in:
 
-   Edit the new aclocal.m4 and change:
+  Copy the gettext/po/Makefile.in.in file from
+  the gettext distribution to the po directory:
+  
+       cp .../gettext-<version>/po/Makefile.in.in /tmp
+       cd .../LPRng
+       cp /tmp/Makefile.in.in po
+       configure
+  
+  Modify the localedir information so the top level configure
+  can update it:
+  
+  ORIGINAL:
+    localedir = $(prefix)/share/locale
+  
+  NEW:
+    localedir = @LOCALEDIR@
+  
 
-    AC_ARG_ENABLE(nls,
-      [  --disable-nls           do not use Native Language Support],
-      USE_NLS=$enableval, USE_NLS=yes)
+2. aclocal.m4
 
-    to:
+  The aclocal.m4 file uses the aclocal.m4 macros from the
+  gettext-0.10.39 distribution.
 
-    AC_ARG_ENABLE(nls,
-      [  --enable-nls           use Native Language Support],
-      USE_NLS=$enableval, USE_NLS=no)
+  The default has been changed to NO nls support:
 
+   ORIGINAL:
+      AC_ARG_ENABLE(nls,
+        [  --disable-nls           do not use Native Language Support],
+        USE_NLS=$enableval, USE_NLS=yes)
+
+   NEW:
+
+      AC_ARG_ENABLE(nls,
+        [  --enable-nls           use Native Language Support],
+        USE_NLS=$enableval, USE_NLS=no)
+
+  You can do this by the following steps:
+     
+       cp aclocal.m4 aclocal.bak
+
+       edit aclocal.m4 and truncate it at the start of the NLS macros
+       ....
+          #  NLS Support
+       .... (truncate after the comments)
+
+  concatenate the new gettext aclocal macros to the end
+     of this file:
+
+       cat .../gettext-xxx/aclocal.m4 >>aclocal.m4
+
+  Edit the new aclocal.m4 and change:
+
+      AC_ARG_ENABLE(nls,
+        [  --disable-nls           do not use Native Language Support],
+        USE_NLS=$enableval, USE_NLS=yes)
+
+      to:
+
+      AC_ARG_ENABLE(nls,
+        [  --enable-nls           use Native Language Support],
+        USE_NLS=$enableval, USE_NLS=no)

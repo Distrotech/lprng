@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: init.bsdi.sh,v 1.3 2000/08/19 20:35:46 papowell Exp papowell $
+# init.bsdi.sh,v 1.1 2001/08/21 20:33:15 root Exp
 # This file can be installed in /usr/local/etc/init.d
 #  as lprng.sh
 # You should install the following script to run the files in this
@@ -32,7 +32,7 @@ case "$1" in
 			$0 start
             ;;
     stop  )
-		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+		/usr/bin/killall -INT lpd >/dev/null 2>&1
             ;;
     start )
             echo -n ' lpd';

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 5.22 2000/12/25 01:51:19 papowell Exp papowell $
+ * $Id: linelist.h,v 1.14 2001/09/02 20:42:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -156,7 +156,7 @@ void Init_line_list( struct line_list *l );
 void Free_line_list( struct line_list *l );
 void Free_listof_line_list( struct line_list *l );
 void Check_max( struct line_list *l, int incr );
-void Add_line_list( struct line_list *l, char *str,
+char *Add_line_list( struct line_list *l, char *str,
 		const char *sep, int sort, int uniq );
 void Add_casekey_line_list( struct line_list *l, char *str,
 		const char *sep, int sort, int uniq );
@@ -167,7 +167,7 @@ void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
 	char *sep, int sort, int uniq );
 void Move_line_list( struct line_list *dest, struct line_list *src );
 void Split( struct line_list *l, char *str, const char *sep,
-	int sort, const char *keysep, int uniq, int trim, int nocomments );
+	int sort, const char *keysep, int uniq, int trim, int nocomments, char *escape );
 char *Join_line_list( struct line_list *l, char *sep );
 char *Join_line_list_with_sep( struct line_list *l, char *sep );
 char *Join_line_list_with_quotes( struct line_list *l, char *sep );

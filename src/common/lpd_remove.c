@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 5.25 2000/12/28 01:33:01 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -62,7 +62,7 @@ int Job_remove( int *sock, char *input )
 	/* get the options */
 	++input;
 	DEBUGF(DLPRM1)("Job_remove: input '%s'", input );
-	Split(&tokens,input,Whitespace,0,0,0,0,0);
+	Split(&tokens,input,Whitespace,0,0,0,0,0,0);
 	DEBUGFC(DLPRM2)Dump_line_list("Job_remove: input", &tokens );
 
 	/* check printername for characters, underscore, digits */
@@ -273,7 +273,6 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		++removed;
 		if( tokens->count == 0 ) break;
 	}
-	Close_gdbm();
 	Free_line_list(&info);
 	Free_job(&job);
 	Free_line_list( &Sort_order );
@@ -307,7 +306,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 	if( Server_names_DYN ){
 		Free_line_list(&info);
-		Split(&info, Server_names_DYN, File_sep, 0,0,0,0,0);
+		Split(&info, Server_names_DYN, File_sep, 0,0,0,0,0,0);
 		for( i = 0; i < info.count; ++i ){
 			DEBUGF(DLPRM2)("Get_queue_status: getting subserver status '%s'", 
 				info.list[i] );
@@ -318,7 +317,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		}
 	} else if( Destinations_DYN ){
 		Free_line_list(&info);
-		Split(&info, Destinations_DYN, File_sep, 0,0,0,0,0);
+		Split(&info, Destinations_DYN, File_sep, 0,0,0,0,0,0);
 		for( i = 0; i < info.count; ++i ){
 			DEBUGF(DLPRM2)("Get_queue_status: getting destination status '%s'", 
 				info.list[i] );
@@ -472,9 +471,6 @@ int Remove_job( struct job *job )
 	fail |= Remove_file( openname );
 	openname = Find_str_value(&job->info,HF_NAME,Value_sep);
 	fail |= Remove_file( openname );
-
-	/* remove from db */
-	Remove_from_db( openname );
 
 	if( fail == 0 ){
 		setmessage( job, TRACE, "remove SUCCESS" );

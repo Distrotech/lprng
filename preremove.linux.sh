@@ -1,5 +1,5 @@
 #
-# $Id: preremove.linux.sh,v 1.1 2000/06/06 18:16:08 papowell Exp papowell $
+# preremove.linux.sh,v 1.1 2001/08/21 20:33:17 root Exp
 #
 echo RUNNING preremove.linux.sh
 echo "Stopping lpd server"

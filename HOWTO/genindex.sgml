@@ -3,7 +3,7 @@
 <!-- This file was produced by collateindex.pl.         -->
 <!-- Remove this comment if you edit this file by hand! -->
 <!-- ULINK is abused here.
-      
+
       The URL attribute holds the URL that points from the index entry
       back to the appropriate place in the output produced by the HTML
       stylesheet. (It's much easier to calculate this URL in the first
@@ -23,43 +23,43 @@
 
 <indexentry>
   <primaryie>download,
-    <ulink url="#MAILLIST" role="AEN173">Additional Resources </ulink>
+    <ulink url="#MAILLIST" role="AEN190">Additional Resources </ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>FAQ,
-    <ulink url="#AEN188" role="AEN193">Frequently Asked Questions</ulink>
+    <ulink url="#AEN215" role="AEN220">Frequently Asked Questions</ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>Frequently Asked Questions,
-    <ulink url="#AEN188" role="AEN195">Frequently Asked Questions</ulink>
+    <ulink url="#AEN215" role="AEN222">Frequently Asked Questions</ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>FTP site,
-    <ulink url="#MAILLIST" role="AEN175">Additional Resources </ulink>
+    <ulink url="#MAILLIST" role="AEN192">Additional Resources </ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>History,
-    <ulink url="#SECFEATURES" role="AEN140">What is LPRng?  </ulink>
+    <ulink url="#SECFEATURES" role="AEN146">What is LPRng?  </ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>Mailing List,
-    <ulink url="#MAILLIST" role="AEN180">Additional Resources </ulink>
+    <ulink url="#MAILLIST" role="AEN207">Additional Resources </ulink>
   </primaryie>
 </indexentry>
 
 <indexentry>
   <primaryie>Tutorial notes,
-    <ulink url="#MAILLIST" role="AEN186">Additional Resources </ulink>
+    <ulink url="#MAILLIST" role="AEN213">Additional Resources </ulink>
   </primaryie>
 </indexentry>
 

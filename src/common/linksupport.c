@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 5.20 2000/12/25 01:51:07 papowell Exp papowell $";
+"$Id: linksupport.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
 
 
 /***************************************************************************
@@ -667,7 +667,7 @@ int Link_open_list( char *hostlist, char **result,
 		hostlist, port, timeout, Cast_ptr_to_long(bindto) );
 	}
 	if( result ) *result = 0;
-	Split(&list,hostlist,Host_sep,0,0,0,0,0);
+	Split(&list,hostlist,Host_sep,0,0,0,0,0,0);
 	err = errno = 0;
 	for( i = 0; sock < 0 && i < list.count; ++i ){
 		DEBUGF(DNW4) ("Link_open_list: host trying '%s'", list.list[i] );
@@ -1300,7 +1300,7 @@ int AF_Protocol(void)
  * addrprt = destination
  ***************************************************************************/
 
-int inet_pton( int family, const char *strptr, void *addr )
+ int inet_pton( int family, const char *strptr, void *addr )
 {
 	if( family != AF_INET ){
 		FATAL(LOG_ERR) "inet_pton: bad family '%d'", family );

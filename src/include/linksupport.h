@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 5.6 2000/12/25 01:51:19 papowell Exp papowell $
+ * $Id: linksupport.h,v 1.14 2001/09/02 20:42:19 papowell Exp $
  ***************************************************************************/
 
 
@@ -12,9 +12,14 @@
 #ifndef _LINKSUPPORT_H_
 #define _LINKSUPPORT_H_ 1
 
+#include "config.h"
+
 #if !defined(HAVE_INET_NTOP)
  const char *inet_ntop( int family, const void *addr,
 	char *str, size_t len );
+#endif
+#if !defined(HAVE_INET_PTON)
+ int inet_pton( int family, const char *strptr, void *addr );
 #endif
 
 /* PROTOTYPES */
@@ -46,9 +51,6 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 const char *Link_err_str (int n);
 const char *Ack_err_str (int n);
 int AF_Protocol(void);
-int inet_pton( int family, const char *strptr, void *addr );
-const char *inet_ntop( int family, const void *addr,
-	char *str, size_t len );
 const char *inet_ntop_sockaddr( struct sockaddr *addr,
 	char *str, int len );
 

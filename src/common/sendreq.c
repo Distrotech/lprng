@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 5.12 2000/12/25 01:51:15 papowell Exp papowell $";
+"$Id: sendreq.c,v 1.14 2001/09/02 20:42:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -145,12 +145,19 @@ int Send_request(
 	err = errno;
 	if( sock < 0 ){
 		char *msg = "";
-		if( !Is_server ){
-			msg = "\nMake sure LPD server is running on the server";
-		}
 		SNPRINTF( errormsg, sizeof(errormsg)-2)
-			"cannot open connection - %s%s",
+			"cannot open connection - %s",
 			err?Errormsg(err):"bad or missing hostname", msg );
+		if( !Is_server ){
+			int v = strlen(errormsg);
+			SNPRINTF( errormsg+v, sizeof(errormsg)-v)
+			"\nMake sure the remote host supports the LPD protocol");
+			if( geteuid() && getuid() ){
+				v = strlen(errormsg);
+				SNPRINTF( errormsg+v, sizeof(errormsg)-v)
+				"\nand accepts connections from this host and from non-privileged (>1023) ports");
+			}
+		}
 		goto error;
 	}
 

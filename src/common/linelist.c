@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 5.41 2000/12/25 01:51:07 papowell Exp papowell $";
+"$Id: linelist.c,v 1.14 2001/09/02 20:42:10 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -354,15 +354,16 @@ void Check_max( struct line_list *l, int incr )
 }
 
 /*
- *void Add_line_list( struct line_list *l, char *str,
+ *char *Add_line_list( struct line_list *l, char *str,
  *  char *sep, int sort, int uniq )
  *  - add a copy of str to the line list
  *  sep      - key separator, used for sorting
  *  sort = 1 - sort the values
  *  uniq = 1 - only one value
+ *  returns:  added string
  */
 
-void Add_line_list( struct line_list *l, char *str,
+char *Add_line_list( struct line_list *l, char *str,
 		const char *sep, int sort, int uniq )
 {
 	char *s = 0;
@@ -407,6 +408,7 @@ void Add_line_list( struct line_list *l, char *str,
 		}
 	}
 	/* if(DEBUGL4)Dump_line_list("Add_line_list: result", l); */
+	return( str );
 }
 
 /*
@@ -521,7 +523,7 @@ void Move_line_list( struct line_list *dest, struct line_list *src )
 
 /*
  * Split( struct line_list *l, char *str, int sort, char *keysep,
- *		int uniq, int trim, int nocomments )
+ *		int uniq, int trim, int nocomments, char *escape )
  *  Split the str up into strings, as delimted by sep.
  *   put duplicates of the original into the line_list l.
  *  If sort != 0, then sort them using keysep to separate sort key from value
@@ -529,10 +531,12 @@ void Move_line_list( struct line_list *dest, struct line_list *src )
  *  if trim != 0 then remove leading and trailing whitespace and
  *    if trim is a printable character any characters at start == trim
  *  if nocomments != 0, then remove comments as well
+ *  if escape != 0, then allow the characters in the string to be escaped
+ *     i.e. - escape = ":" then \: would be replace by :
  *
  */
 void Split( struct line_list *l, char *str, const char *sep,
-	int sort, const char *keysep, int uniq, int trim, int nocomments )
+	int sort, const char *keysep, int uniq, int trim, int nocomments, char *escape )
 {
 	char *end = 0, *t, *buffer = 0;
 	int len, blen = 0;
@@ -547,9 +551,18 @@ void Split( struct line_list *l, char *str, const char *sep,
 	if( str == 0 || *str == 0 ) return;
 	for( ; str && *str; str = end ){
 		end = 0;
-		if( sep && (t = safestrpbrk( str, sep )) ){
+		t = str;
+		if( !ISNULL(sep) ) while( (t = safestrpbrk( t, sep )) ){
+			if( escape && t != str && cval(t-1) == '\\'
+				&& strchr( escape, cval(t) ) ){
+				++t;
+				DEBUG4("Split: escape '%s'", t );
+				continue;
+			}
 			end = t+1;
-		} else {
+			break;
+		}
+		if( !end ){
 			t = str + strlen(str);
 		}
 		DEBUG5("Split: str 0x%lx, ('%c%c...') end 0x%lx, t 0x%lx",
@@ -1382,7 +1395,7 @@ void Read_file_list( int required, struct line_list *model, char *str,
 
 	Init_line_list(&l);
 	DEBUG3("Read_file_list: '%s', doinclude %d", str, doinclude );
-	Split( &l, str, File_sep, 0, 0, 0, 1, 0 );
+	Split( &l, str, File_sep, 0, 0, 0, 1, 0 ,0);
 	start = model->count;
 	for( i = 0; i < l.count; ++i ){
 		if( stat( l.list[i], &statb ) == -1 ){
@@ -1474,7 +1487,7 @@ void Read_fd_and_split( struct line_list *list, int fd,
 	}
 	close( fd );
 	DEBUG4("Read_fd_and_split: size %d", size );
-	Split( list, sv, linesep, sort, keysep, uniq, trim, nocomment );
+	Split( list, sv, linesep, sort, keysep, uniq, trim, nocomment ,0);
 	if( sv ) free( sv );
 }
 
@@ -1525,9 +1538,16 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 	DEBUG4("Build_pc_names: '%s'", str);
 	if( (s = safestrpbrk(str, ":")) ){
 		c = *s; *s = 0;
-		Split(&opts,s+1,":",1,Value_sep,0,1,0);
+		Split(&opts,s+1,":",1,Value_sep,0,1,0,":");
+		for( i = 0; i < opts.count; ++i ){
+			t = opts.list[i];  
+			while( t && (t = strstr(t,"\\:")) ){
+				memmove(t, t+1, strlen(t+1)+1 );
+				++t;
+			}
+		}
 	}
-	Split(&l,str,"|",0,0,0,1,0);
+	Split(&l,str,"|",0,0,0,1,0,0);
 	if( s ) *s = c;
 	if(DEBUGL4)Dump_line_list("Build_pc_names- names", &l);
 	if(DEBUGL4)Dump_line_list("Build_pc_names- options", &opts);
@@ -1555,7 +1575,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 			for( i = start_oh; !ok && i <= end_oh; ++i ){
 				DEBUG4("Build_pc_names: [%d] '%s'", i, opts.list[i] );
 				if( (t = safestrchr( opts.list[i], '=' )) ){
-					Split(&oh,t+1,File_sep,0,0,0,1,0);
+					Split(&oh,t+1,File_sep,0,0,0,1,0,0);
 					ok = !Match_ipaddr_value(&oh, hostname);
 					DEBUG4("Build_pc_names: check host '%s', ok %d",
 						t+1, ok );
@@ -1821,16 +1841,16 @@ void Find_pc_info( char *name,
 		u = pc.list[start];
 		c = 0;
 		if( (t = safestrpbrk(u,":")) ){
-			Split(&l, t+1, ":", 1, Value_sep, 0, 1, 0);
+			Split(&l, t+1, ":", 1, Value_sep, 0, 1, 0,0);
 		}
 		if( aliases ){
 			if( t ){
 				c = *t; *t = 0;
-				Split(aliases, u, Printcap_sep, 0, 0, 0, 0, 0);
+				Split(aliases, u, Printcap_sep, 0, 0, 0, 0, 0,0);
 				Remove_duplicates_line_list(aliases);
 				*t = c;
 			} else {
-				Split(aliases, u, Printcap_sep, 0, 0, 0, 0, 0);
+				Split(aliases, u, Printcap_sep, 0, 0, 0, 0, 0,0);
 				Remove_duplicates_line_list(aliases);
 			}
 		}
@@ -1843,7 +1863,7 @@ void Find_pc_info( char *name,
 					lowercase(s);
 					DEBUG4("Find_pc_info: tc '%s'", s );
 					if( (t = safestrchr( s, '=' )) ){
-						Split(&tc,t+1,File_sep,0,0,0,1,0);
+						Split(&tc,t+1,File_sep,0,0,0,1,0,0);
 					}
 					free( l.list[start_tc] );
 					l.list[start_tc] = 0;
@@ -2219,7 +2239,7 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 
 	if( !Is_server && Pass_env_DYN ){
 		Free_line_list(&env_names);
-		Split(&env_names,Pass_env_DYN,File_sep,1,Value_sep,1,1,0);
+		Split(&env_names,Pass_env_DYN,File_sep,1,Value_sep,1,1,0,0);
 		for( i = 0; i < env_names.count; ++i ){
 			name = env_names.list[i];
 			if( (s = getenv( name )) ){
@@ -2251,7 +2271,7 @@ void Getprintcap_pathlist( int required,
 
 	Init_line_list(&l);
 	DEBUG2("Getprintcap_pathlist: processing '%s'", path );
-	Split(&l,path,Strict_file_sep,0,0,0,1,0);
+	Split(&l,path,Strict_file_sep,0,0,0,1,0,0);
 	for( i = 0; i < l.count; ++i ){
 		path = l.list[i];
 		c = path[0];
@@ -2409,7 +2429,7 @@ int Check_for_rg_group( char *user )
 		user, s );
 	if( s ){
 		match = 1;
-		Split(&l,s,List_sep,0,0,0,0,0);
+		Split(&l,s,List_sep,0,0,0,0,0,0);
 		for( i = 0; match && i < l.count; ++i ){
 			s = l.list[i];
 			match = In_group( s, user );
@@ -2621,7 +2641,7 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 	} else {
 		Split_cmd_line(&cmd, line);
 		if( !noopts ){
-			Split(&cmd, flags, Whitespace, 0,0, 0, 0, 0);
+			Split(&cmd, flags, Whitespace, 0,0, 0, 0, 0,0);
 		}
 		Fix_dollars(&cmd, job, 0, flags);
 	}
@@ -2930,7 +2950,7 @@ void Dump_parms( char *title, struct keywords *k )
 
 void Dump_default_parms( int fd, char *title, struct keywords *k )
 {
-	char *s, *def, *key;
+	char *def, *key;
 	char buffer[2*SMALLBUFFER];
 	int n;
 
@@ -2939,7 +2959,7 @@ void Dump_default_parms( int fd, char *title, struct keywords *k )
 		Write_fd_str(fd, buffer);
 	}
 	for( ; k &&  k->keyword; ++k ){
-		n = 0; s = "";
+		n = 0;
 		key = k->keyword;
 		def = k->default_value;
 		switch(k->type){
@@ -2958,7 +2978,12 @@ void Dump_default_parms( int fd, char *title, struct keywords *k )
 			SNPRINTF(buffer,sizeof(buffer))" :%s=%d\n", key, n);
 			break;
 		case STRING_K:
-			SNPRINTF(buffer,sizeof(buffer))" :%s=%s\n", key, s);
+			if( def ){
+				if( cval(def) == '=' ) ++def;
+			} else {
+				def = "";
+			}
+			SNPRINTF(buffer,sizeof(buffer))" :%s=%s\n", key, def);
 			break;
 		default:
 			SNPRINTF(buffer,sizeof(buffer))"# %s UNKNOWN\n", key);
@@ -3054,7 +3079,7 @@ void Fix_Z_opts( struct job *job )
 	DEBUG4("Fix_Z_opts: after Prefix_O '%s'", str );
 	if( Remove_Z_DYN && str ){
 		/* remove the various options - split on commas */
-		Split(&l, Remove_Z_DYN, ",", 0, 0, 0, 0, 0);
+		Split(&l, Remove_Z_DYN, ",", 0, 0, 0, 0, 0,0);
 		for( i = 0; i < l.count; ++i ){
 			pattern = l.list[i];
 			DEBUG4("Fix_Z_opts: pattern '%s'", pattern );
@@ -3217,7 +3242,10 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 			} else {
 				quote = 0;
 				switch( c ){
-				case 'a': str = Accounting_file_DYN; break;
+				case 'a': 
+					str = Accounting_file_DYN;
+					if( str && cval(str) == '|' ) str = 0;
+					break;
 				case 'b': str = job?Find_str_value(&job->info,SIZE,Value_sep):0; break;
 				case 'c':
 					notag = 1; space=0;

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 5.11 2000/12/25 01:51:10 papowell Exp papowell $";
+"$Id: lpd_logger.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 
 #include "lp.h"
@@ -276,7 +276,6 @@ int Dump_queue_status(int outfd)
 	}
 	DEBUGF(DLOG2)("Dump_queue_status: writing to fd %d", outfd );
 	for( i = 0; i < All_line_list.count; ++i ){
-		Close_gdbm();
 		Set_DYN(&Printer_DYN,0);
 		pr = All_line_list.list[i];
 		DEBUGF(DLOG2)("Dump_queue_status: checking '%s'", pr );
@@ -340,7 +339,6 @@ int Dump_queue_status(int outfd)
 		}
 		if( Write_fd_str( outfd, "\n" ) < 0 ){ return(1); }
 	}
-	Close_gdbm();
 
 	if( Write_fd_str( outfd, "END\n" ) < 0 ){ return(1); }
 	Set_DYN(&Printer_DYN,0);

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 5.15 2000/12/25 01:51:05 papowell Exp papowell $";
+"$Id: gethostinfo.c,v 1.14 2001/09/02 20:42:09 papowell Exp $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)
@@ -510,19 +510,17 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 				if( buffer[0] ) *t++ = '.';
 				strcpy(t,"255");
 				t += strlen(t);
-				*t = 0;
 			}
-			if( bitcount ){
+			if( bitcount && i < addrlen ){
 				if( buffer[0] ) *t++ = '.';
 				SNPRINTF(t,6) "%d", (~((1<<(8-bitcount))-1))&0xFF);
 				t += strlen(t);
-				*t = 0;
+				++i;
 			}
 			for( ; i < addrlen; ++i ){
 				if( buffer[0] ) *t++ = '.';
 				strcpy(t,"0");
 				t += strlen(t);
-				*t = 0;
 			}
 			DEBUG6("form_addr_and_mask: len %d '%s'", m, buffer );
 			result = inet_pton(family, buffer, mask );
@@ -608,6 +606,8 @@ int Match_ipaddr_value( struct line_list *list, struct host_information *host )
 				result = Globmatch( str, host->host_names.list[j] );
 			}
 			if( result ){
+				DEBUGF(DDB2)("Match_ipaddr_value: mask '%s'",
+					str );
 				form_addr_and_mask(str,addr,mask,host->h_length,
 					host->h_addrtype );
 				for( j = 0; result && j < host->h_addr_list.count; ++j ){

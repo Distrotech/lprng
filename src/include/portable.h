@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 5.17 2000/12/25 01:51:22 papowell Exp papowell $
+ * $Id: portable.h,v 1.14 2001/09/02 20:42:22 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -337,10 +337,10 @@ typedef struct dirent plp_dir_t;
  * Patrick Powell Thu Apr  6 07:47:54 PDT 1995
  *********************************************************************/
 
-#ifdef HAVE_MALLOC_H
-# include <malloc.h>
-#else
 # if !defined(HAVE_STDLIB_H)
+# ifdef HAVE_MALLOC_H
+#   include <malloc.h>
+# else
    void *malloc(size_t);
    void free(void *);
 # endif

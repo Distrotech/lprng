@@ -1,0 +1,153 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Locations of Printcap Files&#13;</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
+    <link rel="UP" title="Printcap Database " href=
+    "printcapref.htm">
+    <link rel="PREVIOUS" title="Printer Load Balancing" href=
+    "loadbalance.htm">
+    <link rel="NEXT" title=
+    "Single Printcap File for Large Installation " href=
+    "secoh.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
+          (For LPRng-3.7.5)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "loadbalance.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          12. Printcap Database</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "secoh.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTCAPPATH">12.15. Locations of
+      Printcap Files</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><tt class="LITERAL">printcap_path=</tt><i class=
+          "EMPHASIS">printcap file locations</i></p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">lpd_printcap_path=</tt><i class=
+          "EMPHASIS">additional server printcap file
+          locations</i></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>The <tt class="LITERAL">printcap_path</tt> and <tt class=
+      "LITERAL">lpd_printcap_path</tt> configuration options (see
+      <a href="configfile.htm">lpd.conf(5)</a> ) specify a set of
+      paths for the printcap information. Client programs use only
+      <tt class="LITERAL">printcap_path</tt> and the <b class=
+      "APPLICATION">lpd</b> server uses both <tt class=
+      "LITERAL">printcap_path</tt> and <tt class=
+      "LITERAL">lpd_printcap_path</tt>. The path names can be
+      separated with whitespace, commas, semicolons, or colons. The
+      default values are:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN5952"></a>
+<pre class="SCREEN">
+    printcap_path      ${sysconfdir}/printcap
+    lpd_printcap_path  ${sysconfdir}/lpd_printcap
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="AEN5954">12.15.1. Separate
+        Server and Client Printcap Files</a></h2>
+
+        <p>Since only the <b class="APPLICATION">lpd</b> server
+        uses the printcap file specified by the <tt class=
+        "LITERAL">lpd_printcap_path</tt>, you can place server
+        specific information there. This allows you to have a
+        common printcap file for clients and an additional one for
+        the lpd servers.</p>
+      </div>
+
+      <div class="SECT2">
+        <h2 class="SECT2"><a name="ALLPC">12.15.2. <tt class=
+        "LITERAL">all</tt> Printcap Entry</a></h2>
+
+        <p>The <tt class="LITERAL">all</tt> printcap name and <tt
+        class="LITERAL">all</tt> option is reserved to provide a
+        list of printers available for use by the spooling
+        software. This is a desperation, last ditch, back to the
+        wall option for administrators with systems that do not
+        have ways to provide a list of printcap entries. The 'all'
+        printcap entry has the form:</p>
+
+        <div class="INFORMALEXAMPLE">
+          <a name="AEN5965"></a>
+<pre class="SCREEN">
+    all:all=pr1,pr2,...
+</pre>
+        </div>
+        <br>
+        <br>
+
+        <p>The value of the <tt class="LITERAL">all</tt> option
+        should be a list of printcap names whose values will then
+        be extracted.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "loadbalance.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "secoh.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Printer Load
+          Balancing</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "printcapref.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Single
+          Printcap File for Large Installation</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 5.23 2000/12/25 01:51:08 papowell Exp papowell $";
+"$Id: lpd.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 
 #include "lp.h"
@@ -780,7 +780,7 @@ int Read_server_status( int fd )
 		}
 		buffer[status] = 0;
 		/* we split up read line and record information */
-		Split(&l,buffer,Whitespace,0,0,0,0,0);
+		Split(&l,buffer,Whitespace,0,0,0,0,0,0);
 		if(DEBUGL1)Dump_line_list("Read_server_status - input", &l );
 		for( count = 0; count < l.count; ++count ){ 
 			name = l.list[count];
@@ -952,7 +952,6 @@ void Service_all( struct line_list *args )
 		Free_line_list( &Sort_order );
 		if( Scan_queue( &Spool_control, &Sort_order,
 				&printable,&held,&move, 1, first_scan, 0 ) ){
-			Close_gdbm();
 			continue;
 		}
 		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);

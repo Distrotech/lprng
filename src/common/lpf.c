@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 5.12 2000/12/25 01:51:11 papowell Exp papowell $";
+"$Id: lpf.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
 
 
 /***************************************************************************
@@ -22,7 +22,7 @@
  *      -Kcontrolfilename -Lbnrname \
  *      [-iindent] \
  *		[-Zoptions] [-Cclass] [-Jjob] [-Raccntname] -nlogin -hHost  \
- *      -Fformat [-Tcrlf] [-Ddebuglevel] [affile]
+ *      -Fformat [-Tcrlf] [-Tdebug] [affile]
  * 
  *  1. Parameters can be in different order than the above.
  *  2. Optional parameters can be missing
@@ -81,10 +81,8 @@
  *
  * npages    - number of pages for accounting
  *
- * -Tlevel - sets debug level. level must be integer
+ * -Tdebug - increment debug level
  * -Tcrlf  - turn LF to CRLF translation off
- * -TX     - append character X to end of line (CR, CR/LF, LF, LF/CR marks end)
- *
  *
  *	The functions fatal(), logerr(), and logerr_die() can be used to report
  *	status. The variable errorcode can be set by the user before calling
@@ -500,7 +498,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 							crlf = 1;
 						}
 						if( !strcasecmp( s, "debug" ) ){
-							debug = 1;
+							++debug;
 						}
 					}
 					break;
@@ -581,6 +579,8 @@ void getargs( int argc, char *argv[], char *envp[] )
  */
 void suspend_ofilter(void)
 {
+	fflush(stdout);
+	fflush(stderr);
 	if(debug)FPRINTF(STDERR,"FILTER suspending\n");
 	kill(getpid(), SIGSTOP);
 	if(debug)FPRINTF(STDERR,"FILTER awake\n");
@@ -596,6 +596,8 @@ void filter_pgm(char *stop)
 	int c;
 	int state, i, xout, lastc;
 	int lines = 0;
+	char inputline[1024];
+	int inputcount = 0;
 
 	/*
 	 * do whatever initializations are needed
@@ -607,8 +609,13 @@ void filter_pgm(char *stop)
 	lastc = xout = state = 0;
 	npages = 1;
 
+	inputcount = 0;
 	while( (c = getchar()) != EOF ){
+		if( inputcount < sizeof(inputline) - 3 ) inputline[inputcount++] = c;
 		if( c == '\n' ){
+			inputline[inputcount-1] = 0;
+			if(debug)FPRINTF(STDERR,"INPUTLINE count %d '%s'\n", inputcount, inputline );
+			inputcount = 0;
 			++lines;
 			if( lines > length ){
 				lines -= length;

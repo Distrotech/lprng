@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 5.27 2000/12/25 01:51:04 papowell Exp papowell $";
+"$Id: checkpc.c,v 1.14 2001/09/02 20:42:08 papowell Exp $";
 
 
 
@@ -137,6 +137,9 @@ int main( int argc, char *argv[], char *envp[] )
 	Free_line_list( &raw );
 
 	To_root();
+	if( Fix && geteuid() ){
+		WARNMSG("Fix option (-f) requires root permissions\n" );
+	}
 
 	if(Verbose)MESSAGE("Checking for configuration files '%s'", Config_file_DYN);
 	found_pc = Check_path_list( Config_file_DYN, 0 );
@@ -190,10 +193,14 @@ int main( int argc, char *argv[], char *envp[] )
 				if( Fix ){
 					mkdir_path( path );
 				}
-			} else {
-				*s = '/';
-				To_root();
-				Make_write_file( path, 0 );
+			}
+			*s = '/';
+			if( stat( path, &statb ) ){
+				WARNMSG( "  LPD Lockfile '%s' does not exist!", path);
+				if( Fix ){
+					To_root();
+					Make_write_file( path, 0 );
+				}
 			}
 		}
 		Spool_file_perms_DYN = oldfile;
@@ -401,6 +408,9 @@ void Scan_printer(void)
 			Printer_DYN, Spool_dir_DYN, Errormsg(errno) );
 		return;
 	}
+	if( (Fix || Remove) && Lpq_status_file_DYN ){
+		unlink(Lpq_status_file_DYN);
+	}
 	while( (d = readdir(dir)) ){
 		cf_name = d->d_name;
 		if( safestrcmp( cf_name, "." ) == 0
@@ -409,6 +419,10 @@ void Scan_printer(void)
 		if( stat(cf_name,&statb) == -1 ){
 			WARNMSG( "  stat of file '%s' failed '%s'",
 				cf_name, Errormsg(errno) );
+			continue;
+		}
+		/* do not touch symbolic links */
+		if( S_ISLNK( statb.st_mode ) ){
 			continue;
 		}
 		delta = Current_time - statb.st_mtime;
@@ -423,21 +437,26 @@ void Scan_printer(void)
 				&& isalpha(cval(cf_name+1))
 				&& isalpha(cval(cf_name+2))
 				&& isdigit(cval(cf_name+3)) );
-		if( !jobfile ) jobfile = ( !safestrncmp( cf_name,"temp",4 ) );
 
-		if( jobfile && delta > Age && Remove ){
+		if( jobfile && Age && delta > Age ){
+			int n = (delta)/60 ;
             if( (statb.st_size == 0) ){
-				if(Verbose)MESSAGE( "  file '%s', zero length file %ld hours old",
-					cf_name, (long)((delta+3599)/3600) );
-				unlink(cf_name);
+				if( Remove || Verbose)MESSAGE( " %s:  file '%s', zero length file > %d mins old",
+					Printer_DYN, cf_name, n );
+				if( Remove ){
+					unlink(cf_name);
+				}
 				continue;
 			} else {
-				if(Verbose)MESSAGE( "  file '%s', %ld hours old",
-					cf_name, (long)((delta+3599)/3600) );
-				unlink(cf_name);
+				if( Remove || Verbose)MESSAGE( " %s:  file '%s', %ld hours old, remove > %d mins old",
+					Printer_DYN, cf_name, n,  Age );
+				if( Remove ){
+					unlink(cf_name);
+				}
 				continue;
 			}
 		}
+		/* we update all real files in this directory */
 		Check_file( cf_name, Fix, 0, 0 );
 	}
 	closedir(dir);
@@ -456,7 +475,9 @@ void Scan_printer(void)
 		if( Queue_db_file_DYN ) unlink(Queue_db_file_DYN );
 	}
 	Free_line_list( &Sort_order );
+	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue before maxfd %d", fdx); close(fdx); }
 	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 1, 0 );
+	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue after maxfd %d", fdx); close(fdx); }
 
 	/*
 	 * check to see if we have a local or remote printer
@@ -478,7 +499,7 @@ void Scan_printer(void)
 		} else if( stat(s,&statb) < 0 ){
 			WARNMSG( "%s: cannot stat lp device '%s' - %s",
 				Printer_DYN, s, Errormsg(errno) );
-		} else if( (fd = Checkwrite(s,&statb,0,0,0)) < 0 ){
+		} else if( (fd = Checkwrite(s,&statb,0,0,1)) < 0 ){
 			WARNMSG( "%s: cannot open lp device '%s' - %s",
 				Printer_DYN, s, Errormsg(errno) );
 		}
@@ -508,7 +529,7 @@ void Check_executable_filter( char *id )
 	Init_line_list(&files);
 	filter_str = Find_str_value(&PC_entry_line_list,id,Value_sep);
 	if(!filter_str) filter_str = Find_str_value(&Config_line_list,id,Value_sep);
-	Split(&files,filter_str,Whitespace,0,0,0,0,0);
+	Split(&files,filter_str,Whitespace,0,0,0,0,0,0);
 	if( files.count ){
 		if(Verbose)MESSAGE("  '%s' filter '%s'", id, filter_str );
 		s = 0;
@@ -581,7 +602,7 @@ void Make_write_file( char *file, char *printer )
 
 	if( (fd = Checkread( s, &statb )) < 0 ){
 		if( Fix ){
-			fd = Checkwrite( s, &statb, O_RDWR, 1, 0 );
+			fd = Checkwrite( s, &statb, O_RDWR, 1, 1 );
 		}
 	}
 	if( fd < 0 ){
@@ -820,7 +841,7 @@ int Check_spool_dir( char *path, int owner )
 	}
 
 	pathname = 0;
-	Split(&parts,path,"/",0,0,0,0,0);
+	Split(&parts,path,"/",0,0,0,0,0,0);
 
 	for( i = 0; i < parts.count; ++i ){
 		pathname = safeextend3(pathname,"/",parts.list[i],__FILE__,__LINE__);
@@ -1409,7 +1430,7 @@ int Check_path_list( char *plist, int allow_missing )
 	struct stat statb;
 
 	Init_line_list(&values);
-	Split(&values,plist,File_sep,0,0,0,0,0);
+	Split(&values,plist,File_sep,0,0,0,0,0,0);
 	for( i = 0; i < values.count; ++i ){
 		path = values.list[i];
 		if( path[0] == '|' ){

@@ -91,9 +91,8 @@ TAGS info:
 cifast ci:
 	if test ! -d RCS ; then mkdir RCS; fi;
 	checkin() { \
-		rcs -l $$1; \
-		ci $(CI) -mUpdate -t-Initial $$1; \
-		yes |co $(CO) $$1; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	for i in *.[0-9] Makefile.in Makefile; do \
 		checkin $$i; \

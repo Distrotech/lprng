@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 5.34 2000/12/25 01:51:16 papowell Exp papowell $";
+"$Id: vars.c,v 1.14 2001/09/02 20:42:16 papowell Exp $";
 
 
 /* force local definitions */
@@ -186,7 +186,7 @@ struct keywords Pc_var_list[] = {
    /* printers that we should query for status information */
 { "destinations", 0, STRING_K, &Destinations_DYN,0,0},
    /* allow LPR to make direct socket connection to printer */
-{ "direct", 0, STRING_K, &Direct_DYN,0,0},
+{ "direct", 0, FLAG_K, &Direct_DYN,0,0},
    /* drop root permissions after binding to listening port */
 { "drop_root", 0, FLAG_K, &Drop_root_DYN,0,0},
    /* exit linger timeout to wait for socket to close */
@@ -282,7 +282,7 @@ struct keywords Pc_var_list[] = {
    /*  interval in secs between starting up all servers */
 { "lpd_poll_time", 0,  INTEGER_K,  &Poll_time_DYN,0,0,"=600"},
    /* lpd port */
-{ "lpd_port", 0, STRING_K, &Lpd_port_DYN,0,0,"=printer"},
+{ "lpd_port", 0, STRING_K, &Lpd_port_DYN,0,0,"=515"},
    /* lpd printcap path */
 { "lpd_printcap_path", 0, STRING_K, &Lpd_printcap_path_DYN,1,0,"=" LPD_PRINTCAP_PATH},
    /* maximum number of lpq status queries kept in cache */
@@ -352,7 +352,7 @@ struct keywords Pc_var_list[] = {
    /*  pr program for p format */
 { "pr", 0,  STRING_K,  &Pr_program_DYN,0,0,"=/bin/pr"},
    /* prefix control file line to line, "Z O" -> Z to O, "OS Z" does O and S to Z */
-{ "prefix_option_to_option", 0, FLAG_K, &Prefix_option_to_option_DYN,0,0},
+{ "prefix_option_to_option", 0, STRING_K, &Prefix_option_to_option_DYN,0,0},
    /* prefix these -Z options to start of options list on outgoing or filters */
 { "prefix_z", 0, STRING_K, &Prefix_Z_DYN,0,0},
    /* /etc/printcap files */

@@ -1,20 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 5.17 2000/12/25 01:51:12 papowell Exp papowell $";
+"$Id: lpstat.c,v 1.14 2001/09/02 20:42:13 papowell Exp $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
@@ -163,7 +163,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	if( Found_flag == 0 ){
 		if( request_list.count == 0 ){
-			Split(&request_list,Printer_DYN,", ",1,0,1,1,0);
+			Split(&request_list,Printer_DYN,", ",1,0,1,1,0,0);
 		}
 		o_flag = 1;
 		flag_count = 1;
@@ -306,7 +306,7 @@ int Read_status_info( char *host, int sock,
 		if( (s = safestrrchr(buffer,'\n')) ){
 			*s++ = 0;
 			/* add the lines */
-			Split(&l,buffer,Line_ends,0,0,0,0,0);
+			Split(&l,buffer,Line_ends,0,0,0,0,0,0);
 			memmove(buffer,s,strlen(s)+1);
 		}
 		if( DEBUGL2 )Dump_line_list("Read_status_info - status after splitting", &l );
@@ -538,7 +538,7 @@ SYNOPSIS
 
 #undef SX
 #define SX(X,Y,Z) \
-	if((X)&&!(Y))Y="all"; Split(&Z,Y,", ",1,0,1,1,0);
+	if((X)&&!(Y))Y="all"; Split(&Z,Y,", ",1,0,1,1,0,0);
 	SX(a_flag,a_val,Printer_list);
 	SX(c_flag,c_val,Printer_list);
 	SX(f_flag,f_val,f_list);

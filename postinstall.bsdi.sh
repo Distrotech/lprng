@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: postinstall.bsdi.sh,v 1.12 2000/10/29 22:52:48 papowell Exp papowell $
+# postinstall.bsdi.sh,v 1.1 2001/08/21 20:33:16 root Exp
 # 
 # This is the shell script that does the postinstall
 # dynamic fixup

@@ -1,6 +1,6 @@
 # 
 # -- START --
-# $Id: postinstall.linux.sh,v 1.12 2000/10/29 22:52:49 papowell Exp papowell $
+# postinstall.linux.sh,v 1.1 2001/08/21 20:33:17 root Exp
 #
 #  If you are building an RPM package,  please see the
 #  DISTRIBUTIONS/RPM directory(s) for a RPM Spec file
@@ -38,11 +38,15 @@ fix () {
 	fi;
 }
 echo "Installing configuration files"
-init=${DESTDIR}/etc/rc.d/init.d/lprng
+init=${DESTDIR}/etc/rc.d/init.d/lpd
 if [ "X$MAKEINSTALL" = "XYES" ] ; then
 	if [ "$INIT" != "no" ] ; then
 		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		cp init.linux $init;
+	        if [ -f /etc/redhat-release -a -f /sbin/chkconfig ] ; then
+			cp init.redhat $init;
+		else
+			cp init.linux $init;
+		fi
 		chmod 744 $init
 	fi;
 	fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
@@ -60,8 +64,14 @@ if [ "X$MAKEPACKAGE" != "XYES" -a "$INIT" != no ] ; then
     fi
     if [ -f /etc/redhat-release -a -f /sbin/chkconfig ] ; then
 		echo "RedHat Linux - running chkconfig"
+		(
 		/sbin/chkconfig lpr off
 		/sbin/chkconfig --del lpr
+		/sbin/chkconfig lpr off
+		/sbin/chkconfig --del lpr
+		/sbin/chkconfig lprng off
+		/sbin/chkconfig --del lprng
+		)
 		echo "Stopping server"
 		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
 		sleep 2

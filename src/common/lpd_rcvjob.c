@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 5.22 2000/12/25 01:51:10 papowell Exp papowell $";
+"$Id: lpd_rcvjob.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -127,7 +127,7 @@ int Receive_job( int *sock, char *input )
 
 	if( input && *input ) ++input;
 	Clean_meta(input);
-	Split(&info,input,Whitespace,0,0,0,0,0);
+	Split(&info,input,Whitespace,0,0,0,0,0,0);
 
 	DEBUGFC(DRECV1)Dump_line_list("Receive_job: input", &info );
 	if( info.count != 1 ){
@@ -225,6 +225,14 @@ int Receive_job( int *sock, char *input )
 		/* make sure we have length and filename */
 		filename = 0;
 		file_len = strtod(line+1,&filename);
+		if ((line+1) == filename){
+			/* Recover from Apple Desktop Printing stupidity.
+			   It occasionally resends the queue selection cmd.
+			   Darian Davis DD 03JUL2000 */
+			status = 0;
+			LOGERR(LOG_ERR)"Recovering from incorrect job submission");
+			continue;
+		}
 		if( filename ){
 			while( isspace(cval(filename)) ) ++filename;
 			Clean_meta(filename);
@@ -423,7 +431,7 @@ int Receive_block_job( int *sock, char *input )
 
 	if( *input ) ++input;
 	Clean_meta(input);
-	Split(&l,input,Whitespace,0,0,0,0,0);
+	Split(&l,input,Whitespace,0,0,0,0,0,0);
 	DEBUGFC(DRECV1)Dump_line_list("Receive_block_job: input", &l );
 
 	if( l.count != 2 ){
@@ -641,7 +649,7 @@ int Scan_block_file( int fd, char *error, int errlen, char *auth_id )
 			continue;
 		}
 		Clean_meta(line+1);
-		Split(&info,line+1,Whitespace,0,0,0,0,0);
+		Split(&info,line+1,Whitespace,0,0,0,0,0,0);
 		if( info.count != 2 ){
 			SNPRINTF( error, errlen)
 			_("bad length information '%s'"), line+1 );

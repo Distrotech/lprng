@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 5.19 2000/12/25 01:51:14 papowell Exp papowell $";
+"$Id: sendauth.c,v 1.14 2001/09/02 20:42:15 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"

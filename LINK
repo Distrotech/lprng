@@ -2,5 +2,5 @@
 DIR=`pwd | sed -e 's,.*/,,'`
 PREFIX=`echo $DIR | sed -e 's,-.*,,'`
 cd ..;
-rm $PREFIX
+rm -f $PREFIX
 ln -s $DIR $PREFIX

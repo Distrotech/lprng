@@ -1,48 +1,52 @@
                LPRng Installation 
           Patrick Powell <papowell@lprng.com>
-          Updated Tue Dec 26 08:38:53 PST 2000
+       Last Updated Sun Aug 19 14:49:25 PDT 2001
+
+SUPER EXPRESS INSTALLATION FOR TERMINALLY IMPATIENT SYSADMINS
+
+The "STANDARD configuration" is the most common configuration for UNIX/LINUX
+  systems:
+  - /etc/printcap, /etc/lpd.conf, /etc/lpd.perms configuration files
+  - executables in /usr/bin, /usr/sbin
+  - you do not need any include files from /usr/local/include
+    or libraries from /usr/local/lib
+  - no Kerberos support
+
+  ./configure --prefix=/usr --sysconfdir=/etc
+  make clean all
+  (as root):
+     make install 
+     checkpc -f
 
 CAVEATS and WARNINGS:
 
-    The LPRng software requires an ANSI C compiler and a make that is
+    The LPRng software requires an ANSI C compiler and a make utility that is
     compatible with Gnu Make (verson 3.73) or BSD 4.3/4.4.  By default,
-    LPRng is compiled and tested using GCC and Gnu Make.
-
-    Starting with Release 3.7.1,  it is STRONGLY recommended that you
-    install the gdbm database support library.  This will provide a
-    significant performance increase.
-    If you do not want to install or use the gdbm database use the
-     --disable-gdbm configuration option.
-    
-    GNU Make, GCC, and gdbm are available at many FTP sites, such as:
-      ftp://prep.ai.mit.edu/pub/gnu
-      ftp://ftp.uu.net/pub/gnu
+    LPRng is compiled and tested using GCC and Gnu Make.  It uses libtool
+    to create a shared library on systems where this is supported.
 
 Solaris Users:
    
-     You can get precompiled versions of the GCC compiler, GNU Make,
-   and gdbm libraries from:
+   You can get precompiled versions of the GCC compiler and GNU Make
+   from:
       www.sunfreeware.com
    
-   Use the "install in '/usr/local/'" versions.  The LPRng code has
-   NOT been tested with the Sun Microsystems compilers, and NOT been
-   tested with 64 bit support enabled.
-   
-     You MUST repeat MUST set your PATH so that the GNU gcc and
-   other utilities in /usr/local/bin are found FIRST and then you
-   MUST have the /usr/ccs/bin next in your path.
-   
+   The LPRng code has NOT been tested with the Sun Microsystems compilers,
+   and NOT been tested with 64 bit support enabled.
+
+   Your PATH environment variable MUST repeat MUST have /usr/local/bin
+   FIRST followed by /usr/ccs/bin:
+
      PATH=/usr/local/bin:/usr/ccs/bin:$PATH
-   
-   If you have ANY problems with compilation,  and you are NOT
-   using a 'clean' GCC installation,  please install GCC from
-   a package (see http://www.sunfreeware.com) or recompile gcc
-   and reinstall it.  Also,  please make sure that the include
-   files are correct for your version of Solaris.  In fact,
-   I recommend that you do the compilation on a 'clean' machine
-   that has nothing but a 'virgin' Solaris Install + utilities
-   BEFORE reporting problems.
-   
+
+   If you have ANY problems with compilation,  and you are NOT using a
+   'clean' GCC installation,  please install GCC from a package (see
+   http://www.sunfreeware.com) or recompile gcc and reinstall it.
+   Make sure that the include files are correct for your version
+   of Solaris.  In fact, I recommend that you do the compilation on a
+   'clean' machine that has nothing but a 'virgin' Solaris Install +
+   utilities BEFORE reporting problems.
+
      You have been warned.
    
 HPUX Users:
@@ -62,63 +66,98 @@ HPUX Users:
 
 EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
 
-	It is extremely dangerous to use NFS mounted file systems for spool
-	directories.  The LPRng system depends on file locking for process
-	coordination and synchronization.  Given the historical evidence
-	of problems with file locks and NFS,  not to mention the terrible
-	performance impact,  it is strongly recommended that you use a file
-	system local to the server host for your spool directories.
+    It is extremely dangerous to use NFS mounted file systems for spool
+    directories.  The LPRng system depends on file locking for process
+    coordination and synchronization.  Given the historical evidence
+    of problems with file locks and NFS,  not to mention the terrible
+    performance impact,  it is strongly recommended that you use a file
+    system local to the server host for your spool directories.
 
      You have been warned.
 
-EXPRESS INSTALLATION INSTRUCTIONS
+SYSTEM STARTUP SCRIPTS
 
-  AUTOMATED STARTUP
+The software install procedures will attempt to create and install
+a startup script for the following systems:
 
-  The during installation,  the LPRng software will try to
-  install a startup script for the following systems:
+FreeBSD: /etc/rc.conf
+   The installation procedures will stop the LPD print spooler,
+   update the /etc/rc.conf file,  and restart the LPD print spooler.
 
-  FreeBSD:  will stop the LPD print spooler, try to install
-   startup script.  If your system is compatible with this,
-   see notes on INIT SCRIPTS AND PACKAGES at end of this file.
-  BSDI: will stop the lpd server.  You will need to hand
-   install an init script.  See INIT SCRIPTS AND PACKAGES
-    at end of this file.
-  Linux: RedHat - will try to use the chkconfig script to
-    set up lprng.
-  Solaris: will edit /etc/inetd.conf file,  remove the
-    printer entry.   Also puts in startup script in
-    /etc/init.d and creates link in /etc/rc2.d for startup.
-    See the HOWTO for additional on Solaris installation.
-  Other distributions:  you will have to hand install 
+RedHat Linux: RedHat /etc/init.d/lprng
+   The chkconfig utility will be used to set up LPRng
+   to run at level 345.
+
+Solaris: /etc/inetd.conf, /etc/init.d/lprng.sh
+    Removes the 'printer' entry from /etc/inetd.conf file
+    Also puts a startup script in /etc/init.d and
+    creates link to script in /etc/rc2.d.
+
+LINUX, System V, Solaris:
+
+    The print services startup file is in /etc/rc.d/init.d (or /etc/init.d)
+    and symbolic links are made to it from the rc<level>.d directories.
+    The links usually have the form NNNname, e.g.- 322lpr, where the NNN
+    is the order that the script is to be executed relative to the other
+    scripts and the 'name' is the name of the script in the  /etc/rc.d/init.d
+    directory.
+
+    At startup time the script is invoked with the 'start' option and
+    at shutdown time with the 'stop' option.  The following script
+    shows an example of how this is used.
+
+    #!/bin/sh
+    case "$1" in
+      start)
+            # Start daemons.
+            /usr/bin/echo "Starting lpd: \c"; /usr/local/bin/lpd;
+        /usr/bin/echo "";
+            ;;
+      stop)
+            # Stop daemons.
+            /usr/bin/printf "Shutting down lpd: "
+            pkill lpd
+            /usr/bin/echo "done"
+            ;;
+      *)
+            echo "Usage: lpd {start|stop}"
+            ;;
+    esac
+
+
+Other distributions:
+    You will have to hand install 
     startup scripts.  See the sample startup scripts on your
-    system and modify them appropriately.  You will probably
-    be able to simply change the path to the lpd program
+    system and modify them appropriately.  Usually all
+    that is done is to change the path to the lpd program
     or lpsched program to use the LPRng lpd server.
 
-STEP 1: ./configure
+CONFIGURATION
 
-  The LPRng default installation puts files
-  in the following locations or uses the following paths:
+  The configure (autoconf) utility is used to specify the
+  location of files and run time options for the LPRng software.
 
-   default installation directories:
-     ${prefix}  is usually /usr/local
-     ${exec_prefix}  is usually ${prefix}
+  configure (autoconf) defaults for files and directories:
+     ${prefix}  - default is /usr/local
+     ${exec_prefix}  - default is ${prefix}
      ${bindir}  is usually ${exec_refix}/bin, (/usr/local/bin)
      ${sbindir} is usually ${exec_prefix}/sbin (/usr/local/sbin)
+     ${libdir} is usually ${exec_prefix}/lib (/usr/local/lib)
      ${libexecdir} is usually ${exec_prefix}/libexec (/usr/local/libexec)
      ${sysconfdir} is usually ${prefix}/etc (/usr/local/etc)
      ${mandir} is usually ${prefix}/man     (/usr/local/man)
 
-     i.e - /usr/local/etc/{lpd.conf, lpd.perms, printcap}
-
-     We install a sample lpd.conf or lpd.perms in
-      ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
+  CONFIGURATION FILES:
+     We install a sample lpd.conf, lpd.perms, and printcap in
+     ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
+     and printcap.sample;  we make copies of the
+     sample files to lpd.conf, lpd.perms and printcap respectively.
     
-   We install the executables in: 
-         (* indicates default SETUID Root install) 
-     ${bindir}/ lpr *, lprm *, lpq *, lpstat *
-     ${sbindir}/lpc *, checkpc, lpd *
+  EXECUTABLES AND SHARED LIBRARIES:
+         (* indicates SETUID root permissions) 
+     ${bindir}/ lpr*, lprm*, lpq*, lpstat*
+     ${sbindir}/lpc*, checkpc, lpd
+     ${libdir}/liblpr.so, liblib.a 
      ${libexecdir}/filters/ lpf, banner, etc 
      ${sysconfdir}/ lpd.conf, lpd.perms, printcap
      ${mandir}/ man pages
@@ -127,60 +166,89 @@ STEP 1: ./configure
             /usr/local/sbin/{lpd, checkpc, lpc ... }
             /usr/local/libexec/filters/{lpf, banner, etc }
 
-OR STEP1: ./configure --prefix=/usr --sysconfdir=/etc
+  STANDARD OR HISTORICALLY COMPATIBLE FILE LOCATIONS:
+     ./configure --prefix=/usr --sysconfdir=/etc
+     i.e. - /etc/printcap, /etc/lpd.conf, /etc/lpd.perms
+            /usr/local/bin/{lpr, lprm, ... }
+            /usr/local/sbin/{lpd, checkpc, lpc ... }
+            /usr/local/lib/{liblpr.so, liblpr.a, ... }
+            /usr/local/libexec/filters/{lpf, banner, etc }
 
-  By convention,  many systems use /etc, /usr/bin, and /usr/sbin for the
-  locations of these files.  Note that the location of the lpd server differs
-  radically from system to sytem.
-     
-   Suppose you wanted to install in /usr/bin, /usr/sbin, and /etc:
-     configure --prefix=/usr --sysconfdir=/etc
-     
-OR STEP1: Custom Installation - see LPRng-HOWTO
+CONFIGURATION OPTIONS
 
   In addition to the --prefix, etc., mentioned above,  there are several
-  more you can use:
+    more you can use:
+
+     COMPILATION:
 
   --with-cc=COMPILER      select compiler to use
-  --with-ccopts=CFLAGS    select compiler command line options
   --with-linker=LINKER    select linker to use
-  --with-ldopts=LDFLAGS    select linker command line options
-  --with-cppopts=CPPFLAGS  select compiler preprocessor command line options
-  --disable-setuid                  disable setuid root client and server executables
-  --disable-gdbm                    disable the use of the GDBM library support
-  --enable-priv_ports               require connections to be from privileged ports
-  --disable-force_localhost         force_localhost default to disabled
-  --disable-require_configfiles     client programs require lpd.conf, printcap
-  --enable-kerberos                 enable kerberos support
-  --enable-mit_kerberos4            enable MIT Kerberos 4 support
-  --disable-kerberos_checks         disable kerberos library location and checking for support
-  --with-lpddir=DIR                 lpd executable directory (default ${sbindir})
-  --with-lpd_conf_path=PATH         path of lpd.conf (default: ${sysconfdir}/lpd.conf)
-  --with-lpd_perms_path=PATH        path of lpd.perms (default: ${sysconfdir}/lpd.perms)
-  --with-printcap_path=PATH         path of printcap (default ${sysconfdir}/printcap)
-  --with-lpd_printcap_path=PATH     path of lpd_printcap (default ${sysconfdir}/lpd_printcap)
-  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd 
-  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value 
-  --with-filter_path=PATH           filter PATH value 
-  --with-userid=NAME                run LPRng software as this userid, default daemon 
-  --with-groupid=NAME               run LPRng software as this groupid, default daemon 
-  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file 
-  --with-order_routine=NAME         queue order routine name in user object file 
-  --with-user_objs=NAME             user specified object file 
-  --with-user_include=NAME          include file with function prototypes for user object file 
-  --with-filterdir=DIR              filter directory (default ${libexecdir}/filters)
-  --disable-strip                   disable stripping binaries by default
+  --with-ldopts=LDFLAGS   linker command line options
+  --with-cppopts=CPPFLAGS compiler preprocessor command line options
+  --with-ccopts=CFLAGS    compiler command line options
+                          (use cppopts unless strictly for compiler)
+  --disable-strip         do not strip binaries
+  --enable-shared[=PKGS]  build shared libraries [default=yes]
+  --enable-static[=PKGS]  build static libraries [default=yes]
+  --enable-fast-install[=PKGS]  optimize for fast installation [default=yes]
+  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+  --disable-libtool-lock  avoid locking (might break parallel builds)
+  --with-pic              try to use only PIC/non-PIC objects [default=use both]
+  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
 
-STEP2: Make and Install
+     FILE LOCATIONS:
+
+  --with-lpddir=DIR           lpd executable directory (default ${sbindir})
+  --with-lpd_conf_path=PATH   lpd.conf location (default: ${sysconfdir}/lpd.conf)
+  --with-lpd_perms_path=PATH  lpd.perms location (default: ${sysconfdir}/lpd.perms)
+  --with-printcap_path=PATH   printcap location (default ${sysconfdir}/printcap)
+  --with-lpd_printcap_path=PATH lpd_printcap location (default- not used )
+  --with-lockfile=PATH        lockfile PATH, default /var/run/lpd 
+  --with-ld_library_path=PATH  subprocess LD_LIBRARY_PATH environment variable
+                              (default: /usr/lib:/usr/local/lib)
+  --with-filter_path=PATH     subprocess PATH environment variable 
+                              (default: /usr/bin:/usr/local/bin)
+  --with-filterdir=DIR        filter directory (default ${libexecdir}/filters)
+
+     OPERATION:
+
+  --disable-setuid        disable setuid root client and server executables
+  --enable-priv_ports         require connections to be from privileged ports
+  --disable-force_localhost   disable force_localhost default
+  --disable-require_configfiles  client programs will not require lpd.conf
+  --enable-kerberos            enable kerberos support
+  --enable-mit_kerberos4       enable MIT Kerberos 4 support
+  --disable-kerberos_checks    disable kerberos library location and checking for support
+  --with-userid=NAME          lpd runs as this userid, default daemon 
+  --with-groupid=NAME         lpd runs as this userid, default daemon 
+  --with-chooser_routine=NAME load balance queue chooser routine name in user object file 
+  --with-order_routine=NAME   queue order routine name in user object file 
+  --with-user_objs=NAME       user specified object file 
+  --with-user_include=NAME    include file with function prototypes for user object file 
+
+  CREATE AND INSTALL EXECUTABLES AND LIBRARIES
+    ./configure [ configuration options ]
     make clean all;
     su   # you must do the following commands as root
     make install
     ./src/checkpc -f
 
-STEP3: Manually Start Server and Check
-    If the installation step did not install the system time
-    run scripts or you need to do the installation by hand,
-    here is the method to follow:
+  STARTING LPD SERVER AND CHECKING CONFIGURATION
+
+    Use the following command to check to see that
+    the LPD server is running on the localhost:
+
+       #> lpc -s localhost lpd
+
+    If it has not been started,  then you can start it by hand:
+
+       #> /usr/sbin/lpd
+
+INSTALLATION PROBLEMS
+
+If the installation step did not install the executables
+in the correct location or there are other problems,
+use the following procedures to fix up the install:
 
     # kill off the old server
     On BSD:
@@ -188,8 +256,9 @@ STEP3: Manually Start Server and Check
     On System V:
     kill `ps -e |grep lpd | awk '{print $1}'`
 
-    # you should remove or rename the existing lpd binaries if they
-    # have not been installed correctly:
+You should remove or rename the original lpd binaries if they
+have are still present:
+
     mv /usr/lib/lpd /usr/lib/lpd.old
     ln -s /usr/local/bin/lpd /usr/lib/lpd
     # you might want to track down the old lpr, lpq, lprm binaries
@@ -208,131 +277,72 @@ STEP3: Manually Start Server and Check
 If you are running on Solaris, see the Solaris section in the
 LPRng-HOWTO for further instructions on integration with the LP subsystem.
 
-STEP4: Fix automatic startup
-
-BSD (/etc/rc) based systems.
-Don't forget to modify the /etc/rc.local or other system startup files
-to start LPRng's lpd.  You can find the file by looking for the 'lpd'
-line in the startup files.
-
-LINUX, System V, Solaris:
-
-There is a print services startup file in /etc/rc.d/init.d.
-
-For UNIX SystemV or Linux like systems,  here is
-a small sample file that will start up and shut down the lpd server.
-This is simply a copy of the /etc/rc.d/lpr file.  Copy the existing file
-before you edit or remove it.
-
-
-#!/bin/sh
-case "$1" in
-  start)
-        # Start daemons.
-        /usr/bin/echo "Starting lpd: \c"; /usr/local/bin/lpd; /usr/bin/echo;
-        ;;
-  stop)
-        # Stop daemons.
-        /usr/bin/echo "Shutting down lpd: \c"
-        server=`/usr/local/bin/lpc -Pany@localhost lpd \
-        | awk '{for(i=1;i<=NF;++i){v=$i+0;if(v>1){ print v;exit;}}}'`
-        if [ -n "$server" ]; then
-            /usr/bin/echo " server pid $server";
-            kill $server;
-        else
-            /usr/bin/echo " no server active";
-        fi;
-        ;;
-  *)
-        echo "Usage: lpd {start|stop}"
-        exit 1
-        ;;
-esac
-
 PRINTCAP FILES:
 
-You will probably want to update your printcap files.  See
-the LPRng-HOWTO for information on printcap files.
-If you want to use existing or non-LPRng compatible filters,
-try setting the :bkf:  (Berkeley LPD conformant filter) in the
-printcap entry:
+Read the comments in the /etc/printcap.sample for details on
+how to set up a simple set of printcap entries.  You may also
+want to read the LPRng HOWTO documentation.
 
-Example:
+SECURITY WARNINGS:
 
-lp:bkf:\
-  :if=/usr/local/libexec/very.old.filter
+  The default configuration for LPRng allows connections from
+  any port while a strict RFC1179 implementation would require
+  connections only from a port in the range 721-731.  Relaxing
+  this restriction allows non-setuid root clients (lpr, lpq, etc)
+  to connect to the LPRng server.
 
-KERBEROS IV:
-   If you want to use Kerberos 4,  see the comments in the src/Makefile
-and follow the indicated directions.
+  The following is the default LPRng system installation:
 
-                      CONFIGURE DETAILS
+    1. All client programs are installed Setuid Root.
+    2. No checking is done for strict RFC1179 conformance by 
+       the lpd server
+    3. By default, all client programs will connect to the server
+       on the local host (force_localhost configuration option).
 
-The configure script attempts to generate Makefiles which should compile
-and build on your system.
+  This configuration allows you to connect directly to non-LPRng systems
+  using the LPRng clients,  and to have the maximum flexibility with the
+  least amount of system configuration problems.  You can modify the
+  /etc/printcap file, and set 'force_localhost@' to send jobs to
+  a remote print server which requires connections
+  to originate from a privileged port.
 
-./configure --help
-Usage: configure [options] [host]
-Options: [defaults in brackets after descriptions]
-Configuration:
-  --cache-file=FILE       cache test results in FILE
-  --help                  print this message
-  --no-create             do not create output files
-  --quiet, --silent       do not print `checking...' messages
-  --version               print the version of autoconf that created configure
-Directory and file names:
-  --prefix=PREFIX         install architecture-independent files in PREFIX
-                          [/usr/local]
-  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
-                          [same as prefix]
-  --bindir=DIR            user executables in DIR [EPREFIX/bin]
-  --sbindir=DIR           system admin executables in DIR [EPREFIX/sbin]
-  --libexecdir=DIR        program executables in DIR [EPREFIX/libexec]
-  --datadir=DIR           read-only architecture-independent data in DIR
-                          [PREFIX/share]
-  --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
-  --sharedstatedir=DIR    modifiable architecture-independent data in DIR
-                          [PREFIX/com]
-  --localstatedir=DIR     modifiable single-machine data in DIR [PREFIX/var]
-  --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
-  --includedir=DIR        C header files in DIR [PREFIX/include]
-  --oldincludedir=DIR     C header files for non-gcc in DIR [/usr/include]
-  --infodir=DIR           info documentation in DIR [PREFIX/info]
-  --mandir=DIR            man documentation in DIR [PREFIX/man]
-  --srcdir=DIR            find the sources in DIR [configure dir or ..]
-  --program-prefix=PREFIX prepend PREFIX to installed program names
-  --program-suffix=SUFFIX append SUFFIX to installed program names
-  --program-transform-name=PROGRAM
-                          run sed PROGRAM on installed program names
-Host type:
-  --build=BUILD           configure for building on BUILD [BUILD=HOST]
-  --host=HOST             configure for HOST [guessed]
-  --target=TARGET         configure for TARGET [TARGET=HOST]
-Features and packages:
-  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
-  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --x-includes=DIR        X include files are in DIR
-  --x-libraries=DIR       X library files are in DIR
---enable and --with options recognized:
-  --with-cc=COMPILER      select compiler to use
-  --with-ccopts=CFLAGS    select compiler command line options
-  --with-linker=LINKER    select linker to use
-  --with-ldopts=LDFLAGS    select linker command line options
-  --with-cppopts=CPPFLAGS  select compiler preprocessor command line options
-  --disable-setuid        disable setuid root client and server executables
-  --enable-priv_ports     require connections to be from privileged ports
-  --disable-force_localhost force_localhost default to disabled
-  --with-lpddir=DIR       lpd executable directory (default ${sbindir})
-  --with-filterdir=DIR     filter directory (default ${libexecdir}/filters)
-  --with-lpd_conf_path=PATH     path to lpd.conf (default: ${sysconfdir}/lpd.conf)
-  --with-lpd_perms_path=PATH    path to lpd.perms (default: ${sysconfdir}/lpd.perms)
-  --with-printcap_path=PATH     path to printcap (default ${sysconfdir}/printcap)
+  The described configuration has the drawback of having SETUID clients,
+  which is regarded as dangerous .
 
-  --enable-nls           use Native Language Support
-  --with-included-gettext use the GNU gettext library included here
-  --with-catgets          use catgets functions if available
+  A more cautious approch is to use the following:
+
+    1. No LPRng programs are installed Setuid Root
+       (configure --disable-setuid)
+    2. All clients communicate directly to the server on the localhost.
+       (i.e. - force_localhost is used)
+    3. The server is started are system initialization time by root
+       and it is the only program that opens a connection to a
+       remote print spooler.  This now reduces the problem
+       to a much more manageable level.
+
+  If you are truly paranoid then you should read the LPRng HOWTO
+  section on Authentication,  and add either PGP or Kerberos authentication
+  to your system.
+
+KERBEROS:
+
+  LPRng uses the MIT Kerberos 5 distribution and provides backwards
+  compatibility with the MIT Kerberos 4 print support system.
+
+  If you want to use Kerberos authentication then configure with
+  the following options:
+
+  - for Kerberos 5 only:
+  ./configure --enable-kerberos
+  - for Kerberos 5 and Kerberos 4 legacy support:
+  ./configure --enable-kerberos --enable-mit_kerberos4
+
+         --- CONFIGURE (autoconf) DOCUMENTATION ---
+
+Basic Installation
+==================
+
+   These are generic installation instructions.
 
    The `configure' shell script attempts to guess correct values for
 various system-dependent variables used during compilation.  It uses
@@ -356,7 +366,7 @@ it or regenerate `configure' using a newer version of `autoconf'.
 
 The simplest way to compile this package is:
 
-  1. In the same directory as these instructions, execute
+  1. `cd' to the directory containing the package's source code and type
      `./configure' to configure the package for your system.  If you're
      using `csh' on an old version of System V, you might need to type
      `sh ./configure' instead to prevent `csh' from trying to execute
@@ -365,16 +375,22 @@ The simplest way to compile this package is:
      Running `configure' takes awhile.  While running, it prints some
      messages telling which features it is checking for.
 
-  2. Type `make' to compile the package.  This will create the executables
-     in the source directory.
+  2. Type `make' to compile the package.
 
-  3. Type `make install' to install the programs and any data files and
+  3. Optionally, type `make check' to run any self-tests that come with
+     the package.
+
+  4. Type `make install' to install the programs and any data files and
      documentation.
 
-  4. You can remove the program binaries and object files from the
-     source directory by typing `make clean'.  To also remove the files
-     that `configure' created (so you can compile the package for a
-     different kind of computer), type `make distclean'.
+  5. You can remove the program binaries and object files from the
+     source code directory by typing `make clean'.  To also remove the
+     files that `configure' created (so you can compile the package for
+     a different kind of computer), type `make distclean'.  There is
+     also a `make maintainer-clean' target, but that is intended mainly
+     for the package's developers.  If you use it, you may have to get
+     all sorts of other programs in order to regenerate files that came
+     with the distribution.
 
 Compilers and Options
 =====================
@@ -389,31 +405,22 @@ this:
 Or on systems that have the `env' program, you can do it like this:
      env CPPFLAGS=-I/usr/local/include LDFLAGS=-s ./configure
 
-If you wish to generate Makefiles with these options built in, use:
-  ./configure
-  --with-cc=COMPILER     # select compiler to use
-  --with-ccopts=CFLAGS   # select compiler command line options
-  --with-linker=LINKER   # select linker to use
-  --with-ldopts=LDFLAGS  #  select linker command line options
-  --with-cppopts=CPPFLAGS # select compiler preprocessor command line options
-  --with-lpddir=DIR      # where to install the lpd binary.  default: $(bindir)
-  --with-admindir=DIR    # where to install the administrative commands
+Compiling For Multiple Architectures
+====================================
 
-Example: 
-   ./configure "--with-cppopts=-I/usr/local/include -I/usr/include/krb5"
-      "--with-ldopts=-L/usr/local/lib" --with-lpddir=/usr/libexec
+   You can compile the package for more than one kind of computer at the
+same time, by placing the object files for each architecture in their
+own directory.  To do this, you must use a version of `make' that
+supports the `VPATH' variable, such as GNU `make'.  `cd' to the
+directory where you want the object files and executables to go and run
+the `configure' script.  `configure' automatically checks for the
+source code in the directory that `configure' is in and in `..'.
 
-Using a Different Build Directory
-=================================
-
-   You can compile the package in a different directory from the one
-containing the source code.  Doing so allows you to compile it on more
-than one kind of computer at the same time.  To do this, you must use a
-version of `make' that supports the `VPATH' variable, such as GNU
-`make'.  `cd' to the directory where you want the object files and
-executables to go and run the `configure' script.  `configure'
-automatically checks for the source code in the directory that
-`configure' is in and in `..'.
+   If you have to use a `make' that does not supports the `VPATH'
+variable, you have to compile the package for one architecture at a time
+in the source code directory.  After you have installed the package for
+one architecture, use `make distclean' before reconfiguring for another
+architecture.
 
 Installation Names
 ==================
@@ -428,6 +435,11 @@ architecture-specific files and architecture-independent files.  If you
 give `configure' the option `--exec-prefix=PATH', the package will use
 PATH as the prefix for installing programs and libraries.
 Documentation and other data files will still use the regular prefix.
+
+   In addition, if you use an unusual directory layout you can give
+options like `--bindir=PATH' to specify different values for particular
+kinds of files.  Run `configure --help' for a list of the directories
+you can set and what kinds of files go in them.
 
    If the package supports it, you can cause programs to be installed
 with an extra prefix or suffix on their names by giving `configure' the
@@ -486,9 +498,9 @@ Operation Controls
 operates.
 
 `--cache-file=FILE'
-     Save the results of the tests in FILE instead of `config.cache'.
-     Set FILE to `/dev/null' to disable caching, for debugging
-     `configure'.
+     Use and save the results of the tests in FILE instead of
+     `./config.cache'.  Set FILE to `/dev/null' to disable caching, for
+     debugging `configure'.
 
 `--help'
      Print a summary of the options to `configure', and exit.
@@ -496,7 +508,9 @@ operates.
 `--quiet'
 `--silent'
 `-q'
-     Do not print messages saying which checks are being made.
+     Do not print messages saying which checks are being made.  To
+     suppress all normal output, redirect it to `/dev/null' (any error
+     messages will still be shown).
 
 `--srcdir=DIR'
      Look for the package's source code in directory DIR.  Usually
@@ -507,55 +521,3 @@ operates.
      script, and exit.
 
 `configure' also accepts some other, not widely useful, options.
-
-SECURITY WARNINGS
-
-  The default configuration for LPRng allows connections from
-  any port, while a strict RFC1179 implementation would require
-  connections only from a port in the range 721-731.  Relaxing
-  this restriction allows non-setuid root clients (lpr, lpq, etc)
-  to connect to the LPRng server.
-
-  The following is the default LPRng system installation:
-
-    1. All client programs are installed Setuid Root
-    2. No checking is done for strict RFC1179 conformance by clients
-       or the lpr server
-    3. By default, all client programs will connect to the server
-       on the local host (force_localhost configuration option).
-
-  This configuration allows you to connect directly to non-LPRng systems
-  using the LPRng clients,  and to have the maximum flexibility with the
-  least amount of system configuration problems.  You can modify the
-  /etc/printcap file, and set 'force_localhost@' for printers whosse
-  spool queues are not on the localhost,  and which require connections
-  to originate from a privileged port.
-
-  This configuration is the most common one encountered by system
-  administrators,  but has the drawback of having SETUID clients.
-
-  A more cautious approch is to use the following:
-
-    1. No LPRng programs are installed Setuid Root
-       (configure --disable-setuid)
-    2. All clients communicate directly to the server on the localhost.
-    3. The server is started are system initialization time by root.
-
-  If you insist on strict RFC1179 conformance for remote connections
-  to your server:
-    1. All client programs are installed Setuid Root
-    2. All connections must originate from a privileged port
-       (configure --enable-priv_ports)
-
-  Finally you are truly paranoid,  then you should read the LPRng HOWTO
-  section on Authentication,  and add either PGP or Kerberos authentication
-  to your system,  and do not install the LPRng clients Setuid ROOT.
-
-NON-SETUID Install
-
-  If you want to install LPRng without setuid permissions,  then you must
-  use the following:
-      ./configure --disable-setuid ...
-      make all install
-
-      vi /.../etc/lpd.perms

@@ -3,7 +3,8 @@ DIR=`pwd | sed -e 's,.*/,,'`
 PREFIX=`echo $DIR | sed -e 's,-.*,,'`
 TAIL=`echo $DIR | sed -e 's,^[^-]*-,,'`
 LAST=`echo $TAIL | sed -e 's,^.*\.,,'`
-BEFORE=`echo $TAIL | sed -e 's,\(^.*\.\).*$,\1,'`
+BEFORE=`echo $TAIL | sed -e 's,\.[0-9]*$,.,'`
 INCR=`expr $LAST "+" 1`
 NEW=$PREFIX-$BEFORE$INCR
-cd ..; mv $DIR $NEW; rm $PREFIX;
+cd ..; mv $DIR $NEW; rm -f $PREFIX;
+ln -s $NEW $PREFIX

@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Print Job Formats</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
+    <link rel="UP" title="Filters " href="filters.htm">
+    <link rel="PREVIOUS" title="Filter Exit Codes " href=
+    "exitcodes.htm">
+    <link rel="NEXT" title="OF Filter" href="ofdetails.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
+          (For LPRng-3.7.5)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "exitcodes.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          16. Filters</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "ofdetails.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="PRINTJOBFORMATS">16.3. Print Job
+      Formats</a></h1>
+
+      <p>Options used:</p>
+
+      <ul>
+        <li>
+          <p><tt class="LITERAL">:if</tt>, <tt class=
+          "LITERAL">cf</tt>, <tt class="LITERAL">df</tt>, <tt
+          class="LITERAL">gf</tt>, <tt class="LITERAL">nf</tt>, <tt
+          class="LITERAL">:of</tt>, <tt class="LITERAL">rf</tt>,
+          <tt class="LITERAL">tf</tt>, <tt class="LITERAL">vf</tt>,
+          <tt class="LITERAL">X</tt><tt class="LITERAL">f</tt>, <i
+          class="EMPHASIS">Filter programs</i></p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p><b class="APPLICATION">LPRng</b> has inherited a set of
+      so-called `<i class="EMPHASIS">print formats</i>' from its
+      BSD ancestor. The format was used to specify the type of file
+      that was being printed. The <b class="APPLICATION">lpd</b>
+      server used the print format to select the filter for
+      processing the file. The de<i class="EMPHASIS">f</i>ault
+      format is <tt class="LITERAL">f</tt>.</p>
+
+      <p>The user can specify the format (i.e., the file type) by
+      giving the appropriate option to <b class=
+      "APPLICATION">lpr</b>:</p>
+
+      <ul>
+        <li>
+          <p><tt class="LITERAL">-b</tt> or <tt class=
+          "LITERAL">-l</tt>: Binary (literal) file. No processing
+          should be done. The <tt class="LITERAL">l</tt> format is
+          recorded as the file format.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-c</tt>: cifplot(1) output.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-d</tt>: TeX DVI file.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-g</tt>: Output from the plot(3X)
+          routines.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-n</tt> or <tt class=
+          "LITERAL">-t</tt>: (di)troff output.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-p</tt>: Text file that should be
+          pre-processed by the <tt class="LITERAL">pr</tt> command,
+          and then by the standard text filter.</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">-v</tt>: Benson Varian raster
+          image.</p>
+        </li>
+      </ul>
+      <br>
+      <br>
+
+      <p>Alternatively, one can also use <tt class=
+      "LITERAL">-Fx</tt>, where <tt class="LITERAL">x</tt> is the
+      format specifier. (E.g., <tt class="LITERAL">-Fc</tt> instead
+      of <tt class="LITERAL">-c</tt>.) This last form also allows
+      you to use other (non-standard) format specifiers.</p>
+
+      <p>The filter for format <tt class="LITERAL">X</tt> is the
+      value for the <tt class="LITERAL">Xf</tt> printcap option,
+      with some minor exceptions. The following <tt class=
+      "LITERAL">Xf</tt> options have a pre-defined meaning.</p>
+
+      <ul>
+        <li>
+          <p><tt class="LITERAL">:if</tt> The <tt class=
+          "LITERAL">f</tt> format filter, i.e. - for the default
+          <tt class="LITERAL">f</tt> format. All print jobs are
+          passed through this one, unless another format is
+          selected.</p>
+        </li>
+
+        <li>
+          <p><a name="CF"></a> <tt class="LITERAL">cf</tt> Cifplot
+          data filter (for <tt class="LITERAL">-c</tt> format).</p>
+        </li>
+
+        <li>
+          <p><a name="DF"></a> <tt class="LITERAL">df</tt> Filter
+          for DVI files (<tt class="LITERAL">-d</tt>).</p>
+        </li>
+
+        <li>
+          <p><a name="GF"></a> <tt class="LITERAL">gf</tt> Graph
+          data filter (<tt class="LITERAL">-g</tt>).</p>
+        </li>
+
+        <li>
+          <p><a name="NF"></a> <tt class="LITERAL">nf</tt> Ditroff
+          data filter (<tt class="LITERAL">-n</tt>).</p>
+        </li>
+
+        <li>
+          <p><tt class="LITERAL">:of</tt> This filter is used for
+          processing the (optional) banner at the start and/or end
+          of the print job, and also for the interjob separators.
+          See <a href="ofdetails.htm">OF Filter</a> for
+          details.</p>
+        </li>
+
+        <li>
+          <p><a name="RF"></a> <tt class="LITERAL">rf</tt> Filter
+          for Fortran style files (<tt class=
+          "LITERAL">-r</tt>).</p>
+        </li>
+
+        <li>
+          <p><a name="TF"></a> <tt class="LITERAL">tf</tt> Troff
+          filter (<tt class="LITERAL">-t</tt>).</p>
+        </li>
+
+        <li>
+          <p><a name="VF"></a> <tt class="LITERAL">vf</tt>
+          (Versatek) raster image filter (<tt class=
+          "LITERAL">-v</tt>).</p>
+        </li>
+      </ul>
+      &#13;<br>
+      <br>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "exitcodes.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "ofdetails.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Filter Exit
+          Codes</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "filters.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">OF Filter</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

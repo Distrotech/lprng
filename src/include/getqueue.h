@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 5.19 2000/12/25 01:51:18 papowell Exp papowell $
+ * $Id: getqueue.h,v 1.14 2001/09/02 20:42:18 papowell Exp $
  ***************************************************************************/
 
 
@@ -164,7 +164,6 @@ int Setup_cf_info( struct job *job, int check_for_existence );
 char *Make_hf_image( struct job *job );
 int Set_hold_file( struct job *job, struct line_list *perm_check );
 void Get_hold_file( struct job *job, char *hf_name );
-void Remove_from_db( char *openname );
 void Get_spool_control( const char *file, struct line_list *info );
 void Set_spool_control( struct line_list *perm_check, const char *file,
 	struct line_list *info );
@@ -212,7 +211,5 @@ void Init_buf(char **buf, int *max, int *len);
 void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len );
 void Put_buf_str( const char *s, char **buf, int *max, int *len );
 void Free_buf(char **buf, int *max, int *len);
-int Open_gdbm( int db_create );
-void Close_gdbm(void);
 
 #endif

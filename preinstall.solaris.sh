@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: preinstall.solaris.sh,v 1.4 2000/10/16 15:41:58 papowell Exp papowell $
+# preinstall.solaris.sh,v 1.1 2001/08/21 20:33:17 root Exp
 # This is an effort to automate the setup
 #  needed to install the LPRng software on the
 #  Solaris OS.  This is effectively a one way path.

@@ -4,6 +4,10 @@
  -- PUBLIC "-//OASIS//DTD DocBook V3.1//EN" --
 [
   <!ENTITY LPRng "<application/LPRng/">
+  <!ENTITY LPRngTool "<application/LPRngTool/">
+  <!ENTITY lpd "<application/lpd/">
+  <!ENTITY lpr "<application/lpr/">
+  <!ENTITY ifhp "<application/ifhp/">
   <!ENTITY license SYSTEM "license.enc">
   <!ENTITY y2k SYSTEM "y2k.txt">
   <!ENTITY genindex.sgml SYSTEM "genindex.sgml">
@@ -11,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 28 Dec 2000 (For LPRng-3.7.4)</subtitle>
+<subtitle> 2 Sep 2001 (For LPRng-3.7.5)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -29,15 +33,11 @@ Fax <fax>858-279-8424</fax>
 </affiliation>
 </author>
 <copyright>
-<year>1996</year>
-<year>1997</year>
-<year>1998</year>
-<year>1999</year>
-<year>2000</year>
+<year>1996-2001</year>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 5.89 2000/12/28 12:52:40 papowell Exp papowell $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.13 2001/09/02 20:42:27 papowell Exp $</releaseinfo>
 
 	<legalnotice>
 	 <important>
@@ -67,7 +67,11 @@ Fax <fax>858-279-8424</fax>
     </legalnotice>
 
 <abstract>
-<para>The &LPRng; software is an enhanced, extended, and portable implementation
+<para>The LPRng; Printing Software consists of the &LPRng; print spooler,
+the &ifhp; print filter, and
+the &LPRngTool; graphical user interface.
+</para>
+<para>The &LPRng; print spooler is an enhanced, extended, and portable implementation
 of the Berkeley <application/lpr/ print spooler functionality. While providing the same
 interface and meeting RFC1179 requirements, the implementation is completely
 independent and provides support for the following features: lightweight (no databases
@@ -80,16 +84,10 @@ and a greatly improved permission and authorization mechanism.
 The source software compiles and runs on a wide variety of UNIX systems,
 and is compatible with other print spoolers and network printers that use
 the <application/lpr/ interface and meet RFC1179 requirements.
+Included in the &LPRng; print spooler distribution is
+a set of customizable banner page generation programs.
 </para>
 <para>
-The companion ifhp print filter is used with the &LPRng; to provide
-hardware level support for PostScript, PCL, text, and other printers.
-The ifhp filter also provides diagnostic and error information as well as
-accounting information.
-</para>
-<para>
-The &LPRng; distribution also has a set of easily customizable programs to
-produce banner pages for job identification.
 The SVR4 lp and lpstat functionality is provided by a set of emulator
 programs,
 and &LPRng; can be easily integrated with the Samba SMB support package.
@@ -100,6 +98,19 @@ PGP,
 and simple MD5 based authentication.
 Additional authentication support is extremely simple to add.
 </para>
+<para>
+The &ifhp; print filter converts
+print jobs into formats compatible with
+PostScript, PCL, text, and other printers and
+provides diagnostic and error information as well as
+accounting information.
+</para>
+<para>
+The ;LPRngTool& Graphical User Interface provides a simple to use
+configuration and monitoring tool.
+It allows users to monitor printers and generate printcap entries
+in a simple manner,  as well as providing extensive help and diagnostics.
+</para>
 </abstract>
 </bookinfo>
 
@@ -109,15 +120,22 @@ Additional authentication support is extremely simple to add.
 <para>
 The &LPRng; Print Spooler provides the essential printing services
 for UNIX and UNIX-like operating systems.
-It can be configured to work optimally in small,
+It can be configured to work in small,
 large,
-and enterprise level environments.
-The &LPRng; Print Spooler has a companion <application>ifhp</application> Print Filter
-which provides printer level support and communication.
-This document is designed to be the single basic reference for the
-&LPRng; software;
-the <application>ifhp</application> Print Filter is distributed separately
-and has additional documentation.
+or enterprise level environments.
+The &ifhp; Print Filter
+is used with &LPRng; to convert print jobs into a format compatible
+with a particular printer and the
+while it may briefly describe the &ifhp; operation,
+Finally,
+the &LPRngTool; Graphical User Interface  provides an easy to use
+configuration and monitoring tool for the &LPRng; print spooler.
+</para>
+<para>
+This document is the basic reference for the &LPRng; print spooler software;
+the &ifhp; documentation
+and &LPRngTool;
+should be consulted for details about their operation.
 </para>
 </sect1>
 
@@ -288,8 +306,11 @@ the users in a simple an predictable manner.</para>
 
 <sect1 id="secfeatures"><title>What is &LPRng;?
 <indexterm/<primary/History// </title>
-<para>The &LPRng; print spooler software was developed to a flexible and scalable
-approach to each of these printing problems.
+<para>The &LPRng; print spooler software was developed to be robust,
+reliable,
+secure,
+scalable,
+and portable.
 It has been used since 1988 in extremely demanding
 academic printing environments such as University of Minnesota, MIT,
 and Rutgers,
@@ -306,6 +327,20 @@ authentication,
 and failover support.
 &LPRng; provides a highly flexible configuration system that
 allows it to perform optimally in all of these environments.
+</para>
+
+<para>
+The &LPRng; software has three components:
+the &lpd; print spooler and the user client applications
+<application/lpr/,
+<application/lpq/,
+<application/lprm/,
+etc.;
+the IFHP print filter (<application/ifhp/) which is used to convert
+jobs into a suitable for a particular printer,
+and the
+the LPRngTool Graphic User Interface (<application/lprngtool/) which provides
+a simple and easy to use configuration and monitoring tool for the &LPRng; print spooler.
 </para>
 
 <para>
@@ -352,7 +387,7 @@ and with extensive debugging capabilities to allow
 quick and easy diagnostics of problems.
 </para>
 
-<para>In early 1999
+<para>In 1999
 the code base for &LPRng; was again reorganized in order to provide a common
 method for running on non-UNIX platforms such as Microsoft Windows NT,
 Apple Rhapsody, and embedded systems.</para>
@@ -361,14 +396,13 @@ Apple Rhapsody, and embedded systems.</para>
 many security problems that could develop were identified and steps
 taken to ensure that they were not present in &LPRng;.
 For example,
-&LPRng; clients such as lpr, lprm, lpc, and lpq run as
+&LPRng; clients such as lpr, lprm, lpc, and lpq can run as
 ordinary users programs,
-and even the lpd server can run as a user once a network port has
-been opened.
-Bounds checking is performed on all input and formatting (for example,
-snprintf() rather
-than sprintf() is used),
-as well as other preventive measures were applied.</para>
+the lpd server can run as a non-root user once a network port has
+been opened,
+and all text formatting operations done by &LPRng; use a very restricted and
+highly secure version of the <application/snprintf/ function.
+</para>
 </sect1>
 
 <sect1 id="maillist"><title>Additional Resources </title>
@@ -377,6 +411,15 @@ as well as other preventive measures were applied.</para>
 which is available in several formats.
 Information
 about &LPRng; and the latest release
+can be found on the &LPRng; web page
+<ulink URL="http://www.lprng.com/LPRng.html">http://www.lprng.com/LPRng.html</ulink></para>
+<indexterm/<primary/download//
+<indexterm/<primary/FTP site//
+
+<para>The &ifhp; documentation is the IFHP-HOWTO,
+which is available in the &ifhp; distribution.
+Information
+about &ifhp; and the latest release
 can be found on the &LPRng; web page
 <ulink URL="http://www.lprng.com/LPRng.html">http://www.lprng.com/LPRng.html</ulink></para>
 <indexterm/<primary/download//
@@ -741,7 +784,7 @@ they are used by the <application>ifhp</application> filter.
 <anchor id=fileprog>
 <para>The Open Source <application/file/ utility by Ian F. Darwin
 can be obtained from
-<ulink URL="ftp://ftp.astron.com/pub/file">ftp://ftp.astron.com/pub/file</ulink>.
+<ulink URL="ftp://ftp.astron.com/pub/file/">ftp://ftp.astron.com/pub/file/</ulink>.
 This is a greatly improved version of the original UNIX file utility and
 may be used by the <application>ifhp</application> filter to do file recognition.</para>
 
@@ -4220,7 +4263,7 @@ Modify the printcap entry to have the following form:
 <screen>lp:sd=/var/spool/lpd/%P
   :force_localhost
   :lp=/tmp/lp
-  :filter= -$ /tmp/testf '$P' $0P -X$-P ${lp} G\072</screen>
+  :filter= -$ /tmp/testf '$P' $0P -X$-P ${lp} G\072 or \:</screen>
 </informalexample>
 </para>
 
@@ -4233,7 +4276,7 @@ the <application>lpq</application> status:
 Printer: lp@h4
  ....
  Status: IF filter msg - 'TESTF /tmp/testf -Plp -P lp -Xlp \
-    -Ylp /tmp/lp G:' at 01:20:21.560</screen>
+    -Ylp /tmp/lp G: or :' at 01:20:21.560</screen>
 </informalexample>
 </para>
 
@@ -11472,12 +11515,23 @@ and the printcap name, aliases, and options are determined.
 Colons
 <literal remap=tt>:</literal>
 act as option separators,
-and leading and trailing whitespaces are removed.</para>
+and leading and trailing whitespaces are removed.
+</para>
 </listitem>
 
 <listitem>
 <para>Options are sorted and except for the
 <literal>tc=...</literal> option only the last option setting is retained.</para>
+</listitem>
+
+<listitem>
+<para>If an option value requires a colon, then the
+<literal/\:/ or
+<literal/\072/,
+the same escaped character value as used in the C, Perl, tcl, and other programming
+languages,
+can be used.
+</para>
 </listitem>
 
 <listitem>
@@ -16946,6 +17000,36 @@ user ID specified by the
 (default <literal>daemon</literal>) configuration entry.</para>
 </listitem>
 
+
+<listitem>
+<para>The
+<literal/filter_path/ (default <literal>/bin:/usr/bin:/usr/local/bin</literal>,
+and
+<literal/filter_ld_path/ (default <literal>/lib:/usr/lib:/usr/local/lib</literal>,
+configuration options specifies the value of the
+<literal/PATH/
+and
+<literal/LD_LIBRARY_PATH/
+environment variables.</para>
+</listitem>
+
+<listitem>
+<para>The
+<literal/filter_path/ (default <literal>/bin:/usr/bin:/usr/local/bin</literal>,
+and
+<literal/filter_ld_path/ (default <literal>/lib:/usr/lib:/usr/local/lib</literal>,
+configuration option specifies the value of the
+<literal/PATH/
+and
+<literal/LD_LIBRARY_PATH/
+environment variables.
+The other enviroment variables are described in 
+<link linkend="filterenv">
+&LPRng; ftp mirror sites
+Filter Environment Variables
+</link>
+</listitem>
+
 <listitem>
 <para><acronym>ROOT</acronym> Flag.
 If the ROOT flag is specified the
@@ -18974,14 +19058,35 @@ and then how to configure &LPRng; to use Kerberos.</para>
 
 <sect2><title>&LPRng; Configuration</title>
 
-<para>By default,
-&LPRng; will search for the <filename>krb5.h</filename> file and the
+<para>The following <literal/configure/ options are used to enable
+Kerberos support:
+<informalexample>
+<screen> --enable-kerberos                 enable kerberos support
+--enable-mit_kerberos4            enable MIT Kerberos 4 support
+--disable-kerberos_checks         disable kerberos library location and checking for support
+</screen>
+</informalexample>
+</para>
+
+<para>
+The <literal/--enable-kerberos/ option will 
+cause <literal/configure/ to search for the
+include files such as
+<filename>krb5.h</filename>
+and the
 <literal>krb5</literal>
+support libraries.
 libraries.
 If it finds these,
 then Kerberos authentication will be included.
-If it also finds the <filename>krb.h</filename> file then MIT Kerberos 4 compatibility will
-also be enabled.</para>
+The <literal/--enable-mit_kerberos/ enable searching for 
+the Kerberos 4 include files and support libraries.
+If these are found then
+MIT Kerberos 4 compatibility will
+be enabled.
+The <literal/--disable-kerberos_checks/ will disable checking for libraries
+and simply enable the various options.
+</para>
 
 </sect2>
 
@@ -19005,7 +19110,7 @@ also be enabled.</para>
 files using templates from the files in the
 Kerberos distribution's
 <filename>src/config-files</filename> directory.
-See the Installation notes and the System Administrators Guide for
+See the Kerberos Installation Guide and the Kerberos System Administrators Guide for
 details.</para>
 </listitem>
 
@@ -19029,21 +19134,20 @@ fi</screen>
 
 <listitem>
 <para> Use kadmin (or kadmin.local) to create principals for the
-<application>lpd</application> servers.  I have been using
-<filename>lpr/hostname.REALM</filename>
-as a template-
-i.e.
+<application>lpd</application> servers.  The recommended method is to use
+<filename>lpr/hostname@REALM</filename>
+as a template for the principal name,
+i.e. -
 <literal>lpr/astart1.private@ASTART.COM</literal>
 for an example.
 You should use fully qualified domain names for the principals.
-Since it will never be used by an individual,
-you do not have to give it a password.
+Do not assign the principal a password.
 <informalexample>
 <screen>Example:
 
-kadmin ...
-addprinc -randkey lpr/wayoff.private@ASTART.COM
-</screen>
+#&gt; kadmin   OR #> kadmin.local 
+kadmin: addprinc -randkey lpr/wayoff.private@ASTART.COM
+quit</screen>
 </informalexample>
 </para>
 </listitem>
@@ -19051,11 +19155,11 @@ addprinc -randkey lpr/wayoff.private@ASTART.COM
 <listitem>
 <para> Extract the keytab for each server:
 <informalexample>
-<screen>kadmin ...
-ktadd -k keytab  lpr/hostname.REALM
-
+<screen>
 Example:
-ktadd -k /tmp/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM</screen>
+#> kadmin   OR #> kadmin.local 
+ktadd -k lpr.wayoff.private  lpr/wayoff.private@ASTART.COM
+quit</screen>
 </informalexample>
 </para>
 </listitem>
@@ -19063,23 +19167,24 @@ ktadd -k /tmp/lpr.wayoff.private  lpr/wayoff.private@ASTART.COM</screen>
 <listitem>
 <para>The
 <literal>keytab</literal>
-file contains the keytab information, which is the
-equivalent information for the server.</para>
-</listitem>
-
-<listitem>
-<para> Copy each
+file contains the keytab information which is the
+equivalent information for the server
+Copy each
 <literal>keytab</literal>
-file  to the
-appropriate server (you might want to encrypt
-or use a secure transfer for this).
-Put it in the <filename>/etc/lpd.keytab</filename> file on the server.
-This file should have
-<literal>0400</literal>
-permissions and owned by
+file  to <filename>/etc/lpd.keytab</filename> file on the server.
+See the warnings about of keytab files in the
+Kerberos Installation and  Kerberos  Administration manuals.
+You should copy the file using an encrypted connection,
+set the permissions to read only by the owner (<literal>400</literal>),
+and set the owner to
 <literal>daemon</literal> or the user that <application>lpd</application> will run as.
 <informalexample>
-<screen>#&gt; ls -l /etc/lpd.keytab
+<screen>#&gt; chmod 400 lpr.wayoff.com
+#&gt; scp lpr.wayoff.com root@wayoff.com:/etc/lpd.keytab
+#&gt; ssh -l root wayoff.com
+# wayoff &gt; chmod 400 /etc/lpd.keytab  
+# wayoff &gt; chown daemon /etc/lpd.keytab  
+# wayoff &gt; ls -l /etc/lpd.keytab  
 -rw-------  1 daemon  wheel  128 Jan 16 11:06 /etc/lpd.keytab</screen>
 </informalexample>
 </para>
@@ -19139,11 +19244,11 @@ make install</screen>
 <itemizedlist>
 
 <listitem>
-<para><literal>auth=kerberos5=</literal><emphasis>use Kerberos5 authentication</emphasis></para>
+<para><literal>auth=kerberos5</literal><emphasis>use Kerberos5 authentication</emphasis></para>
 </listitem>
 
 <listitem>
-<para><literal>kerberos_id=</literal><emphasis>destination server key used by clients</emphasis></para>
+<para><literal>kerberos_id=</literal><emphasis>server prinicpal name (for client use)</emphasis></para>
 </listitem>
 
 <listitem>
@@ -19179,18 +19284,19 @@ make install</screen>
 
 <para>Example printcap entry:
 <informalexample>
-<screen>pr:
+<screen>pr:client
     :lp=pr@wayoff
     :auth=kerberos5
     :kerberos_id=lpr/wayoff.private@ASTART.COM
 pr:server
     :lp=pr@faroff.private
     :auth_forward=kerberos5
-    :kerberos_id=lpr@wayoff.private@ASTART.COM
+    :kerberos_id=lpr/wayoff.private@ASTART.COM
     :kerberos_forward_id=lpr/faroff.private@ASTART.COM
+    :kerberos_keytab=/etc/lpd.keytab
 
 OR If you want to use Kerberos 4 authentication to the server
-pr:
+pr:client
     :lp=pr@wayoff
     :auth=kerberos4
     :kerberos_id=lpr/wayoff.private@ASTART.COM
@@ -19198,7 +19304,7 @@ pr:
 pr:server
     :lp=pr@faroff.private
     :auth_forward=kerberos5
-    :kerberos_id=lpr@wayoff.private@ASTART.COM
+    :kerberos_id=lpr/wayoff.private@ASTART.COM
     :kerberos_forward_id=lpr/faroff.private@ASTART.COM
     :kerberos_keytab=/etc/lpd.keytab
 </screen>
@@ -19700,28 +19806,30 @@ modify it to suit themselves.</para>
 
 <para>In Academic institutions, avoiding printing accounting has been
 regarded as a challenge,  an ongoing game of fat cat and poor starving
-mouse, between the Administration and the downtrodden, poor, over charged
+mouse, between the brutal and corrupt Administration and the poor, downtrodden, over-charged
 student.
 We will disregard the fact that if most students put as much effort
 into their studies as in finding ways to avoid accounting procedures
 then they would be Rhodes Scholar material,  but I digress...</para>
 
 <para>
-There are two approaches to printing accouting:
-use software methods to determine the number of pages that should be printed
-and use this as the recorded accouting information,
-or use a hardware level pagecounter on the printer to accurately
+There are two approaches to printing accounting:
+use software determine the number of pages that should be printed
+or use a hardware pagecounter facility on the printer to accurately
 determine the number of pages used.
 While the software method works well in a relatively error
 and security compromise free environment
 and where print jobs do not jam,
 for accurate account a hardware level pagecounter or some other
 method must be used.
-Thus,
-in the following section we assume that the printer has some sort of
-non-volatile page counter mechanism that is reliable and impervious to
-power on/off cycles and tampering by the users,
-and can be queried by the printing software.
+LPRng provides facilities to use either method to determine page counts.
+</para>
+
+<para>
+There are also two methods available to store the actual accounting information:
+the simple <emphasis/save to file/ method and the more complex
+<emphasis/save to program/ method.
+LPRng provides support for both methods.
 </para>
 
 <sect1 id="accountingserver"><title>Accounting Printcap Options </title>
@@ -19739,7 +19847,6 @@ entries in the printcap file.
 <row><entry>af</entry><entry>NULL</entry><entry>accounting file name</entry></row>
 <row><entry>as</entry><entry>"jobstart $H $n $P $k $b $t"</entry><entry>accounting info for job start</entry></row>
 <row><entry>ae</entry><entry>"jobend $H $n $P $k $b $t"</entry><entry>accounting info for job end</entry></row>
-<row><entry>accounting_server</entry><entry>NULL</entry></row>
 <row><entry>achk</entry><entry>FALSE</entry></row>
 <row><entry>la</entry><entry>TRUE</entry><entry>do accounting for 'local' printer</entry></row>
 <row><entry>ar</entry><entry>FALSE</entry><entry>do accounting for 'remote' transfers</entry></row>
@@ -19749,80 +19856,14 @@ entries in the printcap file.
 
 </sect1>
 
-<sect1><title>Accounting File</title>
-
-<para>
-Accouting information is usually stored in the file specified by the
-<literal/:af=/ option.
-If the option has the format <literal/host%port/,
-then a TCP/IP connection is opened to the specified port on the indicated host,
-and accounting information is written and read from the connection,
-otherwise the value is treated like a file relative to the
-spool queue directory.
-The port that the connection originates from will be in the range
-set by the configuration or printcap
-<emphasis remap=tt>
-<link linkend="lpdport">originate_port</link>
-</emphasis>
-option.
-</para>
-
-<para>
-Accounting information can be written to the accounting file by the print spooler,
-<literal/:of/ filter,
-or job file filter.
-The filters are responsible for making a connection to the specified host and port
-or opening the accouting file.
-The following is a simple example of accounting information written to the
-accounting file.
-<informalexample>
-<screen>jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
-'-b1093' '-tNov  5 19:39:25'
-start '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
-'-c0' '-Fo' '-tSun Nov  5 19:39:25 1995'
-filestart '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
-'-c0' '-Ff' '-tSun Nov  5 19:39:27 1995'
-fileend '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
-'-b3' '-c0' '-Ff' '-tSun Nov  5 19:39:58 1995'
-end '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
-'-b2' '-c0' '-Fo' '-tSun Nov  5 19:39:59 1995'
-jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
-'-b1093' '-tNov  5 19:39:59'</screen>
-</informalexample>
-</para>
-<para>The
-<literal>jobstart</literal>
-lines is added by the <application/lpd/ server,
-and are specified by the
-<literal/:as/
-printcap option.
-The <literal>start</literal>
-line is added by the <literal/:of/ filter.
-This filter usually queries the printer and gets printer
-dependent accounting information such as the pagecounter value.
-The <literal/:of/ filter is then suspended and the job is processed
-by the various format dependent filters.
-These produce the <literal/filestart/ and <literal/fileend/
-lines.
-These filters can also query the printer and get printer dependent
-accouting information.
-The <literal/end/ line is added by the <literal/:of/ filter
-when it terminates.
-The <literal/:of/ filter may query the printer again at this point
-and get the final pagecounter value for the job and determine
-the number of pages.
-The <literal/:ae/ option specifies the output to be put into the
-accouting file at the end of the job.
-</para>
-<para>The accounting file must exist and will not be created by the
-<application>lpd</application> server.
-The accounting file should be periodically truncated.</para>
+<sect1><title>Accounting Information</title>
 
 <para>
 The <literal/:as=.../ and <literal/:ae=.../ options specify the
-format of the information that the <application/lpd/ server writes
-to the accouting file.
-These values are expanded using the same methods as for the
+the start of job and end of job accounting information
+or a set of programs to be run to record the start and end of job
+accounting information. 
+The option values are expanded using the same methods as for the
 filter options.
 For example:
 
@@ -19838,61 +19879,195 @@ For example:
 
 <para>
 If the options have the form <literal>:as=|/path ...</literal>,
-then the specified program is run,
-and is responsible for putting the server level accounting
-information into the accouting file.
+then the specified program is run to record the information.
+By convention the accounting information is passed as command line
+values to the program.
+The programs are run in the same manner as a print filter.
+When the <literal/:as/ or <literal/:ae/ value specifies
+a program then logging using the <literal/:af/ option
+values in the next section is not performed.
+For example:
 </para>
 
-<para>
-If the format of the <literal/:af/ option is
-<literal>:af=host%port</literal>
-and the
-<literal>:achk</literal>
-option is set,
-then the <application>lpd</application>
-server will
-open the connection to the host,
-send the
-<literal>:as</literal>
-string,
-and then wait for a single line of text from the remote server.
-If nothing is read or the first word on the return line is
-<literal>accept</literal>,
-then the job will be printed.
-If the value is
-<literal>hold</literal>,
-<literal>remove</literal>,
-or
-<literal>abort</literal>,
-the job will be held,
-removed, or aborted.
-Any other value will cause the job to be deleted.
-</para>
-<para>
-At the end of the job the
-<literal>:ae</literal>
-string will be sent to the server.
-No response is expected.
-</para>
+<informalexample>
+<screen>:as=|/usr/local/libexec/jobstart $H $n $P $k $b $t
+  /usr/local/libexec/jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+    '-b1093' '-tNov  5 19:39:25'
+:ae=jobend $H $n $P $k $b $t
+  jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+    '-b1093' '-tNov  5 19:39:59'</screen>
+</informalexample>
 
-<para>
-If the format of the <literal/:as/ option is
-<literal>:as=| ... </literal>,
-then the value is assumed to be a filter program.
-It is invoked using the usual procedures for filters,
-with its <acronym/STDIN/ set to the accounting file and its output is read
-by the <literal/lpd/ server.
-If the filter exits with a 0 exit code,
-the filter output is read and interpreted as that returned from a network connection.
-If the exit code is
-JHOLD,
-JREMOVE,
-or
-JABORT,
-the job is held, removed, or aborted.
-Any other exit code will cause the job to be removed.
-</para>
 </sect1>
+
+<sect1><title>Accounting File</title>
+
+<para>
+The Accounting File (<literal/:af=/)
+option value specifies the destination of accounting information.
+If the format of the <literal/:af/ option is
+<literal>:as=| ... </literal>,
+then the value is assumed to be a program to be run to record
+start and end of job information.
+The program is run in the same manner as a print filter.
+The values of the <literal/:as/ and <literal/:ae/ options are written
+to the program's <literal/STDIN/ and the output from
+the program's <literal/STDOUT/
+is used as described below for authorization.
+</para>
+
+<para>
+If the <literal/:af=/ option has the format <literal/host%port/
+then a TCP/IP connection is opened to the specified port on the indicated host.
+The values of the <literal/:as/ and <literal/:ae/ options are written
+to the remote host.
+The port that the connection originates from will be in the range
+set by the configuration or printcap
+<emphasis remap=tt>
+<link linkend="lpdport">originate_port</link>
+</emphasis>
+option.
+</para>
+
+<para>
+Finally,
+if the <literal/:af=/ has neither of these formats then
+it will be treated as a pathname to a file.
+If the file exists or the <literal/create_files/ option is true,
+then the file will be opened and the 
+values of the <literal/:as/ and <literal/:ae/ options are written
+to the file.
+The accounting file should be periodically truncated.
+
+</para>
+<para>
+
+By convention
+the <literal/:af=/ value is passed to filters as a command line option.
+LPRng will pass the option value only if it is specifies a file or network destination.
+This implies that
+accounting information can be written to the accounting file
+or network destinations by the print spooler,
+<literal/:of/ filters,
+or print file filters.
+The filters are responsible for opening the accounting file or network connection.
+</para>
+
+<para>
+The following is an example of information written to the accounting file:
+<informalexample>
+<screen>jobstart '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+'-b1093' '-tNov  5 19:39:25'
+start '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+'-c0' '-Fo' '-tSun Nov  5 19:39:25 1995'
+filestart '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+'-c0' '-Ff' '-tSun Nov  5 19:39:27 1995'
+fileend '-p12944' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+'-b3' '-c0' '-Ff' '-tSun Nov  5 19:39:58 1995'
+end '-p12942' '-kcfA938h4.private' '-nroot' '-hh4.private' '-Pps' \
+'-b2' '-c0' '-Fo' '-tSun Nov  5 19:39:59 1995'
+jobend '-Hh4.private' '-nroot' '-Pps' '-kcfA938h4.private' \
+'-b1093' '-tNov  5 19:39:59'</screen>
+</informalexample>
+</para>
+
+<para>The
+<literal>jobstart</literal>
+and
+<literal>jobend</literal>
+lines are written by <application/lpd/
+and are the expanded
+<literal/:as/
+and
+<literal/:ae/
+values.
+The
+<literal>start</literal>
+and
+<literal>end</literal>
+line are added by the <literal/:of/ filter.
+This filter usually queries the printer and gets printer
+dependent accounting information such as the pagecounter value.
+The <literal/:of/ filter is then suspended and the job is processed
+by the various format dependent filters.
+The the <literal/filestart/ and <literal/fileend/
+lines are produced by the other filters.
+</para>
+
+</sect1>
+<sect1><title>Authorization and Quotas</title>
+
+<para>
+In addition to simply recording accounting information the
+accounting procedures can be used to check print quotas or update
+databases.
+This is done by using the
+Accounting Check <literal/:achk/ flag
+and the
+<literal/:as/,
+<literal/:ae/,
+and
+<literal/:af/ network connection or program capabilities.
+</para>
+
+<para>
+If the <literal/:achk/ flag is set and the
+<literal/:as=/ option specifies a program to be run,
+or the
+<literal/:af=/ option specifies a program to be run or a network connection
+then output of the program or information read from the
+network connection is used to control the handling of the job.
+If the
+<literal/:as=/ option specifies a program to be run then
+the program is run and the exit code and output is saved.
+If the <literal/:as=/ option specifies a string and the
+<literal/:af=/ option specifies a program to be run or a remote host
+to be contacted then the <literal/:as=/ value is written to the
+program STDIN or remote host.
+The program STDOUT or network connection is read and saved and the
+program exit code is saved.
+</para>
+<para>
+If the information was read from a program,
+then the exit code of the program is checked:
+<informalexample><screen>
+Exit Code    Action
+JSUCC (0)    process data read
+JFAIL        retry with JFAIL status
+JHOLD        hold job
+JREMOVE      remove job
+JABORT       abort processing jobs
+other        abort processing jobs
+</screen></informalexample>
+</para>
+
+<para>
+If the information was read from a network connection or the
+program exited with JSUCC (0) then the
+start of the first line of the information read is used.
+If this line starts with the following case insensitive words
+then the following actions are taken: 
+<informalexample><screen>
+Word         Action
+(blank)      process job
+ACCEPT       process job
+FAIL         retry with JFAIL status
+HOLD         hold job
+REMOVE       remove job
+(other)      abort processing jobs
+</screen></informalexample>
+</para>
+
+<para>
+These facilities can be used to implement a wide variety of quota
+mechanisms.
+The most simple method is to create a script or program that can be
+run as the <literal/:as=/ program.
+This would connect to a database server or check a database to see if
+user quotas had been exceeded. 
+If they had,  then it would return a <literal/REMOVE/ or <literal/HOLD/
+status as appropriate.
+</para>
 
 <sect1><title>Accessing Printer Hardware Pagecounters</title>
 

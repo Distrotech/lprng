@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 5.39 2000/12/25 01:51:09 papowell Exp papowell $";
+"$Id: lpd_jobs.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -269,8 +269,8 @@ void Get_subserver_info( struct line_list *order,
 	Init_line_list(&server);
 
 	DEBUG1("Get_subserver_info: old_order '%s', list '%s'",old_order, list);
-	Split(&server_order,old_order,File_sep,0,0,0,1,0);
-	Split(&server_order,     list,File_sep,0,0,0,1,0);
+	Split(&server_order,old_order,File_sep,0,0,0,1,0,0);
+	Split(&server_order,     list,File_sep,0,0,0,1,0,0);
 	if(DEBUGL1)Dump_line_list("Get_subserver_info - starting",&server_order);
 
 	/* get the info of printers */
@@ -767,6 +767,8 @@ int Do_queue_jobs( char *name, int subserver )
 				Free_line_list( &chooser_list );
 				Free_line_list( &chooser_env );
 				if( !Chooser_routine_DYN && Chooser_DYN ){
+					if( in_tempfd > 0 ) close( in_tempfd ); in_tempfd = -1;
+					if( out_tempfd > 0 ) close( out_tempfd ); out_tempfd = -1;
 					in_tempfd = Make_temp_fd(0);
 					out_tempfd = Make_temp_fd(0);
 				}
@@ -810,7 +812,7 @@ int Do_queue_jobs( char *name, int subserver )
 						}
 					}
 				}
-				if( chooser_list.count > 0 && Chooser_routine_DYN ){
+				if( Chooser_routine_DYN ){
 #if defined(CHOOSER_ROUTINE)
 					extern int CHOOSER_ROUTINE( struct line_list *servers,
 						struct line_list *available, int *use_subserver );
@@ -831,7 +833,7 @@ int Do_queue_jobs( char *name, int subserver )
 					Errorcode = JABORT;
 					fatal(LOG_ERR,"Do_queue_jobs: 'chooser_routine' select and no routine defined");
 #endif
-				} else if( chooser_list.count > 0 && Chooser_DYN ){
+				} else if( Chooser_DYN ){
 					/* we invoke the chooser with the list
 					 * of printers we have found in the order
 					 */
@@ -1210,6 +1212,10 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 			Errorcode = JABORT;
 			FATAL(LOG_INFO)"Remote_job: no bq_format value");
 		}
+		if( !islower(cval(Bounce_queue_format_DYN)) ){
+			Errorcode = JABORT;
+			FATAL(LOG_INFO)"Remote_job: bq_format must be single lower case letter");
+		}
 		if(DEBUGL2) Dump_job( "Remote_job - before filtering", &jcopy );
 		tempfd = Make_temp_fd(&tempfile);
 
@@ -1246,7 +1252,12 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 		Set_str_value(lp,"N",s?s:"(lpd_filter)");
 		Set_flag_value(lp,COPIES,1);
 		Set_double_value(lp,SIZE,job_size);
-		Set_str_value(lp,FORMAT,Bounce_queue_format_DYN);
+		{
+			char fmt[2];
+			fmt[0] = cval(Bounce_queue_format_DYN);
+			fmt[1] = 0;
+			Set_str_value(lp,FORMAT,fmt);
+		}
 	} else if( !move_dest ) {
 		int err = Errorcode;
 		Errorcode = 0;
@@ -2672,17 +2683,35 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 			}
 			SETSTATUS(job) "%s filter finished", filter_title );
 			if( (s = Bounce_queue_format_DYN) ){
+				char fmt[2];
+				fmt[0] = s[0];
+				fmt[1] = 0;
+				if( !s[0] ){
+					Errorcode = JABORT;
+					FATAL(LOG_INFO)"Remote_job: bq_format must be single lower case letters");
+				}
 				/* bounce queue format is OnOnD... where O is old
 				 * default is D or original if not present
 				 */
-				while( s[0] && s[1] ){
-					if( cval(format) == cval(s) ){
-						++s;
-						break;
+				if( s[1] ){
+					while( s[0] ){
+						char fmt[2];
+						fmt[0] = s[0];
+						if( !s[1] ) break; 
+						if( cval(format) == cval(s) || cval(s) == '*' ){
+							fmt[0] = s[1];
+							break;
+						}
+						fmt[0] = 0;
+						s += 2;
 					}
-					s += 2;
 				}
-				if( cval(s) ) Set_str_value(datafile,FORMAT,s);
+				if( !islower(cval(fmt)) ){
+					Errorcode = JABORT;
+					FATAL(LOG_INFO) "Remote_job: bounce_queue_format '%s' does not match format '%s'",
+						Bounce_queue_format_DYN, format);
+				}
+				Set_str_value(datafile,FORMAT,fmt);
 			}
 		}
 		DEBUG3("Filter_files_in_job: finished file");

@@ -1,20 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 5.14 2000/12/25 01:51:12 papowell Exp papowell $";
+"$Id: lprm.c,v 1.14 2001/09/02 20:42:13 papowell Exp $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
@@ -168,7 +168,7 @@ int main(int argc, char *argv[], char *envp[])
 		DEBUG2("lprm: checking '%s' for -U perms",
 			Allow_user_setting_DYN );
 		Init_line_list(&user_list);
-		Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0);
+		Split( &user_list, Allow_user_setting_DYN,File_sep,0,0,0,0,0,0);
 		
 		found = 0;
 		for( i = 0; !found && i < user_list.count; ++i ){
@@ -232,6 +232,15 @@ void Do_removal(char **argv)
 	DEBUG1("Do_removal: start");
 	Get_printer();
 	Fix_Rm_Rp_info(0,0);
+
+	if( ISNULL(RemotePrinter_DYN) ){
+		SNPRINTF( msg, sizeof(msg))
+			_("Printer: %s - cannot remove jobs from device '%s'\n"),
+			Printer_DYN, Lp_device_DYN );
+		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+		return;
+	}
+
 	/* fix up authentication */
 	if( Auth ){
 		Set_DYN(&Auth_DYN, getenv("AUTH"));

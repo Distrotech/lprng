@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 5.15 2000/12/25 01:51:13 papowell Exp papowell $";
+"$Id: permission.c,v 1.14 2001/09/02 20:42:14 papowell Exp $";
 
 
 #include "lp.h"
@@ -105,7 +105,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 		DEBUGF(DDB2)("Perms_check: line [%d]='%s'", linecount,
 			perms->list[linecount]);
 		Free_line_list(&values);
-		Split(&values,perms->list[linecount],Whitespace,0,0,0,0,0);
+		Split(&values,perms->list[linecount],Whitespace,0,0,0,0,0,0);
 		if( values.count == 0 ) continue;
 		result = 0; m = 0; invert = 0;
 		for( valuecount = 0; m == 0 && valuecount < values.count;
@@ -113,7 +113,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 			DEBUGF(DDB2)("Perms_check: [%d]='%s'",valuecount,
 				values.list[valuecount] );
 			Free_line_list(&args);
-			Split(&args,values.list[valuecount],Perm_sep,0,0,0,0,0);
+			Split(&args,values.list[valuecount],Perm_sep,0,0,0,0,0,0);
 			if( args.count == 0 ) continue;
 			if( invert > 0 ){
 				invert = -1;
@@ -166,6 +166,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					break;
 				}
 				break;
+
 			case P_GROUP:
 				m = 1;
 				if( !job_check ){ m = 0; }
@@ -204,15 +205,13 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					break;
 				}
 				break;
+
 			case P_IFIP:
 			case P_REMOTEHOST:
-				m = 1;
-				switch (check->service){
-				default:
-					m = match_host( &args, check->remotehost, invert );
-					break;
-				}
+			case P_REMOTEIP:
+				m = match_host( &args, check->remotehost, invert );
 				break;
+
 			case P_AUTH:
 				m = 1;
 				switch (check->service){
@@ -250,14 +249,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					m = match( &args, check->authuser, invert );
 				}
 				break;
-			case P_REMOTEIP:
-				m = 1;
-				switch( check->service ){
-				default:
-					m = match_host( &args, check->remotehost, invert );
-					break;
-				}
-				break;
+
 			case P_CONTROLLINE:
 				/* check to see if we have control line */
 				m = 1;
@@ -283,7 +275,6 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				}
 				break;
 			case P_SERVICE:
-				m = 1;
 				m = match_char( &args, check->service, invert );
 				break;
 			case P_FORWARD:

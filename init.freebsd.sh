@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: init.freebsd.sh,v 1.3 2000/06/05 18:30:23 papowell Exp papowell $
+# init.freebsd.sh,v 1.1 2001/08/21 20:33:15 root Exp
 # This file can be installed in /usr/local/etc/init.d
 #  as lprng.sh
 # Freebsd 3.x and 4.x will run all files in this directory

@@ -1,7 +1,7 @@
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-2000 Patrick Powell, San Diego, CA
+# Copyright 1988-2001 Patrick Powell, San Diego, CA
 #     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
@@ -10,6 +10,104 @@
 # PURPOSE: Record Changes
 # CHANGES,v 3.47 1998/03/29 18:37:09 papowell Exp
 ###########################################################################
+
+Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
+
+  I was not closing all open file descriptors.  This caused checkpc and
+  lpd (when running as 'spool queue server') to die mysteriously after
+  processing a couple of jobs.
+  (Clue to cause supplied by: Heiko Burghardt <burghardt@riege.de>)
+
+  The lpc -s status only reported number of jobs.  Now it also reports
+  queue status,  as it used to, and should have.  And it reports only
+  the number of printable jobs.
+  (Patch by:  Garry Zacheiss <zacheiss@MIT.EDU>)
+
+  Patch to accommodate Broken RFC1179 Implemenation #39 from Apple.
+  (Gory details and a patch by: Darius Davis <s328919@student.uq.edu.au>)
+
+  The 'Read_fd_len_timeout' and 'Write_fd_len_timeout' code would not
+  pause indefinately if the timeout value was 0.
+  (Noticed by: David E. Cross <crossd@cs.rpi.edu>)
+
+  A slew of patches from Crutcher Dunnavant at redhat.com:
+  From the LPRng-3.7.4-23.src.rpm at the RedHat ftp site: 
+    LPRng-3.7.4-direct.patch - fixed a typeo in vars.c
+    LPRng-3.7.4-inet_ntop.patch - conflicting/duplicate
+        definition of inet_ntop.
+        NOTE: I also fixed the inet_pton() definition to
+        be consistent with the patch.
+    LPRng-3.7.4-jobfilescan.patch, LPRng-3.7.4-lockfile.patch
+        a little less agressive checkpc operation.  Checkpc
+		now does not NOT update the targets of symbolic links.
+		This solves the problem of various tools creating
+		files in the spool directory as well as symbolic links
+		to filters.  The FILES need to be accessible by
+		filters running as the LPD user, the targets of the
+		symbolic links should not be touched.
+    LPRng-3.7.4-kerb5.patch - not used, do not want to hardwire
+        paths into configure.  Modified RPM config file to add
+        /usr/kerberos/{include,lib} instead
+	LPRng-3.7.4-lockfile.patch - lockfile created now
+    LPRng-3.7.4-manpage.patch - typo in lpr.1 fixed
+    LPRng-3.7.4-nointl.patch - configure using wrong -lintl
+        value.
+    LPRng-3.7.4-nonblock.patch - changed some blocking opens
+        to nonblocking opens in checkpc so that checkpc did not
+        hang.  Silly of me not to have done this,  as the
+        Check_write() routine even had a nonblocking flag just
+        for this purpose.
+    LPRng-3.7.4-s390.patch, LPRng-3.7.4-setgroups.patch
+        This is a fiddle, not a major problem.  The only
+		exploit possible is if the lpd server is started
+		with "extra" groups besides the default one.  If
+		you do not install lpd SETUID root (which is the default)
+		then you have to be root to start this (su root OR login
+		as root),  and this means that either login or su is
+		not setting up the group membership correctly.
+		But it is better to err on the side of paranoia than
+		be careless.
+    LPRng-3.7.4-shutdown.patch
+        Note: the 'shutdown()' patch was NOT applied as it breaks
+        a slew of other things.  Clearly we have some problem
+        printers out there that need to be identified.
+  (Courtesy of: Crutcher Dunnavant <crutcher@redhat.com>)
+
+  Updated GETTEXT/i8n support to gettext-0.10.39.
+
+  The printcap option 'prefix_option_to_option' is declared as a flag in
+  src/common/vars.c in both versions 3.7.4 (line 355) and 3.6.26.
+  { "prefix_option_to_option", 0, FLAG_K, * &Prefix_option_to_option_DYN,0,0},
+  should be:
+  { "prefix_option_to_option", 0, STRING_K, &Prefix_option_to_option_DYN,0,0},
+  (From: Anthony R Iano-Fletcher <Anthony.Iano-Fletcher@cbel.cit.nih.gov>)
+
+  Redid the authentication documentation and code...  cleaned it up a bit. 
+  And comments.  And printcap.5 updated, HOWTO updated.  Sort of works now.
+  Fixed up '$a' filter options so that :af=xxx is put on command line only
+  if it is NOT a filter.  This clears up the mysterious Linux Printfilter
+  deaths.
+
+  Permission checking now works for SERVICE=X.  You can only do remote host
+  and port comparisions (REMOTE_IP=, REMOTE_HOST=, PORT=).  This was initiated
+  by a bug report about address mask generation.
+  (From: Willi Burmeister <wib@cs.uni-kiel.de>)
+
+  'lpc client' now displays defaults.
+
+  The changes to use the 'initgroups()' call for setting process group and
+  effective group also cleared up problem reported by some Debian users.
+
+  You can now put a colon in printcap entry values using: \:.  This makes
+  life a little easier for some folks who need to have options of the form
+  "http://...".  You can now do:  filter=/.../sendftp -d ftp\://some/site
+
+  The configure defaults for filter_path (PATH value for filters)
+    are now /bin:/usr/bin:/usr/local/bin
+  The configure defaults for filter_ld_path (LD_LIBRARY_PATH value for filters)
+    are now /lib:/usr/lib:/usr/local/lib
+
+  Reviewed LOTS and LOTS of documentation.  Fiddles all over the place.
 
 Release LPRng 3.7.4 Wed Dec 27 07:10:27 PST 2000
   ARGH ARGH!  Distributed the test version and not the release
@@ -1292,7 +1390,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 
      # FreeBSD Convenience Script for Source Install
      # -- START --
-     # $Id: CHANGES,v 5.87 2000/12/28 01:32:37 papowell Exp papowell $
+     # CHANGES,v 1.1 2001/08/21 20:33:14 root Exp
      #
      #  If you are building a PORT, see the
      #  DISTRIBUTIONS/Freebsd directory for a complete port
@@ -1446,7 +1544,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
     
 	# LINUX/RedHat Source Installation Convenience Script
 	# -- START --
-	# $Id: CHANGES,v 5.87 2000/12/28 01:32:37 papowell Exp papowell $
+	# CHANGES,v 1.1 2001/08/21 20:33:14 root Exp
       *** same as above
 	fix () {
       *** same as above

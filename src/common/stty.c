@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: stty.c,v 5.7 2000/12/25 01:51:15 papowell Exp papowell $";
+"$Id: stty.c,v 1.14 2001/09/02 20:42:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -208,7 +208,7 @@ void Do_stty( int fd )
 	struct line_list l;
 
 	Init_line_list(&l);
-	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0,0);
 	Check_max(&l,1);
 	l.list[l.count] = 0;
 	DEBUG3("Do_stty: using SGTTYB, fd %d", fd );
@@ -554,7 +554,7 @@ void Do_stty( int fd )
 	struct line_list l;
 
 	Init_line_list(&l);
-	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0,0);
 	Check_max(&l,1);
 	l.list[l.count] = 0;
 
@@ -926,7 +926,7 @@ void Do_stty( int fd )
 	struct line_list l;
 
 	Init_line_list(&l);
-	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0);
+	Split(&l,Stty_command_DYN,Whitespace,0,0,0,0,0,0);
 	Check_max(&l,1);
 	l.list[l.count] = 0;
 

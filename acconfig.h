@@ -122,6 +122,9 @@
 /* Define as 1 if you have gettext and don't want to use GNU gettext.  */
 #undef HAVE_GETTEXT
 
+/* Define as 1 if you have Heimdal Kerberos */
+#undef HAVE_HEIMDAL
+
 /* Define if you have innetgr() defined in include file */
 #undef HAVE_INNETGR_DEF
 
@@ -411,6 +414,10 @@
 /* Define for Encore UMAX 4.3 that has <inq_status/cpustats.h>
    instead of <sys/cpustats.h>.  */
 #undef UMAX4_3
+
+/* Define if we want gdbm */
+#undef USE_GDBM
+#undef USE_GDBM_LIB
 
 /* Define if we the user specifies an include file */
 #undef USER_INCLUDE

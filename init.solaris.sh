@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: init.solaris.sh,v 1.4 2000/06/05 18:30:23 papowell Exp papowell $
+# init.solaris.sh,v 1.1 2001/08/21 20:33:15 root Exp
 #
 # for Solaris
 #  copy this script to /etc/init.d/lprng

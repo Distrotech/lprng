@@ -33,9 +33,7 @@
 #             to ${MAKE} sure scripts work
 #   addit:    use pkg_add
 #   removeit: use pkg_delete
-#   portit:   ${MAKE} a subdirecotory, LPRng, that has all of the files
-#             that you should send off to be a new port.  Do a
-#             diff of them and put the diff in the LPRng.diffs file.
+#
 # Notes and warnings:
 #   $PREFIX does not have quite the same effect as it normally would,
 #   as some of the LPRng files MUST be in fixed locations.
@@ -69,24 +67,28 @@
 #   ${MAKE} install
 #   ${MAKE} package
 #
-#Step 3: (To make diff for the PORTS distribution)
-#   ${MAKE} portit
+#Step 3: (To make a port distribution):
+#   ${MAKE} port
 #
 # Notes and warnings:
 # 
 
 PORTNAME=LPRng
-PORTVERSION=3.7.4
+PORTVERSION=3.7.5
 CATEGORIES=	    sysutils print
 MASTER_SITES=	ftp://ftp.astart.com/pub/LPRng/LPRng/
 EXTRACT_SUFX=	.tgz
 
 MAINTAINER=	papowell@astart.com
 
-LIB_DEPENDS=	gdbm:${PORTSDIR}/databases/gdbm
 #RUN_DEPENDS=	ifhp:${PORTSDIR}/print/ifhp
 
+PREFIX?=/usr
+
 HAS_CONFIGURE=	yes
+GNU_CONFIGURE=	yes
+INSTALLS_SHLIB=	yes
+
 CONFIGURE_ARGS= \
 	--prefix=${PREFIX} \
 	--sysconfdir=/etc \
@@ -94,24 +96,26 @@ CONFIGURE_ARGS= \
 	--with-ccopts="-I/usr/local/include" \
 	--with-filterdir=${PREFIX}/libexec/filters \
 	--with-ld_library_path="${PREFIX}/lib:/lib:/usr/lib:/usr/local/lib" \
-	--with-filter_path="${PREFIX}/bin:/bin:/usr/bin:${PREFIX}/sbin:/sbin:/usr/sbin:${PREFIX}/libexec:/usr/libexec:/usr/local/libexec:/usr/sbin"
+	--with-filter_path="${PREFIX}/bin:/bin:/usr/bin:${PREFIX}/sbin:/sbin:/usr/sbin"
 	
 
-MAN1=lp.1 lpf.1 lpr.1 lprm.1 psbanner.1 cancel.1 monitor.1 lpstat.1 lpq.1 pclbanner.1 lpbanner.1
-MAN5=printcap.5 lpd.conf.5 lpd.perms.5
+MAN1=cancel.1 lp.1 lpbanner.1 lpf.1 lpq.1 lpr.1 lprm.1 lpstat.1 monitor.1 pclbanner.1 psbanner.1
+MAN5=lpd.conf.5 lpd.perms.5 printcap.5
 MAN8=checkpc.8 lpc.8 lpd.8
 
 post-install:
 .if !defined(NOPORTSDOCS)
-	${MKDIR} ${PREFIX}/share/doc/${DISTNAME}
+	${MKDIR} ${DESTDIR}${PREFIX}/share/doc/${DISTNAME}
 	${CP} ` ls \
 	    ${WRKSRC}/HOWTO/*.txt \
 	    ${WRKSRC}/HOWTO/*.ps \
+	    ${WRKSRC}/HOWTO/*.pdf \
 	    ${WRKSRC}/HOWTO/*.html \
 	    ${WRKSRC}/HOWTO/*.gif \
+	    ${WRKSRC}/HOWTO/*.png \
 	    ${WRKSRC}/HOWTO/*.jpg \
 	    ${WRKSRC}/HOWTO/*.ppt 2>/dev/null `\
-		${PREFIX}/share/doc/${DISTNAME};
+		${DESTDIR}${PREFIX}/share/doc/${DISTNAME};
 .endif
 	@${CAT} pkg-message
 
@@ -126,7 +130,9 @@ plist:
 	${TOUCH} pkg-plist
 	-${RM} -rf /var/tmp/$(DISTNAME)
 	${MKDIR} /var/tmp/$(DISTNAME)/etc
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/etc
 	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/bin
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/lib
 	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/libexec
 	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/sbin
 	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/man/man1
@@ -144,14 +150,15 @@ plist:
 	-${MAKE} deinstall
 	#-${MAKE} clean
 # we install in the DESTDIR subtree -
-	${MAKE} makesum
-	${MAKE} all
+	#${MAKE} makesum
+	#${MAKE} all
 	FORCE_PKG_REGISTER=YES ${MAKE} install NO_MTREE=yes DESTDIR=/var/tmp/$(DISTNAME) MAKEPACKAGE=YES
 	${CP} /dev/null /tmp/PLIST
 	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type f) | \
 	${SED} -e 's/..//' -e '/info.dir/d' -e '/man[0-9]/d' \
 	  -e '/etc.*conf$$/d' -e '/etc.*printcap$$/d' \
 	 >> /tmp/PLIST
+	cp /tmp/PLIST /tmp/files
 
 	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type f) | \
 	${SED} -n -e 's/\.gz$$//' -e '/man\//s,.*/,,p' > /tmp/MANPAGES
@@ -210,11 +217,13 @@ addit:
 	pkg_add ${DISTNAME}.tgz
 removeit:
 	pkg_delete ${DISTNAME}
-portit:
-	-${RM} -rf LPRng
-	-${MKDIR} LPRng
-	${CP} -r pkg-* files-* README.html Makefile LPRng
-	-diff -crN LPRng /usr/ports/sysutils/LPRng >LPRng.diffs
+
+port:
+	rm -f *.tgz *.bak
+	rm -rf /tmp/LPRng
+	mkdir /tmp/LPRng
+	-cp Makefile README.html distinfo files-* pkg-* /tmp/LPRng
+	cd /tmp; shar ` find LPRng -print` >LPRng.port
 
 checkit:
 	${MAKE} cleanit
@@ -224,7 +233,6 @@ checkit:
 	-${MAKE} deinstall
 	${MAKE} install deinstall
 	${MAKE} packageit
-	${MAKE} portit
 
 cleanit:
 	-${RM} -rf pkg-plist distinfo *.tgz work LPRng.diffs LPRng

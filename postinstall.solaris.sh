@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: postinstall.solaris.sh,v 1.12 2000/10/29 22:52:49 papowell Exp papowell $
+# postinstall.solaris.sh,v 1.1 2001/08/21 20:33:17 root Exp
 #
 # We use this when we are building a package or doing an install
 #

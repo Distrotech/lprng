@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.4
+.ds VE LPRng-3.7.5
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -127,12 +127,12 @@ DEFAULT ACCEPT
 # Reject any connections from outside our subnet
 REJECT SERVICE=X NOT IP=130.191.0.0/255.255.0.0
 # Only accept Printing (P) and spooling (LPR) from
-# Engineering Lab or the Dean's office
-REJECT SERVICE=P,R NOT REMOTEHOST=*.eng.astart.com,dean.astart.com
+# the private network, the 10.0.0.0/8  network and fw
+REJECT SERVICE=P,R NOT REMOTEHOST=*.private,10.0.0.0/8,fw.astart.com
 # Do not accept forwarded jobs for printing
 REJECT SERVICE=P FORWARD
 # Allow only the administrators control access
-ACCEPT SERVICE=C,M REMOTEHOST=spooler.eng.astart.com USER=root,papowell
+ACCEPT SERVICE=C,M REMOTEHOST=spooler.astart.com USER=root,papowell
 ACCEPT SERVICE=C,M SERVER REMOTEUSER=root,papowell
 # Allow only the user on the same host who spooled job to remove it
 ACCEPT SERVICE=M SAMEUSER SAMEHOST
@@ -1232,16 +1232,14 @@ The output device
 will be be STDOUT  (file descriptor 1) and
 STDERR (file descriptor 2) will be connected to the error logging file.
 If this is a printing filter,
-the error log will be determined by the :af: printcap field.
-If accounting is enabled,
-file descriptor 3 will be connected to be the accounting file or filter as
-specified by the printcap :af: entry.
+the error log will be determined by the :af: printcap field
+and FD 3 will be opened and set to the either the file,
+remote host,
+or input of the filter program.
 .IP 3. 5
-If the
-ROOT_PERMS_TO_FILTER_SECURITY_LOOPHOLE compile time option is enabled,
-then filter specifications starting with ROOT filtername will be
+Filter specifications starting with ROOT will be
 run as root (EUID = 0).
-This can be a serious security loophole,
+This can be a serious security loophole
 and should only be used as a last resort for specific problems.
 .IP 4. 5
 The options for the filter command line will be replaced by appropriate
@@ -1258,7 +1256,7 @@ The options will be exanded as follows:
 .nf
 .ta \w'Key  'u +4n +4n
 Key	Value
-a	Accounting file (printcap 'af')
+a	Accounting file (printcap 'af' entry)
 b	Job size, i.e.- total data file size, in bytes
 c	if binary (format 'l') expands to -c
 d	Control directory
@@ -1405,7 +1403,7 @@ the accounting file will not be created.
 .PP
 When af specifies a filter or network connection and the
 achk flag is set,
-then after writting the initial accounting information (see as printcap field below)
+then after writing the initial accounting information (see as printcap field below)
 the server will wait for a reply of the form
 ACCEPT from the filter or server.
 If not received,

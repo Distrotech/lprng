@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: preremove.freebsd.sh,v 1.4 2000/10/29 22:52:50 papowell Exp papowell $
+# preremove.freebsd.sh,v 1.1 2001/08/21 20:33:17 root Exp
 #
 # This is the shell script that does the preremove
 # lpd shutdown.  It is the script from hell

@@ -1,7 +1,7 @@
 ###########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-1995 Patrick Powell, San Diego, CA
+# Copyright 1988-2001 Patrick Powell, San Diego, CA
 #     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
@@ -16,7 +16,7 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.7.4
+## VERSION=3.7.5
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files

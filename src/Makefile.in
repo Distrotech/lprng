@@ -1,13 +1,13 @@
 ##########################################################################
 # LPRng - An Extended Print Spooler System
 #
-# Copyright 1988-2000 Patrick Powell, San Diego, California
+# Copyright 1988-2001 Patrick Powell, San Diego, California
 #     papowell@lprng.com
 # See LICENSE for conditions of use.
 #
 ###########################################################################
 # MODULE: Makefile
-# $Id: Makefile.in,v 1.40 2000/12/28 01:32:52 papowell Exp papowell $
+# Makefile.in,v 1.1 2001/08/21 20:33:17 root Exp
 ###########################################################################
 #
 
@@ -23,7 +23,7 @@
 
 
 PACKAGE=@PACKAGE@
-VERSION=3.7.4
+VERSION=@VERSION@
 
 # where the source directory is
 SRC=@srcdir@
@@ -51,10 +51,10 @@ SHELL = @SHELL@
 LDCC=@LDCC@
 
 # any libs that need to be used to get these programs to compile:
-LIBS=@INTLLIBS@ @LIBS@
+LIBS= @LIBS@
 
-# add path to internationalization
-INTLINCS=@INTLINCS@
+# what libtool
+LIBTOOL=@LIBTOOL@
 
 ### PATHS ####
 # prefix
@@ -69,31 +69,35 @@ sbindir=@sbindir@
 libexecdir=@libexecdir@
 # for the configuration stuff
 sysconfdir=@sysconfdir@
+# libraries
+libdir=@libdir@
 
 # install options
 
 STRIP=@STRIP@
 
-CFLAGS:= @CPPFLAGS@ @CFLAGS@ @DEFS@ \
- -I.. -I${SRC}/include -I${SRC}/common @INTLINCS@ \
- -DCHOWN=\"@CHOWN@\"  \
- -DCHGRP=\"@CHGRP@\"  \
- -DPRINTCAP_PATH=\"@PRINTCAP_PATH@\"  \
- -DLPD_PRINTCAP_PATH=\"@LPD_PRINTCAP_PATH@\"  \
- -DLPD_PERMS_PATH=\"@LPD_PERMS_PATH@\"  \
- -DLPD_CONF_PATH=\"@LPD_CONF_PATH@\"  \
- -DREQUIRE_CONFIGFILES=\"@REQUIRE_CONFIGFILES@\"  \
- -DFILTER_PATH=\"@FILTER_PATH@\"  \
- -DLD_LIBRARY_PATH=\"@LD_LIBRARY_PATH@\"  \
- -DLOCKFILE=\"@LOCKFILE@\"  \
- -DCLEAR=\"@CLEAR@\"  \
- -DUSERID=\"@USERID@\"  \
- -DGROUPID=\"@GROUPID@\"  \
- -DLOCALEDIR=\"@LOCALEDIR@\"
-
+CFLAGS:= \
+	-I${top_builddir} \
+	-I${SRC}/include -I${SRC}/common \
+	@CPPFLAGS@ @CFLAGS@ @DEFS@ \
+	-DCHOWN=\"@CHOWN@\"  \
+	-DCHGRP=\"@CHGRP@\"  \
+	-DPRINTCAP_PATH=\"@PRINTCAP_PATH@\"  \
+	-DLPD_PRINTCAP_PATH=\"@LPD_PRINTCAP_PATH@\"  \
+	-DLPD_PERMS_PATH=\"@LPD_PERMS_PATH@\"  \
+	-DLPD_CONF_PATH=\"@LPD_CONF_PATH@\"  \
+	-DREQUIRE_CONFIGFILES=\"@REQUIRE_CONFIGFILES@\"  \
+	-DFILTER_PATH=\"@FILTER_PATH@\"  \
+	-DLD_LIBRARY_PATH=\"@LD_LIBRARY_PATH@\"  \
+	-DLOCKFILE=\"@LOCKFILE@\"  \
+	-DCLEAR=\"@CLEAR@\"  \
+	-DUSERID=\"@USERID@\"  \
+	-DGROUPID=\"@GROUPID@\"  \
+	-DLOCALEDIR=\"@LOCALEDIR@\"
 
 USER_OBJS := @USER_OBJS@
 LDFLAGS   := @LDFLAGS@
+
 FILTER_DIR = @FILTER_DIR@
 LPD_DIR    = @LPD_DIR@
 
@@ -124,6 +128,7 @@ STRIP      = @STRIP@
 #
 #CFLAGS:= $(CFLAGS) -DDMALLOC
 #LIBS:= $(LIBS) -ldmalloc
+
 
 
 #********************* OVERRIDING CONFIGURES' GUESSES ******************
@@ -175,9 +180,16 @@ STRIP      = @STRIP@
 
 
 SRCDIRS=${SRC}/common ${SRC}/AUTHENTICATE
-INCLUDE=.. ${SRC}/include ${INTLINCS}
+INCLUDE=.. ${SRC}/include
 
 VPATH=..:.:${SRC}/include:${SRC}/common
+
+########################################################################
+
+.SUFFIXES: .lo
+LINK =  $(LIBTOOL) --mode=link $(LDCC) $(LDFLAGS) -o $@
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c $<
 
 #**********************  End of Configurable Part ****************************
 
@@ -185,7 +197,6 @@ TARGET= lpc lpd lpq lpr lprm lpf checkpc lp lpstat \
 	lpbanner monitor ./lpd.conf
 
 NONTARGET = sserver sclient
-
 
 LPD_OBJS= lpd.o
 LPR_OBJS= lpr.o
@@ -199,16 +210,16 @@ MONITOR_OBJS= monitor.o getopt.o
 LPBANNER_OBJS= lpbanner.o plp_snprintf.o
 
 LIBLPR_OBJS = \
-	accounting.o child.o controlword.o copyright.o \
-	debug.o errormsg.o fileopen.o gethostinfo.o \
-	getopt.o getprinter.o getqueue.o globmatch.o \
-	initialize.o krb5_auth.o \
-	linelist.o linksupport.o lockfile.o \
-	lpd_control.o lpd_jobs.o lpd_logger.o lpd_rcvjob.o \
-	lpd_remove.o sendauth.o lpd_secure.o lpd_status.o \
-	merge.o permission.o plp_snprintf.o printjob.o \
-	proctitle.o  sendjob.o sendmail.o sendreq.o \
-	stty.o utilities.o vars.o md5.o $(USER_OBJS)
+	accounting.lo child.lo controlword.lo copyright.lo \
+	debug.lo errormsg.lo fileopen.lo gethostinfo.lo \
+	getopt.lo getprinter.lo getqueue.lo globmatch.lo \
+	initialize.lo krb5_auth.lo \
+	linelist.lo linksupport.lo lockfile.lo \
+	lpd_control.lo lpd_jobs.lo lpd_logger.lo lpd_rcvjob.lo \
+	lpd_remove.lo sendauth.lo lpd_secure.lo lpd_status.lo \
+	merge.lo permission.lo plp_snprintf.lo printjob.lo \
+	proctitle.lo  sendjob.lo sendmail.lo sendreq.lo \
+	stty.lo utilities.lo vars.lo md5.lo $(USER_OBJS)
 
 ALL_OBJS = $(LIBLPR_OBJS) \
 	$(LPR_OBJS) $(LPQ_OBJS) $(LPC_OBJS) $(LPRM_OBJS) $(LPD_OBJS) \
@@ -220,12 +231,10 @@ all: $(TARGET)
 	uninstall realclean mostlyclean distclean \
 	TAGS info generate
 
-
-
 # we want to force defaults to be updated whenever we
 # change the options in Makefile or Makefile.bsd
 #GNU
-vars.o: Makefile
+vars.o vars.lo: Makefile
 #
 #BSD vars.o: Makefile.bsd
 
@@ -236,38 +245,37 @@ vars.o: Makefile
 #
 
 
-liblpr.a: $(LIBLPR_OBJS)
-	ar ruv $@ $(USER_OBJS) $(LIBLPR_ORDER)
-	$(RANLIB) $@
+liblpr.la: $(LIBLPR_OBJS)
+	$(LINK) $(LIBLPR_OBJS) -rpath ${libdir}
 
-lpd: $(LPD_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPD_OBJS} liblpr.a $(LIBS)
-lpr: $(LPR_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPR_OBJS} liblpr.a $(LIBS)
-lpq: $(LPQ_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPQ_OBJS} liblpr.a $(LIBS)
-lpstat: $(LPSTAT_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPSTAT_OBJS} liblpr.a $(LIBS)
-lprm: $(LPRM_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPRM_OBJS} liblpr.a $(LIBS)
-lpc: $(LPC_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${LPC_OBJS} liblpr.a $(LIBS)
-checkpc: $(CHECKPC_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${CHECKPC_OBJS} liblpr.a $(LIBS)
+lpd: $(LPD_OBJS) liblpr.la
+	$(LINK) ${LPD_OBJS} liblpr.la $(LIBS)
+lpr: $(LPR_OBJS) liblpr.la
+	$(LINK) ${LPR_OBJS} liblpr.la $(LIBS)
+lpq: $(LPQ_OBJS) liblpr.la
+	$(LINK) ${LPQ_OBJS} liblpr.la $(LIBS)
+lpstat: $(LPSTAT_OBJS) liblpr.la
+	$(LINK) ${LPSTAT_OBJS} liblpr.la $(LIBS)
+lprm: $(LPRM_OBJS) liblpr.la
+	$(LINK) ${LPRM_OBJS} liblpr.la $(LIBS)
+lpc: $(LPC_OBJS) liblpr.la
+	$(LINK) ${LPC_OBJS} liblpr.la $(LIBS)
+checkpc: $(CHECKPC_OBJS) liblpr.la
+	$(LINK) ${CHECKPC_OBJS} liblpr.la $(LIBS)
 lpf: $(LPF_OBJS)
-	$(LDCC) $(LDFLAGS) -o $@ ${LPF_OBJS} $(LIBS)
+	$(LINK) ${LPF_OBJS} $(LIBS)
 lpbanner: $(LPBANNER_OBJS)
-	$(LDCC) $(LDFLAGS) -o $@ ${LPBANNER_OBJS} $(LIBS)
-monitor: $(MONITOR_OBJS) liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ ${MONITOR_OBJS} liblpr.a $(LIBS)
+	$(LINK) ${LPBANNER_OBJS} $(LIBS)
+monitor: $(MONITOR_OBJS) liblpr.la
+	$(LINK) ${MONITOR_OBJS} liblpr.la $(LIBS)
 
 authenticate_pgp: ${SRC}/AUTHENTICATE/authenticate_pgp.sh
 	rm -f $@; cp ${SRC}/AUTHENTICATE/authenticate_pgp.sh $@; chmod 555 $@
 
-sserver: sserver.o liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ sserver.o liblpr.a $(LIBS)
-sclient: sclient.o liblpr.a
-	$(LDCC) $(LDFLAGS) -o $@ sclient.o liblpr.a $(LIBS)
+sserver: sserver.o liblpr.la
+	$(LINK) sserver liblpr.la $(LIBS)
+sclient: sclient.o liblpr.la
+	$(LINK) sclient liblpr.la $(LIBS)
 
 sendauth.o lpd_secure.o :	user_auth.stub
 
@@ -299,40 +307,36 @@ SUID_ROOT_PERMS=04755 -o root
 install: all
 	echo "Clients are being installed @PERMS@";
 	for i in ${DESTDIR}${bindir} ${DESTDIR}${sbindir} \
-		${DESTDIR}${sysconfdir} \
+		$(DESTDIR)$(libdir) ${DESTDIR}${sysconfdir} \
 		${DESTDIR}${LPD_DIR} ${DESTDIR}${FILTER_DIR}; do \
 	  if [ ! -d $$i ] ; then ${SRC}/mkinstalldirs $$i ; fi; \
 	done;
 
-	${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpq ${DESTDIR}${bindir}
-	${INSTALLCMD} ${STRIP} -m $(@PERMS@) lprm ${DESTDIR}${bindir}
-	${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpr ${DESTDIR}${bindir}
-	${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpstat ${DESTDIR}${bindir}
-	${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpc ${DESTDIR}${sbindir}
-	${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpd ${DESTDIR}${LPD_DIR}
-	${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpf ${DESTDIR}${FILTER_DIR}
-	${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpbanner ${DESTDIR}${FILTER_DIR}
-	${INSTALLCMD}    -m $(NORM_PERMS) pclbanner ${DESTDIR}${FILTER_DIR}
-	${INSTALLCMD}    -m $(NORM_PERMS) psbanner ${DESTDIR}${FILTER_DIR}
-	${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) checkpc ${DESTDIR}${sbindir}
+	${LIBTOOL} --mode=install $(INSTALLCMD) liblpr.la $(DESTDIR)$(libdir)/liblpr.la
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpq ${DESTDIR}${bindir}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lprm ${DESTDIR}${bindir}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpr ${DESTDIR}${bindir}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpstat ${DESTDIR}${bindir}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpc ${DESTDIR}${sbindir}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpd ${DESTDIR}${LPD_DIR}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpf ${DESTDIR}${FILTER_DIR}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpbanner ${DESTDIR}${FILTER_DIR}
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) pclbanner ${DESTDIR}${FILTER_DIR}
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) psbanner ${DESTDIR}${FILTER_DIR}
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) checkpc ${DESTDIR}${sbindir}
 	cd ${DESTDIR}${bindir}; rm -f lp cancel; ln -s lpr lp; ln -s lprm cancel;
 
 uninstall:
-	rm -f ${DESTDIR}${LPD_DIR}/lpd
-	cd ${DESTDIR}${FILTER_DIR}; rm -f lpf lpbanner pclbanner psbanner
-	cd ${DESTDIR}${bindir}; rm -f lp lpq lpstat lpr lp cancel;
-	cd ${DESTDIR}${sbindir}; rm -f lpc checkpc
-
 
 ###########################################################################
 
 
 clean::
-	-rm -f *.o *.tmp *core *.a ? ?.bak ?.orig $(TARGET) $(NONTARGET) st[0-9]* \
-	tags ./lpd.conf
+	-rm -rf *.o *.tmp *core *.a ? ?.bak ?.orig $(TARGET) $(NONTARGET) st[0-9]* \
+	tags ./lpd.conf */*.old */*.bak */*.orig .libs *.lo *.la
 
 realclean mostlyclean distclean:: clean
-	-rm -f Makefile Makefile.bsd
+	-rm -f Makefile Makefile.bsd pclbanner psbanner
 
 info:
 tags TAGS:
@@ -347,9 +351,8 @@ CO=-l
 cifiles:
 	if [ ! -d RCS ] ; then mkdir RCS ; fi ;
 	checkin() { \
-		rcs -l $$1; \
-		ci $(CI) -mUpdate -t-Initial $$1; \
-		co $(CO) $$1; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	for i in *; do \
 		if [ -f "$$i" ] ; then \
@@ -362,9 +365,8 @@ cifiles:
 
 cifast ci: cifiles
 	checkin() { \
-		rcs -l $$1; \
-		ci $(CI) -mUpdate -t-Initial $$1; \
-		co $(CO) $$1; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	for i in *; do \
 		if [ -d "$$i" ] ; then \
@@ -412,7 +414,7 @@ depend: /tmp/dep /tmp/order
 #
 /tmp/order:: Makefile
 /tmp/order:: $(LIBLPR_OBJS)
-	lorder $(LIBLPR_OBJS) |tsort >/tmp/raw
+	lorder ` echo $(LIBLPR_OBJS) | sed -e 's/\.lo/.o/g'` |tsort >/tmp/raw
 	awk '\
 		BEGIN { print "LIBLPR_ORDER = \\"; } \
 		{ line = line " " $$0;            \
@@ -427,7 +429,7 @@ depend: /tmp/dep /tmp/order
 				print "\t" line;         \
 			}                            \
 		}' /tmp/raw >/tmp/order
-    
+	
 	
 ############# GENERATED ###################################################
 
@@ -438,61 +440,159 @@ LIBLPR_ORDER = \
 	 initialize.o getopt.o copyright.o controlword.o\
 	 proctitle.o utilities.o sendreq.o sendjob.o\
 	 merge.o lpd_secure.o sendauth.o md5.o\
-	 lpd_rcvjob.o lpd_jobs.o accounting.o stty.o\
-	 sendmail.o printjob.o lpd_remove.o debug.o\
-	 permission.o lockfile.o linksupport.o linelist.o\
+	 lpd_rcvjob.o lpd_jobs.o lockfile.o accounting.o\
+	 stty.o sendmail.o printjob.o lpd_remove.o\
+	 debug.o permission.o linksupport.o linelist.o\
 	 gethostinfo.o globmatch.o getqueue.o getprinter.o\
 	 fileopen.o errormsg.o plp_snprintf.o child.o\
 	 vars.o
 
 
 ########### DEPENDENCIES #########
-accounting.o :	config.h accounting.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h lpd.h plp_snprintf.h portable.h utilities.h utilities.h
-child.o :	config.h child.h debug.h errormsg.h gethostinfo.h getopt.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-controlword.o :	config.h control.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-copyright.o :	config.h copyright.h debug.h errormsg.h license.h linelist.h lp.h patchlevel.h plp_snprintf.h portable.h utilities.h utilities.h
-debug.o :	config.h child.h debug.h errorcodes.h errormsg.h getopt.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-errormsg.o :	config.h child.h debug.h errorcodes.h errormsg.h getopt.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-fileopen.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-gethostinfo.o :	config.h debug.h errormsg.h gethostinfo.h getqueue.h globmatch.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-getopt.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-getprinter.o :	config.h child.h debug.h errormsg.h gethostinfo.h getprinter.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-getqueue.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getprinter.h getqueue.h globmatch.h linelist.h lockfile.h lp.h merge.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
-globmatch.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-initialize.o :	config.h debug.h errorcodes.h errormsg.h gethostinfo.h getopt.h getqueue.h initialize.h linelist.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-krb5_auth.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h krb5_auth.h linelist.h linksupport.h lp.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
-linelist.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getprinter.h getqueue.h globmatch.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-linksupport.o :	config.h debug.h errorcodes.h errormsg.h gethostinfo.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-lockfile.o :	config.h debug.h errormsg.h fileopen.h linelist.h lockfile.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-lpd_control.o :	config.h child.h control.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h globmatch.h linelist.h lp.h lpd.h lpd_control.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-lpd_jobs.o :	config.h accounting.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h linelist.h linksupport.h lockfile.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h lpd_remove.h merge.h permission.h plp_snprintf.h portable.h printjob.h proctitle.h sendjob.h sendmail.h stty.h utilities.h utilities.h
-lpd_logger.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getopt.h getprinter.h getqueue.h linelist.h linksupport.h lp.h lpd.h lpd_logger.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-lpd_rcvjob.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getqueue.h linelist.h linksupport.h lockfile.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-lpd_remove.o :	config.h child.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h linelist.h lp.h lpd_remove.h permission.h plp_snprintf.h portable.h proctitle.h sendreq.h utilities.h utilities.h
-sendauth.o :	config.h user_auth.stub child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h globmatch.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h md5.h permission.h plp_snprintf.h portable.h sendauth.h sendjob.h utilities.h utilities.h
-lpd_secure.o :	config.h user_auth.stub child.h debug.h errorcodes.h errormsg.h fileopen.h getopt.h getqueue.h globmatch.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h lpd_secure.h md5.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-lpd_status.o :	config.h child.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h globmatch.h linelist.h lockfile.h lp.h lpd_status.h permission.h plp_snprintf.h portable.h proctitle.h sendreq.h utilities.h utilities.h
-merge.o :	config.h debug.h errormsg.h linelist.h lp.h merge.h plp_snprintf.h portable.h utilities.h utilities.h
-permission.o :	config.h debug.h errormsg.h fileopen.h gethostinfo.h getqueue.h globmatch.h linelist.h linksupport.h lp.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
-plp_snprintf.o :	config.h config.h
-printjob.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h printjob.h utilities.h utilities.h
-proctitle.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-sendjob.o :	config.h accounting.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h sendauth.h sendjob.h utilities.h utilities.h
-sendmail.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h sendmail.h utilities.h utilities.h
-sendreq.o :	config.h child.h debug.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h readstatus.h sendauth.h sendreq.h utilities.h utilities.h
-stty.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h stty.h utilities.h utilities.h
-utilities.o :	config.h debug.h errorcodes.h errormsg.h getopt.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-vars.o :	config.h accounting.h child.h debug.h errormsg.h gethostinfo.h getqueue.h linelist.h lp.h permission.h plp_snprintf.h portable.h printjob.h utilities.h utilities.h
-md5.o :	md5.h md5.h
-lpr.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lpr.h patchlevel.h plp_snprintf.h portable.h printjob.h sendjob.h utilities.h utilities.h
-lpq.o :	config.h child.h debug.h errormsg.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lpq.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
-lpc.o :	config.h child.h control.h debug.h errorcodes.h errormsg.h getopt.h getprinter.h initialize.h linelist.h lp.h lpc.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
-lprm.o :	config.h child.h debug.h errormsg.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lprm.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
-lpd.o :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h initialize.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h lpd_control.h lpd_jobs.h lpd_logger.h lpd_rcvjob.h lpd_remove.h lpd_secure.h lpd_status.h patchlevel.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
-checkpc.o :	config.h checkpc.h child.h debug.h errormsg.h fileopen.h getopt.h getprinter.h getqueue.h initialize.h linelist.h lockfile.h lp.h lpd_remove.h patchlevel.h plp_snprintf.h portable.h proctitle.h stty.h utilities.h utilities.h
-lpf.o :	config.h portable.h portable.h
-plp_snprintf.o :	config.h config.h
-monitor.o :	config.h debug.h errormsg.h getopt.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-getopt.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-lpbanner.o :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
-plp_snprintf.o :	config.h config.h
+# doing 'accounting.lo' LO 'accounting.lo' O 'accounting.o' C 'accounting.c'
+# II ./common/accounting.c
+accounting.o accounting.lo :	config.h accounting.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h lpd.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'child.lo' LO 'child.lo' O 'child.o' C 'child.c'
+# II ./common/child.c
+child.o child.lo :	config.h child.h debug.h errormsg.h gethostinfo.h getopt.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'controlword.lo' LO 'controlword.lo' O 'controlword.o' C 'controlword.c'
+# II ./common/controlword.c
+controlword.o controlword.lo :	config.h control.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'copyright.lo' LO 'copyright.lo' O 'copyright.o' C 'copyright.c'
+# II ./common/copyright.c
+copyright.o copyright.lo :	config.h copyright.h debug.h errormsg.h license.h linelist.h lp.h patchlevel.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'debug.lo' LO 'debug.lo' O 'debug.o' C 'debug.c'
+# II ./common/debug.c
+debug.o debug.lo :	config.h child.h debug.h errorcodes.h errormsg.h getopt.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'errormsg.lo' LO 'errormsg.lo' O 'errormsg.o' C 'errormsg.c'
+# II ./common/errormsg.c
+errormsg.o errormsg.lo :	config.h child.h debug.h errorcodes.h errormsg.h getopt.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'fileopen.lo' LO 'fileopen.lo' O 'fileopen.o' C 'fileopen.c'
+# II ./common/fileopen.c
+fileopen.o fileopen.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'gethostinfo.lo' LO 'gethostinfo.lo' O 'gethostinfo.o' C 'gethostinfo.c'
+# II ./common/gethostinfo.c
+gethostinfo.o gethostinfo.lo :	config.h debug.h errormsg.h gethostinfo.h getqueue.h globmatch.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'getopt.lo' LO 'getopt.lo' O 'getopt.o' C 'getopt.c'
+# II ./common/getopt.c
+getopt.o getopt.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'getprinter.lo' LO 'getprinter.lo' O 'getprinter.o' C 'getprinter.c'
+# II ./common/getprinter.c
+getprinter.o getprinter.lo :	config.h child.h debug.h errormsg.h gethostinfo.h getprinter.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'getqueue.lo' LO 'getqueue.lo' O 'getqueue.o' C 'getqueue.c'
+# II ./common/getqueue.c
+getqueue.o getqueue.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getprinter.h getqueue.h globmatch.h linelist.h lockfile.h lp.h merge.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'globmatch.lo' LO 'globmatch.lo' O 'globmatch.o' C 'globmatch.c'
+# II ./common/globmatch.c
+globmatch.o globmatch.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'initialize.lo' LO 'initialize.lo' O 'initialize.o' C 'initialize.c'
+# II ./common/initialize.c
+initialize.o initialize.lo :	config.h child.h debug.h errorcodes.h errormsg.h gethostinfo.h getopt.h getqueue.h initialize.h linelist.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'krb5_auth.lo' LO 'krb5_auth.lo' O 'krb5_auth.o' C 'krb5_auth.c'
+# II ./common/krb5_auth.c
+krb5_auth.o krb5_auth.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h lpd_secure.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'linelist.lo' LO 'linelist.lo' O 'linelist.o' C 'linelist.c'
+# II ./common/linelist.c
+linelist.o linelist.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getprinter.h getqueue.h globmatch.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'linksupport.lo' LO 'linksupport.lo' O 'linksupport.o' C 'linksupport.c'
+# II ./common/linksupport.c
+linksupport.o linksupport.lo :	config.h debug.h errorcodes.h errormsg.h gethostinfo.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'lockfile.lo' LO 'lockfile.lo' O 'lockfile.o' C 'lockfile.c'
+# II ./common/lockfile.c
+lockfile.o lockfile.lo :	config.h debug.h errormsg.h fileopen.h linelist.h lockfile.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'lpd_control.lo' LO 'lpd_control.lo' O 'lpd_control.o' C 'lpd_control.c'
+# II ./common/lpd_control.c
+lpd_control.o lpd_control.lo :	config.h child.h control.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h globmatch.h linelist.h lp.h lpd.h lpd_control.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'lpd_jobs.lo' LO 'lpd_jobs.lo' O 'lpd_jobs.o' C 'lpd_jobs.c'
+# II ./common/lpd_jobs.c
+lpd_jobs.o lpd_jobs.lo :	config.h accounting.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h linelist.h linksupport.h lockfile.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h lpd_remove.h merge.h permission.h plp_snprintf.h portable.h printjob.h proctitle.h sendjob.h sendmail.h stty.h utilities.h utilities.h
+# doing 'lpd_logger.lo' LO 'lpd_logger.lo' O 'lpd_logger.o' C 'lpd_logger.c'
+# II ./common/lpd_logger.c
+lpd_logger.o lpd_logger.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getopt.h getprinter.h getqueue.h linelist.h linksupport.h lp.h lpd.h lpd_logger.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'lpd_rcvjob.lo' LO 'lpd_rcvjob.lo' O 'lpd_rcvjob.o' C 'lpd_rcvjob.c'
+# II ./common/lpd_rcvjob.c
+lpd_rcvjob.o lpd_rcvjob.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getqueue.h linelist.h linksupport.h lockfile.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'lpd_remove.lo' LO 'lpd_remove.lo' O 'lpd_remove.o' C 'lpd_remove.c'
+# II ./common/lpd_remove.c
+lpd_remove.o lpd_remove.lo :	config.h child.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h linelist.h lp.h lpd_remove.h permission.h plp_snprintf.h portable.h proctitle.h sendreq.h utilities.h utilities.h
+# doing 'sendauth.lo' LO 'sendauth.lo' O 'sendauth.o' C 'sendauth.c'
+# II ./common/sendauth.c
+sendauth.o sendauth.lo :	config.h user_auth.stub child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getqueue.h globmatch.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h md5.h permission.h plp_snprintf.h portable.h sendauth.h sendjob.h utilities.h utilities.h
+# doing 'lpd_secure.lo' LO 'lpd_secure.lo' O 'lpd_secure.o' C 'lpd_secure.c'
+# II ./common/lpd_secure.c
+lpd_secure.o lpd_secure.lo :	config.h user_auth.stub child.h debug.h errorcodes.h errormsg.h fileopen.h getopt.h getqueue.h globmatch.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h lpd_jobs.h lpd_rcvjob.h lpd_secure.h md5.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'lpd_status.lo' LO 'lpd_status.lo' O 'lpd_status.o' C 'lpd_status.c'
+# II ./common/lpd_status.c
+lpd_status.o lpd_status.lo :	config.h child.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h globmatch.h linelist.h lockfile.h lp.h lpd_status.h permission.h plp_snprintf.h portable.h proctitle.h sendreq.h utilities.h utilities.h
+# doing 'merge.lo' LO 'merge.lo' O 'merge.o' C 'merge.c'
+# II ./common/merge.c
+merge.o merge.lo :	config.h debug.h errormsg.h linelist.h lp.h merge.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'permission.lo' LO 'permission.lo' O 'permission.o' C 'permission.c'
+# II ./common/permission.c
+permission.o permission.lo :	config.h debug.h errormsg.h fileopen.h gethostinfo.h getqueue.h globmatch.h linelist.h linksupport.h lp.h permission.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'plp_snprintf.lo' LO 'plp_snprintf.lo' O 'plp_snprintf.o' C 'plp_snprintf.c'
+# II ./common/plp_snprintf.c
+plp_snprintf.o plp_snprintf.lo :	config.h config.h
+# doing 'printjob.lo' LO 'printjob.lo' O 'printjob.o' C 'printjob.c'
+# II ./common/printjob.c
+printjob.o printjob.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h printjob.h utilities.h utilities.h
+# doing 'proctitle.lo' LO 'proctitle.lo' O 'proctitle.o' C 'proctitle.c'
+# II ./common/proctitle.c
+proctitle.o proctitle.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'sendjob.lo' LO 'sendjob.lo' O 'sendjob.o' C 'sendjob.c'
+# II ./common/sendjob.c
+sendjob.o sendjob.lo :	config.h accounting.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h sendauth.h sendjob.h utilities.h utilities.h
+# doing 'sendmail.lo' LO 'sendmail.lo' O 'sendmail.o' C 'sendmail.c'
+# II ./common/sendmail.c
+sendmail.o sendmail.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h getqueue.h linelist.h lp.h plp_snprintf.h portable.h sendmail.h utilities.h utilities.h
+# doing 'sendreq.lo' LO 'sendreq.lo' O 'sendreq.o' C 'sendreq.c'
+# II ./common/sendreq.c
+sendreq.o sendreq.lo :	config.h child.h debug.h errormsg.h fileopen.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h readstatus.h sendauth.h sendreq.h utilities.h utilities.h
+# doing 'stty.lo' LO 'stty.lo' O 'stty.o' C 'stty.c'
+# II ./common/stty.c
+stty.o stty.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h stty.h utilities.h utilities.h
+# doing 'utilities.lo' LO 'utilities.lo' O 'utilities.o' C 'utilities.c'
+# II ./common/utilities.c
+utilities.o utilities.lo :	config.h debug.h errorcodes.h errormsg.h getopt.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'vars.lo' LO 'vars.lo' O 'vars.o' C 'vars.c'
+# II ./common/vars.c
+vars.o vars.lo :	config.h accounting.h child.h debug.h errormsg.h gethostinfo.h getqueue.h linelist.h lp.h permission.h plp_snprintf.h portable.h printjob.h utilities.h utilities.h
+# doing 'md5.lo' LO 'md5.lo' O 'md5.o' C 'md5.c'
+# II ./common/md5.c
+md5.o md5.lo :	md5.h md5.h
+# doing 'lpr.o' LO 'lpr.lo' O 'lpr.o' C 'lpr.c'
+# II ./common/lpr.c
+lpr.o lpr.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lpd_jobs.h lpr.h patchlevel.h plp_snprintf.h portable.h printjob.h sendjob.h utilities.h utilities.h
+# doing 'lpq.o' LO 'lpq.lo' O 'lpq.o' C 'lpq.c'
+# II ./common/lpq.c
+lpq.o lpq.lo :	config.h child.h debug.h errormsg.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lpq.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
+# doing 'lpc.o' LO 'lpc.lo' O 'lpc.o' C 'lpc.c'
+# II ./common/lpc.c
+lpc.o lpc.lo :	config.h child.h control.h debug.h errorcodes.h errormsg.h getopt.h getprinter.h initialize.h linelist.h lp.h lpc.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
+# doing 'lprm.o' LO 'lprm.lo' O 'lprm.o' C 'lprm.c'
+# II ./common/lprm.c
+lprm.o lprm.lo :	config.h child.h debug.h errormsg.h getopt.h getprinter.h getqueue.h initialize.h linelist.h linksupport.h lp.h lprm.h patchlevel.h plp_snprintf.h portable.h sendreq.h utilities.h utilities.h
+# doing 'lpd.o' LO 'lpd.lo' O 'lpd.o' C 'lpd.c'
+# II ./common/lpd.c
+lpd.o lpd.lo :	config.h child.h debug.h errorcodes.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h initialize.h krb5_auth.h linelist.h linksupport.h lp.h lpd.h lpd_control.h lpd_jobs.h lpd_logger.h lpd_rcvjob.h lpd_remove.h lpd_secure.h lpd_status.h patchlevel.h permission.h plp_snprintf.h portable.h proctitle.h utilities.h utilities.h
+# doing 'checkpc.o' LO 'checkpc.lo' O 'checkpc.o' C 'checkpc.c'
+# II ./common/checkpc.c
+checkpc.o checkpc.lo :	config.h checkpc.h child.h debug.h errormsg.h fileopen.h gethostinfo.h getopt.h getprinter.h getqueue.h initialize.h linelist.h lockfile.h lp.h lpd_remove.h patchlevel.h plp_snprintf.h portable.h proctitle.h stty.h utilities.h utilities.h
+# doing 'lpf.o' LO 'lpf.lo' O 'lpf.o' C 'lpf.c'
+# II ./common/lpf.c
+lpf.o lpf.lo :	config.h portable.h portable.h
+# doing 'plp_snprintf.o' LO 'plp_snprintf.lo' O 'plp_snprintf.o' C 'plp_snprintf.c'
+# II ./common/plp_snprintf.c
+plp_snprintf.o plp_snprintf.lo :	config.h config.h
+# doing 'monitor.o' LO 'monitor.lo' O 'monitor.o' C 'monitor.c'
+# II ./common/monitor.c
+monitor.o monitor.lo :	config.h debug.h errormsg.h getopt.h getqueue.h linelist.h linksupport.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'getopt.o' LO 'getopt.lo' O 'getopt.o' C 'getopt.c'
+# II ./common/getopt.c
+getopt.o getopt.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'lpbanner.o' LO 'lpbanner.lo' O 'lpbanner.o' C 'lpbanner.c'
+# II ./common/lpbanner.c
+lpbanner.o lpbanner.lo :	config.h debug.h errormsg.h linelist.h lp.h plp_snprintf.h portable.h utilities.h utilities.h
+# doing 'plp_snprintf.o' LO 'plp_snprintf.lo' O 'plp_snprintf.o' C 'plp_snprintf.c'
+# II ./common/plp_snprintf.c
+plp_snprintf.o plp_snprintf.lo :	config.h config.h

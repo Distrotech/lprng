@@ -21,9 +21,8 @@ CO=-kv
 
 ci:
 	checkin() { \
-		rcs -l $$*; \
-		ci $(CI) -mUpdate -t-Initial $$*; \
-		yes |co $(CO) $$*; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	dirs=`find . -type d -name RCS -print | sed -e s/.RCS//`; \
 	echo dirs $$dirs; \
@@ -33,3 +32,4 @@ ci:
 	); done;
 
 realclean mostlyclean distclean clean:
+	cd FreeBSD-4.ports.systutils.LPRng; make clean

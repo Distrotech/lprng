@@ -24,6 +24,7 @@ realclean mostlyclean distclean:
 		f=`basename $$i .in`; \
 		rm -f $$f; \
 	done
+	rm -f *.old *.bak ? ?.* core 
 
 install:
 
@@ -32,9 +33,8 @@ CO=-kv
 
 cifast ci:
 	checkin() { \
-		rcs -l $$1; \
-		ci $(CI) -mUpdate -t-Initial $$1; \
-		co $(CO) $$1; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	for i in *; do \
 		echo $$i ; \

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: monitor.c,v 5.9 2000/12/25 01:51:13 papowell Exp papowell $";
+"$Id: monitor.c,v 1.14 2001/09/02 20:42:14 papowell Exp $";
 
 
 #include "lp.h"
@@ -286,7 +286,7 @@ void Decode( char *in )
 		*s++ = 0;
 		Unescape(s);
 		Free_line_list(&l);
-		Split(&l,s,Line_ends,1,Value_sep,1,1,1);
+		Split(&l,s,Line_ends,1,Value_sep,1,1,1,0);
 		for( i = 0; i < l.count; ++i ){
 			t = l.list[i];
 			if( debug || safestrncasecmp(t,VALUE,5) ){
@@ -299,7 +299,7 @@ void Decode( char *in )
 			FPRINTF(STDOUT,"TRACE: '%s'\n", s );
 		} else if( !safestrcasecmp(in,UPDATE) ){
 			FPRINTF(STDOUT,"UPDATE: '%s'\n", s );
-			Split(&info,s,Line_ends,0,0,0,0,0);
+			Split(&info,s,Line_ends,0,0,0,0,0,0);
 			for( i = 0; i < info.count; ++i ){
 				header = info.list[i];
 				if( (value = safestrchr(header,'=')) ) *value++ = 0;
@@ -310,7 +310,7 @@ void Decode( char *in )
 			FPRINTF(STDOUT,"PRSTATUS: '%s'\n", s );
 		} else if( !safestrcasecmp(in,QUEUE) ){
 			FPRINTF(STDOUT,"QUEUE: '%s'\n", s );
-			Split(&info,s,Line_ends,0,0,0,0,0);
+			Split(&info,s,Line_ends,0,0,0,0,0,0);
 			for( i = 0; i < info.count; ++i ){
 				header = info.list[i];
 				if( (value = safestrchr(header,'=')) ) *value++ = 0;
@@ -320,7 +320,7 @@ void Decode( char *in )
 			Free_line_list(&info);
 		} else if( !safestrcasecmp(in,DUMP) ){
 			FPRINTF(STDOUT,"DUMP:\n");
-			Split(&info,s,Line_ends,0,0,0,0,0);
+			Split(&info,s,Line_ends,0,0,0,0,0,0);
 			for( i = 0; i < info.count; ++i ){
 				header = info.list[i];
 				if( (value = safestrchr(header,'=')) ) *value++ = 0;
@@ -428,6 +428,7 @@ int tcp_open( int port )
  * Calls[] = list of dispatch functions 
  */
 
+ void Dispatch_input(int *talk, char *input ){}
  struct call_list Calls[] = {
 	{0,0}
 };

@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: preremove.solaris.sh,v 1.2 2000/06/06 18:16:09 papowell Exp papowell $
+# preremove.solaris.sh,v 1.1 2001/08/21 20:33:17 root Exp
 #
 # This is the shell script that does the preremove
 echo RUNNING preremove.solaris.sh

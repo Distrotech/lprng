@@ -13,20 +13,20 @@
 
 # FAQ Makefile
 #
-SRC = @srcdir@
-VPATH=${SRC}
 
-prefix = @prefix@
-MAN =		$(prefix)/man
-SHELL =		@SHELL@
+FMT=LPRng-HOWTO
+DSSSL=docbook-1.54
+DSSSL=modular
+
+SRC=@srcdir@
+
+CATALOGS= \
+      -c /usr/local/share/sgml/catalog \
+      -c /usr/local/share/sgml/docbook/dsssl/${DSSSL}/catalog
 
 DOC=LPRng-HOWTO
 
-CATALOGS= \
-	  -c /usr/local/share/sgml/catalog \
-	  -c /usr/local/share/sgml/docbook/dsssl/docbook-1.54/catalog
-
-all: license.enc license.txt y2k.txt $(DOC).html purge
+all: license.enc license.txt y2k.txt $(DOC).html $(DOC).pdf LPRng-HOWTO-Multipart/index.htm purge
 
 LICENSE= $(SRC)/../LICENSE
 
@@ -43,27 +43,23 @@ y2k.txt: $(SRC)/../Y2KCompliance
 
 $(DOC).html: $(DOC).sgml $(DOC).dsl Makefile license.enc
 	jade -i output.html -V nochunks -t sgml \
-		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml >$(DOC).html
+		$(CATALOGS) -d $(FMT).dsl $(DOC).sgml >$(DOC).html
 	-tidy -i -m -f /dev/null ${TIDYFLAGS} $@
-
-index.htm HTML.manifest: $(DOC).sgml $(DOC).dsl Makefile license.enc
-	jade -i output.html -V html-manifest -t sgml \
-		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml
-	-tidy -i -m -f /dev/null ${TIDYFLAGS} `xargs < HTML.manifest`
-	perl -spi -e 's/index.htm/start.htm/g;' *.htm
-	cp index.htm start.htm
+	./updateheader $@
 
 check: license.enc
 	#nsgmls -s -f handbook.errs handbook.sgml
 	nsgmls -s $(CATALOGS) $(DOC).sgml
 
-$(DOC).dvi: $(DOC).sgml $(DOC).dsl Makefile license.enc
+$(DOC).tex: $(DOC).sgml $(FMT).dsl Makefile
 	jade -Vtex-backend -ioutput.print -t tex -o $(DOC).tex \
-		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml
+		$(CATALOGS) -d $(FMT).dsl $(DOC).sgml
+
+$(DOC).dvi: $(DOC).tex $(FMT).dsl Makefile
 	echo "==> TeX pass 1/3"
-	tex "&jadetex" $(DOC).tex >/dev/null 2>&1
+	-tex "&jadetex" $(DOC).tex  2>&1 >/dev/null
 	echo "==> TeX pass 2/3"
-	tex "&jadetex" $(DOC).tex >/dev/null 2>&1
+	-tex "&jadetex" $(DOC).tex  2>&1 >/dev/null
 	echo "==> TeX pass 3/3"
 	tex "&jadetex" $(DOC).tex
 
@@ -79,14 +75,16 @@ purge:
 .PHONY: all clean install ci install.zman update purge
 
 update:
-	updatesgmlmirrors ../MIRRORS *.sgml
-	updatehtmlmirrors ../MIRRORS LPRng.html
-	updateversion *.sgml LPRng.html
+	./updatesgmlmirrors ../MIRRORS *.sgml
+	./updateversion *.sgml
 	cp ../CHANGES .
 	perl collateindex.pl -t "Index" -N -o genindex.sgml
 	jade -V html-index -V nochunks -t sgml \
-		$(CATALOGS) -d /usr/local/share/sgml/docbook/dsssl/docbook-1.54/html/docbook.dsl $(DOC).sgml >/dev/null
+		$(CATALOGS) -d \
+		/usr/local/share/sgml/docbook/dsssl/modular/html/docbook.dsl \
+		$(DOC).sgml >/dev/null
 	perl collateindex.pl -t "Index" -o genindex.sgml HTML.index
+	${MAKE} all
 
 # 
 #
@@ -94,13 +92,13 @@ install:
 	
 clean:
 	-rm -f *.errs HTML.* *.tex *.log *.aux *.toc
-	-rm -f *.ps *.dvi *.htm
 
 mostlyclean distclean:: clean
 
 realclean: clean purge
-	-rm -f CHANGES HTML.* genindex.sgml *.htm LPRng-HOWTO.html
-	-rm -f *.ps *.dvi
+	-rm -f CHANGES HTML.* genindex.sgml
+	-rm -f *.ps *.dvi *.htm *.html *.pdf
+	-rm -rf LPRng-HOWTO-Multipart
 	
 
 #CI=
@@ -108,9 +106,8 @@ realclean: clean purge
 CO=-l
 cifast ci: clean
 	checkin() { \
-		rcs -l $$1; \
-		ci $(CI) -mUpdate -t-Initial $$1; \
-		yes |co $(CO) $$1; \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
 	for i in  *.sgml Makefile.in Makefile; do \
 		checkin $$i; \
@@ -118,3 +115,14 @@ cifast ci: clean
 
 correct:
 	correct -d dict *.sgml
+
+LPRng-HOWTO-Multipart/index.htm: $(DOC).sgml $(DOC).dsl Makefile license.enc
+	rm -rf LPRng-HOWTO-Multipart;
+	if [ ! -d LPRng-HOWTO-Multipart ] ; then mkdir LPRng-HOWTO-Multipart; fi
+	cp LPRng.jpg LPRngT-L.jpg LPRng-HOWTO-Multipart
+	jade -i output.html -V html-manifest -t sgml \
+		$(CATALOGS) -d $(FMT).dsl $(DOC).sgml
+	-tidy -i -m -f /dev/null ${TIDYFLAGS} `xargs < HTML.manifest`
+	updateheader index.htm
+	mv *.htm LPRng-HOWTO-Multipart
+

@@ -1,3 +1,0 @@
-#!/bin/sh
-./configure --prefix=/usr --sysconfdir=/etc \
- --with-ldopts="-L/usr/local/lib" --with-cppopts="-I/usr/local/include" --enable-kerberos --enable-mit_kerberos4

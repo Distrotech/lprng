@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.4
+.ds VE LPRng-3.7.5
 .TH LPR 1 \*(VE "LPRng"
 .ig
 Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
@@ -50,9 +50,6 @@ lpr \- off line print
 .BI \-m " mailTo"
 ]
 [
-.BI \-o " options"
-]
-[
 .BI \-P " printer"
 ]
 [
@@ -92,6 +89,9 @@ lpr \- off line print
 ]
 [
 .BI \-1,2,3,4 " font"
+]
+[
+.B \-\-
 ]
 .ti +5n
 [
@@ -261,7 +261,7 @@ By default,
 the destination printer
 is taken from
 the command line
-.I dest
+.I "-P printer"
 value,
 then
 the environment variables
@@ -328,8 +328,6 @@ the client host.
 Make a direct connection to the printer device and do not spool.
 .TP 5
 .BI -Z " options"
-.TP 5
-.BI -o " options"
 Pass the specified options to the print spooler.
 Used when additional or specialized information
 must be provided to the spooler.

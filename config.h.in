@@ -428,6 +428,9 @@
 /* Define if you have the inet_pton function.  */
 #undef HAVE_INET_PTON
 
+/* Define if you have the initgroups function.  */
+#undef HAVE_INITGROUPS
+
 /* Define if you have the innetgr function.  */
 #undef HAVE_INNETGR
 
@@ -466,6 +469,9 @@
 
 /* Define if you have the seteuid function.  */
 #undef HAVE_SETEUID
+
+/* Define if you have the setgroups function.  */
+#undef HAVE_SETGROUPS
 
 /* Define if you have the setlocale function.  */
 #undef HAVE_SETLOCALE
@@ -592,9 +598,6 @@
 
 /* Define if you have the <filehdr.h> header file.  */
 #undef HAVE_FILEHDR_H
-
-/* Define if you have the <gdbm.h> header file.  */
-#undef HAVE_GDBM_H
 
 /* Define if you have the <grp.h> header file.  */
 #undef HAVE_GRP_H

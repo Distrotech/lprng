@@ -32,16 +32,16 @@ if( not $Q ){ $Q = $args{"P"}; }
 # now we split up the name and use as parameters for Z options
 while( $Q =~ /_([^_]+)/g ){
 	# you can simply append them:
-    # $Zopts .= ",$1";
+    $Zopts .= ",$1";
 	# or you can test and then append translated format
 	# if( $1 eq "11" ){ $Zopts .= ",legal"; }
     #  elsif( $1 eq "15" ){ $Zopts .= ",ledger"; }
     #
-	if( $1 eq "landscape"
-		or $1 eq "legal"
-		or $1 eq "ledger" ){
-		$Zopts .= ",$1"
-	}
+	#if( $1 eq "landscape"
+	#	or $1 eq "legal"
+	#	or $1 eq "ledger" ){
+	#	$Zopts .= ",$1"
+	#}
 }
 if( $Zopts ){
 	# remove leading comma

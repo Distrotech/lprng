@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 5.18 2000/12/28 01:32:59 papowell Exp papowell $";
+"$Id: lpd_control.c,v 1.14 2001/09/02 20:42:11 papowell Exp $";
 
 
 #include "lp.h"
@@ -64,7 +64,7 @@ int Job_control( int *sock, char *input )
 	DEBUGF(DCTRL1)("Job_control: socket %d, doing '%s'", *sock, input );
 
 	/* check printername for characters, underscore, digits */
-	Split(&tokens,input,Whitespace,0,0,0,0,0);
+	Split(&tokens,input,Whitespace,0,0,0,0,0,0);
 	DEBUGFC(DCTRL2)Dump_line_list("Job_control - input", &tokens);
 
 	tokencount = tokens.count;
@@ -422,6 +422,7 @@ void Do_queue_control( char *user, int action, int *sock,
 	case OP_FLUSH:
 		if( Lpq_status_file_DYN ) unlink(Lpq_status_file_DYN );
 		if( Queue_db_file_DYN ) unlink(Queue_db_file_DYN );
+		signal_server = 0;
 		break;
 		
 	default:
@@ -456,7 +457,6 @@ void Do_queue_control( char *user, int action, int *sock,
 			if( kill( serverpid, signal_server ) ){
 				serverpid = 0;
 			}
-		} else {
 			SNPRINTF(msg,sizeof(msg))_("kill server PID %d with %s\n"),
 				serverpid, Sigstr(signal_server) );
 			Write_fd_str(*sock,msg);
@@ -499,8 +499,11 @@ void Do_queue_control( char *user, int action, int *sock,
 			if( serverpid == 0 || kill( serverpid, signal_server ) ){
 				serverpid = 0;
 			} else {
-				SNPRINTF(msg,sizeof(msg))_("kill load balance server PID %d with %s\n"),
-					serverpid, Sigstr(signal_server) );
+				SNPRINTF(msg,sizeof(msg))_(
+				"WARNING: the main load balance server may have exited before\n"
+				"it could be informed that there were new jobs.\n"
+                "Please use 'lpc start %s' to start the server"),
+					Server_queue_name_DYN );
 				Write_fd_str(*sock,msg);
 			}
 		}
@@ -579,7 +582,6 @@ int Do_control_file( char *user, int action, int *sock,
 	if( Scan_queue( &Spool_control, &Sort_order,
 			0,0,0,0,0,1) ){
 		err = errno;
-		Close_gdbm();
 		SNPRINTF(error, errorlen)
 			"Do_control_file: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(err) );
@@ -715,7 +717,6 @@ int Do_control_file( char *user, int action, int *sock,
 			goto next_dest;
 		}
 	}
-	Close_gdbm();
 	Free_job(&job);
 	Free_line_list(&Sort_order);
 	Free_line_list(&l);

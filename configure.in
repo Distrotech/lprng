@@ -1,13 +1,15 @@
 dnl process this file with GNU autoconf to produce a configure script.
 dnl
-dnl $Id: configure.in,v 5.82 2000/12/28 12:52:02 papowell Exp papowell $
+dnl configure.in,v 1.1 2001/08/21 20:33:15 root Exp
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
 AC_INIT(Makefile.in)
 
+
 PACKAGE=LPRng
-VERSION=3.7.4
+VERSION=3.7.5
+
 
 AC_CONFIG_AUX_DIR(.)
 AC_CANONICAL_SYSTEM
@@ -19,6 +21,17 @@ AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
 ALL_LINGUAS="fr"
 
+WITH_CC dnl
+WITH_CCOPTS dnl
+WITH_LINKER dnl
+WITH_LDOPTS dnl
+WITH_CPPOPTS dnl
+if test -z "$LOCALEDIR" ; then
+    LOCALEDIR='${prefix}/share/locale'
+fi;
+WITH_LOCALEDIR dnl
+export LOCALEDIR
+
 AC_PREFIX_DEFAULT(/usr/local)
 AC_SUBST(INSTALL)
 AC_SUBST(INSTALL_MAN)
@@ -29,6 +42,7 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 AC_SUBST(LDCC)
 
+
 dnl check for awk
 AC_PROG_AWK
 AC_SUBST(AWK)
@@ -38,20 +52,6 @@ AC_PATH_PROG(CHOWN,chown)dnl
 AC_SUBST(CHOWN)dnl
 AC_PATH_PROG(CHGRP,chgrp)dnl
 AC_SUBST(CHGRP)dnl
-
-
-WITH_CC dnl
-WITH_CCOPTS dnl
-WITH_LINKER dnl
-WITH_LDOPTS dnl
-WITH_CPPOPTS dnl
-
-if test -z "$LOCALEDIR" ; then
-	LOCALEDIR='$(prefix)/share/locale'
-fi;
-
-WITH_LOCALEDIR dnl
-
 
 
 dnl ----------------------------------------------------------------------------
@@ -66,16 +66,6 @@ PERMS=SUID_ROOT_PERMS
 )
 AC_MSG_RESULT($PERMS)
 AC_SUBST(PERMS)
-
-dnl check to see if gdbm is suppressed
-AC_MSG_CHECKING(suppress DBM or GDBM use for queue status)
-AC_ARG_ENABLE( gdbm,
-[  --disable-gdbm                    do not use DBM or GDBM for queue status],
-[v=yes;  USE_GDBM="0";],
-[v=no; USE_GDBM="1";]
-)
-AC_MSG_RESULT($v);dnl
-AC_SUBST(USE_GDMB)
 
 dnl check to see if setuid is suppressed
 AC_MSG_CHECKING(require connections from priviledged ports)
@@ -182,9 +172,9 @@ dnl  lpd_printcap location
 dnl
 AC_MSG_CHECKING(lpd_printcap location)
 AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/lpd_printcap)],
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (NONE)],
 LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=\${sysconfdir}/lpd_printcap,
+LPD_PRINTCAP_PATH=,
 )
 AC_MSG_RESULT($LPD_PRINTCAP_PATH)
 AC_SUBST(LPD_PRINTCAP_PATH)
@@ -216,8 +206,9 @@ dnl  LD_LIBRARY_PATH value
 dnl
 AC_MSG_CHECKING(LD_LIBRARY_PATH value)
 AC_ARG_WITH(ld_library_path,
-[  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value ],
-LD_LIBRARY_PATH="$withval"
+[  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib ],
+LD_LIBRARY_PATH="$withval",
+LD_LIBRARY_PATH="/lib:/usr/lib:/usr/local/lib"
 )
 AC_MSG_RESULT("$LD_LIBRARY_PATH")
 AC_SUBST(LD_LIBRARY_PATH)
@@ -226,8 +217,9 @@ dnl  filter PATH value
 dnl
 AC_MSG_CHECKING(filter PATH value)
 AC_ARG_WITH(filter_path,
-[  --with-filter_path=PATH           filter PATH value ],
-FILTER_PATH="$withval"
+[  --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin ],
+FILTER_PATH="$withval",
+FILTER_PATH="/bin:/usr/bin:/usr/local/bin"
 )
 AC_MSG_RESULT("$FILTER_PATH")
 AC_SUBST(FILTER_PATH)
@@ -351,30 +343,9 @@ AC_ARG_ENABLE( strip,
 AC_MSG_RESULT($v)
 AC_SUBST(STRIP)
 
-
-dnl ----------------------------------------------------------------------------
-dnl -----------   C compiler checks    -----------------------------------------
-AC_PROG_CC
-AC_PROG_CPP
-
-if test "$ac_cv_prog_gcc" = yes; then
-	cat >conftest.c <<EOF
-#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-yes
-#endif
-EOF
-    if ${CC-cc} -E conftest.c | egrep yes >/dev/null 2>&1; then
-        gcc -v
-		echo "WARNING: gcc -O (version 2.4.5 and below) produces incorrect code"
-		echo "  for lpd.c and other large routines. Update your GCC compiler"
-		exit 1
-	fi;
-fi;
-
-LDCC="$CC"
-
 dnl ----------------------------------------------------------------------------
 dnl ------------   OS Checks  --------------------------------------------------
+
 AC_ISC_POSIX
 AC_MINIX
 AC_AIX
@@ -402,7 +373,28 @@ AC_SUBST(OSVERSION)dnl
 
 
 dnl ----------------------------------------------------------------------------
-dnl ------------   compiler checks  --------------------------------------------------
+dnl -----------   C compiler checks    -----------------------------------------
+
+AC_PROG_CPP
+AC_PROG_CC
+
+if test "$ac_cv_prog_gcc" = yes; then
+	cat >conftest.c <<EOF
+#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+yes
+#endif
+EOF
+    if ${CC-cc} -E conftest.c | egrep yes >/dev/null 2>&1; then
+        gcc -v
+		echo "WARNING: gcc -O (version 2.4.5 and below) produces incorrect code"
+		echo "  for lpd.c and other large routines. Update your GCC compiler"
+		exit 1
+	fi;
+fi;
+
+LDCC="$CC"
+
+AM_PROG_LIBTOOL
 
 AC_C_CONST
 AC_C_INLINE
@@ -520,6 +512,9 @@ changequote([, ])dnl
 		if test "$ac_cv_prog_gcc" != yes; then
 			CPPFLAGS="$CPPFLAGS -std";
 			CFLAGS="$CFLAGS -std";
+        else
+            CPPFLAGS="$CPPFLAGS -DAES_SOURCE"
+            CFLAGS="$CFLAGS -DAES_SOURCE"
 		fi
 		;;
 	*mips-sni* )
@@ -591,56 +586,13 @@ if test -z "$checklibs"; then
 	fi
 fi
 
-AC_MSG_RESULT(USE_GDBM $USE_GDBM)
-if test "$USE_GDBM" = 1 ; then
-	AC_CHECK_HEADERS(gdbm.h,,[
-		echo "
-WARNING: you have GDBM use enabled and cannot find the gdbm.h file.
-You may need to add -I /usr/local/include to the compilation options:
-  Bourne Shell:
-    CPPFLAGS="-I/usr/local/include" configure ...
-  Csh:
-   env CPPFLAGS="-I/usr/local/include" configure ...
-"
-	exit 1
-])
-	dnl check for the gdbm library
-	AC_CHECK_LIB(gdbm, gdbm_open, [LIBS="$LIBS -lgdbm"],[
-		echo "
-WARNING: you have GDBM use enabled and cannot find the gdbm library.
-You may need to add -I /usr/local/include to the compilation options:
-  Bourne Shell:
-    LDFLAGS="-L/usr/local/lib" configure ...
-  Csh:
-   env LDFLAGS="-I/usr/local/lib" configure ...
-"
-	exit 1
-	]
-	
-	AC_TRY_LINK([
-#include "gdbm.h"
-],[
-int i = GDBM_SYNC | GDBM_NOLOCK;
-GDBM_FILE dbf;
-gdbm_fdesc(dbf);
-],version=yes,version=no)
-	if test "$version" != "yes" ; then
-		echo "
-WARNING: you do not have GDBM version 1.8.0 or later installed.
-Please install this or use --disable-gdbm to disable gdbm use.
-"
-	exit 1
-	fi
-fi
-)
-
 dnl ----------------------------------------------------------------------------
 dnl function checks:
 
 AC_CHECK_FUNCS(_res cfsetispeed fcntl flock gethostbyname2 getdtablesize)
 AC_CHECK_FUNCS(gethostname getrlimit inet_aton inet_ntop inet_pton)
-AC_CHECK_FUNCS(innetgr killpg lockf mkstemp)
-AC_CHECK_FUNCS(mktemp openlog putenv random rand setenv seteuid setlocale setpgid setproctitle)
+AC_CHECK_FUNCS(innetgr initgroups killpg lockf mkstemp)
+AC_CHECK_FUNCS(mktemp openlog putenv random rand setenv seteuid setgroups setlocale setpgid setproctitle)
 AC_CHECK_FUNCS(setresuid setreuid setruid setsid sigaction)
 AC_CHECK_FUNCS(sigprocmask siglongjmp socketpair strcasecmp)
 AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysconf sysinfo)
@@ -1104,7 +1056,7 @@ fi
 dnl ----------------------------------------------------------------------------
 dnl just for (really) backwards compatibility
 dnl we really try not to use union wait -- it's heinously unportable.
-dnl nicked this check from Tcl as well. ;)
+dnl nicked this check from Tcl as well. ;
 dnl
 dnl The check below checks whether <sys/wait.h> defines the type
 dnl "union wait" correctly.  It's needed because of weirdness in
@@ -1353,7 +1305,6 @@ dnl ----------------------------------------------------------------------------
 AC_PROG_INSTALL
 AC_CHECK_PROG(INSTALL_MAN,auxman,auxman,[$INSTALL -m 644])
 
-AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 
 dnl ----------------- force this to be Bourne Shell for now ---------------
@@ -1363,35 +1314,33 @@ AC_MSG_RESULT(using $SHELL (FORCED))
 
 AM_GNU_GETTEXT
 
+AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
  if test "${USE_NLS}" = yes; then
-   AC_MSG_CHECKING([Using NLS, localedir ${LOCALEDIR}, ])
+   AC_MSG_RESULT([Using NLS, localedir ${LOCALEDIR}, need intl/libintl.a - "${USE_INCLUDED_LIBINTL}" ])
    if test "${USE_INCLUDED_LIBINTL}" = yes ; then
-	  AC_MSG_RESULT([using the local libintl installation])
-	  if test -f ${srcdir}/${nls_cv_header_libgt} ; then
-		INTLINCS='-I $(top_builddir)/intl'
-	  else
-		AC_MSG_RESULT([NLS enabled, local libintl support is needed, and])
-		AC_MSG_RESULT([ source code is not in the ${srcdir}/intl directory.])
-		AC_MSG_RESULT([ See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details.])
+      CPPFLAGS="$CPPFLAGS -I \${top_builddir}/intl"
+	  AC_MSG_RESULT([using \${top_builddir}/intl])
+	  if test "$nls_cv_force_use_gnu_gettext" = no ; then
+		echo "NLS enabled and requested system gettext support not available."
+		echo " You may need to use:"
+		echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
+		echo " See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
+		exit 1;
+      fi
+	  if test ! -f ${srcdir}/intl/gettext.h ; then
+		echo "gettext code is not in the ${srcdir}/intl directory."
+		echo "See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
 		exit 1;
 	  fi
-   else
-	  AC_MSG_RESULT([using -lintl])
-	  INTLLIBS=-lintl
    fi
+   LIBS="$INTLLIBS $LIBS"
  else
    AC_MSG_RESULT([No NLS])
  fi   
- if test "${USE_NLS}" != yes -o "${USE_INCLUDED_LIBINTL}" != yes ; then
-	nls_cv_header_intl=
-	nls_cv_header_libgt=
- fi
  if test "$XGETTEXT" = "" ; then
 	 XGETTEXT=xgettext;
  fi
  AC_MSG_RESULT(using XGETTEXT $XGETTEXT)
- AC_SUBST(INTLINCS)
- AC_SUBST(INTLLIBS)
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- END OF GENERAL CONFIGURATION   ---------------------------
@@ -1403,61 +1352,90 @@ dnl Kerberos stuff again
 
 if test -n "$KERBEROS" ; then
 	dnl Kerberos 5 - release 1.1.1
-	AC_CHECK_HEADERS(krb5.h)
-    if test "$ac_cv_header_krb5_h" != "yes" ; then
-		  AC_MSG_WARN([Kerberos 5 support wanted and cannot find krb5.h include file
+	found=
+	AC_CHECK_HEADERS(krb5.h,found=yes)
+    if test "$found" != "yes" ; then
+		  AC_MSG_ERROR([
+Kerberos 5 support wanted and cannot find krb5.h include file
 use configure --disable-kerberos-checks or check your Kerberos 5 installation
 If you have installed kerberos in /usr/local/{lib,include} then use
-configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L/usr/local/lib])
-		exit 1
+configure --enable-kerberos --with-cppopts=-I/usr/local/include --with-ldopts=-L/usr/local/lib
+])
 	fi
-	AC_CHECK_HEADERS(krb.h kerberosIV/krb.h)
-	if test "$MIT_KERBEROS4" != "" \
-		-a "$ac_cv_header_krb_h" != "yes" \
-		-a "$ac_cv_header_kerberosIV_krb_h" != "yes" ; then
-		  AC_MSG_WARN(MIT Kerberos 4 support wanted and cannot find krb.h or kerberosIV/krb.h)
-		  exit 1
+	if test "$MIT_KERBEROS4" != "" ; then
+		found=
+		if test "$found" != "yes" ; then
+			AC_CHECK_HEADERS(krb.h,found=yes)
+		fi
+		if test "$found" != "yes" ; then
+			AC_CHECK_HEADERS(kerberosIV/krb.h,found=yes)
+		fi
+		if test "$found" != "yes" ; then
+		  AC_MSG_ERROR(MIT Kerberos 4 support wanted and cannot find krb.h or kerberosIV/krb.h)
+		fi
 	fi
 
 	if test "$KERBEROS_CHECKS" = 1 ; then
 		dnl we have the Kerberos 5 package, lets try for the rest
+		AC_TRY_COMPILE([
+		#include <stdio.h>
+		#include <krb5.h>
+		], [printf("%d",sizeof(HostAddress));],
+		heimdal=yes, heimdal=no)
+		if test $heimdal = yes; then
+			AC_MSG_ERROR(You must use MIT Kerberos with LPRng)
+		fi
 
-		found=
 		dnl we check for the library we need to use
 		dnl courtesy of mandrake linux and friends.
 		dnl  Christian Zoffoli <czoffoli@linux-mandrake.com>
-		AC_CHECK_LIB(crypto,
-			krb5_des_string_to_key,
-			libk5crypto=-lcrypto; k5=crypto,
-			AC_CHECK_LIB(k5crypto,
-				krb5_des_string_to_key,
-				libk5crypto=-lk5crypto; k5=k5crypto,
-				AC_ERROR(Kerberos 5 encryption libraries not found.),
-				${LDFLAGS} -lcom_err))
-
-		AC_CHECK_LIB(${k5}, krb5_init_secure_context,
-		   [found=yes LIBS="-lkrb5 ${libk5crypto} -lcom_err $LIBS"],,
-			-lkrb5 ${libk5crypto} -lcom_err)dnl
-
-		dnl Kerberos 5 - release 1.0
-		if test "$found" != "yes" ; then
-			AC_CHECK_LIB(${k5}, krb5_init_context,
-				[found=yes LIBS="-lkrb5 ${libk5crypto} -lcom_err $LIBS"],,
-				 -lkrb5 ${libk5crypto} -lcom_err)dnl
+		SAVELIBS=$LIBS
+		found=
+		if test "$found" = "" ; then
+			LIBS=" -lcrypto -lcom_err $SAVELIBS"
+			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
+			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
 		fi;
-		if test "$found" != "yes" ; then
-			  AC_MSG_WARN(Kerberos 5 support wanted and cannot find support libraries)
+		if test "$found" = "" ; then
+			LIBS=" -lk5crypto -lcom_err $SAVELIBS"
+			AC_CHECKING(for krb5_des_string_to_keyin $LIBS, )
+			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
+		fi;
+		if test "$found" = "" ; then
+			echo "Kerberos 5 encryption support library not found."
+			echo " You may need to use:"
+			echo "  configure '--with-cppopts=-I/usr/local/include' '--with-ldopts=-L/usr/local/lib'"
+			exit 1
+		fi
+
+		SAVELIBS=$LIBS
+
+		found= 
+		if test "$found" = "" ; then
+			LIBS=" -lkrb5 $SAVELIBS"
+			AC_CHECKING(for krb5_init_context in $LIBS, )
+			AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+		fi;
+		if test "$found" = "" ; then
+			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_secure_context or krb5_init_context )
 			  AC_MSG_WARN(use configure --disable-kerberos or check your Kerberos 5 installation)
 			  exit 1
         fi
+
 		if test "$MIT_KERBEROS4" != "" ; then
-			found4=;
-			AC_CHECK_LIB(krb4, krb_recvauth,
-				[found4=yes LIBS="-lkrb4 -ldes425 $LIBS"], [found4=], -ldes425 )dnl
-			if test "$found4" != "yes" ; then
-				AC_CHECK_LIB(krb4, krb_recvauth, [ LIBS="-lkrb4 -ldes $LIBS"], , -ldes )
+			SAVELIBS=$LIBS
+			found=;
+			if test "$found" = "" ; then
+				LIBS=" -lkrb4 -ldes425 $SAVELIBS"
+				AC_CHECKING(for krb_recvauth in $LIBS, )
+				AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
 			fi;
-			if test "$found4" != "yes" ; then
+			if test "$found" = "" ; then
+				LIBS=" -lkrb4 -ldes $SAVELIBS"
+				AC_CHECKING(for krb_recvauth in $LIBS, )
+				AC_TRY_LINK_FUNC(krb5_init_context,found="yes")
+			fi;
+			if test "$found" = "" ; then
 			  AC_MSG_WARN(MIT Kerberos 4 support wanted and cannot link to Kerberos 4 libraries)
 			  exit 1
             fi
@@ -1522,10 +1500,10 @@ dnl ---------------- END OF KERBEROS -----------------------------------------
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF OUTPUT ------------------------------------------
 
+
 if test "$ac_cv_prog_gcc" = yes; then
 	CFLAGS="$CFLAGS -Wall -Werror"
 fi;
-
 
 AC_OUTPUT(
 [

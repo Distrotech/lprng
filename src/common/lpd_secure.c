@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 5.16 2000/12/25 01:51:11 papowell Exp papowell $";
+"$Id: lpd_secure.c,v 1.14 2001/09/02 20:42:12 papowell Exp $";
 
 
 #include "lp.h"
@@ -74,7 +74,7 @@ int Receive_secure( int *sock, char *input )
 	Init_line_list( &header_info );
 	Init_line_list( &info );
 
-	Split(&args,input+1,Whitespace,0,0,0,0,0);
+	Split(&args,input+1,Whitespace,0,0,0,0,0,0);
 	DEBUGFC(DRECV1)Dump_line_list("Receive_secure - input", &args);
 	if( args.count != 5 && args.count != 4 ){
 		SNPRINTF( error+1, sizeof(error)-1)

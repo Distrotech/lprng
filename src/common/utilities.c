@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 5.18 2000/12/25 01:51:16 papowell Exp papowell $";
+"$Id: utilities.c,v 1.14 2001/09/02 20:42:16 papowell Exp $";
 
 #include "lp.h"
 
@@ -162,13 +162,17 @@ int Write_fd_len( int fd, const char *msg, int len )
 int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len )
 {
 	int i;
-	if( Set_timeout() ){
-		Set_timeout_alarm( timeout  );
-		i = Write_fd_len( fd, msg, len );
+	if( timeout > 0 ){
+		if( Set_timeout() ){
+			Set_timeout_alarm( timeout  );
+			i = Write_fd_len( fd, msg, len );
+		} else {
+			i = -1;
+		}
+		Clear_timeout();
 	} else {
-		i = -1;
+		i = Write_fd_len( fd, msg, len );
 	}
-	Clear_timeout();
 	return( i < 0 ? -1 : 0 );
 }
 
@@ -215,13 +219,17 @@ int Write_fd_str_timeout( int timeout, int fd, const char *msg )
 int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
 {
 	int i;
-	if( Set_timeout() ){
-		Set_timeout_alarm( timeout  );
-		i = read( fd, msg, len );
+	if( timeout > 0 ){
+		if( Set_timeout() ){
+			Set_timeout_alarm( timeout  );
+			i = read( fd, msg, len );
+		} else {
+			i = -1;
+		}
+		Clear_timeout();
 	} else {
-		i = -1;
+		i = read( fd, msg, len );
 	}
-	Clear_timeout();
 	return( i );
 }
 
@@ -1031,6 +1039,8 @@ void Clear_timeout( void )
 	if( SetRootUID == 0 ){
 		OriginalEUID = geteuid();	
 		OriginalRUID = getuid();	
+		OriginalEGID = getegid();	
+		OriginalRGID = getgid();	
 		DEBUG1("setup_info: OriginalEUD %d, OriginalRUID %d",
 			OriginalEUID, OriginalRUID );
 		/* we now make sure that we are able to use setuid() */
@@ -1147,18 +1157,27 @@ void Clear_timeout( void )
  * Superhero functions - change the EUID to the requested one
  *  - these are really idiot level,  as all of the tough work is done
  * in setup_info() and seteuid_wrapper() 
+ *  We also change the groups, just to be nasty as well, except for
+ *  To_ruid and To_uid,  which only does the RUID and EUID
+ *    Sigh...  To every rule there is an exception.
  */
 int To_root(void)
 {
-	setup_info(); return( seteuid_wrapper( 0 )	);
+	setup_info();
+	Set_full_group( 0, 0 );
+	return( seteuid_wrapper( 0 )	);
 }
 int To_daemon(void)
 {
-	setup_info(); return( seteuid_wrapper( DaemonUID )	);
+	setup_info();
+	Set_full_group( DaemonUID, DaemonGID );
+	return( seteuid_wrapper( DaemonUID )	);
 }
 int To_user(void)
 {
-	setup_info(); return( seteuid_wrapper( OriginalRUID )	);
+	setup_info();
+	Set_full_group( OriginalRUID, OriginalRGID );
+	return( seteuid_wrapper( OriginalRUID )	);
 }
 int To_ruid(int uid)
 {
@@ -1194,15 +1213,23 @@ int setuid_wrapper(int to)
 
 int Full_daemon_perms(void)
 {
-	setup_info(); return(setuid_wrapper(DaemonUID));
+	setup_info();
+	Set_full_group( DaemonUID, DaemonGID );
+	return(setuid_wrapper(DaemonUID));
 }
+
 int Full_root_perms(void)
 {
-	setup_info(); return(setuid_wrapper( 0 ));
+	setup_info();
+	Set_full_group( 0, 0 );
+	return(setuid_wrapper( 0 ));
 }
+
 int Full_user_perms(void)
 {
-	setup_info(); return(setuid_wrapper(OriginalRUID));
+	setup_info();
+	Set_full_group( OriginalRUID, OriginalRGID );
+	return(setuid_wrapper(OriginalRUID));
 }
 
 
@@ -1276,29 +1303,56 @@ int Getdaemon_group(void)
  * 3. set the RGID/EGID
  ***************************************************************************/
 
-int Setdaemon_group(void)
+int Set_full_group( int euid, int gid )
 {
-	uid_t euid;
 	int status;
 	int err;
+	struct passwd *pw = 0;
 
-	DaemonGID = Getdaemon_group();
-	DEBUG4( "Setdaemon_group: set '%d'", DaemonGID );
+	DEBUG4( "Set_full_group: euid '%d'", euid );
+
+	/* get the user we want to set the groups for */
+	pw = getpwuid(euid);
 	if( UID_root ){
-		euid = geteuid();
-		To_root();	/* set RUID/EUID to root */
-		status = setgid( DaemonGID );
-		err = errno;
-		if( To_uid( euid ) ){
+		setuid(0);	/* set RUID/EUID to root */
+#if defined(HAVE_INITGROUPS)
+		if( pw ){
+			/* froth froth... initgroups() uses the same buffer as
+			 * getpwuid... SHRIEK  so we need to copy the user name
+			 */
+			char user[256];
+			safestrncpy(user,pw->pw_name);
+			if( strlen(user) != strlen(pw->pw_name) ){
+				FATAL(LOG_ERR) "Set_full_group: CONFIGURATION BOTCH! strlen of user name '%s' = %d larger than buffer size %d",
+					pw->pw_name, strlen(pw->pw_name), sizeof(user) );
+			}
+			if( initgroups(user, pw->pw_gid ) == -1 ){
+				err = errno;
+				LOGERR_DIE(LOG_ERR) "Set_full_group: initgroups failed '%s'",
+					Errormsg( err ) );
+			}
+		} else
+#endif
+#if defined(HAVE_SETGROUPS)
+			if( setgroups(0,0) == -1 ){
+				err = errno;
+				LOGERR_DIE(LOG_ERR) "Set_full_group: setgroups failed '%s'",
+					Errormsg( err ) );
+			}
+#endif
+		status = setgid( gid );
+		if( status < 0 ){
 			err = errno;
-			LOGERR_DIE(LOG_ERR) "setdaemon_group: To_uid '%d' failed '%s'",
-				euid, Errormsg( err ) );
-		}
-		if( status < 0 || DaemonGID != getegid() ){
-			LOGERR_DIE(LOG_ERR) "setdaemon_group: setgid '%d' failed '%s'",
-			DaemonGID, Errormsg( err ) );
+			LOGERR_DIE(LOG_ERR) "Set_full_group: setgid '%d' failed '%s'",
+				gid, Errormsg( err ) );
 		}
 	}
+	return( 0 );
+}
+
+int Setdaemon_group(void)
+{
+	Set_full_group( DaemonUID, DaemonGID );
 	return( 0 );
 }
 

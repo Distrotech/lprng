@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 5.25 2000/12/28 01:32:55 papowell Exp papowell $";
+"$Id: getprinter.c,v 1.14 2001/09/02 20:42:09 papowell Exp $";
 
 
 #include "lp.h"
@@ -170,10 +170,17 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				"conflicting printcap entries :lp=%s:rm=%s",
 				Lp_device_DYN, RemoteHost_DYN );
 		}
-		if( !Is_server && Force_localhost_DYN ){
+		if( !Is_server && Direct_DYN
+			&& strchr( "/|", cval(Lp_device_DYN)) ){
+			Set_DYN(&RemotePrinter_DYN, 0 );
+			Set_DYN(&RemoteHost_DYN, 0 );
+			goto done;
+		}
+		if( !Is_server && (Force_localhost_DYN && !Direct_DYN) ){
 			/* we force a connection to the localhost using
 			 * the print queue primary name
 			 */
+#if 0
 			if( safestrchr( Lp_device_DYN, '@' ) ){
 				Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
 				s = safestrchr( RemotePrinter_DYN, '@');
@@ -181,6 +188,10 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			} else {
 				Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 			}
+			Set_DYN( &RemoteHost_DYN, LOCALHOST );
+			Set_DYN( &Lp_device_DYN, 0 );
+#endif
+			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 			Set_DYN( &RemoteHost_DYN, LOCALHOST );
 			Set_DYN( &Lp_device_DYN, 0 );
 		} else if( safestrchr( Lp_device_DYN, '@' ) ){
@@ -220,6 +231,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			}
 		}
 	}
+ done:
 
 	Expand_vars();
 	DEBUG1("Fix_Rm_Rp_info: Printer '%s', Queue '%s', Lp '%s', Rp '%s', Rh '%s'",
@@ -274,7 +286,7 @@ void Get_all_printcap_entries(void)
 		}
 		DEBUG1("Get_all_printcap_entries: '%s' has '%s'",s,t);
 	}
-	Split(&All_line_list,t,File_sep,0,0,0,1,0);
+	Split(&All_line_list,t,File_sep,0,0,0,1,0,0);
 	if( s == 0 ){
 		for( i = 0; i < PC_order_line_list.count; ++i ){
 			s = PC_order_line_list.list[i];
@@ -324,7 +336,7 @@ void Get_all_printcap_entries(void)
 		}
 		if( t && *t ){
 			Free_line_list( &All_line_list );
-			Split(&All_line_list,t,File_sep,0,0,0,1,0);
+			Split(&All_line_list,t,File_sep,0,0,0,1,0,0);
 		}
 		if(DEBUGL1)Dump_line_list("Get_all_printcap_entries- after User", &User_PC_order_line_list );
 		if( s == 0 ){

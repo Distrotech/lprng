@@ -1,7 +1,14 @@
+etc/lpd.perms.sample
+etc/lpd.conf.sample
+etc/printcap.sample
+etc/lprng.sh
 bin/lpq
 bin/lprm
 bin/lpr
 bin/lpstat
+lib/liblpr.so.0
+lib/liblpr.la
+lib/liblpr.a
 libexec/filters/lpf
 libexec/filters/lpbanner
 libexec/filters/pclbanner
@@ -9,21 +16,13 @@ libexec/filters/psbanner
 sbin/lpc
 sbin/lpd
 sbin/checkpc
-share/doc/LPRng-3.7.1beta2/LISA98.ppt
-share/doc/LPRng-3.7.1beta2/topbanner.gif
-share/doc/LPRng-3.7.1beta2/star1.gif
-share/doc/LPRng-3.7.1beta2/rfc1179.txt
-share/doc/LPRng-3.7.1beta2/lisa2000.jpg
-share/doc/LPRng-3.7.1beta2/links.html
-share/doc/LPRng-3.7.1beta2/linkbanner.gif
-share/doc/LPRng-3.7.1beta2/license.txt
-share/doc/LPRng-3.7.1beta2/bg.gif
-share/doc/LPRng-3.7.1beta2/REDIRECT.LPRng.html
-share/doc/LPRng-3.7.1beta2/LPRng_20logo.gif
-share/doc/LPRng-3.7.1beta2/LPRngLOGO334x100.gif
-share/doc/LPRng-3.7.1beta2/LPRngLOGO2.gif
-share/doc/LPRng-3.7.1beta2/LPRngLOGO100x30.gif
-share/doc/LPRng-3.7.1beta2/LPRng.html
-share/doc/LPRng-3.7.1beta2/LPRng-HOWTO.html
-share/doc/LPRng-3.7.1beta2/y2k.txt
-@dirrm  share/doc/LPRng-3.7.1beta2
+share/doc/LPRng-3.7.5/LISA98.ppt
+share/doc/LPRng-3.7.5/rfc1179.txt
+share/doc/LPRng-3.7.5/license.txt
+share/doc/LPRng-3.7.5/REDIRECT.LPRng.html
+share/doc/LPRng-3.7.5/LPRngT-S.jpg
+share/doc/LPRng-3.7.5/LPRngT-L.jpg
+share/doc/LPRng-3.7.5/LPRng.jpg
+share/doc/LPRng-3.7.5/LPRng-HOWTO.html
+share/doc/LPRng-3.7.5/y2k.txt
+@dirrm  share/doc/LPRng-3.7.5

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.7.4
+.ds VE LPRng-3.7.5
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -81,6 +81,7 @@ other entries.
 Currently only the
 printcap :sd: (spool directory)
 and :forward_server: (forward server) entries use these.
+.PP
 .SH "GENERAL CONFIGURATION PARAMETERS"
 .PP
 Some of the following paramters take lists of files or directories.
@@ -268,7 +269,7 @@ and job information.
 (see of_filter_options, filter_options, bk_filter_options, bk_of_filter_options)
 .TP
 \fBfilter_path\fR
-(default: /bin:/usr/bin:/usr/ucb:/usr/sbin:/usr/etc:/etc)
+(default: /bin:/usr/bin:)
 The value for the environment variable PATH, both used to find filters
 and passed on to filters run by \fBlpd\fR and \fBlpr\fR.
 .TP

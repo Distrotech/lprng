@@ -1,6 +1,6 @@
 #
 # -- START --
-# $Id: init.linux.sh,v 1.7 2000/07/14 22:40:44 papowell Exp papowell $
+# init.linux.sh,v 1.1 2001/08/21 20:33:15 root Exp
 #
 # lpd           This shell script takes care of starting and stopping
 #               lpd (printer daemon).

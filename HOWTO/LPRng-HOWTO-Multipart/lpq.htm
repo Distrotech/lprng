@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>lpq - Status Monitoring Program</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
+    <link rel="PREVIOUS" title="FQDN Host Information " href=
+    "forcefqdnhostname.htm">
+    <link rel="NEXT" title="lpq Job Selection" href="x4481.htm">
+  </head>
+
+  <body class="CHAPTER" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng-HOWTO: 2 Sep 2001
+          (For LPRng-3.7.5)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "forcefqdnhostname.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">
+          </td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x4481.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="CHAPTER">
+      <h1><a name="LPQ">Chapter 7. <b class="APPLICATION">lpq</b> -
+      Status Monitoring Program</a></h1>
+
+      <div class="TOC">
+        <dl>
+          <dt><b>Table of Contents</b></dt>
+
+          <dt>7.1. <a href="lpq.htm#AEN4475"><b class=
+          "APPLICATION">lpq</b> Queue Selection (lpq -Pprinter, lpq
+          -a)</a></dt>
+
+          <dt>7.2. <a href="x4481.htm"><b class=
+          "APPLICATION">lpq</b> Job Selection</a></dt>
+
+          <dt>7.3. <a href="x4488.htm"><b class=
+          "APPLICATION">lpq</b> Short Format (lpq -s)</a></dt>
+
+          <dt>7.4. <a href="x4499.htm"><b class=
+          "APPLICATION">lpq</b> Long Format (lpq, lpq -l, lpq
+          -L)</a></dt>
+
+          <dt>7.5. <a href="x4510.htm"><b class=
+          "APPLICATION">lpq</b> Verbose Format (lpq -v)</a></dt>
+
+          <dt>7.6. <a href="stalledtime.htm">Job Taking Too Long -
+          Stalled</a></dt>
+
+          <dt>7.7. <a href="x4528.htm">Configuring Format and
+          Displayed Information</a></dt>
+        </dl>
+      </div>
+
+      <p>The <b class="APPLICATION">lpq</b> program is the main
+      method used to monitor queues. You can obtain the available
+      options by using:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN4471"></a>
+<pre class="SCREEN">
+    <tt class="PROMPT">h4: {306} %</tt> <tt class=
+"USERINPUT"><b>lpq -=</b></tt>
+    lpq: Illegal option '='
+    usage: lpq [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]
+      -a           - all printers
+      -c           - clear screen before update
+      -l           - increase (lengthen) detailed status information
+                     additional l flags add more detail.
+      -L           - maximum detailed status information
+      -n linecount - linecount lines of detailed status information
+      -Ddebuglevel - debug level
+      -Pprinter    - specify printer
+      -s           - short (summary) format
+      -tsleeptime  - sleeptime between updates
+      -V           - print version information
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <div class="SECT1">
+        <h1 class="SECT1"><a name="AEN4475">7.1. <b class=
+        "APPLICATION">lpq</b> Queue Selection (lpq -Pprinter, lpq
+        -a)</a></h1>
+
+        <p>If no queue is specified, then the default queue is
+        used, with <tt class="LITERAL">-Pprinter@host</tt> causing
+        a direct connection to the named host. The <tt class=
+        "LITERAL">-a</tt> literal selects all queues.</p>
+      </div>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "forcefqdnhostname.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x4481.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">FQDN Host
+          Information</td>
+
+          <td width="34%" align="center" valign="top">&nbsp;</td>
+
+          <td width="33%" align="right" valign="top"><b class=
+          "APPLICATION">lpq</b> Job Selection</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

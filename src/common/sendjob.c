@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 5.14 2000/12/25 01:51:14 papowell Exp papowell $";
+"$Id: sendjob.c,v 1.14 2001/09/02 20:42:15 papowell Exp $";
 
 
 #include "lp.h"
@@ -151,7 +151,12 @@ int Send_job( struct job *job, struct job *logjob,
 		msg[0] = 0;
 		if( !Is_server && err ){
 			SNPRINTF( msg, sizeof(msg))
-			"\nMake sure LPD server is running on the server");
+			"\nMake sure the remote host supports the LPD protocol");
+			if( geteuid() && getuid() ){
+				int v = strlen(msg);
+				SNPRINTF( msg+v, sizeof(msg)-v)
+				"\nand accepts connections from this host and from non-privileged (>1023) ports");
+			}
 		}
 		SNPRINTF( error, sizeof(error)-2)
 			"cannot open connection to %s - %s%s", RemoteHost_DYN,
@@ -508,8 +513,10 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				status = Link_copy( RemoteHost_DYN, sock, 0, transfer_timeout,
 						openname, fd, size );
 			}
+			/* special case - cannot read error code from other end */
 			if( fd == 0 ){
-				shutdown(*sock,1);
+				close(*sock);
+				*sock = -1;
 			}
 			if( status 
 				|| ( fd !=0 && (status = Link_send( RemoteHost_DYN,sock,

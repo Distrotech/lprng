@@ -1,6 +1,6 @@
 # 
 # -- START --
-# $Id: postinstall.generic.sh,v 1.8 2000/10/29 22:52:49 papowell Exp papowell $
+# postinstall.generic.sh,v 1.1 2001/08/21 20:33:16 root Exp
 #
 # This is the shell script that does the postinstall
 # dynamic fixup

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-2000, Patrick Powell, San Diego, CA
+ * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 5.36 2000/12/28 01:32:56 papowell Exp papowell $";
+"$Id: getqueue.c,v 1.14 2001/09/02 20:42:09 papowell Exp $";
 
 
 /***************************************************************************
@@ -36,9 +36,6 @@
 #include "permission.h"
 #include "lockfile.h"
 #include "merge.h"
-#ifdef HAVE_GDBM_H
-#include <gdbm.h>
-#endif
 
 #if defined(USER_INCLUDE)
 # include USER_INCLUDE
@@ -57,11 +54,6 @@
  *   and leave it to the checkpc code to clean them up.
  */
 
-#ifdef HAVE_GDBM_H
- GDBM_FILE gdbm_file = 0;
- int gdbm_lock = -1;
-#endif
-
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
 		int only_pr_and_move, int create_db, int write_db )
@@ -72,18 +64,14 @@ int Scan_queue( struct line_list *spool_control,
 	char *hf_name, *sort_key, *outstr;
 	int c, printable, held, move, p, h, m;
 	struct job job;
-#ifdef HAVE_GDBM_H
-	datum key_data, data_data;
-	plp_block_mask oblock;
-#endif
 
 	sort_key = outstr = 0;
 	c = printable = held = move = 0;
 	Init_job( &job );
 	Init_line_list(&directory_files);
-	if( pprintable ) *pprintable = printable;
-	if( pheld ) *pheld = held;
-	if( pmove ) *pmove = move;
+	if( pprintable ) *pprintable = 0;
+	if( pheld ) *pheld = 0;
+	if( pmove ) *pmove = 0;
 
 	Free_line_list(sort_order);
 
@@ -91,45 +79,21 @@ int Scan_queue( struct line_list *spool_control,
 		return(1);
 	}
 
-#ifdef HAVE_GDBM_H
-	memset(&key_data,0,sizeof(key_data));
-	memset(&data_data,0,sizeof(data_data));
-	if( Queue_db_file_DYN ){
-		create_db = Open_gdbm( create_db );
-	}
-#else
-	create_db = 1;	/* we always need to read files */
-#endif
-
 	hf_name = 0;
 	while(1){
-		if( create_db ){
-			hf_name = 0;
-			while( hf_name == 0 && (d = readdir(dir)) ){
-				hf_name = d->d_name;
-				DEBUG5("Scan_queue: found file '%s'", hf_name );
-				if(    (cval(hf_name+0) == 'h')
-					&& (cval(hf_name+1) == 'f')
-					&& isalpha(cval(hf_name+2))
-					&& isdigit(cval(hf_name+3))
-					){
-					break;
-				} else {
-					hf_name = 0;
-				}
-			}
-#ifdef HAVE_GDBM_H
-		} else if( gdbm_file ){
-			if( hf_name == 0 ){
-				key_data = gdbm_firstkey( gdbm_file );
+		hf_name = 0;
+		while( hf_name == 0 && (d = readdir(dir)) ){
+			hf_name = d->d_name;
+			DEBUG5("Scan_queue: found file '%s'", hf_name );
+			if(    (cval(hf_name+0) == 'h')
+				&& (cval(hf_name+1) == 'f')
+				&& isalpha(cval(hf_name+2))
+				&& isdigit(cval(hf_name+3))
+				){
+				break;
 			} else {
-				/* we now get the keys */
-				data_data = gdbm_nextkey( gdbm_file, key_data );
-				if( key_data.dptr ) free( key_data.dptr );
-				key_data = data_data;
+				hf_name = 0;
 			}
-			hf_name = key_data.dptr;
-#endif
 		}
 		/* found them all */
 		if( hf_name == 0 ){
@@ -141,25 +105,8 @@ int Scan_queue( struct line_list *spool_control,
 		DEBUG2("Scan_queue: processing file '%s'", hf_name );
 
 		/* read the hf file and get the information */
-		if( create_db ){
-			Get_file_image_and_split( hf_name, 0, 0,
-				&job.info, Line_ends, 1, Value_sep,1,1,1,0);
-#ifdef HAVE_GDBM_H
-		} else if( gdbm_file ){
-			struct stat statb;
-			if( stat( hf_name, &statb ) ){
-				/* we now delete the record */
-				plp_block_all_signals( &oblock );
-				gdbm_delete( gdbm_file, key_data );
-				plp_set_signal_mask( &oblock, 0 );
-			} else {
-				data_data = gdbm_fetch( gdbm_file, key_data );
-				Split( &job.info, data_data.dptr,
-					Line_ends, 1, Value_sep,1,1,1);
-				if( data_data.dptr ) free( data_data.dptr ); data_data.dptr = 0;
-			}
-#endif
-		}
+		Get_file_image_and_split( hf_name, 0, 0,
+			&job.info, Line_ends, 1, Value_sep,1,1,1,0);
 		if(DEBUGL5)Dump_line_list("Scan_queue: hf", &job.info );
 		if( job.info.count == 0 ){
 			continue;
@@ -191,41 +138,15 @@ int Scan_queue( struct line_list *spool_control,
 			}
 		}
 
-#ifdef HAVE_GDBM_H
-		/* we now set the DB entry */
-		if( gdbm_file ){
-			key_data.dptr = hf_name;
-			key_data.dsize = strlen( hf_name ) + 1;
-			data_data.dptr = outstr;
-			data_data.dsize = strlen( outstr ) + 1;
-			plp_block_all_signals( &oblock );
-			m = gdbm_store( gdbm_file, key_data, data_data, GDBM_REPLACE );
-			plp_set_signal_mask( &oblock, 0 );
-			if( m ){
-				Close_gdbm();
-				unlink( Queue_db_file_DYN );
-				Errorcode = JABORT;
-				FATAL(LOG_ERR)"Scan_queue: DB '%s' not updated '%s'",
-					Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-			}
-		}
-#endif
 		if(sort_key) free(sort_key); sort_key = 0;
 		if(outstr) free(outstr); outstr = 0;
 	}
+	closedir(dir);
 
 	if(sort_key) free(sort_key); sort_key = 0;
 	if(outstr) free(outstr); outstr = 0;
 	Free_job(&job);
 	Free_line_list(&directory_files);
-
-#ifdef HAVE_GDBM_H
-	if( !write_db ){
-		Close_gdbm();
-	}
-	DEBUG1("Scan_queue: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-		Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
-#endif
 
 	if(DEBUGL5){
 		LOGDEBUG("Scan_queue: final values" );
@@ -309,7 +230,7 @@ int Get_fd_image_and_split( int fd,
 	s = Get_fd_image( fd, maxsize );
 	if( s == 0 ) return 1;
 	if( clean ) Clean_meta(s);
-	Split( l, s, sep, sort, keysep, uniq, trim, nocomments );
+	Split( l, s, sep, sort, keysep, uniq, trim, nocomments ,0);
 	if( return_image ){
 		*return_image = s;
 	} else {
@@ -337,7 +258,7 @@ int Get_file_image_and_split( const char *file,
 	}
 	if( s == 0 ) return 1;
 	if( clean ) Clean_meta(s);
-	Split( l, s, sep, sort, keysep, uniq, trim, nocomments );
+	Split( l, s, sep, sort, keysep, uniq, trim, nocomments ,0);
 	if( return_image ){
 		*return_image = s;
 	} else {
@@ -465,7 +386,7 @@ int Get_hold_class( struct line_list *info, struct line_list *sq )
 		&& (t = Find_str_value(info,CLASS,Value_sep)) ){
 		held = 1;
 		Free_line_list(&l);
-		Split(&l,s,File_sep,0,0,0,0,0);
+		Split(&l,s,File_sep,0,0,0,0,0,0);
 		for( i = 0; held && i < l.count; ++i ){
 			held = Globmatch( l.list[i], t );
 		}
@@ -576,7 +497,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 
 	hpformat = Find_flag_value(&job->info,HPFORMAT,Value_sep);
 	if( (s = Find_str_value(&job->info,DATAFILES,Value_sep)) ){
-		Split(&cf_line_list,s,"\001",0,0,0,0,0);
+		Split(&cf_line_list,s,"\001",0,0,0,0,0,0);
 	} else {
 		s = Find_str_value(&job->info,OPENNAME,Value_sep);
 		if( !s ) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
@@ -763,51 +684,6 @@ int Set_hold_file( struct job *job, struct line_list *perm_check )
 		status = 1;
 	}
 
-#ifdef HAVE_GDBM_H
-	if( status == 0 && Queue_db_file_DYN ){
-		datum key_data, data_data;
-		plp_block_mask oblock;
-		int n, write_db = 0;
-
-		if( gdbm_file == 0 ){
-			if( Open_gdbm( 0 ) ){
-				Scan_queue( 0, 0, 0, 0, 0, 0, 1, 1 );
-			}
-		} else {
-			write_db = 1;
-		}
-		if( gdbm_file == 0 ){
-			Errorcode = JABORT;
-			unlink( Queue_db_file_DYN );
-			FATAL(LOG_ERR)"Set_hold_file: DB '%s' not updated '%s'",
-				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-		}
-		/* set the file information */
-		memset(&key_data,0,sizeof(key_data));
-		memset(&data_data,0,sizeof(data_data));
-		key_data.dptr = hf_name;
-		key_data.dsize = strlen( hf_name ) + 1;
-		data_data.dptr = outstr;
-		data_data.dsize = strlen( outstr ) + 1;
-		plp_set_signal_mask( &oblock, 0 );
-		n = gdbm_store( gdbm_file, key_data, data_data, GDBM_REPLACE );
-		plp_set_signal_mask( &oblock, 0 );
-		if( n ){
-			/*
-			 * we can remove the database file and force it to be
-			 * rebuilt
-			 */
-			Close_gdbm();
-			unlink( Queue_db_file_DYN );
-			Errorcode = JABORT;
-			FATAL(LOG_ERR)"Set_hold_file: DB '%s' not updated '%s'",
-				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-		}
-		if( !write_db ){
-			Close_gdbm();
-		}
-	}
-#endif
 
 	if( Lpq_status_file_DYN ){
 		unlink(Lpq_status_file_DYN );
@@ -846,89 +722,10 @@ void Get_hold_file( struct job *job, char *hf_name )
 
 	if( ISNULL(hf_name) ) return;
 
-#ifdef HAVE_GDBM_H
-	if( Queue_db_file_DYN ) {
-		datum key_data, data_data;
-		int write_db = 0;
-
-		if( gdbm_file == 0 ){
-			if( Open_gdbm( 0 ) ){
-				Scan_queue( 0, 0, 0, 0, 0, 0, 1, 1 );
-			}
-		} else {
-			write_db = 1;
-		}
-		if( gdbm_file == 0 ){
-			Errorcode = JABORT;
-			unlink( Queue_db_file_DYN );
-			FATAL(LOG_ERR)"Get_hold_file: open of DB file %s failed - %s",
-				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-		}
-		memset(&key_data,0,sizeof(key_data));
-		memset(&data_data,0,sizeof(data_data));
-
-		DEBUG1("Get_hold_file: getting gdbm entry '%s'", hf_name );
-		/* set the file information */
-		key_data.dptr = hf_name;
-		key_data.dsize = strlen( hf_name ) + 1;
-		data_data = gdbm_fetch( gdbm_file, key_data );
-		if( data_data.dptr ){
-			DEBUG1("Get_hold_file: db has '%s'", hf_name );
-			Split( &job->info, data_data.dptr,
-				Line_ends, 1, Value_sep,1,1,1);
-			free( data_data.dptr); data_data.dptr = 0;
-			status = 1;
-		}
-		if( !write_db ){
-			Close_gdbm();
-		}
-	}
-#endif
 	if( !status ) {
 		Get_file_image_and_split( hf_name, 0, 0,
 			&job->info, Line_ends, 1, Value_sep,1,1,1,0);
 	}
-}
-
-/*
- * remove a db entry for the job
- */
-
-void Remove_from_db( char *openname )
-{
-#ifdef HAVE_GDBM_H
-	if( Queue_db_file_DYN ){
-		datum key_data;
-		plp_block_mask oblock;
-		int write_db = 0;
-
-		DEBUG1("Remove_from_db: '%s' in DB file '%s'",
-			openname, Queue_db_file_DYN );
-		if( gdbm_file == 0 ){
-			if( Open_gdbm( 0 ) ){
-				Scan_queue( 0, 0, 0, 0, 0, 0, 1, 1 );
-			}
-		} else {
-			write_db = 1;
-		}
-		if( gdbm_file == 0 ){
-			Errorcode = JABORT;
-			unlink( Queue_db_file_DYN );
-			FATAL(LOG_ERR)"Remove_from_db: open of DB file %s failed - %s",
-				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-		}
-		memset(&key_data,0,sizeof(key_data));
-		key_data.dptr = openname;
-		key_data.dsize = strlen( openname ) + 1;
-		/* we now delete the record */
-		plp_block_all_signals( &oblock );
-		gdbm_delete( gdbm_file, key_data );
-		plp_set_signal_mask( &oblock, 0 );
-		if( !write_db ){
-			Close_gdbm();
-		}
-	}
-#endif
 }
 
 /*
@@ -1071,7 +868,7 @@ char *Make_sort_key( struct job *job )
 		cmpstr = ORDER_ROUTINE( &job );
 #else
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Scan_queue: order_routine requested and ORDER_ROUTINE undefined");
+		FATAL(LOG_ERR)"Make_sort_key: order_routine requested and ORDER_ROUTINE undefined");
 #endif
 	} else {
 		/* first key is DONE_TIME - done jobs come last */
@@ -1690,7 +1487,6 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	if( pmove ) *pmove = move;
 	DEBUG3("Job_printable: printable %d, held %d, move '%d', status '%s'",
 		printable, held, move, buffer );
-
 }
 
 int Server_active( char *file )
@@ -1756,7 +1552,7 @@ int Get_destination( struct job *job, int n )
 	if( (s = Find_str_value(&job->info,buffer,Value_sep)) ){
 		s = safestrdup(s,__FILE__,__LINE__);
 		Unescape(s);
-		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1);
+		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1,0);
 		if(s) free( s ); s = 0;
 		result = 0;
 	}
@@ -1778,7 +1574,7 @@ int Get_destination_by_name( struct job *job, char *name )
 	if( name && (s = Find_str_value(&job->info,name,Value_sep)) ){
 		s = safestrdup(s,__FILE__,__LINE__);
 		Unescape(s);
-		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1);
+		Split(&job->destination,s,Line_ends,1,Value_sep,1,1,1,0);
 		if(s) free( s ); s = 0;
 		result = 0;
 	}
@@ -2427,77 +2223,4 @@ void Free_buf(char **buf, int *max, int *len)
 	if( *buf ) free(*buf); *buf = 0;
 	*len = 0;
 	*max = 0;
-}
-
-int Open_gdbm( int db_create )
-{
-#ifdef HAVE_GDBM_H
-	struct stat statb;
-	int flags = GDBM_SYNC|GDBM_NOLOCK|GDBM_WRITER;
-
-	if( gdbm_file ){
-		Close_gdbm();
-	}
-	if( Queue_db_file_DYN ){
-		gdbm_lock = Checkwrite( Queue_db_file_DYN, &statb,O_RDWR,1,0);
-		DEBUG1("Open_gdbm: gdbm_lock fd %d", (int)gdbm_lock );
-		if( gdbm_lock == -1 ){
-			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot open '%s'",
-				Queue_db_file_DYN );
-		}
-		DEBUG1("Open_gdbm: locking %d", (int)gdbm_lock );
-		while(1){
-			errno  = 0;
-			if( Do_lock( gdbm_lock, 1 ) < 0 ){
-				if( errno == EINTR ){
-					LOGERR(LOG_ERR)"Open_gdbm: cannot lock '%s'",
-						Queue_db_file_DYN );
-					plp_usleep(1000);
-					continue;
-				} else {
-					Errorcode = JABORT;
-					LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot lock '%s'",
-						Queue_db_file_DYN );
-				}
-			} else {
-				break;
-			}
-		}
-		if( fstat( gdbm_lock, &statb ) ){
-			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR)"Open_gdbm: cannot stat '%s'",
-				Queue_db_file_DYN );
-		}
-		if( statb.st_size == 0 ){
-			db_create = 1;
-		}
-		if( db_create ) flags |= GDBM_NEWDB;
-		gdbm_file = gdbm_open( Queue_db_file_DYN, 0,
-			flags, Spool_file_perms_DYN, NULL );
-		if( gdbm_file == 0 ){
-			Errorcode = JABORT;
-			FATAL(LOG_ERR)"Open_dgbm: open of DB file '%s' failed, %s",
-				Queue_db_file_DYN, gdbm_strerror(gdbm_errno) );
-		}
-		DEBUG1("Open_gdbm: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-			Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
-	}
-#endif
-	return( 1 );
-}
-
-
-void Close_gdbm(void)
-{
-#ifdef HAVE_GDBM_H
-	DEBUG1("Close_gdbm: gdbm_file 0x%x, gdbm file fd %d, lock fd %d",
-		Cast_ptr_to_int(gdbm_file), gdbm_file?gdbm_fdesc(gdbm_file):-1,  gdbm_lock );
-	if( gdbm_file ){
-		gdbm_close( gdbm_file );
-		close( gdbm_lock );
-	}
-	gdbm_lock = -1;
-	gdbm_file = 0;
-#endif
 }
