@@ -1656,7 +1656,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 void Build_printcap_info( 
 	struct line_list *names, struct line_list *order,
 	struct line_list *list, struct line_list *raw,
-	struct host_information *hostname  )
+	struct host_information *hostname )
 {
 	int i, c;
 	char *t, *keyid = 0;
@@ -1723,12 +1723,10 @@ char *Select_pc_info( const char *id,
 	struct line_list *names,
 	struct line_list *order,
 	struct line_list *input,
-	int depth,
-	struct line_list *user_names,
-	struct line_list *user_input )
+	int depth, int wildcard )
 {
-	int start, end, i, c;
-	char *s, *t, *name = 0, *found = 0;
+	int start, end, i, c, allglob = 0, glob;
+	char *s, *t, *found = 0;
 	struct line_list l;
 
 	Init_line_list(&l);
@@ -1737,15 +1735,12 @@ char *Select_pc_info( const char *id,
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Select_pc_info: printcap tc recursion depth %d", depth );
 	}
-	if(DEBUGL4)Dump_line_list("Select_pc_info- info", info );
-	if(DEBUGL4)Dump_line_list("Select_pc_info- aliases", aliases );
 	if(DEBUGL4)Dump_line_list("Select_pc_info- names", names );
+	if(DEBUGL4)Dump_line_list("Select_pc_info- order", order );
 	if(DEBUGL4)Dump_line_list("Select_pc_info- input", input );
-	if(DEBUGL4)Dump_line_list("Select_pc_info- user_names", user_names );
-	if(DEBUGL4)Dump_line_list("Select_pc_info- user_input", user_input );
 	start = 0; end = 0;
-	name = Find_str_value( names, id, Value_sep );
-	if( !name && PC_filters_line_list.count ){
+	found = Find_str_value( names, id, Value_sep );
+	if( !found && PC_filters_line_list.count ){
 		Filterprintcap( &l, &PC_filters_line_list, id);
 		Build_printcap_info( names, order, input, &l, &Host_IP );
 		Free_line_list( &l );
@@ -1753,51 +1748,43 @@ char *Select_pc_info( const char *id,
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter info", info );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter names", names );
 		if(DEBUGL4)Dump_line_list("Select_pc_info- after filter input", input );
-		name = Find_str_value( names, id, Value_sep );
+		found = Find_str_value( names, id, Value_sep );
 	}
-	/* do lookup */
-	c = 0;
-	if( name == 0 ) for( i = 0; name == 0 && i < names->count; ++i ){
-		s = names->list[i];
-		DEBUG1("Select_pc_info: names[%d] '%s'", i, s );
-		if( (t = safestrpbrk(s, Value_sep)) ){
-			c = *t; *t = 0;
-			DEBUG1("Select_pc_info: trying '%s'", s );
-			if( !Globmatch( s, id ) ){
-				name = t+1;
+	/* do partial glob match  */
+	if( wildcard ){
+		c = 0;
+		for( i = 0; !found && i < names->count; ++i ){
+			s = names->list[i];
+			if( (t = safestrpbrk(s, Value_sep)) ){
+				c = *t; *t = 0;
+				DEBUG1("Select_pc_info: trying '%s'", s );
+				glob = !strcmp(s,"*"); 
+				allglob |= glob;
+				if( !glob && !Globmatch( s, id ) ){
+					found = t+1;
+				}
+				*t = c;
 			}
-			*t = c;
+		}
+		/* do full glob match  */
+		for( i = 0; !found && allglob && i < names->count; ++i ){
+			s = names->list[i];
+			if( (t = safestrpbrk(s, Value_sep)) ){
+				c = *t; *t = 0;
+				DEBUG1("Select_pc_info: trying '%s'", s );
+				if( !Globmatch( s, id ) ){
+					found = t+1;
+				}
+				*t = c;
+			}
 		}
 	}
-	if( name ){
-		Find_pc_info( name, info, aliases, names, order, input, 0, 0, depth );
-		found = name;
-	}
-	/* do lookup for user supplied printcap information */
-	name = Find_str_value( user_names, id, Value_sep );
-	c = 0;
-	if( name == 0 && user_names ) for( i = 0; name == 0 && i < user_names->count; ++i ){
-		s = user_names->list[i];
-		DEBUG1("Select_pc_info: user_names[%d] '%s'", i, s );
-		if( (t = safestrpbrk(s, Value_sep)) ){
-			c = *t; *t = 0;
-			DEBUG1("Select_pc_info: trying '%s'", s );
-			if( !Globmatch( s, id ) ){
-				name = t+1;
-			}
-			*t = c;
-		}
-	}
-	if( name && user_names ){
-		Find_pc_info( name, info, aliases, names, order, input, user_names, user_input, depth );
-		found = name;
-	}
-	if(DEBUGL3){
-		LOGDEBUG("Select_pc_info: printer '%s', found '%s'", id, name );
-		Dump_line_list_sub("aliases",aliases);
-		Dump_line_list_sub("info",info);
+	if( found ){
+		Find_pc_info( found, info, aliases, names, order, input, depth, 0 );
 	}
 	DEBUG1("Select_pc_info: returning '%s'", found );
+	if(DEBUGL4)Dump_line_list("Select_pc_info- returning aliases", aliases );
+	if(DEBUGL4)Dump_line_list("Select_pc_info- returning info", info );
 	return( found );
 }
 
@@ -1807,25 +1794,17 @@ void Find_pc_info( char *name,
 	struct line_list *names,
 	struct line_list *order,
 	struct line_list *input,
-	struct line_list *user_names,
-	struct line_list *user_input,
-	int depth )
+	int depth, int wildcard )
 {
 	int start, end, i, j, c, start_tc, end_tc;
 	char *s, *t, *u;
 	struct line_list l, pc, tc;
-	struct line_list *use_this_input;
 
 	Init_line_list(&l); Init_line_list(&pc); Init_line_list(&tc);
 
 	DEBUG1("Find_pc_info: found name '%s'", name );
-	if( user_names ){
-		use_this_input = user_input;
-	} else {
-		use_this_input = input;
-	}
-	if( Find_first_key(use_this_input,name,Printcap_sep,&start)
-		|| Find_last_key(use_this_input,name,Printcap_sep,&end) ){
+	if( Find_first_key(input,name,Printcap_sep,&start)
+		|| Find_last_key(input,name,Printcap_sep,&end) ){
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)
 			"Find_pc_info: name '%s' in names and not in input list",
@@ -1834,7 +1813,7 @@ void Find_pc_info( char *name,
 	DEBUG4("Find_pc_info: name '%s', start %d, end %d",
 		name, start, end );
 	for(; start <= end; ++start ){
-		u = use_this_input->list[start];
+		u = input->list[start];
 		DEBUG4("Find_pc_info: line [%d]='%s'", start, u );
 		if( u && *u ){
 			Add_line_list( &pc, u, 0, 0, 0 );
@@ -1878,7 +1857,7 @@ void Find_pc_info( char *name,
 		for( j = 0; j < tc.count; ++j ){
 			s = tc.list[j];
 			DEBUG4("Find_pc_info: tc entry '%s'", s );
-			if( !Select_pc_info( s, info, 0, names, order, input, depth+1, user_names, user_input ) ){
+			if( !Select_pc_info( s, info, 0, names, order, input, depth+1, wildcard ) ){
 				FATAL(LOG_ERR)
 				"Find_pc_info: tc entry '%s' not found", s);
 			}
@@ -2699,7 +2678,7 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 		/* set up full perms for filter */ 
 		if( Is_server ){
 			if( root ){
-				To_euid_root();
+				if( UID_root ) To_euid_root();
 			} else {
 				Full_daemon_perms();
 			}
@@ -3080,7 +3059,7 @@ void Fix_Z_opts( struct job *job )
 		if( str ) free(str); str = 0;
 	}
 	str = Find_str_value( &job->info,"Z", Value_sep );
-	DEBUG4("Fix_Z_opts: after Prefix_O '%s'", str );
+	DEBUG4("Fix_Z_opts: after Prefix_option_to_option '%s'", str );
 	if( Remove_Z_DYN && str ){
 		/* remove the various options - split on commas */
 		Split(&l, Remove_Z_DYN, ",", 0, 0, 0, 0, 0,0);
@@ -3126,34 +3105,21 @@ void Fix_Z_opts( struct job *job )
 		str = Find_str_value(&job->info,"Z",Value_sep);
 		if(s) free(s); s = 0;
 	}
-	DEBUG4("Fix_Z_opts: after prefix '%s'", str );
-	if( Prefix_option_to_option_DYN ){
-		s = Prefix_option_to_option_DYN;
-		/* now we have the fixed value */
-		DEBUG4("Fix_Z_opts: prefix_options fixed '%s'", s);
-		n = strlen(s);
-		/* find the starting values */
-		str = 0;
-		buffer[1] = 0;
-		for( i = 0; i < n-1; ++i ){
-			buffer[0] = s[i];
-			if( (start = Find_str_value(&job->info,buffer,Value_sep)) ){
-				str= safeextend3(str,",",start, __FILE__,__LINE__);
-				Set_str_value(&job->info,buffer,0);
-			}
+	DEBUG4("Fix_Z_opts: after Prefix_Z '%s'", str );
+	for( s = safestrchr(str,','); s; s = strchr(s,',') ){
+		if( cval(s+1) == ',' ){
+			memmove(s,s+1,strlen(s+1)+1);
+		} else {
+			++s;
 		}
-		/* do we need to prefix it? */
-		if( str ){
-			buffer[0] = s[i];
-			start = Find_str_value(&job->info,buffer,Value_sep);
-				/* put at start */
-			start= safestrdup3(str,",",Find_str_value(&job->info,buffer,Value_sep),
-				__FILE__,__LINE__);
-			Set_str_value(&job->info, buffer, start );
-			if( start ) free(start); start = 0;
-		}
-		if( str ) free(str); str = 0;
 	}
+	if( str ){
+		if( cval(str) == ',' ){
+			memmove(str,str+1,strlen(str+1)+1);
+		}
+		if( (n = strlen(str)) && cval(str+n-1) == ',' ) str[n-1] = 0;
+	}
+	DEBUG4("Fix_Z_opts: final Z '%s'", str );
 	Free_line_list(&l);
 }
 

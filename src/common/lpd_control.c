@@ -419,7 +419,20 @@ void Do_queue_control( char *user, int action, int *sock,
 
 	case OP_FLUSH:
 		if( Lpq_status_file_DYN ) unlink(Lpq_status_file_DYN );
-		if( Queue_db_file_DYN ) unlink(Queue_db_file_DYN );
+		{
+			char *file;
+			int fd = -1;
+			if( (file = Queue_status_file_DYN) &&
+				(fd = Checkwrite( file, &statb,O_RDWR,0,0)) > 0 ){
+				ftruncate( fd, 0);
+				close(fd);
+			}
+			if( (file = Status_file_DYN) &&
+				(fd = Checkwrite( file, &statb,O_RDWR,0,0)) > 0 ){
+				ftruncate( fd, 0);
+				close(fd);
+			}
+		}
 		signal_server = 0;
 		break;
 		

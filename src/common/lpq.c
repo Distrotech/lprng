@@ -162,8 +162,6 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if(DEBUGL1)Dump_line_list("lpq- Config", &Config_line_list );
-	Get_all_printcap_entries();
-	if(DEBUGL1)Dump_line_list("lpq- All_line_list", &All_line_list );
 	/* we do the individual printers */
 	if( Displayformat == REQ_DLONG && Longformat && Status_line_count <= 0 ){
 		Status_line_count = (1 << (Longformat-1));
@@ -177,11 +175,16 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		if( All_printers ){
 			DEBUG1("lpq: all printers");
+			Get_all_printcap_entries();
+			if(DEBUGL1)Dump_line_list("lpq- All_line_list", &All_line_list );
 			for( i = 0; i < All_line_list.count; ++i ){
 				Set_DYN(&Printer_DYN,All_line_list.list[i] );
 				Show_status(argv);
 			}
 		} else {
+			/* set up configuration */
+			Get_printer();
+			Fix_Rm_Rp_info(0,0);
 			Show_status(argv);
 		}
 		DEBUG1("lpq: done");
@@ -206,9 +209,6 @@ void Show_status(char **argv)
 	char msg[LINEBUFFER];
 
 	DEBUG1("Show_status: start");
-	/* set up configuration */
-	Get_printer();
-	Fix_Rm_Rp_info(0,0);
 
 	if( ISNULL(RemotePrinter_DYN) ){
 		SNPRINTF( msg, sizeof(msg))
@@ -229,6 +229,13 @@ void Show_status(char **argv)
 		SNPRINTF( msg, sizeof(msg))
 			_("Printer: %s - cannot use printer, not in privileged group\n"),
 			Printer_DYN );
+		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+		return;
+	}
+	if( Direct_DYN && Lp_device_DYN ){
+		SNPRINTF( msg, sizeof(msg))
+			_("Printer: %s - direct connection to device '%s'\n"),
+			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 		return;
 	}

@@ -124,6 +124,6 @@ LPRng-HOWTO-Multipart/index.htm: $(DOC).sgml $(DOC).dsl Makefile license.enc
 	jade -i output.html -V html-manifest -t sgml \
 		$(CATALOGS) -d $(FMT).dsl $(DOC).sgml
 	-tidy -i -m -f /dev/null ${TIDYFLAGS} `xargs < HTML.manifest`
-	updateheader index.htm
+	./updateheader index.htm
 	mv *.htm LPRng-HOWTO-Multipart
 

@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.2
+VERSION=3.8.3
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -258,7 +258,7 @@ AC_SUBST(DONE_JOBS)
 dnl  done_jobs_max_age value
 dnl
 AC_MSG_CHECKING(retain status for jobs less than N seconds old, default 0 - no expiry)
-AC_ARG_WITH(done_jobs,
+AC_ARG_WITH(done_jobs_max_age,
 [  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry],
 DONE_JOBS_MAX_AGE="$withval", DONE_JOBS_MAX_AGE="0",
 )

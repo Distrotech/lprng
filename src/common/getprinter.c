@@ -120,15 +120,14 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			&PC_entry_line_list,
 			&PC_alias_line_list,
 			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, 0, 0 ))
+			&PC_info_line_list, 0, 1 ))
 			||
 			(s = Select_pc_info("*",
 			&PC_entry_line_list,
 			&PC_alias_line_list,
 			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, 0, 0 ))
+			&PC_info_line_list, 0, 0 ))
 		){
-
 			if( !safestrcmp( s, "*" ) ){
 				s = Queue_name_DYN;
 			}
@@ -138,31 +137,6 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 			if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_alias_line_list",
 				&PC_alias_line_list );
 			if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - PC_entry_line_list",
-				&PC_entry_line_list );
-		}
-		if( !Is_server
-			&& (
-			(s = Select_pc_info(Printer_DYN,
-			&PC_entry_line_list,
-			&PC_alias_line_list,
-			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, &User_PC_names_line_list, &User_PC_info_line_list ))
-			||
-			(s = Select_pc_info("*",
-			&PC_entry_line_list,
-			&PC_alias_line_list,
-			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, &User_PC_names_line_list, &User_PC_info_line_list ))
-			)
-		){
-
-			if( !safestrcmp( s, "*" ) ){
-				s = Queue_name_DYN;
-			}
-			Set_DYN(&Printer_DYN,s);
-
-			DEBUG2("Fix_Rm_Rp_info: User_PC found '%s'", Printer_DYN );
-			if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - User_PC",
 				&PC_entry_line_list );
 		}
 		if(DEBUGL2)Dump_line_list("Fix_Rm_Rp_info - final PC_entry_line_list",
@@ -267,30 +241,13 @@ void Get_all_printcap_entries(void)
 			&PC_entry_line_list,
 			&PC_alias_line_list,
 			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, 0, 0 )) ){
+			&PC_info_line_list, 0, 0 )) ){
 		if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
 			t = "all";
 		}
 		DEBUG1("Get_all_printcap_entries: '%s' has '%s'",s,t);
-	} else if( (s = Select_pc_info("*",
-			&PC_entry_line_list,
-			&PC_alias_line_list,
-			&PC_names_line_list, &PC_order_line_list,
-			&PC_info_line_list, 0, 0, 0 )) ){
-		/* we check to see if we have the main wildcard entry */
-		if( safestrcmp( s, "*" ) ){
-			/* no, we use the entries in the list */
-			s = 0;
-		} else if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
-			/* we do have the main wildcard, but it does not have an all entry
-			 * so we use the list entries
-			 */
-			s = 0;
-		}
-		DEBUG1("Get_all_printcap_entries: '%s' has '%s'",s,t);
-	}
-	Split(&All_line_list,t,File_sep,0,0,0,1,0,0);
-	if( s == 0 ){
+		Split(&All_line_list,t,File_sep,0,0,0,1,0,0);
+	} else {
 		for( i = 0; i < PC_order_line_list.count; ++i ){
 			s = PC_order_line_list.list[i];
 			if( !s || !*s || !safestrcmp( ALL, s ) ) continue;
@@ -299,67 +256,6 @@ void Get_all_printcap_entries(void)
 			}
 		}
 	}
-	/* now we check for the user specified printcap information */
-	if( !Is_server ){
-		s = t = 0;
-		DEBUG1("Get_all_printcap_entries: User_PC starting");
-		if( (s = Select_pc_info(ALL,
-				&PC_entry_line_list,
-				&PC_alias_line_list,
-				&PC_names_line_list, &PC_order_line_list,
-				&PC_info_line_list, 0,
-				&User_PC_names_line_list, &User_PC_info_line_list )) ){
-			if( safestrcmp( s, "*" ) ){
-				/* no, we use the entries in the list */
-				s = 0;
-			} else if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
-				/* we do have the main wildcard, but it does not have an all entry
-				 * so we use 'all'
-				 */
-				s = 0;
-			}
-			DEBUG1("Get_all_printcap_entries: looking for 'all' User printcap '%s' has '%s'",s,t);
-		} else if( (s = Select_pc_info("*",
-				&PC_entry_line_list,
-				&PC_alias_line_list,
-				&PC_names_line_list, &PC_order_line_list,
-				&PC_info_line_list, 0,
-				&User_PC_names_line_list, &User_PC_info_line_list )) ){
-			/* we check to see if we have the main wildcard entry */
-			if( safestrcmp( s, "*" ) ){
-				/* no, we use the entries in the list */
-				s = 0;
-			} else if( !(t = Find_str_value( &PC_entry_line_list, ALL, Value_sep )) ){
-				/* we do have the main wildcard, but it does not have an all entry
-				 * so we use the list entries
-				 */
-				s = 0;
-			}
-			DEBUG1("Get_all_printcap_entries: looking for wildcard, User printcap '%s' has '%s'",s,t);
-		}
-		if( t && *t ){
-			Free_line_list( &All_line_list );
-			Split(&All_line_list,t,File_sep,0,0,0,1,0,0);
-		}
-		if(DEBUGL1)Dump_line_list("Get_all_printcap_entries- after User", &User_PC_order_line_list );
-		if( s == 0 ){
-			struct line_list l;
-			Init_line_list(&l);
-			DEBUG1("Get_all_printcap_entries: prefixing user");
-			Merge_line_list( &l, &User_PC_order_line_list, 0, 0, 0);
-			Merge_line_list( &l, &All_line_list, 0, 0, 0);
-			Free_line_list( &All_line_list );
-			for( i = 0; i < l.count; ++i ){
-				s = l.list[i];
-				if( !safestrcmp( ALL, s ) ) continue;
-				if( !safestrcmp( "*", s ) ) continue;
-				Add_line_list(&All_line_list,s, 0, 0, 0);
-			}
-			Remove_duplicates_line_list(&All_line_list);
-			Free_line_list(&l);
-		}
-	}
-
 	if(DEBUGL1)Dump_line_list("Get_all_printcap_entries- All_line_list", &All_line_list );
 }
 

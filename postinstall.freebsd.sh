@@ -15,8 +15,8 @@
 #  in place.  You need to do this during the postinstall
 #  step in the package installation.
 #
-set -x
 echo RUNNING postinstall.freebsd.sh parms "'$0 $@'" MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" INIT="$INIT" cwd `pwd`
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 fix () {
     v=`echo $1 | sed -e 's/[:;].*//'`;
     p=`echo $2 | sed -e 's/:.*//'`; d=`dirname $p`;
@@ -49,7 +49,7 @@ fix () {
 # we have to take them from one place and put in another
 if [ "X$MAKEPACKAGE" = "XYES" ] ; then
     hold=${DESTDIR}${PREFIX}/etc
-    echo "Setting up configuration files path" ${hold}
+    echo "Setting up configuration files path for package" ${hold}
     # we put files into the destination
     if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
     cp lpd.perms ${hold}/lpd.perms.sample
@@ -59,7 +59,14 @@ if [ "X$MAKEPACKAGE" = "XYES" ] ; then
         cp init.freebsd ${hold}/lprng.sh
     fi
 elif [ "X$MAKEINSTALL" = XYES ] ; then
-    echo "Setting up configuration files path" ${hold}
+	# we have the port pre-install operation
+	if [ "$MANDIR" = "/usr/man" -a ! -d ${DESTDIR}/usr/man ] ; then
+		# we have the dreaded standard installation
+		# try to make a symbolic link to 
+		echo "Creating symbolic link from /usr/man to /usr/share/man"
+		v=`ln -s ${DESTDIR}/usr/share/man ${DESTDIR}/usr/man`;
+	fi
+    echo "Setting up configuration files path for installation" ${hold}
     hold=${DESTDIR}${PREFIX}/etc
     if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
     cp lpd.perms ${hold}/lpd.perms.sample
@@ -94,7 +101,7 @@ elif [ "X$MAKEINSTALL" = XYES ] ; then
     fi
 elif [ "X$2" = "XPOST-INSTALL" ] ; then
     # when doing an install from a package we get the file from the package
-    hold=${DESTDIR}${PREFIX}/etc
+    hold=etc
     if [ -f ${hold}/lpd.perms.sample ] ; then
         fix ${hold}/lpd.perms "${LPD_PERMS_PATH}"
         fix ${hold}/lpd.conf "${LPD_CONF_PATH}"
@@ -112,5 +119,13 @@ elif [ "X$2" = "XPOST-INSTALL" ] ; then
         ls
         exit 1
     fi
+elif [ "X$2" = "XPRE-INSTALL" ] ; then
+	# we have the port pre-install operation
+	if [ "$MANDIR" = "/usr/man" -a ! -d /usr/man ] ; then
+		# we have the dreaded standard installation
+		# try to make a symbolic link to 
+		echo "Creating symbolic link from /usr/man to /usr/share/man"
+		v=`ln -s /usr/share/man /usr/man`;
+	fi
 fi
 exit 0

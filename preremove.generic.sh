@@ -5,6 +5,7 @@
 # This is the shell script that does the preremove
 # lpd shutdown.  It is the script from hell
 echo RUNNING preremove.generic.sh
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 echo "Stopping LPD"
 kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
 exit 0

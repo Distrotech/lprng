@@ -75,7 +75,7 @@ $(SCRIPTS): header
 
 header: Makefile
 	@echo "#!@SHELL@" >$@
-	@echo PATH_PREFIX=$(prefix) >>$@
+	@echo PREFIX=$(prefix) >>$@
 	@echo LPD_PATH=$(LPD_PATH) >>$@
 	@echo INSTALL=\"$(INSTALL)\" >>$@
 	@echo LPD_PERMS_PATH=$(LPD_PERMS_PATH) >>$@
@@ -88,9 +88,14 @@ header: Makefile
 	@echo PSHOWALL=\"$(PSHOWALL)\"  >>$@
 	@echo "VERSION=$(VERSION)" >>$@
 	@echo "INIT=$(INIT)" >>$@
+	@echo "MANDIR=$(mandir)" >>$@
 
 ./postinstall: $(SCRIPTS) Makefile
-	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) OSNAME=linux;; esac; \
+	OSNAME=@OSNAME@; case "@OSNAME@" in \
+	 *linux* ) OSNAME=linux;; \
+	 *freebsd* ) OSNAME=freebsd;; \
+	 *solaris* ) OSNAME=solaris;; \
+	esac; \
 	if test -f postinstall.$${OSNAME} ; then s=postinstall.$${OSNAME} ; else s=postinstall.generic; fi; \
 	echo POSTINSTALL "'$$s'"; cp $$s postinstall;
 
@@ -141,7 +146,7 @@ src/lpd.conf:
 	cd src; $(MAKE) MAKETARGET=lpd.conf
 
 realclean mostlyclean distclean: clean
-	cd DISTRIBUTIONS/FreeBSD* ; ${MAKE} clean; rm -f *.tgz ;
+	rm -f DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/*.tgz ;
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(ALLDIRS)
 	rm -f `find . -type f -name '*.old' -print` \
 	 `find . -type f -name '*.bak' -print` \

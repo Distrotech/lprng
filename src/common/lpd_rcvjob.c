@@ -924,6 +924,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		status = 1;
 		goto error;
 	}
+	DEBUG1("Check_for_missing_files: hold file fd '%d'", fd );
 
 	if( Create_control( job, error, errlen, auth_id, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Check_for_missing_files: Create_control error '%s'", error );

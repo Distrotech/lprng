@@ -420,7 +420,7 @@ It will report a zillion errors if something is wrong.
 
 <sect1><title/Fixing the Problems/
       <figure id="fg9">
-        <title>Using &printcap; -f</title>
+        <title>Using &checkpc; -f</title>
 <screen>
 h110: {1} % checkpc
 Warning -  bad directory - /var/spool/lpd/lp
@@ -1223,8 +1223,8 @@ http://www.fapo.com/1284int.htm
 </ulink>
 for a nice introduction,
 and the IEEE1394 Trade Association Home Page
-<ulink URL="http://www.1394.org/">
-http://www.1394.com/
+<ulink URL="http://www.1394ta.org/">
+http://www.1394ta.com/
 </ulink>
 for pointers to other information.
 </para>
@@ -3898,7 +3898,7 @@ printer information.
 <sect1><title>Templates and Standard Configurations</title>
 
 
-      <figure><title></title>
+      <figure><title>Templates in Printcaps</title>
 <screen>
 .common
   :sh:sd=/var/spool/lpd/%P:force_localhost

@@ -606,7 +606,7 @@ fi
 
 
 PACKAGE=LPRng
-VERSION=3.8.2
+VERSION=3.8.3
 
 
 ac_aux_dir=
@@ -1693,9 +1693,9 @@ echo "$ac_t"""$DONE_JOBS"" 1>&6
 
 echo $ac_n "checking retain status for jobs less than N seconds old""... $ac_c" 1>&6
 echo "configure:1696: checking retain status for jobs less than N seconds old" >&5
-# Check whether --with-done_jobs or --without-done_jobs was given.
-if test "${with_done_jobs+set}" = set; then
-  withval="$with_done_jobs"
+# Check whether --with-done_jobs_max_age or --without-done_jobs_max_age was given.
+if test "${with_done_jobs_max_age+set}" = set; then
+  withval="$with_done_jobs_max_age"
   DONE_JOBS_MAX_AGE="$withval"
 else
   DONE_JOBS_MAX_AGE="0"

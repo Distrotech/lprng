@@ -1,0 +1,208 @@
+#  FreeBSD LPRng Distribution Port Generation
+#       Patrick Powell
+#    Tue Jun  6 18:06:07 PDT 2000
+#
+#  The scripts in this directory largely automate the process
+#    of building a LPRng port or package for FreeBSD.  They
+#    a) ${MAKE} the PLIST and other files
+#    b) do a slew of regression tests, etc.
+#    c) make a port or package
+#
+#  Added targets for package/port/testers:
+#    All REPEAT ALL of these targets have security loopholes and should NOT
+#    be used on a system where other users are active.  You have been
+#    warned.
+#
+#   plist:    this little monster makes the PLIST. It is assumed
+#             that you will do this on a standalone system, so
+#             it is not paranoid about testing for files, etc.
+#             You are warned.
+#   checkit:  you should use this target to (literally) checkit
+#             to ${MAKE} sure the package installs
+#   cleanit:  you should use this target to clean things up.
+#             This is the equivalent of 'distclean'
+#   packageit:  ${MAKE} a package, install it, clean it, abuse it,
+#             and otherwise torture test it.  Used for checking
+#             to ${MAKE} sure scripts work
+#   addit:    use pkg_add
+#   removeit: use pkg_delete
+#
+# Notes and warnings:
+#   $PREFIX does not have quite the same effect as it normally would,
+#   as some of the LPRng files MUST be in fixed locations.
+#   
+#   $DESTDIR allows the 'install' step to put files in an 'unusual'
+#   place.  Note that the same effect is obtained by using:
+#
+#      make all
+#      make PREFIX=/... install
+#
+#   WATCH OUT FOR REBUILDS WHEN YOU USE THIS FORMAT!
+#
+#   Setting INIT=no in the MAKEFILE will cause the install process NOT
+#   to put the standard LPRng startup script in /usr/local/etc/lprng.sh
+#   This makes LPRng a total replacement for Berkeley lpd
+#
+#Step 1: untar the distribution and then go the the FreeBSD support directory:
+#    tar zxvf LPRng-...tgz
+#    cd LPRng*/DI*/FR*
+#
+#Step 2: (For the VERY paranoid)
+#   read the rest of this Makefile!
+#	${MAKE} -f Makefile.build checkit
+#     this does all sorts of tests, etc.
+#   The final result is LPRng installed and a port made in this
+#   directory.
+#
+#Step 2: (For the blithely accepting)
+#   read the rest of this makefile up to the end of these comments
+#	${MAKE} plist
+#   ${MAKE} install
+#   ${MAKE} package
+#
+#Step 3: (To make a port distribution):
+#   ${MAKE} port
+#
+# Notes and warnings:
+# 
+PLIST=/tmp/PLIST-${DISTNAME}
+MANPAGES=/tmp/MANPAGES-${DISTNAME}
+TROOT=/var/tmp/$(DISTNAME)
+OLDDIRS=/tmp/OLDDIRS-$(DISTNAME)
+
+checkit:
+	${MAKE} makesum
+	${MAKE} -f Makefile.build plist
+	-${MAKE} deinstall
+	${MAKE} install deinstall
+	${MAKE} reinstall
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.tgz
+	${MAKE} deinstall
+	pkg_add *.tgz
+	pkg_delete ${DISTNAME}
+	${MAKE} -f Makefile.build port
+
+# Automated PLIST and INSTALL generation
+#   - I wonder why more scripts don't have this, it would make life easier
+plist:
+#
+# First, create a new set of directories where your port can be
+# installed
+#
+	-${RM} -rf pkg-plist ${TROOT}
+	${TOUCH} pkg-plist
+	${MKDIR} ${TROOT}/etc
+	${MKDIR} ${TROOT}${PREFIX}/etc
+	${MKDIR} ${TROOT}${PREFIX}/bin
+	${MKDIR} ${TROOT}${PREFIX}/lib
+	${MKDIR} ${TROOT}${PREFIX}/libexec
+	${MKDIR} ${TROOT}${PREFIX}/sbin
+	${MKDIR} ${TROOT}${PREFIX}/man/man1
+	${MKDIR} ${TROOT}${PREFIX}/man/man5
+	${MKDIR} ${TROOT}${PREFIX}/man/man8
+	${MKDIR} ${TROOT}${PREFIX}/etc/rc.d
+	${MKDIR} ${TROOT}${PREFIX}/share/doc
+#
+# Store the directory structure in a new file.
+#
+	(cd ${TROOT}${PREFIX} && find . -type d) >${OLDDIRS}
+# ${MAKE} the package and copy to the temporary directory to get the list
+
+	-${MAKE} clean
+	-${MAKE} deinstall
+# we install in the DESTDIR subtree -
+	${MAKE} all
+	FORCE_PKG_REGISTER=YES ${MAKE} install NO_MTREE=yes DESTDIR=${TROOT} MAKEPACKAGE=YES
+	${CP} /dev/null ${PLIST}
+	@echo Installed files 
+	(cd ${TROOT}${PREFIX} && find . -type f)
+	(cd ${TROOT}${PREFIX} && find . -type f) | \
+	${SED} -e 's/..//' -e '/info.dir/d' -e '/man[0-9]/d' \
+	  -e '/etc.*conf$$/d' -e '/etc.*printcap$$/d' \
+	 >> ${PLIST}
+
+	(cd ${TROOT}${PREFIX} && find . -type f) | \
+	${SED} -n -e 's/\.gz$$//' -e '/man\//s,.*/,,p' > ${MANPAGES}
+
+# This is truly evil - we add the man pages by editing the makefile.
+	-MAN1=`grep '1$$' ${MANPAGES}`; MAN1=`${ECHO} $$MAN1`; ${ECHO} MAN1 "$$MAN1"; \
+	MAN5=`grep '5$$' ${MANPAGES}`; MAN5=`${ECHO} $$MAN5`; ${ECHO} MAN5 "$$MAN5"; \
+	MAN8=`grep '8$$' ${MANPAGES}`; MAN8=`${ECHO} $$MAN8`; ${ECHO} MAN8 "$$MAN8"; \
+	$(PERL) -spi.bak -e \
+	"s/^MAN1=.*/MAN1=$${MAN1}/; s/^MAN5=.*/MAN5=$${MAN5}/; s/^MAN8=.*/MAN8=$${MAN8}/;" \
+		Makefile
+# get directories and put in reverse order so that deeper are removed first
+	(cd ${TROOT}${PREFIX} && find . -type d) \
+	 | comm -13 ${OLDDIRS} - \
+	 | ${SED} -e /filters/d -e s#^..## -e 's#^#@dirrm  #' | sort -r >> ${PLIST}
+# now update the PLIST
+	${CP} ${PLIST} pkg-plist
+
+# put the updated postinstall script into the package directory
+	if [ -f ${WRKSRC}/preremove ] ; then ${CP} ${WRKSRC}/preremove pkg-deinstall; fi
+	if [ -f ${WRKSRC}/postinstall ] ; then ${CP} ${WRKSRC}/postinstall pkg-install; fi
+
+# and now deinstall it so you don't get strange things happening
+	#-${RM} -rf ${TROOT}
+	#${MAKE} deinstall
+	${RM} *.bak
+	sed -e 's!DOCSDIR!${DOCSDIR}!' files-pkg-message >pkg-message
+
+# do the tests in the book.  But we cheat a bit
+packageit:
+	-${RM} -f *.tgz
+	-${MAKE} deinstall
+ 	#${MAKE} clean
+	#${MAKE} makesum
+	#make
+	${MAKE} install
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.tgz
+	${MAKE} deinstall
+	pkg_add *.tgz
+	pkg_delete ${DISTNAME}
+
+addit:
+	pkg_add ${DISTNAME}.tgz
+removeit:
+	pkg_delete ${DISTNAME}
+
+port:
+	rm -rf *.tgz *.bak /tmp/${PORTNAME}
+	mkdir /tmp/${PORTNAME}
+	-cp Makefile README.html distinfo files-* pkg-* /tmp/${PORTNAME}
+	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}
+	cd /tmp; sh ${PORTNAME}.port; cd ${PORTNAME}; ${MAKE} install
+
+cleanit:
+	rm -rf pkg-plist distinfo *.tgz work
+	cp /dev/null pkg-plist
+
+TESTDIR=/tmp/DISTDIR
+test-fetch:
+	-rm -rf ${TESTDIR}
+	${MKDIR} ${TESTDIR}
+	(cd ${TESTDIR}; \
+	 for file in ${DISTFILES}; do \
+			md5 /usr/ports/distfiles/$${file}; \
+			for site in `${SORTED_MASTER_SITES_CMD}`; do \
+			    ${ECHO_MSG} ">> Attempting to fetch from $${site}."; \
+				DIR=${DIST_SUBDIR}; \
+				case $${file} in \
+				*/*)	${MKDIR} $${file%/*}; \
+						args="-o $${file} $${site}$${file}";; \
+				*)		args=$${site}$${file};; \
+				esac; \
+				if ${SETENV} ${FETCH_ENV} ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${args} ${FETCH_AFTER_ARGS}; then \
+					${ECHO_MSG} ">> OK $${file} from $${site}"; \
+					md5 $${file}; \
+				else \
+					${ECHO_MSG} ">> FAIL $${file} from $${site}";\
+				fi \
+			done; \
+	 done)
+
+.include "Makefile"

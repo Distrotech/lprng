@@ -4,6 +4,7 @@
 #  needed to install the LPRng software on the
 #  Solaris OS.  This is effectively a one way path.
 #  You are warned.
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 PATH=/etc:/usr/etc:/usr/bin:/bin:/sbin:/usr/sbin:$PATH
 # remove the init.d entry and links
 for i in /etc/rc*.d/*lp ; do

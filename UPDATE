@@ -31,7 +31,7 @@ echo ""
 echo ""
 cat CHANGES ;
 ) >/tmp/CHANGES$NEW
-mv CHANGES CHANGES.OLD
+mv CHANGES /tmp/CHANGES.OLD
 cp /tmp/CHANGES$NEW CHANGES
 if [ ! -f Makefile ] ; then configure; fi
 make update

@@ -10,6 +10,7 @@
 # We first install the sample files
 #
 echo RUNNING postinstall.linux.sh MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" DESTDIR="$DESTDIR" INIT="$INIT" cwd `pwd`
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 fix () {
 	v=`echo $1 | sed -e 's/[:;].*//'`;
     p=`echo $2 | sed -e 's/:.*//'`; d=`dirname $p`;

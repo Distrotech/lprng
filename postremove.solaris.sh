@@ -2,6 +2,7 @@
 # written by Willi Burmeister (wib@cs.uni-kiel.de) for LPRng
 #
 echo RUNNING postremove.solaris
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 if [ -z "${PKG_INSTALL_ROOT}" ]; then
   # Send hup signal to inetd
   echo "Sending inetd SIGHUP"

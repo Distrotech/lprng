@@ -1,3 +1,64 @@
+Version LPRng-3.8.3 - Mon Dec 10 20:40:02 PST 2001
+
+   Fixed the operation of 'lpr -Pxx' when printcap for xxx
+   has the format:
+     xx:direct:lp=...
+     Sigh... too many special cases...
+       (Pointed out at LISA2001, and fixed on site...
+       Now who was that masked Sysadmin???...)
+    (From the mailing list:
+      James Thomas Klaas <jklaas@engin.umich.edu> )
+
+   Removed spurious commas in control file Z options.
+
+   Configure did not set 'done_jobs_max_age' correctly.
+   (Patch from: Dejan Ilic <dejan.ilic@home.se>)
+
+   lpc flush now cleans out status as it should have done...
+    GRRR... user pointed this out at LISA 2001...
+
+   Fixed up a problem with global variable Name.
+      From:  Rick Cochran <rcc2@cornell.edu>
+	I got LPRng to build under OSX.  It required only one patch which
+	seems to be due to the fact that "Name" is declared "extern" all
+	over the place, but is only defined in getopt.c.  Since lpstat
+	doesn't use getopt, ld complains.  I'm not sure why GNU ld should
+	complain under OSX and not on other platforms.
+     (Patch by:  Rick Cochran <rcc2@cornell.edu>)
+
+   Editted the lpr man page.  Updated the information about
+    obsolete options.
+
+   Updated the installation procedures for FreeBSD, linux, etc.
+   The STANDARD_configuration script now checks to see if there
+   is a /usr/share/man and if so, runs  configure with
+   --mandir=/usr/share/man.  Man pages now show up in the
+   right place.  This was true on *BSD, various LINUX distros,
+   and some versions of SunOS/Solaris.
+
+   Updated the DISTRIBUTIONS/FreeBSD entry and the postinstall
+   scripts so that the port stuff works better.  Now if you do:
+         cd LPRng/DISTRIBUTIONS/FreeBSD*
+         make PREFIX=/usr SYSCONFDIR=/etc
+   You will get the same effect as:
+         cd LPRng
+         sh STANDARD_configuration
+         make clean all install
+   But, as you might suspect, there are some minor gotchas.
+   The man pages usually get installed in /usr/share/man, but
+   when you use the PORT system and override PREFIX it
+   insists on installing them in /usr/man... and various
+   versions of the FreeBSD and OpenPort stuff INSISTS that
+   when generating a port that the originals of the man pages
+   are in the ${PREFIX}/man/manX directories.
+
+   I gave up and cheated:  you get an obnoxious warning to
+   either create /usr/man or to make a symbolic link from 
+   to /usr/share/man from /usr/man before installation starts.
+   I know, I know.  But I don't have that many brain cells
+   left to fry...
+
+
 Version LPRng-3.8.2 - Mon Dec  3 12:26:52 PST 2001
 
   MAJOR CONFIGURATION CHANGE:

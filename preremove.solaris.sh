@@ -4,6 +4,7 @@
 #
 # This is the shell script that does the preremove
 echo RUNNING preremove.solaris.sh
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 echo "Stopping LPD"
-kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+pkill -INT lpd
 exit 0

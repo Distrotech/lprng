@@ -5,8 +5,8 @@
 # We use this when we are building a package or doing an install
 #
 #
-release=`uname -r | sed 's/\.//' | awk '{ n = $1; if( n > 0 ){ while( n < 100 ){ n = n *10;}}; print n; }'`
-echo RUNNING postinstall.solaris MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" INIT="$INIT" cwd `pwd` release $release
+echo RUNNING postinstall.solaris MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" INIT="$INIT" cwd `pwd`
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 fix () {
 	v=`echo $1 | sed -e 's/[:;].*//'`;
     p=`echo $2 | sed -e 's/:.*//'`; d=`dirname $p`;

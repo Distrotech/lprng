@@ -387,8 +387,6 @@ struct keywords Pc_var_list[] = {
 { "qq", 0,  FLAG_K,  &Use_queuename_DYN,0,0,"=1"},
    /*  print queue control file name */
 { "queue_control_file", 0,  STRING_K,  &Queue_control_file_DYN,0,0,"=control.%P"},
-   /*  print queue database file name */
-{ "queue_db_file", 0,  STRING_K,  &Queue_db_file_DYN,0,0,"=db.%P"},
    /*  print queue lock file name */
 { "queue_lock_file", 0,  STRING_K,  &Queue_lock_file_DYN,0,0,"=%P"},
    /*  print queue status file name */

@@ -5,8 +5,9 @@
 # This is the shell script that does the preremove
 # lpd shutdown.  It is the script from hell
 echo RUNNING preremove.freebsd.sh parms "'$0 $@'"
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 if [ "X$2" = "XDEINSTALL" ] ; then
 	echo "Stopping LPD"
-	kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+	killall -INT lpd
 fi
 exit 0

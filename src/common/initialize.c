@@ -160,6 +160,7 @@ void Setup_configuration()
 {
 	char *s;
 	struct line_list raw;
+	struct line_list order;
 
 	/* Get default configuration file information */
 #ifdef DMALLOC
@@ -178,6 +179,7 @@ void Setup_configuration()
 #endif
 
 	Init_line_list(&raw);
+	Init_line_list(&order);
 	Clear_config();
 
 
@@ -252,18 +254,40 @@ void Setup_configuration()
 		s = Make_pathname( s, User_printcap_DYN );
 		DEBUG2("Setup_configuration: User_printcap '%s'", s );
 		Getprintcap_pathlist( 0, &raw, 0, s );
-		Build_printcap_info( &User_PC_names_line_list, &User_PC_order_line_list,
-			&User_PC_info_line_list, &raw, &Host_IP );
+		Build_printcap_info( &PC_names_line_list, &order,
+			&PC_info_line_list, &raw, &Host_IP );
 		Free_line_list( &raw );
 		if( s ) free(s); s = 0;
+		/* now we append the names from the order list */
+		if( order.count > 0 ){
+			int i;
+			/* append the found ones, remove duplicates */
+			for( i = 0; i < PC_order_line_list.count; ++i ){
+				int j;
+				int found = 0;
+				s = PC_order_line_list.list[i];
+				for( j = 0; !found && j < order.count; ++j ){
+					found = !strcmp(s, order.list[j]);
+				}
+				if( !found ){
+					Add_line_list(&order,s,0,0,0);
+				}
+			}
+			Free_line_list( &PC_order_line_list );
+			for( i = 0; i < order.count; ++i ){
+				s = order.list[i];
+				Add_line_list(&PC_order_line_list,s,0,0,0);
+			}
+		}
+		Free_line_list( &order );
 	}
 	if(DEBUGL3){
 		Dump_line_list("Setup_configuration: PC names", &PC_names_line_list );
 		Dump_line_list("Setup_configuration: PC order", &PC_order_line_list );
 		Dump_line_list("Setup_configuration: PC info", &PC_info_line_list );
-		Dump_line_list("Setup_configuration: User_PC names", &User_PC_names_line_list );
-		Dump_line_list("Setup_configuration: User_PC order", &User_PC_order_line_list );
-		Dump_line_list("Setup_configuration: User_PC info", &User_PC_info_line_list );
+		//Dump_line_list("Setup_configuration: User_PC names", &User_PC_names_line_list );
+		//Dump_line_list("Setup_configuration: User_PC order", &User_PC_order_line_list );
+		//Dump_line_list("Setup_configuration: User_PC info", &User_PC_info_line_list );
 		Dump_line_list("Setup_configuration: Raw Perms", &RawPerm_line_list );
 		Dump_line_list("Setup_configuration: Perms", &Perm_line_list );
 	}

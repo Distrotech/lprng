@@ -93,8 +93,8 @@ EXTERN struct line_list
 	Config_line_list, PC_filters_line_list,
 	PC_names_line_list, PC_order_line_list,
 	PC_info_line_list, PC_entry_line_list, PC_alias_line_list,
-	User_PC_names_line_list, User_PC_order_line_list,
-	User_PC_info_line_list, User_PC_alias_line_list,
+	//User_PC_names_line_list, User_PC_order_line_list,
+	//User_PC_info_line_list, User_PC_alias_line_list,
 	All_line_list, Spool_control, Sort_order,
 	RawPerm_line_list, Perm_line_list, Perm_filters_line_list,
 	Process_list, Tempfiles, Servers_line_list, Printer_list,
@@ -105,8 +105,8 @@ EXTERN struct line_list *Allocs[]
 	 &Config_line_list, &PC_filters_line_list,
 	 &PC_names_line_list, &PC_order_line_list,
 	 &PC_info_line_list, &PC_entry_line_list, &PC_alias_line_list,
-	 &User_PC_names_line_list, &User_PC_order_line_list,
-	 &User_PC_info_line_list, &User_PC_alias_line_list,
+	 //&User_PC_names_line_list, &User_PC_order_line_list,
+	 //&User_PC_info_line_list, &User_PC_alias_line_list,
 	 &All_line_list, &Spool_control, &Sort_order,
 	 &RawPerm_line_list, &Perm_line_list, &Perm_filters_line_list,
 	 &Tempfiles, &Servers_line_list,
@@ -217,25 +217,21 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 void Build_printcap_info( 
 	struct line_list *names, struct line_list *order,
 	struct line_list *list, struct line_list *raw,
-	struct host_information *hostname  );
+	struct host_information *hostname );
 char *Select_pc_info( const char *id,
 	struct line_list *info,
 	struct line_list *aliases,
 	struct line_list *names,
 	struct line_list *order,
 	struct line_list *input,
-	int depth,
-	struct line_list *user_names,
-	struct line_list *user_input );
+	int depth, int wildcard );
 void Find_pc_info( char *name,
 	struct line_list *info,
 	struct line_list *aliases,
 	struct line_list *names,
 	struct line_list *order,
 	struct line_list *input,
-	struct line_list *user_names,
-	struct line_list *user_input,
-	int depth );
+	int depth, int wildcard );
 void Clear_var_list( struct keywords *v, int setv );
 void Set_var_list( struct keywords *keys, struct line_list *values );
 int Check_str_keyword( const char *name, int *value );

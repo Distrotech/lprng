@@ -87,9 +87,12 @@ struct security {
  * while in principle we could segragate these, it is not worth it
  * as the number is relatively small
  *****************************************************************/
+EXTERN int Optind;			/* next argv to process */
+EXTERN int Opterr DEFINE(=1); /* Zero disables errors msgs */
+EXTERN char *Optarg;		/* Pointer to option argument */
+EXTERN char *Name;			/* Name of program */
 
 extern char *Copyright[];	/* Copyright info */
-extern char *Name;			/* Program name */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
 EXTERN int Server_pid;		/* PID of server */
@@ -420,7 +423,6 @@ EXTERN char* Queue_control_file_DYN; /* Queue control file name */
 EXTERN char* Queue_lock_file_DYN; /* Queue lock file name */
 EXTERN char* Queue_status_file_DYN; /* Queue status file name */
 EXTERN char* Queue_unspooler_file_DYN; /* Unspooler PID status file name */
-EXTERN char* Queue_db_file_DYN; /* Queue DB file name */
 EXTERN int Read_write_DYN; /* open the printer for reading and writing */
 EXTERN char* RemoteHost_DYN; /* remote-queue machine (hostname) (with rm) */
 EXTERN char* RemotePrinter_DYN; /* remote-queue printer name (with rp) */

@@ -13,6 +13,7 @@
 #
 
 echo RUNNING postinstall.bsdi MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" INIT="$INIT" cwd `pwd`
+if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
 fix () {
 	v=`echo $1 | sed -e 's/[:;].*//'`;
 	p=`echo $2 | sed -e 's/[:;].*//'`; d=`dirname $p`;

@@ -80,7 +80,7 @@ ${DOC}-Multipart/index.htm: $(DOC).sgml $(DOC).dsl Makefile license.enc
 	cp *.png *.jpg ${DOC}-Multipart
 
 purge:
-	rm -f *.aux *.log *.toc *.fot *.ps *.dvi *.tex figs *.htmp *.fig
+	rm -f *.aux *.log *.toc *.fot *.dvi *.tex figs *.htmp *.fig
 
 
 .PHONY: all clean install ci install.zman update purge
@@ -99,20 +99,21 @@ install:
 		rm -rf ../$$i; mkdir ../$$i; done;
 	cp *.png *.jpg ../HTML/
 	cp ${DOC}.html ../HTML/index.html
-	cp ${DOC}.ps ${DOC}.pdf ../PDF/
-	cp ${DOC}-Multipart/* ../Multipart
+#	cp ${DOC}.ps ../PDF/
+	cp ${DOC}.pdf ../PDF/
+#	cp ${DOC}-Multipart/* ../Multipart
 
 clean:
 	-rm -f *.errs HTML.* *.tex *.log *.aux *.toc *.dvi *.ps *.tex *.fig
-	-rm -f ${DOC}.html index.html *.htm */*.htm *.pdf *.ps
+	-rm -f ${DOC}.html index.html *.htm */*.htm *.pdf *.ps *.bak
 	-rm -rf ${DOC}-Multipart
 	-rm -f x_* */x_*
+	for i in *.pic; do s=`echo $$i | sed 's/\.pic/\.png/'`; rm -f $$s; done
+	for i in *.pic; do s=`echo $$i | sed 's/\.pic/\.eps/'`; rm -f $$s; done
 
-mostlyclean distclean:: clean
-
-realclean: clean purge
+mostlyclean distclean:: clean purge
 	-rm -f genindex.sgml
-	-rm -f *.ps *.dvi *.htm *.html *.pdf
+	-rm -f *.ps *.dvi *.htm *.html *.pdf *.eps
 	
 
 #CI=

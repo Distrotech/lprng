@@ -244,37 +244,6 @@ int main( int argc, char *argv[], char *envp[] )
 		}
 	}
 
-	if(Verbose){
-		MESSAGE("*** Checking for client info ****");
-	}
-	Is_server = 0;
-	Initialize(argc, argv, envp, 'D' );
-	Setup_configuration();
-	Free_line_list(&raw);
-	for( i = Optind; i < argc; ++i ){
-		Getprintcap_pathlist( Require_configfiles_DYN,
-			&raw, &PC_filters_line_list,
-			argv[i] );
-	}
-	Build_printcap_info( &PC_names_line_list, &PC_order_line_list,
-		&PC_info_line_list, &raw, &Host_IP );
-	Free_line_list( &raw );
-	if(Verbose)Show_all_printcap_entries();
-	if( User_specified_printer ){
-		if( DEBUGL1 ) Dump_line_list("checkpc: names", &PC_names_line_list );
-		s = Find_str_value( &PC_names_line_list, User_specified_printer, Value_sep );
-		DEBUG1("checkpc: for CLIENT %s is really %s", User_specified_printer, s );
-		if( s ){
-			Set_DYN(&Printer_DYN,s);
-			Scan_printer();
-		}
-	} else {
-		for( i = 0; i < All_line_list.count; ++i ){
-			Set_DYN(&Printer_DYN,All_line_list.list[i]);
-			Scan_printer();
-		}
-	}
-
     if(DEBUGL3){
 		struct stat statb; int i;
         LOGDEBUG("main: END open fd's");
@@ -482,7 +451,6 @@ void Scan_printer(void)
 	 */
 	if( Fix ){
 		if( Lpq_status_file_DYN ) unlink(Lpq_status_file_DYN );
-		if( Queue_db_file_DYN ) unlink(Queue_db_file_DYN );
 	}
 	Free_line_list( &Sort_order );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue before maxfd %d", fdx); close(fdx); }

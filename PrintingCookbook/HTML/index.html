@@ -372,8 +372,8 @@
           <dt>1-8. <a href="#FG8">Using <b class=
           "APPLICATION">checkpc</b></a></dt>
 
-          <dt>1-9. <a href="#FG9">Using <tt class=
-          "FILENAME">/etc/printcap</tt> -f</a></dt>
+          <dt>1-9. <a href="#FG9">Using <b class=
+          "APPLICATION">checkpc</b> -f</a></dt>
 
           <dt>2-1. <a href="#AEN184">Basic Printcap Entry</a></dt>
 
@@ -689,7 +689,8 @@
           <dt>10-1. <a href="#AEN1359">Using <tt class=
           "LITERAL">:bk</tt> (Berkeley Kompatible) Flag</a></dt>
 
-          <dt>11-1. <a href="#AEN1368"></a></dt>
+          <dt>11-1. <a href="#AEN1368">Templates in
+          Printcaps</a></dt>
 
           <dt>11-2. <a href="#AEN1373">Using <b class=
           "APPLICATION">lpc</b> client all</a></dt>
@@ -1137,8 +1138,7 @@
           <div class="FIGURE">
             <a name="FG9"></a>
 
-            <p><b>Figure 1-9. Using <tt class=
-            "FILENAME">/etc/printcap</tt> -f</b></p>
+            <p><b>Figure 1-9. Using checkpc -f</b></p>
 <pre class="SCREEN">
     h110: {1} % checkpc
     Warning -  bad directory - /var/spool/lpd/lp
@@ -2047,8 +2047,8 @@
           Ports, see <a href="http://www.fapo.com/1284int.htm"
           target="_top">http://www.fapo.com/1284int.htm</a> for a
           nice introduction, and the IEEE1394 Trade Association
-          Home Page <a href="http://www.1394.org/" target=
-          "_top">http://www.1394.com/</a> for pointers to other
+          Home Page <a href="http://www.1394ta.org/" target=
+          "_top">http://www.1394ta.com/</a> for pointers to other
           information.</p>
 
           <p>The good news is that if your printer is IEEE1284
@@ -5329,7 +5329,7 @@ target=
           <div class="FIGURE">
             <a name="AEN1368"></a>
 
-            <p><b>Figure 11-1.</b></p>
+            <p><b>Figure 11-1. Templates in Printcaps</b></p>
 <pre class="SCREEN">
     .common
       :sh:sd=/var/spool/lpd/%P:force_localhost
