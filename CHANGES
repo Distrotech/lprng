@@ -1,3 +1,8 @@
+Version LPRng-3.8.5 - Tue Jan 22 15:58:46 PST 2002
+
+  Added a minor fix to lpq so that it will check all queues.
+   (Courtesy of Jim Trocki <trockij@transmeta.com>)
+
 Version LPRng-3.8.4 - Thu Dec 13 08:25:17 PST 2001
 
    ARGH! ARGH!  screwed up lpq -a by forgetting to

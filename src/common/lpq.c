@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.37 2001/12/22 01:14:08 papowell Exp $";
+"$Id: lpq.c,v 1.2 2002/01/23 01:01:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -184,7 +184,6 @@ int main(int argc, char *argv[], char *envp[])
 		} else {
 			/* set up configuration */
 			Get_printer();
-			Fix_Rm_Rp_info(0,0);
 			Show_status(argv);
 		}
 		DEBUG1("lpq: done");
@@ -209,6 +208,8 @@ void Show_status(char **argv)
 	char msg[LINEBUFFER];
 
 	DEBUG1("Show_status: start");
+
+	Fix_Rm_Rp_info(0,0);
 
 	if( ISNULL(RemotePrinter_DYN) ){
 		SNPRINTF( msg, sizeof(msg))

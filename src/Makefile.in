@@ -266,9 +266,9 @@ lpc: $(LPC_OBJS) liblpr.la
 	$(LINK) ${LPC_OBJS} liblpr.la $(LIBS)
 checkpc: $(CHECKPC_OBJS) liblpr.la
 	$(LINK) ${CHECKPC_OBJS} liblpr.la $(LIBS)
-lpf: $(LPF_OBJS)
+lpf: $(LPF_OBJS) liblpr.la
 	$(LINK) ${LPF_OBJS} $(LIBS)
-lpbanner: $(LPBANNER_OBJS)
+lpbanner: $(LPBANNER_OBJS) liblpr.la
 	$(LINK) ${LPBANNER_OBJS} $(LIBS)
 monitor: $(MONITOR_OBJS) liblpr.la
 	$(LINK) ${MONITOR_OBJS} liblpr.la $(LIBS)
@@ -292,13 +292,14 @@ lp: lpr
 # lpd.conf
 
 ./lpd.conf: Makefile vars.c
-	rm -f $@
-	echo "# lpd.conf" >$@.tmp
-	echo "# VERSION=$(VERSION)" >>$@.tmp
+	set -e; \
+	rm -f $@ ; \
+	echo "# lpd.conf" >/tmp/$@.$$$$ ; \
+	echo "# VERSION=$(VERSION)" >>/tmp/$@.$$$$ ; \
 	$(CPP) $(CFLAGS) -C ${SRC}/common/vars.c \
-	 | /bin/sh ../UTILS/make_lpd_conf >>$@.tmp
-	mv $@.tmp $@
-	chmod 644 $@
+	 | /bin/sh ${SRC}/../UTILS/make_lpd_conf >>/tmp/$@.$$$$ ; \
+	chmod 644 /tmp/$@.$$$$ ; \
+	cp /tmp/$@.$$$$ $@ ; rm /tmp/$@.$$$$
 
 ###########################################################################
 #

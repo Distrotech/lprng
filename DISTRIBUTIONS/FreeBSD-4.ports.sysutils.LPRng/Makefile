@@ -6,7 +6,7 @@
 #
 
 PORTNAME=LPRng
-PORTVERSION=3.8.4
+PORTVERSION=3.8.5
 CATEGORIES=	 sysutils print
 MASTER_SITES=	ftp://ftp.lprng.com/pub/%SUBDIR%/ \
 	ftp://ftp.cise.ufl.edu/pub/mirrors/%SUBDIR%/ \
