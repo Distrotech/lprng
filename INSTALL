@@ -38,24 +38,25 @@ The "STANDARD configuration" is the most common configuration for UNIX/LINUX
      (as root):
        make install
        checkpc -f
+   Note that the existing LPD server must be shut down and the LPRng lpd
+   server started.
 
 CAVEATS and WARNINGS:
 
     The LPRng software requires an ANSI C compiler and a make utility that is
     compatible with Gnu Make (verson 3.73 or later) or FreeBSD 4.2 or later.
     LPRng is compiled and tested using GCC and Gnu Make.  It uses libtool
-    to create a shared library on systems where this is supported.
+    to create a shared library on systems where this is supported.  Due to
+	security concerns with dynamic or shared libraries,  LPRng by default is
+    compiled as statically linked executables.  Before using dynamic or
+    shared libraries,  please check on the security implications of doing so
+    for SETUID ROOT or executables running as ROOT.
 
 INCLUDE FILES AND LIBRARIES 
 
 If you are using GETOPT or Kerberos you may need to extend the search
-paths for include files and libraries as shown below:
-
-    --with-ldopts="-L/usr/local/lib" \
-     --with-cppopts="-I/usr/local/include"
-  OR (for example)
-    --with-ldopts="-L/usr/local/lib -L/usr/lib/krb5" \
-     --with-cppopts="-I/usr/local/include -I/usr/include/krb5"
+paths for include files and libraries.  See the STANDARD_configuration
+and KERBEROS_configuration files for examples.
 
 Solaris Users:
 
@@ -66,14 +67,14 @@ Solaris Users:
    The LPRng code has NOT been tested with the Sun Microsystems compilers,
    and NOT been tested with 64 bit support enabled.
 
-   Your PATH environment variable MUST repeat MUST have /usr/local/bin
-   FIRST followed by /usr/ccs/bin:
+   During compilation and installation, the PATH environment variable
+   MUST have /usr/local/bin FIRST followed by /usr/ccs/bin:
 
      PATH=/usr/local/bin:/usr/ccs/bin:$PATH
 
    If you have ANY problems with compilation,  and you are NOT using a
    'clean' GCC installation,  please install GCC from a package (see
-   http://www.sunfreeware.com) or recompile gcc and reinstall it.
+   http://www.sunfreeware.com) or remove gcc and reinstall it.
    Make sure that the include files are correct for your version
    of Solaris.  In fact, I recommend that you do the compilation on a
    'clean' machine that has nothing but a 'virgin' Solaris Install +
@@ -82,12 +83,13 @@ Solaris Users:
      You have been warned.
 
 HPUX Users:
+
     See the following site for precompiled GCC and other tools:
          http://hpux.cae.wisc.edu/
 
-   I STRONGLY recommend installing GCC and using GCC,  especially
-   on HPUX 9.X and 10.X.  Make sure that your include files are
-   the correct ones for your particular OS.
+   I STRONGLY recommend installing GCC and using GCC.  Make sure
+   that your include files are the correct ones for your particular
+   OS.
 
    If you use the native or HP provided C compiler,  you will need to
    add some additional flags to allow ANSI C compatibility.  The
@@ -116,10 +118,10 @@ SYSTEM STARTUP SCRIPTS
 The software install procedures will attempt to create and install
 a startup script for the following systems:
 
-FreeBSD: /etc/rc.conf
+FreeBSD: /usr/local/etc/rc/lpd.sh, /etc/rc.conf
    The installation procedures will stop the LPD print spooler,
-   update the /etc/rc.conf file,  and restart the LPD print spooler.
-
+   update the lpd.sh and /etc/rc.conf file,  and restart the LPD print spooler.
+  
 RedHat Linux: RedHat /etc/init.d/lprng
    The chkconfig utility will be used to set up LPRng
    to run at level 345.
@@ -184,10 +186,23 @@ CONFIGURATION
      ${mandir} is usually ${prefix}/man     (/usr/local/man)
 
   CONFIGURATION FILES:
-     We install a sample lpd.conf, lpd.perms, and printcap in
-     ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
-     and printcap.sample;  we make copies of the
-     sample files to lpd.conf, lpd.perms and printcap respectively.
+
+     All of the LPRng configuration files but printcap files go in
+     ${sysconfdir}/lpd/, usually /etc/lpd/.  The printcap file,
+     for historical and backwards compatibility reasons,
+     is is in ${sysconfdir}/printcap, i.e. - /etc/printcap.
+     We install a sample lpd.conf, lpd.perms, and printcap files
+     and do not overwrite existing lpd.conf, lpd.perms and printcap files.
+     
+     Default 'configure' locations:
+         lpd.conf:   /usr/local/etc/lpd/lpd.conf  (/usr/local/etc/lpd/lpd.conf.sample)
+         lpd.perms:  /usr/local/etc/lpd/lpd.perms (/usr/local/etc/lpd/lpd.perms.sample)
+         printcap:   /usr/local/etc/printcap (/usr/local/etc/printcap.sample)
+
+     Standard UNIX Configuration:
+         lpd.conf:   /etc/lpd/lpd.conf  (/etc/lpd/lpd.conf.sample)
+         lpd.perms:  /etc/lpd/lpd.perms (/etc/lpd/lpd.perms.sample)
+         printcap:   /etc/printcap (/etc/printcap.sample)
 
   EXECUTABLES AND SHARED LIBRARIES:
          (* indicates SETUID root permissions)
@@ -198,20 +213,26 @@ CONFIGURATION
      ${sysconfdir}/ lpd.conf, lpd.perms, printcap
      ${mandir}/ man pages
 
-     i.e. - /usr/local/bin/{lpr, lprm, ... }
-            /usr/local/sbin/{lpd, checkpc, lpc ... }
-            /usr/local/libexec/filters/{lpf, banner, etc }
+     Default 'configure' locations:
+		/usr/local/bin/{lpr, lprm, ... }
+		/usr/local/sbin/{lpd, checkpc, lpc ... }
+		/usr/local/libexec/filters/{lpf, banner, etc }
 
-  STANDARD OR HISTORICALLY COMPATIBLE FILE LOCATIONS:
+     Standard UNIX Configuration:
+		/usr/local/bin/{lpr, lprm, ... }
+		/usr/local/sbin/{lpd, checkpc, lpc ... }
+		/usr/local/libexec/filters/{lpf, banner, etc }
+
+  STANDARD OR HISTORICAL COMPATIBILITY:
+     See the STANDARD_configuration file.  Basically, this runs
+  configure with:
      ./configure --prefix=/usr --sysconfdir=/etc
+
      i.e. - /etc/printcap, /etc/lpd/lpd.conf, /etc/lpd/lpd.perms
             /usr/bin/{lpr, lprm, ... }
             /usr/sbin/{lpd, checkpc, lpc ... }
             /usr/lib/{liblpr.so, liblpr.a, ... }
             /usr/libexec/filters/{lpf, banner, etc }
-     NOTE: see the STANDARD_configuration file in the LPRng distribution.
-     WARNING: the classic location of lpd.conf and lpd.perms was in
-     /etc; this is now /etc/lpd/.
 
 CONFIGURATION OPTIONS
 

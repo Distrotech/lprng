@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.30 2003/11/14 02:32:56 papowell Exp $
+ * $Id: user_auth.c,v 1.31 2003/12/13 00:11:47 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -1043,8 +1043,8 @@ int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int 
 			DEBUG1("Pgp_get_pgppassfd: PGPPASS '%s'", s );
 			*pgppass = s;
 		} else if( (s = getenv( "PGPPASSFD" )) ){
-			t = 0;
 			char buffer[128];
+			t = 0;
 			pgppassfd = strtol(s,&t,10);
 			if( pgppassfd <= 0 || !t || *t || fstat(pgppassfd, &statb)  ){
 				Errorcode = JABORT;

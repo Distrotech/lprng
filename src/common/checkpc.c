@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.61 2003/11/14 02:32:53 papowell Exp $";
+"$Id: checkpc.c,v 1.62 2003/12/13 00:11:45 papowell Exp $";
 
 
 
@@ -140,7 +140,11 @@ int main( int argc, char *argv[], char *envp[] )
 		&PC_info_line_list, &raw, &Host_IP );
 	Free_line_list( &raw );
 
+#if defined (__CYGWIN__)
+	if( Fix && (geteuid() != ROOTUID && getuid() != ROOTUID) ){
+#else
 	if( Fix && geteuid() && getuid() ){
+#endif
 		WARNMSG("Fix option (-f) requires root permissions\n" );
 	}
 

@@ -4,7 +4,7 @@
 #: src/common/lpc.c:276 src/common/lpc.c:441 src/common/lpq.c:530
 msgid ""
 msgstr ""
-"Project-Id-Version: LPRng 3.8.23\n"
+"Project-Id-Version: LPRng 3.8.24\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2003-11-13 08:59-0800\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.61 2003/11/14 02:32:55 papowell Exp $";
+"$Id: sendauth.c,v 1.62 2003/12/13 00:11:46 papowell Exp $";
 
 #include "lp.h"
 #include "user_auth.h"

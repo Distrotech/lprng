@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.61 2003/11/14 02:32:56 papowell Exp $";
+"$Id: vars.c,v 1.62 2003/12/13 00:11:47 papowell Exp $";
 
 
 /* force local definitions */

@@ -1,3 +1,21 @@
+Version LPRng-3.8.24 - Fri Dec 12 15:03:02 PST 2003
+
+  Small bugfixes
+
+	Cygwin patch applied.
+     (From "Luke Bakken"<Luke.Bakken@getronics.com>
+	Comment:
+	 I thought I'd check LPRng to make sure that the latest version still
+	 works OK with Cygwin. Everything seems OK except for the checkpc.c
+	 "root" user warning. Will this patch be OK for that file?
+
+    GCC 3.xx giveth, GCC 2.95 taketh a hard line.
+     Patch for -  t = 0; char buffer[128]; in user_auth.c
+    (From: "Marcus Overhagen" <marcus.overhagen@ims.fhg.de> and
+        Jeff Chua <jchua@fedex.com>)
+
+
+
 Version LPRng-3.8.23 - Wed Nov 12 13:32:02 PST 2003
 
    I did not document that the default locations of the lpd.conf and lpd.perms

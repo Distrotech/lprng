@@ -1,21 +1,23 @@
-bin/lpq
-bin/lpr
-bin/lprm
-bin/lpstat
 lib/liblpr.a
-libexec/filters/lpbanner
+bin/lpq
+bin/lprm
+bin/lpr
+bin/lpstat
+sbin/lpc
+sbin/lpd
 libexec/filters/lpf
+libexec/filters/lpbanner
 libexec/filters/pclbanner
 libexec/filters/psbanner
 sbin/checkpc
-sbin/lpc
-sbin/lpd
 sbin/lprng_certs
 sbin/lprng_index_certs
 etc/lpd/lpd.perms.sample
 etc/lpd/lpd.conf.sample
 etc/lpd/printcap.sample
 etc/lpd/lprng.sh.sample
+bin/lp
+bin/cancel
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng-Reference.html
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LPRng-Reference.pdf
 %%PORTDOCS%%%%DOCSDIR%%/Reference/LISA98.ppt
@@ -56,6 +58,6 @@ etc/lpd/lprng.sh.sample
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/x_smb.png
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/x_write.png
 %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook/Cookbook.pdf
-%%PORTDOCS%%@dirrm %%DOCSDIR%%/Reference
-%%PORTDOCS%%@dirrm %%DOCSDIR%%/PrintingCookbook
-%%PORTDOCS%%@dirrm %%DOCSDIR%%
+@dirrm %%PORTDOCS%%%%DOCSDIR%%/Reference
+@dirrm %%PORTDOCS%%%%DOCSDIR%%/PrintingCookbook
+@dirrm %%PORTDOCS%%%%DOCSDIR%%

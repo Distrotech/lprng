@@ -1,0 +1,21 @@
+***************
+*** 140,146 ****
+                 &PC_info_line_list, &raw, &Host_IP );
+         Free_line_list( &raw );
+  
+         if( Fix && geteuid() && getuid() ){
+                 WARNMSG("Fix option (-f) requires root permissions\n" );
+         }
+  
+--- 140,150 ----
+                 &PC_info_line_list, &raw, &Host_IP );
+         Free_line_list( &raw );
+  
++ #if defined (__CYGWIN__)
++        if( Fix && (geteuid() != ROOTUID && getuid() != ROOTUID) ){
++ #else
+         if( Fix && geteuid() && getuid() ){
++ #endif
+                 WARNMSG("Fix option (-f) requires root permissions\n" );
+         }
+  

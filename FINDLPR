@@ -1,0 +1,26 @@
+#!/bin/sh
+usage(){
+cat <<EOF
+use: $0 [-r]
+   find and optionally remove LPRng executables
+   -r  - remove them
+EOF
+	exit 1;
+}
+r=
+while [ "$1" ] ; do
+    case $1 in
+	-r ) r="yes";;
+	* ) usage ;;
+    esac
+    shift;
+done
+for i in lpr lpq lprm lpc lpd checkit lp cancel;  do
+    v=` which $i ` || continue;
+    echo "$i = $v";
+    if [ -n "$r" ]  ; then
+	if [ -f "$v" ] ; then
+		rm -f "$v";
+	fi
+    fi
+done

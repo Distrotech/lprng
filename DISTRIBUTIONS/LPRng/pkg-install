@@ -33,6 +33,7 @@ MANDIR=/usr/local/man
 #
 echo RUNNING postinstall.freebsd.sh parms "'$0 $@'" MAKEPACKAGE="$MAKEPACKAGE" MAKEINSTALL="$MAKEINSTALL" PREFIX="$PREFIX" INIT="$INIT" cwd `pwd`
 if [ "$VERBOSE_INSTALL" != "" ] ; then set -x; fi
+
 fix () {
     v=`echo $1 | sed -e 's/[:;].*//'`;
     p=`echo $2 | sed -e 's/:.*//'`; d=`dirname $p`;
@@ -66,8 +67,13 @@ fix () {
 }
 
 startserver(){
-	if [ -f /etc/rc.conf ] ; then
-		perl -spi.bak -e 's/lpd_enable/lprng_enable/;' ${DESTDIR}/etc/rc.conf 
+	cnf=${DESTDIR}/etc/rc.conf
+	if [ -f ${cnf} ] ; then
+		if grep lprng ${cnf} ; then
+			: # no changes
+		else
+			echo 'lprng_enable="YES"' >> ${cnf}
+		fi
 	fi
 	echo "Stopping LPD"
 	killall lpd || true

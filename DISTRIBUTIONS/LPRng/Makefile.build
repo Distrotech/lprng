@@ -1,9 +1,9 @@
-#  FreeBSD LPRng Distribution Port Generation
+#  FreeBSD ifhp Distribution Port Generation
 #       Patrick Powell
 #    Tue Jun  6 18:06:07 PDT 2000
 #
 #  The scripts in this directory largely automate the process
-#    of building a LPRng port or package for FreeBSD.  They
+#    of building a ifhp port or package for FreeBSD.  They
 #    a) ${MAKE} the pkg-plist and other files
 #    b) do a slew of regression tests, etc.
 #    c) make a port or package
@@ -28,21 +28,20 @@
 #   removeit: use pkg_delete
 #
 #Step 1: untar the distribution and then go the the FreeBSD support directory:
-#    tar zxvf LPRng-...tgz
-#    cd LPRng*/DI*/FR*
+#    tar zxvf ifhp-...tgz
+#    cd ifhp*/DI*/FR*
 #
 #Step 2: (For the VERY paranoid)
 #   read the rest of this Makefile!
 #	${MAKE} -f Makefile.build checkit
 #     this does all sorts of tests, etc.
-#   The final result is LPRng installed and a port made in this
+#   The final result is ifhp installed and a port made in this
 #   directory.
 #
 #Step 2: (For the blithely accepting)
 #   ${MAKE} -f Makefile.build plist
 #   ${MAKE} port
 #
-
 
 all:
 	@echo "checkit:  you should use this target to (literally) checkit"
@@ -60,8 +59,16 @@ all:
 	@echo "addit:    use pkg_add"
 	@echo "removeit: use pkg_delete"
 
+localupdate:
+	echo ${PORTNAME}
+	set -x; \
+	cd ../../..; f=`ls |grep ${PORTNAME} |grep 'tgz$$' | tail -1`; \
+	echo FILE $$f; \
+	if [ -f $$f ] ; then cp $$f /usr/ports/distfiles; fi
+	${MAKE} makesum
+
 checkit:
-	-v=`pkg_info |grep ${PORTNAME} | sed -e 's/ .*//'`; pkg_delete $$v
+	-v=`pkg_info |grep '^${PORTNAME}' | sed -e 's/ .*//'`; pkg_delete $$v
 	${MAKE} clean makesum
 	${MAKE} -f Makefile.build plist
 	-${MAKE} deinstall
@@ -72,40 +79,47 @@ checkit:
 	pkg_delete ${DISTNAME}
 	${MAKE} -f Makefile.build port
 
+# do the tests in the book.  But we cheat a bit
+packageit:
+	-${RM} -f *.*z
+	-${MAKE} deinstall
+ 	#${MAKE} clean
+	#${MAKE} makesum
+	#make
+	${MAKE} install
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.*z
+	${MAKE} deinstall
+	pkg_add *.*z
+	pkg_delete ${DISTNAME}
+
 plist:
+	cp /dev/null pkg-plist
 	-${MAKE} deinstall
 	${MAKE} all
-	MAN1=`cd work/*/man; ls *1`; MAN5=`cd work/*/man; ls *5`; MAN8=`cd work/*/man; ls *8`; \
-	MAN1=`echo $$MAN1`; MAN5=`echo $$MAN5`; MAN8=`echo $$MAN8`; \
+	MAN1=`cd work/*/man; for i in *1; do if [ -f $$i ] ; then printf " $$i" ; fi; done`; \
+	MAN5=`cd work/*/man; for i in *5; do if [ -f $$i ] ; then printf " $$i "; fi; done`; \
+	MAN8=`cd work/*/man; for i in *8; do if [ -f $$i ] ; then printf " $$i "; fi; done`; \
 	perl -spi \
 		-e "s/^MAN1=.*/MAN1=$$MAN1/;" \
 		-e "s/^MAN5=.*/MAN5=$$MAN5/;" \
 		-e "s/^MAN8=.*/MAN8=$$MAN8/;" \
 		Makefile
 	${MAKE} FORCE_PKG_REGISTER=YES VERBOSE_INSTALL="set -x" reinstall MAKEPACKAGE=YES  2>&1 |tee /tmp/install.log
-	sed -n -e "/\/man\//d" -e "/^\/usr\/bin\/install/s,.* ${PREFIX}/,,p" /tmp/install.log |sort >pkg-plist
-	sed -n -e "/\/usr\/bin\/install.*sample/s,.* ${PREFIX}/,,p" /tmp/install.log >>pkg-plist
+	grep -e '^+* */usr/bin/install' /tmp/install.log >/tmp/install.lines
+	grep -e '^ *SYMLINK' /tmp/install.log >>/tmp/install.lines
+	sed -n -e "/\/man\//d" -e "s,^.*${PREFIX}/,,p" /tmp/install.lines >pkg-plist
 	find ${DOCSDIR} -type f | sed -e 's,${DOCSDIR}/,%%PORTDOCS%%%%DOCSDIR%%/,' >>pkg-plist
-	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/Reference' >>pkg-plist
-	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%/PrintingCookbook' >>pkg-plist
-	echo '%%PORTDOCS%%@dirrm %%DOCSDIR%%' >>pkg-plist
 
-# put the updated postinstall script into the package directory
+	find ${DOCSDIR} -type d | sed -n -e 's,${DOCSDIR}/,@dirrm %%PORTDOCS%%%%DOCSDIR%%/,p' | sort -r |uniq >>pkg-plist
+	echo "@dirrm %%PORTDOCS%%%%DOCSDIR%%" >>pkg-plist
+	# put the updated postinstall script into the package directory
 	if [ -f ${WRKSRC}/preremove ] ; then ${CP} ${WRKSRC}/preremove pkg-deinstall; fi
 	if [ -f ${WRKSRC}/postinstall ] ; then ${CP} ${WRKSRC}/postinstall pkg-install; fi
 
 	sed -e 's!DOCSDIR!${DOCSDIR}!' files-pkg-message >pkg-message
 	-${MAKE} deinstall
-
-# do the tests in the book.  But we cheat a bit
-packageit:
-	-${RM} -f *.*z
-	-${MAKE} deinstall
-	${MAKE} reinstall FORCE_PKG_REGISTER=YES
-	${MAKE} package
-	${MAKE} deinstall
-	pkg_add *.*z
-	pkg_delete ${DISTNAME}
 
 addit:
 	pkg_add ${DISTNAME}.*z
@@ -113,16 +127,17 @@ removeit:
 	pkg_delete ${DISTNAME}
 
 port:
-	-pkg_delete ${DISTNAME}
-	rm -rf *.*z *.bak *.tbz2 /tmp/${PORTNAME}
+	${MAKE} deinstall
+	rm -rf *.*z *.bak /tmp/${PORTNAME}
 	mkdir /tmp/${PORTNAME}
-	-cp Makefile distinfo files-* pkg-* /tmp/${PORTNAME}
+	-cp Makefile distinfo pkg-* /tmp/${PORTNAME}
 	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}
 	cd /tmp; sh ${PORTNAME}.port; cd ${PORTNAME}; ${MAKE} install
 
-cleanit:
-	rm -rf pkg-plist distinfo *.*z work
-	cp /dev/null pkg-plist
+cleanit clean:
+	rm -rf pkg-plist distinfo *.*z work pkg-install pkg-deinstall
+	${MAKE} clean
+
 
 TESTDIR=/tmp/DISTDIR
 test-fetch:

@@ -348,20 +348,21 @@ install: all
 	done;
 
 	${LIBTOOL} --mode=install $(INSTALLCMD) liblpr.la $(DESTDIR)$(libdir)/liblpr.la
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpq ${DESTDIR}${bindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lprm ${DESTDIR}${bindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpr ${DESTDIR}${bindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpstat ${DESTDIR}${bindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpc ${DESTDIR}${sbindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpd ${DESTDIR}${LPD_DIR}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpf ${DESTDIR}${FILTER_DIR}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpbanner ${DESTDIR}${FILTER_DIR}
-	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) pclbanner ${DESTDIR}${FILTER_DIR}
-	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) psbanner ${DESTDIR}${FILTER_DIR}
-	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) checkpc ${DESTDIR}${sbindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_certs ${DESTDIR}${sbindir}
-	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_index_certs ${DESTDIR}${sbindir}
-	cd ${DESTDIR}${bindir}; rm -f lp cancel; ln -s lpr lp; ln -s lprm cancel;
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpq ${DESTDIR}${bindir}/lpq
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lprm ${DESTDIR}${bindir}/lprm
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpr ${DESTDIR}${bindir}/lpr
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpstat ${DESTDIR}${bindir}/lpstat
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpc ${DESTDIR}${sbindir}/lpc
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpd ${DESTDIR}${LPD_DIR}/lpd
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpf ${DESTDIR}${FILTER_DIR}/lpf
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpbanner ${DESTDIR}${FILTER_DIR}/lpbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) pclbanner ${DESTDIR}${FILTER_DIR}/pclbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) psbanner ${DESTDIR}${FILTER_DIR}/psbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) checkpc ${DESTDIR}${sbindir}/checkpc
+	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_certs ${DESTDIR}${sbindir}/lprng_certs
+	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_index_certs ${DESTDIR}${sbindir}/lprng_index_certs
+	cd ${DESTDIR}${bindir}; rm -f lp; ln -s  lpr  lp; echo " SYMLINK `pwd`/lp"
+	cd ${DESTDIR}${bindir}; rm -f cancel; ln -s lprm  cancel; echo " SYMLINK `pwd`/cancel"
 
 uninstall:
 
