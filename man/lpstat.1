@@ -10,6 +10,8 @@ lpstat \- print information about the status of the LP print service
 .SH SYNOPSIS
 .B lpstat
 [
+.B \-A
+] [
 .B \-d
 ] [
 .B \-r
@@ -43,7 +45,7 @@ lpstat \- print information about the status of the LP print service
 .B \-p
 .RI [ list ]
 [
-.B \-D
+.BI \-D
 ] [
 .B \-l
 ] ]
@@ -66,6 +68,9 @@ lpstat \- print information about the status of the LP print service
 .B \-v
 .RI [ list ]
 ]
+[
+.BI \-T debugoptions
+] 
 .RI [ list ]
 .SH DESCRIPTION
 .IX "lpstat command" "" "\fLlpstat\fP \(em print information about the status of the LP print service"
@@ -138,6 +143,9 @@ prints the status of all output requests.
 .SH OPTIONS
 The following options are supported:
 .TP 15
+\f3\-A\f1
+Use authentication specified by the value of the AUTH environment variable.
+.TP 15
 \f3\-a\f1 [\f2list\f1]
 Reports whether print destinations are accepting requests.
 .I list
@@ -203,63 +211,58 @@ Print the status of output requests for users.
 \f3\-v\f1 [\f2list\f1]
 Print the path names of the printer output devices.
 (Ignored.)
+.TP 15
+\f3\-Toptions\f1
+Set debugging options. Use -D= to get lpstat to provide a list.
 .SH ENVIRONMENT
-See
-.BR environ (5)
-for descriptions of the following environment variables that affect the
-execution of
-.BR lpstat :
-.TP 15
-.SB LPDEST
-Determine the spool queue.
-If the
-.SB LPDEST
-environment variable is not set,
-the
-.SB PRINTER
-environment variable will be used.
-The
-.BI \-P \0dest
-option takes precedence over
-.SB LPDEST\s0\f1.
-Results are undefined when
-.B \-P
-is not specified and
-.SB LPDEST
-contains a value that is not a valid device or destination name.
-.TP
-.SB PRINTER
-Determine the output device or destination.
-If the
-.SB LPDEST
-and
-.SB PRINTER
-environment variables are not set, an unspecified output device is used.  The
-.BI \-P \0dest
-option and the
-.SB LPDEST
-environment variable takes precedence over
-.SB PRINTER\s0\f1.
-Results are undefined when
-.B \-P
-is not specified,
-.SB LPDEST
-is unset, and
-.SB PRINTER
-contains a value that is not a valid device or destination name.
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
 .SH "EXIT STATUS"
-The following exit values are returned by
-.BR cancel :
+.PP
+The following exit values are returned:
 .TP 15
-.B 0
+.B "zero (0)"
 Successful completion.
 .TP
-.B >0
+.B "non-zero (!=0)"
 An error occurred.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+${HOME}/.printcap	user printer description file
+/etc/printcap		system printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
 .SH SEE ALSO
 lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

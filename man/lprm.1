@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPRM 1 \*(VE "LPRng"
 .ig
 lprm.1,v 3.39 1998/03/29 18:37:49 papowell Exp
@@ -9,6 +9,9 @@ lprm \- remove jobs from the line printer spooling queue
 .B lprm
 [
 .B \-a
+]
+[
+.B \-A
 ]
 [
 .BI \-D debugopt
@@ -117,16 +120,28 @@ shell glob expansion.
 .sp
 lprm -Pt1 'nobody@system*'
 .SH OPTIONS
+.IP "\fB\-A\fR" 5
+Use authentication specified by the value of the AUTH environment variable.
 .IP "\fB\-a\fR" 5
 Remove files from all spool queues available to the user.
 .IP "\fB\-P\fIprinter\fR" 5
 Specifies printer queue.
-If it is not provided,
-the default printer is the
-value of the PRINTER environment variable,
-or the first printer in the
-.I printcap
-database if it is not defined.
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
 .IP "\fB\-U\fIuser\fR" 5
 Explicitly provide a userid for doing the removal to the LPD server.
 This can be done only by ROOT or userids listed in the
@@ -156,6 +171,33 @@ The
 wildcard defaults to all user jobs,
 not just those submitted by the user.
 This allows administrators to purge a spool queue easily.
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -164,7 +206,8 @@ The following are a commonly used set of default values.
 .nf
 .ta \w'/var/spool/lpd/printcap.<hostname>           'u
 /etc/lpd.conf		LPRng configuration file
-/etc/printcap		printer description file
+${HOME}/.printcap	user printer description file
+/etc/printcap		system printer description file
 /etc/lpd.perms	printer permissions
 /var/spool/printer*		spool directories
 /var/spool/printer*/printer	lock file for queue control
@@ -176,6 +219,7 @@ The following are a commonly used set of default values.
 lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

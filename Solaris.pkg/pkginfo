@@ -1,7 +1,0 @@
-PKG=LPRng
-ARCH=
-VERSION=3.6.1beta40
-NAME=Line Printer Daemon
-CATEGORY=application
-BASEDIR=/
-CLASSES=none

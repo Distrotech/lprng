@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: lpd_logger.h,v 5.1 1999/09/12 21:33:02 papowell Exp papowell $
+ * $Id: lpd_logger.h,v 5.4 2000/11/07 18:14:35 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -25,7 +25,7 @@ char *Get_record( struct file_info *io, int start, int *len );
 int Put_record( struct file_info *io, int start, char *buf );
 void Remove_first_record( struct file_info *io );
 void Add_record( struct file_info *io, char *buf );
-int Dump_queue_status(int fd);
+int Dump_queue_status(int outfd);
 void Logger( struct line_list *args );
 
 #endif

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sserver.c,v 5.1 1999/09/12 21:32:31 papowell Exp papowell $";
+"$Id: sserver.c,v 5.8 2000/10/11 17:07:15 papowell Exp papowell $";
 
 /*
  * 
@@ -34,9 +34,9 @@ void
 usage()
 {   
 	int i;
-	fprintf(stdout, "usage: %s %s\n", progname, msg[0]);
+	FPRINTF(STDOUT, "usage: %s %s\n", progname, msg[0]);
 	for( i = 1; msg[i]; ++i ){
-		fprintf(stdout, "%s\n", msg[i]);
+		FPRINTF(STDOUT, "%s\n", msg[i]);
 	}
 }  
 
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	struct stat statb;
 
 	progname = argv[0];
-	setlinebuf(stdout);
+	setlinebuf(STDOUT);
 
 	/*
 	 * Parse command line arguments
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	if( Kerberos_keytab_DYN == 0 ) Set_DYN(&Kerberos_keytab_DYN, "/etc/lpd.keytab");
 	if( Kerberos_service_DYN == 0 ) Set_DYN(&Kerberos_service_DYN,"lpr");
 	if( port == 0 ){
-		fprintf( stdout, "bad port specified\n" );
+		FPRINTF( STDOUT, "bad port specified\n" );
 		exit(1);
 	}
 	/*
@@ -98,12 +98,13 @@ main(int argc, char *argv[])
 	 */
 
 	remote_principal_krb5( Kerberos_service_DYN, 0, auth, sizeof(auth));
-	fprintf(stdout, "server principal '%s'\n", auth );
+	FPRINTF(STDOUT, "server principal '%s'\n", auth );
 
 	if ((sock = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-		fprintf(stdout, "socket: %s\n", Errormsg(errno));
+		FPRINTF(STDOUT, "socket: %s\n", Errormsg(errno));
 		exit(3);
 	}
+	Max_open(sock);
 	/* Let the socket be reused right away */
 	(void) setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
 			  sizeof(on));
@@ -113,17 +114,17 @@ main(int argc, char *argv[])
 	sin.sin_addr.s_addr = 0;
 	sin.sin_port = htons(port);
 	if (bind(sock, (struct sockaddr *) &sin, sizeof(sin))) {
-		fprintf(stdout, "bind: %s\n", Errormsg(errno));
+		FPRINTF(STDOUT, "bind: %s\n", Errormsg(errno));
 		exit(3);
 	}
 	if (listen(sock, 1) == -1) {
-		fprintf(stdout, "listen: %s", Errormsg(errno));
+		FPRINTF(STDOUT, "listen: %s", Errormsg(errno));
 		exit(3);
 	}
 	while(1){
 		if ((acc = accept(sock, (struct sockaddr *)&peername,
 				&namelen)) == -1){
-			fprintf(stdout, "accept: %s\n", Errormsg(errno));
+			FPRINTF(STDOUT, "accept: %s\n", Errormsg(errno));
 			exit(3);
 		}
 
@@ -132,36 +133,36 @@ main(int argc, char *argv[])
 		client = 0;
 		if( server_krb5_auth( Kerberos_keytab_DYN, Kerberos_service_DYN, acc,
 			&client, err, sizeof(err), file ) ){
-			fprintf( stdout, "server_krb5_auth error '%s'\n", err );
+			FPRINTF( STDOUT, "server_krb5_auth error '%s'\n", err );
 			goto done;
 		}
-		plp_snprintf(buffer,sizeof(buffer),"client '%s'", client );
-		fprintf(stdout,"%s\n",buffer);
+		SNPRINTF(buffer,sizeof(buffer))"client '%s'", client );
+		FPRINTF(STDOUT,"%s\n",buffer);
 		fd = Checkread( file, &statb );
 		DEBUG1( "main: opened for write '%s', fd %d, size %ld",
 			file, fd, (long)(statb.st_size) );
 		if( fd < 0 ){
-			plp_snprintf( err, sizeof(err),
+			SNPRINTF( err, sizeof(err))
 				"file open failed: %s", Errormsg(errno));
 			goto done;      
 		}
-		fprintf(stdout,"RECEVIED:\n");
+		FPRINTF(STDOUT,"RECEVIED:\n");
 		while( (len = read(fd, buffer,sizeof(buffer)-1)) > 0 ){
 			write(1,buffer,len);
 		}
 		close(fd);
 		fd = Checkwrite( file, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 		if( fd < 0 ){
-			plp_snprintf( err, sizeof(err),
+			SNPRINTF( err, sizeof(err))
 				"main: could not open for writing '%s' - '%s'", file,
 					Errormsg(errno) );
 			goto done;
 		}
-		plp_snprintf(buffer,sizeof(buffer),"credentials '%s'\n", client );
+		SNPRINTF(buffer,sizeof(buffer))"credentials '%s'\n", client );
 		Write_fd_str(fd,buffer);
 		close(fd);
 		if( server_krb5_status( acc, err, sizeof(err), file ) ){
-			fprintf( stdout, "server_krb5_status error '%s'\n", err );
+			FPRINTF( STDOUT, "server_krb5_status error '%s'\n", err );
 			goto done;
 		}
  done:
@@ -190,7 +191,7 @@ void setstatus (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}
@@ -198,7 +199,7 @@ void setstatus (va_alist) va_dcl
 	return;
 }
 
-void send_to_logger (struct job *job,const char *header, char *fmt){;}
+void send_to_logger( int sfd, int mfd, struct job *job, const char *header, char *msg ){;}
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
 void setmessage (struct job *job,const char *header, char *fmt,...)
@@ -220,7 +221,7 @@ void setmessage (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}

@@ -42,7 +42,7 @@ ${AWK} '
 				name = substr(name,2);
 			}
 		}
-		type = a[2] + 0;
+		type = a[3] + 0;
 		i = 1;
 		while( i == 1 ) {
 			i = index( type, " " );
@@ -50,8 +50,8 @@ ${AWK} '
 				type = substr(type,2);
 			}
 		}
-		value = a[6];
-		for( i = 7; i <= fields; ++i ){
+		value = a[7];
+		for( i = 8; i <= fields; ++i ){
 			value = value "," a[i];
 		}
 		i = 1;

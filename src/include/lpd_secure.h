@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: lpd_secure.h,v 5.1 1999/09/12 21:33:02 papowell Exp papowell $
+ * $Id: lpd_secure.h,v 5.6 2000/11/07 18:14:36 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -14,11 +14,13 @@
 
 /* PROTOTYPES */
 int Receive_secure( int *sock, char *input );
-int Pgp_receive( int *sock, char *user, char *jobsize, int from_server );
-int Krb5_receive( int *sock, char *authtype, char *user,
-	char *jobsize, int from_server );
-int Check_secure_perms( struct line_list *options, int from_server );
-void Wait_for_child( void *p );
-int Receive_k4auth( int *sock, char *input );
+int Do_secure_work( int use_line_order, char *jobsize, int from_server,
+	char *tempfile, struct line_list *header_info );
+struct security *Fix_receive_auth( char *name, struct line_list *info );
+int Pgp_receive( int *sock, char *user, char *jobsize, int from_server,
+	char *authtype, struct line_list *info,
+	char *error, int errlen, struct line_list *header_info, char *tempfile );
+int Check_secure_perms( struct line_list *options, int from_server,
+	char *error, int errlen );
 
 #endif

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: fileopen.c,v 5.1 1999/09/12 21:32:34 papowell Exp papowell $";
+"$Id: fileopen.c,v 5.8 2000/08/11 15:10:00 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -42,15 +42,17 @@ int Checkread( const char *file, struct stat *statb )
 	/* open the file */
 	DEBUG3("Checkread: file '%s'", file );
 
-	if( (fd = open( file, O_RDONLY|O_NOCTTY, Spool_file_perms_DYN ) )< 0 ){
+	if( (fd = open( file, O_RDONLY|O_NOCTTY, 0 ) )< 0 ){
+		Max_open(fd);
 		status = -1;
 		err = errno;
 		DEBUG3( "Checkread: cannot open '%s', %s", file, Errormsg(err) );
+		memset( statb, 0, sizeof(struct stat) );
 	}
 
     if( status >= 0 && fstat( fd, statb ) < 0 ) {
 		err = errno;
-        logerr(LOG_ERR,
+        LOGERR(LOG_ERR)
 		"Checkread: fstat of '%s' failed, possible security problem", file);
         status = -1;
     }
@@ -63,11 +65,12 @@ int Checkread( const char *file, struct stat *statb )
 		status = -1;
 	}
 
-	if( status < 0 ){
+	if( status < 0 && fd >= 0 ){
 		close( fd );
 		fd = -1;
 	}
-	DEBUG3("Checkread: '%s' fd %d", file, fd );
+
+	DEBUG3("Checkread: '%s' fd %d, size %0.0f", file, fd, (double)(statb->st_size) );
 	errno = err;
 	return( fd );
 }
@@ -110,7 +113,8 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 	}
 	/* turn off umask */
 	oldumask = umask( 0 ); 
-	fd = open( file, options, Spool_file_perms_DYN );
+	fd = open( file, options, Is_server?Spool_file_perms_DYN:0600 );
+	Max_open(fd);
 	err = errno;
 	umask( oldumask );
 	if( fd < 0 ){
@@ -120,7 +124,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 		/* turn off nonblocking */
 		mask = fcntl( fd, F_GETFL, 0 );
 		if( mask == -1 ){
-			logerr(LOG_ERR, "Checkwrite: fcntl F_GETFL of '%s' failed", file);
+			LOGERR(LOG_ERR) "Checkwrite: fcntl F_GETFL of '%s' failed", file);
 			status = -1;
 		} else {
 			DEBUG3( "Checkwrite: F_GETFL value '0x%x', BLOCK 0x%x",
@@ -128,7 +132,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 			mask &= ~NONBLOCK;
 			mask = fcntl( fd, F_SETFL, mask );
 			if( mask == -1 ){
-				logerr(LOG_ERR, "Checkwrite: fcntl F_SETFL of '%s' failed",
+				LOGERR(LOG_ERR) "Checkwrite: fcntl F_SETFL of '%s' failed",
 					file );
 				status = -1;
 			}
@@ -139,7 +143,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 
     if( status >= 0 && fstat( fd, statb ) < 0 ) {
 		err = errno;
-        logerr_die(LOG_ERR, "Checkwrite: fstat of '%s' failed, possible security problem", file);
+        LOGERR_DIE(LOG_ERR) "Checkwrite: fstat of '%s' failed, possible security problem", file);
         status = -1;
     }
 
@@ -153,9 +157,10 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 	if( fd == 0 ){
 		int tfd;
 		tfd = dup(fd);
+		Max_open(tfd);
 		err = errno;
 		if( tfd < 0 ){
-			logerr(LOG_ERR, "Checkwrite: dup of '%s' failed", file);
+			LOGERR(LOG_ERR) "Checkwrite: dup of '%s' failed", file);
 			status = -1;
 		} else {
 			close(fd);
@@ -167,7 +172,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 		fd = -1;
 	}
 	DEBUG2("Checkwrite: file '%s' fd %d, inode 0x%x, perms 0%o",
-		file, fd, statb->st_ino, statb->st_mode );
+		file, fd, (int)(statb->st_ino), (int)(statb->st_mode) );
 	errno = err;
 	return( fd );
 }

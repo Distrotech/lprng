@@ -1,0 +1,233 @@
+# New ports collection makefile for:	LPRng
+# Version required:	3.6.8
+# Date created:		2 Apr 1997
+# Whom:			desmo@bandwidth.org
+#
+# $FreeBSD: ports/sysutils/LPRng/Makefile,v 1.10 1999/09/27 01:50:00 steve Exp $
+#
+#  FreeBSD LPRng Distribution Port Generation
+#       Patrick Powell
+#    Tue Jun  6 18:06:07 PDT 2000
+#
+#  The scripts in this directory largely automate the process
+#    of building a LPRng port or package for FreeBSD.  They
+#    a) ${MAKE} the PLIST and other files
+#    b) do a slew of regression tests, etc.
+#    c) make a port or package
+#
+#  Added targets for package/port/testers:
+#    All REPEAT ALL of these targets have security loopholes and should NOT
+#    be used on a system where other users are active.  You have been
+#    warned.
+#
+#   plist:    this little monster makes the PLIST. It is assumed
+#             that you will do this on a standalone system, so
+#             it is not paranoid about testing for files, etc.
+#             You are warned.
+#   checkit:  you should use this target to (literally) checkit
+#             to ${MAKE} sure the package installs
+#   cleanit:  you should use this target to clean things up.
+#             This is the equivalent of 'distclean'
+#   packageit:  ${MAKE} a package, install it, clean it, abuse it,
+#             and otherwise torture test it.  Used for checking
+#             to ${MAKE} sure scripts work
+#   addit:    use pkg_add
+#   removeit: use pkg_delete
+#   portit:   ${MAKE} a subdirecotory, LPRng, that has all of the files
+#             that you should send off to be a new port.  Do a
+#             diff of them and put the diff in the LPRng.diffs file.
+# Notes and warnings:
+#   $PREFIX does not have quite the same effect as it normally would,
+#   as some of the LPRng files MUST be in fixed locations.
+#   
+#   $DESTDIR allows the 'install' step to put files in an 'unusual'
+#   place.  Note that the same effect is obtained by using:
+#
+#      make all
+#      make PREFIX=/... install
+#
+#   WATCH OUT FOR REBUILDS WHEN YOU USE THIS FORMAT!
+#
+#   Setting INIT=no in the MAKEFILE will cause the install process NOT
+#   to put the standard LPRng startup script in /usr/local/etc/lprng.sh
+#   This makes LPRng a total replacement for Berkeley lpd
+#
+#Step 1: untar the distribution and then go the the FreeBSD support directory:
+#    tar zxvf LPRng-...tgz
+#    cd LPRng*/DI*/FR*
+#
+#Step 2: (For the VERY paranoid)
+#   read the rest of this Makefile!
+#	${MAKE} checkit
+#     this does all sorts of tests, etc.
+#   The final result is LPRng installed and a port made in this
+#   directory.
+#
+#Step 2: (For the blithely accepting)
+#   read the rest of this makefile up to the end of these comments
+#	${MAKE} plist
+#   ${MAKE} install
+#   ${MAKE} package
+#
+#Step 3: (To make diff for the PORTS distribution)
+#   ${MAKE} portit
+#
+# Notes and warnings:
+# 
+
+PORTNAME=LPRng
+PORTVERSION=3.7.1
+CATEGORIES=	    sysutils print
+MASTER_SITES=	ftp://ftp.astart.com/pub/LPRng/LPRng/
+EXTRACT_SUFX=	.tgz
+
+MAINTAINER=	papowell@astart.com
+
+LIB_DEPENDS=	gdbm:${PORTSDIR}/databases/gdbm
+#RUN_DEPENDS=	ifhp:${PORTSDIR}/print/ifhp
+
+HAS_CONFIGURE=	yes
+CONFIGURE_ARGS= \
+	--prefix=${PREFIX} \
+	--sysconfdir=/etc \
+	--with-ldopts="-L/usr/local/lib" \
+	--with-ccopts="-I/usr/local/include" \
+	--with-filterdir=${PREFIX}/libexec/filters \
+	--with-ld_library_path="${PREFIX}/lib:/lib:/usr/lib:/usr/local/lib" \
+	--with-filter_path="${PREFIX}/bin:/bin:/usr/bin:${PREFIX}/sbin:/sbin:/usr/sbin:${PREFIX}/libexec:/usr/libexec:/usr/local/libexec:/usr/sbin"
+	
+
+MAN1=lp.1 lpf.1 lpr.1 lprm.1 psbanner.1 cancel.1 monitor.1 lpstat.1 lpq.1 pclbanner.1 lpbanner.1
+MAN5=printcap.5 lpd.conf.5 lpd.perms.5
+MAN8=checkpc.8 lpc.8 lpd.8
+
+post-install:
+.if !defined(NOPORTSDOCS)
+	${MKDIR} ${PREFIX}/share/doc/${DISTNAME}
+	${CP} ` ls \
+	    ${WRKSRC}/HOWTO/*.txt \
+	    ${WRKSRC}/HOWTO/*.ps \
+	    ${WRKSRC}/HOWTO/*.html \
+	    ${WRKSRC}/HOWTO/*.gif \
+	    ${WRKSRC}/HOWTO/*.jpg \
+	    ${WRKSRC}/HOWTO/*.ppt 2>/dev/null `\
+		${PREFIX}/share/doc/${DISTNAME};
+.endif
+	@${CAT} pkg-message
+
+# Automated PLIST and INSTALL generation
+#   - I wonder why more scripts don't have this, it would make life easier
+plist:
+#
+# First, create a new set of directories where your port can be
+# installed
+#
+	-${RM} -rf pkg-plist /var/tmp/${DISTNAME}
+	${TOUCH} pkg-plist
+	-${RM} -rf /var/tmp/$(DISTNAME)
+	${MKDIR} /var/tmp/$(DISTNAME)/etc
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/bin
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/libexec
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/sbin
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/man/man1
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/man/man5
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/man/man8
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/etc/rc.d
+	${MKDIR} /var/tmp/$(DISTNAME)${PREFIX}/share/doc
+#
+# Store the directory structure in a new file.
+#
+	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type d) >/tmp/OLD-DIRS
+# ${MAKE} the package and copy to the temporary directory to get the list
+
+
+	-${MAKE} deinstall
+	#-${MAKE} clean
+# we install in the DESTDIR subtree -
+	${MAKE} makesum
+	${MAKE} all
+	FORCE_PKG_REGISTER=YES ${MAKE} install NO_MTREE=yes DESTDIR=/var/tmp/$(DISTNAME) MAKEPACKAGE=YES
+	${CP} /dev/null /tmp/PLIST
+	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type f) | \
+	${SED} -e 's/..//' -e '/info.dir/d' -e '/man[0-9]/d' \
+	  -e '/etc.*conf$$/d' -e '/etc.*printcap$$/d' \
+	 >> /tmp/PLIST
+
+	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type f) | \
+	${SED} -n -e 's/\.gz$$//' -e '/man\//s,.*/,,p' > /tmp/MANPAGES
+
+# This is truly evil - we add the man pages by editing the makefile.
+	MAN1=`grep '1$$' /tmp/MANPAGES`; MAN1=`${ECHO} $$MAN1`; ${ECHO} MAN1 "$$MAN1"; \
+	MAN5=`grep '5$$' /tmp/MANPAGES`; MAN5=`${ECHO} $$MAN5`; ${ECHO} MAN5 "$$MAN5"; \
+	MAN8=`grep '8$$' /tmp/MANPAGES`; MAN8=`${ECHO} $$MAN8`; ${ECHO} MAN8 "$$MAN8"; \
+	$(PERL) -spi.bak -e \
+	"s/^MAN1=.*/MAN1=$${MAN1}/; s/^MAN5=.*/MAN5=$${MAN5}/; s/^MAN8=.*/MAN8=$${MAN8}/;" \
+		Makefile
+# get directories
+	(cd /var/tmp/$(DISTNAME)${PREFIX} && find . -type d) \
+	 | comm -13 /tmp/OLD-DIRS - \
+	 | ${SED} -e /filters/d -e s#^..## -e 's#^#@dirrm  #' >> /tmp/PLIST
+# now update the PLIST
+	${CP} /tmp/PLIST pkg-plist
+
+# fix up the MESSAGE
+	${SED} <files-pkg-message \
+	 -e "s|@@DISTNAME@@|${DISTNAME}|g" \
+	 -e "s|@@PREFIX@@|${PREFIX}|g" \
+	 -e "s|@@sbindir@@|${PREFIX}/sbin|g" \
+	 -e "s|@@bindir@@|${PREFIX}/bin|g" \
+		>pkg-message
+
+# put the updated postinstall script into the package directory
+	${CP} ${WRKSRC}/preremove pkg-deinstall
+	${CP} ${WRKSRC}/postinstall pkg-install;
+
+# and now deinstall it so you don't get strange things happening
+	-${RM} -rf /var/tmp/${DISTNAME}
+	${MAKE} deinstall
+	${RM} *.bak
+
+# do the tests in the book.  But we cheat a bit
+packageit:
+	-${RM} -f *.tgz
+	-${MAKE} deinstall
+ 	#${MAKE} clean
+	#${MAKE} makesum
+	#make
+	${MAKE} install
+	${MAKE} package
+	${MAKE} deinstall
+	pkg_add *.tgz
+	${MAKE} deinstall
+	pkg_add *.tgz
+	pkg_delete ${DISTNAME}
+	${MAKE} reinstall
+	${MAKE} package
+	-${MAKE} removeit
+	${MAKE} addit
+
+addit:
+	pkg_add ${DISTNAME}.tgz
+removeit:
+	pkg_delete ${DISTNAME}
+portit:
+	-${RM} -rf LPRng
+	-${MKDIR} LPRng
+	${CP} -r pkg-* files-* README.html Makefile LPRng
+	-diff -crN LPRng /usr/ports/sysutils/LPRng >LPRng.diffs
+
+checkit:
+	${MAKE} cleanit
+	${MAKE} makesum
+	${MAKE} clean all
+	${MAKE} plist
+	-${MAKE} deinstall
+	${MAKE} install deinstall
+	${MAKE} packageit
+	${MAKE} portit
+
+cleanit:
+	-${RM} -rf pkg-plist distinfo *.tgz work LPRng.diffs LPRng
+	-${CP} /dev/null pkg-plist
+
+.include <bsd.port.mk>

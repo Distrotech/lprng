@@ -1,20 +1,20 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 5.3 1999/10/12 18:50:33 papowell Exp papowell $";
+"$Id: lpq.c,v 5.16 2000/11/07 18:14:26 papowell Exp papowell $";
 
 
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
@@ -42,7 +42,7 @@
  *   First Out), in order of priority level.  File names compris-
  *   ing a job may be unavailable (when lpr(1) is used as a  sink
  *   in  a  pipeline)  in  which  case  the  file is indicated as
- *   ``(stdin)''.
+ *   ``(STDIN)''.
  *    -P printer
  *         Specifies a particular printer, otherwise  the  default
  *         line printer is used (or the value of the PRINTER vari-
@@ -102,7 +102,6 @@
 #include "linksupport.h"
 #include "patchlevel.h"
 #include "sendreq.h"
-#include "termclear.h"
 
 /**** ENDINCLUDE ****/
 
@@ -138,6 +137,9 @@ int main(int argc, char *argv[], char *envp[])
 	(void) plp_signal (SIGINT, cleanup_INT);
 	(void) plp_signal (SIGQUIT, cleanup_QUIT);
 	(void) plp_signal (SIGTERM, cleanup_TERM);
+	(void) signal (SIGPIPE, SIG_IGN);
+	(void) signal (SIGCHLD, SIG_DFL);
+
 
 	/*
 	 * set up the user state
@@ -151,14 +153,17 @@ int main(int argc, char *argv[], char *envp[])
 	Status_line_count = 0;
 	Displayformat = REQ_DLONG;
 
-	Initialize(argc, argv, envp);
+	Initialize(argc, argv, envp, 'D' );
 	Setup_configuration();
 	Get_parms(argc, argv );      /* scan input args */
-
-	if( All_printers || (Printer_DYN && safestrcasecmp(Printer_DYN,ALL) == 0 ) ){
-		Get_all_printcap_entries();
-		if(DEBUGL1)Dump_line_list("lpq- All_line_list", &All_line_list );
+	if( Auth && !getenv("AUTH") ){
+		FPRINTF(STDERR,_("authentication requested (-A) and no AUTH environment variable"));
+		usage();
 	}
+
+	if(DEBUGL1)Dump_line_list("lpq- Config", &Config_line_list );
+	Get_all_printcap_entries();
+	if(DEBUGL1)Dump_line_list("lpq- All_line_list", &All_line_list );
 	/* we do the individual printers */
 	if( Displayformat == REQ_DLONG && Longformat && Status_line_count <= 0 ){
 		Status_line_count = (1 << (Longformat-1));
@@ -203,20 +208,24 @@ void Show_status(char **argv)
 	DEBUG1("Show_status: start");
 	/* set up configuration */
 	Get_printer();
-	Fix_Rm_Rp_info();
+	Fix_Rm_Rp_info(0,0);
 
 	if( Displayformat != REQ_DSHORT
 		&& safestrcasecmp(Printer_DYN, RemotePrinter_DYN) ){
-		plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
+		SNPRINTF( msg, sizeof(msg)) _("Printer: %s is %s@%s\n"),
 			Printer_DYN, RemotePrinter_DYN, RemoteHost_DYN );
 		DEBUG1("Show_status: '%s'",msg);
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 	}
 	if( Check_for_rg_group( Logname_DYN ) ){
-		plp_snprintf( msg, sizeof(msg),
-			"Printer: %s - cannot use printer, not in privileged group\n" );
+		SNPRINTF( msg, sizeof(msg))
+			_("Printer: %s - cannot use printer, not in privileged group\n"),
+			Printer_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 		return;
+	}
+	if( Auth ){
+		Set_DYN(&Auth_DYN, getenv("AUTH") );
 	}
 	fd = Send_request( 'Q', Displayformat,
 		&argv[Optind], Connect_timeout_DYN,
@@ -241,7 +250,7 @@ void Show_status(char **argv)
  * int output = output fd
  *  We read the input in blocks,  split up into lines,
  *  and then pass the lines to a lower level routine for processing.
- *  We run the status through the plp_snprintf() routine,  which will
+ *  We run the status through the SNPRINTF() routine,  which will
  *   rip out any unprintable characters.  This will prevent magic escape
  *   string attacks by users putting codes in job names, etc.
  ***************************************************************************/
@@ -250,8 +259,8 @@ int Read_status_info( char *host, int sock,
 	int output, int timeout, int displayformat,
 	int status_line_count )
 {
-	int i, j, len, n, status, count, index_list, same;
-	char buffer[SMALLBUFFER], header[SMALLBUFFER];
+	int n, status, count, line, last_line, same;
+	char header[SMALLBUFFER], buffer[SMALLBUFFER];
 	char *s, *t;
 	struct line_list l;
 	int look_for_pr = 0;
@@ -264,200 +273,160 @@ int Read_status_info( char *host, int sock,
 	DEBUG1("Read_status_info: output %d, timeout %d, dspfmt %d",
 		output, timeout, displayformat );
 	DEBUG1("Read_status_info: status_line_count %d", status_line_count );
-	buffer[0] = 0;
-	do {
-		DEBUG1("Read_status_info: look_for_pr %d, in buffer already '%s'", look_for_pr, buffer );
-		if( DEBUGL2 )Dump_line_list("Read_status_info - starting list", &l );
-		count = strlen(buffer);
-		n = sizeof(buffer)-count-1;
-		status = 1;
-		if( n > 0 ){
-			status = Link_read( host, &sock, timeout,
-				buffer+count, &n );
-			DEBUG1("Read_status_info: Link_read status %d, read %d", status, n );
-		}
-		if( status || n <= 0 ){
-			status = 1;
-			buffer[count] = 0;
-		} else {
-			buffer[count+n] = 0;
-		}
-		DEBUG1("Read_status_info: got '%s'", buffer );
-		/* now we have to split line up */
-		if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT || Rawformat ){
-			if( Write_fd_str( output, buffer ) < 0 ) return(1);
-			buffer[0] = 0;
-			continue;
-		}
-		if( (s = safestrrchr(buffer,'\n')) ){
-			*s++ = 0;
-			/* add the lines */
-			Split(&l,buffer,Line_ends,0,0,0,0,0);
-			memmove(buffer,s,strlen(s)+1);
-		}
-		if( DEBUGL2 )Dump_line_list("Read_status_info - status after splitting", &l );
-		if( displayformat == REQ_DSHORT ){
-			for( i = 0; i < l.count; ++i ){
-				t = l.list[i];
-				if( t && !Find_exists_value(&Printer_list,t,0) ){
-					if( Write_fd_str( output, t ) < 0
-						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-					Add_line_list(&Printer_list,t,0,1,0);
-				}
+
+	/*
+	 * Do not try to be fancy - the overhead is not high unless lots
+	 * of data and then something is wrong.
+	 */
+	if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT ){
+		do{ 
+			if( (n = read( sock, buffer, sizeof(buffer)-1)) ){
+				buffer[n] = 0;
+				if( Write_fd_str( output, buffer ) < 0 ) return(1);
 			}
-			Free_line_list(&l);
-			continue;
-		}
-		if( status ){
-			if( buffer[0] ){
-				Add_line_list(&l,buffer,0,0,0);
-				buffer[0] = 0;
-			}
-			Check_max(&l,1);
-			l.list[l.count++] = 0;
-		}
-		index_list = 0;
- again:
-		DEBUG2("Read_status_info: look_for_pr '%d'", look_for_pr );
-		if( DEBUGL2 )Dump_line_list("Read_status_info - starting, Printer_list",
-			&Printer_list);
-		while( look_for_pr && index_list < l.count ){
-			s = l.list[index_list];
-			if( s == 0 || isspace(cval(s)) || !(t = strstr(s,"Printer:"))
-				|| Find_exists_value(&Printer_list,t,0) ){
-				++index_list;
-			} else {
-				look_for_pr = 0;
+		} while( n > 0 );
+		return 0;
+	}
+
+	Read_fd_and_split( &l, sock, Line_ends, 0, 0, 0, 0, 0 );
+	if(DEBUGL1)Dump_line_list("lpq- status", &l );
+	last_line = -1;
+
+	/* now deal with the short status format */
+	if( displayformat == REQ_DSHORT ){
+		for( line = 0; line < l.count; ++line ){
+			s = l.list[line];
+			if( s && !Find_exists_value(&Printer_list,s,0) ){
+				if( Write_fd_str( output, s ) < 0
+					|| Write_fd_str( output, "\n" ) < 0 ) return(1);
+				Add_line_list(&Printer_list,s,0,1,0);
 			}
 		}
-		while( index_list < l.count && (s = l.list[index_list]) ){
-			DEBUG2("Read_status_info: checking [%d] '%s', total %d", index_list, s, l.count );
-			if( s && !isspace(cval(s)) && (t = strstr(s,"Printer:")) ){
-				if( Find_exists_value(&Printer_list,t,0) ){
-					look_for_pr = 1;
-					goto again;
-				} else {
-					Add_line_list(&Printer_list,t,0,1,0);
-					if( Write_fd_str( output, s ) < 0
-						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-					++index_list;
-					continue;
-				}
-			}
-			if( status_line_count > 0 ){
-				/*
-				 * starting at line_index, we take this as the header.
-				 * then we check to see if there are at least status_line_count there.
-				 * if there are,  we will increment status_line_count until we get to
-				 * the end of the reading (0 string value) or end of list.
-				 */
-				header[0] = 0;
-				strncpy( header, s, sizeof(header)-1);
-				header[sizeof(header)-1] = 0;
-				if( (s = strchr(header,':')) ){
-					*++s = 0;
-				}
-				len = strlen(header);
-				/* find the last status_line_count lines */
-				same = 1;
-				for( i = index_list+1; i < l.count ; ++i ){
-					same = !safestrncmp(l.list[i],header,len);
-					DEBUG2("Read_status_info: header '%s', len %d, to '%s', same %d",
-						header, len, l.list[i], same );
-					if( !same ){
-						break;
-					}
-				}
-				/* if they are all the same,  then we save for next pass */
-				/* we print the i - status_line count to i - 1 lines */
-				j = i - status_line_count;
-				if( index_list < j ) index_list = j;
-				DEBUG2("Read_status_info: header '%s', index_list %d, last %d, same %d",
-					header, index_list, i, same );
-				if( same ) break;
-				while( index_list < i ){
-					DEBUG2("Read_status_info: writing [%d] '%s'",
-						index_list, l.list[index_list]);
-					if( Write_fd_str( output, l.list[index_list] ) < 0
-						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-					++index_list;
-				}
+		return(0);
+	}
+	
+	same = 0;
+	header[0] = 0;
+	last_line = -1;
+	look_for_pr = 1;
+	for( line = 0; line < l.count; ){
+		/* we start by looking at the first line and seeing if it is
+		 * for a printer that we have already found
+		 */
+		while( look_for_pr && line < l.count ){
+			s = l.list[line];
+			if( s == 0 || isspace(cval(s))
+				|| !(strstr(s,"Printer:") || strstr(s,_("Printer:")) )
+				|| Find_exists_value(&Printer_list,s,0) ){
+				;
 			} else {
 				if( Write_fd_str( output, s ) < 0
 					|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-				++index_list;
+				look_for_pr = 0;
+				Add_line_list(&Printer_list,s,0,1,0);
+				DEBUG1("Read_status_info: pr [%d] '%s'", line, s );
+			}
+			++line;
+		}
+		header[0] = 0;
+		last_line = -1;
+		while( !look_for_pr && line < l.count ){
+			s = l.list[line];
+			DEBUG1("Read_status_info: last_line %d, header '%s', checking [%d] '%s'",
+				last_line, header, line, s );
+			/* find up to the first colon */
+			if( s == 0 ){
+				++line;
+				continue;
+			}
+			if( !Rawformat ){
+				if( (t = safestrchr(s,':')) ){
+					*t = 0;
+				}
+				same = 1;
+				if( last_line == -1 ){
+					last_line = line;
+					safestrncpy( header, s );
+					if( t ) *t = ':';
+					++line;
+					continue;
+				}
+				if( (same = isspace(cval(s))) ){
+					same = !safestrcmp( header, s );
+				}
+				if( t ) *t = ':';
+				if( same ){
+					++line;
+					continue;
+				}
+				DEBUG1("Read_status_info: header '%s', same %d", header, same );
+				n = line - status_line_count;
+				if( n < last_line ) n = last_line; 
+				for( ; n < line; ++n ){
+					t = l.list[n];
+					if( Write_fd_str( output, t ) < 0
+						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
+				}
+				if( !isspace(cval(s)) &&
+					(strstr(s,"Printer:") || strstr(s,_("Printer:")) ) ){
+					look_for_pr = 1;
+				}
+				header[0] = 0;
+				last_line = -1;
+			} else {
+				if( !isspace(cval(s)) &&
+					(strstr(s,"Printer:") || strstr(s,_("Printer:")) ) ){
+					look_for_pr = 1;
+				} else {
+					if( Write_fd_str( output, s ) < 0
+						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
+					++line;
+				}
 			}
 		}
-		DEBUG2("Read_status_info: at end index_list %d, count %d", index_list, l.count );
-		for( i = 0; i < l.count && i < index_list; ++i ){
-			if( l.list[i] ) free( l.list[i] ); l.list[i] = 0;
+	}
+	DEBUG1("Read_status_info: after checks look_for_pr %d, line %d, last_line %d",
+		look_for_pr, line, last_line);
+	if( !look_for_pr ){
+		n = l.count - status_line_count;
+		if( n < last_line ) n = last_line;
+		for( ; n < l.count; ++n ){
+			s = l.list[n];
+			if( Write_fd_str( output, s ) < 0
+				|| Write_fd_str( output, "\n" ) < 0 ) return(1);
 		}
-		for( i = 0; index_list < l.count ; ++i, ++index_list ){
-			l.list[i] = l.list[index_list];
-		}
-		l.count = i;
-	} while( status == 0 );
+	}
+
+	Free_line_list(&l);
 	Free_line_list(&l);
 	DEBUG1("Read_status_info: done" );
 	return(0);
 }
 
-/* VARARGS2 */
-#ifdef HAVE_STDARGS
- void setstatus (struct job *job,char *fmt,...)
-#else
- void setstatus (va_alist) va_dcl
-#endif
+void Term_clear()
 {
-#ifndef HAVE_STDARGS
-    struct job *job;
-    char *fmt;
-#endif
-	char msg[LARGEBUFFER];
-    VA_LOCAL_DECL
-
-    VA_START (fmt);
-    VA_SHIFT (job, struct job * );
-    VA_SHIFT (fmt, char *);
-
-	msg[0] = 0;
-	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
-		strcat( msg,"\n" );
-		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
+#if defined(CLEAR) 
+	int pid, n;
+	plp_status_t procstatus;
+	if( (pid = dofork(0)) == 0 ){
+		setuid( OriginalRUID );
+		close_on_exec(3);
+		execl(CLEAR,0);
+		exit(1);
+	} else if( pid < 0 ){
+		LOGERR_DIE(LOG_ERR) _("fork() failed") );
 	}
-	VA_END;
-	return;
-}
-
- void send_to_logger (int sfd, int mfd, struct job *job,const char *header, char *fmt){;}
-/* VARARGS2 */
-#ifdef HAVE_STDARGS
- void setmessage (struct job *job,const char *header, char *fmt,...)
+	while( (n = plp_waitpid(pid,&procstatus,0)) != pid ){
+		int err = errno;
+		DEBUG1("Filterprintcap: waitpid(%d) returned %d, err '%s'",
+			pid, n, Errormsg(err) );
+		if( err == EINTR ) continue; 
+		LOGERR(LOG_ERR) _("Term_clear: waitpid(%d) failed"), pid);
+		exit(1);
+	}
 #else
- void setmessage (va_alist) va_dcl
+	Write_fd_str(1,"\014");
 #endif
-{
-#ifndef HAVE_STDARGS
-    struct job *job;
-    char *fmt, *header;
-#endif
-	char msg[LARGEBUFFER];
-    VA_LOCAL_DECL
-
-    VA_START (fmt);
-    VA_SHIFT (job, struct job * );
-    VA_SHIFT (header, char * );
-    VA_SHIFT (fmt, char *);
-
-	msg[0] = 0;
-	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
-		strcat( msg,"\n" );
-		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
-	}
-	VA_END;
-	return;
 }
 
 /***************************************************************************
@@ -469,12 +438,12 @@ int Read_status_info( char *host, int sock,
  extern char *next_opt;
 
  char LPQ_optstr[]    /* LPQ options */
- = "D:P:VacLn:lst:vU:" ;
+ = "AD:P:VacLn:lst:vU:" ;
 
 void Get_parms(int argc, char *argv[] )
 {
 	int option;
-	char *name;
+	char *name, *s, *t;
 
 	if( argv[0] && (name = safestrrchr( argv[0], '/' )) ) {
 		++name;
@@ -483,12 +452,13 @@ void Get_parms(int argc, char *argv[] )
 	}
 	/* check to see if we simulate (poorly) the LP options */
 	if( name && safestrcmp( name, "lpstat" ) == 0 ){
-		fprintf( stderr,"lpq:  please use the LPRng lpstat program\n");
+		FPRINTF( STDERR,_("lpq:  please use the LPRng lpstat program\n"));
 		exit(1);
 	} else {
 		/* scan the input arguments, setting up values */
 		while ((option = Getopt (argc, argv, LPQ_optstr )) != EOF) {
 			switch (option) {
+			case 'A': Auth = 1; break;
 			case 'D':
 				Parse_debug(Optarg,1);
 				break;
@@ -496,7 +466,7 @@ void Get_parms(int argc, char *argv[] )
 				Set_DYN(&Printer_DYN,Optarg);
 				break;
 			case 'V': ++Verbose; break;
-			case 'a': Set_DYN(&Printer_DYN,"all"); ++All_printers; break;
+			case 'a': Set_DYN(&Printer_DYN,ALL); All_printers = 1; break;
 			case 'c': Clear_scr = 1; break;
 			case 'l': ++Longformat; break;
 			case 'n': Status_line_count = atoi( Optarg ); break;
@@ -515,42 +485,69 @@ void Get_parms(int argc, char *argv[] )
 		}
 	}
 	if( Verbose ) {
-		fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
-		if( Verbose > 1 ) Printlist( Copyright, stderr );
+		FPRINTF( STDOUT, "%s\n", Version );
+		if( Verbose > 1 ){
+			if( (s = getenv("LANG")) ){
+				FPRINTF( STDOUT, _("LANG environment variable '%s'\n"), s );
+				t = _("");
+				if( t && *t ){
+					FPRINTF( STDOUT, _("gettext translation information '%s'\n"), t );
+				} else {
+					FPRINTF( STDOUT, "%s", _("No translation available\n"));
+				}
+			} else {
+				FPRINTF( STDOUT, "LANG environment variable not set\n" );
+			}
+			Printlist( Copyright, 2 );
+		}
 	}
 }
 
- char *lpq_msg = 
-"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n\
-  -a           - all printers\n\
-  -c           - clear screen before update\n\
-  -l           - increase (lengthen) detailed status information\n\
-                 additional l flags add more detail.\n\
-  -L           - maximum detailed status information\n\
-  -n linecount - linecount lines of detailed status information\n\
-  -Ddebuglevel - debug level\n\
-  -Pprinter    - specify printer\n\
-  -s           - short (summary) format\n\
-  -tsleeptime  - sleeptime between updates\n\
-  -V           - print version information\n";
+ char *lpq_msg[] = {
+N_("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"),
+N_("  -A           - use authentication specified by AUTH environment variable\n"),
+N_("  -a           - all printers\n"),
+N_("  -c           - clear screen before update\n"),
+N_("  -l           - increase (lengthen) detailed status information\n"),
+N_("                 additional l flags add more detail.\n"),
+N_("  -L           - maximum detailed status information\n"),
+N_("  -n linecount - linecount lines of detailed status information\n"),
+N_("  -Ddebuglevel - debug level\n"),
+N_("  -Pprinter    - specify printer\n"),
+N_("  -s           - short (summary) format\n"),
+N_("  -tsleeptime  - sleeptime between updates\n"),
+N_("  -V           - print version information\n"),
+0 };
 
 void usage(void)
 {
-	fprintf( stderr, lpq_msg, Name );
+	char *s;
+	int i;
+	for( i = 0; (s = lpq_msg[i]); ++i ){
+		if( i == 0 ){
+			FPRINTF( STDERR, _(s), Name );
+		} else {
+			FPRINTF( STDERR, "%s", _(s) );
+		}
+	}
 	exit(1);
 }
 
- int Start_worker( struct line_list *args, int fd )
-{
-	return(1);
-}
+ void Dispatch_input(int *talk, char *input ){}
+/*
+ * Calls[] = list of dispatch functions 
+ */
+
+ struct call_list Calls[] = {
+	{0,0}
+};
 
 #if 0
 
 #include "permission.h"
 #include "lpd.h"
 #include "lpd_status.h"
- int Send_request(
+/* int Send_request( */
 	int class,					/* 'Q'= LPQ, 'C'= LPC, M = lprm */
 	int format,					/* X for option */
 	char **options,				/* options to send */
@@ -565,10 +562,10 @@ void usage(void)
 
 	cmd[0] = format;
 	cmd[1] = 0;
-	plp_snprintf(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN);
+	SNPRINTF(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN);
 	for( i = 0; options[i]; ++i ){
 		n = strlen(cmd);
-		plp_snprintf(cmd+n,sizeof(cmd)-n," %s",options[i] );
+		SNPRINTF(cmd+n,sizeof(cmd)-n," %s",options[i] );
 	}
 	Perm_check.remoteuser = "papowell";
 	Perm_check.user = "papowell";
@@ -576,5 +573,5 @@ void usage(void)
 	Job_status(&socket,cmd);
 	return(-1);
 }
-
+*/
 #endif

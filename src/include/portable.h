@@ -1,21 +1,16 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 5.3 1999/10/09 20:49:32 papowell Exp papowell $
+ * $Id: portable.h,v 5.16 2000/10/11 17:07:40 papowell Exp papowell $
  ***************************************************************************/
 
+#ifndef _PLP_PORTABLE_H
+#define _PLP_PORTABLE_H 1
 
 /***************************************************************************
- * LPRng - An Extended Print Spooler System
- *
- * Copyright 1988-1997, Patrick Powell, San Diego, CA
- *     papowell@sdsu.edu
- * See LICENSE for conditions of use.
- *
- ***************************************************************************
  * MODULE: portable.h
  * PURPOSE:
  * The configure program generates config.h,  which defines various
@@ -35,12 +30,10 @@
  * portable.h,v 3.14 1998/03/24 02:43:22 papowell Exp
  **************************************************************************/
 
-#ifndef _PLP_PORTABLE_H
-#define _PLP_PORTABLE_H 1
-
 #if !defined(EXTERN)
 #define EXTERN extern
 #define DEFINE(X) 
+#undef DEFS
 #endif
 
 #ifndef __STDC__
@@ -73,7 +66,7 @@ LPRng requires ANSI Standard C compiler
  * This appears to be historical.
  *************************************************************************/
 #ifdef apollo
-# define IS_APOLLO
+# define IS_APOLLO OSVERSION
 /* #undef __STDC__ */
 /* # define CONFLICTING_PROTOS */
 #endif
@@ -85,7 +78,7 @@ LPRng requires ANSI Standard C compiler
  * Take a chance on using the standard calls
  *************************************************************************/
 #ifdef ultrix
-# define IS_ULTRIX
+# define IS_ULTRIX OSVERSION
 #endif
 
 
@@ -93,7 +86,7 @@ LPRng requires ANSI Standard C compiler
  * AIX.
  *************************************************************************/
 #ifdef _AIX32 
-# define IS_AIX32
+# define IS_AIX32 OSVERSION
 #endif
 
 /*************************************************************************
@@ -123,36 +116,36 @@ LPRng requires ANSI Standard C compiler
 
 /*************************************************************************/
 #if defined(NeXT)
-# define IS_NEXT
+# define IS_NEXT OSVERSION
 # define __STRICT_BSD__
 #endif
 
 /*************************************************************************/
 #if defined(__sgi) && defined(_SYSTYPE_SVR4)
-# define IS_IRIX5
+# define IS_IRIX5 OSVERSION
 #endif
 
 /*************************************************************************/
 #if defined(__sgi) && defined(_SYSTYPE_SYSV)
-#define IS_IRIX4
+#define IS_IRIX4 OSVERSION
 #endif
 
 /*************************************************************************/
 #if defined(__linux__) || defined (__linux) || defined (LINUX)
-# define IS_LINUX
+# define IS_LINUX OSVERSION
 #endif
 
 /*************************************************************************/
 
 #if defined(__convex__) /* Convex OS 11.0 - from w_stef */
-# define IS_CONVEX
+# define IS_CONVEX OSVERSION
 # define LPASS8 (L004000>>16)
 #endif
 
 /*************************************************************************/
 
 #ifdef _AUX_SOURCE
-# define IS_AUX
+# define IS_AUX OSVERSION
 # define _POSIX_SOURCE
 
 # undef SETPROCTITLE
@@ -162,7 +155,7 @@ LPRng requires ANSI Standard C compiler
 /*************************************************************************/
 
 #if defined(SNI) && defined(sinix)
-# define IS_SINIX
+# define IS_SINIX OSVERSION
 #endif
 
 
@@ -181,7 +174,7 @@ LPRng requires ANSI Standard C compiler
 
 /*************************************************************************/
 #if defined(__bsdi__)
-# define IS_BSDI
+# define IS_BSDI OSVERSION
 #endif
 
 /*************************************************************************/
@@ -657,6 +650,9 @@ XX ** NO VARARGS ** XX
 /**********************************************************************
  *  Select() problems
  **********************************************************************/
+#ifdef HAVE_SELECT_H
+#include <select.h>
+#endif
 #if !defined(FD_SET_FIX)
 # define FD_SET_FIX(X) X
 #endif
@@ -670,6 +666,31 @@ int inet_pton( int family, const char *strptr, void *addr );
 #if !defined(HAVE_INET_NTOP)
 const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 #endif
+
+
+/*****************************************************
+ * Internationalisation of messages, using GNU gettext
+ *****************************************************/
+
+#if HAVE_LOCALE_H
+# include <locale.h>
+#endif
+
+#if ENABLE_NLS
+# include <libintl.h>
+# define _(Text) gettext(Text)
+# ifdef gettext_noop
+#  define N_(Text) gettext_noop(Text)
+# else
+#  define N_(Text) Text
+# endif
+#else
+# define _(Text) Text
+# define N_(Text) Text
+# define textdomain(Domain)
+# define bindtextdomain(Package, Directory)
+#endif
+
 
 /**********************************************************************
  *  SUNOS Definitions
@@ -736,15 +757,8 @@ extern int toupper( int );
 extern int tputs( const char *cp, int affcnt, int (*outc)() );
 extern int vfprintf(FILE *, const char *, ...);
 extern int vprintf(FILE *, const char *, va_list ap);
-/* surprisingly, there are no declarations for random on Sun stuff */
 #endif
 
-
-#ifndef STDLIB_DEFINES_RANDOM
- /* surprisingly, sometimes there are no declarations for random */
-  extern long random(void);
-  extern void srandom(unsigned int seed);
-#endif
 
 #ifdef SOLARIS
 extern int setreuid( uid_t ruid, uid_t euid );
@@ -768,27 +782,10 @@ extern int seteuid(uid_t);
 
 /* IPV6 structures define */
 
-#if !defined(AF_INET6)
-#  define AF_INET6 24
-#endif
-
-#if defined(IN_ADDR6)
-# define in6_addr in_addr6
-# define IN6_ADDR
-#endif
-
-#if !defined(IN6_ADDR)
-# define IN6_ADDR
-# define SIN6_LEN 16
-
-struct in6_addr { unsigned char s6_addr[SIN6_LEN]; };
-struct sockaddr_in6 {
-	/* unsigned char sin6_len; */
-	unsigned char sin6_family;
-	unsigned short sin6_port;
-	unsigned int sin6_flowinfo;
-	struct in6_addr sin6_addr;
-};
+#if defined(AF_INET6)
+# if defined(IN_ADDR6)
+#  define in6_addr in_addr6
+# endif
 #endif
 
 #if defined(HAVE_ARPA_NAMESER_H)
@@ -796,17 +793,6 @@ struct sockaddr_in6 {
 #endif
 #if defined(HAVE_RESOLV_H)
 # include <resolv.h>
-#endif
-
-/* the dreaded QUAD_T strikes again... */
-#if defined(quad_t) && qaud_t == NONE
-# undef HAVE_QUAD_T
-#else
-# define HAVE_QUAD_T 1
-/* suspender and belts on this one */
-struct have_quad_t {
-	quad_t t;
-};
 #endif
 
 #ifdef HAVE_INNETGR
@@ -821,4 +807,24 @@ extern int innetgr(const char *netgroup,
 #define Cast_ptr_to_int(v) ((int)(long)(v))
 #define Cast_ptr_to_long(v) ((long)(v))
 
-#endif	/* PLP_PORTABLE_H */
+/* for testing, set -Wall -Wformat and then make */
+
+#if defined(FORMAT_TEST)
+# define FPRINTF fprintf
+# define PRINTF printf
+# define STDOUT stdout
+# define STDERR stderr
+# define SNPRINTF(X,Y) printf(
+# define VSNPRINTF(X,Y) vprintf(
+# define SETSTATUS(X) printf(
+#else
+# define FPRINTF safefprintf
+# define PRINTF safeprintf
+# define STDOUT 1
+# define STDERR 2
+# define SNPRINTF(X,Y) plp_snprintf(X,Y,
+# define VSNPRINTF(X,Y) plp_vsnprintf(X,Y,
+# define SETSTATUS(X) setstatus(X,
+#endif
+
+#endif

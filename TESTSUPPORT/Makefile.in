@@ -29,8 +29,6 @@
 #
 ###########################################################################
 #
-# WARNING: This is a makefile for GNU Make
-# It uses VPATH and replacement facilities
 
 #************** GENERAL CONFIGURATION INFORMATION ************************
 
@@ -79,17 +77,9 @@ SRC=@srcdir@
 #
 BIN=../src
 
-SRCDIRS=${SRC}/.
-INCLUDE=.. ${SRC}/.
+VPATH=.:..:${SRC}/.
 
-#GNU
-VPATH=$(subst :, ,$(INCLUDE) $(SRCDIRS))
-INCS=$(patsubst %,-I%,$(INCLUDE))
-#
-#BSD .PATH: $(INCLUDE) $(SRCDIRS)
-#BSD INCS=$(INCLUDE:S/^/-I/g)
-
-CFLAGS = $(CCOPTFLAGS) @DEFS@ $(INCS)
+CFLAGS = $(CCOPTFLAGS) @DEFS@ -I. -I ${SRC} -I ..
 
 TMP=/tmp/
 CONFIG_FILE=${TMP}LPD/lpd.conf
@@ -104,19 +94,12 @@ install all: warn files bin perms pc
 	@echo "set the LPD_CONF environment variable to " ${CONFIG_FILE}
 	@echo "and put " ${TMP}LPD " in your path"
 
+
 .PHONY: all warn files bin perms pc ci clean \
 	uninstall realclean mostlyclean distclean \
 	tags info
 
 warn:
-ifdef notdef
-	@if ${MAKE} -v 2>&1 | grep -s GNU ; then \
-		echo "using GNU make"; \
-	else \
-		echo "Not using GNU make"; \
-		exit 1; \
-	fi;
-endif
 	@echo "HOST is " ${HOST} " and USER is " ${USER}
 	@echo "HOST should be the fully qualified domain name"
 	@echo "USER is the USERID under which the software runs"
@@ -141,25 +124,25 @@ $(CONFIG_FILE): lpd.conf.proto
 	DOMAIN=`echo ${HOST} | sed -e 's/\./ /' -e 's/.* //' `; \
 	sed -e s/_DOMAIN_/$${DOMAIN}/g -e s/_HOST_/${HOST}/g -e "s:_TMP_:${TMP}:g" \
 		 -e s/_USER_/${USER}/ \
-		$^ >${CONFIG_FILE}
+		lpd.conf.proto >${CONFIG_FILE}
 $(COMMON_CONFIG): common.conf.proto
 	sed -e s/_HOST_/${HOST}/ -e 's/^#[0-$(LEVEL)]//' -e "s:_TMP_:${TMP}:g" \
-		$^  >$@
+		common.conf.proto  >$@
 $(PRINTCAP): printcap.proto
 	sed -e s/_HOST_/${HOST}/ -e 's/^#[0-$(LEVEL)]//' -e "s:_TMP_:${TMP}:g" \
-		$^  >$@
+		printcap.proto  >$@
 $(LPD_PRINTCAP): lpd_printcap.proto
 	sed -e s/_HOST_/${HOST}/ -e 's/^#[0-$(LEVEL)]//' -e "s:_TMP_:${TMP}:g" \
-		$^  >$@
+		lpd_printcap.proto  >$@
 $(PRINTCAP_DB): printcap.proto
 	sed -e s/_HOST_/${HOST}/ -e 's/^#[0-$(LEVEL)]//' -e "s:_TMP_:${TMP}:g" \
-		$^ | ${SRC}/makedb >$@
+		printcap.proto | sh ${SRC}/makedb >$@
 
 perms: $(PERMS) $(PERMS_DB)
 $(PERMS): lpd.perms.proto
-	sed -e s/_HOST_/${HOST}/ -e s/_USER_/${USER}/ $^ >$@
+	sed -e s/_HOST_/${HOST}/ -e s/_USER_/${USER}/ lpd.perms.proto >$@
 $(PERMS_DB): lpd.perms.proto
-	sed -e s/_HOST_/${HOST}/ -e s/_USER_/${USER}/ $^ | ${SRC}/makedb >$@
+	sed -e s/_HOST_/${HOST}/ -e s/_USER_/${USER}/ lpd.perms.proto | sh ${SRC}/makedb >$@
 
 
 
@@ -173,40 +156,40 @@ ${TMP}LPD/lpbanner: $(BIN)/lpbanner
 	$(INSTALLCMD) -m 755 $(BIN)/lpbanner ${TMP}LPD
 
 ${TMP}LPD/lpd: $(BIN)/lpd
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lpd $@
 
 ${TMP}LPD/lpc: $(BIN)/lpc
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lpc $@
 
 ${TMP}LPD/lpr: $(BIN)/lpr
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lpr $@
 
 ${TMP}LPD/lpq: $(BIN)/lpq
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lpq $@
 
 ${TMP}LPD/lprm: $(BIN)/lprm
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lprm $@
 
 ${TMP}LPD/lpf: $(BIN)/lpf
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/lpf $@
 
 ${TMP}LPD/checkpc: $(BIN)/checkpc
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 $(BIN)/checkpc $@
 
 ${TMP}LPD/filter: ${SRC}/filter.sh
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 ${SRC}/filter.sh $@
 
 ${TMP}LPD/bqfilter: ${SRC}/bqfilter.sh
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 ${SRC}/bqfilter.sh $@
 
 ${TMP}LPD/router: ${SRC}/router.sh
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 ${SRC}/router.sh $@
 
 ${TMP}LPD/dbserver: ${SRC}/dbserver.sh
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 ${SRC}/dbserver.sh $@
 
 ${TMP}LPD/clearlog: ${SRC}/clearlog
-	$(INSTALLCMD) -m 755 $^ $@
+	$(INSTALLCMD) -m 755 ${SRC}/clearlog $@
 
 CI=
 CO=-kv
@@ -224,7 +207,6 @@ clean::
 	-rm -f *.o core
 
 realclean mostlyclean distclean:: clean
-	rm -f Makefile Makefile.bsd
 
 UNINSTAll::
 	-rm -rf ${TMP}LPD

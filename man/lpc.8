@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPC 1 \*(VE "LPRng"
 .ig
 lpc.1,v 3.36 1998/03/29 18:37:49 papowell Exp
@@ -8,6 +8,12 @@ Mon Jul 17 20:14:17 PDT 1995 Patrick Powell
 lpc \- line printer control program
 .SH SYNOPSIS
 .B lpc
+[
+.BI \-A
+]
+[
+.BI \-a
+]
 [
 .BI \-D debugopts
 ]
@@ -87,6 +93,10 @@ command operates by sending requests to the
 server process to update the information in these files and to signal
 server processes that the information has been updated.
 .SH OPTIONS
+.IP "\fB\-A\fR" 5
+Use authentication specified by the value of the AUTH environment variable.
+.IP "\fB\-a\fR" 5
+Alias for -Pall.
 .IP "\fB\-P\fIprinter\fR" 5
 Printer spool queue to operate on.
 if no name is given,
@@ -406,8 +416,8 @@ The following are a commonly used set of default values.
 .fi
 .SH "SEE ALSO"
 lpd.conf(5),
-lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

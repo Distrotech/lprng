@@ -1,14 +1,16 @@
-all: all-no
+all: all-@USE_INCLUDED_LIBINTL@
 
 all-yes:
-	echo "You need to link to the correct Makefile.in.in - see README.gettext"
-	exit 1;
+	echo "You need to install the gettext package"
+	echo "See the ABOUT-NLS.LPRng file in the source code"
+
 all-no:
-	echo "No internationalization"
 
-install installcheck uninstall check mostlyclean clean:
+# define default target
+TARGETS= all warn TAGS clean uninstall install  info dvi check \
+	realclean mostlyclean distclean dist update ci cifiles FRC \
+	cifast fixpostinstall all-yes all-no
 
-cifast ci:
+.PHONY: ${TARGETS}
 
-distclean:
-.NOEXPORT:
+$(TARGETS):

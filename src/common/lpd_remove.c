@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 5.2 1999/10/05 23:53:30 papowell Exp papowell $";
+"$Id: lpd_remove.c,v 5.22 2000/11/28 16:51:15 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -68,15 +68,15 @@ int Job_remove( int *sock, char *input )
 	/* check printername for characters, underscore, digits */
 
 	if( tokens.count < 2 ){
-		plp_snprintf( error, sizeof(error),
+		SNPRINTF( error, sizeof(error))
 			_("missing user or printer name"));
 		goto error;
 	}
 	name = tokens.list[0];
 
 	DEBUGF(DLPRM1)("Job_remove: checking '%s'", name );
-	if( (s = Clean_name( name )) ){
-		plp_snprintf( error, sizeof(error),
+	if( (s = Is_clean_name( name )) ){
+		SNPRINTF( error, sizeof(error))
 			_("printer '%s' has illegal character at '%s' in name"), name, s );
 		goto error;
 	}
@@ -84,7 +84,6 @@ int Job_remove( int *sock, char *input )
 	Set_DYN(&Printer_DYN,name);
 
 	user = safestrdup(tokens.list[1],__FILE__,__LINE__);
-	Perm_check.user = user;
 	Perm_check.remoteuser = user;
 
 	/* remove the first two tokens */
@@ -107,7 +106,7 @@ int Job_remove( int *sock, char *input )
 	goto done;
 
  error:
-	logmsg( LOG_INFO, _("Job_remove: error '%s'"), error );
+	LOGMSG( LOG_INFO) _("Job_remove: error '%s'"), error );
 	DEBUGF(DLPRM2)("Job_remove: error msg '%s'", error );
 	safestrncat(error,"\n");
 	if( Write_fd_str( *sock, error ) < 0 ) cleanup(0);
@@ -130,7 +129,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	char msg[SMALLBUFFER], header[SMALLBUFFER];
 	int control_perm, permission, count, removed, status,
 		i, c = 0, pid, fd;
-	char *s, *identifier, *path;
+	char *s, *identifier;
 	struct stat statb;
 	struct line_list info, active_pid;
 	struct job job;
@@ -140,6 +139,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	Init_job(&job);
 
 	/* set printer name and printcap variables */
+
 	DEBUGFC(DLPRM2)Dump_line_list("Get_queue_remove - tokens", tokens );
 	DEBUGF(DLPRM2)( "Get_queue_remove: user '%s', printer '%s'",
 		user, Printer_DYN );
@@ -149,10 +149,13 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	setproctitle( "lpd LPRM '%s'", Printer_DYN );
 	/* first check to see if you have control permissions */
 
-	status = Setup_printer( Printer_DYN, msg, sizeof(msg) );
+	msg[0] = 0;
+	status = Setup_printer( Printer_DYN, msg, sizeof(msg), 0 );
 	if( status ){
-		DEBUGF(DLPRM2)("Get_queue_remove: no spool queue '%s'", Printer_DYN);
-		return;
+		if( msg[0] == 0 ){
+			DEBUGF(DLPRM2)("Get_queue_remove: cannot set up printer '%s'", Printer_DYN);
+		}
+		goto error;
 	}
 
 	c = Debug;
@@ -168,7 +171,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		i = Debug;
 		Debug = c;
 		if( Log_file_DYN ){
-			fd = Trim_status_file( Log_file_DYN, Max_log_file_size_DYN,
+			fd = Trim_status_file( -1, Log_file_DYN, Max_log_file_size_DYN,
 				Min_log_file_size_DYN );
 			if( fd > 0 && fd != 2 ){
 				dup2(fd,2);
@@ -186,12 +189,6 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 	/* check for permissions */
 
-	Free_line_list(&Perm_line_list);
-	Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
-	if( Perm_filters_line_list.count ){
-		Filterprintcap( &Perm_line_list, &Perm_filters_line_list,
-			Printer_DYN);
-	}
 	Perm_check.service = 'C';
 	Perm_check.printer = Printer_DYN;
 	Perm_check.host = 0;
@@ -202,12 +199,11 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 	if( control_perm != P_ACCEPT ) control_perm = 0;
 
-	plp_snprintf( msg, sizeof(msg), _("Printer %s@%s:\n"),
+	SNPRINTF( msg, sizeof(msg)) _("Printer %s@%s:\n"),
 		Printer_DYN, ShortHost_FQDN );
 	Write_fd_str( *sock, msg );
 
-	Free_line_list( &Sort_order );
-	Scan_queue( Spool_dir_DYN, &Spool_control, &Sort_order,0,0,0,0 );
+	Scan_queue( &Spool_control, &Sort_order,0,0,0,0,0, 1 );
 	DEBUGF(DLPRM2)("Get_queue_remove: total files %d", Sort_order.count );
 
 	/* scan the files to see if there is one which matches */
@@ -215,28 +211,26 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	DEBUGFC(DLPRM3)Dump_line_list("Get_queue_remove - tokens", tokens );
 	for( count = 0; count < Sort_order.count; ++count ){
 		Free_job(&job);
-		s = Sort_order.list[count];
-		if( (s = safestrchr(Sort_order.list[count],';')) ){
-			Split(&job.info,s+1,";",1,Value_sep,1,1,1);
-		}
+		Get_hold_file(&job, Sort_order.list[count] );
 
 		DEBUGFC(DLPRM3)Dump_job("Get_queue_remove - info",&job);
         if( tokens->count && Patselect( tokens, &job.info, 0) ){
 			continue;
         }
 
-
+		/* get everything for the job now */
+		Setup_cf_info( &job, 0 );
 		identifier = Find_str_value(&job.info,IDENTIFIER,Value_sep);
 		if( !identifier ) identifier
 			= Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 
 		DEBUGF(DLPRM3)("Get_queue_remove: matched '%s'", identifier );
-		plp_snprintf( msg, sizeof(msg), _("  checking perms '%s'\n"),
+		SNPRINTF( msg, sizeof(msg)) _("  checking perms '%s'\n"),
 			identifier );
 		Write_fd_str( *sock, msg );
 
-		/* we check to see if we can remove this one if we are the user */
 
+		/* we check to see if we can remove this one if we are the user */
 		if( control_perm == 0 ){
 			/* now we get the user name and IP address */
 			Perm_check.user = Find_str_value(&job.info,LOGNAME,Value_sep);
@@ -248,7 +242,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			Perm_check.service = 'M';
 			permission = Perms_check( &Perm_line_list, &Perm_check, &job, 1 );
 			if( permission == P_REJECT ){
-				plp_snprintf( msg, sizeof(msg), _("  no permissions '%s'\n"),
+				SNPRINTF( msg, sizeof(msg)) _("  no permissions '%s'\n"),
 					identifier );
 				Write_fd_str( *sock, msg );
 				continue;
@@ -257,14 +251,13 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 		/* log this to the world */
 		DEBUGF(DLPRM4)("Get_queue_remove: removing '%s'", identifier );
-		plp_snprintf( msg, sizeof(msg), _("  dequeued '%s'\n"),
-			identifier );
+		SNPRINTF( msg, sizeof(msg)) _("  dequeued '%s'\n"), identifier );
 		Write_fd_str( *sock, msg );
 
 		setmessage( &job, "LPRM", "start" );
 		if( Remove_job( &job ) ){
 			setmessage( &job, "LPRM", "fail" );
-			plp_snprintf( msg, sizeof(msg),
+			SNPRINTF( msg, sizeof(msg))
 				_("error: could not remove '%s'"), identifier ); 
 			Write_fd_str( *sock, msg );
 			goto error;
@@ -274,37 +267,37 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			DEBUGF(DLPRM4)("Get_queue_remove: active_pid %d", pid );
 			if( kill( pid, 0 ) == 0 ){
 				Check_max(&active_pid,1);
-				active_pid.list[active_pid.count++] = (void *)pid;
+				active_pid.list[active_pid.count++] = Cast_int_to_voidstar(pid);
 			}
 		}
 		++removed;
 		if( tokens->count == 0 ) break;
 	}
+	Close_gdbm();
 	Free_line_list(&info);
 	Free_job(&job);
 	Free_line_list( &Sort_order );
 	if( removed ){
 		for( i = 0; i < active_pid.count; ++i ){
-			pid = (int)(active_pid.list[i]);
+			pid = Cast_ptr_to_int(active_pid.list[i]);
 			active_pid.list[i] = 0;
 			DEBUGF(DLPRM2)("Get_queue_remove: killing pid '%d' SIGINT", pid );
+			killpg( pid, SIGINT );
 			kill( pid, SIGINT );
+			killpg( pid, SIGCONT );
 			kill( pid, SIGCONT );
 		}
 		/* kill spooler process */
-		path = Make_pathname( Spool_dir_DYN, Queue_lock_file_DYN );
+		
 		pid = 0;
-		if( (fd = Checkread( path, &statb ) ) >= 0 ){
+		if( (fd = Checkread( Queue_lock_file_DYN, &statb )) >= 0 ){
 			pid = Read_pid( fd, (char *)0, 0 );
 			close( fd );
 		}
 		DEBUGF(DLPRM2)("Get_queue_status: checking server pid %d", pid );
-		free(path);
 		/* kill active spooler */
 		if( pid > 0 ){
 			kill( pid, SIGUSR2 );
-			/* sigh ... yes, you may need to start it */
-			kill( pid, SIGCONT );
 		}
 	}
 
@@ -330,21 +323,40 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			DEBUGF(DLPRM2)("Get_queue_status: finished destination status '%s'", 
 				info.list[i] );
 		}
-	} else if( Bounce_queue_dest_DYN ){
-		DEBUGF(DLPRM2)("Get_queue_status: getting bouncequeue dest status '%s'", 
-			Bounce_queue_dest_DYN);
-		Set_DYN(&Printer_DYN,Bounce_queue_dest_DYN);
-		Get_local_or_remote_remove( user, sock, tokens, done_list );
-		DEBUGF(DLPRM2)("Get_queue_status: finished subserver status '%s'", 
-			Bounce_queue_dest_DYN );
 	} else if( RemoteHost_DYN ){
-		fd = Send_request( 'M', REQ_REMOVE, tokens->list, Connect_timeout_DYN,
-			Send_query_rw_timeout_DYN, *sock );
-		if( fd >= 0 ){
-			while( (c = read(fd,msg,sizeof(msg))) > 0 ){
-				Write_fd_len(*sock,msg,c);
+		if( Find_fqdn( &LookupHost_IP, RemoteHost_DYN )
+			&& ( !Same_host(&LookupHost_IP,&Host_IP )
+				|| !Same_host(&LookupHost_IP,&Localhost_IP )) ){
+			DEBUGF(DLPQ1)("Get_local_or_remote_status: doing local");
+			if( safestrcmp(RemotePrinter_DYN, Printer_DYN) ){
+				Set_DYN(&Printer_DYN,RemotePrinter_DYN);
+				Get_queue_remove( user, sock, tokens, done_list );
+			} else {
+				SNPRINTF(msg,sizeof(msg))"Error: loop in printcap- %s@%s -> %s@%s\n",
+					Printer_DYN, FQDNHost_FQDN, RemotePrinter_DYN, RemoteHost_DYN );
+				Write_fd_str(*sock, msg );
 			}
-			close(fd);
+		} else {
+			/* put user name at start of list */
+			Check_max(tokens,2);
+			for( i = tokens->count; i > 0; --i ){
+				tokens->list[i] = tokens->list[i-1];
+			}
+			tokens->list[0] = user;
+			++tokens->count;
+			tokens->list[tokens->count] = 0;
+			fd = Send_request( 'M', REQ_REMOVE, tokens->list, Connect_timeout_DYN,
+				Send_query_rw_timeout_DYN, *sock );
+			if( fd >= 0 ){
+				while( (c = read(fd,msg,sizeof(msg))) > 0 ){
+					Write_fd_len(*sock,msg,c);
+				}
+				close(fd);
+			}
+			for( i = 0; i < tokens->count; ++i ){
+				tokens->list[i] = tokens->list[i+1];
+			}
+			--tokens->count;
 		}
 	}
 
@@ -353,12 +365,13 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
  error:
 	DEBUGF(DLPRM2)("Get_queue_remove: error msg '%s'", msg );
-	plp_snprintf(header, sizeof(header), "Printer: %s", Printer_DYN );
+	SNPRINTF(header, sizeof(header)) "Printer: %s", Printer_DYN );
 	safestrncpy( header, _(" ERROR: ") );
 	safestrncat( header, msg );
 	safestrncat( header, "\n" );
 	Write_fd_str( *sock, header );
  done:
+	active_pid.count = 0;
 	Free_line_list(&info);
 	Free_line_list(&active_pid);
 	Free_job(&job);
@@ -369,7 +382,7 @@ void Get_local_or_remote_remove( char *user, int *sock,
 	struct line_list *tokens, struct line_list *done_list )
 {
 	char msg[LARGEBUFFER];
-	int fd, n;
+	int fd, n, i;
 
 	/* we have to see if the host is on this machine */
 
@@ -377,14 +390,22 @@ void Get_local_or_remote_remove( char *user, int *sock,
 		Get_queue_remove( user, sock, tokens, done_list );
 		return;
 	}
-	Fix_Rm_Rp_info();
+	Fix_Rm_Rp_info(0,0);
 	/* now we look at the remote host */
 	if( Find_fqdn( &LookupHost_IP, RemoteHost_DYN )
 		&& ( !Same_host(&LookupHost_IP,&Host_IP )
-			|| !Same_host(&LookupHost_IP,&Host_IP )) ){
+			|| !Same_host(&LookupHost_IP,&Localhost_IP )) ){
 		Get_queue_remove( user, sock, tokens, done_list );
 		return;
 	}
+	/* put user name at start of list */
+	Check_max(tokens,2);
+	for( i = tokens->count; i > 0; --i ){
+		tokens->list[i] = tokens->list[i-1];
+	}
+	tokens->list[0] = user;
+	++tokens->count;
+	tokens->list[tokens->count] = 0;
 	fd = Send_request( 'M', REQ_REMOVE, tokens->list, Connect_timeout_DYN,
 		Send_query_rw_timeout_DYN, *sock );
 	if( fd >= 0 ){
@@ -393,34 +414,36 @@ void Get_local_or_remote_remove( char *user, int *sock,
 		}
 		close(fd);
 	}
+	for( i = 0; i < tokens->count; ++i ){
+		tokens->list[i] = tokens->list[i+1];
+	}
+	--tokens->count;
 }
 
 int Remove_file( char *openname )
 {
-	struct stat statb;
 	int fail = 0;
-	if( openname ){
+	struct stat statb;
+
+	if( openname && stat( openname, &statb ) == 0 ){
 		DEBUGF(DLPRM3)("Remove_file: removing '%s'", openname );
-		unlink( openname );
-		if( stat( openname, &statb ) == 0 ){
-			logerr( LOG_INFO, "Remove_file: unlink did not remove '%s'",
+		if( unlink( openname ) || stat( openname, &statb ) == 0 ){
+			LOGERR(LOG_INFO) "Remove_file: unlink did not remove '%s'",
 				openname);
-			fail = 1;
+			fail |= 1;
 		}
 	}
-	return(fail);
+	return( fail );
 }
 
 int Remove_job( struct job *job )
 {
 	int i;
 	int fail = 0;
-	char *identifier, *openname, *hf_name;
+	char *identifier, *openname;
 	struct line_list *datafile;
 
-	Setup_cf_info( Spool_dir_DYN, 0, job );
-
-	DEBUGFC(DLPRM3)Dump_job("Remove_job",job);
+	DEBUGFC(DLPRM1)Dump_job("Remove_job",job);
 	setmessage(job,STATE,"REMOVE");
 	identifier = Find_str_value(&job->info,IDENTIFIER,Value_sep);
 	setmessage( job, TRACE, "remove START" );
@@ -428,22 +451,32 @@ int Remove_job( struct job *job )
 		identifier = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 	}
 
-	DEBUGF(DLPRM3)("Remove_job: identifier '%s'",identifier);
+	DEBUGF(DLPRM1)("Remove_job: identifier '%s'",identifier);
 	fail = 0;
 	for( i = 0; i < job->datafiles.count; ++i ){
 		datafile = (void *)job->datafiles.list[i];
 		openname = Find_str_value(datafile,OPENNAME,Value_sep);
-		if( openname ) fail |= Remove_file( openname );
+		fail |= Remove_file( openname );
+		openname = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+		fail |= Remove_file( openname );
 	}
 	openname = Find_str_value(&job->info,OPENNAME,Value_sep);
-	if( openname ) fail |= Remove_file( openname );
-	hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
-	if( hf_name ) fail |= Remove_file( hf_name );
+	fail |= Remove_file( openname );
+	openname = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+	fail |= Remove_file( openname );
+	openname = Find_str_value(&job->info,HF_NAME,Value_sep);
+	fail |= Remove_file( openname );
+
+	/* remove from db */
+	Remove_from_db( openname );
 
 	if( fail == 0 ){
 		setmessage( job, TRACE, "remove SUCCESS" );
 	} else {
 		setmessage( job, TRACE, "remove FAILED" );
+	}
+	if( Lpq_status_file_DYN ){
+		unlink(Lpq_status_file_DYN);
 	}
 	return( fail );
 }

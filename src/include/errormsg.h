@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: errormsg.h,v 5.1 1999/09/12 21:32:57 papowell Exp papowell $
+ * $Id: errormsg.h,v 5.4 2000/05/25 00:18:52 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -20,7 +20,7 @@ void logerr_die(int kind, char *msg,...);
 void Diemsg(char *msg,...);
 void Warnmsg(char *msg,...);
 void logDebug(char *msg,...);
-void Msg(char *msg,...);
+void Message(char *msg,...);
 #else
 void logmsg();
 void fatal();
@@ -29,7 +29,27 @@ void logerr_die();
 void Diemsg();
 void Warnmsg();
 void logDebug();
-void Msg();
+void Message();
+#endif
+
+#if defined(FORMAT_TEST)
+#define LOGMSG(X) printf(
+#define FATAL(X) printf(
+#define LOGERR(X) printf(
+#define LOGERR_DIE(X) printf(
+#define LOGDEBUG printf
+#define DIEMSG printf
+#define WARNMSG printf
+#define MESSAGE printf
+#else
+#define LOGMSG(X) logmsg(X,
+#define FATAL(X) fatal(X,
+#define LOGERR(X) logerr(X,
+#define LOGERR_DIE(X) logerr_die(X,
+#define LOGDEBUG logDebug
+#define DIEMSG Diemsg
+#define WARNMSG Warnmsg
+#define MESSAGE Message
 #endif
 
 /* PROTOTYPES */

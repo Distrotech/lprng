@@ -11,10 +11,21 @@
 # Makefile,v 3.3 1998/03/30 02:33:23 papowell Exp
 ########################################################################## 
 
-.PHONY: all clean ci install realclean mostlyclean distclean
+SRC=@srcdir@
+AWK=@AWK@
 
-all clean install realclean mostlyclean distclean:
-	echo done
+
+all clean:
+
+.PHONY: all clean ci cifast install realclean mostlyclean distclean
+
+realclean mostlyclean distclean:
+	for i in ${SRC}/*.in; do \
+		f=`basename $$i .in`; \
+		rm -f $$f; \
+	done
+
+install:
 
 CI=
 CO=-kv

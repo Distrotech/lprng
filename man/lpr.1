@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPR 1 \*(VE "LPRng"
 .ig
 Thu Jul 20 07:19:29 PDT 1995 Patrick Powell
@@ -9,6 +9,9 @@ lpr \- off line print
 .B lpr
 [
 .B \-A
+]
+[
+.B \-B
 ]
 [
 .B \-b,l
@@ -22,6 +25,9 @@ lpr \- off line print
 .ti +5n
 [
 .BI \-F " filterformat"
+]
+[
+.B \-G
 ]
 [
 .B \-h
@@ -42,6 +48,9 @@ lpr \- off line print
 .ti +5n
 [
 .BI \-m " mailTo"
+]
+[
+.BI \-o " options"
 ]
 [
 .BI \-P " printer"
@@ -73,7 +82,13 @@ lpr \- off line print
 .BI \-w " width"
 ]
 [
-.BI \-Z " zoptions"
+.BI \-X " userfile"
+]
+[
+.B \-Y
+]
+[
+.BI \-Z " options"
 ]
 [
 .BI \-1,2,3,4 " font"
@@ -89,7 +104,12 @@ become available.  If no names appear, the standard input is assumed.
 .SH OPTIONS
 .TP 5
 .B \-A
-Use the authenticated transfer facilities if they are available.
+The authentication type is set by the value of the AUTH environment variable.
+.TP 5
+.B \-B
+Do filtering of job files by the filters specified by the printcap.
+Combine the output of the filtering operation into a single job file and then
+send the single file to the lpd print spooler.
 .TP 5
 .BI \-C " class"
 Specify the job classification for use on the burst page and to
@@ -120,8 +140,7 @@ input is assumed to a standard text file and the
 .I f
 format is used;
 the output device is assmed to be a simple line printer.
-Therer are other formats available,
-listed below.
+Other formats available are listed below.
 Not all formats may be available on all printers;
 see
 .BR printcap (5)
@@ -199,6 +218,11 @@ format).
 a raster image for devices like the Benson Varian.
 .RE
 .TP 5
+\fB\-G\fP
+Similar to the
+\fB\-B\fP option,
+but only processes individual files.
+.TP 5
 \fB\-h\fP
 No banner or header for this job.
 .TP 5
@@ -233,15 +257,22 @@ Send mail upon unsuccessful completion to user
 .IR mailTo .
 .TP 5
 .BI \-P " printer"
-Output to the specific printer;
-the default is (in order of priority)
-the explictly specified -P value,
-the environment variable PRINTER,
-the first entry in the printcap information,
-and the default_printer entry from the
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
 configuration file,
-and finally the hard coded (site dependent) default_printer
-value.
+and then the compile time default.
 .TP 5
 .B \-Q
 Put the name of the spool queue into the job file.
@@ -290,10 +321,17 @@ Use debug flags for extreme verbosity.
 .TP 5
 .BI \-w " width"
 Specify the page width for printing the job.
+.BI \-X " path"
+User specified filter for job files.  Processing is done on
+the client host.
+.B \-Y
+Make a direct connection to the printer device and do not spool.
 .TP 5
-.BI -Z " zoptions"
-This option is used to pass options to the print spooler,
-and is used when additional or specialized information
+.BI -Z " options"
+.TP 5
+.BI -o " options"
+Pass the specified options to the print spooler.
+Used when additional or specialized information
 must be provided to the spooler.
 .TP 5
 .BI \-1,2,3,4 "fontname"
@@ -326,6 +364,114 @@ to the original data file
 rather than a copy of the data file was to be used when spooling jobs.
 This opens up a variety of security problems,
 as well as being ineffective when printing to a remote host.
+.SH "THE -B, -Y, -X filter ULTRA-LIGHTWEIGHT PRINTING OPTIONS"
+.PP
+LPRng supports ultra-lightweight printing by eliminating the need
+for a print spooler.
+This is quite dangerous, but makes the lpr client very lightweight.
+The
+.B \-Y
+command line option and the
+.B :direct
+printcap option enables lpr to connect directly to a specified port
+or use a program to send a job.
+This filter also enables client side filtering,  so if there are
+any filters specified in the printcap entry they will be used.
+For example:
+.RS
+lpr -Y -Phost%port file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     ${filter} <$i;  # where ${filter} is filter from printcap
+   done  >host%port (TCP/IP connection)
+
+lpr -Y -Phost%port -X userfilter file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     userfilter <$i;
+   done  >host%port (TCP/IP connection)
+
+Summary:
+   -P host%port    > TCP/IP connection to host%port
+   -P /dev/lp      > /dev/lp
+   -P '|/program'  | /program
+
+SPECIAL CASE
+lpr -Y -Ppr@host -X userfilter file1 file2 ...
+ approximately equivalent to:
+   for i in file1 file2 ...; do
+     userfilter <$i >temp.$i;
+   done
+   lpr -Ppr@host temp.file1 temp.file2
+.RE
+.PP
+The
+.B \-B
+option or the :lpr_bounce is used to filter and make a single file out
+of a set of print files and then forward them.
+.RS
+lpr -B -Ppr@host
+  approximately equivalent to:
+   lpr -Y -P/tmp/tempfile file1 file2 ...
+   lpr -Ppr@host /tmp/tempfile
+.RE
+.PP
+You can also use a printcap entry and the
+.B :direct
+options.
+.RS
+Printcap:
+   lp:direct:lp=h14%9100:remote_support=R
+lpr -Plp file1 file2
+   Same as:
+lpr -Plp -Y -Ph14%9100 file1 file2
+.RE
+.PP
+The
+.B :remote_support
+option is used to prevent the
+.B lpq
+and
+.B lpc
+program from attempting to send jobs to the device.
+
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH "PRINTCAP INFORMATION"
+.LP
+The printer names and other information is obtained by using a printcap
+file or some other database.
+The ${HOME}/.printcap
+file can be used to specify user level options and configuration
+information.
+See
+printcap(5)
+for more information. 
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -334,7 +480,8 @@ The following are a commonly used set of default values.
 .nf
 .ta \w'/var/spool/lpd/printcap.<hostname>           'u
 /etc/lpd.conf		LPRng configuration file
-/etc/printcap		printer description file
+${HOME}/.printcap	user printer description file
+/etc/printcap		system printer description file
 /etc/lpd.perms	printer permissions
 /var/spool/printer*		spool directories
 /var/spool/printer*/printer	lock file for queue control
@@ -346,9 +493,10 @@ The following are a commonly used set of default values.
 .BR lpd.conf (5),
 .BR lpc (8),
 .BR lpd (8),
-.BR lpr (1),
+.BR checkpc (8),
 .BR lpq (1),
 .BR lprm (1),
+.BR checkpc (8),
 .BR printcap (5),
 .BR lpd.perms (5),
 .BR pr (1).

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 5.2 1999/10/23 02:37:09 papowell Exp papowell $";
+"$Id: utilities.c,v 5.17 2000/10/11 17:07:33 papowell Exp papowell $";
 
 #include "lp.h"
 
@@ -35,18 +35,18 @@ char *Time_str(int shortform, time_t t)
 	if( t == 0 ){
 		if( gettimeofday( &tv, 0 ) == -1 ){
 			Errorcode = JFAIL;
-			logerr_die( LOG_ERR,"Time_str: gettimeofday failed");
+			LOGERR_DIE(LOG_ERR)"Time_str: gettimeofday failed");
 		}
 		t = tv.tv_sec;
 	}
 	tmptr = localtime( &t );
 	if( shortform && Full_time_DYN == 0 ){
-		plp_snprintf( buffer, sizeof(buffer),
+		SNPRINTF( buffer, sizeof(buffer))
 			"%02d:%02d:%02d.%03d",
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
 			(int)(tv.tv_usec/1000) );
 	} else {
-		plp_snprintf( buffer, sizeof(buffer),
+		SNPRINTF( buffer, sizeof(buffer))
 			"%d-%02d-%02d-%02d:%02d:%02d.%03d",
 			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
@@ -64,7 +64,7 @@ char *Time_str(int shortform, time_t t)
 
 
 /*
- * Time_str: return "cleaned up" ctime() string...
+ * Pretty_time: return "cleaned up" ctime() string...
  *
  * in YY/MO/DY/hr:mn:sc
  * Thu Aug 4 12:34:17 BST 1994 -> 12:34:17
@@ -80,7 +80,7 @@ char *Pretty_time( time_t t )
 	if( t == 0 ){
 		if( gettimeofday( &tv, 0 ) == -1 ){
 			Errorcode = JFAIL;
-			logerr_die( LOG_ERR,"Time_str: gettimeofday failed");
+			LOGERR_DIE(LOG_ERR)"Time_str: gettimeofday failed");
 		}
 		t = tv.tv_sec;
 	}
@@ -94,7 +94,7 @@ time_t Convert_to_time_t( char *str )
 {
 	time_t t = 0;
 	if(str) t = strtol(str,0,0);
-	DEBUG5("Convert_to_time_t: %s = %d", str, t );
+	DEBUG5("Convert_to_time_t: %s = %ld", str, (long)t );
 	return(t);
 }
 
@@ -103,18 +103,21 @@ time_t Convert_to_time_t( char *str )
  *  Use for copyright printing as well
  ***************************************************************************/
 
-void Printlist( char **m, FILE *f )
+void Printlist( char **m, int fd )
 {
-	if( *m ){
-		fprintf( f, *m, Name );
-		fprintf( f, "\n" );
-		++m;
+	char msg[SMALLBUFFER];
+	if( m ){
+		if( *m ){
+			SNPRINTF( msg,sizeof(msg)) _(*m), Name );
+			Write_fd_str(fd, msg);
+			Write_fd_str(fd,"\n");
+			++m;
+		}
+		for( ; *m; ++m ){
+			SNPRINTF( msg,sizeof(msg)) "%s\n", _(*m) );
+			Write_fd_str(fd, msg);
+		}
 	}
-
-    for( ; *m; ++m ){
-        fprintf( f, "%s\n", *m );
-    }
-	fflush(f);
 }
 
 
@@ -131,6 +134,13 @@ void Printlist( char **m, FILE *f )
  * Note: we do the write first and then check for timeout.
  ***************************************************************************/
 
+/*
+ * Write_fd_len( fd, msg, len )
+ * returns:
+ *  0  - success
+ *  <0 - failure
+ */
+
 int Write_fd_len( int fd, const char *msg, int len )
 {
 	int i;
@@ -139,8 +149,15 @@ int Write_fd_len( int fd, const char *msg, int len )
 	while( len > 0 && (i = write( fd, msg, len ) ) >= 0 ){
 		len -= i, msg += i;
 	}
-	return( i );
+	return( (i < 0) ? -1 : 0 );
 }
+
+/*
+ * Write_fd_len_timeout( timeout, fd, msg, len )
+ * returns:
+ *  0  - success
+ *  <0 - failure
+ */
 
 int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len )
 {
@@ -152,8 +169,15 @@ int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len )
 		i = -1;
 	}
 	Clear_timeout();
-	return( i );
+	return( i < 0 ? -1 : 0 );
 }
+
+/*
+ * Write_fd_str_timeout( fd, msg )
+ * returns:
+ *  0  - success
+ *  <0 - failure
+ */
 
 int Write_fd_str( int fd, const char *msg )
 {
@@ -163,6 +187,14 @@ int Write_fd_str( int fd, const char *msg )
 	return( 0 );
 }
 
+
+/*
+ * Write_fd_str_timeout( timeout, fd, msg )
+ * returns:
+ *  0  - success
+ *  <0 - failure
+ */
+
 int Write_fd_str_timeout( int timeout, int fd, const char *msg )
 {
 	if( msg && *msg ){
@@ -170,6 +202,15 @@ int Write_fd_str_timeout( int timeout, int fd, const char *msg )
 	}
 	return( 0 );
 }
+
+
+/*
+ * Read_fd_len_timeout( timeout, fd, msg, len )
+ * returns:
+ *  n>0 - read n
+ *  0  - EOF
+ *  <0 - failure
+ */
 
 int Read_fd_len_timeout( int timeout, int fd, char *msg, int len )
 {
@@ -266,7 +307,7 @@ void plp_block_all_signals ( plp_block_mask *oblock )
 
 	(void) sigfillset (&block); /* block all signals */
 	if (sigprocmask (SIG_SETMASK, &block, oblock) < 0)
-		logerr_die( LOG_ERR, "plp_block_all_signals: sigprocmask failed");
+		LOGERR_DIE(LOG_ERR) "plp_block_all_signals: sigprocmask failed");
 #else
 	*oblock = sigblock( ~0 ); /* block all signals */
 #endif
@@ -280,7 +321,7 @@ void plp_unblock_all_signals ( plp_block_mask *oblock )
 
 	(void) sigemptyset (&block); /* block all signals */
 	if (sigprocmask (SIG_SETMASK, &block, oblock) < 0)
-		logerr_die( LOG_ERR, "plp_unblock_all_signals: sigprocmask failed");
+		LOGERR_DIE(LOG_ERR) "plp_unblock_all_signals: sigprocmask failed");
 #else
 	*oblock = sigblock( 0 ); /* unblock all signals */
 #endif
@@ -290,13 +331,12 @@ void plp_set_signal_mask ( plp_block_mask *in, plp_block_mask *out )
 {
 #ifdef HAVE_SIGPROCMASK
 	if (sigprocmask (SIG_SETMASK, in, out ) < 0)
-		logerr_die( LOG_ERR, "plp_set_signal_mask: sigprocmask failed");
+		LOGERR_DIE(LOG_ERR) "plp_set_signal_mask: sigprocmask failed");
 #else
-	if( out ){
-		*out = sigblock( *in ); /* block all signals */
-	} else {
-	 	(void)sigblock( *in ); /* block all signals */
-	}
+	sigset_t block;
+	if( in ) block = sigsetmask( *in );
+	else     block = sigblock( 0 );
+	if( out ) *out = block;
 #endif
 }
 
@@ -308,7 +348,7 @@ void plp_unblock_one_signal ( int sig, plp_block_mask *oblock )
 	(void) sigemptyset (&block); /* clear out signals */
 	(void) sigaddset (&block, sig ); /* clear out signals */
 	if (sigprocmask (SIG_UNBLOCK, &block, oblock ) < 0)
-		logerr_die( LOG_ERR, "plp_unblock_one_signal: sigprocmask failed");
+		LOGERR_DIE(LOG_ERR) "plp_unblock_one_signal: sigprocmask failed");
 #else
 	*oblock = sigblock( 0 );
 	(void) sigsetmask (*oblock & ~ sigmask(sig) );
@@ -323,7 +363,7 @@ void plp_block_one_signal( int sig, plp_block_mask *oblock )
 	(void) sigemptyset (&block); /* clear out signals */
 	(void) sigaddset (&block, sig ); /* clear out signals */
 	if (sigprocmask (SIG_BLOCK, &block, oblock ) < 0)
-		logerr_die( LOG_ERR, "plp_block_one_signal: sigprocmask failed");
+		LOGERR_DIE(LOG_ERR) "plp_block_one_signal: sigprocmask failed");
 #else
 	*oblock = sigblock( sigmask( sig ) );
 #endif
@@ -347,36 +387,32 @@ void plp_sigpause( void )
 /* case insensitive compare for OS without it */
 int safestrcasecmp (const char *s1, const char *s2)
 {
-	int c1, c2, d;
+	int c1, c2, d = 0;
 	if( (s1 == s2) ) return(0);
 	if( (s1 == 0 ) && s2 ) return( -1 );
 	if( s1 && (s2 == 0 ) ) return( 1 );
 	for (;;) {
-		c1 = *s1++;
-		c2 = *s2++;
-		if (isalpha (c1) && isalpha (c2)) {
-			c1 = tolower (c1);
-			c2 = tolower (c2);
-		}
-		if( (d = (c1 - c2 )) || c1 == 0 ) return(d);
+		c1 = *((unsigned char *)s1); s1++;
+		c2 = *((unsigned char *)s2); s2++;
+		if( isupper(c1) ) c1 = tolower(c1);
+		if( isupper(c2) ) c2 = tolower(c2);
+		if( (d = (c1 - c2 )) || c1 == 0 ) break;
 	}
-	return( 0 );
+	return( d );
 }
 
 /* case insensitive compare for OS without it */
 int safestrncasecmp (const char *s1, const char *s2, int len )
 {
-	int c1, c2, d;
+	int c1, c2, d = 0;
 	if( (s1 == s2) && s1 == 0 ) return(0);
 	if( (s1 == 0 ) && s2 ) return( -1 );
 	if( s1 && (s2 == 0 ) ) return( 1 );
 	for (;len>0;--len){
-		c1 = *s1++;
-		c2 = *s2++;
-		if (isalpha (c1) && isalpha (c2)) {
-			c1 = tolower (c1);
-			c2 = tolower (c2);
-		}
+		c1 = *((unsigned char *)s1); s1++;
+		c2 = *((unsigned char *)s2); s2++;
+		if( isupper(c1) ) c1 = tolower(c1);
+		if( isupper(c2) ) c2 = tolower(c2);
 		if( (d = (c1 - c2 )) || c1 == 0 ) return(d);
 	}
 	return( 0 );
@@ -479,14 +515,14 @@ int Get_max_servers( void )
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NPROC)
 	struct rlimit pcount;
 	if( getrlimit(RLIMIT_NPROC, &pcount) == -1 ){
-		fatal( LOG_ERR, "Get_max_servers: getrlimit failed" );
+		FATAL(LOG_ERR) "Get_max_servers: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
 	DEBUG1("Get_max_servers: getrlimit returns %d", n );
 #else
 # if defined(HAVE_SYSCONF) && defined(_SC_CHILD_MAX)
 	if( n == 0 && (n = sysconf(_SC_CHILD_MAX)) < 0 ){
-		fatal( LOG_ERR, "Get_max_servers: sysconf failed" );
+		FATAL(LOG_ERR) "Get_max_servers: sysconf failed" );
 	}
 	DEBUG1("Get_max_servers: sysconf returns %d", n );
 # else
@@ -508,8 +544,8 @@ int Get_max_servers( void )
 
 
 /***************************************************************************
- * int get_max_processes()
- *  get the maximum number of processes allowed
+ * int Get_max_fd()
+ *  get the maximum number of file descriptors allowed
  ***************************************************************************/
 
 int Get_max_fd( void )
@@ -519,21 +555,31 @@ int Get_max_fd( void )
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NOFILE)
 	struct rlimit pcount;
 	if( getrlimit(RLIMIT_NOFILE, &pcount) == -1 ){
-		fatal( LOG_ERR, "Get_max_fd: getrlimit failed" );
+		FATAL(LOG_ERR) "Get_max_fd: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
-	DEBUG1("Get_max_fd: getrlimit returns %d", n );
+	DEBUG4("Get_max_fd: getrlimit returns %d", n );
 #else
 # if defined(HAVE_SYSCONF) && defined(_SC_OPEN_MAX)
 	if( n == 0 && (n = sysconf(_SC_OPEN_MAX)) < 0 ){
-		fatal( LOG_ERR, "Get_max_servers: sysconf failed" );
+		FATAL(LOG_ERR) "Get_max_servers: sysconf failed" );
 	}
-	DEBUG1("Get_max_fd: sysconf returns %d", n );
+	DEBUG4("Get_max_fd: sysconf returns %d", n );
 # else
 	n = 20;
-	DEBUG1("Get_max_fd: using default %d", n );
+	DEBUG4("Get_max_fd: using default %d", n );
 # endif
 #endif
+
+	if( n < 0 || n > 10240 ){
+		/* we have some systems that will return a VERY
+		 * large or negative number for unlimited FD's.  Well, we
+		 * don't want to use a large number here.  So we
+		 * will make it a small number.  The actual number of
+		 * file descriptors open by processes is VERY conservative.
+		 */
+		n = 256;
+	}
 
 	DEBUG1("Get_max_fd: returning %d", n );
 	return( n );
@@ -547,9 +593,9 @@ char *Brk_check_size( void )
 	char *s = sbrk(0);
 	int   v = s - Top_of_mem;
 	if( Top_of_mem == 0 ){
-		plp_snprintf(b, sizeof(b), "BRK: initial value 0x%lx", Cast_ptr_to_long(s) );
+		SNPRINTF(b, sizeof(b)) "BRK: initial value 0x%lx", Cast_ptr_to_long(s) );
 	} else {
-		plp_snprintf(b, sizeof(b), "BRK: new value 0x%lx, increment %d", Cast_ptr_to_long(s), v );
+		SNPRINTF(b, sizeof(b)) "BRK: new value 0x%lx, increment %d", Cast_ptr_to_long(s), v );
 	}
 	Top_of_mem = s;
 	return(b);
@@ -641,9 +687,9 @@ int Set_block_io( int fd )
  *  Returns:
  *   **outbuffer, *outlen updated
  *    0    - success
- *    -1   - IO error on output
- *    -2   - Timeout
- *    -3   - IO error on input
+ *   JRDERR     - IO error on output
+ *   JTIMEOUT   - Timeout
+ *   JWRERR     - IO error on input
  */
 
 int Read_write_timeout(
@@ -651,9 +697,10 @@ int Read_write_timeout(
 	int writefd, char **outbuffer, int *outlen, int timeout )
 {
 	time_t start_t, current_t;
-	int elapsed, readnonblocking, writenonblocking, m, err, done, retval;
+	int elapsed, m, err, done, retval;
 	struct timeval timeval, *tp;
     fd_set readfds, writefds; /* for select() */
+	struct stat statb;
 
 	DEBUG4( "Read_write_timeout: read(fd %d, buffer 0x%lx, maxinlen %d, readlen 0x%lx->%d",
 		readfd, Cast_ptr_to_long(inbuffer), maxinlen, Cast_ptr_to_long(readlen),
@@ -662,22 +709,36 @@ int Read_write_timeout(
 		writefd, Cast_ptr_to_long(outbuffer), Cast_ptr_to_long(outbuffer?*outbuffer:0),
 		Cast_ptr_to_long(outlen), outlen?*outlen:0, timeout );
 
+	retval = done = 0;
 	time( &start_t );
 
-	readnonblocking = writenonblocking = 0;
-	if( readfd >= 0
-		&& !(readnonblocking = Get_nonblock_io( readfd )) ){
+	if( *outlen == 0 ) return( retval );
+	if( readfd  > 0 ){
+		if( fstat( readfd, &statb ) ){
+			Errorcode = JABORT;
+			FATAL(LOG_ERR) "Read_write_timeout: readfd %d closed", readfd );
+		}
 		Set_nonblock_io( readfd );
+	} else {
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "Read_write_timeout: no readfd %d", readfd );
 	}
-	if( writefd >= 0 && *outlen > 0
-		&& !(writenonblocking = Get_nonblock_io( writefd)) ){
+	if( writefd  > 0 ){
+		if( fstat( writefd, &statb ) ){
+			Errorcode = JABORT;
+			FATAL(LOG_ERR) "Read_write_timeout: writefd %d closed",
+				writefd );
+		}
 		Set_nonblock_io( writefd );
+	} else {
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "Read_write_timeout: no write %d", writefd );
 	}
 
-	retval = done = 0;
 	while(!done){
 		tp = 0;
 		memset( &timeval, 0, sizeof(timeval) );
+		m = 0;
 		if( timeout > 0 ){
 			time( &current_t );
 			elapsed = current_t - start_t;
@@ -694,14 +755,10 @@ int Read_write_timeout(
 		FD_ZERO( &writefds );
 		FD_ZERO( &readfds );
 		m = 0;
-		if( writefd >= 0 && *outlen > 0 ){
-			FD_SET( writefd, &writefds );
-			if( m <= writefd ) m = writefd+1;
-		}
-		if( readfd >= 0 ){
-			FD_SET( readfd, &readfds );
-			if( m <= readfd ) m = readfd+1;
-		}
+		FD_SET( writefd, &writefds );
+		if( m <= writefd ) m = writefd+1;
+		FD_SET( readfd, &readfds );
+		if( m <= readfd ) m = readfd+1;
 		errno = 0;
 		DEBUG4("Read_write_timeout: starting select" );
         m = select( m,
@@ -713,31 +770,36 @@ int Read_write_timeout(
 			m, Errormsg(err) );
 		if( m < 0 ){
 			if( err != EINTR ){
-				/* error */
-				retval = -1;
+				LOGERR(LOG_INFO)"Read_write_timeout: select returned %d, errno '%s'",
+				m, Errormsg(err) );
+				retval = JTIMEOUT;
 				done = 1;
 			}
 		} else if( m == 0 ){
 			/* timeout */
-			retval = -2;
+			retval = JTIMEOUT;
 			done = 1;
 		} else {
-			if( readfd >=0 && FD_ISSET( readfd, &readfds ) ){
+			if( FD_ISSET( readfd, &readfds ) ){
 				DEBUG4("Read_write_timeout: read possible on fd %d", readfd );
 				m = read( readfd, inbuffer, maxinlen );
+				DEBUG4("Read_write_timeout: read() returned %d", m );
 				if( readlen ) *readlen = m;
 				/* caller leaves space for this */
 				if( m >= 0 ) inbuffer[m] = 0;
-				if( m < 0 ) retval = -3;
+				if( m < 0 ) retval = JRDERR;
 				done = 1;
 			}
-			if( writefd >=0 && FD_ISSET( writefd, &writefds ) ){
+			if( FD_ISSET( writefd, &writefds ) ){
 				DEBUG4("Read_write_timeout: write possible on fd %d", writefd );
+				Set_nonblock_io( writefd );
 				m = write( writefd, *outbuffer, *outlen );
+				err = errno;
+				Set_block_io( writefd );
 				DEBUG4("Read_write_timeout: wrote %d", m );
-				if( m <= 0 ){
+				if( m < 0 ){
 					/* we have EOF on the file descriptor */
-					retval = -1;
+					retval = JWRERR;
 					done = 1;
 				} else {
 					*outlen -= m;
@@ -746,18 +808,17 @@ int Read_write_timeout(
 						done = 1;
 					}
 				}
+				errno = err;
 			}
 		}
 	}
 	err = errno;
-	if( !readnonblocking ) Set_block_io( readfd );
-	if( !writenonblocking ) Set_block_io( writefd );
 	errno = err;
 	return( retval );
 }
 
 /***************************************************************************
- * Set up alarms so PLP doesn't hang forever during transfers.
+ * Set up alarms so LPRng doesn't hang forever during transfers.
  ***************************************************************************/
 
 /*
@@ -780,11 +841,19 @@ int Read_write_timeout(
 {
 	Alarm_timed_out = 1;
 	signal( SIGALRM, SIG_IGN );
+	errno = EINTR;
 #if defined(HAVE_SIGLONGJMP)
 	siglongjmp(Timeout_env,1);
 #else
 	longjmp(Timeout_env,1);
 #endif
+}
+
+
+ static plp_signal_t timeout_break (int sig)
+{
+	Alarm_timed_out = 1;
+	signal( SIGALRM, SIG_IGN );
 }
 
 
@@ -797,22 +866,34 @@ int Read_write_timeout(
  * Clear_alarm()
  *  Turns off the timeout alarm
  ***************************************************************************/
-
-void Set_timeout_alarm( int timeout )
+void Set_timeout_signal_handler( int timeout, plp_sigfunc_t handler )
 {
 	int err = errno;
+	sigset_t oblock;
 
-	signal(SIGALRM, SIG_IGN);
 	alarm(0);
+	signal(SIGALRM, SIG_IGN);
+	plp_unblock_one_signal( SIGALRM, &oblock );
 	Alarm_timed_out = 0;
 	Timeout_pending = 0;
 
 	if( timeout > 0 ){
 		Timeout_pending = timeout;
-		plp_signal_break(SIGALRM, timeout_alarm);
+		plp_signal_break(SIGALRM, handler);
 		alarm (timeout);
 	}
 	errno = err;
+}
+
+
+void Set_timeout_alarm( int timeout )
+{
+	Set_timeout_signal_handler( timeout, timeout_alarm );
+}
+
+void Set_timeout_break( int timeout )
+{
+	Set_timeout_signal_handler( timeout, timeout_break );
 }
 
 void Clear_timeout( void )
@@ -840,14 +921,14 @@ void Clear_timeout( void )
  * 
  * "root" is the user who owns the setuid executable (privileged).
  * "user" is the user who runs it.
- * "daemon" owns data files used by the PLP utilities (spool directories, etc).
+ * "daemon" owns data files used by the LPRng utilities (spool directories, etc).
  *   and is set by the 'user' entry in the configuration file.
  * 
+ * To_ruid( user );	-- set ruid to user, euid to root
+ * To_euid( user );	-- set euid to user, ruid to root
+ * To_root();	-- set euid to root, ruid to root
+ * To_daemon();	-- set euid to daemon, ruid to root
  * To_user();	-- set euid to user, ruid to root
- * To_ruid_user();	-- set ruid to user, euid to root
- * To_root();	-- set euid to root
- * To_daemon();	-- set euid to daemon
- * To_root();	-- set euid to root
  * Full_daemon_perms() -- set both UID and EUID, one way, no return
  * 
  */
@@ -950,6 +1031,8 @@ void Clear_timeout( void )
 	if( SetRootUID == 0 ){
 		OriginalEUID = geteuid();	
 		OriginalRUID = getuid();	
+		DEBUG1("setup_info: OriginalEUD %d, OriginalRUID %d",
+			OriginalEUID, OriginalRUID );
 		/* we now make sure that we are able to use setuid() */
 		/* notice that setuid() will work if EUID or RUID is 0 */
 		if( OriginalEUID == 0 || OriginalRUID == 0 ){
@@ -961,12 +1044,12 @@ void Clear_timeout( void )
 					setuid( (uid_t)0 ) || setreuid( 0, 0 )
 #				endif
 				){
-				fatal( LOG_ERR,
+				FATAL(LOG_ERR)
 					"setup_info: RUID/EUID Start %d/%d seteuid failed",
 					OriginalRUID, OriginalEUID);
 			}
 			if( getuid() || geteuid() ){
-				fatal( LOG_ERR,
+				FATAL(LOG_ERR)
 				"setup_info: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
 					OriginalRUID, OriginalEUID, 
 					getuid(), geteuid() );
@@ -996,17 +1079,17 @@ void Clear_timeout( void )
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( 0 ) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"seteuid_wrapper: setuid() failed!!");
 		}
 #if defined(HAVE_SETEUID)
 		if( seteuid( to ) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"seteuid_wrapper: seteuid() failed!!");
 		}
 #else
 		if( setreuid( 0, to) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"seteuid_wrapper: setreuid() failed!!");
 		}
 #endif
@@ -1036,19 +1119,21 @@ void Clear_timeout( void )
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( 0 ) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"setruid_wrapper: setuid() failed!!");
 		}
 #if defined(HAVE_SETRUID)
 		if( setruid( to ) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"setruid_wrapper: setruid() failed!!");
 		}
-#else
+#elif defined(HAVE_SETREUID)
 		if( setreuid( to, 0) ){
-			logerr_die( LOG_ERR,
+			LOGERR_DIE(LOG_ERR)
 			"setruid_wrapper: setreuid() failed!!");
 		}
+#else
+# error - you do not have a way to set ruid
 #endif
 	}
 	ruid = getuid();
@@ -1075,9 +1160,9 @@ int To_user(void)
 {
 	setup_info(); return( seteuid_wrapper( OriginalRUID )	);
 }
-int To_ruid_user(void)
+int To_ruid(int uid)
 {
-	setup_info(); return( setruid_wrapper( OriginalRUID )	);
+	setup_info(); return( setruid_wrapper( uid )	);
 }
 int To_uid( int uid )
 {
@@ -1095,11 +1180,12 @@ int setuid_wrapper(int to)
 	if( UID_root ){
 		/* Note: you MUST use setuid() to force saved_setuid correctly */
 		if( setuid( (uid_t)0 ) ){
-			logerr_die( LOG_ERR, "setuid_wrapper: setuid(0) failed!!");
+			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(0) failed!!");
 		}
 		if( setuid( (uid_t)to ) ){
-			logerr_die( LOG_ERR, "setuid_wrapper: setuid(%d) failed!!", to);
+			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(%d) failed!!", to);
 		}
+		if( to ) UID_root = 0;
 	}
     DEBUG4("after setuid: (%d, %d)", getuid(),geteuid());
 	errno = err;
@@ -1205,11 +1291,11 @@ int Setdaemon_group(void)
 		err = errno;
 		if( To_uid( euid ) ){
 			err = errno;
-			logerr_die( LOG_ERR, "setdaemon_group: To_uid '%d' failed '%s'",
+			LOGERR_DIE(LOG_ERR) "setdaemon_group: To_uid '%d' failed '%s'",
 				euid, Errormsg( err ) );
 		}
 		if( status < 0 || DaemonGID != getegid() ){
-			logerr_die( LOG_ERR, "setdaemon_group: setgid '%d' failed '%s'",
+			LOGERR_DIE(LOG_ERR) "setdaemon_group: setgid '%d' failed '%s'",
 			DaemonGID, Errormsg( err ) );
 		}
 	}
@@ -1313,3 +1399,24 @@ double Space_avail( char *pathname )
 	return(space);
 }
 
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...)
+#else
+ void safefprintf (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+	int fd;
+    char *format;
+#endif
+	char buf[1024];
+    VA_LOCAL_DECL
+
+    VA_START (format);
+    VA_SHIFT (fd, int);
+    VA_SHIFT (format, char *);
+
+	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	Write_fd_str( fd, buf );
+}

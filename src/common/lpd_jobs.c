@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 5.5 1999/10/16 22:06:46 papowell Exp papowell $";
+"$Id: lpd_jobs.c,v 5.37 2000/11/28 20:43:37 papowell Exp papowell $";
 
 #include "lp.h"
 #include "lpd.h"
@@ -33,6 +33,17 @@
 #include "stty.h"
 
 #include "lpd_jobs.h"
+#include "lpd_rcvjob.h"
+
+#if defined(USER_INCLUDE)
+# include USER_INCLUDE
+#else
+# if defined(CHOOSER_ROUTINE)
+#   error No 'USER_INCLUDE' file with function prototypes specified
+    You need an include file with function prototypes
+# endif
+#endif
+
 
 /**** ENDINCLUDE ****/
 
@@ -152,32 +163,29 @@
 void Update_spool_info( struct line_list *sp )
 {
 	struct line_list info;
-	char *sd, *pr, *hf_name, *sc;
-	int pid, done_time;
+	char *sc;
 
 	Init_line_list(&info);
-	Move_line_list(&info,sp);
 
-	pr = Find_str_value(&info,PRINTER,Value_sep);
-	DEBUG1("Update_spool_info: printer '%s'", pr );
-	sd = Find_str_value(&info,SPOOLDIR,Value_sep);
+	Set_str_value(&info,SPOOLDIR, Find_str_value(sp,SPOOLDIR,Value_sep) );
+	Set_str_value(&info,PRINTER, Find_str_value(sp,PRINTER,Value_sep) );
+	Set_str_value(&info,QUEUE_CONTROL_FILE, Find_str_value(sp,QUEUE_CONTROL_FILE,Value_sep) );
+	Set_str_value(&info,HF_NAME, Find_str_value(sp,HF_NAME,Value_sep) );
+	Set_str_value(&info,IDENTIFIER, Find_str_value(sp,IDENTIFIER,Value_sep) );
+	Set_str_value(&info,SERVER, Find_str_value(sp,SERVER,Value_sep) );
+	Set_str_value(&info,DONE_TIME, Find_str_value(sp,DONE_TIME,Value_sep) );
+
 	sc = Find_str_value(&info,QUEUE_CONTROL_FILE,Value_sep);
-	pr = Find_str_value(&info,PRINTER,Value_sep);
-	hf_name = Find_str_value(&info,HF_NAME,Value_sep);
-	pid = Find_flag_value(&info,SERVER,Value_sep);
-	done_time = Find_flag_value(&info,DONE_TIME,Value_sep);
+
+	DEBUG1("Update_spool_info: file '%s'", sc );
+
 	Free_line_list(sp);
-	Get_spool_control(sd,sc,pr,sp);
-	Set_str_value(sp,SPOOLDIR,sd);
-	Set_str_value(sp,QUEUE_CONTROL_FILE,sc);
-	Set_str_value(sp,PRINTER,pr);
-	Set_str_value(sp,HF_NAME,hf_name);
-	Set_decimal_value(sp,SERVER,pid);
-	Set_flag_value(sp,DONE_TIME,done_time);
+	Get_spool_control(sc,sp);
+	Merge_line_list(sp,&info,Value_sep,1,1);
 	Free_line_list(&info);
 }
 
-int cmp_server( const void *left, const void *right )
+int cmp_server( const void *left, const void *right, const void *arg )
 {   
     struct line_list *l, *r;
 	int tr, tl;
@@ -192,107 +200,63 @@ int cmp_server( const void *left, const void *right )
 }
 
 
-int Get_subserver_pc( char *printer, struct line_list *l, int done_time )
+int Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time )
 {
-	char *pr, *sd, *s, *scf;
-	struct stat statb;
-	struct line_list entry, alias;
-	int printable, held, move, status, idle;
-	char *save_printer;
+	int printable, held, move, status;
+	char *path;
+	char buffer[SMALLBUFFER];
 
-	save_printer = Printer_DYN;
-	Printer_DYN = 0;
+	printable = held = move = status = 0;
 
-	pr = sd = 0;
-	printable = held = move = status = idle = 0;
-	Init_line_list(&entry);
-	Init_line_list(&alias);
-
-	Set_DYN(&Printer_DYN,printer);
 	DEBUG1("Get_subserver_pc: '%s'", printer );
-	if( !(pr = Select_pc_info(printer,&alias,&entry, &PC_names_line_list,
-			&PC_order_line_list, &PC_info_line_list, 0)) ){
-		logmsg(LOG_ERR,"Get_subserver_pc: cannot find load balance queue '%s'", printer );
-		status = 1;
-		goto error;
-	}
-	Set_DYN(&Printer_DYN, pr);
-	Set_str_value(l,PRINTER,pr);
-	if( done_time == 0 ){
-		done_time = time((void *)0);
-	}
-	Set_flag_value(l,DONE_TIME,done_time);
-	if( (s = Find_str_value(&entry,"check_idle",Value_sep))
-    	|| (s = Find_str_value(&Config_line_list,"check_idle",Value_sep)) ){
-		idle = 1;
-		DEBUG1("Get_subserver_pc: check_idle '%s'", s);
+	buffer[0] = 0;
+	if( Setup_printer( printer, buffer, sizeof(buffer), 1 ) ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "Get_subserver_pc: '%s' - '%s'", printer, buffer);
 	}
 
-	/* get Spool_dir */
-	sd = Find_str_value(&entry,SD,Value_sep);
-	if( !sd ) sd = Find_str_value(&Config_line_list,SD,Value_sep);
-	if( !sd ) sd = Find_default_var_value( &Spool_dir_DYN );
-	/* expand the spool queue string */
-	sd = safestrdup(sd,__FILE__,__LINE__);
-	Expand_percent( &sd );
+	Set_str_value(subserver_info,PRINTER,Printer_DYN);
+	Set_str_value(subserver_info,SPOOLDIR,Spool_dir_DYN);
+	path = Make_pathname( Spool_dir_DYN, Queue_control_file_DYN );
+	Set_str_value(subserver_info,QUEUE_CONTROL_FILE,path);
+	if( path ) free(path); path = 0;
 
-	DEBUG1("Get_subserver_pc: spool dir '%s'", sd );
-	/* get the spool queue */
-	if( sd == 0 || stat(sd,&statb) == -1 || !S_ISDIR(statb.st_mode) ){
-		status = 1;
-		logmsg(LOG_ERR,"Get_subserver_pc: no spool queue for '%s'", sd );
-		goto error;
-	}
-	Set_str_value(l,SPOOLDIR,sd);
+	Update_spool_info( subserver_info );
 
-	scf = Find_str_value(&entry,QUEUE_CONTROL_FILE,Value_sep);
-	if( !scf ) scf = Find_str_value(&Config_line_list,QUEUE_CONTROL_FILE,Value_sep);
-	if( !scf ) scf = Find_default_var_value( &Queue_control_file_DYN );
-	scf = safestrdup(scf,__FILE__,__LINE__);
-	Expand_percent( &scf );
-	Set_str_value(l,QUEUE_CONTROL_FILE,scf);
+	DEBUG1("Get_subserver_pc: scanning '%s'", Spool_dir_DYN );
+	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, 0, 0);
+	Set_flag_value(subserver_info,PRINTABLE,printable);
+	Set_flag_value(subserver_info,HELD,held);
+	Set_flag_value(subserver_info,MOVE,move);
+	Set_flag_value(subserver_info,DONE_TIME,done_time);
 
-	Update_spool_info( l );
+	DEBUG1("Get_subserver_pc: printable %d, held %d, move %d, fowarding '%s'",
+		printable, held, move, Find_str_value(subserver_info,FORWARDING,Value_sep) );
 
-	printable = held = move = 0;
-	Free_line_list(&entry);
-	DEBUG1("Get_subserver_pc: scanning '%s'", sd );
-	Scan_queue(sd, l, &entry, &printable, &held, &move, 1);
-	Set_flag_value(l,PRINTABLE,printable);
-	Set_flag_value(l,HELD,held);
-	Set_flag_value(l,MOVE,move);
-	Set_flag_value(l,IDLE,idle);
-	DEBUG1("Get_subserver_pc: printable %d, held %d, move %d",
-		printable, held, move );
-
-
- error:
-
-	Free_line_list(&alias);
-	Free_line_list(&entry);
-	if(sd)free(sd); sd = 0;
-	if(scf)free(scf); scf = 0;
-	if( Printer_DYN ) free(Printer_DYN); Printer_DYN = save_printer;
 	return(status);
+}
+
+/***************************************************************************
+ * Dump_subserver_info()
+ *  dump the server information list
+ ***************************************************************************/
+
+void Dump_subserver_info( char *title, struct line_list *l)
+{
+	char buffer[LINEBUFFER];
+	int i;
+	LOGDEBUG("*** Dump_subserver_info: '%s' - %d subservers",
+		title,	l->count );
+	for( i = 0; i < l->count; ++i ){
+		SNPRINTF(buffer,sizeof(buffer))"server %d",i);
+		Dump_line_list_sub(buffer,(struct line_list *)l->list[i]);
+	}
 }
 
 /***************************************************************************
  * Get_subserver_info()
  *  hack up the server information list into a list of servers
  ***************************************************************************/
-
-
-void Dump_subserver_info( char *title, struct line_list *l)
-{
-	char buffer[LINEBUFFER];
-	int i;
-	logDebug("*** Dump_subserver_info: '%s' - %d subservers",
-		title,	l->count );
-	for( i = 0; i < l->count; ++i ){
-		plp_snprintf(buffer,sizeof(buffer),"server %d",i);
-		Dump_line_list_sub(buffer,(struct line_list *)l->list[i]);
-	}
-}
 
 void Get_subserver_info( struct line_list *order,
 	char *list, char *old_order)
@@ -301,51 +265,47 @@ void Get_subserver_info( struct line_list *order,
 	int i, j;
 	char *s;
 
-	Init_line_list(&server);
 	Init_line_list(&server_order);
+	Init_line_list(&server);
 
-	DEBUG1("Get_subserver_info: servers '%s'",list);
-	DEBUG1("Get_subserver_info: order '%s'",old_order);
-	Split(&server,list,           File_sep,1,File_sep,    1,1,0);
-	Split(&server_order,old_order,File_sep,0,0,           0,1,0);
+	DEBUG1("Get_subserver_info: old_order '%s', list '%s'",old_order, list);
+	Split(&server_order,old_order,File_sep,0,0,0,1,0);
+	Split(&server_order,     list,File_sep,0,0,0,1,0);
+	if(DEBUGL1)Dump_line_list("Get_subserver_info - starting",&server_order);
 
 	/* get the info of printers */
-	for( i = 0; i < server.count; ++i ){
-		s = server.list[i];
-		for( j = 0; j < server_order.count; ++j ){
-			if( !safestrcasecmp(s,server_order.list[j]) ){
-				break;
-			}
+	pl = 0;
+	for( i = 0; i < server_order.count; ++i ){
+		s = server_order.list[i];
+		DEBUG1("Get_subserver_info: doing '%s'",s);
+		if( Find_str_value(&server,s,Value_sep) ){
+			DEBUG1("Get_subserver_info: already done '%s'",s);
+			continue;
 		}
-		++j;
-		Check_max(order,1);
-		pl = malloc_or_die(sizeof(pl[0]),__FILE__,__LINE__);
-		memset(pl, 0, sizeof(pl[0]));
-		if( Get_subserver_pc( s, pl, j ) ){
+		if( pl == 0 ) pl = malloc_or_die(sizeof(pl[0]),__FILE__,__LINE__);
+		Init_line_list(pl);
+		if( Get_subserver_pc( s, pl, i+1 ) ){
+			Free_line_list( pl );
 			free(pl); pl = 0;
 		} else {
+			Check_max(order,1);
+			DEBUG1("Get_subserver_info: adding to list '%s' at %d",s,order->count);
 			order->list[order->count++] = (char *)pl;
+			Set_str_value(&server,s,s);
 			pl = 0;
 		}
 		++j;
 	}
-
-	Free_line_list(&server);
 	Free_line_list(&server_order);
-	if( Mergesort( order->list+1, order->count-1,
-		sizeof( order->list[0] ), cmp_server ) ){
-		fatal( LOG_ERR,
-			_("Get_subserver_info: Mergesort failed") );
-	}
-
+	Free_line_list(&server);
 	if(DEBUGL1)Dump_subserver_info("Get_subserver_info - starting order",order);
 }
 
 /***************************************************************************
- * int Copy_or_link - move or link files
+ * Make_temp_copy - make a temporary copy in the directory
  ***************************************************************************/
 
-int Copy_or_link( char *srcfile, char *destfile )
+char *Make_temp_copy( char *srcfile, char *destdir )
 {
 	char buffer[LARGEBUFFER];
 	char *path = 0;
@@ -355,56 +315,58 @@ int Copy_or_link( char *srcfile, char *destfile )
 	fail = 0;
 	srcfd = destfd = -1;
 
-	DEBUG3("Copy_or_link: '%s' to '%s'", srcfile, destfile);
-	if( link( srcfile, destfile ) == -1 ){
-		DEBUG3("Copy_or_link: link '%s' to '%s' failed, '%s'",
-			srcfile, destfile, Errormsg(errno) );
-		path = safestrdup2(destfile,".x",__FILE__,__LINE__);
-		destfd = Checkwrite(path,&statb,0,1,0);
-		if( destfd < 0 ){
-			logerr(LOG_INFO,"Copy_or_link: open '%s' failed", path );
-			fail = 1;
-		}
+	DEBUG3("Make_temp_copy: '%s' to '%s'", srcfile, destdir);
+
+	destfd = Make_temp_fd_in_dir(&path, destdir);
+	unlink(path);
+	if( link( srcfile, path ) == -1 ){
+		DEBUG3("Make_temp_copy: link '%s' to '%s' failed, '%s'",
+			srcfile, path, Errormsg(errno) );
 		srcfd = Checkread(srcfile, &statb );
 		if( srcfd < 0 ){
-			logerr(LOG_INFO,"Copy_or_link: open '%s' failed", srcfile );
+			LOGERR(LOG_INFO)"Make_temp_copy: open '%s' failed", srcfile );
 			fail = 1;
+			goto error;
 		}
-		while( !fail && (n = read(srcfd,buffer,sizeof(buffer))) > 0 ){
+		while( (n = read(srcfd,buffer,sizeof(buffer))) > 0 ){
 			for( count = len = 0; len < n
 				&& (count = write(destfd, buffer+len,n-len)) > 0;
 				len += count );
-			if( count < 0 ) fail = 1;
-		}
-		if( srcfd >= 0 ) close(srcfd); srcfd = -1;
-		if( destfd >= 0 ) close(destfd); destfd = -1;
-
-		if( !fail && link( path, destfile ) == -1 ){
-			logerr(LOG_INFO,"Copy_or_link: link '%s' to '%s' failed, '%s'",
-			path, destfile, Errormsg(errno) );
-			fail = 1;
+			if( count < 0 ){
+				LOGERR(LOG_INFO)"Make_temp_copy: copy to '%s' failed", path );
+				fail = 1;
+				goto error;
+			}
 		}
 	}
-	if( path ) free(path); path = 0;
-	return( fail );
+
+ error:
+	if( fail ){
+		unlink(path); path = 0;
+	}
+	if( srcfd >= 0 ) close(srcfd); srcfd = -1;
+	if( destfd >= 0 ) close(destfd); destfd = -1;
+	return( path );
 }
 
 /***************************************************************************
  * Do_queue_jobs: process the job queue
  ***************************************************************************/
 
-int Do_queue_jobs( char *name, int subserver, int idle_check )
+int Do_queue_jobs( char *name, int subserver )
 {
 	int master = 0;		/* this is the master */
+	int opened_logfile = 0;	/* we have not opened the log file */
 	int lock_fd;	/* fd for files */
-	char buffer[SMALLBUFFER];
+	char buffer[SMALLBUFFER], savename[SMALLBUFFER], errormsg[SMALLBUFFER];
 	char *path, *s, *id, *tempfile, *transfername, *openname,
-		*new_dest, *move_dest, *pr, *hf_name, *sd, *from;
+		*new_dest, *move_dest, *pr, *hf_name, *sd, *from, *forwarding;
 	struct stat statb;
 	int i, j, mod, fd, pid, printable, held, move, destinations,
 		destination, use_subserver, job_to_do, working, printing_enabled,
-		all_done, fail, idle, job_index;
-	struct line_list servers, tinfo, *sp, *datafile;
+		all_done, fail, job_index, change, in_tempfd, out_tempfd, len,
+		chooser_did_not_find_server;
+	struct line_list servers, tinfo, *sp, *datafile, chooser_list, chooser_env;
 	plp_block_mask oblock;
 	struct job job;
 
@@ -414,15 +376,18 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 
 	Init_job(&job);
 	Init_line_list(&servers);
+	Init_line_list(&chooser_list);
+	Init_line_list(&chooser_env);
 	id = transfername = 0;
+	in_tempfd = out_tempfd = -1;
 
 	Name = "(Server)";
 	Set_DYN(&Printer_DYN,name);
-	DEBUG1("Do_queue_jobs: called with name '%s', subserver %d, idle_check %d",
-		Printer_DYN, subserver, idle_check );
+	DEBUG1("Do_queue_jobs: called with name '%s', subserver %d",
+		Printer_DYN, subserver );
 	name = Printer_DYN;
 
-	if(DEBUGL4){ int fdx; fdx = dup(0); logDebug("Do_queue_jobs: start next fd %d",fdx); close(fdx); };
+	if(DEBUGL4){ int fdx; fdx = dup(0); LOGDEBUG("Do_queue_jobs: start next fd %d",fdx); close(fdx); };
 
  begin:
 	Set_DYN(&Printer_DYN,name);
@@ -431,61 +396,85 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 	Free_listof_line_list( &servers );
 	if( lock_fd != -1 ) close( lock_fd ); lock_fd = -1;
 
+	Errorcode = JABORT;
+	/* you need to have a spool queue */
+	if( Setup_printer( Printer_DYN, buffer, sizeof(buffer), 0 ) ){
+		cleanup(0);
+	}
+	if(DEBUGL4){ int fdx; fdx = dup(0);
+	LOGDEBUG("Do_queue_jobs: after Setup_printer next fd %d",fdx); close(fdx); };
+
+	setproctitle( "lpd %s '%s'", Name, Printer_DYN );
+
+ again:
 	/* block signals */
 	plp_block_one_signal(SIGCHLD, &oblock);
 	plp_block_one_signal(SIGUSR1, &oblock);
 	(void) plp_signal(SIGCHLD,  SIG_DFL);
 	(void) plp_signal(SIGUSR1,  (plp_sigfunc_t)Sigusr1);
+	Susr1 = 0;
 
-	Errorcode = JABORT;
-	/* you need to have a spool queue */
-	if( Setup_printer( Printer_DYN, buffer, sizeof(buffer) ) ){
-		cleanup(0);
-	}
-	if(DEBUGL4){ int fdx; fdx = dup(0);
-	logDebug("Do_queue_jobs: after Setup_printer next fd %d",fdx); close(fdx); };
-
-	setproctitle( "lpd %s '%s'", Name, Printer_DYN );
 	path = Make_pathname( Spool_dir_DYN, Queue_lock_file_DYN );
 	DEBUG1( "Do_queue_jobs: checking lock file '%s'", path );
 	lock_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 	if( lock_fd < 0 ){
-		logerr_die( LOG_ERR, _("Do_queue_jobs: cannot open lockfile '%s'"),
+		LOGERR_DIE(LOG_ERR) _("Do_queue_jobs: cannot open lockfile '%s'"),
 			path ); 
 	}
-	pid = Read_pid( lock_fd, (char *)0, 0 );
-	DEBUG1( "Do_queue_jobs: last server '%d'", pid );
-	if( Do_lock( lock_fd, 0 ) <= 0 ){
+	if(path) free(path); path = 0;
+
+	/*
+	This code is very tricky,  and may cause some headaches
+	First, you want to make sure that you have an active process
+	to do the unspooling.  If you CAN lock the lock file, then you
+	are the active process.  If you CANNOT lock the lock file
+	then some other process is the active process.
+
+	If some other process is the active process then you want to
+	make sure that you signal it.  When the process is exiting
+	then it will first truncate lock file and then close it.
+	We make the brutal assumption that from the time that the
+	process truncates the log file until it exits will be less than
+	the time taken for this process to read the file and send a signal.
+	We help a bit by having the exiting process sleep 2 seconds -
+	i.e. - we make sure that it will take a fairish time.
+
+	This makes sure that processes that read the PID before it is
+	truncated will send the signal to an existing processes.
+	*/
+
+	while( Do_lock( lock_fd, 0 ) < 0 ){
+		pid = Read_pid( lock_fd, (char *)0, 0 );
 		DEBUG1( "Do_queue_jobs: server process '%d' may be active", pid );
+		if( pid == 0 || kill( pid, SIGUSR1 ) ){
+			plp_usleep(1000);
+			continue;
+		}
 		Errorcode = 0;
-		if( pid > 0 ) kill( pid, SIGUSR1 );
-		if(path) free(path); path = 0;
 		cleanup(0);
 	}
 	pid = getpid();
-	DEBUG1( "Do_queue_jobs: writing lockfile with pid '%d'", pid );
+	DEBUG1( "Do_queue_jobs: writing lockfile '%s' with pid '%d'",
+		Queue_lock_file_DYN, pid );
 	Write_pid( lock_fd, pid, (char *)0 );
-	DEBUG1("Do_queue_jobs: lock_fd fd %d", lock_fd );
-	DEBUG1( "Do_queue_jobs: got lock file '%s'", path );
-	if(path) free(path); path = 0;
 
- again:
-
-	if( Log_file_DYN ){
-		fd = Trim_status_file( Log_file_DYN, Max_log_file_size_DYN,
+	/* we now now new queue status so we force update */
+	if( Lpq_status_file_DYN ){
+		unlink(Lpq_status_file_DYN);
+	}
+	if( Log_file_DYN && !opened_logfile ){
+		fd = Trim_status_file( -1, Log_file_DYN, Max_log_file_size_DYN,
 			Min_log_file_size_DYN );
 		if( fd > 0 && fd != 2 ){
 			dup2(fd,2);
 			close(fd);
 		}
+		opened_logfile = 1;
 	}
+
 	s = Find_str_value(&Spool_control,DEBUG,Value_sep);
 	if(!s) s = New_debug_DYN;
 	Parse_debug( s, 0);
-
-	if(DEBUGL4){ int fdx; fdx = dup(0);
-		logDebug("Do_queue_jobs: after logfile next fd %d",fdx); close(fdx); };
-
 
 	if( Server_queue_name_DYN ){
 		if( subserver == 0 ){
@@ -496,24 +485,6 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 		}
 		Name = "(Sub)";
 	}
-
-
-	if(DEBUGL4){ int fdx; fdx = dup(0);
-		logDebug("Do_queue_jobs: after unspooler next fd %d",fdx); close(fdx); };
-
-	/* we now do our idle check */
-	idle = 0;
-	DEBUG1("Do_queue_jobs: Check_idle_DYN '%s', idle_check %d",
-		Check_idle_DYN, idle_check );
-	if( Check_idle_DYN || idle_check ){
-		idle = Do_check_idle();
-		/* exit if not idle */
-		if( idle_check || idle ){
-			Errorcode = idle;
-			cleanup(0);
-		}
-	}
-
 	/* set up the server name information */
 	Check_max(&servers,1);
 	sp = malloc_or_die(sizeof(sp[0]),__FILE__,__LINE__);
@@ -524,17 +495,34 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 	servers.list[servers.count++] = (char *)sp;
 	Update_spool_info(sp);
 
+	change = Find_flag_value(&Spool_control,CHANGE,Value_sep);
+	if( change ){
+		Set_flag_value(sp,CHANGE,0);
+		Set_flag_value(&Spool_control,CHANGE,0);
+		Set_spool_control(0, Queue_control_file_DYN, &Spool_control);
+	}
+
 	master = 0;
 	if( Server_names_DYN ){
 		DEBUG1( "Do_queue_jobs: Server_names_DYN '%s', Server_order '%s'",
 			Server_names_DYN, Srver_order(&Spool_control) );
 		if( Server_queue_name_DYN ){
 			Errorcode = JABORT;
-			fatal(LOG_ERR,"Do_queue_jobs: serving '%s' and subserver for '%s'",
+			FATAL(LOG_ERR)"Do_queue_jobs: serving '%s' and subserver for '%s'",
 				Server_queue_name_DYN, Server_names_DYN );
 		}
+
+		/* save the Printer_DYN name */
+		safestrncpy(savename,Printer_DYN);
+		/* we now get the subserver information */
 		Get_subserver_info( &servers,
 			Server_names_DYN, Srver_order(&Spool_control) );
+
+		/* reset the main printer */
+		if( Setup_printer( savename, buffer, sizeof(buffer), 0 ) ){
+			cleanup(0);
+		}
+
 		master = 1;
 		/* start the queues that need it */
 		for( i = 1; i < servers.count; ++i ){
@@ -544,13 +532,17 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			if( (s = Find_str_value(sp,SERVER,Value_sep)) ){
 				DEBUG1("Do_queue_jobs: subserver '%s' active server '%s'", pr,s );
 			}
-			printable = !Pr_disabled(sp) && !Pr_aborted(sp);
+			printable = !Pr_disabled(sp) && !Pr_aborted(sp)
+				&& Find_flag_value(sp,PRINTABLE,Value_sep);
 			move = Find_flag_value(sp,MOVE,Value_sep);
-			DEBUG1("Do_queue_jobs: subserver '%s', printable %d, move %d, idle %d",
-				pr, printable, move );
-			if( printable || move ){
+			forwarding = Find_str_value(sp,FORWARDING,Value_sep);
+			change = Find_flag_value(sp,CHANGE,Value_sep);
+			DEBUG1("Do_queue_jobs: subserver '%s', printable %d, move %d, forwarding '%s'",
+				pr, printable, move, forwarding );
+			if( printable || move || change || forwarding ){
 				pid = Fork_subserver( &servers, i, 0 );
 			}
+			Set_flag_value(sp,CHANGE,0);
 		}
 	}
 
@@ -558,11 +550,11 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 	if(DEBUGL3)Dump_subserver_info("Do_queue_jobs - after setup",&servers);
 
 	if(DEBUGL4){ int fdx; fdx = dup(0);
-		logDebug("Do_queue_jobs: after subservers next fd %d",fdx);close(fdx);};
+		LOGDEBUG("Do_queue_jobs: after subservers next fd %d",fdx);close(fdx);};
 	/* get new job values */
-	if( Scan_queue( Spool_dir_DYN, &Spool_control, &Sort_order,
-			&printable, &held, &move, 1) ){
-		logerr_die( LOG_ERR,"Do_queue_jobs: cannot read queue '%s'",
+	if( Scan_queue( &Spool_control, &Sort_order,
+			&printable, &held, &move, 1, 0, 0 ) ){
+		LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 			Spool_dir_DYN );
 	}
 
@@ -570,15 +562,13 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 		printable, held, move );
 
 	if(DEBUGL1){ i = dup(0);
-		logDebug("Do_queue_jobs: after Scan_queue next fd %d", i); close(i); }
+		LOGDEBUG("Do_queue_jobs: after Scan_queue next fd %d", i); close(i); }
 
 	/* remove junk fields from job information */
 	for( i = 0; i < Sort_order.count; ++i ){
 		/* fix up the sort stuff */
 		Free_job(&job);
-		if( (s = safestrchr(Sort_order.list[i], ';')) ){
-			Split(&job.info,s+1,";",1,Value_sep,1,1,1);
-		}
+		Get_hold_file(&job,Sort_order.list[i] );
 		if(DEBUGL3)Dump_job("Do_queue_jobs - info", &job);
 
 		/* debug output */
@@ -587,9 +577,8 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			Set_decimal_value(&job.info,SERVER,0);
 			mod = 1;
 		}
-		if( !Find_str_value(&job.info,OPENNAME,Value_sep ) ){
-			transfername = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
-			Set_str_value(&job.info,OPENNAME,transfername);
+		if( Find_str_value(&job.info,OPENNAME,Value_sep ) ){
+			Set_str_value(&job.info,OPENNAME,0);
 			mod = 1;
 		}
 		if((destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep))){
@@ -606,43 +595,30 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 				}
 			}
 		}
-		if( !(openname = Find_str_value(&job.info,HF_NAME,Value_sep ))
-			|| stat(openname,&statb) == -1 ){
-			mod = 1;
-		}
-		if( mod ) Set_hold_file(&job, 0);
+		if( mod ) Set_hold_file(&job, 0 );
 	}
+
 
 	Free_job(&job);
 	
-	/* get the permissions for this queue */
-	Free_line_list(&Perm_line_list);
-	Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
-	if( Perm_filters_line_list.count ){
-		Filterprintcap( &Perm_line_list, &Perm_filters_line_list,
-		Printer_DYN);
-	}
-
-
 	while(1){
 		DEBUG1( "Do_queue_jobs: MAIN LOOP" );
 		if(DEBUGL4){ int fdx; fdx = dup(0);
-		logDebug("Do_queue_jobs: MAIN LOOP next fd %d",fdx); close(fdx); };
+		LOGDEBUG("Do_queue_jobs: MAIN LOOP next fd %d",fdx); close(fdx); };
 		Unlink_tempfiles();
 
 		/* check for changes to spool control information */
-		plp_unblock_all_signals( &oblock);
+		plp_unblock_all_signals( &oblock );
 		plp_set_signal_mask( &oblock, 0 );
 
 		DEBUG1( "Do_queue_jobs: Susr1 before scan %d", Susr1 );
 		while( Susr1 ){
 			DEBUG1( "Do_queue_jobs: rescanning" );
 
-			Get_spool_control(Spool_dir_DYN, Queue_control_file_DYN,
-				Printer_DYN, &Spool_control);
-			if( Scan_queue( Spool_dir_DYN, &Spool_control, &Sort_order,
-					&printable, &held, &move, 1 ) ){
-				logerr_die( LOG_ERR,"Do_queue_jobs: cannot read queue '%s'",
+			Get_spool_control( Queue_control_file_DYN, &Spool_control);
+			if( Scan_queue( &Spool_control, &Sort_order,
+					&printable, &held, &move, 1, 0, 0 ) ){
+				LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 					Spool_dir_DYN );
 			}
 			DEBUG1( "Do_queue_jobs: printable %d, held %d, move %d",
@@ -651,6 +627,12 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			for( i = 0; i < servers.count; ++i ){
 				sp = (void *)servers.list[i];
 				Update_spool_info( sp );
+				change = Find_flag_value(sp,CHANGE,Value_sep);
+				pid = Find_flag_value(sp,SERVER,Value_sep);
+				if( i > 0 && change && pid == 0 ){
+					pid = Fork_subserver( &servers, i, 0 );
+				}
+				Set_flag_value(sp,CHANGE,0);
 			}
 			if(DEBUGL1) Dump_subserver_info( "Do_queue_jobs - rescan",
 				&servers );
@@ -668,56 +650,40 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 		/* make sure you can print */
 		printing_enabled
 			= !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
-		DEBUG3("Do_queue_jobs: printing_enabled '%d'", printing_enabled );
+		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
+		DEBUG3("Do_queue_jobs: printing_enabled '%d', forwarding '%s'",
+			printing_enabled, forwarding );
 
-		Free_job(&job);
 		openname = transfername = hf_name = id = move_dest = new_dest = 0;
 		destination = use_subserver = job_to_do = -1;
-		working =  destinations = 0;
+		working =  destinations = chooser_did_not_find_server = 0;
 
 		for( job_index = 0; job_to_do < 0 && job_index < Sort_order.count;
 			++job_index ){
+
 			Free_job(&job);
-			openname = transfername = hf_name = id = move_dest = new_dest = 0;
+			id = move_dest = new_dest = 0;
 			destination = use_subserver = job_to_do = -1;
 			working = destinations = 0;
 
-			if( !(s = Sort_order.list[job_index]) ) continue;
-			path = Find_str_in_str(s,HF_NAME,";");
-			DEBUG3("Do_queue_jobs: checking path '%s'", path );
-			Get_file_image_and_split(0,path,0,0,&job.info,
-				Line_ends,1,Value_sep,1,1,1);
-			if( path ) free(path); path = 0;
-			if( job.info.count == 0 ){
-				/* no hold file in spool queue */
-				if((s = safestrchr(s,';')) ){
-					Split(&job.info,s+1,";",1,Value_sep,1,1,1);
-				}
-			}
+			if( !Sort_order.list[job_index] ) continue;
+			DEBUG3("Do_queue_jobs: job_index [%d] '%s'", job_index,
+				Sort_order.list[job_index] );
+			Get_hold_file( &job, Sort_order.list[job_index] );
 
-			if( !Find_str_value(&job.info,OPENNAME,Value_sep) ){
-				path = Find_str_in_str(s,OPENNAME,";");
-				Set_str_value(&job.info,OPENNAME,path);
-				if( path ) free(path); path = 0;
-			}
-
-			if( Setup_cf_info( Spool_dir_DYN, 0, &job ) ){
-				id = Find_str_value(&job.info,OPENNAME,Value_sep);
-				DEBUG3("Do_queue_jobs: missing control file '%s'",id);
-				free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
-				continue;
-			}
-
-			if(DEBUGL4)Dump_job("Do_queue_jobs: current hold file",&job);
+			if(DEBUGL4)Dump_job("Do_queue_jobs: job ",&job);
+			if( job.info.count == 0 ) continue;
 
 			/* check to see if active */
 			if( (pid = Find_flag_value(&job.info,SERVER,Value_sep)) ){
 				DEBUG3("Do_queue_jobs: [%d] active %d", job_index, pid );
 				continue;
 			}
+
 			/* get printable status */
+			Setup_cf_info( &job, 1 );
 			Job_printable(&job,&Spool_control,&printable,&held,&move);
-			if( (!(printable && printing_enabled) && !move) || held ){
+			if( (!(printable && (printing_enabled || forwarding)) && !move) || held ){
 				DEBUG3("Do_queue_jobs: [%d] not processable", job_index );
 				free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
 				continue;
@@ -728,7 +694,7 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 					/* you cannot update hold file!! */
 					setstatus( &job, _("cannot update hold file for '%s'"),
 						id);
-					fatal( LOG_ERR,
+					FATAL(LOG_ERR)
 						_("Do_queue_jobs: cannot update hold file for '%s'"), 
 						id);
 				}
@@ -798,25 +764,133 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 				 * find the subserver with a class that will print this job
 				 * if master = 1, then we start with 1
 				 */
+				Free_line_list( &chooser_list );
+				Free_line_list( &chooser_env );
+				if( !Chooser_routine_DYN && Chooser_DYN ){
+					in_tempfd = Make_temp_fd(0);
+					out_tempfd = Make_temp_fd(0);
+				}
+				DEBUG1("Do_queue_jobs: chooser '%s', chooser_routine %lx",
+					Chooser_DYN, Cast_ptr_to_long(Chooser_routine_DYN) );
 				for( j = master; use_subserver < 0 && j < servers.count; ++j ){
 					sp = (void *)servers.list[j];
+					s = Find_str_value(sp,PRINTER,Value_sep);
+					DEBUG1("Do_queue_jobs: checking '%s'", s );
 					if( Pr_disabled(sp)
 						|| Pr_aborted(sp)
 						|| Sp_disabled(sp)
 						|| Find_flag_value(sp,SERVER,Value_sep)){
 						DEBUG1("Do_queue_jobs: cannot use [%d] '%s'",
-							j, Find_flag_value(sp,PRINTER,Value_sep) );
+							j, s );
 						continue;
 					}
 					if( Get_hold_class(&job.info,sp) ){
 						DEBUG1("Do_queue_jobs: cannot use [%d] '%s' class conflict",
-							j, Find_flag_value(sp,PRINTER,Value_sep) );
+							j, s );
 						/* we found a server that was available */
 						continue;
 					}
-					use_subserver = j;
-					job_to_do = job_index;
+					if( Chooser_DYN == 0 && Chooser_routine_DYN == 0 ){
+						use_subserver = j;
+						job_to_do = job_index;
+					} else {
+						char *t;
+						/* add to the list of possible servers */
+						Set_flag_value(&chooser_list,s,j);
+						if( !Chooser_routine_DYN ){
+							/* get the environment values for the possible server */
+							t = Join_line_list_with_sep(sp,"\n");
+							Set_str_value(&chooser_env,s,t);
+							if( t ) free(t); t = 0;
+							if( Write_fd_str( in_tempfd, s ) < 0 
+								|| Write_fd_str( in_tempfd, "\n" ) < 0 ){
+								Errorcode = JABORT;
+								LOGERR_DIE(LOG_ERR) "Do_queue_jobs: write(%d) failed", in_tempfd);
+							}
+						}
+					}
 				}
+				if( chooser_list.count > 0 && Chooser_routine_DYN ){
+#if defined(CHOOSER_ROUTINE)
+					extern int CHOOSER_ROUTINE( struct line_list *servers,
+						struct line_list *available, int *use_subserver );
+					/* return status for job */
+					DEBUG1("Do_queue_jobs: using CHOOSER_ROUTINE %s", STR(CHOOSER_ROUTINE) );
+					j =  CHOOSER_ROUTINE( &servers, &chooser_list, &use_subserver );
+					if( j ){
+						SETSTATUS(&job)"CHOOSER_ROUTINE exit status %s", Server_status(j));
+						Update_status( &job, j );
+					} else if( use_subserver >= 0 ){
+						/* we use this subserver */
+						job_to_do = job_index;
+					} else {
+						/* we did not find a server queue */
+						chooser_did_not_find_server = 1;
+					}
+#else
+					Errorcode = JABORT;
+					fatal(LOG_ERR,"Do_queue_jobs: 'chooser_routine' select and no routine defined");
+#endif
+				} else if( chooser_list.count > 0 && Chooser_DYN ){
+					/* we invoke the chooser with the list
+					 * of printers we have found in the order
+					 */
+					if( lseek(in_tempfd,0,SEEK_SET) == -1 ){
+						Errorcode = JFAIL;
+						LOGERR_DIE(LOG_INFO)"Do_queue_jobs: fseek(%d) failed",
+							out_tempfd);
+					}
+					j = Filter_file( in_tempfd, out_tempfd, "CHOOSER",
+						Chooser_DYN, Filter_options_DYN, &job, &chooser_env, 1 );
+					if( j ){
+						SETSTATUS(&job)"CHOOSER exit status %s", Server_status(j));
+						Update_status( &job, j );
+					} else {
+						if( lseek(out_tempfd,0,SEEK_SET) == -1 ){
+							Errorcode = JFAIL;
+							LOGERR_DIE(LOG_INFO)"Do_queue_jobs: fseek(%d) failed",
+								out_tempfd);
+						}
+						len = read( out_tempfd, buffer,sizeof(buffer)-1 );
+						if( len >= 0 ){
+							buffer[len] = 0;
+						} else {
+							Errorcode = JFAIL;
+							LOGERR_DIE(LOG_INFO)"Do_queue_jobs: read(%d) failed",
+								out_tempfd);
+						}
+						while( isspace(cval(buffer)) ){
+							memmove(buffer,buffer+1,strlen(buffer+1)+1);
+						}
+						if( (s = strpbrk(buffer,Whitespace)) ){
+							*s = 0;
+						}
+						if( buffer[0] ){
+							/* we found a server queue */
+							SETSTATUS(&job)"CHOOSER selected '%s'", buffer);
+							if( Find_str_value( &chooser_list,buffer,Value_sep ) ){
+								use_subserver = Find_flag_value(&chooser_list,buffer,Value_sep);
+								job_to_do = job_index;
+							} else if( strchr( buffer,'@') ){
+								/* we are routing to a remote queue not in list */
+								use_subserver = 0;
+								job_to_do = job_index;
+								Set_str_value( &job.info,NEW_DEST,buffer);
+								new_dest = Find_str_value( &job.info,NEW_DEST,Value_sep);
+							} else {
+								LOGMSG(LOG_ERR)"Do_queue_jobs: CHOOSER selection '%s' not a subserver",
+									buffer );
+							}
+						} else {
+							/* we did not find a server queue */
+							chooser_did_not_find_server = 1;
+						}
+					}
+				}
+				if( in_tempfd >= 0 ) close( in_tempfd ); in_tempfd = -1;
+				if( out_tempfd >= 0 ) close( out_tempfd ); out_tempfd = -1;
+				Free_line_list( &chooser_env );
+				Free_line_list( &chooser_list );
 			}
 		}
 
@@ -824,7 +898,10 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			&servers );
 		for( j = 0; j < servers.count; ++j ){
 			sp = (void *)servers.list[j];
-			if( Find_flag_value(sp,SERVER,Value_sep) ){
+			pid = Find_flag_value(sp,SERVER,Value_sep);
+			pr = Find_str_value(sp,PRINTER,Value_sep);
+			DEBUG2("Do_queue_jobs: printer '%s', server %d", pr, pid );
+			if( pid ){
 				++working;
 			}
 		}
@@ -833,91 +910,175 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 		DEBUG1("Do_queue_jobs: job_to_do %d, use_subserver %d, working %d",
 			job_to_do, use_subserver, working );
 
-		if( job_to_do < 0 && !working ){
+		if( job_to_do < 0 && !working && chooser_did_not_find_server == 0 ){
 			DEBUG1("Do_queue_jobs: nothing to do");
 			break;
 		}
 
 		/* now we see if we have to wait */ 
-		if( working && use_subserver < 0 ){
-			DEBUG1("Do_queue_jobs: waiting for process");
-			if( servers.count > 1 ){
-				setstatus(0, "waiting for subserver to finish" );
+		if( use_subserver < 0 ){
+			if( chooser_did_not_find_server ){
+				setstatus(0, "chooser did not find subserver, waiting %d sec",
+					Chooser_interval_DYN );
+				Wait_for_subserver( Chooser_interval_DYN, &servers );
+			} else if( working ){
+				if( servers.count > 1 ){
+					setstatus(0, "waiting for server queue process to exit" );
+				} else {
+					setstatus(0, "waiting for subserver to exit" );
+				}
+				Wait_for_subserver( 0, &servers );
 			}
-			Wait_for_subserver( &servers, &Sort_order );
 			continue;
 		}
 
 		/*
-		 * get the complete job status
+		 * get the job information
 		 */
 		hf_name = Find_str_value(&job.info,HF_NAME,Value_sep);
+		id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
+		if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 
 		/*
 		 * set the hold file information
 		 */
 
 		if( destination >= 0 ){
-			plp_snprintf(buffer,sizeof(buffer),"DEST%d",destination );
+			SNPRINTF(buffer,sizeof(buffer))"DEST%d",destination );
 			Set_str_value(&job.info,DESTINATION,buffer);
 		}
 
 		Set_decimal_value(&job.info,SERVER,getpid());
 		Set_flag_value(&job.info,START_TIME,time((void *)0));
-		sp = (void *)servers.list[use_subserver];
-		pr = Find_str_value(sp,PRINTER,Value_sep);
 
+		sp = (void *)servers.list[use_subserver];
+		Set_str_value(sp,HF_NAME,0);
+		Set_str_value(sp,IDENTIFIER,0);
+
+		pr = Find_str_value(sp,PRINTER,Value_sep);
 		DEBUG1("Do_queue_jobs: starting job '%s' on '%s'", id, pr );
 
 		if( Set_hold_file( &job, 0 ) ){
 			/* you cannot update hold file!! */
 			setstatus( &job, _("cannot update hold file '%s'"), hf_name);
-			fatal( LOG_ERR,
+			FATAL(LOG_ERR)
 				_("Do_queue_jobs: cannot update hold file '%s'"), hf_name);
 		}
 
+		if( Status_file_DYN ){
+			DEBUG1("Do_queue_jobs: trimming status file '%s'/'%s'", Spool_dir_DYN, Status_file_DYN );
+			fd = Trim_status_file( -1, Status_file_DYN, Max_status_size_DYN,
+				Min_status_size_DYN );
+			if( fd > 0 ) close(fd);
+			fd = -1;
+		}
+
 		if( use_subserver > 0 ){
-			/* we now copy the data and/or control files */
+			/* we set up a copy of the job descriptor to use to make
+				the job in the new directory */
+			struct job jcopy;
+			Init_job(&jcopy);
+			Copy_job(&jcopy,&job);
+
 			sd = Find_str_value(sp,SPOOLDIR,Value_sep);
-			name = Find_str_value(sp,PRINTER,Value_sep);
+			pr = Find_str_value(sp,PRINTER,Value_sep);
 			id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
 			if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
+
 			DEBUG1("Do_queue_jobs: subserver '%s', spool dir '%s' for job '%s'",
-				name, sd, id );
-			setstatus(&job, "transferring '%s' to subserver '%s'", id, name );
+			   pr, sd, id );
+			setstatus(&job, "transferring '%s' to subserver '%s'", id, pr ); 
+
+			for( i = 0; i < jcopy.datafiles.count; ++i ){
+				datafile = (void *)jcopy.datafiles.list[i];
+				Set_str_value( datafile, OPENNAME, 0 );
+			}
+			Set_str_value(&jcopy.info,OPENNAME,0);
+			Set_str_value(&jcopy.info,HF_NAME,0);
+			if(DEBUGL2)Dump_job("Do_queue_jobs: subserver jcopy", &jcopy );
+
 			fail = 0;
-			for( i = 0; i < job.datafiles.count; ++i ){
-				datafile = (void *)job.datafiles.list[i];
+			for( i = 0; i < jcopy.datafiles.count; ++i ){
+				datafile = (void *)jcopy.datafiles.list[i];
 				if(DEBUGL3)Dump_line_list("Do_queue_jobs - copying datafiles",
 					datafile);
 				from = Find_str_value(datafile,TRANSFERNAME,Value_sep);
-				path = Make_pathname(sd,from);
+				path = Make_temp_copy( from, sd );
 				DEBUG3("Do_queue_jobs: sd '%s', from '%s', path '%s'",
 					sd, from, path );
-				fail |= Copy_or_link( from, path );
-				if(path) free(path); path = 0;
+				if( path ){
+					Set_str_value( datafile, OPENNAME, path );
+				} else {
+					fail = 1;
+					break;
+				}
 			}
-			from = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
-			path = Make_pathname(sd,from);
-			DEBUG3("Do_queue_jobs: sd '%s', from '%s', path '%s'",
-				sd, from, path );
-			fail |= Copy_or_link( from, path );
-			if(path) free(path); path = 0;
-
+			if( !fail ){
+				from = Find_str_value(&jcopy.info,TRANSFERNAME,Value_sep);
+				path = Make_temp_copy(from,sd);
+				DEBUG3("Do_queue_jobs: sd '%s', from '%s', path '%s'",
+					sd, from, path );
+				if( path ){
+					Set_str_value( &jcopy.info,OPENNAME,path );
+				} else {
+					fail = 1;
+				}
+			}
+			/* if we fail to copy, make a note of it */
 			if( fail ){
-				setstatus(&job, "transfer '%s' to subserver '%s' failed", id, name );
-				plp_snprintf(buffer,sizeof(buffer),
-					"could not copy to destination '%s'", name );
+				SNPRINTF(buffer,sizeof(buffer))"cannot copy '%s' to subserver '%s' queue directory '%s'",
+					id, pr, sd );
 				Set_str_value(&job.info,ERROR,buffer);
-				Set_hold_file(&job, 0 );
-				setstatus(&job,"could not copy to destination '%s', spool dir '%s'",
-					name, sd );
+				setstatus(&job, "%s", buffer);
+				path = Find_str_value(&jcopy.info,OPENNAME,Value_sep);
+				if( path ) unlink(path);
+				for( i = 0; i < jcopy.datafiles.count; ++i ){
+					datafile = (void *)jcopy.datafiles.list[i];
+					path = Find_str_value(datafile,OPENNAME,Value_sep);
+					if( path ) unlink(path);
+				}
+				Update_status(&job, JFAIL);
+				Free_job(&jcopy);
 				continue;
 			}
+			if(DEBUGL2)Dump_job("Do_queue_jobs: subserver jcopy new", &jcopy );
+
+			/* set up the new context */
+			safestrncpy(savename,Printer_DYN);
+			buffer[0] = 0;
+			if( Setup_printer( pr, buffer, sizeof(buffer), 1 ) ){
+				Errorcode = JABORT;
+				FATAL(LOG_ERR) "Do_queue_jobs: subserver '%s' setup failed - %s'",
+						pr, buffer );
+			}
+
+			/* we have to chdir to the destination directory */
+			i =  Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0 );
+			Free_job(&jcopy);
+
+			/* now we switch back to the old context */
+			if( Setup_printer( savename, buffer, sizeof(buffer), 1 ) ){
+				Errorcode = JABORT;
+				FATAL(LOG_ERR) "Do_queue_jobs: subserver '%s' setup failed '%s'",
+					savename, buffer );
+			}
+			/* now handle error conditions */
+			if( i ){
+				SNPRINTF(buffer,sizeof(buffer))"transfer '%s' to subserver '%s' failed - %s",
+					id, pr, errormsg );
+				Set_str_value(&job.info,ERROR,buffer);
+				setstatus(&job, "%s", buffer);
+				Update_status(&job, JFAIL);
+				continue;
+			}
+
+			/* now we deal with the job in the original queue */
 			Set_flag_value(&job.info,DONE_TIME,time((void *)0));
-			Set_hold_file(&job, 0 );
-			setstatus(&job, "transfer '%s' to subserver '%s' finished", id, name );
-			setmessage(&job,STATE,"COPYTO %s",name);
+			Set_hold_file(&job, 0);
+
+			Set_str_value(sp,IDENTIFIER,id);
+			setstatus(&job, "transfer '%s' to subserver '%s' finished", id, pr );
+			setmessage(&job,STATE,"COPYTO %s",pr);
 			if( !Save_when_done_DYN ){
 				if( Remove_job( &job ) ){
 					setstatus( &job, _("could not remove job '%s'"), id);
@@ -927,7 +1088,7 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			} else {
 				setstatus( &job, _("job '%s' saved"), id );
 			}
-			setstatus(&job, "starting subserver '%s'", name );
+			setstatus(&job, "starting subserver '%s'", pr );
 			pid = Fork_subserver( &servers, use_subserver, 0 );
 		} else {
 			Free_line_list(&tinfo);
@@ -940,7 +1101,7 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 					/* you cannot update hold file!! */
 					setstatus( &job, _("cannot update hold file '%s'"),
 						hf_name );
-					fatal( LOG_ERR,
+					FATAL(LOG_ERR)
 						_("Do_queue_jobs: cannot update hold file '%s'"), 
 						hf_name );
 				}
@@ -953,6 +1114,7 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 		}
 	}
 
+
 	/* now we reset the server order */
 	Errorcode = JSUCC;
 	Free_job(&job);
@@ -964,21 +1126,24 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
 			s = Find_str_value(sp,PRINTER,Value_sep);
 			Add_line_list(&tinfo,s,0,0,0);
 		}
-		s = Join_line_list(&tinfo,",");
+		s = Join_line_list_with_sep(&tinfo,",");
 		Set_str_value(&Spool_control,SERVER_ORDER,s);
-		Set_spool_control(0, Spool_dir_DYN,Queue_control_file_DYN,
-			Printer_DYN,&Spool_control);
+		Set_spool_control(0, Queue_control_file_DYN, &Spool_control);
 		if(s) free(s); s = 0;
 		Free_line_list(&tinfo);
 	}
 	Free_listof_line_list(&servers);
 
-	DEBUG1("Do_queue_jobs: done, Errorcode %d, '%s'", Errorcode,
-		Server_status(Errorcode) );
-
-	/* check for changes to spool control information */
+	/* truncate and close the lock file then wait a short time for signal */
+	ftruncate( lock_fd, 0 );
+	close( lock_fd );
+	lock_fd = -1;
+	/* force status update */
+	if( Lpq_status_file_DYN ){
+		unlink(Lpq_status_file_DYN);
+	}
 	plp_unblock_all_signals( &oblock);
-	plp_set_signal_mask( &oblock, 0);
+	sleep(2);
 	DEBUG1( "Do_queue_jobs: Susr1 at end %d", Susr1 );
 	if( Susr1 ){
 		DEBUG1("Do_queue_jobs: SIGUSR1 just before exit" );
@@ -996,18 +1161,17 @@ int Do_queue_jobs( char *name, int subserver, int idle_check )
  *
  ***************************************************************************/
 
-int Remote_job( struct job *job, char *id )
+int Remote_job( struct job *job, int lpd_bounce, char *id )
 {
-	int status, tempfd, of_error[2], pid, len, n, i;
+	int status, tempfd, n;
 	double job_size;
-	char buffer[SMALLBUFFER], *s, *tempfile, *pgm;
+	char buffer[SMALLBUFFER], *s, *tempfile, *oldid, *newid, *old_lp_value;
 	struct line_list *lp, *firstfile;
 	struct job jcopy;
 	struct stat statb;
-	plp_status_t procstatus;
 
 	DEBUG1("Remote_job: %s", id );
-	setmessage(job,STATE,"SENDING");
+	/* setmessage(job,STATE,"SENDING"); */
 	status = 0;
 	Init_job(&jcopy);
 
@@ -1017,16 +1181,15 @@ int Remote_job( struct job *job, char *id )
 	Setup_user_reporting(job);
 
 	if( Accounting_remote_DYN && Accounting_file_DYN ){
-		Setup_accounting( job );
 		if( Accounting_start_DYN ){
 			status = Do_accounting( 0,
 				Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
 		}
 		DEBUG1("Remote_job: accounting status %s", Server_status(status) );
 		if( status ){
-			plp_snprintf(buffer,sizeof(buffer),
+			SNPRINTF(buffer,sizeof(buffer))
 				"accounting check failed '%s'", Server_status(status));
-			setstatus(job,"%s", buffer );
+			SETSTATUS(job)"%s", buffer );
 			switch(status){
 	case JFAIL: break;
 	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
@@ -1034,27 +1197,40 @@ int Remote_job( struct job *job, char *id )
 	default: Set_str_value(&job->info,ERROR,buffer); break;
 			}
 			Set_hold_file(job, 0 );
-			Errorcode = status;
-			cleanup(0);
+			goto exit;
 		}
 	}
 
-	status = 0;
+	Errorcode = status = 0;
 
 	Copy_job(&jcopy,job);
 	if(DEBUGL2)Dump_job("Remote_job - jcopy", &jcopy );
-	if( Bounce_queue_dest_DYN || Lpd_bounce_DYN ){
+	if( lpd_bounce ){
+		if( !Bounce_queue_format_DYN ){
+			Errorcode = JABORT;
+			FATAL(LOG_INFO)"Remote_job: no bq_format value");
+		}
 		if(DEBUGL2) Dump_job( "Remote_job - before filtering", &jcopy );
 		tempfd = Make_temp_fd(&tempfile);
-		Print_job( tempfd, &jcopy, 0 );
+
+		old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep),
+			__FILE__,__LINE__ );
+		Set_str_value( &PC_entry_line_list, LP, tempfile );
+		/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
+		Print_job( tempfd, -1, &jcopy, 0, 0, 0 );
+		Set_str_value( &PC_entry_line_list, LP, old_lp_value );
+		if( old_lp_value ) free(old_lp_value); old_lp_value = 0;
+
 		if( fstat( tempfd, &statb ) ){
-			logerr_die(LOG_INFO,"Remote_job: fstatb failed" );
+			LOGERR(LOG_INFO)"Remote_job: fstatb failed" );
+			status = JFAIL;
 		}
 		if( (close(tempfd) == -1 ) ){
-			Errorcode = JFAIL;
-			logerr_die( LOG_INFO,"Remote_job: close(%d) failed",
+			status = JFAIL;
+			LOGERR(LOG_INFO)"Remote_job: close(%d) failed",
 				tempfd);
 		}
+		if( status ) goto exit;
 		job_size = statb.st_size;
 		Free_listof_line_list(&jcopy.datafiles);
 		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
@@ -1063,10 +1239,6 @@ int Remote_job( struct job *job, char *id )
 		jcopy.datafiles.list[jcopy.datafiles.count++] = (void *)lp;
 		Set_str_value(lp,OPENNAME,tempfile);
 		Set_str_value(lp,TRANSFERNAME,tempfile);
-		if( !(s = Bounce_queue_format_DYN) || strlen(s) > 1 || !islower(cval(s))  ){
-			Set_str_value( &jcopy.info,ERROR,"bad bq_format value");
-		}
-		Set_str_value(lp,FORMAT,Bounce_queue_format_DYN);
 		s = 0;
 		if( (firstfile = (void *)(job->datafiles.list[0])) ){
 			s = Find_str_value( firstfile, "N", Value_sep );
@@ -1074,134 +1246,45 @@ int Remote_job( struct job *job, char *id )
 		Set_str_value(lp,"N",s?s:"(lpd_filter)");
 		Set_flag_value(lp,COPIES,1);
 		Set_double_value(lp,SIZE,job_size);
-	} else if( Generate_banner_DYN ){
-		struct line_list files;
-		int banner_place, do_banner;
-
-		s = Find_str_value(&jcopy.info, BNRNAME, Value_sep );
-		do_banner = Always_banner_DYN || s;
-		if( do_banner && s == 0 ){
-			s = Find_str_value( &jcopy.info,LOGNAME,Value_sep);
-			if( s == 0 ) s = "ANONYMOUS";
-			Set_str_value(&jcopy.info,BNRNAME,s);
-		}
-
-		pgm = Banner_end_DYN;
-		if( !pgm ) pgm = Banner_start_DYN;
-		if( !pgm ) pgm = Banner_printer_DYN;
-		if( !pgm ){
-			fatal( LOG_ERR,
-				_("Remote_job: generate_banner and no banner_printer defined") );
-		}
-		if( do_banner ){
-			setstatus(job,"generating banner using '%s'", pgm);
-			Init_line_list(&files);
-			tempfd = Make_temp_fd(&tempfile);
-
-			if( pipe( of_error ) == -1 ){
-				Errorcode = JFAIL;
-				logerr_die( LOG_INFO,"Remote_job: pipe() failed");
-			}
-			DEBUG3("Remote_job: fd of_error[%d,%d]", of_error[0], of_error[1] );
-
-			Check_max(&files, 10 );
-			files.list[files.count++] = Cast_int_to_voidstar(0);		/* stdin */
-			files.list[files.count++] = Cast_int_to_voidstar(tempfd);	/* stdout */
-			files.list[files.count++] = Cast_int_to_voidstar(of_error[1]);	/* stderr */
-			if( (pid = Make_passthrough( pgm, Filter_options_DYN, &files, &jcopy, 0 )) < 0 ){
-				Errorcode = JFAIL;
-				logerr_die(LOG_INFO,"Remote_job: could not make banner process");
-			}
-			files.count = 0;
-			Free_line_list(&files);
-
-			if( (close(of_error[1]) == -1 ) ){
-				Errorcode = JFAIL;
-				logerr_die( LOG_INFO,"Remote_job: close(%d) failed",
-					of_error[1]);
-			}
-			len = 0;
-			while( len < sizeof(buffer)-1
-				&& (n = read(of_error[0],buffer+len,sizeof(buffer)-len-1)) >0 ){
-				buffer[n+len] = 0;
-				while( (s = safestrchr(buffer,'\n')) ){
-					*s++ = 0;
-					setstatus(job, "Remote_job: BANNER_ERROR: '%s'", buffer );
-					memmove(buffer,s,strlen(s)+1);
-				}
-				len = strlen(buffer);
-			}
-			if( len ){
-				setstatus(job, "Remote_job: BANNER_ERROR: '%s'", buffer );
-			}
-			if( (close(of_error[0]) == -1 ) ){
-				Errorcode = JFAIL;
-				logerr_die( LOG_INFO,"Remote_job: close(%d) failed",
-					of_error[0]);
-			}
-			while( (n = plp_waitpid(pid,&procstatus,0)) != pid );
-			DEBUG1("Remote_job: pid %d, exit status '%s'", pid,
-				Decode_status(&procstatus) );
-			if( WIFEXITED(procstatus) && (n = WEXITSTATUS(procstatus)) ){
-				plp_snprintf(buffer,sizeof(buffer),
-					"Remote_job: banner printer '%s' exited with status %d", pgm, n);
-				Set_str_value(&jcopy.info,ERROR,buffer);
-			} else if( WIFSIGNALED(procstatus) ){
-				n = WTERMSIG(procstatus);
-				plp_snprintf(buffer,sizeof(buffer),
-					"Remote_job: banner printer '%s' died with signal %d, '%s'",
-						pgm, n, Sigstr(n));
-				Set_str_value(&jcopy.info,ERROR,buffer);
-			}
-			if( fstat( tempfd, &statb ) ){
-				logerr_die(LOG_INFO,"Remote_job: fstatb failed" );
-			}
-			job_size = statb.st_size;
-
-			if( (close(tempfd) == -1 ) ){
-				Errorcode = JFAIL;
-				logerr_die( LOG_INFO,"Remote_job: close(%d) failed",
-					tempfd);
-			}
-
-			Check_max(&jcopy.datafiles,2);
-			banner_place = 0;
-			if( Banner_last_DYN || Banner_end_DYN ){
-				banner_place = jcopy.datafiles.count;
-			} else {
-				for( i = jcopy.datafiles.count; i >= 0; --i ){
-					jcopy.datafiles.list[i+1] = jcopy.datafiles.list[i];
-				}
-			}
-			++jcopy.datafiles.count;
-
-			lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
-			memset(lp,0,sizeof(lp[0]));
-			jcopy.datafiles.list[banner_place] = (void *)lp;
-			Set_str_value(lp,OPENNAME,tempfile);
-			Set_str_value(lp,TRANSFERNAME,tempfile);
-			Set_str_value(lp,FORMAT,"f");
-			Set_str_value(lp,"N","(banner)");
-			Set_flag_value(lp,COPIES,1);
-			Set_double_value(lp,SIZE,job_size);
-		}
-	}
-	if( Fix_control( &jcopy, Control_filter_DYN ) ){
-		status = JFAIL;
-		if( !(s = Find_str_value(&jcopy.info,ERROR,Value_sep)) ){
-			plp_snprintf(buffer,sizeof(buffer), _("control filter error") );
-			Set_str_value(&jcopy.info,ERROR,buffer);
-		}
+		Set_str_value(lp,FORMAT,Bounce_queue_format_DYN);
 	} else {
-		if(DEBUGL3)Dump_job("Send_job - after Fix_control", &jcopy );
-		status = Send_job( &jcopy, Connect_timeout_DYN, Connect_interval_DYN,
-			Max_connect_interval_DYN, Send_job_rw_timeout_DYN );
-		DEBUG1("Remote_job: %s, status '%s'", id, Link_err_str(status) );
+		int err = Errorcode;
+		Errorcode = 0;
+		if( Generate_banner_DYN ){
+			Add_banner_to_job( &jcopy );
+		}
+		Filter_files_in_job( &jcopy, -1, 0 );
+		status = Errorcode;
+		Errorcode = err;
+		if( status ){
+			goto done;
+		}
 	}
+
+	/* fix up the control file */
+	Fix_control( &jcopy, Control_filter_DYN, Xlate_format_DYN );
+	oldid = Find_str_value(&job->info,IDENTIFIER,Value_sep );
+	newid = Find_str_value(&jcopy.destination,IDENTIFIER,Value_sep );
+	if( newid == 0 ){
+		newid = Find_str_value(&jcopy.info,IDENTIFIER,Value_sep );
+	}
+	n = Find_flag_value( &jcopy.info, DATAFILE_COUNT, Value_sep );
+	if( Max_datafiles_DYN > 0 && n > Max_datafiles_DYN ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR)
+				_("Remote_job: %d datafiles and only allowed %d"),
+					n, Max_datafiles_DYN );
+	}
+	setmessage(job,STATE,"SENDING OLDID=%s NEWID=%s DEST=%s@%s",
+		oldid, newid, RemotePrinter_DYN, RemoteHost_DYN );
+	if(DEBUGL3)Dump_job("Send_job - after Fix_control", &jcopy );
+	status = Send_job( &jcopy, job, Connect_timeout_DYN, Connect_interval_DYN,
+		Max_connect_interval_DYN, Send_job_rw_timeout_DYN, 0 );
+	DEBUG1("Remote_job: %s, status '%s'", id, Link_err_str(status) );
 	buffer[0] = 0;
 
 	if(DEBUGL2)Dump_job("Remote_job - final jcopy value", &jcopy );
-
+ done:
 	s = 0;
 	if( status ){
 		s = Find_str_value(&jcopy.info,ERROR,Value_sep);
@@ -1218,19 +1301,19 @@ int Remote_job( struct job *job, char *id )
 	case JREMOVE:
 		break;
 	case LINK_ACK_FAIL:
-		plp_snprintf(buffer,sizeof(buffer),
+		SNPRINTF(buffer,sizeof(buffer))
 			_("link failure while sending job '%s'"), id );
 		s = buffer;
 		status = JFAIL;
 		break;
 	case LINK_PERM_FAIL:
-		plp_snprintf(buffer,sizeof(buffer),
+		SNPRINTF(buffer,sizeof(buffer))
 			 _("no permission to spool job '%s'"), id );
 		s = buffer;
 		status = JREMOVE;
 		break;
 	default:
-		plp_snprintf(buffer,sizeof(buffer),
+		SNPRINTF(buffer,sizeof(buffer))
 			_("failed to send job '%s'"), id );
 		s = buffer;
 		status = JFAIL;
@@ -1250,6 +1333,7 @@ int Remote_job( struct job *job, char *id )
 				Send_job_rw_timeout_DYN );
 		}
 	}
+ exit:
 	return( status );
 }
 
@@ -1260,31 +1344,32 @@ int Remote_job( struct job *job, char *id )
 
 int Local_job( struct job *job, char *id )
 {
-	int status, fd, pid, errorpid, n, len;
-	plp_status_t procstatus;
-	char buffer[SMALLBUFFER], *s;
+	int status, fd, status_fd, pid, poll_for_status;
+	char *old_lp_value;
+	char buffer[SMALLBUFFER];
+
+	status_fd = fd = -1;
 
 	DEBUG1("Local_job: starting %s", id );
 	setmessage(job,STATE,"PRINTING");
-	status = 0;
+	Errorcode = status = 0;
 	Set_str_value(&job->info,PRSTATUS,0);
 	Set_str_value(&job->info,ERROR,0);
 
 	Setup_user_reporting(job);
 
-	setstatus(job,"subserver pid %d starting", getpid());
+	SETSTATUS(job)"subserver pid %d starting", getpid());
 	if( Accounting_file_DYN && Local_accounting_DYN ){
-		setstatus(job,"accounting at start");
-		Setup_accounting( job );
+		SETSTATUS(job)"accounting at start");
 		if( Accounting_start_DYN ){
 			status = Do_accounting( 0,
 				Accounting_start_DYN, job, Send_job_rw_timeout_DYN );
 		}
 		DEBUG1("Local_job: accounting status %s", Server_status(status) );
 		if( status ){
-			plp_snprintf(buffer,sizeof(buffer),
+			SNPRINTF(buffer,sizeof(buffer))
 				"accounting check failed '%s'", Server_status(status));
-			setstatus(job,"%s", buffer );
+			SETSTATUS(job)"%s", buffer );
 			switch(status){
 	case JFAIL: break;
 	case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
@@ -1292,88 +1377,65 @@ int Local_job( struct job *job, char *id )
 	default: Set_str_value(&job->info,ERROR,buffer); break;
 			}
 			Set_hold_file(job, 0 );
-			Errorcode = status;
-			cleanup(0);
+			goto exit;
 		}
 	}
- 	status = Errorcode = 0;
+ 	Errorcode = status = 0;
 
-	setstatus(job,"opening device '%s'", Lp_device_DYN);
-	pid = errorpid = 0;
-	fd = Printer_open(Lp_device_DYN,job,
+	SETSTATUS(job)"opening device '%s'", Lp_device_DYN);
+	pid = 0;
+	fd = Printer_open(Lp_device_DYN, &status_fd, job,
 		Send_try_DYN, Connect_interval_DYN, Max_connect_interval_DYN,
-		Connect_grace_DYN, Connect_timeout_DYN, &pid, &errorpid );
+		Connect_grace_DYN, Connect_timeout_DYN, &pid, &poll_for_status );
 
+	/* note: we NEVER return fd == 0 or horrible things have happened */
 	DEBUG1("Local_job: fd %d", fd );
-	if( fd < 0 ){
+	if( fd <= 0 ){
 		status = JFAIL;
-	} else {
-		setstatus(job,"printing job '%s'", id );
-		Print_job( fd, job, Send_job_rw_timeout_DYN );
-		status = Errorcode;
-		/* we do shutdown on socket, close otherwise */
-		DEBUG1("Local_job: shutting down fd %d", fd );
-		if( (fd = Shutdown_or_close(fd)) > 0 ){
-			if( Send_job_rw_timeout_DYN > 0 ){
-				Set_linger( fd, Send_job_rw_timeout_DYN );
-			} else if( Exit_linger_timeout_DYN > 0 ){
-				Set_linger( fd, Exit_linger_timeout_DYN );
-			}
-		}
-		DEBUG1("Local_job: after shutdown fd %d", fd );
-		while( pid > 0 || errorpid > 0 ){
-			setstatus(job,"waiting for printer filter to exit");
-			n = plp_waitpid(-1,&procstatus,0);
-			if( n  == pid ){
-				pid = 0;
-				if( WIFEXITED(procstatus) ){
-					status = WEXITSTATUS(procstatus);
-					setstatus(job,"printer filter exit status '%s'",
-						Server_status(status) );
-					DEBUG1("Local_job: filter exit status '%s'",
-						Server_status(status) );
-				} else if( WIFSIGNALED(procstatus) ){
-					n = WTERMSIG(procstatus);
-					DEBUG1("Local_job: signal %d, '%s'",
-						n, Sigstr(n));
-					setstatus(job,"printer filter died with signal '%s'",
-						Sigstr(n));
-					status = JABORT;
-				}
-			} else if( n == errorpid ){
-				errorpid = 0;
-			}
-		}
-		/* we wait for nothing to read */
-		if( fd > 0 && Wait_for_eof_DYN ){
-			DEBUG1("Local_job: wait for eof on %d", fd );
-			buffer[0] = 0;
-			for(len = 0;
-				len < sizeof(buffer)-1 && (n = read(fd, buffer+len, sizeof(buffer)-1-len)) > 0;
-				len = strlen(buffer) ){
-				buffer[len+n] = 0;
-				DEBUG1("Local_job: read '%s'", buffer);
-				while( (s = strchr(buffer,'\n')) ){
-					*s++ = 0;
-					setstatus(job, "IO_DEVICE message '%s'", buffer);
-					memmove(buffer,s,strlen(s)+1);
-				}
-			}
-			DEBUG1("Local_job: eof on %d", fd );
-		}
-		close( fd );
+		goto exit;
+	}
+	SETSTATUS(job)"printing job '%s'", id );
+	/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
+	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, LP, Value_sep),
+		__FILE__,__LINE__ );
+	Set_str_value( &PC_entry_line_list, LP, Lp_device_DYN );
+	status = Print_job( fd, status_fd, job, Send_job_rw_timeout_DYN, poll_for_status, 0 );
+	Set_str_value( &PC_entry_line_list, LP, old_lp_value );
+	if( old_lp_value ) free(old_lp_value); old_lp_value = 0;
+	/* we close close device */
+	DEBUG1("Local_job: shutting down fd %d", fd );
+
+	fd = Shutdown_or_close( fd );
+	DEBUG1("Local_job: after shutdown fd %d, status_fd %d", fd, status_fd );
+	if( status_fd > 0 ){
+		/* we shut down this connection as well */
+		shutdown(status_fd,1);
+		/* we wait for eof on status_fd */
+		buffer[0] = 0;
+		Get_status_from_OF(job,"LP",pid,
+			status_fd, buffer, sizeof(buffer)-1, Send_job_rw_timeout_DYN, 0, 0 );
+	}
+	if( fd > 0 ) close( fd ); fd = -1;
+	if( status_fd > 0 ) close( status_fd ); status_fd = -1;
+	if( pid > 0 ){
+		SETSTATUS(job)"waiting for printer filter to exit");
+		status = Wait_for_pid( pid, "LP", 0, Send_job_rw_timeout_DYN );
 	}
 	DEBUG1("Local_job: status %s", Server_status(status) );
 
 	Set_str_value(&job->info,PRSTATUS,Server_status(status));
 	if( Accounting_file_DYN && Local_accounting_DYN ){
-		setstatus(job,"accounting at end");
+		SETSTATUS(job)"accounting at end");
 		if( Accounting_end_DYN ){
 			Do_accounting( 1, Accounting_end_DYN, job,
 				Send_job_rw_timeout_DYN );
 		}
 	}
-	setstatus(job,"finished '%s', status '%s'", id, Server_status(status));
+	SETSTATUS(job)"finished '%s', status '%s'", id, Server_status(status));
+
+ exit:
+	if( fd != -1 ) close(fd); fd = -1;
+	if( status_fd != -1 ) close(status_fd); status_fd = -1;
 	return( status );
 }
 
@@ -1394,7 +1456,6 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 	pr = Find_str_value(sp,PRINTER,Value_sep);
 	Set_str_value(parms,PRINTER,pr);
 	Set_flag_value(parms,SUBSERVER,use_subserver);
-	Set_flag_value(parms,IDLE,Find_flag_value(sp,IDLE,Value_sep) );
 	if( use_subserver > 0 ){
 		Set_str_value(parms,CALL,QUEUE);
 	} else {
@@ -1407,7 +1468,7 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 	if( pid > 0 ){
 		Set_decimal_value(sp,SERVER,pid);
 	} else {
-		logerr( LOG_ERR, _("Fork_subserver: fork failed") );
+		LOGERR(LOG_ERR) _("Fork_subserver: fork failed") );
 	}
 	Free_line_list(parms);
 	return( pid );
@@ -1415,7 +1476,7 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
 
 /***************************************************************************
  * struct server_info *Wait_for_subserver( struct line_list *servers,
- *     int block, plp_block_mask *omask )
+ *     int block )
  *  wait for a server process to exit
  *  if none present return 0
  *  look up the process in the process table
@@ -1423,14 +1484,15 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
  *  return the process table entry
  ***************************************************************************/
 
-void Wait_for_subserver( struct line_list *servers, struct line_list *order )
+void Wait_for_subserver( int timeout, struct line_list *servers
+	/*, struct line_list *order */ )
 {
 	pid_t pid;
 	plp_status_t procstatus;
 	int found, sigval, status, i, done;
 	struct line_list *sp = 0;
 	struct job job;
-	char buffer[SMALLBUFFER], *pr, *hf_name;
+	char buffer[SMALLBUFFER], *pr, *hf_name, *id;
 
 	/*
 	 * wait for the process to finish or a signal to be delivered
@@ -1439,9 +1501,8 @@ void Wait_for_subserver( struct line_list *servers, struct line_list *order )
 	Init_job(&job);
 	sigval = errno = 0;
 
-	/* we need to unblock signals and wait for event */
-	(void) plp_signal(SIGCHLD,  (plp_sigfunc_t)Sigchld);
 	done = 0;
+ again:
 	while( (pid = plp_waitpid( -1, &procstatus, WNOHANG )) > 0 ){
 		++done;
 		DEBUG1("Wait_for_subserver: pid %d, status '%s'", pid,
@@ -1472,11 +1533,11 @@ void Wait_for_subserver( struct line_list *servers, struct line_list *order )
 			pid, Server_status(status) );
 
 		if( status != JSIGNAL ){
-			plp_snprintf(buffer,sizeof(buffer),
+			SNPRINTF(buffer,sizeof(buffer))
 				 _("subserver pid %d exit status '%s'"),
 				pid, Server_status(status));
 		} else {
-			plp_snprintf(buffer,sizeof(buffer),
+			SNPRINTF(buffer,sizeof(buffer))
 				_("subserver pid %d died with signal '%s'"),
 				pid, Sigstr(sigval));
 			status = JABORT;
@@ -1491,43 +1552,54 @@ void Wait_for_subserver( struct line_list *servers, struct line_list *order )
 				found = 1;
 				++done;
 
+				Free_job(&job);
 				Set_decimal_value(sp,SERVER,0);
 				Set_flag_value(sp,DONE_TIME,time((void *)0));
+
+				/* we get the hold file information */
 				hf_name = Find_str_value(sp,HF_NAME,Value_sep);
+				Get_hold_file( &job, hf_name );
+				Setup_cf_info( &job, 0 );
+
 				pr = Find_str_value(sp,PRINTER,Value_sep);
-				DEBUG1( "Wait_for_subserver: server pid %d for '%s' for '%s' finished",
-					pid, pr, hf_name );
+				id = Find_str_value(sp,IDENTIFIER,Value_sep);
+				Set_str_value(&job.info,IDENTIFIER,id);
+				DEBUG1( "Wait_for_subserver: server pid %d for '%s' for '%s' '%s' finished",
+					pid, pr, hf_name, id );
 
 				/* see if you can get the hold file and update the status */
-				Free_job(&job);
-				Get_file_image_and_split( 0, hf_name, 0, 0,
-					&job.info, Line_ends,1,Value_sep,1,1,1);
-
 				if( job.info.count ){
-					Update_status( &job, status);
+					Update_status( &job, status );
 				}
-
 				Set_str_value(sp,HF_NAME,0);
+				Set_str_value(sp,IDENTIFIER,0);
 				Update_spool_info(sp);
 				if( i == 0 ){
-					Get_spool_control(Spool_dir_DYN,Queue_control_file_DYN,
-					Printer_DYN,&Spool_control );
+					/* this is the information for the master spool queue */
+					Get_spool_control(Queue_control_file_DYN, &Spool_control );
 				}
 			}
 		}
+		Free_job(&job);
 		/* sort server order */
 		if( Mergesort( servers->list+1, servers->count-1,
-			sizeof( servers->list[0] ), cmp_server ) ){
-			fatal( LOG_ERR,
+			sizeof( servers->list[0] ), cmp_server, 0 ) ){
+			FATAL(LOG_ERR)
 				_("Wait_for_subserver: Mergesort failed") );
 		}
 		if(DEBUGL4) Dump_subserver_info(
 			"Wait_for_subserver: after sorting", servers );
 	}
 	if( !done ){
+		/* we need to unblock signals and wait for event */
+		Chld = 0;
+		Set_timeout_break( timeout );
+		(void) plp_signal(SIGCHLD,  (plp_sigfunc_t)Sigchld);
 		plp_sigpause();
+		Clear_timeout();
+		signal( SIGCHLD, SIG_DFL );
+		if( Chld ) goto again;
 	}
-	signal( SIGCHLD, SIG_DFL );
 
 	Free_job(&job);
 }
@@ -1542,112 +1614,101 @@ void Wait_for_subserver( struct line_list *servers, struct line_list *order )
  ***************************************************************************/
 
  static struct keywords keys[] = {
-	{"succ", INTEGER_K, (void *)0, JSUCC},
-	{"jsucc", INTEGER_K, (void *)0, JSUCC},
-	{"success", INTEGER_K, (void *)0, JSUCC},
-	{"jsuccess", INTEGER_K, (void *)0, JSUCC},
-	{"abort", INTEGER_K, (void *)0, JABORT},
-	{"jabort", INTEGER_K, (void *)0, JABORT},
-	{"hold", INTEGER_K, (void *)0, JHOLD},
-	{"jhold", INTEGER_K, (void *)0, JHOLD},
-	{"remove", INTEGER_K, (void *)0, JREMOVE},
-	{"jremove", INTEGER_K, (void *)0, JREMOVE},
+	{"succ", N_("succ"), INTEGER_K, (void *)0, JSUCC},
+	{"jsucc", N_("jsucc"), INTEGER_K, (void *)0, JSUCC},
+	{"success", N_("success"), INTEGER_K, (void *)0, JSUCC},
+	{"jsuccess", N_("jsuccess"), INTEGER_K, (void *)0, JSUCC},
+	{"abort", N_("abort"), INTEGER_K, (void *)0, JABORT},
+	{"jabort", N_("jabort"), INTEGER_K, (void *)0, JABORT},
+	{"hold", N_("hold"), INTEGER_K, (void *)0, JHOLD},
+	{"jhold", N_("jhold"), INTEGER_K, (void *)0, JHOLD},
+	{"remove", N_("remove"), INTEGER_K, (void *)0, JREMOVE},
+	{"jremove", N_("jremove"), INTEGER_K, (void *)0, JREMOVE},
 	{ (char *)0 }
 };
 
-int Decode_transfer_failure( int attempt, struct job *job, char *id )
+int Decode_transfer_failure( int attempt, struct job *job )
 {
 	struct keywords *key;
-	int in[2], out[2], count, result, n, pid, len;
+	int result, n, len, c;
 	char line[SMALLBUFFER], *outstr;
-	plp_status_t status;
-	struct line_list fd;
 
-	DEBUG1("Decode_transfer_failure: send_failure_action '%s'",
-		Send_failure_action_DYN );
-	Init_line_list(&fd);
 	result = JREMOVE;
-	outstr = 0;
-	if( Send_failure_action_DYN ){
+	outstr = Send_failure_action_DYN;
+	if( outstr ) while( isspace(cval(outstr)) ) ++outstr;
+	DEBUG1("Decode_transfer_failure: send_failure_action '%s'", outstr );
+	if( outstr && cval(outstr) == '|' ){
 		/* check to see if it is a filter */
-		if( Send_failure_action_DYN[0] == '|' ){
-			/* open a pipe to read output from */
-			if( pipe(in) < 0 || pipe(out) < 0 ){
-				logerr_die( LOG_ERR, _("Decode_transfer: pipe failed") );
-			}
-			DEBUG1("Decode_transfer_failure: pipe in[%d,%d], out[%d,%d]",
-				in[0], in[1], out[0], out[1] );
+		int out_tempfd, in_tempfd;
 
-			Check_max(&fd,10);
-			fd.list[fd.count++] = Cast_int_to_voidstar(in[0]);
-			fd.list[fd.count++] = Cast_int_to_voidstar(out[1]);
-			fd.list[fd.count++] = Cast_int_to_voidstar(2);
-			pid = Make_passthrough( Send_failure_action_DYN+1,
-				Filter_options_DYN, &fd,job, 0 );
-			fd.count = 0;
-			Free_line_list(&fd);
-
-			(void)close(in[0]);
-			(void)close(out[1]);
-			plp_snprintf( line, sizeof(line), "%d", attempt );
-			Write_fd_str( in[1], line );
-			close(in[1]);
-			len = 0;
-			while( len < sizeof(line)-1
-				&& (count = read( out[0], line+len, sizeof(line)-len-1 )) > 0){
-				line[len+count] = 0;
-				DEBUG1("Decode_transfer_failure: read '%s'", line );
-				len += count;
-			}
-			line[len] = 0;
-			close( out[0] );
-			while( (n = plp_waitpid(pid,&status,0)) != pid );
-			if( WIFSIGNALED(status) ){
-				n = WTERMSIG(status);
-				DEBUG1("Decode_transfer_failure: signal %d, '%s'",
-					n, Sigstr(n));
-				result = JABORT;
-			} else if( WIFEXITED(status) ){
-				result = WEXITSTATUS(status);
-				if( result == 0 ){
-					DEBUG1("Decode_transfer_failure: exit status %d", result);
-					outstr = line;
-					if( outstr && *outstr ){
-						char *s;
-						while( strchr(Whitespace,cval(outstr)) ) ++outstr;
-						if( (s = strpbrk(outstr,Whitespace)) ) *s = 0;
-					}
-					setstatus( job, "job '%s', send_failure_action filter returned '%s'",
-						id, outstr );
-				} else {
-					setstatus( job, "job '%s', send_failure_action filter exit '%s'",
-						id, Server_status(result) );
-				}
-			}
-		} else {
-			outstr = Send_failure_action_DYN;
-			setstatus( job, "job '%s', send_failure_action '%s'",
-				id, outstr );
+		outstr = 0;
+		SNPRINTF( line, sizeof(line)) "%d\n", attempt );
+		out_tempfd = Make_temp_fd( 0);
+		in_tempfd = Make_temp_fd( 0);
+		if( Write_fd_str(in_tempfd,line) < 0 ){
+			Errorcode = JFAIL;
+			LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: write(%d) failed",
+				in_tempfd);
 		}
-		if( outstr && *outstr ){
-			for( key = keys; key->keyword; ++key ){
-				DEBUG1("Decode_transfer_failure: comparing '%s' to '%s'",
-					outstr, key->keyword );
-				if( safestrcasecmp( key->keyword, outstr ) == 0 ){
-					result = key->maxval;
-					break;
-				}
+		if( lseek(in_tempfd,0,SEEK_SET) == -1 ){
+			Errorcode = JFAIL;
+			LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: fseek(%d) failed",
+				in_tempfd);
+		}
+		n = Filter_file( in_tempfd, out_tempfd, "TRANSFER_FAILURE",
+			Send_failure_action_DYN, Filter_options_DYN, job, 0, 1 );
+		DEBUG1("Decode_transfer_failure: exit status %s", Server_status(n));
+		if( n ){
+			result = n;
+			setstatus( job, "send_failure_action filter exit status '%s'",
+				Server_status(result) );
+		} else {
+			if( lseek(out_tempfd,0,SEEK_SET) == -1 ){
+				Errorcode = JFAIL;
+				LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: fseek(%d) failed",
+					out_tempfd);
+			}
+			len = read( out_tempfd, line,sizeof(line)-1 );
+			if( len >= 0 ){
+				line[len] = 0;
+			} else {
+				Errorcode = JFAIL;
+				LOGERR_DIE(LOG_INFO)"Decode_transfer_failure: read(%d) failed",
+					out_tempfd);
+			}
+			while( (c = cval(line)) && strchr( Whitespace, c) ){
+				memmove( line, line+1, strlen(line+1)+1 );
+			}
+			while( (len = strlen(line)) && (c = cval(line+len-1))
+				&& strchr( Whitespace, c) ){
+				line[len-1] = 0;
+			}
+			setstatus( job, "send_failure_action filter returned '%s'",
+				outstr );
+		}
+		close( out_tempfd ); out_tempfd = -1;
+		close( in_tempfd ); in_tempfd = -1;
+	}
+	if( outstr && *outstr ){
+		DEBUG1("Decode_transfer_failure: outstr '%s'", outstr );
+		for( key = keys; key->keyword; ++key ){
+			DEBUG1("Decode_transfer_failure: comparing '%s' to '%s'",
+				outstr, key->keyword );
+			if( safestrcasecmp( key->keyword, outstr ) == 0 ){
+				result = key->maxval;
+				break;
 			}
 		}
 	}
-	DEBUG1("Decode_transfer_failure: returning '%s'", Server_status(result) );
+	DEBUG1("Decode_transfer_failure: result '%s'", Server_status(result) );
+	setstatus( job, "send_failure_action '%s'", Server_status(result) );
 	return( result );
 }
 
 void Update_status( struct job *job, int status )
 {
 	char buffer[SMALLBUFFER];
-	char *id, *did, *strv;
+	char *id, *did, *strv, *hf_name;
 	struct line_list *destination;
 	int copy, copies, attempt, destinations, n, done = 0;
 	
@@ -1689,6 +1750,7 @@ void Update_status( struct job *job, int status )
 		break;
 
 	case JSUCC:	/* successful, remove job */
+		if(DEBUGL3)Dump_job("Update_status - JSUCC", job );
 		if( destination ){
 			done = 0;
 			copies = Find_flag_value(&job->info,SEQUENCE,Value_sep);
@@ -1716,6 +1778,8 @@ void Update_status( struct job *job, int status )
 				}
 			}
 			Update_destination(job);
+			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+			if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 			if( done && n >= destinations ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: job '%s' printed",
@@ -1727,6 +1791,9 @@ void Update_status( struct job *job, int status )
 		} else {
 			copies = Find_flag_value(&job->info,COPIES,Value_sep);
 			copy = Find_flag_value(&job->info,COPY_DONE,Value_sep);
+			id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+			if(!id) id = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
+
 			if( Find_str_value(&job->info,MOVE,Value_sep) ){
 				Set_flag_value(&job->info,DONE_TIME,time((void *)0));
 				setstatus( job, "%s@%s: job '%s' moved",
@@ -1735,7 +1802,7 @@ void Update_status( struct job *job, int status )
 				++copy;
 				Set_flag_value(&job->info,COPY_DONE,copy);
 				if( copies ){
-				setstatus( job, "%s@%s: job '%s' printed copy %d of %d",
+					setstatus( job, "%s@%s: job '%s' printed copy %d of %d",
 					Printer_DYN, FQDNHost_FQDN, id, copy, copies );
 				}
 				if( copy >= copies ){
@@ -1749,16 +1816,20 @@ void Update_status( struct job *job, int status )
 				}
 			}
 		done_job:
-			Set_hold_file( job, 0 );
-			if(DEBUGL3)Dump_job("Update_status - done_job", job );
-			if( !Save_when_done_DYN ){
-				if( Remove_job( job ) ){
-					setstatus( job, _("could not remove job '%s'"), id);
+			hf_name = Find_str_value(&job->info,HF_NAME,Value_sep);
+			DEBUG3("Update_status: done_job, id '%s', hf '%s'", id, hf_name );
+			if( hf_name ){
+				Set_hold_file( job, 0 );
+				if(DEBUGL3)Dump_job("Update_status - done_job", job );
+				if( !Save_when_done_DYN ){
+					if( Remove_job( job ) ){
+						setstatus( job, _("could not remove job '%s'"), id);
+					} else {
+						setstatus( job, _("job '%s' removed"), id );
+					}
 				} else {
-					setstatus( job, _("job '%s' removed"), id );
+					setstatus( job, _("job '%s' saved"), id );
 				}
-			} else {
-				setstatus( job, _("job '%s' saved"), id );
 			}
 		}
 		break;
@@ -1774,11 +1845,11 @@ void Update_status( struct job *job, int status )
 			++attempt;
 			Set_flag_value(&job->info,ATTEMPT,attempt);
 		}
-		DEBUG1( "Do_queue_jobs: JFAIL - attempt %d, max %d",
+		DEBUG1( "Update_status: JFAIL - attempt %d, max %d",
 			attempt, Send_try_DYN );
 		Set_hold_file( job, 0 );
 
-		if( Send_try_DYN && attempt >= Send_try_DYN ){
+		if( Send_try_DYN > 0 && attempt >= Send_try_DYN ){
 			char buf[60];
 
 			/* check to see what the failure action
@@ -1786,7 +1857,7 @@ void Update_status( struct job *job, int status )
 			 */
 			setstatus( job, _("job '%s', attempt %d, allowed %d"),
 				id, attempt, Send_try_DYN );
-			status = Decode_transfer_failure( attempt, job, id );
+			status = Decode_transfer_failure( attempt, job );
 			switch( status ){
 			case JSUCC:   strv = _("treating as successful"); break;
 			case JFAIL:   strv = _("retrying job"); break;
@@ -1795,7 +1866,7 @@ void Update_status( struct job *job, int status )
 			case JREMOVE: strv = _("removing job - status JREMOVE"); break;
 			case JHOLD:   strv = _("holding job"); break;
 			default:
-				plp_snprintf( buf, sizeof(buf),
+				SNPRINTF( buf, sizeof(buf))
 					_("unexpected status 0x%x"), status );
 				strv = buf;
 				status = JABORT;
@@ -1804,15 +1875,28 @@ void Update_status( struct job *job, int status )
 			setstatus( job, _("job '%s', %s"), id, strv );
 		}
 		if( status == JFAIL ){
-			setstatus( job, _("job '%s' attempt %d of %d, retrying"),
-				id, attempt, Send_try_DYN );
+			if( Send_try_DYN > 0 ){
+				setstatus( job, _("job '%s' attempt %d, trying %d times"),
+					id, attempt, Send_try_DYN );
+			} else {
+				setstatus( job, _("job '%s' attempt %d, trying indefinately"),
+					id, attempt);
+			}
+			if( destination ){
+				Set_str_value(destination,ERROR,0);
+				Set_str_value(destination,PRSTATUS,0);
+			} else {
+				Set_str_value(&job->info,ERROR,0);
+				Set_str_value(&job->info,PRSTATUS,0);
+			}
+			Set_hold_file( job, 0 );
 		} else {
 			goto again;
 		}
 		break;
 
 	case JFAILNORETRY:	/* do not try again */
-		plp_snprintf( buffer, sizeof(buffer), _("failed, no retry") );
+		SNPRINTF( buffer, sizeof(buffer)) _("failed, no retry") );
 		if( destination ){
 			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
 			++attempt;
@@ -1840,7 +1924,7 @@ void Update_status( struct job *job, int status )
 
 	default:
 	case JABORT:	/* abort, do not try again */
-		plp_snprintf(buffer,sizeof(buffer), _("aborting operations") );
+		SNPRINTF(buffer,sizeof(buffer)) _("aborting operations") );
 		Set_flag_value(&job->info,PRIORITY_TIME,0);
 		if( destination ){
 			if( !Find_str_value(destination,ERROR,Value_sep) ){
@@ -1866,16 +1950,15 @@ void Update_status( struct job *job, int status )
 		if( Stop_on_abort_DYN ){
 			setstatus( job, _("stopping printing on filter JABORT exit code") );
 			Set_flag_value( &Spool_control,PRINTING_ABORTED,1 );
-			Set_spool_control(0, Spool_dir_DYN, Queue_control_file_DYN,
-				Printer_DYN,&Spool_control);
+			Set_spool_control(0, Queue_control_file_DYN, &Spool_control);
 		}
 		break;
 
 	case JREMOVE:	/* failed, remove job */
 		if( destination ){
 			if( !Find_str_value(destination,ERROR,Value_sep) ){
-				plp_snprintf( buffer, sizeof(buffer),
-					_("removing destination due to errors"), did );
+				SNPRINTF( buffer, sizeof(buffer))
+					_("removing destination due to errors") );
 				Set_str_value(destination,ERROR,buffer);
 			}
 			Set_flag_value(destination,DONE_TIME, time( (void *)0) );
@@ -1884,8 +1967,8 @@ void Update_status( struct job *job, int status )
 			Set_hold_file( job, 0 );
 		} else {
 			if( !Find_str_value(&job->info,ERROR,Value_sep) ){
-				plp_snprintf( buffer, sizeof(buffer),
-					_("removing job due to errors"), id );
+				SNPRINTF( buffer, sizeof(buffer))
+					_("removing job due to errors") );
 				Set_str_value(&job->info,ERROR,buffer);
 			}
 			Set_flag_value(&job->info,DONE_TIME, time( (void *)0) );
@@ -1918,11 +2001,12 @@ int Check_print_perms( struct job *job )
 	perm.printer = Printer_DYN;
 	perm.user = Find_str_value(&job->info,LOGNAME,Value_sep);
 	perm.remoteuser = perm.user;
+	perm.host = 0;
 	s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
 		perm.host = &PermHost_IP;
-		perm.remotehost = perm.host;
 	}
+	perm.remotehost = perm.host;
 	permission = Perms_check( &Perm_line_list,&perm, job, 1 );
 	DEBUG3("Check_print_perms: permission '%s'", perm_str(permission) );
 	return( permission );
@@ -1931,7 +2015,7 @@ int Check_print_perms( struct job *job )
 
 void Setup_user_reporting( struct job *job )
 {
-	char *host = Find_first_letter(&job->controlfile,'M',0);
+	char *host = Find_str_value(&job->info,MAILNAME,Value_sep);
 	char *port = 0, *protocol = "UDP", *s;
 	int prot_num = SOCK_DGRAM;
 
@@ -1963,96 +2047,16 @@ void Setup_user_reporting( struct job *job )
 	Mail_fd = Link_open_type(host, port, 10, prot_num, 0 );
 	DEBUG3("Setup_user_reporting: Mail_fd '%d'", Mail_fd );
 
-	if( Mail_fd > 0 && prot_num == SOCK_STREAM ){
-		if( Send_job_rw_timeout_DYN > 0 ){
-			Set_linger( Mail_fd, Send_job_rw_timeout_DYN );
-		} else if( Exit_linger_timeout_DYN > 0 ){
-			Set_linger( Mail_fd, Exit_linger_timeout_DYN );
-		}
+	if( Mail_fd > 0 && prot_num == SOCK_STREAM && Exit_linger_timeout_DYN > 0 ){
+		Set_linger( Mail_fd, Exit_linger_timeout_DYN );
 	}
 	if( host ) free(host); host = 0;
 }
 
-
-
-/***************************************************************************
- * Do_check_idle()
- *  execute the idle check of the printer indicated by the
- *  check_idle printcap entry:
- *   check_idle=/script
- ***************************************************************************/
-
-int Do_check_idle(void)
-{
-	int status, n, pid, error_fd[2], len, count;
-	char line[SMALLBUFFER];
-	struct line_list fd;
-	plp_status_t procstatus;
-
-	Init_line_list(&fd);
-
-	DEBUG1( "Do_check_idle: Check_idle_DYN '%s'", Check_idle_DYN );
-	setstatus(0,_("checking for idle using %s"), Check_idle_DYN );
-
-	Init_line_list(&fd);
-	Check_max(&fd,10);
-	if( pipe(error_fd) == -1 ){
-		Errorcode = JABORT;
-		logerr_die( LOG_ERR, _("Do_check_idle: pipe failed"));
-	}
-
-	fd.list[fd.count++] = Cast_int_to_voidstar(0);
-	fd.list[fd.count++] = Cast_int_to_voidstar(1);
-	fd.list[fd.count++] = Cast_int_to_voidstar(error_fd[1]);
-	pid = Make_passthrough(Check_idle_DYN, 0, &fd, 0, 0 );
-	fd.count = 0;
-	Free_line_list(&fd);
-	close(error_fd[1]);
-	/* now read the error messages */
-	len = 0;
-	while( len < sizeof(line)-1
-		&& (count = read( error_fd[0], line+len, sizeof(line)-len-1 )) > 0){
-		char *s;
-		line[len+count] = 0;
-		DEBUG1("Do_check_idle: read '%s'", line );
-		if( (s = safestrchr(line,'\n')) ){
-			*s++ = 0;
-			setstatus(0,_("CHECKIDLE filter msg - '%s'"), line );
-			memmove(line,s,strlen(s)+1);
-		}
-		len = strlen(line);
-	}
-	close(error_fd[0]);
-	while( (n = plp_waitpid(pid,&procstatus,0)) != pid );
-	DEBUG1("Do_check_idle: pid %d, status '%s'", pid,
-		Decode_status(&procstatus));
-	if( WIFSIGNALED(procstatus) ){
-		Errorcode = JABORT;
-		n = WTERMSIG(procstatus);
-		fatal(LOG_INFO,"Do_check_idle: process died with signal %d, '%s'",
-			n, Sigstr(n));
-	}
-	status = WEXITSTATUS(procstatus);
-
-	DEBUG1("Do_check_idle: exit status '%d'", status );
-	switch( status ){
-	case JSUCC:
-	case JNOSPOOL:
-	case JNOPRINT:
-		break;
-	default:
-		status = JABORT;
-		break;
-	}
-	DEBUG1("Do_check_idle: returning status '%s'",
-		Server_status(status) );
-	setstatus(0,_("idle status %s"), Server_status(status));
-	return(status);
-}
-
 void Service_worker( struct line_list *args )
 {
-	int pid, unspooler_fd, destinations;
+	int pid, unspooler_fd, destinations, attempt, n, lpd_bounce;
+	struct line_list *destination;
 	char *s, *path, *hf_name, *new_dest, *move_dest,
 		*id, *did;
 	struct stat statb;
@@ -2060,6 +2064,8 @@ void Service_worker( struct line_list *args )
 	struct job job;
 
 	Name="(Worker)";
+	destination = 0;
+	attempt = 0;
 
 	Init_job(&job);
 
@@ -2072,18 +2078,18 @@ void Service_worker( struct line_list *args )
 	Errorcode = JABORT;
 
 	/* you need to have a spool queue */
-	if( Setup_printer( Printer_DYN, buffer, sizeof(buffer) ) ){
+	if( Setup_printer( Printer_DYN, buffer, sizeof(buffer), 0 ) ){
 		cleanup(0);
 	}
 
 	if(DEBUGL4){ int fd; fd = dup(0);
-	logDebug("Service_worker: after Setup_printer next fd %d",fd); close(fd); };
+	LOGDEBUG("Service_worker: after Setup_printer next fd %d",fd); close(fd); };
 
 	pid = getpid();
 	DEBUG1( "Service_worker: pid %d", pid );
 	path = Make_pathname( Spool_dir_DYN, Queue_unspooler_file_DYN );
 	if( (unspooler_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 )) < 0 ){
-		logerr_die( LOG_ERR, _("Service_worker: cannot open lockfile '%s'"),
+		LOGERR_DIE(LOG_ERR) _("Service_worker: cannot open lockfile '%s'"),
 			path );
 	}
 	if(path) free(path); path = 0;
@@ -2093,43 +2099,50 @@ void Service_worker( struct line_list *args )
 	DEBUG3("Service_worker: checking path '%s'", path );
 
 	hf_name = Find_str_value(args,HF_NAME,Value_sep);
-	Get_file_image_and_split(0,hf_name,0,0, &job.info, Line_ends,1,Value_sep,1,1,1);
-	if( job.info.count == 0 ){
-		DEBUG3("Service_worker: missing hold file '%s'", hf_name);
+	Get_hold_file( &job, hf_name );
+
+	if( Setup_cf_info( &job, 1 ) ){
+		DEBUG3("Service_worker: missing files");
 		Errorcode = 0;
 		cleanup(0);
 	}
-	hf_name = Find_str_value(&job.info,HF_NAME,Value_sep);
 
-
-	if( Setup_cf_info( Spool_dir_DYN, 0, &job ) ){
-		DEBUG3("Service_worker: missing control file");
-		Errorcode = 0;
-		cleanup(0);
-	}
 	Set_str_value(&job.info,NEW_DEST, Find_str_value(args,NEW_DEST,Value_sep));
 	Set_str_value(&job.info,MOVE_DEST, Find_str_value(args,MOVE_DEST,Value_sep));
 	Set_decimal_value(&job.info,SERVER,getpid());
 
 	Free_line_list(args);
 
-	if( Set_hold_file( &job, 0 ) ){
+	n = Set_hold_file( &job, 0 );
+	if( n ){
 		/* you cannot update hold file!! */
 		setstatus( &job, _("cannot update hold file for '%s'"),
 			hf_name );
-		fatal( LOG_ERR,
+		FATAL(LOG_ERR)
 			_("Service_worker: cannot update hold file for '%s'"), 
 			hf_name );
 	}
+
 	id = Find_str_value(&job.info,IDENTIFIER,Value_sep);
 	if(!id) id = Find_str_value(&job.info,TRANSFERNAME,Value_sep);
 
 	if( (destinations = Find_flag_value(&job.info,DESTINATIONS,Value_sep)) ){
 		did = Find_str_value(&job.info,DESTINATION,Value_sep );
-		Get_destination_by_name( &job, did );
+		if( !Get_destination_by_name( &job, did ) ){
+			destination = &job.destination;
+			attempt = Find_flag_value(destination,ATTEMPT,Value_sep);
+		}
+	} else {
+		attempt = Find_flag_value(&job.info,ATTEMPT,Value_sep);
 	}
+	DEBUG3("Service_worker: attempt %d", attempt );
 	new_dest = Find_str_value(&job.info,NEW_DEST,Value_sep);
 	move_dest = Find_str_value(&job.info,MOVE_DEST,Value_sep);
+	lpd_bounce = Lpd_bounce_DYN;
+	if( move_dest ){
+		lpd_bounce = 0;
+		new_dest = move_dest;
+	}
 
 	/*
 	 * The following code is implementing job handling as follows.
@@ -2142,13 +2155,7 @@ void Service_worker( struct line_list *args )
 	 *       set RemoteHost_DYN to FQDNHost_FQDN
 	 */
 
-	if( new_dest || Bounce_queue_dest_DYN ){
-		/* turn off filtering to output queues */
-		if( move_dest ){
-			Set_DYN(&Bounce_queue_dest_DYN,0);
-		} else if( !new_dest ){
-			new_dest = Bounce_queue_dest_DYN;
-		}
+	if( new_dest ){
 		Set_DYN( &RemoteHost_DYN, 0);
 		Set_DYN( &RemotePrinter_DYN, 0);
 		Set_DYN( &Lp_device_DYN, 0);
@@ -2166,28 +2173,43 @@ void Service_worker( struct line_list *args )
 			}
 		}
 		if( !RemoteHost_DYN ){
-			Set_DYN( &RemoteHost_DYN, FQDNHost_FQDN);
+			Set_DYN( &RemoteHost_DYN, LOCALHOST);
 		}
 	}
+	
+	/* we put a timeout before each attempt */
+	if( attempt > 0 ){
+		n = 8;
+		if( attempt < n ) n = attempt;
+		n = Connect_interval_DYN * (1 << (n-1)) + Connect_grace_DYN;
+		if( Max_connect_interval_DYN > 0 && n > Max_connect_interval_DYN ){
+			n = Max_connect_interval_DYN;
+		}
+		DEBUG1("Service_worker: attempt %d, sleeping %d", attempt, n);
+		if( n > 0 ){
+			setstatus( &job, "attempt %d, sleeping %d before retry", attempt+1, n );
+			sleep(n);
+		}
+	}
+
+	Fix_Z_opts(&job);
 
 	if( RemotePrinter_DYN ){
 		Name = "(Worker - Remote)";
 		DEBUG1( "Service_worker: sending '%s' to '%s@%s'",
 			id, RemotePrinter_DYN, RemoteHost_DYN );
 		setproctitle( "lpd %s '%s'", Name, Printer_DYN );
-		if( Remote_support_DYN
-			&& safestrchr( Remote_support_DYN, 'R' ) == 0 
-			&& safestrchr( Remote_support_DYN, 'r' ) == 0 ){
+		if( Remote_support_DYN ) uppercase( Remote_support_DYN );
+		if( safestrchr( Remote_support_DYN, 'R' ) ){
+			Errorcode = Remote_job( &job, lpd_bounce, id );
+		} else {
 			Errorcode = JABORT;
 			setstatus( &job, "no remote support to `%s@%s'",
 			RemotePrinter_DYN, RemoteHost_DYN );
-		} else {
-			Errorcode = Remote_job( &job, id );
 		}
 	} else {
 		Name = "(Worker - Print)";
-		DEBUG1( "Service_worker: printing '%s'",
-			id, Printer_DYN );
+		DEBUG1( "Service_worker: printing '%s'", id );
 		setproctitle( "lpd %s '%s'", Name, Printer_DYN );
 		Errorcode = Local_job( &job, id );
 	}
@@ -2208,158 +2230,477 @@ void Service_worker( struct line_list *args )
  *   int grace,       - minimum time between attempts
  *   int connect_timeout - time to wait for connection success
  *   int *pid         - if we have a filter program, return pid
+ *  returns:
+ *    file descriptor
  */
 
-int Printer_open( char *lp_device, struct job *job,
+int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	int max_attempts, int interval, int max_interval, int grace,
-	int connect_tmout, int *filterpid, int *errorpid )
+	int connect_tmout, int *filterpid, int *poll_for_status )
 {
-	int attempt = 0, err = 0, n;
-	int errors[2], in[2], pid, status;
+	int attempt, err = 0, n, device_fd, c, in[2], pid, readable, mask;
 	struct stat statb;
-	int device_fd = -1, c;
 	time_t tm;
 	char tm_str[32];
-	char *s, *host, *port, *iodevice, *filter;
+	char *s, *host, *port, *filter;
 	struct line_list args;
 
 	Init_line_list(&args);
-	host = port = iodevice = filter = 0;
-	if( filterpid ) *filterpid = 0;
-	if( errorpid ) *errorpid = 0;
+	host = port = filter = 0;
+	*filterpid = 0;
 	DEBUG1( "Printer_open: device '%s', max_attempts %d, grace %d, interval %d, max_interval %d",
 		lp_device, max_attempts, grace, interval, max_interval );
 	time( &tm );
 	tm_str[0] = 0;
 	if( lp_device == 0 ){
-		fatal(LOG_ERR, "Printer_open: printer '%s' missing lp_device value",
+		FATAL(LOG_ERR) "Printer_open: printer '%s' missing lp_device value",
 			Printer_DYN );
 	}
-	c = lp_device[0];
-	if( c == '|' ){
-		filter = lp_device + 1;
-	} else if( c == '/' ){
-		iodevice = lp_device;
-	} else if( safestrchr( lp_device, '%' ) ){
-		/* we have a host%port form */
-		host = safestrdup(lp_device, __FILE__,__LINE__);
-		s = safestrchr(host,'%');
-		*s++ = 0;
-		port = s;
-	} else {
-		Errorcode = JABORT;
-		fatal(LOG_ERR, "Printer_open: printer '%s', bad 'lp' entry '%s'", 
-			Printer_DYN, lp_device );
-	}
 
-
-	/* set flag for closing on timeout */
-	do{
+	*status_fd = device_fd = -1;
+	*poll_for_status = 0;
+	/* we repeat until we get the device or exceed maximum attempts */
+	for( attempt = 0; device_fd < 0 && (max_attempts <= 0 || attempt < max_attempts); ++attempt ){
 		if( grace ) plp_sleep(grace);
+		c = lp_device[0];
 		switch( c ){
 		case '|':
-			if( pipe( errors ) == -1 || pipe( in ) == -1 ){
+#if !defined(HAVE_SOCKETPAIR)
+			FATAL(LOG_ERR)"Printer_open: requires socketpair() system call for output device to be filter");
+			if( pipe( in ) == -1 ){
 				Errorcode = JFAIL;
-				logerr_die( LOG_INFO,"Printer_open: pipe() failed");
+				LOGERR_DIE(LOG_INFO)"Printer_open: pipe() failed");
 			}
-			DEBUG3("Printer_open: fd errors[%d,%d], in[%d,%d]",
-				errors[0], errors[1], in[0], in[1] );
+#else
+			if( socketpair( AF_UNIX, SOCK_STREAM, 0, in ) == -1 ){
+				Errorcode = JFAIL;
+				LOGERR_DIE(LOG_INFO)"Printer_open: socketpair() failed");
+			}
+#endif
+			Max_open(in[0]); Max_open(in[1]);
+			DEBUG3("Printer_open: fd in[%d,%d]",
+				in[0], in[1] );
 			/* set up file descriptors */
-			Free_line_list(&args);
-			Set_str_value(&args,NAME,"LP_FILTER");
-			Set_str_value(&args,CALL,LOG);
-			Set_str_value(&args,PRINTER,Printer_DYN);
-			s = Find_str_value(&job->info,IDENTIFIER,Value_sep);
-			if(!s) s = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
-			Set_str_value(&args,IDENTIFIER,s);
-			if( (pid = Start_worker(&args,errors[0])) < 0 ){
-				Errorcode = JFAIL;
-				logerr_die(LOG_INFO,
-					"Printer_open: could not create LP_FILTER error loggin process");
-			}
-			if( errorpid ) *errorpid = pid;
-
 			Free_line_list(&args);
 			Check_max(&args,10);
 			args.list[args.count++] = Cast_int_to_voidstar(in[0]);	/* stdin */
-			args.list[args.count++] = Cast_int_to_voidstar(1);	/* stdout */
-			args.list[args.count++] = Cast_int_to_voidstar(errors[1]);	/* stderr */
-			if( (pid = Make_passthrough( filter, Filter_options_DYN, &args,
+			args.list[args.count++] = Cast_int_to_voidstar(1);		/* stdout */
+			args.list[args.count++] = Cast_int_to_voidstar(in[0]);	/* stderr */
+			if( (pid = Make_passthrough( lp_device, Filter_options_DYN, &args,
 					job, 0 )) < 0 ){
 				Errorcode = JFAIL;
-				logerr_die(LOG_INFO,
+				LOGERR_DIE(LOG_INFO)
 					"Printer_open: could not create LP_FILTER process");
 			}
 			args.count = 0;
 			Free_line_list(&args);
 
-			if( filterpid ) *filterpid = pid;
+			*filterpid = pid;
+			*status_fd = device_fd = in[1];
 			if( (close( in[0] ) == -1 ) ){
-				logerr_die( LOG_INFO,"Printer_open: close(%d) failed", in[0]);
+				LOGERR_DIE(LOG_INFO)"Printer_open: close(%d) failed", in[0]);
 			}
-			if( (close( errors[0] ) == -1 ) ){
-				logerr_die( LOG_INFO,"Printer_open: close(%d) failed", errors[0]);
-			}
-			if( (close( errors[1] ) == -1 ) ){
-				logerr_die( LOG_INFO,"Printer_open: close(%d) failed", errors[1]);
-			}
-			device_fd = in[1];
 			break;
 
 		case '/':
 			device_fd = Checkwrite_timeout( connect_tmout, lp_device, &statb, 
-				(Lock_it_DYN || Read_write_DYN) ?(O_RDWR):(O_APPEND|O_WRONLY),
+				(Read_write_DYN || Lock_it_DYN) ?(O_RDWR):(O_APPEND|O_WRONLY),
 				0, Nonblocking_open_DYN );
 			err = errno;
-			if( Lock_it_DYN && device_fd >= 0 ){
-				/*
-				 * lock the device so that multiple servers can
-				 * use it
-				 */
-				status = 0;
-				if( isatty( device_fd ) ){
-					status = LockDevice( device_fd, 0 );
-				} else if( S_ISREG(statb.st_mode ) ){
-					status = Do_lock( device_fd, 0 );
+			if( device_fd > 0 ){
+				if( Lock_it_DYN ){
+					int status;
+					/*
+					 * lock the device so that multiple servers can
+					 * use it
+					 */
+					status = 0;
+					if( isatty( device_fd ) ){
+						status = LockDevice( device_fd, 0 );
+					} else if( S_ISREG(statb.st_mode ) ){
+						status = Do_lock( device_fd, 0 );
+					}
+					if( status < 0 ){
+						err = errno;
+						setstatus( job,
+							"lock '%s' failed - %s", lp_device, Errormsg(errno) );
+						close( device_fd );
+						device_fd = -1;
+					}
 				}
-				if( status <= 0 ){
-					err = errno;
-					setstatus( job,
-						"lock '%s' failed - %s", lp_device, Errormsg(errno) );
-					close( device_fd );
-					device_fd = -1;
+				if( isatty( device_fd ) ){
+					Do_stty( device_fd );
 				}
 			}
 			break;
 		default:
+			if( safestrchr( lp_device, '%' ) ){
+				/* we have a host%port form */
+				if( host == 0 ){
+					host = safestrdup(lp_device, __FILE__,__LINE__);
+					s = safestrchr(host,'%');
+					*s++ = 0;
+					port = s;
+				}
+			} else {
+				Errorcode = JABORT;
+				FATAL(LOG_ERR) "Printer_open: printer '%s', bad 'lp' entry '%s'", 
+					Printer_DYN, lp_device );
+			}
 			DEBUG1( "Printer_open: doing link open '%s'", lp_device );
-			device_fd = Link_open( host, port, connect_tmout, 0 );
-			err = errno;
+			*status_fd = device_fd = Link_open( host, port, connect_tmout, 0 );
+            err = errno;
 			break;
 		}
 
 		if( device_fd < 0 ){
-			++attempt;
-			DEBUG1( "Printer_open: open '%s' failed, attempt '%d' - %s",
-				lp_device, attempt, Errormsg(err) );
-			if( max_attempts && attempt >= max_attempts ){
-				break;
-			}
-			n = 8;
-			if( attempt < n ) n = attempt;
-			n = interval*( 1 << (n-1) );
-			if( max_interval > 0 && n > max_interval ) n = max_interval;
-			DEBUG1( "Printer_open: cannot open device '%s' - '%s'", lp_device, Errormsg(err) );
-			setstatus( job, "cannot open '%s' - '%s', attempt %d, sleeping %d",
-					lp_device, Errormsg( err), attempt, n );
-			if( n > 0 ){
-				plp_sleep(n);
+			DEBUG1( "Printer_open: open '%s' failed, max_attempts %d, attempt %d '%s'",
+				lp_device, max_attempts, attempt, Errormsg(err) );
+			if( max_attempts && attempt <= max_attempts ){
+				n = 8;
+				if( attempt < n ) n = attempt;
+				n = interval*( 1 << n );
+				if( max_interval > 0 && n > max_interval ) n = max_interval;
+				setstatus( job, "cannot open '%s' - '%s', attempt %d, sleeping %d",
+						lp_device, Errormsg( err), attempt+1, n );
+				if( n > 0 ){
+					plp_sleep(n);
+				}
+			} else {
+				setstatus( job, "cannot open '%s' - '%s', attempt %d",
+						lp_device, Errormsg( err), attempt+1 );
 			}
 		}
-	} while( device_fd < 0 );
-	if( device_fd >= 0 && isatty(device_fd ) ) Do_stty( device_fd );
+	}
+	if( device_fd > 0 ){
+		/* we can only read status from a device, fifo, or socket */
+		if( (mask = fcntl( device_fd, F_GETFL, 0 )) == -1 ){
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_ERR) "Printer_open: cannot fcntl fd %d", device_fd );
+		}
+		DEBUG2( "Printer_open: fd %d fcntl 0%o", device_fd, mask );
+		mask &= O_ACCMODE;
+		/* first, check to see if we have RD or RW */
+		readable = 0;
+		switch( mask ){
+		case O_RDONLY:
+			Errorcode = JABORT;
+			LOGERR_DIE(LOG_ERR) "Printer_open: fd %d is READ ONLY", device_fd );
+			break;
+		case O_WRONLY:
+			DEBUG2( "Printer_open: WRONLY");
+			break;
+		case O_RDWR:
+			DEBUG2( "Printer_open: RDWR");
+			readable = 1;
+			break;
+		}
+		if( readable
+		&& ( S_ISCHR(statb.st_mode )
+		  || S_ISFIFO(statb.st_mode )
+		  || S_ISSOCK(statb.st_mode ) ) ){
+			*status_fd = device_fd;
+			if( S_ISCHR(statb.st_mode) && !isatty(device_fd) ){
+				*poll_for_status = 1;
+			}
+		}
+	}
 	if( host ) free( host ); host = 0;
 
 	DEBUG1 ("Printer_open: '%s' is fd %d", lp_device, device_fd);
 	return( device_fd );
+}
+
+void Add_banner_to_job( struct job *job )
+{
+	char *banner_name, *tempfile;
+	struct line_list *lp;
+	int tempfd;
+
+	Errorcode = 0;
+    banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
+    if( banner_name == 0 ){
+        banner_name = Find_str_value( &job->info,LOGNAME,Value_sep);
+	}
+	if( banner_name == 0 ) banner_name = "ANONYMOUS";
+	Set_str_value(&job->info,BNRNAME,banner_name);
+    banner_name = Find_str_value(&job->info, BNRNAME, Value_sep );
+	DEBUG1("Add_banner_to_job: banner name '%s'", banner_name );
+	if( !Banner_last_DYN ){
+		DEBUG1("Add_banner_to_job: banner at start");
+		Init_buf(&Outbuf, &Outmax, &Outlen );
+		Print_banner( banner_name, Banner_start_DYN, job );
+        tempfd = Make_temp_fd(&tempfile);
+		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
+			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			Errorcode = JABORT;
+			return;
+		}
+		close(tempfd);
+		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
+		memset(lp,0,sizeof(lp[0]));
+		Check_max(&job->datafiles,1);
+		memmove( &job->datafiles.list[1], &job->datafiles.list[0],
+			job->datafiles.count * sizeof(job->datafiles.list[0]) );
+		job->datafiles.list[job->datafiles.count] = (void *)lp;
+		++job->datafiles.count;
+
+		Set_str_value(lp,OPENNAME,tempfile);
+		Set_str_value(lp,TRANSFERNAME,tempfile);
+		Set_str_value(lp,"N","BANNER");
+	}
+	if( Banner_last_DYN || Banner_end_DYN) {
+		Init_buf(&Outbuf, &Outmax, &Outlen );
+		Print_banner( banner_name, Banner_end_DYN, job );
+        tempfd = Make_temp_fd(&tempfile);
+		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
+			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			Errorcode = JABORT;
+			return;
+		}
+		close(tempfd);
+		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
+		memset(lp,0,sizeof(lp[0]));
+		Check_max(&job->datafiles,1);
+		job->datafiles.list[0] = (void *)lp;
+		++job->datafiles.count;
+		Set_str_value(lp,OPENNAME,tempfile);
+		Set_str_value(lp,TRANSFERNAME,tempfile);
+		Set_str_value(lp,"N","BANNER");
+	}
+	if(DEBUGL3)Dump_job("Add_banner_to_job", job);
+}
+
+void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
+{
+	struct line_list *datafile;
+	char *tempfile, *openname, *format, *s, *filter, *id, *old_lp_value;
+	char filter_name[8], filter_title[64], msg[SMALLBUFFER],
+		filtermsgbuffer[SMALLBUFFER];
+	struct stat statb;
+	int tempfd, fd, n, pid, count, if_error[2];
+	struct line_list files;
+
+	Init_line_list(&files);
+	DEBUG1("Filter_files_in_job: starting, user_filter '%s'", user_filter);
+    if(DEBUGL3){
+		struct stat statb; int i;
+        LOGDEBUG("Filter_files_in_job: START open fd's");
+        for( i = 0; i < 20; ++i ){
+            if( fstat(i,&statb) == 0 ){
+                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+            }
+        }
+    }
+	Errorcode = 0;
+	old_lp_value = safestrdup(Find_str_value( &PC_entry_line_list, "lp", Value_sep ),
+		__FILE__,__LINE__ );
+
+	id = Find_str_value(&job->info,IDENTIFIER,Value_sep);
+	tempfd = -1;
+	for( count = 0; count < job->datafiles.count; ++count ){
+		datafile = (void *)job->datafiles.list[count];
+		if(DEBUGL4)Dump_line_list("Filter_files_in_job - datafile", datafile );
+
+		openname = Find_str_value(datafile,OPENNAME,Value_sep);
+		if( !openname ) openname = Find_str_value(datafile,TRANSFERNAME,Value_sep);
+		format = Find_str_value(datafile,FORMAT,Value_sep);
+
+		Set_str_value(&job->info,FORMAT,format);
+		Set_str_value(&job->info,DF_NAME,openname);
+
+		Set_str_value(&job->info,"N", Find_str_value(datafile,"N",Value_sep) );
+
+		/*
+		 * now we check to see if there is an input filter
+		 */
+		SNPRINTF(filter_name,sizeof(filter_name))"%s","if");
+		filter_name[0] = cval(format);
+		filter = user_filter;
+		switch( cval(format) ){
+			case 'p': case 'f': case 'l':
+				filter_name[0] = 'i';
+				if( !filter ) filter = IF_Filter_DYN;
+				break;
+			case 'a': case 'i': case 'o': case 's':
+				SETSTATUS(job)"bad data file format '%c', using 'if' filter", cval(format) );
+				filter_name[0] = 'i';
+				if( !filter ) filter = IF_Filter_DYN;
+				break;
+		}
+		if( !filter ){
+			filter = Find_str_value(&PC_entry_line_list,
+				filter_name,Value_sep);
+		}
+		if( !filter){
+			filter = Find_str_value(&Config_line_list,filter_name,
+				Value_sep);
+		}
+		if( filter == 0 ) filter = Filter_DYN;
+		DEBUG3("Filter_files_in_job: format '%s', filter '%s'", format, filter );
+
+		if( filter == 0 ){
+			continue;
+		}
+
+		uppercase(filter_name);
+		if( filter ){
+			s = filter;
+			if( cval(s) == '(' ){
+				++s;
+				while( isspace(cval(s))) ++s;
+			} else {
+				if( !(s = strchr(filter,'/')) ) s = filter;
+			}
+			SNPRINTF(msg, sizeof(msg)) "%s", s );
+			if( (s = strpbrk(msg,Whitespace)) ) *s = 0;
+			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,strlen(s+1)+1);
+		}
+		SNPRINTF(filter_title,sizeof(filter_title))"%s filter '%s'",
+			filter_name, msg );
+
+		if( (fd = Checkread( openname, &statb )) < 0 ){
+			Errorcode = JFAIL;
+			LOGMSG( LOG_ERR) "Filter_files_in_job: job '%s', cannot open data file '%s'",
+				id, openname );
+			goto end_of_job;
+		}
+		SETSTATUS(job)"processing '%s', size %0.0f, format '%s', %s",
+			openname, (double)statb.st_size, format, filter_title );
+		if( cval(format) == 'p' ){
+			DEBUG3("Filter_files_in_job: using 'p' formatter '%s'", Pr_program_DYN );
+			SETSTATUS(job)"format 'p' pretty printer '%s'", Pr_program_DYN);
+			if( Pr_program_DYN == 0 ){
+				SETSTATUS(job)"no 'p' format filter available" );
+				Errorcode = JABORT;
+				goto end_of_job;
+			}
+			tempfd = Make_temp_fd(&tempfile);
+			Set_str_value(datafile,OPENNAME,tempfile);
+			n = Filter_file( fd, tempfd, "PR_PROGRAM",
+				Pr_program_DYN, 0, job, 0, 1 );
+			if( n ){
+				Errorcode = JABORT;
+				LOGERR(LOG_INFO)"Filter_files_in_job:  could not make '%s' process",
+					Pr_program_DYN );
+				goto end_of_job;
+			}
+			close(fd); fd = tempfd; tempfd = -1;
+			if( fstat(fd, &statb ) == -1 ){
+				Errorcode = JABORT;
+				LOGERR(LOG_INFO)"Filter_files_in_job: fstat() failed");
+			}
+			SETSTATUS(job)"data file '%s', size now %0.0f",
+				openname, (double)statb.st_size );
+			format = "f";
+			Set_str_value(datafile,FORMAT,format);
+		}
+		if( filter ){
+			DEBUG3("Filter_files_in_job: format '%s' starting filter '%s'",
+				format, filter );
+			DEBUG2("Filter_files_in_job: filter_stderr_to_status_file %d, ps '%s'",
+				Filter_stderr_to_status_file_DYN, Status_file_DYN );
+			if_error[0] = if_error[1] = -1;
+			if( Filter_stderr_to_status_file_DYN && Status_file_DYN && *Status_file_DYN ){
+				if_error[1] = Checkwrite( Status_file_DYN, &statb, O_WRONLY|O_APPEND, 0, 0 );
+			} else if( pipe( if_error ) == -1 ){
+				Errorcode = JFAIL;
+				LOGERR(LOG_INFO)"Filter_files_in_job: pipe() failed");
+				goto end_of_job;
+			}
+			Max_open(if_error[0]); Max_open(if_error[1]);
+			DEBUG3("Filter_files_in_job: %s fd if_error[%d,%d]", filter_title,
+				 if_error[0], if_error[1] );
+			s = 0;
+			if( Backwards_compatible_filter_DYN ) s = BK_filter_options_DYN;
+			if( s == 0 ) s = Filter_options_DYN;
+
+			Free_line_list(&files);
+			Check_max(&files, 10 );
+			files.list[files.count++] = Cast_int_to_voidstar(fd);		/* stdin */
+
+			if( outfd > 0 ){
+				files.list[files.count++] = Cast_int_to_voidstar(outfd);	/* stdout */
+			} else {
+				tempfd = Make_temp_fd(&tempfile);
+				Set_str_value( &PC_entry_line_list, LP, tempfile );
+				Set_str_value(datafile,OPENNAME,tempfile);
+				files.list[files.count++] = Cast_int_to_voidstar(tempfd);	/* stdout */
+			}
+
+			files.list[files.count++] = Cast_int_to_voidstar(if_error[1]);	/* stderr */
+			if( (pid = Make_passthrough( filter, s, &files, job, 0 )) < 0 ){
+				Errorcode = JFAIL;
+				LOGERR(LOG_INFO)"Filter_files_in_job:  could not make %s process",
+					filter_title );
+				goto end_of_job;
+			}
+			files.count = 0;
+			Free_line_list(&files);
+
+			if( fd > 0 ) close(fd); fd = -1;
+			if( tempfd > 0 ) close(tempfd); tempfd = -1;
+			if( (close(if_error[1]) == -1 ) ){
+				Errorcode = JFAIL;
+				LOGERR_DIE(LOG_INFO)"Filter_files_in_job: X5 close(%d) failed",
+					if_error[1]);
+			}
+			if_error[1] = -1;
+			Init_buf(&Outbuf, &Outmax, &Outlen );
+
+			filtermsgbuffer[0] = 0;
+			if( if_error[0] != -1 ){
+				n = Get_status_from_OF(job,filter_title,pid,
+					if_error[0], filtermsgbuffer, sizeof(filtermsgbuffer)-1,
+					0, 0, 0 );
+				if( filtermsgbuffer[0] ){
+					SETSTATUS(job) "%s filter msg - '%s'", filter_title, filtermsgbuffer );
+				}
+				if( n ){
+					Errorcode = n;
+					SETSTATUS(job)"%s filter problems, error '%s'",
+						filter_title, Server_status(n));
+					goto end_of_job;
+				}
+				close(if_error[0]);
+				if_error[0] = -1;
+			}
+			/* now we get the exit status for the filter */
+			n = Wait_for_pid( pid, filter_title, 0, 0 );
+			if( n ){
+				Errorcode = n;
+				SETSTATUS(job)"%s filter exit status '%s'",
+					filter_title, Server_status(n));
+				goto end_of_job;
+			}
+			SETSTATUS(job) "%s filter finished", filter_title );
+			if( (s = Bounce_queue_format_DYN) ){
+				/* bounce queue format is OnOnD... where O is old
+				 * default is D or original if not present
+				 */
+				while( s[0] && s[1] ){
+					if( cval(format) == cval(s) ){
+						++s;
+						break;
+					}
+					s += 2;
+				}
+				if( cval(s) ) Set_str_value(datafile,FORMAT,s);
+			}
+		}
+		DEBUG3("Filter_files_in_job: finished file");
+	}
+ end_of_job:
+	if( old_lp_value ) free( old_lp_value ); old_lp_value = 0;
+	Free_line_list(&files);
+    if(DEBUGL3){
+		struct stat statb; int i;
+        LOGDEBUG("Filter_files_in_job: END open fd's");
+        for( i = 0; i < 20; ++i ){
+            if( fstat(i,&statb) == 0 ){
+                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+            }
+        }
+    }
+	if(DEBUGL3)Dump_job("Filter_files_in_job", job);
 }

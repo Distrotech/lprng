@@ -22,63 +22,91 @@ SHELL =		@SHELL@
 
 DOC=LPRng-HOWTO
 
-all: license.txt y2k.txt $(DOC).html $(DOC).ps purge LPRng.html
+CATALOGS= \
+	  -c /usr/local/share/sgml/catalog \
+	  -c /usr/local/share/sgml/docbook/dsssl/docbook-1.54/catalog
 
+all: license.enc license.txt y2k.txt $(DOC).html purge
 
-license.txt: $(SRC)/../LICENSE
-	cp $^ $@
+LICENSE= $(SRC)/../LICENSE
+
+license.txt: $(LICENSE)
+	cp $(LICENSE) $@
+
+license.enc: $(LICENSE) Makefile
+	echo "<![ CDATA [" >$@
+	cat $(LICENSE) >>$@
+	echo "]]>" >>$@
+
 y2k.txt: $(SRC)/../Y2KCompliance
-	cp $^ $@
+	cp  $(SRC)/../Y2KCompliance $@
 
-$(DOC).html: $(DOC).sgml Makefile
-	sgml2html $(DOC).sgml
-$(DOC).txt: $(DOC).sgml
-	sgml2txt $(DOC).sgml
-$(DOC).tex: $(DOC).sgml Makefile
-	sgml2latex -o tex $(DOC).sgml
-	mv $(DOC).tex $(DOC).Bex
-	sed -e '/tabular/s/{.|.}//g' $(DOC).Bex >$(DOC).tex 
-$(DOC).ps: $(DOC).tex Makefile
-	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
-		'\nonstopmode\input{LPRng-HOWTO.tex}' >/dev/null
-	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
-		'\nonstopmode\input{$(DOC).tex}'
-	- TEXINPUTS=:/usr/local/lib/sgml-tools latex \
-		'\nonstopmode\input{$(DOC).tex}'
+$(DOC).html: $(DOC).sgml $(DOC).dsl Makefile license.enc
+	jade -i output.html -V nochunks -t sgml \
+		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml >$(DOC).html
+	-tidy -i -m -f /dev/null ${TIDYFLAGS} $@
+
+index.htm HTML.manifest: $(DOC).sgml $(DOC).dsl Makefile license.enc
+	jade -i output.html -V html-manifest -t sgml \
+		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml
+	-tidy -i -m -f /dev/null ${TIDYFLAGS} `xargs < HTML.manifest`
+	perl -spi -e 's/index.htm/start.htm/g;' *.htm
+	cp index.htm start.htm
+
+check: license.enc
+	#nsgmls -s -f handbook.errs handbook.sgml
+	nsgmls -s $(CATALOGS) $(DOC).sgml
+
+$(DOC).dvi: $(DOC).sgml $(DOC).dsl Makefile license.enc
+	jade -Vtex-backend -ioutput.print -t tex -o $(DOC).tex \
+		$(CATALOGS) -d $(DOC).dsl $(DOC).sgml
+	echo "==> TeX pass 1/3"
+	tex "&jadetex" $(DOC).tex >/dev/null 2>&1
+	echo "==> TeX pass 2/3"
+	tex "&jadetex" $(DOC).tex >/dev/null 2>&1
+	echo "==> TeX pass 3/3"
+	tex "&jadetex" $(DOC).tex
+
+$(DOC).ps: $(DOC).dvi
 	dvips -q -t letter -o $(DOC).ps $(DOC).dvi
-LPRng.html: $(SRC)/LPRng.html.orig
-	cp $^ $@
+$(DOC).pdf: $(DOC).ps
+	ps2pdf $(DOC).ps $(DOC).pdf
+
 purge:
-	rm -f *.Bex *.aux *.log *.toc
-fixman:
-	cp $(DOC).ps ../../LPRng_DOC
-	sed 's,LPRng-HOWTO\.,lprng/&,' LPRng.html >/tmp/LPRng.html
-	cp /tmp/LPRng.html ../..
+	rm -f *.aux *.log *.toc *.fot
 
-$(DOC).info: $(DOC).sgml
-	sgml2info $^
-
-clean:
-	rm -f *.Bex *.aux *.dvi LPRng-HOWTO*.html *.log *.ps *.tex *.toc
 
 .PHONY: all clean install ci install.zman update purge
 
 update:
-	updateversion *.sgml
+	updatesgmlmirrors ../MIRRORS *.sgml
+	updatehtmlmirrors ../MIRRORS LPRng.html
+	updateversion *.sgml LPRng.html
+	cp ../CHANGES .
+	perl collateindex.pl -t "Index" -N -o genindex.sgml
+	jade -V html-index -V nochunks -t sgml \
+		$(CATALOGS) -d /usr/local/share/sgml/docbook/dsssl/docbook-1.54/html/docbook.dsl $(DOC).sgml >/dev/null
+	perl collateindex.pl -t "Index" -o genindex.sgml HTML.index
 
 # 
 #
 install:
-	cp *.ps *.dvi ../../LPRng_DOC
-
 	
-realclean mostlyclean distclean:: clean
-	rm -f Makefile
+clean:
+	-rm -f *.errs HTML.* *.tex *.log *.aux *.toc
+	-rm -f *.ps *.dvi *.htm
+
+mostlyclean distclean:: clean
+
+realclean: clean purge
+	-rm -f CHANGES HTML.* genindex.sgml *.htm LPRng-HOWTO.html
+	-rm -f *.ps *.dvi
+	
 
 #CI=
 #CO=-kv
 CO=-l
-cifast ci:
+cifast ci: clean
 	checkin() { \
 		rcs -l $$1; \
 		ci $(CI) -mUpdate -t-Initial $$1; \

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 5.2 1999/10/23 02:37:34 papowell Exp papowell $
+ * $Id: utilities.h,v 5.9 2000/10/11 17:07:42 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -25,11 +25,19 @@ EXTERN jmp_buf Timeout_env;
 #  define Set_timeout() (setjmp(Timeout_env)==0)
 #endif
 
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...)
+#else
+ void safefprintf (va_alist) va_dcl
+#endif
+;
+
 /* PROTOTYPES */
 char *Time_str(int shortform, time_t t);
 char *Pretty_time( time_t t );
 time_t Convert_to_time_t( char *str );
-void Printlist( char **m, FILE *f );
+void Printlist( char **m, int fd );
 int Write_fd_len( int fd, const char *msg, int len );
 int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len );
 int Write_fd_str( int fd, const char *msg );
@@ -63,12 +71,14 @@ int Set_block_io( int fd );
 int Read_write_timeout(
 	int readfd, char *inbuffer, int maxinlen, int *readlen,
 	int writefd, char **outbuffer, int *outlen, int timeout );
+void Set_timeout_signal_handler( int timeout, plp_sigfunc_t handler );
 void Set_timeout_alarm( int timeout );
+void Set_timeout_break( int timeout );
 void Clear_timeout( void );
 int To_root(void);
 int To_daemon(void);
 int To_user(void);
-int To_ruid_user(void);
+int To_ruid(int uid);
 int To_uid( int uid );
 int setuid_wrapper(int to);
 int Full_daemon_perms(void);

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH CHECKPC 8 \*(VE "LPRng"
 .ig
 checkpc.8,v 3.33 1998/03/29 18:37:49 papowell Exp
@@ -10,17 +10,15 @@ checkpc \- check out the /etc/printcap database
 .SH SYNOPSIS
 .B checkpc
 [
-.B \-aflprCV
-] [
-.B \-c configfile
+.B \-aflprsCV
 ] [
 .B \-A age[DHMS]
 ] [
-.B \-D debug
+.B \-D debugflags
 ] [
 .B \-P printer
 ] [
-printcap
+.B \-t size[kM]
 ]
 .SH DESCRIPTION
 .B Checkpc
@@ -31,28 +29,26 @@ database.
 It is useful when installing a new printcap database and cleaning up
 existing printer spoolers.
 .IP "\fB\-a\fI" 5
-Do not create accounting files if the fix option has been specified.
-.IP "\fB\-c\fI configfile" 5
-Read the configuration from configfile.
+Do not create accounting files (:lf).
+.IP "\fB\-c\fI" 5
+Print verbose configuration information.
 .IP "\fB\-f\fI" 5
-The fix flag will cause the checkpc program to try and fix
+The fix flag will cause the checkpc program create and fix
 various files and permissions.
 It does this in a simple minded manner,
 and the program may have to be run several times until all permissions
 are correct.
-It also reports its actions.
+It also reports in extremely verbose details its actions.
 .IP "\fB\-l\fI" 5
-Do not create log files if the fix option has been specified.
+Do not create log files (:lf).
 .IP "\fB\-p\fI" 5
 Print verbose printcap information.
 Useful if interested in the printcap values.
-.IP "\fB\-P\fI printer" 5
-Process only the specified print queue
 .IP "\fB\-r\fI" 5
 remove junk or job files older than the age set by -A.
 You must set the age to a non-zero value otherwise no files are removed.
 .IP "\fB\-s\fI" 5
-Do not create printer status files if the fix option has been specified.
+Do not create filter status files (:ps).
 .IP "\fB\-A\fI Age[DHMS]" 5
 Report junk or job files older than age.
 The age time can have a suffix
@@ -62,11 +58,16 @@ minutes (M),
 or
 seconds (S);
 default is days.
-.IP "\fB\-C\fI" 5
-Print verbose configuration information.
-Useful if interested in the configuration or defaults.
+.IP "\fB\-D\fI debugflags" 5
+Run the program with debugging flags.
+See the LPRng HOWTO for details of the flags actions.
 .IP "\fB\-V\fI" 5
-Toggle verbose mode.
+Verbose mode.
+.IP "\fB\-P\fI printer" 5
+Process only the specified print queue.
+.IP "\fB\-t\fI size[kM]" 5
+Truncate log files (:lf) to the specified size in Kbytes
+or Mbytes (default is Mbytes).
 .SH "ANNOYING FEATURES"
 If the
 .B \-f
@@ -74,25 +75,27 @@ If the
 option is specified and you do not run this as root,
 it will complain,
 but attempt to carry out the operations.
-Usually the 
-.IR chown (5)
-will fail,
-but this is not serious.
+This will lead to a large number of failures reports
+if the ownership and/or permissions are incorrect.
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
-printer configuration file.
+printer configuration file and by configuration options.
 The following are a commonly used set of default values.
 .nf
 .ta \w'/var/spool/lpd/printcap.<hostname>           'u
 /etc/lpd.conf		LPRng configuration file
+ or /usr/local/etc/lpd.conf
 /etc/printcap		printer description file
+ or /usr/local/etc/printcap
 /etc/lpd.perms	printer permissions
-/var/spool/printer*		spool directories
-/var/spool/printer*/printer	lock file for queue control
-/var/spool/printer*/control.printer	queue control
-/var/spool/printer*/active.printer	active job
-/var/spool/printer*/log.printer	log file
+ or /usr/local/etc/lpd.perms
+/var/spool/lpd		spool directories
+/var/spool/lpd/queue/lock	    lock file for queue control
+/var/spool/lpd/queue/control	queue control
+/var/spool/lpd/queue/log	trace or debug log file
+/var/spool/lpd/queue/acct	accounting file
+/var/spool/lpd/queue/status	status file
 .fi
 .SH "SEE ALSO"
 lpd.conf(5),

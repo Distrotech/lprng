@@ -1,16 +1,21 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 5.2 1999/10/04 20:51:51 papowell Exp papowell $
+ * $Id: linksupport.h,v 5.5 2000/10/11 17:07:37 papowell Exp papowell $
  ***************************************************************************/
 
 
 
 #ifndef _LINKSUPPORT_H_
 #define _LINKSUPPORT_H_ 1
+
+#if !defined(HAVE_INET_NTOP)
+ const char *inet_ntop( int family, const void *addr,
+	char *str, size_t len );
+#endif
 
 /* PROTOTYPES */
 int Link_setreuse( int sock );

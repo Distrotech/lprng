@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 5.2 1999/10/04 17:00:54 papowell Exp papowell $";
+"$Id: lpd.c,v 5.22 2000/11/07 18:14:24 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -68,10 +68,9 @@ int main(int argc, char *argv[], char *envp[])
 	int pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
 	struct timeval timeval, *timeout;
-	int timeout_encountered = 0;	/* we have a timeout */
 	int max_socks;		/* maximum number of sockets */
 	int n, m;	/* ACME?  Hmmm... well, ok */
-	int err;
+	int err, newsock;
  	time_t last_time;	/* time that last Start_all was done */
  	time_t this_time;	/* current time */
 	plp_status_t status;
@@ -79,8 +78,10 @@ int main(int argc, char *argv[], char *envp[])
 	int start_fd = 0;
 	int status_pid = 0;
 	int request_pipe[2], status_pipe[2];
+	int fork_failed;
 	struct line_list args;
 	char *s;
+	int first_scan = 1;
 
 	Init_line_list( &args );
 	Is_server = 1;	/* we are the LPD server */
@@ -90,27 +91,71 @@ int main(int argc, char *argv[], char *envp[])
 	Debug = 0;
 #endif
 	if(DEBUGL3){
-		logDebug("lpd: argc %d", argc );
+		LOGDEBUG("lpd: argc %d", argc );
 		for( n = 0; n < argc; ++n ){
-			logDebug(" [%d] '%s'", n, argv[n] );
+			LOGDEBUG(" [%d] '%s'", n, argv[n] );
 		}
-		logDebug("lpd: env" );
+		LOGDEBUG("lpd: env" );
 		for( n = 0; envp[n]; ++n ){
-			logDebug(" [%d] '%s'", n, envp[n] );
+			LOGDEBUG(" [%d] '%s'", n, envp[n] );
 		}
 	}
 
 	/* set signal handlers */
-	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Reinit);
-	(void) plp_signal (SIGINT, cleanup_INT);
-	(void) plp_signal (SIGQUIT, cleanup_QUIT);
-	(void) plp_signal (SIGTERM, cleanup_TERM);
-	(void) plp_signal (SIGUSR1, (plp_sigfunc_t)SIG_IGN);
-	(void) plp_signal (SIGUSR2, (plp_sigfunc_t)SIG_IGN);
+	(void) plp_signal(SIGHUP,  (plp_sigfunc_t)Reinit);
+	(void) plp_signal(SIGINT, cleanup_INT);
+	(void) plp_signal(SIGQUIT, cleanup_QUIT);
+	(void) plp_signal(SIGTERM, cleanup_TERM);
+	(void) signal(SIGUSR1, SIG_IGN);
+	(void) signal(SIGUSR2, SIG_IGN);
+	(void) signal(SIGCHLD, SIG_DFL);
+	(void) signal(SIGPIPE, SIG_IGN);
+
+	/*
+	the next bit of insanity is caused by the interaction of signal(2) and execve(2)
+	man signal(2):
+
+	 When a process which has installed signal handlers forks, the child pro-
+	 cess inherits the signals.  All caught signals may be reset to their de-
+	 fault action by a call to the execve(2) function; ignored signals remain
+	 ignored.
+
+
+	man execve(2):
+	 
+	 Signals set to be ignored in the calling process are set to be ignored in
+					   ^^^^^^^
+					   signal(SIGCHLD, SIG_IGN)  <- in the acroread code???
+	 
+	 the new process. Signals which are set to be caught in the calling pro-  
+	 cess image are set to default action in the new process image.  Blocked  
+	 signals remain blocked regardless of changes to the signal action.  The  
+	 signal stack is reset to be undefined (see sigaction(2) for more informa-
+	 tion).
+
+
+	^&*(*&^!!! &*())&*&*!!!  and again, I say, &*()(&*!!!
+
+	This means that if you fork/execve a child,  then you better make sure
+	that you set up its signal/mask stuff correctly.
+
+    So if somebody blocks all signals and then starts up LPD,  it will not work
+	correctly.
+
+	*/
+
+	{ plp_block_mask oblock; plp_unblock_all_signals( &oblock ); }
+
 
 	Get_parms(argc, argv);      /* scan input args */
 
-	Initialize(argc, argv, envp);
+	Initialize(argc, argv, envp, 'D' );
+	DEBUG1("Get_parms: UID_root %d, OriginalRUID %d", UID_root, OriginalRUID);
+
+	if( UID_root && OriginalRUID ){
+		FATAL(LOG_ERR) "lpd installed SETUID root and started by user %d! Possible hacker attack", OriginalRUID);
+	}
+
 	Setup_configuration();
 
 	if( Worker_LPD ){
@@ -119,29 +164,20 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 
+	/* get the maximum number of servers allowed */
+	max_servers = Get_max_servers();
+	n = Get_max_fd();
+	DEBUG1( "lpd: maximum servers %d, maximum file descriptors %d ",
+		max_servers, n );
+
 	if( Lockfile_DYN == 0 ){
-		logerr_die( LOG_INFO, _("No LPD lockfile specified!") );
+		LOGERR_DIE(LOG_INFO) _("No LPD lockfile specified!") );
 	}
-
-	/* set up the log file and standard environment - do not
-	   fool around with anything but fd 0,1,2 which should be safe
-		as we made sure that the fd 0,1,2 existed.
-    */
-
-	Setup_log( Logfile_LPD );
-
-#if defined(HAVE_KRB5_H)
-	if(DEBUGL3){
-		char buffer[LINEBUFFER];
-		remote_principal_krb5( Kerberos_service_DYN, 0, buffer, sizeof(buffer) );
-		logDebug("lpd: kerberos principle '%s'", buffer );
-	}
-#endif
 
 	/* chdir to the root directory */
 	if( chdir( "/" ) == -1 ){
 		Errorcode = JABORT;
-		logerr_die( LOG_ERR, "cannot chdir to /");
+		LOGERR_DIE(LOG_ERR) "cannot chdir to /");
 	}
 
 	/*
@@ -157,15 +193,15 @@ int main(int argc, char *argv[], char *envp[])
 		 */
   		pid = Get_lpd_pid();
  		if( pid > 0 && kill(pid,0) ) pid = 0;
-		Errorcode = JACTIVE;
+		Errorcode = 1;
   		if( pid > 0 ){
-  			Diemsg( _("Another print spooler is using TCP printer port, possibly lpd process '%d'"),
+  			DIEMSG( _("Another print spooler is using TCP printer port, possibly lpd process '%d'"),
   				pid );
   		} else {
  			if( !UID_root ){
- 				Diemsg("Not running with ROOT perms and trying to open port '%s'", Lpd_port_DYN );
+ 				DIEMSG("Not running with ROOT perms and trying to open port '%s'", Lpd_port_DYN );
  			}
- 			Diemsg( _("Another print spooler is using TCP printer port - not LPRng") );
+ 			DIEMSG( _("Another print spooler is using TCP printer port - not LPRng") );
   		}
 		Errorcode = JSUCC;
 	}
@@ -186,12 +222,11 @@ int main(int argc, char *argv[], char *envp[])
 	 * you need to fork to allow the regular user to continue
 	 * you put the child in its separate process group as well
 	 */
-
 	Name = "MAIN";
 	setproctitle( "lpd %s", Name  );
 
 	if( (pid = dofork(1)) < 0 ){
-		logerr_die( LOG_ERR, _("lpd: main() dofork failed") );
+		LOGERR_DIE(LOG_ERR) _("lpd: main() dofork failed") );
 	} else if( pid ){
 		if( Foreground_LPD ){
 			while( (pid = plp_waitpid( pid, &status, 0)) > 0 ){
@@ -202,6 +237,14 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = 0;
 		exit(0);
 	}
+
+	/* set up the log file and standard environment - do not
+	   fool around with anything but fd 0,1,2 which should be safe
+		as we made sure that the fd 0,1,2 existed.
+    */
+
+	Setup_log( Logfile_LPD );
+
 	Name = "Waiting";
 	setproctitle( "lpd %s", Name  );
 
@@ -211,25 +254,28 @@ int main(int argc, char *argv[], char *envp[])
 
 	Set_lpd_pid();
 
+	if( Drop_root_DYN ){
+		Full_daemon_perms();
+	}
+
 	/* establish the pipes for low level processes to use */
 	if( pipe( request_pipe ) == -1 ){
-		logerr_die( LOG_ERR, _("lpd: pipe call failed") );
+		LOGERR_DIE(LOG_ERR) _("lpd: pipe call failed") );
 	}
+	Max_open(request_pipe[0]); Max_open(request_pipe[1]);
 	DEBUG2( "lpd: fd request_pipe(%d,%d)",request_pipe[0],request_pipe[1]);
 	Lpd_request = request_pipe[1];
+	Set_nonblock_io( Lpd_request );
 
 	Logger_fd = -1;
+	status_pid = -1;
 	if( Logger_destination_DYN ){
 		if( pipe( status_pipe ) == -1 ){
-			logerr_die( LOG_ERR, _("lpd: pipe call failed") );
+			LOGERR_DIE(LOG_ERR) _("lpd: pipe call failed") );
 		}
+		Max_open(status_pipe[0]); Max_open(status_pipe[1]);
 		Logger_fd = status_pipe[1];
 		DEBUG2( "lpd: fd status_pipe(%d,%d)",status_pipe[0],status_pipe[1]);
-		status_pid = Start_logger( status_pipe[0] );
-		if( status_pid <= 0 ){
-			logerr_die( LOG_ERR, "lpd: cannot fork logger process");
-		}
-		DEBUG1("lpd: status_pid %d", status_pid );
 	}
 
 	/* open a connection to logger */
@@ -237,7 +283,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* get the maximum number of servers allowed */
 	max_servers = Get_max_servers();
-	DEBUG3( "lpd: maximum servers %d", max_servers );
+	DEBUG1( "lpd: maximum servers %d", max_servers );
 
 	/*
 	 * clean out the current queues
@@ -255,18 +301,46 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 
 	last_time = time( (void *)0 );
-	start_fd = Start_all();
-
+	fork_failed = start_fd = Start_all(first_scan);
+	Fork_error( fork_failed );
+	if( start_fd > 0 ){
+		first_scan = 0;
+	}
 
 	do{
 		DEBUG1("lpd: LOOP START");
-		if(DEBUGL3){ int fd; fd = dup(0); logDebug("lpd: next fd %d",fd); close(fd); };
+		if(DEBUGL3){ int fd; fd = dup(0); LOGDEBUG("lpd: next fd %d",fd); close(fd); };
 
 		timeout = 0;
 		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_fd %d, Started_server %d",
 			Poll_time_DYN, Force_poll_DYN, start_fd, Started_server );
 		if(DEBUGL2)Dump_line_list("lpd - Servers_line_list",&Servers_line_list );
-		if( Poll_time_DYN > 0 && start_fd <= 0 && Servers_line_list.count == 0 ){
+
+		/*
+		 * collect zombies 
+		 */
+
+		while( (pid = plp_waitpid( -1, &status, WNOHANG)) > 0 ){
+			DEBUG1( "lpd: process %d, status '%s'",
+				pid, Decode_status(&status));
+			if( pid == status_pid ){
+				status_pid = -1;
+			}
+			fork_failed = 1;
+		}
+		if( fork_failed > 0 && Logger_fd > 0 && status_pid < 0 ){
+			DEBUG1( "lpd: restarting logger process");
+			fork_failed = status_pid = Start_logger( status_pipe[0] );
+			Fork_error( fork_failed );
+			DEBUG1("lpd: status_pid %d", status_pid );
+		}
+		if( fork_failed < 0 ){
+			/* wait for 10 seconds then go in a loop */
+			memset(&timeval, 0, sizeof(timeval));
+			timeval.tv_sec = 10;
+			timeout = &timeval;
+		} else if( Poll_time_DYN > 0
+			&& start_fd <= 0 && Servers_line_list.count == 0 ){
 			memset(&timeval, 0, sizeof(timeval));
 			this_time = time( (void *)0 );
 			m = (this_time - last_time);
@@ -276,10 +350,14 @@ int main(int argc, char *argv[], char *envp[])
 				m, (int)timeval.tv_sec );
 			if( m >= Poll_time_DYN ){
 				if( Started_server || Force_poll_DYN ){
-					start_fd = Start_all();
+					fork_failed = start_fd = Start_all(first_scan);
+					Fork_error( fork_failed );
 					DEBUG1( "lpd: restarting poll, start_fd %d", start_fd);
-					last_time = this_time;
-					timeval.tv_sec = Poll_time_DYN;
+					if( start_fd > 0 ){
+						if( first_scan ) first_scan = 0;
+						last_time = this_time;
+						timeval.tv_sec = Poll_time_DYN;
+					}
 				} else {
 					DEBUG1( "lpd: no poll" );
 					timeout = 0;
@@ -287,49 +365,32 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		}
 
-		/*
-		 * collect zombies 
-		 */
-
-		while( (pid = plp_waitpid( -1, &status, WNOHANG)) > 0 ){
-			DEBUG1( "lpd: process %d, status '%s'",
-				pid, Decode_status(&status));
-			if( status_pid > 0 && pid == status_pid ){
-				DEBUG1( "lpd: restaring logger process");
-				while( (status_pid = Start_logger( status_pipe[0] )) < 0 ){
-					DEBUG1("lpd: could not start process - %s",
-						Errormsg(errno) );
-					status_pid = plp_waitpid( -1, &status, 0);
-					DEBUG1( "lpd: process %d, status '%s'",
-						status_pid, Decode_status(&status));
-				}
-				DEBUG1("lpd: status_pid %d", status_pid );
-			}
-		}
 		n = Countpid();
 		max_servers = Get_max_servers();
 		DEBUG1("lpd: max_servers %d, active %d", max_servers, n );
-		while( Servers_line_list.count > 0 && n < max_servers ){ 
+
+		/* allow a little space for people to send commands */
+		while( fork_failed > 0 && Servers_line_list.count > 0 && n < max_servers-4 ){ 
 			s = Servers_line_list.list[0];
 			DEBUG1("lpd: starting server '%s'", s );
-			Free_line_list( &args );
 			Set_str_value(&args,PRINTER,s);
 			Set_str_value(&args,CALL,QUEUE);
-			pid = Start_worker( &args, 0 );
+			fork_failed = pid = Start_worker( &args, 0 );
+			Fork_error( fork_failed );
 			Free_line_list(&args);
 			if( pid > 0 ){
 				Remove_line_list( &Servers_line_list, 0 );
 				++Started_server;
 				++n;
-			} else {
-				break;
 			}
 		}
 
+		DEBUG1("lpd: fork_failed %d, processes %d active, max %d",
+			fork_failed, n, max_servers );
 		/* do not accept incoming call if no worker available */
 		readfds = defreadfds;
-		if( n >= max_servers ){
-			DEBUG1( "lpd: not accepting requests", sock );
+		if( n >= max_servers || fork_failed < 0 ){
+			DEBUG1( "lpd: not accepting requests" );
 			FD_CLR( sock, &readfds );
 		}
 
@@ -350,7 +411,7 @@ int main(int argc, char *argv[], char *envp[])
 			int i;
 			for(i=0; i < max_socks; ++i ){
 				if( FD_ISSET( i, &readfds ) ){
-					logDebug( "lpd: waiting for fd %d to be readable", i );
+					LOGDEBUG( "lpd: waiting for fd %d to be readable", i );
 				}
 			}
 		}
@@ -364,11 +425,11 @@ int main(int argc, char *argv[], char *envp[])
 		Setup_waitpid();
 		if(DEBUGL1){
 			int i;
-			logDebug( "lpd: select returned %d, error '%s'",
+			LOGDEBUG( "lpd: select returned %d, error '%s'",
 				m, Errormsg(err) );
 			for(i=0; i < max_socks; ++i ){
 				if( FD_ISSET( i, &readfds ) ){
-					logDebug( "lpd: fd %d readable", i );
+					LOGDEBUG( "lpd: fd %d readable", i );
 				}
 			}
 		}
@@ -384,42 +445,46 @@ int main(int argc, char *argv[], char *envp[])
 			Setup_configuration();
 		}
 		/* mark this as a timeout */
-		timeout_encountered = (m == 0);
 		if( m < 0 ){
 			if( err != EINTR ){
 				errno = err;
-				logerr_die( LOG_ERR, _("lpd: select error!"));
+				LOGERR_DIE(LOG_ERR) _("lpd: select error!"));
 				break;
 			}
 			continue;
 		} else if( m == 0 ){
-			DEBUG1( "lpd: signal or time out" );
+			DEBUG1( "lpd: signal or time out, fork_failed %d", fork_failed );
+			/* we try to fork now */
+			if( fork_failed < 0 ) fork_failed = 1;
 			continue;
 		}
 		if( FD_ISSET( sock, &readfds ) ){
-			int p[2];
-			char b[32];
-			if( pipe(p) == -1 ){
-				logerr(LOG_INFO, _("lpd: pipe() failed") );
+			struct sockaddr sinaddr;
+			int len;
+			len = sizeof( sinaddr );
+			newsock = accept( sock, &sinaddr, &len );
+			err = errno;
+			DEBUG1("lpd: connection fd %d", newsock );
+			if( newsock > 0 ){
+				Set_str_value(&args,CALL,SERVER);
+				pid = Start_worker( &args, newsock );
+				if( pid < 0 ){
+					LOGERR(LOG_INFO) _("lpd: fork() failed") );
+					Write_fd_str( newsock, "\002Server load too high\n");
+				} else {
+					DEBUG1( "lpd: listener pid %d running", pid );
+				}
+				close( newsock );
+				Free_line_list(&args);
+			} else {
+				errno = err;
+				LOGERR(LOG_INFO) _("Service_connection: accept on listening socket failed") );
 			}
-			Free_line_list( &args );
-			Lpd_ack_fd = p[1];
-			Set_str_value(&args,CALL,SERVER);
-			pid = Start_worker( &args, sock );
-			if( pid < 0 ){
-				logerr(LOG_INFO, _("lpd: fork() failed") );
-			}
-			Free_line_list(&args);
-			Lpd_ack_fd = 0;
-			close( p[1] );
-			while( read( p[0], b, sizeof(b) ) > 0 );
-			DEBUG1( "lpd: listener %d running", pid );
-			close( p[0] );
 		}
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
 			Errorcode = JABORT;
-			logerr_die(LOG_INFO, _("lpd: Lpd_request pipe EOF! cannot happen") );
+			LOGERR_DIE(LOG_ERR) _("lpd: Lpd_request pipe EOF! cannot happen") );
 		}
 		if( start_fd > 0 && FD_ISSET( start_fd, &readfds ) ){
 			start_fd = Read_server_status( start_fd );
@@ -433,7 +498,7 @@ int main(int argc, char *argv[], char *envp[])
 /***************************************************************************
  * Setup_log( char *logfile, int sock )
  * Purpose: to set up a standard error logging environment
- * saveme will prevent stdin from being clobbered
+ * saveme will prevent STDIN from being clobbered
  *   1.  dup 'sock' to fd 0, close sock
  *   2.  opens /dev/null on fd 1
  *   3.  If logfile is "-" or NULL, output file is alread opened
@@ -445,26 +510,26 @@ void Setup_log(char *logfile )
 
 	close(0); close(1);
 	if (open("/dev/null", O_RDONLY, 0) != 0) {
-	    logerr_die(LOG_ERR, _("Setup_log: open /dev/null failed"));
+	    LOGERR_DIE(LOG_ERR) _("Setup_log: open /dev/null failed"));
 	}
 	if (open("/dev/null", O_WRONLY, 0) != 1) {
-	    logerr_die(LOG_ERR, _("Setup_log: open /dev/null failed"));
+	    LOGERR_DIE(LOG_ERR) _("Setup_log: open /dev/null failed"));
 	}
 
     /*
-     * open logfile; if it is "-", use stderr; if Foreground is set, use stderr
+     * open logfile; if it is "-", use STDERR; if Foreground is set, use stderr
      */
 	if( fstat(2,&statb) == -1 && dup2(1,2) == -1 ){
-		logerr_die(LOG_ERR, _("Setup_log: dup2(%d,%d) failed"), 1, 2);
+		LOGERR_DIE(LOG_ERR) _("Setup_log: dup2(%d,%d) failed"), 1, 2);
 	}
     if( logfile == 0 ){
 		if( !Foreground_LPD && dup2(1,2) == -1 ){
-			logerr_die(LOG_ERR, _("Setup_log: dup2(%d,%d) failed"), 1, 2);
+			LOGERR_DIE(LOG_ERR) _("Setup_log: dup2(%d,%d) failed"), 1, 2);
 		}
 	} else if( safestrcmp(logfile, "-") ){
 		close(2);
 		if( Checkwrite(logfile, &statb, O_WRONLY|O_APPEND, 0, 0) != 2) {
-			logerr_die(LOG_ERR, _("Setup_log: open %s failed"), logfile );
+			LOGERR_DIE(LOG_ERR) _("Setup_log: open %s failed"), logfile );
 		}
 	}
 }
@@ -485,7 +550,7 @@ void Service_connection( struct line_list *args )
 	char buffer[LINEBUFFER];	/* for messages */
 	int len, talk;
 	int status;		/* status of operation */
-	int permission, newsock, err;
+	int permission;
 	int port = 0;
 	struct sockaddr sinaddr;
 
@@ -495,53 +560,41 @@ void Service_connection( struct line_list *args )
 
 	if( !(talk = Find_flag_value(args,INPUT,Value_sep)) ){
 		Errorcode = JABORT;
-		fatal(LOG_ERR,"Service_connection: no talk fd"); 
+		FATAL(LOG_ERR)"Service_connection: no talk fd"); 
 	}
+
+	DEBUG1("Service_connection: listening fd %d", talk );
 
 	Free_line_list(args);
-	len = sizeof( sinaddr );
-	DEBUG1("Service_connection: listening fd %d", talk );
-	newsock = accept( talk, &sinaddr, &len );
-	err = errno;
-	DEBUG1("Service_connection: connection fd %d", newsock );
 
-	if( newsock > 0 ){
-		if( dup2( newsock, talk ) == -1 ){
-			logerr_die( LOG_INFO, "Service_connection: dup2() failed!" );
-		}
-		if( newsock != talk ){
-			close( newsock );
-		}
-	} else {
-		errno = err;
-		logerr_die(LOG_INFO, _("Service_connection: accept on listening socket failed") );
-	}
-
-	if( Lpd_ack_fd ){
-		close( Lpd_ack_fd );
-		Lpd_ack_fd = -1;
-	}
-
+	/* make sure you use blocking IO */
 	Set_block_io(talk);
 
-	/* get the remote name and set up the various checks */
-	Perm_check.addr = &sinaddr;
-	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr );
-	Perm_check.remotehost  =  &RemoteHost_IP;
-	Perm_check.host = &RemoteHost_IP;
+	len = sizeof( sinaddr );
+	if( getpeername( talk, &sinaddr, &len ) ){
+		LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
+	}
 
 	if( sinaddr.sa_family == AF_INET ){
 		port = ((struct sockaddr_in *)&sinaddr)->sin_port;
-#if defined(IN6_ADDR)
+#if defined(IPV6)
 	} else if( sinaddr.sa_family == AF_INET6 ){
 		port = ((struct sockaddr_in6 * )&sinaddr)->sin6_port;
 #endif
 	} else {
-		fatal( LOG_INFO, _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
+		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
 	}
-	Perm_check.port =  ntohs(port);
+
 	DEBUG2("Service_connection: socket %d, ip '%s' port %d", talk,
 		inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ), ntohs( port ) );
+
+	/* get the remote name and set up the various checks */
+	Perm_check.addr = &sinaddr;
+
+	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr );
+	Perm_check.remotehost  =  &RemoteHost_IP;
+	Perm_check.host = &RemoteHost_IP;
+	Perm_check.port =  ntohs(port);
 
 	len = sizeof( input ) - 1;
 	memset(input,0,sizeof(input));
@@ -557,17 +610,20 @@ void Service_connection( struct line_list *args )
 		cleanup(0);
 	}
 	if( status ){
-		logerr_die( LOG_DEBUG, _("Service_connection: cannot read request") );
+		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request") );
 	}
 	if( len < 2 ){
-		fatal( LOG_INFO, _("Service_connection: bad request line '%s'"), input );
+		FATAL(LOG_INFO) _("Service_connection: bad request line '%s'"), input );
 	}
 
-	/* see if you need to reread the printcap and permissions information */
+	/* read the permissions information */
 
-	Free_line_list(&Perm_line_list);
-	Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
-
+	if( Perm_filters_line_list.count ){
+		Free_line_list(&Perm_line_list);
+		Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
+		Filterprintcap( &Perm_line_list, &Perm_filters_line_list, "");
+	}
+   
 	Perm_check.service = 'X';
 
 	permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
@@ -584,7 +640,7 @@ void Dispatch_input(int *talk, char *input )
 {
 	switch( input[0] ){
 		default:
-			fatal( LOG_INFO,
+			FATAL(LOG_INFO)
 				_("Dispatch_input: bad request line '%s'"), input );
 			break;
 		case REQ_START:
@@ -611,9 +667,11 @@ void Dispatch_input(int *talk, char *input )
 		case REQ_SECURE:
 			Receive_secure( talk, input );
 			break;
+#if defined(MIT_KERBEROS4)
 		case REQ_K4AUTH:
 			Receive_k4auth( talk, input );
 			break;
+#endif
 	}
 }
 
@@ -654,27 +712,29 @@ int Get_lpd_pid(void)
 
 void Set_lpd_pid(void)
 {
-	int lockfd, err;
+	int lockfd;
 	char *path;
 	struct stat statb;
 
 	path = safestrdup3( Lockfile_DYN,".", Lpd_port_DYN, __FILE__, __LINE__ );
-	To_root();
 	lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
-	To_daemon();
+	fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
 	if( lockfd < 0 ){
-		logerr_die( LOG_ERR, _("lpd: Cannot open '%s'"), path );
+		To_root();
+		lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
+		if( lockfd > 0 ){
+			fchown( lockfd, DaemonUID, DaemonGID );
+			fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
+		}
+		To_daemon();
+	}
+	if( lockfd < 0 ){
+		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open '%s'"), path );
 	} else {
 		/* we write our PID */
 		Server_pid = getpid();
 		DEBUG1( "lpd: writing lockfile '%s' fd %d with pid '%d'",path,lockfd,Server_pid );
 		Write_pid( lockfd, Server_pid, (char *)0 );
-		To_root();
-		err = fchmod( lockfd, (statb.st_mode | 0644) );
-		To_daemon();
-		if( err == -1 ){
-			logerr_die( LOG_ERR, _("lpd: Cannot change mode '%s'"), path );
-		}
 	}
 	if(path) free(path); path = 0;
 	close( lockfd );
@@ -744,20 +804,30 @@ int Read_server_status( int fd )
  * 2. Check for duplicate information
  ***************************************************************************/
 
- char *usagemsg = N_("\
- usage: %s [-FV] [-D dbg] [-L log]\n\
- Options\n\
- -D dbg      - set debug level and flags\n\
-                 Example: -D10,remote=5\n\
-                 set debug level to 10, remote flag = 5\n\
- -F          - run in foreground, log to stderr\n\
-               Example: -D10,remote=5\n\
- -L logfile  - append log information to logfile\n\
- -V          - show version info\n");
+ static char *msg[] = {
+	N_("usage: %s [-FV] [-D dbg] [-L log]\n"),
+	N_(" Options\n"),
+	N_(" -D dbg      - set debug level and flags\n"),
+	N_("                 Example: -D10,remote=5\n"),
+	N_("                 set debug level to 10, remote flag = 5\n"),
+	N_(" -F          - run in foreground, log to STDERR\n"),
+	N_("               Example: -D10,remote=5\n"),
+	N_(" -L logfile  - append log information to logfile\n"),
+	N_(" -V          - show version info\n"),
+	0,
+};
 
 void usage(void)
 {
-	fprintf( stderr, _(usagemsg), Name);
+	int i;
+	char *s;
+	for( i = 0; (s = msg[i]); ++i ){
+		if( i == 0 ){
+			FPRINTF( STDERR, _(s), Name);
+		} else {
+			FPRINTF( STDERR, "%s", _(s) );
+		}
+	}
 	exit(1);
 }
 
@@ -768,233 +838,26 @@ void Get_parms(int argc, char *argv[] )
 {
 	int option, verbose = 0;
 
-	while ((option = Getopt (argc, argv, LPD_optstr )) != EOF) {
+	while ((option = Getopt (argc, argv, LPD_optstr )) != EOF){
 		switch (option) {
 		case 'D': Parse_debug(Optarg, 1); break;
-		case 'L': Logfile_LPD = Optarg; break;
 		case 'F': Foreground_LPD = 1; break;
+		case 'L': Logfile_LPD = Optarg; break;
+		case 'V': ++verbose; continue;
 		case 'X': Worker_LPD = 1; break;
-		default:
-			usage();
-			break;
-		case 'V':
-			verbose = !verbose;
-			break;
+		default: usage(); break;
 		}
 	}
 	if( Optind != argc ){
 		usage();
 	}
-	if( verbose > 0 ) {
-		fprintf( stderr, _("Version %s\n"), PATCHLEVEL );
-		if( verbose > 1 ) Printlist( Copyright, stderr );
-		exit(1);
+	if( verbose ) {
+		FPRINTF( STDERR, "%s\n", Version );
+		if( verbose > 1 ) Printlist( Copyright, 1 );
+		exit(0);
 	}
 }
 
-
-/*
- * Error status on STDERR
- */
-/* VARARGS2 */
-#ifdef HAVE_STDARGS
- void setstatus (struct job *job,char *fmt,...)
-#else
- void setstatus (va_alist) va_dcl
-#endif
-{
-#ifndef HAVE_STDARGS
-    struct job *job;
-    char *fmt;
-#endif
-	char *path = 0;
-	char msg_b[SMALLBUFFER];
-	static int insetstatus;
-    VA_LOCAL_DECL
-
-    VA_START (fmt);
-    VA_SHIFT (job, struct job * );
-    VA_SHIFT (fmt, char *);
-
-	if( Doing_cleanup || fmt == 0 || *fmt == 0 || insetstatus ) return;
-
-	insetstatus = 1;
-	(void) plp_vsnprintf( msg_b, sizeof(msg_b)-4, fmt, ap);
-
-	DEBUG1("setstatus: Status_fd %d, Mail_fd %d, msg '%s'", Status_fd, Mail_fd, msg_b);
-
-	if( Status_fd <= 0 && Spool_dir_DYN && Printer_DYN ){
-		path = Make_pathname( Spool_dir_DYN, Queue_status_file_DYN);
-		Status_fd = Trim_status_file( path,
-			Max_status_size_DYN, Min_status_size_DYN );
-		if( path ) free(path); path = 0;
-	}
-
-	send_to_logger( Status_fd, Mail_fd, job, PRSTATUS, msg_b );
-	insetstatus = 0;
-	VA_END;
-}
-
-
-/***************************************************************************
- * void setmessage (struct job *job,char *header, char *fmt,...)
- * put the message out (if necessary) to the logger
- ***************************************************************************/
-
-/* VARARGS2 */
-#ifdef HAVE_STDARGS
- void setmessage (struct job *job,const char *header, char *fmt,...)
-#else
- void setmessage (va_alist) va_dcl
-#endif
-{
-#ifndef HAVE_STDARGS
-    struct job *job;
-    char *header;
-    char *fmt;
-#endif
-	char msg_b[SMALLBUFFER];
-
-    VA_LOCAL_DECL
-
-    VA_START (fmt);
-    VA_SHIFT (job, struct job * );
-    VA_SHIFT (header, char *);
-    VA_SHIFT (fmt, char *);
-
-	if( Doing_cleanup ) return;
-	(void) plp_vsnprintf( msg_b, sizeof(msg_b)-4, fmt, ap);
-	DEBUG1("setmessage: msg '%s'", msg_b);
-	send_to_logger( -1, -1, job, header, msg_b );
-	VA_END;
-}
-
-
-/***************************************************************************
- * send_to_logger( struct job *job, char *msg )
- *  This will try and send to the logger.
- ***************************************************************************/
-
- void send_to_logger( int send_to_status_fd, int send_to_mail_fd,
-	struct job *job, const char *header, char *msg_b )
-{
-	char *s, *t;
-	char *id, *tstr;
-	int num,pid;
-	char out_b[4*SMALLBUFFER];
-	struct line_list l;
-
-	if( Doing_cleanup ) return;
-	Init_line_list(&l);
-	if(DEBUGL4){
-		char buffer[32];
-		plp_snprintf(buffer,sizeof(buffer)-5,"%s", msg_b );
-		if( msg_b ) safestrncat( buffer,"...");
-		logDebug("send_to_logger: Logger_fd fd %d, Status_fd fd %d, Mail_fd fd %d, header '%s', body '%s'",
-			Logger_fd, Status_fd, Mail_fd, header, buffer );
-	}
-	s = t = id = tstr = 0;
-	num = 0;
-	if( job ){
-		Set_str_value(&l,IDENTIFIER,
-			(id = Find_str_value(&job->info,IDENTIFIER,Value_sep)) );
-		Set_decimal_value(&l,NUMBER,
-			(num = Find_decimal_value(&job->info,NUMBER,Value_sep)) );
-	}
-	Set_str_value(&l,UPDATE_TIME,(tstr=Time_str(0,0)));
-	Set_decimal_value(&l,PROCESS,(pid=getpid()));
-
-	plp_snprintf( out_b, sizeof(out_b), "%s at %s ## %s=%s %s=%d %s=%d\n",
-		msg_b, tstr, IDENTIFIER, id, NUMBER, num, PROCESS, pid );
-
-	if( send_to_status_fd > 0 && Status_fd > 0 && Write_fd_str( Status_fd, out_b ) < 0 ){
-		DEBUG4("send_to_logger: write to fd %d failed - %s",
-			Status_fd, Errormsg(errno) );
-		close( Status_fd );
-		Status_fd = -1;
-	}
-	if( send_to_mail_fd > 0 && Mail_fd > 0 && Write_fd_str( Mail_fd, out_b ) < 0 ){
-		DEBUG4("send_to_logger: write to fd %d failed - %s",
-			Mail_fd, Errormsg(errno) );
-		close(Mail_fd);
-		Mail_fd = -1;
-	}
-	if( Logger_fd > 0 ){
-		Set_str_value(&l,PRINTER,Printer_DYN);
-		Set_str_value(&l,HOST,FQDNHost_FQDN);
-		s = Escape(msg_b,0,1);
-		Set_str_value(&l,VALUE,s);
-		if(s) free(s); s = 0;
-		t = Join_line_list(&l,"\n");
-		s = Escape(t,0,1); 
-		if(t) free(t); t = 0;
-		t = safestrdup4(header,"=",s,"\n",__FILE__,__LINE__);
-		Write_fd_str( Logger_fd, t );
-		if( s ) free(s); s = 0;
-		if( t ) free(t); t = 0;
-	}
-	Free_line_list(&l);
-}
-
-/*
- *  Support for non-copy on write fork as for NT
- *   1. Preparation for the fork is done by calling 'Setup_lpd_call'
- *      This establishes a default setup for the new process by setting
- *      up a list of parameters and file descriptors to be passed.
- *   2. The user then adds fork/process specific options
- *   3. The fork is done by calling Make_lpd_call which actually
- *      does the fork() operation.  If the lpd_path option is set,
- *      then a -X command line flag is added and an execv() of the program
- *      is done.
- *   4.A - fork()
- *        Make_lpd_call (child) will call Do_work(),  which dispatches
- *         a call to the required function.
- *   4.B - execv()
- *        The execv'd process checks the command line parameters for -X
- *         flag and when it finds it calls Do_work() with the same parameters
- *         as would be done for the fork() version.
- */
-
-void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
-{
-	Free_line_list( args );
-	Check_max(passfd, 10 );
-	passfd->count = 0;
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(0);
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(1);
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(2);
-	if( Mail_fd > 0 ){
-		Set_decimal_value(args,MAIL_FD,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Mail_fd);
-	}
-	if( Status_fd > 0 ){
-		Set_decimal_value(args,STATUS_FD,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Status_fd);
-	}
-	if( Logger_fd > 0 ){
-		Set_decimal_value(args,LOGGER,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Logger_fd);
-	}
-	if( Lpd_request > 0 ){
-		Set_decimal_value(args,LPD_REQUEST,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Lpd_request);
-	}
-	if( Lpd_ack_fd > 0 ){
-		Set_decimal_value(args,LPD_ACK_FD,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Lpd_ack_fd);
-	}
-	Set_flag_value(args,DEBUG,Debug);
-	Set_flag_value(args,DEBUGFV,DbgFlag);
-#ifdef DMALLOC
-	{
-		extern int _dmalloc_outfile;
-		if( _dmalloc_outfile > 0 ){
-			Set_decimal_value(args,DMALLOC_OUTFILE,passfd->count);
-			passfd->list[passfd->count++] = Cast_int_to_voidstar(_dmalloc_outfile);
-		}
-	}
-#endif
-}
 
 /*
  * Calls[] = list of dispatch functions 
@@ -1006,223 +869,10 @@ void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
 	{&SERVER,Service_connection},	/* used by LPD to handle a connection */
 	{&QUEUE,Service_queue},		/* used by LPD to handle a queue */
 	{&PRINTER,Service_worker},	/* used by LPD queue manager to do actual printing */
-	{&LOG,Service_log},			/* used by LPD to create logger process for filter */
 	{0,0}
 };
 
-/*
- * Make_lpd_call - does the actual forking operation
- *  - sets up file descriptor for child, can close_on_exec()
- *  - does fork() or execve() as appropriate
- *
- *  returns: pid of child or -1 if fork failed.
- */
-
-int Make_lpd_call( struct line_list *passfd, struct line_list *args )
-{
-	int pid, fd, i, n, newfd;
-	struct line_list env;
-
-	Init_line_list(&env);
-	pid = dofork(1);
-	if( pid ){
-		return(pid);
-	}
-	Name = "LPD_CALL";
-
-	if(DEBUGL2){
-		logDebug("Make_lpd_call: lpd path '%s'", Lpd_path_DYN );
-		logDebug("Make_lpd_call: passfd count %d", passfd->count );
-		for( i = 0; i < passfd->count; ++i ){
-			logDebug(" [%d] %d", i, Cast_ptr_to_int(passfd->list[i]));
-		}
-		Dump_line_list("Make_lpd_call - args", args );
-	}
-	for( i = 0; i < passfd->count; ++i ){
-		fd = Cast_ptr_to_int(passfd->list[i]);
-		if( fd < i  ){
-			/* we have fd 3 -> 4, but 3 gets wiped out */
-			do{
-				newfd = dup(fd);
-				if( newfd < 0 ){
-					logerr_die(LOG_INFO,"Make_lpd_call: dup failed");
-				}
-				DEBUG4("Make_lpd_call: fd [%d] = %d, dup2 -> %d",
-					i, fd, newfd );
-				passfd->list[i] = Cast_int_to_voidstar(newfd);
-			} while( newfd < i );
-		}
-	}
-	if(DEBUGL2){
-		logDebug("Make_lpd_call: after fixing fd count %d", passfd->count);
-		for( i = 0 ; i < passfd->count; ++i ){
-			fd = Cast_ptr_to_int(passfd->list[i]);
-			logDebug("  [%d]=%d",i,fd);
-		}
-	}
-	for( i = 0; i < passfd->count; ++i ){
-		fd = Cast_ptr_to_int(passfd->list[i]);
-		DEBUG2("Make_lpd_call: fd %d -> %d",fd, i );
-		if( dup2( fd, i ) == -1 ){
-			Errorcode = JABORT;
-			logerr_die(LOG_INFO,"Make_lpd_call: dup2(%d,%d) failed",
-				fd, i );
-		}
-	}
-	if( Lpd_path_DYN ){
-		/* we really do the execv */
-		Setup_env_for_process(&env,0);
-#ifdef DMALLOC
-		Set_str_value(&env,DMALLOC_OPTIONS,getenv(DMALLOC_OPTIONS));
-#endif
-		Set_str_value(&env,LPD_CONF,getenv(LPD_CONF));
-		Check_max(args,10);
-		args->list[args->count] = 0;
-		for( i = args->count; i >= 0; --i ){
-			args->list[i+2] = args->list[i];
-		}
-		args->list[0] = safestrdup(Lpd_path_DYN,__FILE__,__LINE__);
-		args->list[1] = safestrdup("-X",__FILE__,__LINE__);
-		args->count += 2;
-		if(DEBUGL2)Dump_line_list("Make_lpd_call: args", args );
-		close_on_exec(passfd->count);
-		execve(args->list[0],args->list,env.list);
-		logerr_die(LOG_ERR,"Make_lpd_call: execve '%s' failed",
-			Lpd_path_DYN );
-	}
-	/* close other ones to simulate close_on_exec() */
-	n = Get_max_fd();
-	for( i = passfd->count ; i < n; ++i ){
-		close(i);
-	}
-	passfd->count = 0;
-	Free_line_list( passfd );
-	Do_work( args );
-	return(0);
-}
-
-/*
- *  Do_work- called to dispatch process to the appropriate function
- */
-
-void Do_work( struct line_list *args )
-{
-	const char **ps;
-	char *name;
-	int i;
-
-	Logger_fd = Find_flag_value(args, LOGGER,Value_sep);
-	Status_fd = Find_flag_value(args, STATUS_FD,Value_sep);
-	Mail_fd = Find_flag_value(args, MAIL_FD,Value_sep);
-	Lpd_ack_fd = Find_flag_value(args, LPD_ACK_FD,Value_sep);
-	Lpd_request = Find_flag_value(args, LPD_REQUEST,Value_sep);
-	Debug= Find_flag_value( args, DEBUG, Value_sep);
-	DbgFlag= Find_flag_value( args, DEBUGFV, Value_sep);
-#ifdef DMALLOC
-	{
-		extern int _dmalloc_outfile;
-		_dmalloc_outfile = Find_flag_value(args, DMALLOC_OUTFILE,Value_sep);
-	}
-#endif
-	name = Find_str_value(args,CALL,Value_sep);
-	DEBUG3("Do_work: calling '%s'", name );
-	ps = 0;
-	for( i = 0; name && (ps = Calls[i].id) && safestrcasecmp(*ps,name); ++i);
-	if( ps ){
-		DEBUG3("Do_work: found '%s'", name );
-		(Calls[i].p)(args);
-	} else {
-		Errorcode = JABORT;
-		DEBUG3("Do_work: did not find '%s'", name );
-	}
-	cleanup(0);
-}
-
-/*
- * Lpd_worker - called by LPD on startup when it discovers
- *  the -X flag on the command line.
- */
-
-void Lpd_worker( char **argv, int argc, int optindv  )
-{
-	struct line_list args;
-
-	Name = "LPD_WORKER";
-	DEBUG1("Lpd_worker: argc %d, optind %d", argc, optindv );
-	Init_line_list( &args );
-	while( optindv < argc ){
-		Add_line_list(&args,argv[optindv++],Value_sep,1,1);
-	}
-	if(DEBUGL1)Dump_line_list("Lpd_worker - args", &args );
-	Do_work( &args );
-	cleanup(0);
-}
-
-/*
- * Start_logger - helper function to setup logger process
- */
-
-int Start_logger( int log_fd )
-{
-	struct line_list args, passfd;
-	int fd = Logger_fd;
-	int pid;
-
-	Init_line_list(&passfd);
-	Init_line_list(&args);
-
-	Logger_fd = -1;
-	Setup_lpd_call( &passfd, &args );
-	Logger_fd = fd;
-
-	Set_str_value(&args,CALL,LOGGER);
-
-	Check_max(&passfd,2);
-	Set_decimal_value(&args,INPUT,passfd.count);
-	passfd.list[passfd.count++] = Cast_int_to_voidstar(log_fd);
-
-	pid = Make_lpd_call( &passfd, &args );
-	passfd.count = 0;
-	Free_line_list( &args );
-	Free_line_list( &passfd );
-	DEBUG1("Start_logger: log_fd %d, status_pid %d", log_fd, pid );
-	return(pid);
-}
-
-/*
- * Start_worker - general purpose dispatch function
- *   - adds an input FD
- */
-
-int Start_worker( struct line_list *parms, int fd  )
-{
-	struct line_list args, passfd;
-	int pid;
-
-	Init_line_list(&passfd);
-	Init_line_list(&args);
-	if(DEBUGL1){
-		DEBUG1("Start_worker: fd %d", fd );
-		Dump_line_list("Start_worker - parms", parms );
-	}
-	Setup_lpd_call( &passfd, &args );
-	Merge_line_list( &args, parms, Value_sep,1,1);
-	Free_line_list( parms );
-	if( fd ){
-		Check_max(&passfd,2);
-		Set_decimal_value(&args,INPUT,passfd.count);
-		passfd.list[passfd.count++] = Cast_int_to_voidstar(fd);
-	}
-
-	pid = Make_lpd_call( &passfd, &args );
-	Free_line_list( &args );
-	passfd.count = 0;
-	Free_line_list( &passfd );
-	DEBUG1("Start_worker: pid %d", pid );
-	return(pid);
-}
-
-int Start_all( void )
+int Start_all( int first_scan )
 {
 	struct line_list args, passfd;
 	int pid, p[2];
@@ -1233,8 +883,9 @@ int Start_all( void )
 	DEBUG1( "Start_all: begin" );
 	Started_server = 0;
 	if( pipe(p) == -1 ){
-		logerr_die( LOG_INFO, _("Start_all: pipe failed!") );
+		LOGERR_DIE(LOG_INFO) _("Start_all: pipe failed!") );
 	}
+	Max_open(p[0]); Max_open(p[1]);
 	DEBUG1( "Start_all: fd p(%d,%d)",p[0],p[1]);
 
 	Setup_lpd_call( &passfd, &args );
@@ -1243,6 +894,7 @@ int Start_all( void )
 	Check_max(&passfd,2);
 	Set_decimal_value(&args,INPUT,passfd.count);
 	passfd.list[passfd.count++] = Cast_int_to_voidstar(p[1]);
+	Set_decimal_value(&args,FIRST_SCAN,first_scan);
 
 	pid = Make_lpd_call( &passfd, &args );
 
@@ -1261,14 +913,16 @@ int Start_all( void )
 void Service_all( struct line_list *args )
 {
 	int i, reportfd, fd, printable, held, move, printing_enabled,
-		server_pid;
-	char buffer[SMALLBUFFER], *pr, *path = 0;
+		server_pid, change;
+	char buffer[SMALLBUFFER], *pr, *forwarding;
 	struct stat statb;
+	int first_scan;
 	
 	/* we start up servers while we can */
 	Name = "STARTALL";
 	setproctitle( "lpd %s", Name );
 
+	first_scan = Find_flag_value(args,FIRST_SCAN,Value_sep);
 	reportfd = Find_flag_value(args,INPUT,Value_sep);
 	Free_line_list(args);
 
@@ -1277,138 +931,63 @@ void Service_all( struct line_list *args )
 	}
 	for( i = 0; i < All_line_list.count; ++i ){
 		Set_DYN(&Printer_DYN,0);
-		if( path ) free(path); path = 0;
+		Set_DYN(&Spool_dir_DYN,0);
 		pr = All_line_list.list[i];
 		DEBUG1("Service_all: checking '%s'", pr );
-		if( Setup_printer( pr, buffer, sizeof(buffer)) ) continue;
+		if( Setup_printer( pr, buffer, sizeof(buffer), 0) ) continue;
 		/* now check to see if there is a server and unspooler process active */
-		path = Make_pathname( Spool_dir_DYN, Printer_DYN );
 		server_pid = 0;
-		if( (fd = Checkread( path, &statb ) ) >= 0 ){
+		if( (fd = Checkread( Printer_DYN, &statb ) ) > 0 ){
 			server_pid = Read_pid( fd, (char *)0, 0 );
 			close( fd );
 		}
-		if( path ) free(path); path = 0;
 		DEBUG3("Service_all: printer '%s' checking server pid %d", Printer_DYN, server_pid );
 		if( server_pid > 0 && kill( server_pid, 0 ) == 0 ){
 			DEBUG3("Get_queue_status: server %d active", server_pid );
 			continue;
 		}
+		change = Find_flag_value(&Spool_control,CHANGE,Value_sep);
 		printing_enabled = !(Pr_disabled(&Spool_control) || Pr_aborted(&Spool_control));
 
 		Free_line_list( &Sort_order );
-		if( Scan_queue( Spool_dir_DYN, &Spool_control, &Sort_order,
-				&printable,&held,&move, 1 ) ){
+		if( Scan_queue( &Spool_control, &Sort_order,
+				&printable,&held,&move, 1, first_scan, 0 ) ){
+			Close_gdbm();
 			continue;
 		}
-		if( move || (printable && printing_enabled) ){
+		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
+		if( change || move || (printable && (printing_enabled||forwarding)) ){
 			if( Server_queue_name_DYN ){
 				pr = Server_queue_name_DYN;
 			} else {
 				pr = Printer_DYN;;
 			}
 			DEBUG1("Service_all: starting '%s'", pr );
-			plp_snprintf(buffer,sizeof(buffer),"%s\n",pr );
+			SNPRINTF(buffer,sizeof(buffer))"%s\n",pr );
 			if( Write_fd_str(reportfd,buffer) < 0 ) cleanup(0);
 		}
 	}
 	Free_line_list( &Sort_order );
-	if( path ) free(path); path = 0;
 	Errorcode = 0;
 	cleanup(0);
 }
 
 void Service_queue( struct line_list *args )
 {
-	int subserver, idle;
+	int subserver;
 
 	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER,Value_sep) );
 	subserver = Find_flag_value( args, SUBSERVER, Value_sep );
-	idle = Find_flag_value( args, IDLE, Value_sep );
 
 	Free_line_list(args);
-	Do_queue_jobs( Printer_DYN, subserver, idle );
-	cleanup(0);
-}
-
-void Service_log( struct line_list *args )
-{
-	char *s, *name;
-	int error, n;
-	struct job job, *j;
-	char buffer[SMALLBUFFER];
-
-	Init_job(&job);
-	j = 0;
-
-	Set_DYN(&Printer_DYN, Find_str_value(args, PRINTER,Value_sep) );
-	Set_str_value(&job.info,PRINTER,Printer_DYN);
-
-	error = Find_flag_value(args,INPUT,Value_sep);
-	Set_str_value(&job.info,IDENTIFIER,
-		(s = Find_str_value(args, IDENTIFIER,Value_sep)) );
-
-	if(s) j = &job;
-	name = Find_str_value(args,NAME,Value_sep);
-	if( name ) Name = name;
-	
-	DEBUG2("Service_log: name '%s' id '%s' ", name, s);
-	Init_buf(&Outbuf, &Outmax, &Outlen );
-	while( Outlen < Outmax
-		&& (n = read(error, Outbuf+Outlen, Outmax-Outlen)) > 0 ){
-		Outbuf[Outlen+n] = 0;
-		while( (s = safestrchr(Outbuf,'\n')) ){
-			*s++ = 0;
-			DEBUG2("Service_log: %s '%s'", name, Outbuf);
-			plp_snprintf(buffer,sizeof(buffer),
-				"%s error '%s' at %s\n", name, Outbuf,Time_str(0,0)); 
-			if( Status_fd > 0 && Write_fd_str( Status_fd, buffer ) < 0 ){
-				close( Status_fd );
-				Status_fd = -1;
-			}
-			if( Mail_fd > 0 && Write_fd_str( Mail_fd, buffer ) < 0 ){
-				DEBUG4("Service_log: write to fd %d failed - %s",
-					Mail_fd, Errormsg(errno) );
-				close(Mail_fd);
-				Mail_fd = -1;
-			}
-			memmove(Outbuf,s,strlen(s)+1);
-		}
-		Outlen = strlen(Outbuf);
-	}
-	if( Outlen ){
-		DEBUG2("Service_log: %s '%s'", name, Outbuf);
-		plp_snprintf(buffer,sizeof(buffer),
-			"%s error '%s' at %s", name, Outbuf,Time_str(0,0)); 
-		if( Status_fd > 0 && Write_fd_str( Status_fd, buffer ) < 0 ){
-			close( Status_fd );
-			Status_fd = -1;
-		}
-		if( Mail_fd > 0 && Write_fd_str( Mail_fd, buffer ) < 0 ){
-			DEBUG4("Service_log: write to fd %d failed - %s",
-				Mail_fd, Errormsg(errno) );
-			close(Mail_fd);
-			Mail_fd = -1;
-		}
-	}
-	Free_job(&job);
-	DEBUG2("Service_log: '%s' stderr exiting", name);
-	Errorcode = 0;
+	Do_queue_jobs( Printer_DYN, subserver );
 	cleanup(0);
 }
 
 plp_signal_t sigchld_handler (int signo)
 {
-	int nonblock;
-	DEBUG6 ("sigchld_handler: caught SIGCHLD");
 	signal( SIGCHLD, SIG_DFL );
-	if( !(nonblock = Get_nonblock_io( Lpd_request )) ){
-		Set_nonblock_io( Lpd_request );
-	}
-	Write_fd_str(Lpd_request,"\n");
-	if( nonblock ){
-		Set_block_io( Lpd_request );
-	}
+	write(Lpd_request,"\n", 1);
 }
 
 void Setup_waitpid (void)
@@ -1421,3 +1000,10 @@ void Setup_waitpid_break (void)
 	(void) plp_signal_break(SIGCHLD, sigchld_handler);
 }
 
+void Fork_error( int fork_failed )
+{
+	DEBUG1("Fork_error: %d", fork_failed );
+	if( fork_failed < 0 ){
+		LOGMSG(LOG_CRIT)"LPD: fork failed! LPD not accepting any requests");
+	}
+}

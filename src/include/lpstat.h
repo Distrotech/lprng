@@ -1,16 +1,16 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: lpstat.h,v 5.2 1999/10/04 17:02:03 papowell Exp papowell $
+ * $Id: lpstat.h,v 5.6 2000/11/07 18:14:37 papowell Exp papowell $
  ***************************************************************************/
 
 
 
-#ifndef _LPQ_H_
-#define _LPQ_H_ 1
+#ifndef _LPSTAT_H_
+#define _LPSTAT_H_ 1
 EXTERN int LP_mode;			/* LP mode */
 EXTERN int Longformat;      /* Long format */
 EXTERN int Displayformat;   /* Display format */

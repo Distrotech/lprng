@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPD 8 \*(VE "LPRng"
 .hy 0
 .de NP
@@ -25,7 +25,7 @@ lpd.8,v 3.45 1998/03/29 18:37:49 papowell Exp
 .SH NAME
 lpd \- line printer daemon
 .SH SYNOPSIS
-.B /usr/local/bin/lpd
+.B lpd
 [\-Llogfile] [\-F] [\-V] [\-Ddebugopt] 
 .SH DESCRIPTION
 .PP
@@ -112,29 +112,12 @@ configuration variable,
 will check for spool queues with jobs and no printing activity,
 and start printing.
 .PP
-LPD access control is provided by two means:
-the pathnames or programs specified by the
-.I perms_path
-configuration information and the
-printcap
-.B XU
-(check user) entry.
-These entries consist of a list of files separated by
-colons and/or a set of filters.
-For example:
-.ti +5n
-/etc/lpd.perms:|/usr/local/lib/perms
-.LP
-would specify a file and a filter.
-The filter program is invoked with the 
-.I filter_options
-specified in the configuration information,
-and is sent the name of the printer on the filter standard input.
-The filter should respond by writing a list of permissions entries
-on its standard output.
-.PP
-Each LPD service request is check against
-the entries in the permissions file and/or filter response.
+LPD access control is done using
+a rule set and match algorithm similar to a packet filter.
+Each request for printing, status, or control operations
+is matched against the rule set,
+and the first ACCEPT or REJECT value determines
+if the operation can be performed.
 The following is a typical permissions file:
 .RS
 .nf
@@ -943,7 +926,7 @@ t2|Test Printer 2
     :lp=t2@printserver
     :bq=t1@localhost
     :destinations=t1@localhost,t2@localhost
-    :router=/usr/local/LPD/router
+    :router=/usr/local/libexec/filters/router
 .ft R
 .DE
 .PP
@@ -1843,7 +1826,7 @@ The following are a commonly used set of default values.
 .SH "SEE ALSO"
 lpd.conf(5),
 lpc(8),
-lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sclient.c,v 5.1 1999/09/12 21:32:30 papowell Exp papowell $";
+"$Id: sclient.c,v 5.8 2000/10/11 17:07:15 papowell Exp papowell $";
 
 
 /*
@@ -29,13 +29,15 @@ char *msg[] = {
 
 char *progname;
 
+void send_to_logger( int sfd, int mfd, struct job *job, const char *header, char *msg ){;}
+
 void
 usage()
 {   
 	int i;
-	fprintf(stderr, "usage: %s %s\n", progname, msg[0]);
+	FPRINTF(STDERR, "usage: %s %s\n", progname, msg[0]);
 	for( i = 1; msg[i]; ++i ){
-		fprintf(stderr, "%s\n", msg[i]);
+		FPRINTF(STDERR, "%s\n", msg[i]);
 	}
 }  
 
@@ -63,7 +65,7 @@ char *argv[];
 	while( (c = getopt(argc, argv, "D:p:s:k:P:")) != EOF){
 		switch(c){
 		default: 
-			fprintf(stderr,"bad option '%c'\n", c );
+			FPRINTF(STDERR,"bad option '%c'\n", c );
 			usage(progname); exit(1); break;
 		case 'k': keytab = optarg; break;
 		case 'D': Parse_debug(optarg,1); break;
@@ -73,7 +75,7 @@ char *argv[];
 		}
 	}
 	if( argc - optind != 2 ){
-		fprintf(stderr,"missing host or file name\n" );
+		FPRINTF(STDERR,"missing host or file name\n" );
 		usage(progname);
 		exit(1);
 	}
@@ -84,17 +86,17 @@ char *argv[];
     (void) memset((char *)&sin, 0, sizeof(sin));
 	if(Kerberos_service_DYN == 0 ) Set_DYN(&Kerberos_service_DYN,"lpr");
 	if( principal ){
-		fprintf(stderr, "using '%s'\n", principal );
+		FPRINTF(STDERR, "using '%s'\n", principal );
 	} else {
 		remote_principal_krb5( Kerberos_service_DYN, host, buffer, sizeof(buffer) );
-		fprintf(stderr, "default remote principal '%s'\n", buffer );
+		FPRINTF(STDERR, "default remote principal '%s'\n", buffer );
 		principal = buffer;
 	}
 
     /* look up the server host */
     host_ent = gethostbyname(host);
     if(host_ent == 0){
-		fprintf(stderr, "unknown host %s\n",host);
+		FPRINTF(STDERR, "unknown host %s\n",host);
 		exit(1);
     }
 
@@ -106,6 +108,7 @@ char *argv[];
 
     /* open a TCP socket */
     sock = socket(PF_INET, SOCK_STREAM, 0);
+	Max_open(sock);
     if( sock < 0 ){
 		perror("socket");
 		exit(1);
@@ -122,20 +125,20 @@ char *argv[];
 	if( client_krb5_auth( keytab, Kerberos_service_DYN, host,
 		0, 0, 0, 0,
 		sock, buffer, sizeof(buffer), file ) ){
-		fprintf( stderr, "client_krb5_auth failed: %s\n", buffer );
+		FPRINTF( STDERR, "client_krb5_auth failed: %s\n", buffer );
 		exit(1);
 	}
-	fflush(stdout);
-	fflush(stderr);
-	plp_snprintf(msg, sizeof(msg),"starting read from %d\n", sock );
+	fflush(STDOUT);
+	fflush(STDERR);
+	SNPRINTF(msg, sizeof(msg))"starting read from %d\n", sock );
 	write(1,msg, strlen(msg) );
 	while( (c = read( sock, buffer, sizeof(buffer) ) ) > 0 ){
 		buffer[c] = 0;
-		plp_snprintf(msg, sizeof(msg),
+		SNPRINTF(msg, sizeof(msg))
 			"read %d from fd %d '%s'\n", c, sock, buffer );
 		write( 1, msg, strlen(msg) );
 	}
-	plp_snprintf(msg, sizeof(msg),
+	SNPRINTF(msg, sizeof(msg))
 		"last read status %d from fd %d\n", c, sock );
 	write( 1, msg, strlen(msg) );
     return(0);
@@ -161,7 +164,7 @@ void setstatus (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}
@@ -169,7 +172,7 @@ void setstatus (va_alist) va_dcl
 	return;
 }
 
-void send_to_logger (struct job *job,const char *header, char *fmt){;}
+
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
 void setmessage (struct job *job,const char *header, char *fmt,...)
@@ -191,7 +194,7 @@ void setmessage (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
+		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}

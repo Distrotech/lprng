@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: lpr.h,v 5.1 1999/09/12 21:33:03 papowell Exp papowell $
+ * $Id: lpr.h,v 5.8 2000/11/27 23:20:08 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -13,34 +13,36 @@
 #define _LPR_1_
 
 EXTERN char *Accntname_JOB; /* Accounting name: PLP 'R' control file option */
-EXTERN int Binary;      /* Binary format: 'l' Format */
+EXTERN int Auth_JOB;        /* Use authentication */
+EXTERN int Binary_JOB;      /* Binary format: 'l' Format */
 EXTERN char *Bnrname_JOB;   /* Banner name: RFC 'L' option */
 EXTERN char *Classname_JOB; /* Class name:  RFC 'C' option */
-EXTERN int Copies;      /* Copies */
-EXTERN int Format;    /* format for printing: lower case letter */
+EXTERN int Copies_JOB;      /* Copies */
+EXTERN int Direct_JOB;      /* Connect and send to TCP/IP port */
+EXTERN int Format_JOB;      /* format for printing: lower case letter */
 EXTERN char *Font1_JOB;     /* Font information 1 */
 EXTERN char *Font2_JOB;     /* Font information 2 */
 EXTERN char *Font3_JOB;     /* Font information 3 */
 EXTERN char *Font4_JOB;     /* Font information 4 */
-EXTERN int Indent;      /* indent:      RFC 'I' option */
+EXTERN int Indent_JOB;      /* indent:      RFC 'I' option */
 EXTERN char *Jobname_JOB;   /* Job name:    RFC 'J' option */
+EXTERN int Lpr_zero_file_JOB;  /* LPR does file filtering and job flattening */
+EXTERN int Lpr_bounce_JOB;  /* LPR does file filtering and job flattening */
 EXTERN char *Mailname_JOB;  /* Mail name:   RFC 'M' option */
-EXTERN int No_header;   /* No header flag: no L option in control file */
-EXTERN int Priority;	/* Priority */
+EXTERN int No_header_JOB;   /* No header flag: no L option in control file */
+EXTERN int Priority_JOB;	/* Priority */
+EXTERN char *Printer_JOB;		/* Printer passed as option */
 EXTERN char *Prtitle_JOB;   /* Pr title:    RFC 'T' option */
-EXTERN int Pwidth;	    /* Width paper: RFC 'W' option */
-EXTERN int Removefiles;	    /* Remove files */
+EXTERN int Pwidth_JOB;	    /* Width paper: RFC 'W' option */
+EXTERN int Removefiles_JOB;	    /* Remove files */
 EXTERN char *Username_JOB;	/* Specified with the -U option */
-EXTERN int Secure;		/* Secure filter option */
-EXTERN int Setup_mailaddress;   /* Set up mail address */
 EXTERN char *Zopts_JOB;     /* Z options */
+EXTERN char * User_filter_JOB; /* User specified filter for job files */
 
-EXTERN int DevNullFD;	/* DevNull File descriptor */
 extern struct jobwords Lpr_parms[]; /* parameters for LPR */
-EXTERN int LP_mode;		/* look like LP */
-
-
-EXTERN int Silent;			/* lp -s option */
+EXTERN int LP_mode_JOB;		/* look like LP */
+EXTERN int Silent_JOB;			/* lp -s option */
+EXTERN int Job_number;
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);

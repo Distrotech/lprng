@@ -1,0 +1,3 @@
+#!/bin/sh
+# This is used to configure LPRng with Kerberos5 support for MIT
+./configure --with-ldopts=-L/usr/local/lib --with-cppopts="-I/usr/local/include" --enable-kerberos --enable-mit_kerberos4

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 '\" e
 .\" @(#)lp.1 1.36 95/10/09 SMI; from SVr4
 .\" Copyright 1989 AT&T
@@ -21,7 +21,11 @@ lp \- send requests to an LPRng print service
 [
 .B \-A
 ] [
+.B \-B
+] [
 .B \-c
+] [
+.B \-G
 ] [
 .B \-m
 ] [
@@ -77,6 +81,9 @@ lp \- send requests to an LPRng print service
 .BI \-y " mode-list"
 ]
 .if n .ti +5n
+[
+.BI \-X " path"
+]
 [
 .BI \-D " debug-options"
 ]
@@ -152,6 +159,10 @@ Use authenticated transfer.
 Note that this is not a standard
 .BR lp (1)
 option but has been added for compatibilty with LPRng.
+The authentication type is set by the value of the AUTH environment variable.
+.B \-B
+Process jobs using filters specified in the printcap information.
+The filter output is combined into a single file and sent to the print spooler.
 .TP 15
 .B \-c
 Make a copy
@@ -162,28 +173,33 @@ before printing.
 jobs immediately to the remote server for printing.)
 .TP
 .BI \-d " dest"
-Choose
-.I dest
-as the printer or class of printers
-that is to do the printing.
+The print queue or printer to be used.
 By default,
-.I dest
+the destination printer
 is taken from
-the environment variable
-.B \s-1LPDEST\s+1
-(if it is set),
-and then 
-.B \s-1PRINTER\s+1 .
-Otherwise, a default destination (if one exists)
-for the computer system is used.
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
 .TP
 \f3\-f \f2form-name\f1
 Print the request on the form
 .IR form-name .
-The first letter of the
-\f2form-name\f1
-option is used as the LPRng filter format.
-This is similar to the lpr -F option.
+This sets the job class to
+.I form-name
+and is similar to the lpr -C option.
+.B \-G
+Process jobs using filters specified in the printcap information.
+The filter output for individual files is sent to the print spooler.
 .TP 15
 .BI \-H " special-handling"
 These options are ignored.
@@ -314,6 +330,10 @@ Write a message on the user's terminal after the
 have been printed.
 This option is ignored.
 .TP
+.BI \-X " path"
+Filter individual job files using the specified program and send
+the filter output to the print spooler.
+.TP
 \f3\-y \f2mode-list\f1
 Print this request
 according to the printing modes listed in \f2mode-list\f1.
@@ -346,61 +366,60 @@ the standard input will be used.
 The
 .BR \-
 option must be last in the list.
-.SH ENVIRONMENT
+.SH "PRINTCAP INFORMATION"
+.LP
+The printer names and other information is obtained by using a printcap
+file or some other database.
+The ${HOME}/.printcap
+file can be used to specify user level options and configuration
+information.
 See
-.BR environ (5)
-for descriptions of the following environment variables that affect the
-execution of
-.BR lp
-and
-.BR cancel :
-.TP 15
-.SB LPDEST
-Determine the output device or destination.
-If the
-.SB LPDEST
-environment variable is not set,
-the
-.SB PRINTER
-environment variable will be used.
-The
-.BI \-d \0dest
-option takes precedence over
-.SB LPDEST\s0\f1.
-Results are undefined when
-.B \-d
-is not specified and
-.SB LPDEST
-contains a value that is not a valid device or destination name.
-.TP
-.SB PRINTER
-Determine the output device or destination.
-If the
-.SB LPDEST
-and
-.SB PRINTER
-environment variables are not set, an unspecified output device is used.  The
-.BI \-d \0dest
-option and the
-.SB LPDEST
-environment variable takes precedence over
-.SB PRINTER\s0\f1.
-Results are undefined when
-.B \-d
-is not specified,
-.SB LPDEST
-is unset, and
-.SB PRINTER
-contains a value that is not a valid device or destination name.
+printcap(5)
+for more information. 
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
 .SH "EXIT STATUS"
-The following exit values are returned by
-.BR lp :
+.PP
+The following exit values are returned:
 .TP 15
-.B 0
-All input files were processed successfully.
+.B "zero (0)"
+Successful completion
 .TP
-.B >0
-No output device was available, or an error occurred.
+.B "nonzero (!= 0)"
+An error occurred.
+.SH FILES
+.PP
+The files used by LPRng are set by values in the
+printer configuration file.
+The following are a commonly used set of default values.
+.nf
+.ta \w'/var/spool/lpd/printcap.<hostname>           'u
+/etc/lpd.conf		LPRng configuration file
+${HOME}/.printcap	user printer description file
+/etc/printcap		system printer description file
+/etc/lpd.perms	printer permissions
+/var/spool/printer*		spool directories
+/var/spool/printer*/printer	lock file for queue control
+/var/spool/printer*/control.printer	queue control
+/var/spool/printer*/active.printer	active job
+/var/spool/printer*/log.printer	log file
+.fi
 .SH SEE ALSO
 lpd.conf(5),
 lpc(8),

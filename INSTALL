@@ -1,6 +1,6 @@
                LPRng Installation 
           Patrick Powell <papowell@astart.com>
-         Updated Thu Aug 26 20:49:10 PDT 1999
+          Updated Wed Aug 16 18:59:12 PDT 2000
 
 CAVEATS and WARNINGS:
 
@@ -13,13 +13,41 @@ FTP sites, such as:
   ftp://prep.ai.mit.edu/pub/gnu
   ftp://ftp.uu.net/pub/gnu
 
-Note:  the BSD Make is supported as a courtesy to BSDI, FreeBSD, NetBSD,
-and others.  It is NOT guaranteed to be compatible with other Make facilities
-supplied by other vendors.
+EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
 
-THE EXPRESS INSTALLATION INSTRUCTIONS
+It is extremely dangerous to use NFS mounted file systems for spool
+directories.  The LPRng system depends on file locking for process
+coordination and synchronization.  Given the historical evidence
+of problems with file locks and NFS,  not to mention the terrible
+performance impact,  it is strongly recommended that you use a file
+system local to the server host.
 
-The LPRng default configure, make,  and make install puts files
+EXPRESS INSTALLATION INSTRUCTIONS
+
+Please read the following carefully, as it explains some differences
+between LPRng and some of the 'standard' BSD print spoolers
+
+AUTOMATED STARTUP
+  The current version will try to install a startup script
+  if it detects a system it knows about.
+  FreeBSD:  will stop the LPD print spooler, try to install
+   startup script.  If your system is compatible with this,
+   see notes on INIT SCRIPTS AND PACKAGES at end of this file.
+  BSDI: will stop the lpd server.  You will need to hand
+   install an init script.  See INIT SCRIPTS AND PACKAGES
+    at end of this file.
+  Linux: RedHat - will try to use the chkconfig script to
+    set up lprng.
+    Other distributions:  you will have to hand install 
+    startup scripts.
+  Solaris: will edit /etc/inetd.conf file,  remove the
+    printer entry.   Also puts in startup script in
+    /etc/init.d and creates link in /etc/rc2.d for startup.
+    See the HOWTO for additional on Solaris installation.
+
+STEP 1: ./configure
+
+  The LPRng default installation puts files
   in the following locations or uses the following paths:
 
    default installation directories:
@@ -31,7 +59,10 @@ The LPRng default configure, make,  and make install puts files
      ${sysconfdir} is usually ${prefix}/etc (/usr/local/etc)
      ${mandir} is usually ${prefix}/man     (/usr/local/man)
 
-     we use ${sysconfdir}/ lpd.conf, lpd.perms, printcap
+     i.e - /usr/local/etc/{lpd.conf, lpd.perms, printcap}
+
+     We install a sample lpd.conf or lpd.perms in
+      ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
     
    We install the executables in: 
          (* indicates default SETUID Root install) 
@@ -41,51 +72,62 @@ The LPRng default configure, make,  and make install puts files
      ${sysconfdir}/ lpd.conf, lpd.perms, printcap
      ${mandir}/ man pages
 
-     We install a sample lpd.conf or lpd.perms in
-      ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
-     and if there is no lpd.conf or lpd.perms we install the sample file
-     as the working file as well.
+     i.e. - /usr/local/bin/{lpr, lprm, ... }
+            /usr/local/sbin/{lpd, checkpc, lpc ... }
+            /usr/local/libexec/filters/{lpf, banner, etc }
 
-  ***** WARNING WARNING WARNING: if you want to install lprng non-setuid
-  ***** please see 'NON-SETUID Install' note
+OR STEP1: ./configure --prefix=/usr --sysconfdir=/etc
+
+  By convention,  many systems use /etc, /usr/bin, and /usr/sbin for the
+  locations of these files.  Note that the location of the lpd server differs
+  radically from system to sytem.
      
    Suppose you wanted to install in /usr/bin, /usr/sbin, and /etc:
      configure --prefix=/usr --sysconfdir=/etc
      
-   Note the following explicit overrides:
-  --disable-setuid        disable setuid root client and server executables
-  --disable-strip         disable stripping of executables
-  --enable-priv_ports     require connections to be from privileged ports
-  --disable-force_localhost force_localhost default to disabled
-  --with-lpddir=DIR       lpd executable directory (default ${sbindir})
-  --with-filterdir=DIR     filter directory (default ${libexecdir}/filters)
-  --with-lpd_conf_path=PATH     path to lpd.conf (default: ${sysconfdir}/lpd.conf)
-  --with-lpd_perms_path=PATH    path to lpd.perms (default: ${sysconfdir}/lpd.perms)
-  --with-printcap_path=PATH     path to printcap (default ${sysconfdir}/printcap)
+OR STEP1: Custom Installation - see LPRng-HOWTO
 
-GNU Make:
-    # We recommend that you use the existing /etc/printcap file,
-    ./configure  --with-printcap_path=/etc/printcap \
-         [other options you need ]
+  In addition to the --prefix, etc., mentioned above,  there are several
+  more you can use:
+
+  --with-cc=COMPILER      select compiler to use
+  --with-ccopts=CFLAGS    select compiler command line options
+  --with-linker=LINKER    select linker to use
+  --with-ldopts=LDFLAGS    select linker command line options
+  --with-cppopts=CPPFLAGS  select compiler preprocessor command line options
+  --disable-setuid                  disable setuid root client and server executables
+  --enable-priv_ports               require connections to be from privileged ports
+  --disable-force_localhost         force_localhost default to disabled
+  --disable-require_configfiles     client programs require lpd.conf, printcap
+  --enable-kerberos                 enable kerberos support
+  --enable-mit_kerberos4            enable MIT Kerberos 4 support
+  --disable-kerberos_checks         disable kerberos library location and checking for support
+  --with-lpddir=DIR                 lpd executable directory (default ${sbindir})
+  --with-lpd_conf_path=PATH         path of lpd.conf (default: ${sysconfdir}/lpd.conf)
+  --with-lpd_perms_path=PATH        path of lpd.perms (default: ${sysconfdir}/lpd.perms)
+  --with-printcap_path=PATH         path of printcap (default ${sysconfdir}/printcap)
+  --with-lpd_printcap_path=PATH     path of lpd_printcap (default ${sysconfdir}/lpd_printcap)
+  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd 
+  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value 
+  --with-filter_path=PATH           filter PATH value 
+  --with-userid=NAME                run LPRng software as this userid, default daemon 
+  --with-groupid=NAME               run LPRng software as this groupid, default daemon 
+  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file 
+  --with-order_routine=NAME         queue order routine name in user object file 
+  --with-user_objs=NAME             user specified object file 
+  --with-user_include=NAME          include file with function prototypes for user object file 
+  --with-filterdir=DIR              filter directory (default ${libexecdir}/filters)
+  --disable-strip                   disable stripping binaries by default
+
+STEP2: Make and Install
     make clean all;
     su   # you must do the following commands as root
     make install
-    # this will put the executables in /usr/local,
-    #   and lpd.conf in /usr/local/etc/lpd.conf
-    # if  you have not installed LPRng before,
-    #  install default /usr/local/etc/lpd.perms
-    ./src/checkpc -f
-
-BSD Make:
-    ./configure  --with-printcap_path=/etc/printcap \
-         [other options you need ]
-    make -f Makefile.bsd clean all;
-    su   # you must do the following commands as root
-    make -f Makefile.bsd install
     ./src/checkpc -f
 
 To run LPRng after installation,  you can do the following:
 
+STEP3: Manually Start Server and Check
     # kill off the old server
     kill `ps -aux |grep lpd | awk '{print $2}'`
     # you should remove or rename the existing lpd binaries if they
@@ -98,14 +140,31 @@ To run LPRng after installation,  you can do the following:
     # non-LPRng versions of the programs
     # remove or rename the candidate files
     /usr/local/sbin/lpd;    # start up LPD
+      OR
+    /usr/sbin/lpd;    # start up LPD
+      OR
+    /????/lpd         # start up LPD
     lpq;    # test it with LPQ
 
 If you are running on Solaris, see the Solaris section in the
 LPRng-HOWTO for further instructions on integration with the LP subsystem.
 
+STEP4: Fix automatic startup
+
+BSD (/etc/rc) based systems.
 Don't forget to modify the /etc/rc.local or other system startup files
-to start LPRng's lpd.  For UNIX SystemV or Linux like systems,  here is
+to start LPRng's lpd.  You can find the file by looking for the 'lpd'
+line in the startup files.
+
+LINUX, System V, Solaris:
+
+There is a print services startup file in /etc/rc.d/init.d.
+
+For UNIX SystemV or Linux like systems,  here is
 a small sample file that will start up and shut down the lpd server.
+This is simply a copy of the /etc/rc.d/lpr file.  Copy the existing file
+before you edit or remove it.
+
 
 #!/bin/sh
 case "$1" in
@@ -148,7 +207,7 @@ KERBEROS IV:
    If you want to use Kerberos 4,  see the comments in the src/Makefile
 and follow the indicated directions.
 
-                      CONFIGURE
+                      CONFIGURE DETAILS
 
 The configure script attempts to generate Makefiles which should compile
 and build on your system.

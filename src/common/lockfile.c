@@ -1,21 +1,21 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lockfile.c,v 5.1 1999/09/12 21:32:41 papowell Exp papowell $";
+"$Id: lockfile.c,v 5.6 2000/08/05 23:34:56 papowell Exp papowell $";
 
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.
  ***************************************************************************
  * File Locking Routines:
- * int Lockf( char *filename, int *lock, int *create, struct stat *statb )
+ * int Do_lock( char *filename, int *lock, int *create, struct stat *statb )
  *     filename- name of file
  *     lock- non-zero- attempt to lock, *lock = 1 if success, 0 if fail
  *     create- non-zero- if file does not exist, create
@@ -78,7 +78,8 @@
  * Do_lock( fd , int block )
  * does a lock on a file;
  * if block is nonzero, block until file unlocked
- * Returns: >= 0 if successful, < 0 if lock fn failed
+ * Returns: < 0 if lock fn failed
+ *            0 if successful
  ***************************************************************************/
 
 int Do_lock( int fd, int block )
@@ -103,13 +104,9 @@ int Do_lock( int fd, int block )
 		err = errno;
 		if( code < 0 ){
 			DEBUG1( "Do_lock: flock failed '%s'", Errormsg( err ));
-			if( err == EWOULDBLOCK ){
-				code = 0;
-			} else {
-				code =  -1;
-			}
+			code = -1;
 		} else {
-			code = 1;
+			code = 0;
 		}
 		errno = err;
 	}
@@ -130,13 +127,9 @@ int Do_lock( int fd, int block )
 		err = errno;
 		if( code < 0 ){
 			DEBUG1( "Do_lock: lockf failed '%s'", Errormsg( err));
-			if( err == EACCES || err == EAGAIN ){
-				code = 0;
-			} else {
-				code =  -1;
-			}
+			code = -1;
 		} else {
-			code = 1;
+			code = 0;
 		}
 		errno = err;
 	}
@@ -159,7 +152,7 @@ int Do_lock( int fd, int block )
 		if( code < 0 ){
 			code = -1;
 		} else {
-			code = 1;
+			code = 0;
 		}
 		DEBUG3 ("devlock_fcntl: status %d", code );
 		errno = err;
@@ -201,9 +194,10 @@ int LockDevice(int fd, int block )
         lock = ioctl( fd, TIOCEXCL, (void *) 0);
 		err = errno;
         if( lock < 0) {
-			logerr( LOG_INFO, "LockDevice: TIOCEXCL failed");
+			lock = -1;
+			LOGERR(LOG_INFO) "LockDevice: TIOCEXCL failed");
 		} else {
-			lock = 1;
+			lock = 0;
 		}
     }
 #endif

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: initialize.h,v 5.1 1999/09/12 21:32:59 papowell Exp papowell $
+ * $Id: initialize.h,v 5.4 2000/06/18 21:07:35 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -13,9 +13,8 @@
 #define _INITIALIZE_H
 
 /* PROTOTYPES */
-
-void Initialize( int argc, char *argv[], char *envp[] ); 
-void Setup_configuration( void );
+void Initialize(int argc,  char *argv[], char *envp[], int debugchar );
+void Setup_configuration();
 char *Get_user_information( void );
- 
+
 #endif

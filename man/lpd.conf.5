@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPD.CONF 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -283,8 +283,9 @@ The
 \fBfull_time\fR (default: no)
 Use full time and date format in logging and error messages.
 .TP
-\fBfx\fR (default: flp)
+\fBfx\fR (default: "")
 See \fBprintcap\fP(5) for details.
+This specifies the job formats allowed for this queue.
 .TP
 \fBgroup\fR (default "daemon")
 The group to use for file ownership and process permissions.
@@ -374,12 +375,14 @@ setting longnumber to yes allows 6 digit numbers.
 If the backwards_compatible flag is set,
 only 3 digit numbers will be used.
 .TP
-\fBlpd_port\fR (default: \fIprinter\fR)
+\fBlpd_port\fR (default: \fIprinter\fR)  [ipaddr%]port
 The port that \fBlpd\fR binds to, and that \fBlpr\fR and
 the other client programs send their requests to.
-If this is numeric and within the valid IP port
-range, that port number is used; otherwise, a
-service lookup is performed and the corresponding
+The specification has the format ipaddr%port.
+If the ipaddress is specified then a bind to only this address and
+port is done.
+If the port value is not a number
+a service lookup is performed and the corresponding
 service port is used; see services(5).
 This parameter is useful for debugging a new
 installation of LPRng, in that running LPRng on
@@ -701,9 +704,9 @@ The following are a commonly used set of default values.
 /var/spool/printer*/log.printer	log file
 .fi
 .SH "SEE ALSO"
-lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

@@ -1,0 +1,5 @@
+# Dummy Printcap file
+# VERSION=3.7.1
+lp:cm=Dummy Printcap File
+  :lp=/dev/null
+  :sd=/var/spool/lpd/%P

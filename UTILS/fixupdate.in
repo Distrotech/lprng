@@ -1,15 +1,20 @@
 #!@PERL@
+use strict;
 for (@ARGV){
+	my($hfile,$cfile,$s,$t,$h);
 	#print "arg '$_'\n";
 	$hfile = $_;
 	($cfile = $hfile) =~ s/.*\///;
 	$cfile = "common/" . $cfile;
 	$cfile =~ s/\.h$/.c/;
 	#print "cfile '$cfile', hfile '$hfile'\n";
-	open( CFILE, "<$cfile") or die "cannot open '$cfile'";
+	if( !open( CFILE, "<$cfile") ){
+		warn "cannot open '$cfile'";
+		next;
+	}
 	while (<CFILE>) {
 		chop;	# strip record separator
-		if (/^[a-z]/ .. /^{/) {
+		if (/^[A-Za-z]/ .. /^{/) {
 			chomp;
 			if( /{/ ){
 				$s .= ";\n";

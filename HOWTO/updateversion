@@ -2,19 +2,43 @@
 # <date> 1 Sept 1998 (For LPRng-3.5.3)
 # VERSION
 use POSIX;
-my $v = ` cat ../VERSION `;
-chomp $v;
+my $v = ` cat ../VERSION `; chomp $v;
+#$v="XXXXX";
+my $iv = ` cat ifhp-VERSION `; chomp $iv;
 #print "$v\n";
 my $s = ctime( time );
 #print "$s\n";
 my @s = split ' ', $s;
-my $w = '<date> ' ."$s[2] $s[1] $s[4] (For $v)\n";
+my $w = '<subtitle> ' ."$s[2] $s[1] $s[4] (For $v)" . '</subtitle>' . "\n";
+my $wd = '<date> ' ."$s[2] $s[1] $s[4] (For $v)" . '</date>' . "\n";
+my $n = "Latest LPRng distribution <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}.tgz\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}.tgz</a>\n";
+my $srn = "Latest LPRng SRPM <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.src.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.src.rpm</a>\n";
+my $rn = "Latest LPRng RPM <a href=\"ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.i386.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${v}-1.i386.rpm</a>\n";
+my $in = "Latest IFHP distribution <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}.tgz\">ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}.tgz</a>\n";
+my $isrn = "Latest IFHP SRPM <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.src.rpm\">ftp://ftp.astart.com/pub/LPRng/LPRng/${iv}-1.src.rpm</a>\n";
+my $irn = "Latest IFHP RPM <a href=\"ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm\">ftp://ftp.astart.com/pub/LPRng/FILTERS/${iv}-1.i386.rpm</a>\n";
 #print $w;
-
 while ( <> ){
-	if( /^<date>/ ){
+	if( /h4: {/ ){
+		++$x;
+		s/{\d+}/{$x}/;
+		print;
+	}elsif( /^Latest LPRng dist/ ){
+		print $n ;
+	}elsif( /^Latest LPRng SRPM/ ){
+		print $srn ;
+	}elsif( /^Latest LPRng RPM/ ){
+		print $rn ;
+	}elsif( /^Latest IFHP dist/ ){
+		print $in ;
+	}elsif( /^Latest IFHP SRPM/ ){
+		print $isrn ;
+	}elsif( /^Latest IFHP RPM/ ){
+		print $irn ;
+	}elsif( /^<subtitle>/ ){
 		print $w ;
-		print STDERR $w;
+	}elsif( /^<date>/ ){
+		print $wd ;
 	} else {
 		print ;
 	}

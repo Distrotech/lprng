@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 5.1 1999/09/12 21:32:44 papowell Exp papowell $";
+"$Id: lpd_logger.c,v 5.10 2000/11/07 18:14:25 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -52,14 +52,14 @@ void Hex_dump( void *p, int len )
 	char buffer[SMALLBUFFER];
 	for( i = 0; i < len; ++i ){
 		if( !(i % 16) ){
-			if( i ) logDebug("%s", buffer);
-			plp_snprintf(buffer, sizeof(buffer), "  [0x%03x] ", i );
+			if( i ) LOGDEBUG("%s", buffer);
+			SNPRINTF(buffer, sizeof(buffer)) "  [0x%03x] ", i );
 		}
 		m = strlen(buffer);
-		plp_snprintf(buffer+m, sizeof(buffer)-m," %02x", s[i] );
+		SNPRINTF(buffer+m, sizeof(buffer)-m)" %02x", s[i] );
 	}
 	if( !(i % 16) ){
-		 logDebug("%s", buffer);
+		 LOGDEBUG("%s", buffer);
 	}
 }
 
@@ -67,27 +67,27 @@ void Dump_file_info_sub( char *title, struct file_info *io )
 {
 	char buffer[32];
 	if( io ){
-		logDebug(" %s fd %d", title, io->fd );
-		plp_snprintf(buffer,sizeof(buffer)-4,"%s", io->outbuffer );
+		LOGDEBUG(" %s fd %d", title, io->fd );
+		SNPRINTF(buffer,sizeof(buffer)-4)"%s", io->outbuffer );
 		if( io->outbuffer && strlen(io->outbuffer) > sizeof(buffer)-4){
 			safestrncat(buffer,"...");
 		}
-		logDebug("  outbuffer 0x%lx, outmax 0x%x, '%s'",
+		LOGDEBUG("  outbuffer 0x%lx, outmax 0x%x, '%s'",
 			Cast_ptr_to_long(io->outbuffer), io->outmax, buffer );
-		plp_snprintf(buffer,sizeof(buffer)-4,"%s", io->inbuffer );
+		SNPRINTF(buffer,sizeof(buffer)-4)"%s", io->inbuffer );
 		if( io->inbuffer && strlen(io->inbuffer) > sizeof(buffer)-4 ){
 			safestrncat(buffer,"...");
 		}
-		logDebug("  inbuffer 0x%lx, inmax 0x%x, '%s'",
+		LOGDEBUG("  inbuffer 0x%lx, inmax 0x%x, '%s'",
 			Cast_ptr_to_long(io->inbuffer), io->inmax, buffer );
-		logDebug("  start %d, count %d",
+		LOGDEBUG("  start %d, count %d",
 			io->start, io->count );
 	}
 }
 
 void Dump_file_info( char *title, struct file_info *io )
 {
-	logDebug("Dump_io: %s - 0x%lx", title, Cast_ptr_to_long(io) );
+	LOGDEBUG("Dump_io: %s - 0x%lx", title, Cast_ptr_to_long(io) );
 	Dump_file_info_sub( "", io );
 }
 
@@ -95,15 +95,15 @@ void Dump_file_info_contents( char *title, struct file_info *io )
 {
 	int i, len;
 	char *s;
-	logDebug("*** Dump_file_info_contents: %s - 0x%lx", title, Cast_ptr_to_long(io) );
+	LOGDEBUG("*** Dump_file_info_contents: %s - 0x%lx", title, Cast_ptr_to_long(io) );
 	Dump_file_info_sub( "", io );
 	i = 0;
 	while( i < io->count ){
 		s = Get_record( io, io->start+i, &len );
-		logDebug(" [%d] len %d - '%s'", i, len, s );
+		LOGDEBUG(" [%d] len %d - '%s'", i, len, s );
 		i += len;
 	}
-	logDebug("*** end");
+	LOGDEBUG("*** end");
 }
 
 void Init_file_info( struct file_info *io, char *path, int max_size )
@@ -118,20 +118,21 @@ void Init_file_info( struct file_info *io, char *path, int max_size )
 	if( path == 0 ){
 		fd = Make_temp_fd( &path );
 	} else {
-		fd = open( path, O_RDWR|O_CREAT,Spool_file_perms_DYN );
+		fd = open( path, O_RDWR|O_CREAT,Is_server?Spool_file_perms_DYN:0600 );
+		Max_open(fd);
 	}
 	io->fd = fd;
 	if( fd < 0 ){
 		Errorcode = JABORT;
-		logerr_die( LOG_INFO, "Init_file_info: cannot open '%s'", path );
+		LOGERR_DIE(LOG_INFO) "Init_file_info: cannot open '%s'", path );
 	}
 	if( ftruncate( fd, 0 ) == -1 ){
 		Errorcode = JABORT;
-		logerr_die( LOG_INFO, "Init_file_info: cannot truncate '%s'", path );
+		LOGERR_DIE(LOG_INFO) "Init_file_info: cannot truncate '%s'", path );
 	}
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
 		Errorcode = JABORT;
-		logerr_die( LOG_INFO, "Init_file_info: cannot seek '%s' to offset %d",
+		LOGERR_DIE(LOG_INFO) "Init_file_info: cannot seek '%s' to offset %d",
 			path, max_size );
 	}
 	DEBUGFC(DLOG1)Dump_file_info("Init_file_info - end",io);
@@ -144,7 +145,7 @@ void Read_rec( struct file_info *io, char *s, int start, int reccount )
 		start %= io->max_size;
 		if( lseek( io->fd, start, SEEK_SET ) == -1 ){
 			Errorcode = JABORT;
-			logerr_die( LOG_INFO, "Get_record: lseek offset %d failed", start );
+			LOGERR_DIE(LOG_INFO) "Get_record: lseek offset %d failed", start );
 		}
 		cnt = reccount;
 		if( cnt + start >= io->max_size ){
@@ -153,7 +154,7 @@ void Read_rec( struct file_info *io, char *s, int start, int reccount )
 		}
 		if( (n = read( io->fd, s, cnt )) != cnt ){
 			Errorcode = JABORT;
-			logerr_die( LOG_INFO, "Get_record: read %d failed - ret %d", cnt, n );
+			LOGERR_DIE(LOG_INFO) "Get_record: read %d failed - ret %d", cnt, n );
 		}
 		s += cnt;
 		reccount -= cnt;
@@ -167,7 +168,7 @@ void Write_rec( struct file_info *io, char *s, int start, int reccount )
 		start %= io->max_size;
 		if( lseek( io->fd, start, SEEK_SET ) == -1 ){
 			Errorcode = JABORT;
-			logerr_die( LOG_INFO, "Get_record: lseek offset %d failed", start );
+			LOGERR_DIE(LOG_INFO) "Get_record: lseek offset %d failed", start );
 		}
 		cnt = reccount;
 		if( cnt + start >= io->max_size ){
@@ -176,7 +177,7 @@ void Write_rec( struct file_info *io, char *s, int start, int reccount )
 		}
 		if( (n = write( io->fd, s, cnt )) != cnt ){
 			Errorcode = JABORT;
-			logerr_die( LOG_INFO, "Get_record: write %d failed - ret %d", cnt, n );
+			LOGERR_DIE(LOG_INFO) "Get_record: write %d failed - ret %d", cnt, n );
 		}
 		s += cnt;
 		reccount -= cnt;
@@ -247,7 +248,7 @@ void Add_record( struct file_info *io, char *buf )
 			Remove_first_record( io );
 		} else {
 			Errorcode = JABORT;
-			fatal(LOG_ERR,"Add_record: message len %d too long (max %d)",
+			FATAL(LOG_ERR)"Add_record: message len %d too long (max %d)",
 				strlen(buf), io->max_size );
 		}
 	}
@@ -262,7 +263,7 @@ int Dump_queue_status(int outfd)
 	struct line_list info;
 	struct job job;
 	char buffer[SMALLBUFFER];
-	/* char *esc_lf_2 = Escape("\n",0, 2); */
+	/* char *esc_lf_2 = Escape("\n", 2); */
 	/* char *esc_lf_2 = "%25250a"; */
 	char *esc_lf_1 = "%250a";
 	struct stat statb;
@@ -275,24 +276,24 @@ int Dump_queue_status(int outfd)
 	}
 	DEBUGF(DLOG2)("Dump_queue_status: writing to fd %d", outfd );
 	for( i = 0; i < All_line_list.count; ++i ){
+		Close_gdbm();
 		Set_DYN(&Printer_DYN,0);
 		pr = All_line_list.list[i];
 		DEBUGF(DLOG2)("Dump_queue_status: checking '%s'", pr );
-		if( Setup_printer( pr, buffer, sizeof(buffer)) ) continue;
+		if( Setup_printer( pr, buffer, sizeof(buffer), 0 ) ) continue;
 		Free_line_list( &Sort_order );
-		if( Scan_queue( Spool_dir_DYN, &Spool_control, &Sort_order,
-				0,0,0, 0 ) ){
+		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0 ) ){
 			continue;
 		}
-		if( Write_fd_str( outfd, "DUMP=" ) < 0 ){ return(1); }
 		Free_line_list(&info);
 		Set_str_value(&info,PRINTER,Printer_DYN);
 		Set_str_value(&info,HOST,FQDNHost_FQDN);
 		Set_decimal_value(&info,PROCESS,getpid());
 		Set_str_value(&info,UPDATE_TIME,Time_str(0,0));
 
+		if( Write_fd_str( outfd, "DUMP=" ) < 0 ){ return(1); }
 		s = Join_line_list(&info,"\n");
-		sp = Escape(s,0, 1);
+		sp = Escape(s, 1);
 		if( Write_fd_str( outfd, sp ) < 0 ){ return(1); }
 
 		if( s ) free(s); s = 0;
@@ -304,7 +305,7 @@ int Dump_queue_status(int outfd)
 		if( (fd = Checkread( Queue_control_file_DYN, &statb )) > 0 ){
 			while( (count = read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 				buffer[count] = 0;
-				s = Escape(buffer,0,3);
+				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
 				free(s);
 			}
@@ -316,7 +317,7 @@ int Dump_queue_status(int outfd)
 		if( (fd = Checkread( Queue_status_file_DYN, &statb )) > 0 ){
 			while( (count = read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 				buffer[count] = 0;
-				s = Escape(buffer,0,3);
+				s = Escape(buffer,3);
 				if( Write_fd_str( outfd, s ) < 0 ){ return(1); }
 				free(s);
 			}
@@ -326,14 +327,12 @@ int Dump_queue_status(int outfd)
 
 		for( count = 0; count < Sort_order.count; ++count ){
 			Free_job(&job);
-			s = Sort_order.list[count];
-			if( (s = safestrchr(s,';')) ){
-				Split(&job.info,s+1,";",1,Value_sep,1,1,0);
-			}
+			Get_hold_file( &job, Sort_order.list[count] );
+			
 			if( job.info.count == 0 ) continue;
 			if( Write_fd_str( outfd, "UPDATE%3d" ) < 0 ){ return(1); }
 			s = Join_line_list(&job.info,"\n");
-			sp = Escape(s,0, 3);
+			sp = Escape(s, 3);
 			if( Write_fd_str( outfd, sp ) < 0 ){ return(1); }
 			if( s ) free(s); s = 0;
 			if( sp ) free(sp); s = 0;
@@ -341,6 +340,8 @@ int Dump_queue_status(int outfd)
 		}
 		if( Write_fd_str( outfd, "\n" ) < 0 ){ return(1); }
 	}
+	Close_gdbm();
+
 	if( Write_fd_str( outfd, "END\n" ) < 0 ){ return(1); }
 	Set_DYN(&Printer_DYN,0);
 
@@ -427,25 +428,25 @@ void Logger( struct line_list *args )
 					ioval.start = 0;
 					ioval.count = 0;
 					if( (status_fd = Checkwrite(tempfile, &statb, O_RDWR, 1, 0)) < 0 ){
-						logerr_die( LOG_INFO, "Logger: cannot open file '%s'", tempfile);
+						LOGERR_DIE(LOG_INFO) "Logger: cannot open file '%s'", tempfile);
 					}
-					if( lseek( status_fd, 0, SEEK_SET) != 0 ){
+					if( lseek( status_fd, 0, SEEK_SET) == -1 ){
 						Errorcode = JABORT;
-						logerr_die( LOG_INFO, "Logger: lseek failed file '%s'", tempfile);
+						LOGERR_DIE(LOG_INFO) "Logger: lseek failed file '%s'", tempfile);
 					}
 					if( ftruncate( status_fd, 0 ) ){
 						Errorcode = JABORT;
-						logerr_die( LOG_INFO, "Logger: ftruncate failed file '%s'", tempfile);
+						LOGERR_DIE(LOG_INFO) "Logger: ftruncate failed file '%s'", tempfile);
 					}
 					Init_buf(&Outbuf,&Outmax,&Outlen);
 					if( Dump_queue_status(status_fd) ){
 						DEBUGF(DLOG2)("Logger: Dump_queue_status failed - %s", Errormsg(errno) );
 						Errorcode = JABORT;
-						logerr_die( LOG_INFO, "Logger: cannot write file '%s'", tempfile);
+						LOGERR_DIE(LOG_INFO) "Logger: cannot write file '%s'", tempfile);
 					}
-					if( lseek( status_fd, 0, SEEK_SET) != 0 ){
+					if( lseek( status_fd, 0, SEEK_SET) == -1 ){
 						Errorcode = JABORT;
-						logerr_die( LOG_INFO, "Logger: lseek failed file '%s'", tempfile);
+						LOGERR_DIE(LOG_INFO) "Logger: lseek failed file '%s'", tempfile);
 					}
 					if( (m = read( status_fd, inbuffer, sizeof(inbuffer) )) > 0 ){
 						Put_buf_len( inbuffer, m, &Outbuf, &Outmax, &Outlen );
@@ -455,7 +456,7 @@ void Logger( struct line_list *args )
 						status_fd = -1;
 					} else {
 						Errorcode = JABORT;
-						logerr_die(LOG_INFO,"Logger: read error %s", tempfile);
+						LOGERR_DIE(LOG_INFO)"Logger: read error %s", tempfile);
 					}
 				} else {
 					writefd = -1;
@@ -501,7 +502,7 @@ void Logger( struct line_list *args )
 		if( m < 0 ){
 			if( err != EINTR ){
 				Errorcode = JABORT;
-				logerr_die(LOG_INFO,"Logger: select error");
+				LOGERR_DIE(LOG_INFO)"Logger: select error");
 			}
 		} else if( m > 0 ){
 			if( writefd >=0 && FD_ISSET( writefd, &readfds ) ){
@@ -536,7 +537,7 @@ void Logger( struct line_list *args )
 					readfd = -1;
 				} else {
 					Errorcode = JABORT;
-					logerr_die(LOG_INFO,"Logger: read error on input fd %d", readfd);
+					LOGERR_DIE(LOG_INFO)"Logger: read error on input fd %d", readfd);
 				}
 			}
 			if( writefd >=0 && FD_ISSET( writefd, &writefds ) ){
@@ -550,7 +551,7 @@ void Logger( struct line_list *args )
 						status_fd = -1;
 					} else {
 						Errorcode = JABORT;
-						logerr_die(LOG_INFO,"Logger: read error %s", tempfile);
+						LOGERR_DIE(LOG_INFO)"Logger: read error %s", tempfile);
 					}
 				}
 				if( Outlen == 0 && ioval.count ){

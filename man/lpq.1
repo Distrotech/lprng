@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPQ 1 \*(VE "LPRng"
 .ig
 lpq.1,v 3.39 1998/03/29 18:37:49 papowell Exp
@@ -68,9 +68,7 @@ modified by the job class and priority information.
 .PP
 The following options are available.
 .IP "\fB-A\fR"
-Use authentication when sending requests to 
-.BI lpd (1)
-server.
+Use authentication specified by the value of the AUTH environment variable.
 .IP "\fB-D\fR\fIdebugoptions\fR"
 Debugging is controlled using the
 .B \-D
@@ -81,15 +79,22 @@ or
 .B value 
 to set an overall default value.
 .IP "\fB\-P \fIprinter\fR"
-The specific printer queue to list;
-the default is (in order of priority)
-the explictly specified -P value,
-the environment variable PRINTER,
-the first entry in the printcap information,
-and the default_printer entry from the
+By default,
+the destination printer
+is taken from
+the command line
+.I printer
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
 configuration file,
-and finally the hard coded (site dependent) default_printer
-value.
+and then the compile time default.
 Note that the special printer
 .B all
 has the same affect as the
@@ -138,6 +143,43 @@ The
 command
 .I "lpc start <printer>"
 may be used to start the server if this is the case.
+.SH ENVIRONMENT
+.PP
+By default,
+the destination printer
+is taken from
+the command line
+.I dest
+value,
+then
+the environment variables
+PRINTER,
+LPDEST,
+NPRINTER,
+NGPRINTER,
+then first entry in the printcap information,
+and and finally the default_printer entry from the
+configuration file,
+and then the compile time default.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
+.SH "PRINTCAP INFORMATION"
+.LP
+The printer names and other information is obtained by using a printcap
+file or some other database.
+The ${HOME}/.printcap
+file can be used to specify user level options and configuration
+information.
+See
+printcap(5)
+for more information. 
 .SH FILES
 .PP
 The files used by LPRng are set by values in the
@@ -146,7 +188,8 @@ The following are a commonly used set of default values.
 .nf
 .ta \w'/var/spool/lpd/printcap.<hostname>           'u
 /etc/lpd.conf		LPRng configuration file
-/etc/printcap		printer description file
+${HOME}/.printcap	user printer description file
+/etc/printcap		system printer description file
 /etc/lpd.perms	printer permissions
 /var/spool/printer*		spool directories
 /var/spool/printer*/printer	lock file for queue control
@@ -158,8 +201,8 @@ The following are a commonly used set of default values.
 lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
-lpq(1),
 lprm(1),
 printcap(5),
 lpd.perms(5),

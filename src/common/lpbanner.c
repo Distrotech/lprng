@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpbanner.c,v 5.1 1999/09/12 21:32:41 papowell Exp papowell $";
+"$Id: lpbanner.c,v 5.6 2000/10/11 17:07:21 papowell Exp papowell $";
 
 #include "lp.h"
 
@@ -137,6 +137,7 @@ int main( int argc, char *argv[], char *envp[] )
 	 * Turn off SIGPIPE
 	 */
 	(void)signal( SIGPIPE, SIG_IGN );
+	(void)signal( SIGCHLD, SIG_DFL );
 	banner();
 	return(0);
 }
@@ -150,7 +151,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 	if( (name = argv[0]) == 0 ) name = "FILTER";
 	for( i = 1; i < argc && (arg = argv[i])[0] == '-'; ++i ){
 		if( (c = arg[1]) == 0 ){
-			fprintf( stderr, "missing option flag");
+			FPRINTF( STDERR, "missing option flag");
 			i = argc;
 			break;
 		}
@@ -162,7 +163,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		if( arg[2] == 0 ){
 			optargv = argv[i++];
 			if( optargv == 0 ){
-				fprintf( stderr, "missing option '%c' value", c );
+				FPRINTF( STDERR, "missing option '%c' value", c );
 				i = argc;
 				break;
 			}
@@ -199,9 +200,9 @@ void getargs( int argc, char *argv[], char *envp[] )
 		int fd;
 		fd = open( errorfile, O_APPEND | O_WRONLY, 0600 );
 		if( fd < 0 ){
-			fprintf( stderr, "cannot open error log file '%s'", errorfile );
+			FPRINTF( STDERR, "cannot open error log file '%s'", errorfile );
 		} else {
-			fprintf( stderr, "using error log file '%s'", errorfile );
+			FPRINTF( STDERR, "using error log file '%s'", errorfile );
 			if( fd != 2 ){
 				dup2(fd, 2 );
 				close(fd);
@@ -209,38 +210,36 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 	}
 	if( verbose || debug ){
-		fprintf(stderr, "%s command: ", name );
+		FPRINTF(STDERR, "%s command: ", name );
 		for( i = 0; i < argc; ++i ){
-			fprintf(stderr, "%s ", argv[i] );
+			FPRINTF(STDERR, "%s ", argv[i] );
 		}
-		fprintf( stderr, "\n" );
-		fflush(stderr);
+		FPRINTF( STDERR, "\n" );
 	}
 	if( debug ){
-		fprintf(stderr, "FILTER decoded options: " );
-		fprintf(stderr,"login '%s'\n", login? login : "null" );
-		fprintf(stderr,"host '%s'\n", host? host : "null" );
-		fprintf(stderr,"class '%s'\n", class? class : "null" );
-		fprintf(stderr,"format '%s'\n", format? format : "null" );
-		fprintf(stderr,"job '%s'\n", job? job : "null" );
-		fprintf(stderr,"printer '%s'\n", printer? printer : "null" );
-		fprintf(stderr,"queuename '%s'\n", queuename? queuename : "null" );
-		fprintf(stderr,"accntname '%s'\n", accntname? accntname : "null" );
-		fprintf(stderr,"zopts '%s'\n", zopts? zopts : "null" );
-		fprintf(stderr,"literal, %d\n", literal);
-		fprintf(stderr,"indent, %d\n", indent);
-		fprintf(stderr,"length, %d\n", length);
-		fprintf(stderr,"width, %d\n", width);
-		fprintf(stderr,"xwidth, %d\n", xwidth);
-		fprintf(stderr,"ylength, %d\n", ylength);
-		fprintf(stderr,"accntfile '%s'\n", accntfile? accntfile : "null" );
-		fprintf(stderr,"errorfile '%s'\n", errorfile? errorfile : "null" );
-		fprintf(stderr, "FILTER environment: " );
+		FPRINTF(STDERR, "FILTER decoded options: " );
+		FPRINTF(STDERR,"login '%s'\n", login? login : "null" );
+		FPRINTF(STDERR,"host '%s'\n", host? host : "null" );
+		FPRINTF(STDERR,"class '%s'\n", class? class : "null" );
+		FPRINTF(STDERR,"format '%s'\n", format? format : "null" );
+		FPRINTF(STDERR,"job '%s'\n", job? job : "null" );
+		FPRINTF(STDERR,"printer '%s'\n", printer? printer : "null" );
+		FPRINTF(STDERR,"queuename '%s'\n", queuename? queuename : "null" );
+		FPRINTF(STDERR,"accntname '%s'\n", accntname? accntname : "null" );
+		FPRINTF(STDERR,"zopts '%s'\n", zopts? zopts : "null" );
+		FPRINTF(STDERR,"literal, %d\n", literal);
+		FPRINTF(STDERR,"indent, %d\n", indent);
+		FPRINTF(STDERR,"length, %d\n", length);
+		FPRINTF(STDERR,"width, %d\n", width);
+		FPRINTF(STDERR,"xwidth, %d\n", xwidth);
+		FPRINTF(STDERR,"ylength, %d\n", ylength);
+		FPRINTF(STDERR,"accntfile '%s'\n", accntfile? accntfile : "null" );
+		FPRINTF(STDERR,"errorfile '%s'\n", errorfile? errorfile : "null" );
+		FPRINTF(STDERR, "FILTER environment: " );
 		for( i = 0; (arg = envp[i]); ++i ){
-			fprintf(stderr,"%s\n", arg );
+			FPRINTF(STDERR,"%s\n", arg );
 		}
-		fprintf(stderr, "RUID: %d, EUID: %d\n", (int)getuid(), (int)geteuid() );
-		fflush(stderr);
+		FPRINTF(STDERR, "RUID: %d, EUID: %d\n", (int)getuid(), (int)geteuid() );
 	}
 }
 /***************************************************************************
@@ -1465,17 +1464,17 @@ int top_break,	/* break lines at top of page */
 int breaksize = 3;	/* numbers of rows in break */
 
 /*
- * userinfo: just printf the information
+ * userinfo: just p rintf the information
  */
  static void userinfo( void )
 {
-	(void) plp_snprintf( bline, sizeof(bline), "User:  %s@%s (%s)", login, host, bnrname);
+	(void) SNPRINTF( bline, sizeof(bline)) "User:  %s@%s (%s)", login, host, bnrname);
 	Out_line();
-	(void) plp_snprintf( bline, sizeof(bline), "Date:  %s", Time_str(0,0));
+	(void) SNPRINTF( bline, sizeof(bline)) "Date:  %s", Time_str(0,0));
 	Out_line();
-	(void) plp_snprintf( bline, sizeof(bline), "Job:   %s", job );
+	(void) SNPRINTF( bline, sizeof(bline)) "Job:   %s", job );
 	Out_line();
-	(void) plp_snprintf( bline, sizeof(bline), "Class: %s", class );
+	(void) SNPRINTF( bline, sizeof(bline)) "Class: %s", class );
 	Out_line();
 }
 
@@ -1511,14 +1510,14 @@ void banner(void)
 
 	jobnumber[0] = 0;
 #if 0
-	/* read from the stdin */
+	/* read from the STDIN */
 	(void)fgets( jobnumber, sizeof(jobnumber), stdin );
-	if(debug)fprintf(stdout, "BANNER CMD '%s'\n", jobnumber );
+	if(debug)FPRINTF(STDOUT, "BANNER CMD '%s'\n", jobnumber );
 #endif
 	bigjobnumber = biglogname = bigfromhost = bigjobname = 0;
 
 	/* now calculate the numbers of lines available */
-	if(debug)fprintf(stderr, "BANNER: length %d\n", length );
+	if(debug)FPRINTF(STDERR, "BANNER: length %d\n", length );
 	len = length;
 	len -= 4;	/* user information */
 	/* now we add a top break and bottom break */
@@ -1569,18 +1568,18 @@ void banner(void)
 		top_sep = len/2;
 		bottom_sep = len - top_sep;
 	}
-	if(debug)fprintf(stderr, "BANNER: length %d, top_break %d, top_sep %d\n",
+	if(debug)FPRINTF(STDERR, "BANNER: length %d, top_break %d, top_sep %d\n",
 		length, top_break, top_sep  );
-	if(debug)fprintf(stderr, "BANNER: bigjobnumber %d, jobnumber '%s'\n", bigjobnumber,
+	if(debug)FPRINTF(STDERR, "BANNER: bigjobnumber %d, jobnumber '%s'\n", bigjobnumber,
 		isnull(jobnumber) );
-	if(debug)fprintf(stderr, "BANNER: biglogname %d, bnrname '%s'\n", biglogname,
+	if(debug)FPRINTF(STDERR, "BANNER: biglogname %d, bnrname '%s'\n", biglogname,
 		isnull(bnrname) );
-	if(debug)fprintf(stderr, "BANNER: bigfromhost %d, host '%s'\n", bigfromhost,
+	if(debug)FPRINTF(STDERR, "BANNER: bigfromhost %d, host '%s'\n", bigfromhost,
 		isnull(host) );
-	if(debug)fprintf(stderr, "BANNER: bigjobname %d, jobname '%s'\n", bigjobname,
+	if(debug)FPRINTF(STDERR, "BANNER: bigjobname %d, jobname '%s'\n", bigjobname,
 		isnull(job) );
-	if(debug)fprintf(stderr, "BANNER: userinfo %d\n", 4 );
-	if(debug)fprintf(stderr, "BANNER: bottom_sep %d, bottom_break %d\n",
+	if(debug)FPRINTF(STDERR, "BANNER: userinfo %d\n", 4 );
+	if(debug)FPRINTF(STDERR, "BANNER: bottom_sep %d, bottom_break %d\n",
 		bottom_sep, bottom_break  );
 
 	for( i = 0; i < top_break; ++i ){
@@ -1643,7 +1642,7 @@ void bigprint( struct font *font, char *line )
 
 	bline[width] = 0;
 	len = strlen(line);
-	if(debug)fprintf(stderr,"bigprint: '%s'\n", line );
+	if(debug)FPRINTF(STDERR,"bigprint: '%s'\n", line );
 	for( i = 0; i < font->height; ++i ){
 		for( j = 0; j < width; ++j ){
 			bline[j] = ' ';
@@ -1713,7 +1712,7 @@ void do_char( struct font *font, struct glyph *glyph,
 	int chars, i, j, k;
 	char *s;
 
-	/* if(debug)fprintf(stderr,"do_char: '%c', wid %d\n", glyph->ch, wid ); */
+	/* if(debug)FPRINTF(STDERR,"do_char: '%c', wid %d\n", glyph->ch, wid ); */
 	chars = (font->width+7)/8;	/* calculate the row */
 	s = &glyph->bits[line*chars];	/* get start of row */
 	for( k = 0, i = 0; k < wid && i < chars; ++i ){	/* for each byte in row */
@@ -1725,3 +1724,34 @@ void do_char( struct font *font, struct glyph *glyph,
 		++s;
 	}
 }
+
+int Write_fd_str( int fd, const char *buf )
+{
+	int n;
+	n = strlen(buf);
+	return write(fd,buf,n);
+}
+
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...)
+#else
+ void safefprintf (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+	int fd;
+    char *format;
+#endif
+	char buf[1024];
+    VA_LOCAL_DECL
+
+    VA_START (format);
+    VA_SHIFT (fd, int);
+    VA_SHIFT (format, char *);
+
+	buf[0] = 0;
+	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	Write_fd_str(fd,buf);
+}
+

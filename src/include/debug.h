@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: debug.h,v 5.1 1999/09/12 21:32:56 papowell Exp papowell $
+ * $Id: debug.h,v 5.9 2000/08/05 23:35:03 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -16,6 +16,13 @@
  * note that a good optimizing compiler should not produce code
  *	for the logDebug call.  It may produce lots of warnings, but no code...
  */
+
+#if !defined(EXTERN)
+# define EXTERN extern
+#endif
+EXTERN int Debug;	/* debug flags */
+EXTERN int DbgFlag;	/* debug flags */
+EXTERN int DbgTest;	/* debug flags */
 
 #ifdef NODEBUG
 
@@ -44,8 +51,6 @@
 #define DEBUGFC(FLAG)        if( (FLAG & DbgFlag) )
 #define DEBUGFSET(FLAG)      ( (FLAG & DbgFlag) )
 
-EXTERN int Debug;	/* debug flags */
-EXTERN int DbgFlag;	/* force job number */
 
 /* Debug variable level */
 #define DEBUG1      DEBUGC(1,DRECV1|DCTRL1|DLPQ1|DLPRM1)
@@ -56,8 +61,8 @@ EXTERN int DbgFlag;	/* force job number */
 #define DEBUGL3     DEBUGL(3,DRECV3|DCTRL3|DLPQ3|DLPRM3)
 #define DEBUG4      DEBUGC(4,DRECV4|DCTRL4|DLPQ4|DLPRM4)
 #define DEBUGL4     DEBUGL(4,DRECV4|DCTRL4|DLPQ4|DLPRM4)
-#define DEBUG5      DEBUGC(5,DRECV4|DCTRL4|DLPQ4|DLPRM4)
-#define DEBUGL5     DEBUGL(5,DRECV4|DCTRL4|DLPQ4|DLPRM4)
+#define DEBUG5      DEBUGC(5,0)
+#define DEBUGL5     DEBUGL(5,0)
 #define DEBUG6      DEBUGC(6,0)
 #define DEBUGL6     DEBUGL(6,0)
 
@@ -116,11 +121,29 @@ EXTERN int DbgFlag;	/* force job number */
 #define DLPQ3     ((0x4<<DLPQSHIFT))
 #define DLPQ4     ((0x8<<DLPQSHIFT))
 
-EXTERN int DbgTest;			/* Flags set to test various options */
-EXTERN int DbgJob;	/* force job number */
 
 #define IP_TEST 0x0001		/* test IP address */
 
 void Parse_debug( char *arg, int interactive);
 
+
+/* we define these and then run gcc -Wformat -Wall to find
+ * debug statements with bad formats
+ */
+#if defined(FORMAT_TEST)
+#undef DEBUG1
+#undef DEBUG2
+#undef DEBUG3
+#undef DEBUG4
+#undef DEBUG5
+#undef DEBUG6
+#undef DEBUG7
+#define DEBUG1 printf
+#define DEBUG2 printf
+#define DEBUG3 printf
+#define DEBUG4 printf
+#define DEBUG5 printf
+#define DEBUG6 printf
+#define DEBUG7 printf
+#endif
 #endif

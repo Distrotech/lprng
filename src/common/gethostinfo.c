@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 5.1 1999/09/12 21:32:35 papowell Exp papowell $";
+"$Id: gethostinfo.c,v 5.14 2000/11/07 18:14:21 papowell Exp papowell $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)
@@ -64,13 +64,13 @@ void Check_for_dns_hack( struct hostent *h_ent )
 	switch( h_ent->h_addrtype ){
 	case AF_INET:
 		count = (h_ent->h_length != sizeof(struct in_addr )); break;
-#if defined(IN6_ADDR)
+#if defined(IPV6)
 	case AF_INET6:
 		count = (h_ent->h_length != sizeof(struct in6_addr)); break;
 #endif
 	}
 	if( count ){
-		fatal( LOG_ALERT,
+		FATAL(LOG_ALERT)
 		"Check_for_dns_hack: HACKER ALERT! DNS address length wrong, prot %d len %d",
 			h_ent->h_addrtype, h_ent->h_length );
 	}
@@ -94,12 +94,12 @@ char *Find_fqdn( struct host_information *info, const char *shorthost )
 	Clear_host_information( info );
 
 	if( shorthost == 0 || *shorthost == 0 ){
-		logmsg( LOG_ALERT, "Find_fqdn: called with '%s', HACKER ALERT",
+		LOGMSG( LOG_ALERT) "Find_fqdn: called with '%s', HACKER ALERT",
 			shorthost );
 		return(0);
 	}
 	if( strlen(shorthost) > 64 ){
-		fatal( LOG_ALERT, "Find_fqdn: hostname too long, HACKER ALERT '%s'",
+		FATAL(LOG_ALERT) "Find_fqdn: hostname too long, HACKER ALERT '%s'",
 			shorthost );
 	}
 #if defined(HAVE_GETHOSTBYNAME2)
@@ -181,7 +181,7 @@ char *Fixup_fqdn( const char *shorthost, struct host_information *info,
 			host_ent = gethostbyname( shorthost );
 #endif
 			if( host_ent == 0 ){
-				fatal( LOG_ERR, "Fixup_fqdn: 2nd search failed for host '%s'",
+				FATAL(LOG_ERR) "Fixup_fqdn: 2nd search failed for host '%s'",
 					shorthost );
 			}
 			/* sigh... */
@@ -300,19 +300,19 @@ void Get_local_host( void )
 	host[0] = 0;
 	if( gethostname (host, sizeof(host)) < 0 
 		|| host[0] == 0 ) {
-		fatal( LOG_ERR, "Get_local_fqdn: no host name" );
+		FATAL(LOG_ERR) "Get_local_fqdn: no host name" );
 	}
 	fqdn = Find_fqdn( &Host_IP, host );
 	DEBUG3("Get_local_host: fqdn=%s", fqdn);
 	if( fqdn == 0 ){
-		fatal( LOG_ERR, "Get_local_host: hostname '%s' bad", host );
+		FATAL(LOG_ERR) "Get_local_host: hostname '%s' bad", host );
 	}
 	Set_DYN( &FQDNHost_FQDN, Host_IP.fqdn );
 	Set_DYN( &ShortHost_FQDN, Host_IP.shorthost );
 	DEBUG1("Get_local_host: ShortHost_FQDN=%s, FQDNHost_FQDN=%s",
 		ShortHost_FQDN, FQDNHost_FQDN);
     if( Find_fqdn( &Localhost_IP, LOCALHOST) == 0 ){
-        fatal( LOG_ERR, "Get_local_host: 'localhost' IP address not available!");
+        FATAL(LOG_ERR) "Get_local_host: 'localhost' IP address not available!");
     }
 }
 
@@ -339,13 +339,13 @@ char *Get_hostinfo_byaddr( struct host_information *info,
 	if( sinaddr->sa_family == AF_INET ){
 		addr = &((struct sockaddr_in *)sinaddr)->sin_addr;
 		len = sizeof( ((struct sockaddr_in *)sinaddr)->sin_addr );
-#if defined(IN6_ADDR)
+#if defined(IPV6)
 	} else if( sinaddr->sa_family == AF_INET6 ){
 		addr = &((struct sockaddr_in6 *)sinaddr)->sin6_addr;
 		len = sizeof( ((struct sockaddr_in6 *)sinaddr)->sin6_addr );
 #endif
 	} else {
-		fatal( LOG_ERR, "Get_remote_hostbyaddr: bad family '%d'",
+		FATAL(LOG_ERR) "Get_remote_hostbyaddr: bad family '%d'",
 			sinaddr->sa_family);
 	}
 	if( !addr_only ){
@@ -392,7 +392,8 @@ int Same_host( struct host_information *host,
 	struct host_information *remote )
 {
 	int i, j;
-	char **hl1, **hl2, *h1, *h2 ;
+	char **hl1, **hl2;
+	unsigned char *h1, *h2 ;
 	int c1, c2, l1, l2;
 	int result = 1;
 
@@ -405,21 +406,21 @@ int Same_host( struct host_information *host,
 		l2 = remote->h_length;
 		if( l1 == l2 ){ 
 			for( i = 0; result && i < c1; ++i ){
-				h1 = hl1[i];
+				h1 = (unsigned char *)(hl1[i]);
 				for( j = 0; result && j < c2; ++j ){
-					h2 = hl2[j];
+					h2 = (unsigned char *)(hl2[j]);
 					result = memcmp( h1, h2, l1 );
 					if(DEBUGL4){
 						char ls[64], rs[64];
 						int n;
 						ls[0] = 0; rs[0] = 0;
 						for( n = 0; n < l1; ++n ){
-							plp_snprintf( ls + strlen(ls), 6, "%02x", h1[n] );
+							SNPRINTF( ls + strlen(ls), 3) "%02x", h1[n] );
 						}
 						for( n = 0; n < l1; ++n ){
-							plp_snprintf( rs + strlen(rs), 6, "%02x", h2[n] );
+							SNPRINTF( rs + strlen(rs), 3) "%02x", h2[n] );
 						}
-						logDebug("Same_host: comparing %s to %s, result %d",
+						LOGDEBUG("Same_host: comparing %s to %s, result %d",
 							ls, rs, result );
 					}
 				}
@@ -439,26 +440,26 @@ void Dump_host_information( char *title,  struct host_information *info )
 	int i, j;
 	char **list;
 	char *s;
-	if( title ) logDebug( "*** %s (0x%lx) ***", title, Cast_ptr_to_long(info) );
+	if( title ) LOGDEBUG( "*** %s (0x%lx) ***", title, Cast_ptr_to_long(info) );
 	if( info ){
-		logDebug( "  info name count %d", info->host_names.count );
+		LOGDEBUG( "  info name count %d", info->host_names.count );
 		list = info->host_names.list;
 		for( i = 0; i < info->host_names.count; ++i ){
-			logDebug( "    [%d] '%s'", i, list[i] );
+			LOGDEBUG( "    [%d] '%s'", i, list[i] );
 		}
-		logDebug( "  address type %d, length %d count %d",
+		LOGDEBUG( "  address type %d, length %d count %d",
 				info->h_addrtype, info->h_length,
 				info->h_addr_list.count );
 		for( i = 0; i < info->h_addr_list.count; ++i ){
 			char msg[64];
 			int len;
-			plp_snprintf( msg, sizeof(msg), "    [%d] 0x", i );
+			SNPRINTF( msg, sizeof(msg)) "    [%d] 0x", i );
 			s = info->h_addr_list.list[i];
 			for( j = 0; j < info->h_length; ++j ){
 				len = strlen( msg );
-				plp_snprintf( msg+len, sizeof(msg)-len, "%02x",((unsigned char *)s)[j] );
+				SNPRINTF( msg+len, sizeof(msg)-len) "%02x",((unsigned char *)s)[j] );
 			}
-			logDebug( "%s", msg );
+			LOGDEBUG( "%s", msg );
 		}
 	}
 }
@@ -481,7 +482,7 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 	
 	DEBUG5("form_addr_and_mask: '%s'", v );
 	if( 4*addrlen+1 >= sizeof(buffer) ){
-		fatal(LOG_ERR,"form_addr_and_mask: addrlen too large - hacker attack?");
+		FATAL(LOG_ERR)"form_addr_and_mask: addrlen too large - hacker attack?");
 	}
 	memset( addr, 0, addrlen );
 	memset( mask, ~0, addrlen );
@@ -513,7 +514,7 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 			}
 			if( bitcount ){
 				if( buffer[0] ) *t++ = '.';
-				plp_snprintf(t,6, "%d", (~((1<<(8-bitcount))-1))&0xFF);
+				SNPRINTF(t,6) "%d", (~((1<<(8-bitcount))-1))&0xFF);
 				t += strlen(t);
 				*t = 0;
 			}
@@ -528,9 +529,9 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 		}
 	}
 	if(DEBUGL5){
-		logDebug("form_addr_and_mask: addr '%s'",
+		LOGDEBUG("form_addr_and_mask: addr '%s'",
 			inet_ntop( family, addr, buffer, sizeof(buffer) ) );
-		logDebug("form_addr_and_mask: mask '%s'",
+		LOGDEBUG("form_addr_and_mask: mask '%s'",
 			inet_ntop( family, mask, buffer, sizeof(buffer) ) );
 	}
 }
@@ -571,7 +572,7 @@ int cmp_ip_addr( char *h, char *a, char *m, int len )
 
 int Match_ipaddr_value( struct line_list *list, struct host_information *host )
 {
-	int result = 1, i, j;
+	int result = 1, i, j, invert = 0;
 	char *str, *addr, *mask;
 
 	DEBUGF(DDB1)("Match_ipaddr_value: host %s", host?host->fqdn:0 );
@@ -579,37 +580,46 @@ int Match_ipaddr_value( struct line_list *list, struct host_information *host )
 	if( host == 0 || host->fqdn == 0 ) return(result);
 	addr = malloc_or_die(host->h_length,__FILE__,__LINE__);
 	mask = malloc_or_die(host->h_length,__FILE__,__LINE__);
-	for( i = 0;  i < list->count; ++i ){
+	for( i = 0;  result && i < list->count; ++i ){
 		if( !(str = list->list[i]) ) continue;
-		if( *str == '@' ) {	/* look up host in netgroup */
+		if( cval(str) == '!' ){
+			invert = 1;
+			++str;
+		}
+		if( cval(str) == '@' ) {	/* look up host in netgroup */
 #ifdef HAVE_INNETGR
-			result = !innetgr( str+1, host->fqdn, NULL, NULL );
+			result = !innetgr( str+1, host->shorthost, NULL, NULL );
+			if( result ) result = !innetgr( str+1, host->fqdn, NULL, NULL );
 #else /* HAVE_INNETGR */
 			DEBUGF(DDB3)("match: no innetgr() call, netgroups not permitted");
 #endif /* HAVE_INNETGR */
 		} else if( str[0] == '<' && str[1] == '/' ){
 			struct line_list users;
 			Init_line_list(&users);
-			Get_file_image_and_split(0,str+1,0,0,&users,Whitespace,
-				0,0,0,0,0);
+			Get_file_image_and_split(str+1,0,0,&users,Whitespace,
+				0,0,0,0,0,0);
 			DEBUGFC(DDB3)Dump_line_list("Match_ipaddr_value- file contents'", &users );
 			result = Match_ipaddr_value( &users,host);
 			Free_line_list(&users);
 		} else {
+			lowercase(str);
 			for( j = 0; result && j < host->host_names.count; ++j ){
+				lowercase(host->host_names.list[j]);
 				result = Globmatch( str, host->host_names.list[j] );
 			}
 			if( result ){
 				form_addr_and_mask(str,addr,mask,host->h_length,
 					host->h_addrtype );
 				for( j = 0; result && j < host->h_addr_list.count; ++j ){
-					str = host->h_addr_list.list[j];
-					result = cmp_ip_addr( str, addr, mask, host->h_length );
+					char *v;
+					v = host->h_addr_list.list[j];
+					result = cmp_ip_addr( v, addr, mask, host->h_length );
 				}
 			}
 		DEBUGF(DDB2)("Match_ipaddr_value: checked '%s', result %d",
-			list[i], result);
+			str, result);
 		}
+		if( invert ) result = !result;
 	}
 	DEBUGF(DDB2)("Match_ipaddr_value: result %d", result );
 	if(addr) free(addr); addr = 0;

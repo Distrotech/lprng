@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: globmatch.c,v 5.1 1999/09/12 21:32:39 papowell Exp papowell $";
+"$Id: globmatch.c,v 5.4 2000/08/08 17:48:50 papowell Exp papowell $";
 
 #include "lp.h"
 
@@ -17,7 +17,7 @@
 int glob_pattern( char *pattern, const char *str )
 {
 	int result = 1;
-	int len, c;
+	int len, c, invert;
 	char *glob;
 
 	/* DEBUG4("glob_pattern: pattern '%s' to '%s'", pattern, str ); */
@@ -49,8 +49,11 @@ int glob_pattern( char *pattern, const char *str )
 					return( 1 );
 				}
 				len = glob - pattern;
-				c = 0;
+				invert = c = 0;
 				/* DEBUG4("globmatch: now case '%s', len %d", pattern, len ); */
+				if( len > 0 && (invert = (*pattern == '^')) ){
+					--len; ++pattern;
+				}
 				while( result && len > 0 ){
 					/* DEBUG4("globmatch: c '0x%x', pat '%c', str '%c'",
 						c, *pattern, *str ); */
@@ -69,6 +72,7 @@ int glob_pattern( char *pattern, const char *str )
 						result = (*str != c);
 					}
 				}
+				if( invert ) result = !result;
 				/* DEBUG4("globmatch: after pattern result %d", result); */
 				if( result == 0 ){
 					pattern += len+1;

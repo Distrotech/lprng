@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: printjob.h,v 5.1 1999/09/12 21:33:08 papowell Exp papowell $
+ * $Id: printjob.h,v 5.8 2000/11/27 23:20:09 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -13,16 +13,20 @@
 #define _PRINTJOB_H_ 1
 
 /* PROTOTYPES */
-int Wait_for_pid( int of_pid, char *name, int suspend, int timeout,
-	plp_status_t *status);
-void Print_job( int output, struct job *job, int timeout );
-char *Fix_str( char *str );
+int Print_job( int output, int status_device, struct job *job,
+	int timeout, int poll_for_status, char *user_filter );
+int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
+	int output, char **outbuf, int *outmax, int *outlen,
+	struct job *job, char *id, int terminate_of,
+	char *msgbuffer, int msglen );
 void Print_banner( char *name, char *pgm, struct job *job );
 int Write_outbuf_to_OF( struct job *job, char *title,
-	int of_pid, int of_fd, int of_error,
-	char *buffer, int outlen,
-	char *msg, int msgmax,
-	int timeout, int suspend, int max_wait, int *exit_status,
-	plp_status_t *ps_status);
+	int of_fd, char *buffer, int outlen,
+	int of_error, char *msg, int msgmax,
+	int timeout, int poll_for_status );
+int Get_status_from_OF( struct job *job, char *title, int of_pid,
+	int of_error, char *msg, int msgmax,
+	int timeout, int suspend, int max_wait );
+int Wait_for_pid( int of_pid, char *name, int suspend, int timeout );
 
 #endif

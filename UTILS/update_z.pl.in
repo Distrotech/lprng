@@ -1,0 +1,55 @@
+#!@PERL@
+eval 'exec @PERL@ -S $0 ${1+"$@"}'
+    if $running_under_some_shell;
+            # this emulates #! processing on NIH machines.
+            # (remove #! line above if indigestible)
+
+# update_z script:
+# Determine the options according to the format of the queue name
+#  Inspired by the psfilter code of Andreas Klemm and Thomas Bueschgen,
+#  and the control_filter of Adeel Khurshid
+#
+# First, get command line arguments
+#
+use Getopt::Std;
+my(%args,$Q,$Zopts,@file);
+getopts(
+"A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:S:T:U:V:W:X:Y:Z:" .
+"a:b:cd:e:f:g:h:i:j:k:l:m:n:o:p:q:r:s:t:u:v:w:x:y:z:",
+\%args );
+# read stdin
+@file = <STDIN>;
+$Zopts = "";
+# first use command line Queue name
+$Q = $args{"Q"};
+if( not $Q and (($Q) = grep(/^Q/,@file)) ){
+   # next use control file Queue name
+	$Q =~ s/^Q//;
+	chomp $Q if $Q;
+}
+# if no queue name fall back to printer name
+if( not $Q ){ $Q = $args{"P"}; }
+# now we split up the name and use as parameters for Z options
+while( $Q =~ /_([^_]+)/g ){
+	# you can simply append them:
+    # $Zopts .= ",$1";
+	# or you can test and then append translated format
+	# if( $1 eq "11" ){ $Zopts .= ",legal"; }
+    #  elsif( $1 eq "15" ){ $Zopts .= ",ledger"; }
+    #
+	if( $1 eq "landscape"
+		or $1 eq "legal"
+		or $1 eq "ledger" ){
+		$Zopts .= ",$1"
+	}
+}
+if( $Zopts ){
+	# remove leading comma
+	$Zopts = substr( $Zopts, 1 );
+	#replace or prefix Z options
+	if( not (grep { s/$/,$Zopts/ if /^Z/; } @file) ){
+		print "Z" . $Zopts . "\n";
+	}
+}
+print @file if( @file );
+exit 0

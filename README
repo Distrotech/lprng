@@ -1,9 +1,22 @@
                  LPRng - An Enhanced Printer Spooler
                Patrick Powell <papowell@astart.com>
-    * README,v 3.10 1998/03/24 02:43:22 papowell Exp *
+				Updated Thu Apr 13 04:29:06 PDT 2000
 
-Please read the HOWTO in HOWTO/LPRng-HOWTO.html for answers to questions
-and more information about LPRng.
+The following is a guide to the documentation and LPRng files,
+and the order you might want to read it in.  Files marked with +
+should (must?) be read in order to succesfully install LPRng.
+
+Patrick Powell
+
++ README          - this file (and please read all of it!)
+
++ INSTALL         - installation instructions
+
++ HOWTO/LPRng-HOWTO.html - the LPRng HOWTO - provides answers
+  to many questions and much of the information that was
+  previously in README files.
+
+OVERVIEW
 
 The  LPRng  software  is an enhanced, extended, and portable
 implementation of the Berkeley LPR print spooler functionality.
@@ -39,6 +52,8 @@ Additional authentication support is extremely simple to add.
 Finally, Astart Technlogies (http://www.astart.com) offers commercial
 support for the LPRng software.
 
+WHERE TO GET THE SOFTWARE:
+
 Web Page and HOWTO in HTML format:
    http://www.astart.com/LPRng.html
    and the HOWTO/ directory in the distribution
@@ -48,16 +63,16 @@ The software may be obtained from
 
 Mirrors:
     ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng (AU)
-    ftp://ftp.zod.wau.nl/pub/mirror/plp/LPRng          (AU/NZ)
-    ftp://gwynne.cs.ualberta.ca/pub/LPRng             (CA)
+    ftp://mirror.aarnet.edu.au/pub/LPRng/              (AU/NZ)
+    http://mirror.aarnet.edu.au/pub/LPRng/             (AU/NZ)
+    ftp://sunsite.ualberta.ca/pub/LPRng               (CA)
     ftp://ftp.informatik.uni-hamburg.de/pub/os/unix/utils/LPRng  (DE)
     ftp://ftp.uni-paderborn.de/pub/unix/printer/plp/LPRng (DE)
-    ftp://ftp.iona.ie/pub/plp/LPRng                   (IE)
     ftp://ftp.chembio.ntnu.no/pub/mirrors/LPRng       (NO)
     ftp://ftp.mono.org/pub/LPRng                      (UK)
+    ftp://ftp.iona.ie/pub/LPRng                       (IE)
     ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng  (US)
     ftp://ftp.cs.umn.edu/pub/LPRng                    (US)
-    ftp://ftp.iona.com/pub/plp/LPRng                  (US)
     ftp://uiarchive.uiuc.edu/pub/packages/LPRng       (US)
     ftp://uabgate.uab.ericsson.se/pub/unix/LPRng      (SE)
 
@@ -65,8 +80,45 @@ Mirrors:
 To join the LPRng mailing list,  please send mail to
   lprng-request@lprng.com with the word 'subscribe' in the BODY
 
-Patrick Powell                 Astart Technologies,
-papowell@astart.com            9475 Chesapeake Drive, Suite D,
-Network and System             San Diego, CA 92123
-  Consulting                   619-874-6543 FAX 619-279-8424 
-LPRng - Print Spooler (http:www.astart.com/LPRng)
+DISTRIBUTION:
+
+The LPRng software distribution has the following structure:
+
+ README*     - various README files
+ INSTALL      - Installation information
+
+ HOWTO/       - LPRng-HOWTO.html
+     Use a Web Browser and read the Install section
+
+ configure, Makefile.in, ... - configuration and installation
+     scripts.
+ src/*        - source code
+ ABOUT-NLS.LPRng - description of the GNU internationalization
+ man/*        - man files for the major components.  I recommend
+                reading lpd.8, printcap.5, and lpd.conf.5
+ CHANGES      - change log
+ TESTSUPPORT  - a mini lpr setup that can run as user
+ UTILS/*      - set of utilities used during developement and for management
+
+If you want to check the signed md5 checksums,  here is the PGP key:
+
+Type Bits/KeyID    Date       User ID
+pub  1024/00D95C9D 1997/01/31 Patrick A. Powell <papowell@astart.com>
+                              Patrick A. Powell <papowell@sdsu.edu>
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.3i
+
+mQCNAzLygTQAAAEEANBW5fPYjN3wSAnP9xWOUc3CvsMUxjip0cN2sY5qrdoJyIhn
+qbAspBopR+tGQfyp5T7C21yfWRRnfXmoJ3FVtgToAsJUYmzoSFY08eDx+rmSqCLe
+rdJjX8aG8jVXpGipEo9U4QsUK+OKzx3/y/OaK4cizoWqKvy1l4lEzDsA2VydAAUT
+tCdQYXRyaWNrIEEuIFBvd2VsbCA8cGFwb3dlbGxAYXN0YXJ0LmNvbT6JAJUDBRA0
+XonoiUTMOwDZXJ0BAQ2cBAC7zU9Fn3sC3x0USJ+3vjhg/qA+Gjb5Fi1dJd4solc4
+vJvtf0UL/1/rGipbR+A0XHpHzJUMP9ZfJzKZjaK/d0ZBNlS3i+JnypypeQiAqo9t
+FV0OyUCwDfWybgAORuAa2V6UJnAhvj/7TpxMmCApolaIb4yFyKunHa8aBxN+17Ro
+rrQlUGF0cmljayBBLiBQb3dlbGwgPHBhcG93ZWxsQHNkc3UuZWR1PokAlQMFEDLy
+gTSJRMw7ANlcnQEBYBYD/0zTeoiDNnI+NjaIei6+6z6oakqO70qFVx0FG3aP3kRH
+WlDhdtFaAuaMRh+RItHfFfcHhw5K7jiJdgKiTgGfj5Vt3OdHYkeeh/sddqgf9YnS
+tpj0u5NfrotPTUw39n6YTgS5/aW0PQfO9dx7jVUcGeod1TGXTe9mIhDMwDJI4J14
+=3Zbp
+-----END PGP PUBLIC KEY BLOCK-----

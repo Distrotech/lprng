@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: permission.h,v 5.1 1999/09/12 21:33:05 papowell Exp papowell $
+ * $Id: permission.h,v 5.5 2000/11/27 23:20:09 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -46,9 +46,10 @@
 #define P_AUTH			22	/* authentication type - USER, SERVER, NONE */
 #define P_AUTHTYPE		23	/* authentication type */
 #define P_AUTHUSER		24	/* authentication user name */
-#define P_AUTHFROM		25	/* from client/host name */
+#define P_AUTHFROM		25	/* from client or name */
 #define P_AUTHSAMEUSER	26	/* from same authenticated user name */
 #define P_AUTHJOB		27	/* job has authentication */
+#define P_REMOTEPORT	28	/* alias for PORT */
 
 /*
  * First character of protocol to letter mappings
@@ -79,8 +80,11 @@ struct perm_check {
 
 	const char *authtype;			/* authentication type */
 	const char *authfrom;			/* authentication from */
+	const char *authuser;			/* user from */
+#if 0
 	const char *auth_client_id;	/* client authentication info */
 	const char *auth_from_id;	/* sender (client/server) authentication info */
+#endif
 };
 
 EXTERN struct perm_check Perm_check;

@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: sendjob.h,v 5.1 1999/09/12 21:33:09 papowell Exp papowell $
+ * $Id: sendjob.h,v 5.5 2000/11/27 23:20:10 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -13,15 +13,15 @@
 #define _SENDJOB_1_ 1
 
 /* PROTOTYPES */
-int Send_job( struct job *job,
+int Send_job( struct job *job, struct job *logjob,
 	int connect_timeout_len, int connect_interval, int max_connect_interval,
-	int transfer_timeout );
-int Send_normal( int *sock, struct job *job, int transfer_timeout, int block_fd );
-int Send_control( int *sock, struct job *job, int transfer_timeout,
+	int transfer_timeout, char *final_filter );
+int Send_normal( int *sock, struct job *job, struct job *logjob,
+	int transfer_timeout, int block_fd, char *final_filter );
+int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_timeout,
 	int block_fd );
-int Send_data_files( int *sock, struct job *job, int transfer_timeout,
-	int block_fd );
-int Send_block( int *sock, struct job *job, int transfer_timeout );
-int Send_secure_block( int *sock, struct job *job, int transfer_timeout );
+int Send_data_files( int *sock, struct job *job, struct job *logjob,
+	int transfer_timeout, int block_fd, char *final_filter );
+int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_timeout );
 
 #endif

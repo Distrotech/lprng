@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: proctitle.c,v 5.1 1999/09/12 21:32:51 papowell Exp papowell $";
+"$Id: proctitle.c,v 5.7 2000/10/11 17:07:30 papowell Exp papowell $";
 
 #include "lp.h"
 #include "proctitle.h"
@@ -27,7 +27,7 @@
 /*
  * From the Sendmail.8.8.8 Source Distribution
  *
- * Copyright (c) 1983, 1995-1997 Eric P. Allman
+ * Copyright (c) 1983, 1995-2000 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -66,12 +66,8 @@
 # define SPT_TYPE	SPT_PSTAT
 #endif
 
-#ifdef _AIX3
+#if defined(_AIX32) || defined(_AIX) || defined(AIX) || defined(IS_AIX32)
 # define SPT_PADCHAR	'\0'	/* pad process title with nulls */
-#endif
-
-#ifdef AIX			/* AIX/RT compiler pre-defines this */
-# define SPT_PADCHAR	'\0'		/* pad process title with nulls */
 #endif
 
 #ifdef	DGUX
@@ -248,9 +244,16 @@
 	DEBUG1("initsetproctitle: doing setup");
 	for (i = 0; envp[i] != NULL; i++)
 		envpsize += strlen(envp[i]) + 1;
-	environ = (char **) malloc_or_die(sizeof (char *) * (i + 1),__FILE__,__LINE__);
-	for (i = 0; envp[i] != NULL; i++)
-		environ[i] = safestrdup(envp[i],__FILE__,__LINE__);
+	{
+	char *s;
+	environ = (char **) malloc_or_die((sizeof (char *) * (i + 1))+envpsize+1,__FILE__,__LINE__);
+	s = ((char *)environ)+((sizeof (char *) * (i + 1)));
+	for (i = 0; envp[i] != NULL; i++){
+		strcpy(s,envp[i]);
+		environ[i] = s;
+		s += strlen(s)+1;
+	}
+	}
 	environ[i] = NULL;
 
 	/*
@@ -311,7 +314,7 @@
     /* print the argument string */
     VA_START (fmt);
     VA_SHIFT (fmt, char *);
-    (void) plp_vsnprintf(buf, sizeof(buf), fmt, ap);
+    (void) VSNPRINTF(buf, sizeof(buf)) fmt, ap);
     VA_END;
 
 	i = strlen(buf);

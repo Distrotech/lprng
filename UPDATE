@@ -1,104 +1,20 @@
 #!/usr/local/bin/perl
 use Getopt::Std;
 $| = 1;
-getopts("cd");
-$no_checkin = 0;
-$no_dist = 0;
-if( $opt_c ){
-	print "no checkin\n";
-	$no_checkin = 1;
-}
-if( $opt_d ){
-	print "no distribution\n";
-	$no_dist = 1;
-}
-($newvernum, $oldvernum) = @ARGV;
 ($dir) = `pwd`;
 chomp $dir;
 print "dir $dir\n";
 ($path, $prog) = ($dir =~ m,(.*)/(.*),);
 ($name, $ver) = ($prog =~ m,(.*)-(.*),);
 print "prog $prog, name $name, ver $ver\n";
-@subs = split( /\./, $ver );
-@new = @subs;
-@old = @subs;
-$new[$#new] ++;
-$old[$#old] --;
-$newvernum = join( '.', @new ) unless $newvernum;
-$oldvernum = join( '.', @old ) unless $oldvernum;
-$newprog = $name . "-" . $newvernum;
-$oldprog = $name . "-" . $oldvernum;
-$newdir = $path . "/" . $newprog;
-print "prog $prog, name $name, ver $ver, newprog $newprog, oldprog $oldprog, newdir $newdir\n";
-
-@err = `rm -f $path/$name-*gz*`;
-# check in current version
-if( !$no_checkin ){
-	print "doing gmake ci\n";
-	`gmake ci >/dev/tty 2>&1`;
-	if( $? ){
-		die "gmake ci failed - $!\n";
-	}
-}
-# make a distribution
-if( !$no_dist ){
-	print "doing gmake dist\n";
-	`gmake dist >/dev/tty 2>&1`;
-	if( $? ){
-		die "gmake dist failed - $!\n";
-	}
-}
-if( ! -d "$path/OLD" ){
-	mkdir "$path/OLD",0755 or die "cannot make $path/OLD - $!\n";
-}
-@err = `cp $path/$prog.tgz $path/OLD `;
-if( $? ){ die "cp $path/$prog.tgz $path/OLD failed - $!\n"; }
-if( -d "$path/OLD/$prog" ){
-	@err = ` rm -rf $path/OLD/$prog `;
-	if( $? ){ die "remove of $path/OLD/$prog failed - $!\n"; }
-}
-print "doing: cd $path/OLD; tar zxf $prog.tgz\n";
-@err = `cd $path/OLD; tar zxf $prog.tgz`;
-if( $? ){ die "untar OLD failed - $!\n"; }
-$patch="$name-$oldvernum-$ver.patch";
-@err = `rm -f $path/$patch $path/$patch.gz`;
-# open(PATCH,">$path/$patch") or die "cannot open $path/$patch - $!\n";
-# print PATCH <<"EOF" ;
-# # $patch Patch File- version $name-$oldvernum to $prog
-# # 
-# # If the $name software current distribution directory is
-# # $prog, and this patch file is $patch.gz,
-# # do the following.  NOTE - the -p flag to patch is CRITICAL,
-# # otherwise the wrong files will get patched.
-# #
-# # cd $name-$oldvernum
-# # gunzip -c $patch.gz | patch -p
-# # cd ..
-# # mv $name-$oldvernum $prog
-# # 
-# # ------ Patch starts here ----
-# 
-# EOF
-# close PATCH;
-# print "cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch\n" ;
-# @err = `cd $path/OLD/$prog; diff -c3 -i -r -P ../$name-$oldvernum . >>$path/$patch` ;
-# print "doing gzip $path/$patch and md5 digest\n";
-# @err = `gzip $path/$patch`;
-# @err = ` md5 $path/$patch.gz | pgp -fast -u papowell\@astart > $path/$patch.gz.md5 `;
-
+($newprog = $prog) =~ s/(\d+)$/$1+1/e;
+($newdir = $dir) =~ s/(\d+)$/$1+1/e;
+print "prog $prog, name $name, ver $ver, newprog $newprog, newdir $newdir\n";
 print "\nupdating directory name and links\n";
-@err = `mv $dir $newdir`;
-if( $? ){ die "mv $dir $newdir failed - @err $!\n"; }
 if( -l "$path/$name" ){
  	print "removing link $path/$name\n";
  	@err = `rm $path/$name`;
 	if( $? ){ die "rm link $prog failed - @err $!\n"; }
 }
-@err = `chdir ..; ln -s $newprog $name`;
-if( $? ){ die "ln -s $newprog $name failed - @err $!\n"; }
-
-# make new version
-`gmake update >/dev/tty 2>&1 `;
-if( $? ){
-	die "gmake update failed - $!\n";
-}
+@err = `chdir ..; mv $prog $newprog; ln -s $newprog $name`;
+print @err . "\n";

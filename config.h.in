@@ -29,12 +29,11 @@
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
 
+/* Define if the `long double' type works.  */
+#undef HAVE_LONG_DOUBLE
+
 /* Define if you have a working `mmap' system call.  */
 #undef HAVE_MMAP
-
-/* Define if system calls automatically restart after interruption
-   by a signal.  */
-#undef HAVE_RESTARTABLE_SYSCALLS
 
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
@@ -110,6 +109,12 @@
 /* Define if using alloca.c.  */
 #undef C_ALLOCA
 
+/* Define the chooser routine */
+#undef CHOOSER_ROUTINE
+
+/* Define the clear program */
+#undef CLEAR
+
 /* Define to empty if the keyword does not work.  */
 #undef const
 
@@ -119,6 +124,9 @@
 
 /* Define for DECALPHA  */
 #undef DECALPHA
+
+/* Define if you want to disable force_localhost default  */
+#undef FORCE_LOCALHOST
 
 /* Define to 1 if NLS is requested.  */
 #undef ENABLE_NLS
@@ -141,8 +149,11 @@
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
 
+/* Define if <errno.h> */
+#undef HAVE_ERRNO
+
 /* Define if <errno.h> contains a declaration for extern int errno */
-#undef HAVE_ERRNO_DECL
+#undef HAVE_DECL_ERRNO
 
 /* Define if flock definition available */
 #undef HAVE_FLOCK_DEF
@@ -162,8 +173,15 @@
 /* Define if you have Kerberos 4 krb_sendauth defined in include file */
 #undef HAVE_KRB_AUTH_DEF
 
+/* Define if you have Kerberos 5 xfree and variants */
+#undef HAVE_KRB5_XFREE
+#undef HAVE_KRB_XFREE
+
 /* Define if your locale.h file contains LC_MESSAGES.  */
 #undef HAVE_LC_MESSAGES
+
+/* Define if the `long double' type works.  */
+#undef HAVE_LONG_DOUBLE
 
 /* Define if the `long long' type works.  */
 #undef HAVE_LONG_LONG
@@ -177,12 +195,8 @@
 /* Define if you have a openlog prototype.  */
 #undef HAVE_OPENLOG_DEF
 
-/* Define if _res defined */
-#undef HAVE_RES
-
-/* Define if system calls automatically restart after interruption
-   by a signal.  */
-#undef HAVE_RESTARTABLE_SYSCALLS
+/* Define if quad_t is present on the system  */
+#undef HAVE_QUAD_T
 
 /* Define if you have to use setpgrp(0,0) to set process group */
 #undef HAVE_SETPGRP_0
@@ -206,7 +220,7 @@
 #undef HAVE_SYS_ERRLIST
 
 /* Define if sys_errlist is defined.  */
-#undef HAVE_SYS_ERRLIST_DEF
+#undef HAVE_DECL_SYS_ERRLIST
 
 /* Define if syslog() defined */
 #undef HAVE_SYSLOG_DEF
@@ -215,22 +229,23 @@
 #undef HAVE_SYS_NERR
 
 /* Define if sys_nerr has definition.  */
-#undef HAVE_SYS_NERR_DEF
+#undef HAVE_SYS_NERR
+#undef HAVE_DECL_SYS_NERR
 
 /* Define if sys_siglist has the signal strings. */
 #undef HAVE_SYS_SIGLIST
 
+/* Define if _sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST
+
 /* Define if sys_siglist is defined in unistd.h include file */
 #undef HAVE_SYS_SIGLIST_DEF
 
+/* Define if sys_siglist has the signal strings. */
+#undef HAVE__SYS_SIGLIST_DEF
+
 /* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
 #undef HAVE_SYS_WAIT_H
-
-/* Define if tgetent() has definition  */
-#undef HAVE_TGETENT_DEF
-
-/* Define if tgetstr() has definition  */
-#undef HAVE_TGETSTR_DEF
 
 /* Use the "union wait" union to get process status from wait3/waitpid */
 #undef HAVE_UNION_WAIT
@@ -259,6 +274,12 @@
 /* IRIX */
 #undef IRIX
 
+/* KERBEROS */
+#undef KERBEROS
+
+/* MIT_KERBEROS4 */
+#undef MIT_KERBEROS4
+
 /* Define if on MINIX.  */
 #undef _MINIX
 
@@ -267,6 +288,9 @@
 
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
+
+/* Define the order routine */
+#undef ORDER_ROUTINE
 
 /* make autoconf happy */
 #undef OSNAME
@@ -285,11 +309,11 @@
 /* Define if you need to in order for stat and other things to work.  */
 #undef _POSIX_SOURCE
 
-/* Define if quad_t is NOT present on the system  */
-#undef quad_t
-
 /* Define as the return type of signal handlers (int or void).  */
 #undef RETSIGTYPE
+
+/* Define if a setuid compromise is possible */
+#undef SETUID_CHECK
 
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 #undef size_t
@@ -309,9 +333,6 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
-/* Define if you have the ANSI C header files.  */
-#undef STDLIB_DEFINES_RANDOM
-
 /* Define if you have struct stat with st_mtime_nsec */
 #undef ST_MTIMENSEC
 /* Define if you have struct stat with st_mtimespec.ts_nsec */
@@ -328,6 +349,9 @@
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 #undef uid_t
+
+/* Define if we the user specifies an include file */
+#undef USER_INCLUDE
 
 /* Define if we are to use the old sgttyb structure and <sgtty.h>. */
 #undef USE_SGTTYB
@@ -361,6 +385,9 @@
 
 /* Define if you have the __argz_stringify function.  */
 #undef HAVE___ARGZ_STRINGIFY
+
+/* Define if you have the _res function.  */
+#undef HAVE__RES
 
 /* Define if you have the cfsetispeed function.  */
 #undef HAVE_CFSETISPEED
@@ -406,6 +433,9 @@
 
 /* Define if you have the killpg function.  */
 #undef HAVE_KILLPG
+
+/* Define if you have the krb5_free_data_contents function.  */
+#undef HAVE_KRB5_FREE_DATA_CONTENTS
 
 /* Define if you have the lockf function.  */
 #undef HAVE_LOCKF
@@ -506,14 +536,14 @@
 /* Define if you have the uname function.  */
 #undef HAVE_UNAME
 
+/* Define if you have the unsetenv function.  */
+#undef HAVE_UNSETENV
+
 /* Define if you have the wait3 function.  */
 #undef HAVE_WAIT3
 
 /* Define if you have the waitpid function.  */
 #undef HAVE_WAITPID
-
-/* Define if you have the <a.out.h> header file.  */
-#undef HAVE_A_OUT_H
 
 /* Define if you have the <a_out.h> header file.  */
 #undef HAVE_A_OUT_H
@@ -548,9 +578,6 @@
 /* Define if you have the <ctypes.h> header file.  */
 #undef HAVE_CTYPES_H
 
-/* Define if you have the <curses.h> header file.  */
-#undef HAVE_CURSES_H
-
 /* Define if you have the <dirent.h> header file.  */
 #undef HAVE_DIRENT_H
 
@@ -566,8 +593,14 @@
 /* Define if you have the <filehdr.h> header file.  */
 #undef HAVE_FILEHDR_H
 
+/* Define if you have the <gdbm.h> header file.  */
+#undef HAVE_GDBM_H
+
 /* Define if you have the <grp.h> header file.  */
 #undef HAVE_GRP_H
+
+/* Define if you have the <kerberosIV/krb.h> header file.  */
+#undef HAVE_KERBEROSIV_KRB_H
 
 /* Define if you have the <krb.h> header file.  */
 #undef HAVE_KRB_H
@@ -589,9 +622,6 @@
 
 /* Define if you have the <memory.h> header file.  */
 #undef HAVE_MEMORY_H
-
-/* Define if you have the <ncurses.h> header file.  */
-#undef HAVE_NCURSES_H
 
 /* Define if you have the <ndir.h> header file.  */
 #undef HAVE_NDIR_H
@@ -616,6 +646,9 @@
 
 /* Define if you have the <resolv.h> header file.  */
 #undef HAVE_RESOLV_H
+
+/* Define if you have the <select.h> header file.  */
+#undef HAVE_SELECT_H
 
 /* Define if you have the <setjmp.h> header file.  */
 #undef HAVE_SETJMP_H
@@ -757,9 +790,6 @@
 
 /* Define if you have the <utsname.h> header file.  */
 #undef HAVE_UTSNAME_H
-
-/* Define if you have the <values.h> header file.  */
-#undef HAVE_VALUES_H
 
 /* Define if you have the <varargs.h> header file.  */
 #undef HAVE_VARARGS_H

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPD.PERMS 5 \*(VE "LPRng"
 .SH NAME
 .nf
@@ -16,38 +16,17 @@ it should be escaped with a backslash
 All other lines
 specify permissions entry and should be of the following form:
 .RS
-ACCEPT [ key = value[,value]* ]*
+ACCEPT [[not] key = value[,value]* ]*
 .br
-REJECT [ key = value[,value]* ]*
+REJECT [[not] key = value[,value]* ]*
 .br
 DEFAULT ACCEPT
 .br
 DEFAULT REJECT
 .RE
 .PP
-LPD access control is provided by two means:
-the pathnames or programs specified by the
-.I perms_path
-configuration information and the
-printcap
-.B XU
-(check user) entry.
-These entries consist of a list of files separated by
-colons and/or a set of filters.
-For example:
-.ti +5n
-/etc/lpd.perms:|/usr/local/lib/perms
-.LP
-would specify a file and a filter.
-The filter program is invoked with the 
-.I filter_options
-specified in the configuration information,
-and is sent the name of the printer on the filter standard input.
-The filter should respond by writing a list of permissions entries
-on its standard output.
-.PP
-Each LPD service request is check against
-the entries in the permissions file and/or filter response.
+Each LPD service request is checked against
+the entries in the permissions database or file.
 The following is a typical permissions file:
 .RS
 .nf
@@ -79,21 +58,73 @@ The SERVICE key has value P for printing (i.e.- unspooling),
 R for spooling (i.e.- LPR request),
 C printer control (i.e. - LPC),
 M for removal (i.e.- LPRM request),
-Q for queue information (i.e.- LPQ request),
-and so forth.
+and
+Q for queue information (i.e.- LPQ request).
 The
 .l X
-key indicates the initial connection to the LPD spooler,
-and can be used to control connections from remote systems.
+key is used when checking for connection information.
 .LP
-The
-values of the USER, HOST, and IP keys taken from the control file
-which is being received or checked for permissions.
-The REMOTEUSER, REMOTEHOST and REMOTEIP keys are those either sent
-as part of a command,
-or derived from information about the current network connection.
-(See below for details involving Domain Name Service lookups
-and other information.)
+Initially,
+all of the keys have undefined or NULL values,
+and are assigned values during the permissions checking process.
+When a connection is made to the server,
+it assigns
+The REMOTEHOST key the list of IP addresses and hostnames
+determined by doing a reverse Domain Name Service (DNS)
+lookup on the remote host's IP address.
+If the reverse DNS fails,
+then only the IP address will be used.
+The REMOTEIP is an alias for REMOTEHOST and is retained for
+backwards compatibility.
+The REMOTEPORT (PORT is an alias for REMOTEPORT) is assigned
+the port number of the connection origination.
+Finally,
+the SERVICE value is assigned X,
+and the lpd server will check the database to see if the
+connection is accepted or rejected.
+.LP
+The server will then read the request information from the connection.
+If the request is for an authenticated data transfer,
+the server will invoke the appropriate authentication mechanism
+which will assign AUTH a true (or matching) value,
+AUTHTYPE the type of authentication,
+AUTHUSER the authenticated user id value, which may differ from the
+actual user name,
+and AUTHFROM the authenticated identification of the originator
+of the request,
+which may be a server if the request is forwarded.
+.LP
+Next,
+the SERVICE value is set to R, C, M, or Q depending on whether it is
+an LPR, LPC, LPRM, or LPQ request,
+and the LPC value set to the requested LPC command if it was an LPC
+request.
+If the request contained a user name,
+then REMOTEUSER is set to this name.
+If the request contained a printer name,
+then PRINTER is set to the printer name.
+If the request is a print request,
+then the HOST value is set to the list of host names and IP
+addresses given by a DNS lookup of the value in the
+H field of the job.
+The database is scanned again to determine if the operation can be
+performed on the requested queue.
+To simplify the rule writing,
+if the operation requires modification or checking of individual
+jobs,
+such as the LPC, LPQ, or LPRM commands,
+then the various checks that depend on jobs will succeed in this step.
+.LP
+Finally,
+if the operation requires modification or checking of individual
+jobs,
+such as the LPC, LPQ, or LPRM commands,
+then the specified print queue is scanned,
+and for each job in the print queue,
+the HOST and USER values are set to the host and user
+values in the control file for the job.
+.LP
+The database is checked as follows.
 Each line of the permissions file is scanned for key names and
 values, and these are matched against the request keys information.
 When all matches on a line are made,
@@ -104,12 +135,13 @@ DEFAULT key is used to specify the current default permission to
 be used for successful matches or if there is no match after
 scanning the entire permissions database.
 .LP
-The PRINTER entry is used to specify the printer to be checked.
-The GROUP entry is used to check that the USER name appears in a
-group entry in the system user group database.
+The following keys provide some additional checking capabilties.
+The REMOTEGROUP entry checks that the REMOTEUSER
+value appears in a group or netgroup entry in the system database,
+and the GROUP entry for the USER value.
 For example,
 GROUP=student*,staff*
-would check to see if any of the group name matching
+would check to see if any of the group names matching
 student* or staff* have the specified user name in them.
 If a system has the
 .I netgroups
@@ -119,29 +151,24 @@ a printer, group, or remotegroup name starting with a
 will be treated as a netgroup name,
 and specified user name or printer will be checked to see if
 it is in the group.
-Note that wildcard matches are not performed on netgroups.
-Similarly,
-the
-REMOTEGROUP entry will check a remote user name.
 .LP
-The
-PORT
-entry can be used to ensure that a connection to the server
-orignates from a specified range of ports.
+The SERVER entry will be true (match) if the request originated from
+the print server.
+The SAMEHOST is true (matches) if the REMOTEHOST and HOST values
+have a common entry,
+i.e. - are the same host.
+The SAMEUSER is true (matches) if the REMOTEUSER and USER values are identical.
+The AUTHSAMEUSER is true (matches) if the AUTHUSER 
+value that orginated the request and the AUTHUSER which
+was used to transfer a job are identical.
+AUTHJOB is true (matches) if the job was transferred using authentication.
+The FORWARD value is an alias for NOT SAMEHOST.
 .LP
-The permissions database is scanned in order of the fixed file entries
-and then by invoking the specified filters for each
-of the permissions lists.
-It is recommended that the filters be placed at the end of the
-permissions lists.
-The user name is one of the parameters passed to the filter,
-and can be used to determine if a user has permissions to print a file.
+The CONTROLLINE value can be used to determine if there is a matching line
+in the control file.
+This facility has been used to ensure that jobs contain various
+information fields in order to be printed.
 .LP
-The \f(CWLPC=operation\fP
-entry allows control over individual LPC commands.
-For example,
-you can allow all users to use the
-\f(CWlpc status\fp command,  but only a select set of users other commands.
 .sp
 .nf
 .ne 20v
@@ -152,20 +179,16 @@ SERVICE	S	'X'	'R'	'P'	'Q'	'M'	'C,S'
 USER	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
 HOST	S	RH	JH	JH	JH	JH	JH
 GROUP	S	-	JUSR	JUSR	JUSR	JUSR	JUSR
-IFIP	IP	IFIP	IFIP	-	IFIP	IFIP	IFIP
-IP	IP	RIP	JIP	JIP	RIP	JIP	JIP
-PORT	N	PORT	PORT	-	PORT	PORT	PORT
+REMOTEPORT	N	PORT	PORT	-	PORT	PORT	PORT
 REMOTEUSER	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
 REMOTEHOST	S	RH	RH	JH	RH	RH	RH
 REMOTEGROUP	S	-	JUSR	JUSR	JUSR	CUSR	CUSR
-REMOTEIP	IP	RIP	RIP	JIP	RIP	RIP	RIP
 CONTROLLINE	S	-	CL	CL	CL	CL	CL
 PRINTER	S	-	PR	PR	PR	PR	PR
 FORWARD	V	-	SA	-	-	SA	SA
 SAMEHOST	V	-	SA	-	SA	SA	SA
 SAMEUSER	V	-	-	-	SU	SU	SU
 SERVER	V	-	SV	-	SV	SV	SV
-SPOOLING	V	-	SV	-	SV	SV	SV
 AUTH	V	-	AU	-	AU	AU	AU
 AUTHTYPE	S	-	AU	-	AU	AU	AU
 AUTHUSER	S	-	AU	-	AU	AU	AU
@@ -196,7 +219,6 @@ KEY:
 		AUTHSAMEUSER matches if remote user authentication id matches original
 			user authentication id
 		AUTHJOB it true if print job has authentication
-	IFIP= matches the remote IP address of the connection
 Match: S = string with wild card, IP = IPaddress[/netmask],
 	N = low[-high] number range, V = exact value match
 SERVICE: 'X' - Connection request; 'R' - lpr request from remote host;
@@ -285,29 +307,10 @@ ethernet interfaces,  and for IPV6 (IP Version 6),  in which a host
 can have multiple addresses,  and for the normal host which can have
 both a short name and a fully qualified domain name.
 .PP
-The IFIP (interface IP) field can be used to check the IP address
-of the origination of the request,  as reported by the information
-returned by the accept() system call.  Note that this information may
-be IPV4 or IPV6 information,  depending on the origination of the
-system.  This information is used by gethostbyaddr() to obtain the
-orginating host fully qualified domain name (FQDN) and set of IP addresses.
-Note that this FQDN will be for the originating interface,  and may
-not be the cannonical host name.  Some systems which use the Domain Name Server
-(DNS) system may add the cannonical system name as an alias.
-.PP
 When performing an IP address match,  the entire list of IP addresses
 for a system will now be checked.  If one of these matches, then success
 is reported.  Similarly,  the entire list of host names and aliases will
 be checked.  If one of these matches,  then success will be reported.
-.PP
-In addition,  when checking for printing, if the name lookup for the
-host reported in the control file fails,  then we assume that the host
-is unknown and all match checks for names or IP addresses will fail.
-You can determine if a host has an entry by using the following check,
-which will reject all requests from a remotehost which does not have
-a DNS entry.
-.br
-REJECT NOT REMOTEHOST=*
 .br
 .SH FILES
 .PP
@@ -329,20 +332,12 @@ The following are a commonly used set of default values.
 lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),
 printcap(5),
-lpd.perms(5),
 pr(1).
-.SH DIAGNOSTICS
-.nf
-Most of the diagnostics are self explanatory.
-If you are puzzled over the exact cause of failure,
-set the debugging level on (-D5) and run again.
-The debugging information will 
-help you to pinpoint the exact cause of failure.
-.fi
 .SH "HISTORY"
 LPRng is a enhanced printer spooler system
 with functionality similar to the Berkeley LPR software.

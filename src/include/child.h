@@ -1,10 +1,10 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
- * $Id: child.h,v 5.1 1999/09/12 21:32:55 papowell Exp papowell $
+ * $Id: child.h,v 5.4 2000/10/11 17:07:34 papowell Exp papowell $
  ***************************************************************************/
 
 
@@ -28,7 +28,7 @@ pid_t plp_waitpid_timeout(int timeout,
 void Dump_pinfo( char *title, struct line_list *p ) ;
 int Countpid(void);
 void Killchildren( int sig );
-int dofork( int new_process_group );
+pid_t dofork( int new_process_group );
 void Register_exit( char *name, exit_ret exit_proc, void *p );
 void Clear_exit( void );
 plp_signal_t cleanup_USR1 (int passed_signal);

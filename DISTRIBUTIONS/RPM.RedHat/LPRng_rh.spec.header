@@ -1,0 +1,125 @@
+#							-*-shell-script-*-
+# LPRng Spec File
+#
+%define name LPRng
+%define version 3.7.1
+%define release 1
+
+%define prefix      /usr
+%define sysconfdir  /etc
+%define bindir      /usr/bin
+%define sbindir     /usr/sbin
+%define mandir      /usr/share/man
+%define filterdir   /usr/libexec/filters
+%define docdir      /usr/share/doc/%{name}-%{version}
+
+Summary: LPRng Print Spooler for UNIX and NT
+Name: %{name}
+Version: %{version}
+Release: %{release}
+
+# we need to be compatible with a set of entries
+Provides: lpr lprng
+Obsoletes: lpr
+
+Copyright: GPL and Artistic License, 1986-2000 Patrick Powell <papowell@astart.com>
+Group: System Environment/Daemons
+Source: ftp://ftp.astart.com/pub/LPRng/LPRng/%{name}-%{version}.tgz
+URL: http://www.astart.com/LPRng.html
+Vendor: Astart Technologies, San Diego, CA 92123 http://www.astart.com
+Buildroot: /var/tmp/%{name}-%{version}-%{release}-root
+Packager: Patrick Powell <papowell@astart.com>
+
+%description
+The LPRng software is an enhanced, extended, and portable implementation
+of the Berkeley LPR print spooler functionality. While providing the
+same interface and meeting RFC1179 requirements, the implementation
+is completely new and provides support for the following features:
+lightweight (no databases needed) lpr, lpc, and lprm programs; dynamic
+redirection of print queues; automatic job holding; highly verbose
+diagnostics; multiple printers serving a single queue; client programs
+do not need to run SUID root; greatly enhanced security checks; and a
+greatly improved permission and authorization mechanism.
+
+The source software compiles and runs on a wide variety of UNIX systems,
+and is compatible with other print spoolers and network printers that
+use the LPR interface and meet RFC1179 requirements.  LPRng provides
+emulation packages for the SVR4 lp and lpstat programs, eliminating the
+need for another print spooler package. These emulation packages can be
+modified according to local requirements, in order to support vintage
+printing systems.  An NT version is also available.
+
+For users that require secure and/or authenticated printing support,
+LPRng supports Kerberos V, MIT Kerberos IV Print Support, and PGP
+authentication.  LPRng is being adopted by MIT for use as their Campus
+Wide printing support system. Additional authentication support is
+extremely simple to add.  LPRng is Open Source Software, and the current
+public distribution is available from the listed FTP and Web Sites.
+
+%changelog
+* Fri Jun  9 2000 Patrick Powell <papowell@astart.com>
+  - added all sorts of stuff to generate the files list
+    automatically.
+* Sun May  7 2000 Patrick Powell <papowell@astart.com>
+  - update the scripts.  Added a dynamic %files capability
+    added preinstall, preremove, and postinstall scripts
+* Sat Sep  4 1999 Patrick Powell <papowell@astart.com>
+  - did ugly things to put the script in the spec file
+* Sat Aug 28 1999 Giulio Orsero <giulioo@tiscalinet.it>
+  - 3.6.8
+* Fri Aug 27 1999 Giulio Orsero <giulioo@tiscalinet.it>
+  - 3.6.7 First RPM build.
+  
+# we use the default gunzip | tar xvf
+%prep
+%setup
+
+# we set the configure options and then build
+%build
+CONFIGURE_ARGS="--prefix=%{prefix} --sysconfdir=%{sysconfdir} \
+	 --bindir=%{bindir} --sbindir=%{sbindir} --mandir=%{mandir} \
+	 --with-filterdir=%{filterdir} \
+	 --with-ld_library_path=/lib:/usr/lib:/usr/local/lib \
+	 --with-filter_path=/bin:/usr/bin:/usr/libexec:/usr/local/libexec:/usr/sbin:/var/spool/bin"
+
+CFLAGS=$RPM_OPT_FLAGS  ./configure ${CONFIGURE_ARGS}
+
+echo RPM_BUILD_ROOT "'$RPM_BUILD_ROOT'" RPM_BUILD_DIR "'$RPM_BUILD_ROOT'" "CWD=`pwd`"
+rm -rf $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT
+make DESTDIR=${RPM_BUILD_ROOT} MAKEPACKAGE=YES
+if test -n "${COPY_HERE}" ; then
+	cp preremove ${COPY_HERE};
+	cp postinstall ${COPY_HERE};
+fi
+
+%install
+
+# debugging
+make install DESTDIR=${RPM_BUILD_ROOT} MAKEPACKAGE=YES
+s=${RPM_BUILD_ROOT}/etc/rc.d/init.d/lprng
+if [ ! -d `dirname $s ` ] ; then  mkdir -p `dirname $s`; fi;
+cp init.linux $s
+
+# docs list
+# where to copy
+s=${RPM_BUILD_ROOT}/%{docdir}
+mkdir -p $s
+(cd HOWTO; for i in  `ls *.html *.gif *.jpg *.png *.txt 2>/dev/null ` ; do cp $i $s; done )
+# cleanup
+%clean
+rm -rf $RPM_BUILD_ROOT
+#------------------- FILES
+%files
+%{sysconfdir}/*.sample
+%{sysconfdir}/rc.d/init.d/lprng
+%{bindir}/*
+%{filterdir}/*
+%{mandir}/man*/*
+%{sbindir}/*
+%doc %{docdir}/*
+
+# %preun
+# preremove
+# %post
+# postinstall

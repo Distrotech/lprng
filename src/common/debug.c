@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: debug.c,v 5.1 1999/09/12 21:32:34 papowell Exp papowell $";
+"$Id: debug.c,v 5.8 2000/10/11 17:07:17 papowell Exp papowell $";
 
 
 /*************************************************************
@@ -30,45 +30,43 @@
 struct keywords debug_vars[]		/* debugging variables */
  = {
 #if !defined(NODEBUG)
-    { "debug",INTEGER_K,(void *)&Debug },
-    { "test",INTEGER_K,(void *)&DbgTest },
-    { "job",INTEGER_K,(void *)&DbgJob },
-    { "log",FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
-    { "log+1",FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
-    { "log+2",FLAG_K,(void *)&DbgFlag,DLOG2|DLOG1, DLOGMASK },
-    { "log+3",FLAG_K,(void *)&DbgFlag,DLOG3|DLOG2|DLOG1, DLOGMASK },
-    { "log+4",FLAG_K,(void *)&DbgFlag,DLOG4|DLOG3|DLOG2|DLOG1, DLOGMASK },
-    { "network",FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
-    { "network+1",FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
-    { "network+2",FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK },
-    { "network+3",FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK },
-    { "network+4",FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK },
-    { "database",FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
-    { "database+1",FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
-    { "database+2",FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK },
-    { "database+3",FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK },
-    { "database+4",FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK },
-    { "database+4",FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK },
-    { "receive",FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
-    { "receive+1",FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
-    { "receive+2",FLAG_K,(void *)&DbgFlag,DRECV2|DRECV1, DRECVMASK },
-    { "receive+3",FLAG_K,(void *)&DbgFlag,DRECV3|DRECV2|DRECV1, DRECVMASK },
-    { "receive+4",FLAG_K,(void *)&DbgFlag,DRECV4|DRECV3|DRECV2|DRECV1, DRECVMASK },
-    { "control",FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
-    { "control+1",FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
-    { "control+2",FLAG_K,(void *)&DbgFlag,DCTRL2|DCTRL1, DCTRLMASK },
-    { "control+3",FLAG_K,(void *)&DbgFlag,DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
-    { "control+4",FLAG_K,(void *)&DbgFlag,DCTRL4|DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
-    { "lprm",FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
-    { "lprm+1",FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
-    { "lprm+2",FLAG_K,(void *)&DbgFlag,DLPRM2|DLPRM1, DLPRMMASK },
-    { "lprm+3",FLAG_K,(void *)&DbgFlag,DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
-    { "lprm+4",FLAG_K,(void *)&DbgFlag,DLPRM4|DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
-    { "lpq",FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
-    { "lpq+1",FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
-    { "lpq+2",FLAG_K,(void *)&DbgFlag,DLPQ2|DLPQ1, DLPQMASK },
-    { "lpq+3",FLAG_K,(void *)&DbgFlag,DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
-    { "lpq+4",FLAG_K,(void *)&DbgFlag,DLPQ4|DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
+    { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
+    { "network+1",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
+    { "network+2",0,FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK },
+    { "network+3",0,FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK },
+    { "network+4",0,FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK },
+    { "database",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
+    { "database+1",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
+    { "database+2",0,FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK },
+    { "database+3",0,FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK },
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK },
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK },
+    { "lpr",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
+    { "lpr+1",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
+    { "lpr+2",0,FLAG_K,(void *)&DbgFlag,DRECV2|DRECV1, DRECVMASK },
+    { "lpr+3",0,FLAG_K,(void *)&DbgFlag,DRECV3|DRECV2|DRECV1, DRECVMASK },
+    { "lpr+4",0,FLAG_K,(void *)&DbgFlag,DRECV4|DRECV3|DRECV2|DRECV1, DRECVMASK },
+    { "lpc",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
+    { "lpc+1",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
+    { "lpc+2",0,FLAG_K,(void *)&DbgFlag,DCTRL2|DCTRL1, DCTRLMASK },
+    { "lpc+3",0,FLAG_K,(void *)&DbgFlag,DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
+    { "lpc+4",0,FLAG_K,(void *)&DbgFlag,DCTRL4|DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
+    { "lprm",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
+    { "lprm+1",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
+    { "lprm+2",0,FLAG_K,(void *)&DbgFlag,DLPRM2|DLPRM1, DLPRMMASK },
+    { "lprm+3",0,FLAG_K,(void *)&DbgFlag,DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
+    { "lprm+4",0,FLAG_K,(void *)&DbgFlag,DLPRM4|DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
+    { "lpq",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
+    { "lpq+1",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
+    { "lpq+2",0,FLAG_K,(void *)&DbgFlag,DLPQ2|DLPQ1, DLPQMASK },
+    { "lpq+3",0,FLAG_K,(void *)&DbgFlag,DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
+    { "lpq+4",0,FLAG_K,(void *)&DbgFlag,DLPQ4|DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
+    { "log",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
+    { "log+1",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
+    { "log+2",0,FLAG_K,(void *)&DbgFlag,DLOG2|DLOG1, DLOGMASK },
+    { "log+3",0,FLAG_K,(void *)&DbgFlag,DLOG3|DLOG2|DLOG1, DLOGMASK },
+    { "log+4",0,FLAG_K,(void *)&DbgFlag,DLOG4|DLOG3|DLOG2|DLOG1, DLOGMASK },
+    { "test",0,INTEGER_K,(void *)&DbgTest },
 #endif
     { (char *)0 }
 };
@@ -135,31 +133,31 @@ void Parse_debug (char *dbgstr, int interactive )
 		if(!found && interactive ){
 			int lastflag = 0;
 			int nooutput = 0;
-		    fprintf (stderr,
-	"debug usage: -D [ num | key=num | key=str | flag | flag@ | flag+N ]*\n");
-		    fprintf (stderr, "  keys recognized:");
+		    FPRINTF (STDERR,
+	"debug usage: -D [ num | flag=num | flag=str | flag | flag@ | flag+N ]*\n");
+		    FPRINTF (STDERR, "  flags recognized:");
 		    for (i = 0; list[i].keyword; i++) {
 				if( safestrchr( list[i].keyword, '+' ) ) continue;
 				if( nooutput == 0 ){
 					if( i ){
-						fprintf( stderr, ", " );
-						if( !(i % 4) ) fprintf( stderr, "\n   " );
+						FPRINTF( STDERR, ", " );
+						if( !(i % 4) ) FPRINTF( STDERR, "\n   " );
 					} else {
-						fprintf( stderr, " " );
+						FPRINTF( STDERR, " " );
 					}
 				} else {
 					nooutput = 0;
 				}
 				switch( list[i].type ){
 				case INTEGER_K:
-					fprintf (stderr, "%s=num", list[i].keyword);
+					FPRINTF (STDERR, "%s=num", list[i].keyword);
 					break;
 				case STRING_K:
-					fprintf (stderr, "%s=str", list[i].keyword);
+					FPRINTF (STDERR, "%s=str", list[i].keyword);
 					break;
 				case FLAG_K:
 					if( list[i].maxval == 0 || lastflag != list[i].flag ){
-						fprintf (stderr, "%s[+N,@]", list[i].keyword );
+						FPRINTF (STDERR, "%s[+N,@]", list[i].keyword );
 						lastflag = list[i].maxval;
 					} else {
 						nooutput = 1;
@@ -169,12 +167,12 @@ void Parse_debug (char *dbgstr, int interactive )
 					break;
 				}
 			}
-		    fprintf (stderr, "\n");
+		    FPRINTF (STDERR, "\n");
 			Errorcode = JABORT;
 		    cleanup(0);
 		}
 	}
 	Free_line_list(&l);
 #endif
-	/* logDebug("Parse_debug: Debug %d, DbgFlag 0x%x", Debug, DbgFlag ); */
+	/* LOGDEBUG("Parse_debug: Debug %d, DbgFlag 0x%x", Debug, DbgFlag ); */
 }

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 5.1 1999/09/12 21:32:46 papowell Exp papowell $";
+"$Id: lpf.c,v 5.11 2000/11/29 21:02:12 papowell Exp papowell $";
 
 
 /***************************************************************************
@@ -82,8 +82,8 @@
  * npages    - number of pages for accounting
  *
  * -Tlevel - sets debug level. level must be integer
- * -Tcrlf  - turns LF to CRLF off
- * -TX     - puts character X at end of each line.
+ * -Tcrlf  - turn LF to CRLF translation off
+ * -TX     - append character X to end of line (CR, CR/LF, LF, LF/CR marks end)
  *
  *
  *	The functions fatal(), logerr(), and logerr_die() can be used to report
@@ -109,6 +109,13 @@ int	plp_vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 #else
 int plp_snprintf ();
 int plp_vsnprintf ();
+#endif
+
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...);
+#else
+ void safefprintf ();
 #endif
 
 #include <sys/types.h>
@@ -194,6 +201,7 @@ int of_filter;
 
 int main( int argc, char *argv[], char *envp[] )
 {
+
 	/* check to see if you have the accounting fd */
 	accounting_fd = dup(3);
 	/* if this works, then you have one */
@@ -204,15 +212,15 @@ int main( int argc, char *argv[], char *envp[] )
 		accounting_fd = -1;
 	}
 	if( fcntl(0,F_GETFL,0) == -1 ){
-		fprintf(stderr,"BAD FD 0\n");
+		FPRINTF(STDERR,"BAD FD 0\n");
 		exit(2);
 	}
 	if( fcntl(1,F_GETFL,0) == -1 ){
-		fprintf(stderr,"BAD FD 1\n");
+		FPRINTF(STDERR,"BAD FD 1\n");
 		exit(2);
 	}
 	if( fcntl(2,F_GETFL,0) == -1 ){
-		fprintf(stderr,"BAD FD 2\n");
+		FPRINTF(STDERR,"BAD FD 2\n");
 		exit(2);
 	}
 	getargs( argc, argv, envp );
@@ -220,6 +228,11 @@ int main( int argc, char *argv[], char *envp[] )
 	 * Turn off SIGPIPE
 	 */
 	(void)signal( SIGPIPE, SIG_IGN );
+	(void)signal( SIGPIPE, SIG_DFL );
+	(void)signal( SIGINT,  SIG_DFL );
+	(void)signal( SIGHUP,  SIG_DFL );
+	(void)signal( SIGQUIT, SIG_DFL );
+	(void)signal( SIGCHLD, SIG_DFL );
 	if( of_filter || (format && format[0] == 'o') ){
 		filter_pgm( filter_stop );
 	} else {
@@ -228,26 +241,55 @@ int main( int argc, char *argv[], char *envp[] )
 	return(0);
 }
 
+int Write_fd_str( int fd, const char *msg )
+{
+	int n;
+	n = strlen(msg);
+	return write(fd,msg,n);
+}
+
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...)
+#else
+ void safefprintf (va_alist) va_dcl
+#endif
+{
+#ifndef HAVE_STDARGS
+	int fd;
+    char *format;
+#endif
+	char buf[1024];
+    VA_LOCAL_DECL
+
+    VA_START (format);
+    VA_SHIFT (fd, int);
+    VA_SHIFT (format, char *);
+
+	buf[0] = 0;
+	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	Write_fd_str(fd,buf);
+}
+
 /****************************************************************************
  * Extract the necessary definitions for error message reporting
  ****************************************************************************/
 
 #if !defined(HAVE_STRERROR)
-# if defined(HAVE_SYS_NERR)
-#   if !defined(HAVE_SYS_NERR_DEF)
+# undef  num_errors
+# if defined(HAVE_SYS_ERRLIST)
+#  if !defined(HAVE_DECL_SYS_ERRLIST)
+     extern const char *const sys_errlist[];
+#  endif
+#  if defined(HAVE_SYS_NERR)
+#   if !defined(HAVE_DECL_SYS_NERR)
       extern int sys_nerr;
 #   endif
 #   define num_errors    (sys_nerr)
-# else
-#  	define num_errors    (-1)            /* always use "errno=%d" */
-# endif
-# if defined(HAVE_SYS_ERRLIST)
-#  if !defined(HAVE_SYS_ERRLIST_DEF)
-    extern const char *const sys_errlist[];
 #  endif
-# else
-#  undef  num_errors
-#  define num_errors   (-1)            /* always use "errno=%d" */
+# endif
+# if !defined(num_errors)
+#   define num_errors   (-1)            /* always use "errno=%d" */
 # endif
 #endif
 
@@ -265,8 +307,7 @@ const char * Errormsg ( int err )
 # endif
 	{
 		static char msgbuf[32];     /* holds "errno=%d". */
-		/* SAFE use of sprintf */
-		(void) sprintf (msgbuf, "errno=%d", err);
+		(void) SNPRINTF(msgbuf, sizeof(msgbuf)) "errno=%d", err);
 		cp = msgbuf;
     }
 #endif
@@ -282,14 +323,23 @@ void log( va_alist ) va_dcl
 #ifndef HAVE_STDARGS
 	char *msg;
 #endif
+	int err = errno;
+	int n;
+	char buf[1024];
 	VA_LOCAL_DECL
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
-	(void)vfprintf(stderr, msg, ap);
-	(void)fprintf(stderr, "\n" );
+
+	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	n = strlen(buf);
+	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	n = strlen(buf);
+	(void)SNPRINTF(buf+n,sizeof(buf)-n) "\n" );
+	Write_fd_str(2,buf);
 	VA_END;
-	(void)fflush(stderr);
+	errno = err;
 }
+
 
 #ifdef HAVE_STDARGS
 void fatal(char *msg, ...)
@@ -300,14 +350,20 @@ void fatal( va_alist ) va_dcl
 #ifndef HAVE_STDARGS
 	char *msg;
 #endif
+	int err = errno;
+	int n;
+	char buf[1024];
 	VA_LOCAL_DECL
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
-	(void)fprintf(stderr, "%s: ", name);
-	(void)vfprintf(stderr, msg, ap);
-	(void)fprintf(stderr, "\n" );
+
+	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	n = strlen(buf);
+	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	n = strlen(buf);
+	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
+	Write_fd_str(2,buf);
 	VA_END;
-	(void)fflush(stderr);
 	exit(errorcode);
 }
 
@@ -321,14 +377,19 @@ void logerr( va_alist ) va_dcl
 	char *msg;
 #endif
 	int err = errno;
+	int n;
+	char buf[1024];
 	VA_LOCAL_DECL
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
-	(void)fprintf(stderr, "%s: ", name);
-	(void)vfprintf(stderr, msg, ap);
-	(void)fprintf(stderr, "- %s\n", Errormsg(err) );
+
+	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	n = strlen(buf);
+	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	n = strlen(buf);
+	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
+	Write_fd_str(2,buf);
 	VA_END;
-	(void)fflush(stderr);
 }
 
 #ifdef HAVE_STDARGS
@@ -341,14 +402,19 @@ void logerr_die( va_alist ) va_dcl
 	char *msg;
 #endif
 	int err = errno;
+	int n;
+	char buf[1024];
 	VA_LOCAL_DECL
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
-	(void)fprintf(stderr, "%s: ", name);
-	(void)vfprintf(stderr, msg, ap);
-	(void)fprintf(stderr, "- %s\n", Errormsg(err) );
+
+	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	n = strlen(buf);
+	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	n = strlen(buf);
+	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
+	Write_fd_str(2,buf);
 	VA_END;
-	(void)fflush(stderr);
 	exit(errorcode);
 }
 
@@ -366,7 +432,7 @@ void doaccnt(void)
 
 	t = time((time_t *)0);
 		
-	plp_snprintf(buffer, sizeof(buffer), "%s\t%s\t%s\t%7d\t%s\t%s\n",
+	SNPRINTF(buffer, sizeof(buffer)) "%s\t%s\t%s\t%7d\t%s\t%s\n",
 		login? login: "NULL", 
 		host? host: "NULL", 
 		printer? printer: "NULL", 
@@ -404,7 +470,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 	of_filter =  (strstr( s, "of" ) != 0);
 	for( i = 1; i < argc && (arg = argv[i])[0] == '-'; ++i ){
 		if( (c = arg[1]) == 0 ){
-			fprintf( stderr, "missing option flag");
+			FPRINTF( STDERR, "missing option flag");
 			i = argc;
 			break;
 		}
@@ -416,7 +482,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		if( arg[2] == 0 ){
 			optargv = argv[i++];
 			if( optargv == 0 ){
-				fprintf( stderr, "missing option '%c' value", c );
+				FPRINTF( STDERR, "missing option '%c' value", c );
 				i = argc;
 				break;
 			}
@@ -465,9 +531,9 @@ void getargs( int argc, char *argv[], char *envp[] )
 		int fd;
 		fd = open( errorfile, O_APPEND | O_WRONLY, 0600 );
 		if( fd < 0 ){
-			fprintf( stderr, "cannot open error log file '%s'", errorfile );
+			FPRINTF( STDERR, "cannot open error log file '%s'", errorfile );
 		} else {
-			fprintf( stderr, "using error log file '%s'", errorfile );
+			FPRINTF( STDERR, "using error log file '%s'", errorfile );
 			if( fd != 2 ){
 				dup2(fd, 2 );
 				close(fd);
@@ -475,40 +541,38 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 	}
 	if( debug ){
-		fprintf(stderr, "%s command: ", name );
+		FPRINTF(STDERR, "%s command: ", name );
 		for( i = 0; i < argc; ++i ){
-			fprintf(stderr, "%s ", argv[i] );
+			FPRINTF(STDERR, "%s ", argv[i] );
 		}
-		fprintf( stderr, "\n" );
-		fflush(stderr);
+		FPRINTF( STDERR, "\n" );
 	}
 	if( debug ){
-		fprintf(stderr, "FILTER decoded options: " );
-		fprintf(stderr,"accntfile '%s'\n", accntfile? accntfile : "null" );
-		fprintf(stderr,"accntname '%s'\n", accntname? accntname : "null" );
-		fprintf(stderr,"class '%s'\n", class? class : "null" );
-		fprintf(stderr,"errorfile '%s'\n", errorfile? errorfile : "null" );
-		fprintf(stderr,"format '%s'\n", format? format : "null" );
-		fprintf(stderr,"host '%s'\n", host? host : "null" );
-		fprintf(stderr,"indent, %d\n", indent);
-		fprintf(stderr,"job '%s'\n", job? job : "null" );
-		fprintf(stderr,"length, %d\n", length);
-		fprintf(stderr,"literal, %d\n", literal);
-		fprintf(stderr,"login '%s'\n", login? login : "null" );
-		fprintf(stderr,"printer '%s'\n", printer? printer : "null" );
-		fprintf(stderr,"queuename '%s'\n", queuename? queuename : "null" );
-		fprintf(stderr,"statusfile '%s'\n", statusfile? statusfile : "null" );
-		fprintf(stderr,"width, %d\n", width);
-		fprintf(stderr,"xwidth, %d\n", xwidth);
-		fprintf(stderr,"ylength, %d\n", ylength);
-		fprintf(stderr,"zopts '%s'\n", zopts? zopts : "null" );
+		FPRINTF(STDERR, "FILTER decoded options: " );
+		FPRINTF(STDERR,"accntfile '%s'\n", accntfile? accntfile : "null" );
+		FPRINTF(STDERR,"accntname '%s'\n", accntname? accntname : "null" );
+		FPRINTF(STDERR,"class '%s'\n", class? class : "null" );
+		FPRINTF(STDERR,"errorfile '%s'\n", errorfile? errorfile : "null" );
+		FPRINTF(STDERR,"format '%s'\n", format? format : "null" );
+		FPRINTF(STDERR,"host '%s'\n", host? host : "null" );
+		FPRINTF(STDERR,"indent, %d\n", indent);
+		FPRINTF(STDERR,"job '%s'\n", job? job : "null" );
+		FPRINTF(STDERR,"length, %d\n", length);
+		FPRINTF(STDERR,"literal, %d\n", literal);
+		FPRINTF(STDERR,"login '%s'\n", login? login : "null" );
+		FPRINTF(STDERR,"printer '%s'\n", printer? printer : "null" );
+		FPRINTF(STDERR,"queuename '%s'\n", queuename? queuename : "null" );
+		FPRINTF(STDERR,"statusfile '%s'\n", statusfile? statusfile : "null" );
+		FPRINTF(STDERR,"width, %d\n", width);
+		FPRINTF(STDERR,"xwidth, %d\n", xwidth);
+		FPRINTF(STDERR,"ylength, %d\n", ylength);
+		FPRINTF(STDERR,"zopts '%s'\n", zopts? zopts : "null" );
 
-		fprintf(stderr, "FILTER environment: " );
+		FPRINTF(STDERR, "FILTER environment: " );
 		for( i = 0; (arg = envp[i]); ++i ){
-			fprintf(stderr,"%s\n", arg );
+			FPRINTF(STDERR,"%s\n", arg );
 		}
-		fprintf(stderr, "RUID: %d, EUID: %d\n", (int)getuid(), (int)geteuid() );
-		fflush(stderr);
+		FPRINTF(STDERR, "RUID: %d, EUID: %d\n", (int)getuid(), (int)geteuid() );
 	}
 }
 
@@ -517,11 +581,9 @@ void getargs( int argc, char *argv[], char *envp[] )
  */
 void suspend_ofilter(void)
 {
-	if(debug)fprintf(stderr,"FILTER suspending\n");
-	fflush(stderr);
+	if(debug)FPRINTF(STDERR,"FILTER suspending\n");
 	kill(getpid(), SIGSTOP);
-	if(debug)fprintf(stderr,"FILTER awake\n");
-	fflush(stderr);
+	if(debug)FPRINTF(STDERR,"FILTER awake\n");
 }
 /******************************************
  * prototype filter()
@@ -532,17 +594,17 @@ void suspend_ofilter(void)
 void filter_pgm(char *stop)
 {
 	int c;
-	int state, i, xout;
+	int state, i, xout, lastc;
 	int lines = 0;
 
 	/*
 	 * do whatever initializations are needed
 	 */
-	/* fprintf(stderr, "filter ('%s')\n", stop ? stop : "NULL" ); */
+	/* FPRINTF(STDERR, "filter ('%s')\n", stop ? stop : "NULL" ); */
 	/*
 	 * now scan the input string, looking for the stop string
 	 */
-	xout = state = 0;
+	lastc = xout = state = 0;
 	npages = 1;
 
 	while( (c = getchar()) != EOF ){
@@ -552,7 +614,7 @@ void filter_pgm(char *stop)
 				lines -= length;
 				++npages;
 			}
-			if( !literal && crlf == 0 ){
+			if( !literal && crlf == 0 && lastc != '\r' ){
 				putchar( '\r' );
 			}
 		}
@@ -568,10 +630,6 @@ void filter_pgm(char *stop)
 				++state;
 				if( stop[state] == 0 ){
 					state = 0;
-					if( fflush(stdout) ){
-						logerr( "fflush returned error" );
-						break;
-					}
 					suspend_ofilter();
 				}
 			} else if( state ){
@@ -586,18 +644,16 @@ void filter_pgm(char *stop)
 		} else {
 			putchar( c );
 		}
+		lastc = c;
 	}
 	if( ferror( stdin ) ){
-		logerr( "error on stdin");
+		logerr( "error on STDIN");
 	}
 	for( i = 0; i < state; ++i ){
 		putchar( stop[i] );
 	}
 	if( lines > 0 ){
 		++npages;
-	}
-	if( fflush(stdout) ){
-		logerr( "fflush returned error" );
 	}
 	doaccnt();
 }
@@ -624,12 +680,12 @@ char *Time_str(int shortform, time_t t)
 	}
 	tmptr = localtime( &t );
 	if( shortform ){
-		plp_snprintf( buffer, sizeof(buffer),
+		SNPRINTF( buffer, sizeof(buffer))
 			"%02d:%02d:%02d.%03d",
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
 			(int)(tv.tv_usec/1000) );
 	} else {
-		plp_snprintf( buffer, sizeof(buffer),
+		SNPRINTF( buffer, sizeof(buffer))
 			"%d-%02d-%02d-%02d:%02d:%02d.%03d",
 			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,

@@ -15,16 +15,23 @@
 #
 SRC = @srcdir@
 VPATH=${SRC}
-MANINSTCMD =	@INSTALL_MAN@
+INSTALL=@INSTALL@
 
 # change MANEXT to .gz or .Z if you use compressed manpages.
-MANEXT =	
+MANEXT =
 
 ## fix up prefix to be a make variable
 prefix = @prefix@
 MAN =		@mandir@
 SHELL =		@SHELL@
 
+# Install man pages in compressed form.
+# COMPRESS     = compression utility
+# COMPRESS_DIR = man compressed directory
+# COMPRESS_EXT = man extension for compressed files
+COMPRESS_DIR=
+COMPRESS_EXT=.gz
+COMPRESS=gzip -c
 
 all:
 
@@ -52,28 +59,30 @@ update:
 # Standard man install target.
 #
 install:
-	-${SRC}/mkinstalldirs $(MAN)/man1 $(MAN)/man5 $(MAN)/man8
-	for i in ${SRC}/*.1; do $(MANINSTCMD) $$i $(MAN)/man1/`basename $$i`$(MANEXT); done
-	for i in ${SRC}/*.5; do $(MANINSTCMD) $$i $(MAN)/man5/`basename $$i`$(MANEXT); done
-	for i in ${SRC}/*.8; do $(MANINSTCMD) $$i $(MAN)/man8/`basename $$i`$(MANEXT); done
-
-# Install man pages in compressed form.
-#
-install.zman:
-	for i in ${SRC}/*.1; do compress < $$i >/tmp/_; \
-		 $(MANINSTCMD) /tmp/_ $(MAN)/man1.Z/$$i$(MANEXT); rm -f /tmp/_; done
-	for i in ${SRC}/*.5; do compress < $$i >/tmp/_; \
-		 $(MANINSTCMD) /tmp/_ $(MAN)/man5.Z/$$i$(MANEXT); rm -f /tmp/_; done
-	for i in ${SRC}/*.8; do compress < $$i >/tmp/_; \
-		 $(MANINSTCMD) /tmp/_ $(MAN)/man8.Z/$$i$(MANEXT); rm -f /tmp/_; done
+	for suffix in 1 2 3 4 5 6 7 8 ; do \
+	  if ls ${SRC}/*.$${suffix} >/dev/null 2>&1 ; then \
+	    if [ ! -d $(DESTDIR)$(MAN)/man$${suffix} ] ; then \
+		    echo ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
+		    ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
+	    fi; \
+	    for i in ${SRC}/*.$$suffix; do \
+		echo   $(INSTALL) -m 644 $$i $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+		$(INSTALL)   -m 644 $$i $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+	    done; \
+	  fi; \
+	done;
 
 uninstall:
-	for i in *.1; do rm -f $(MAN)/man1/$$i$(MANEXT); done
-	for i in *.5; do rm -f $(MAN)/man5/$$i$(MANEXT); done
-	for i in *.8; do rm -f $(MAN)/man8/$$i$(MANEXT); done
+	for suffix in 1 2 3 4 5 6 7 8 ; do \
+	  if ls ${SRC}/*.$${suffix} >/dev/null 2>&1 ; then \
+	    for i in ${SRC}/*.$$suffix; do \
+		echo   rm $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+		rm   $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
+	    done; \
+	  fi; \
+	done;
 	
 realclean mostlyclean distclean:: clean
-	rm -f Makefile
 
 clean::
 

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 5.5 1999/10/09 20:48:36 papowell Exp papowell $";
+"$Id: linksupport.c,v 5.19 2000/11/27 23:19:53 papowell Exp papowell $";
 
 
 /***************************************************************************
@@ -43,7 +43,6 @@
  *    if lf != 0, send LF at end of line
  *    if ack != 0, wait for ack
  *      returns 0 if successful, LINK errorcode if failure
- *      closes socket and sets to LINK errorcode if a failure
  *
  * int Link_copy( char *host, int *socket, int timeout,
  *	char *src, int fd, double count)
@@ -51,7 +50,6 @@
  *    do a timeout on both reading from fd and writing to socket;
  *    if timeout == 0, wait indefinately
  *      returns 0 if successful, LINK errorcode if failure
- *      closes socket and sets to LINK errorcode if a failure
  *
  * int Link_line_read(char *host, int *socket, int timeout,
  *	  char *str, int *count )
@@ -79,7 +77,6 @@
  *    if timeout == 0, wait indefinately
  *    returns 0 *count not read
  *            LINK errorcode otherwise
- *    socket is closed on error.
  *
  * int Link_file_read( char *host, int *socket, int readtimeout,
  *    int writetimeout, int fd, int *count, int *ack )
@@ -148,6 +145,7 @@
 #include "lp.h"
 #include "linksupport.h"
 #include "gethostinfo.h"
+#include "errorcodes.h"
 /**** ENDINCLUDE ****/
 
 /***************************************************************************
@@ -174,47 +172,24 @@
 
 int Link_setreuse( int sock )
 {
-	int option = 0;
+	int status = 0;
 #ifdef SO_REUSEADDR
-	int len;
-	len = sizeof( option );
-
-	if( getsockopt( sock, SOL_SOCKET, SO_REUSEADDR, (char *)&option, &len ) ){
-		logerr_die( LOG_ERR, "Link_setreuse: getsockopt SO_REUSEADDR failed" );
-	}
-	DEBUGF(DNW4) ("SO_REUSEADDR: socket %d, value %d", sock, option);
-	if( option == 0 ){
-		option = 1;
-		if( setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
-				(char *)&option, sizeof(option) ) ){
-			logerr_die( LOG_ERR, "Link_setreuse: setsockopt SO_REUSEADDR failed" );
-		}
-	}
+	int option = 1;
+	status =  setsockopt( sock, SOL_SOCKET, SO_REUSEADDR,
+			(char *)&option, sizeof(option) );
 #endif
-	return( option );
+	return( status );
 }
 
 int Link_setkeepalive( int sock )
 {
-	int option = 0;
+	int status = 0;
 #ifdef SO_KEEPALIVE
-	int len;
-
-	len = sizeof( option );
-
-	if( getsockopt( sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&option, &len ) ){
-		logerr_die( LOG_ERR, "Link_setkeepalive: getsockopt SO_KEEPALIVE failed" );
-	}
-	DEBUGF(DNW4) ("SO_KEEPALIVE: socket %d, value %d", sock, option);
-	if( option == 0 ){
-		option = 1;
-		if( setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE,
-				(char *)&option, sizeof(option) ) ){
-			logerr_die( LOG_ERR, "Link_setkeepalive: setsockopt KEEPALIVE failed" );
-		}
-	}
+	int option = 1;
+	status = setsockopt( sock, SOL_SOCKET, SO_KEEPALIVE,
+			(char *)&option, sizeof(option) );
 #endif
-	return( option );
+	return( status );
 }
 
 /*
@@ -259,6 +234,7 @@ int getconnection ( char *hostname, char *dest_port,
 	int range;				/* range of ports */
 	char *use_host;
 	int address_count = 0;
+	int incoming_port;
 
 	/*
 	 * find the address
@@ -278,7 +254,7 @@ int getconnection ( char *hostname, char *dest_port,
 			LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
 		dest_sin.sin_family = LookupHost_IP.h_addrtype;
 		if( LookupHost_IP.h_length > sizeof( dest_sin.sin_addr ) ){
-			fatal( LOG_ALERT, "getconnection: addresslength outsize value");
+			FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
 		}
 		memcpy( &dest_sin.sin_addr,
 			LookupHost_IP.h_addr_list.list[address_count],
@@ -289,7 +265,7 @@ int getconnection ( char *hostname, char *dest_port,
 	}
 	dest_sin.sin_port = Link_dest_port_num(dest_port);
 	if( dest_sin.sin_port == 0 ){
-		logerr(LOG_INFO,
+		LOGERR(LOG_INFO)
 		"getconnection: bad port number for LPD connection!\n"
 		"check 'lpd-port' in configuration file, or the\n"
 		"/etc/services file for a missing 'printer 515/tcp' entry" );
@@ -386,18 +362,21 @@ int getconnection ( char *hostname, char *dest_port,
 	plp_block_all_signals( &oblock );
 	if( UID_root ) (void)To_root();
 	sock = socket(AF_Protocol(), connection_type, 0);
+	Max_open(sock);
 	err = errno;
 	if( UID_root ) (void)To_uid( euid );
 	plp_set_signal_mask( &oblock, 0 );
 	if( sock < 0 ){
 		errno = err;
-		logerr_die(LOG_DEBUG, "getconnection: socket call failed");
+		LOGERR_DIE(LOG_DEBUG) "getconnection: socket call failed");
 	}
 	DEBUGF(DNW4) ("getconnection: socket %d", sock);
 
 	/* bind to an outgoing port if you need to */
 	if( minportno || bindto ){
+		incoming_port = ntohs(Link_dest_port_num(0));
 		do{
+			status = -1;
 			if( bindto == 0 ){
 				src_sin.sin_family = AF_Protocol();
 				src_sin.sin_addr.s_addr = INADDR_ANY;
@@ -406,17 +385,20 @@ int getconnection ( char *hostname, char *dest_port,
 				src_sin.sin_addr = ((struct sockaddr_in *)bindto)->sin_addr;
 			}
 			if( port_number > maxportno ) port_number = minportno;
+
+			/* make sure we don't use the port 515 */
+			if( port_number == incoming_port ) continue;
+
 			DEBUGF(DNW2) ("getconnection: trying port %d, bound to addr '%s'",
 				port_number, inet_ntoa(src_sin.sin_addr) );
 			src_sin.sin_port = htons((u_short)(port_number));
-			port_number++;
 
 			/* set the reuse_addr before bind */
 			status = 0;
 			if( Reuse_addr_DYN ){
 				/* set up the 'resuse' flag on socket, or you may not be
 					able to reuse a port for up to 10 minutes */
-				/* we do the next without interrupts */
+				/* we do the next without interrupts and as root */
 				plp_block_all_signals( &oblock );
 				if( UID_root ) (void)To_root();
 				status = Link_setreuse( sock );
@@ -426,8 +408,7 @@ int getconnection ( char *hostname, char *dest_port,
 				DEBUGF(DNW2) ("getconnection: sock %d, reuse status %d",
 					sock, status );
 				if( status < 0 ){
-					close( sock );
-					sock = LINK_OPEN_FAIL;
+					LOGERR(LOG_ERR) "getconnection: set SO_REUSEADDR failed" );
 				}
 			}
 			if( status >= 0 ){
@@ -449,14 +430,15 @@ int getconnection ( char *hostname, char *dest_port,
 				err = errno;
 				if( UID_root ) (void)To_uid( euid );
 				plp_set_signal_mask( &oblock, 0 );
-				DEBUGF(DNW2) ("getconnection: sock %d, keepalive status %d",
-					sock, status );
+				if( status < 0 ){
+					LOGERR(LOG_ERR) "getconnection: set SO_KEEPALIVE failed" );
+				}
 			}
-		} while( status < 0 && ++port_count < range );
+		} while( ++port_number && status < 0 && ++port_count < range );
 		if( status < 0 ){
 			close( sock );
 			sock = LINK_OPEN_FAIL;
-			logerr( LOG_DEBUG, "getconnection: cannot bind to port");
+			LOGERR(LOG_DEBUG) "getconnection: cannot bind to port");
 			return( sock );
 		}
 	}
@@ -496,8 +478,11 @@ int getconnection ( char *hostname, char *dest_port,
 		} 
 		++connect_count;
 		if( connect_count < range
-			&& ((Retry_ECONNREFUSED_DYN && err == ECONNREFUSED)
-			|| err == EADDRINUSE) ){
+			&& (
+				(Retry_ECONNREFUSED_DYN && err == ECONNREFUSED)
+				|| err == EADDRINUSE
+				|| err == EADDRNOTAVAIL
+				) ){
 			goto again;
 		}
 		/* try next address in list */
@@ -510,7 +495,7 @@ int getconnection ( char *hostname, char *dest_port,
 	} else {
 		i = sizeof( src_sin );
 		if( getsockname( sock, (struct sockaddr *)&src_sin, &i ) < 0 ){
-			logerr_die(LOG_ERR,"getconnnection: getsockname failed" );
+			LOGERR_DIE(LOG_ERR)"getconnnection: getsockname failed" );
 		}
 		DEBUGF(DNW1)( "getconnection: sock %d, src ip %s, port %d", sock,
 			inet_ntoa( src_sin.sin_addr ), ntohs( src_sin.sin_port ) );
@@ -556,7 +541,7 @@ void Set_linger( int sock, int n )
 #endif
 }
 /*
- * int Link_listen()
+ * int Link_listen(port)
  *  1. opens a socket on the current host
  *  2. set the REUSE option on socket
  *  3. does a bind to port determined by Link_dest_port_num();
@@ -570,6 +555,7 @@ int Link_listen( void )
 	int euid;					/* euid at time of call*/
 	int port;
 	int err;
+	char *s;
 
 	/*
 	 * Zero out the sockaddr_in struct
@@ -578,17 +564,47 @@ int Link_listen( void )
 	/*
 	 * Get the destination host address and remote port number to connect to.
 	 */
+	if( Lpd_port_DYN == 0 ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) "Link_listen: LOGIC ERROR- no Lpd_port_DYN value");
+	}
 	sinaddr.sin_family = AF_Protocol();
 	sinaddr.sin_addr.s_addr = INADDR_ANY;
-	sinaddr.sin_port = Link_dest_port_num(0);
+	sinaddr.sin_port = Link_dest_port_num(Lpd_port_DYN);
 	port = ntohs( sinaddr.sin_port );
-	DEBUGF(DNW4)("Link_listen: lpd port %d", port );
+	if( (s = safestrchr( Lpd_port_DYN, '%')) ){
+		*s = 0;
+		if( Find_fqdn( &LookupHost_IP, Lpd_port_DYN ) ){
+			/*
+			 * Get the destination host address and remote port number to connect to.
+			 */
+			DEBUGF(DNW1)("Link_listen: fqdn found %s, h_addr_list count %d",
+				LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
+			sinaddr.sin_family = LookupHost_IP.h_addrtype;
+			if( LookupHost_IP.h_length > sizeof( sinaddr.sin_addr ) ){
+				FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
+			}
+			/* use the first address in the list */
+			memcpy( &sinaddr.sin_addr,
+				LookupHost_IP.h_addr_list.list[0],
+				LookupHost_IP.h_length );
+		} else if( inet_pton( AF_Protocol(), Lpd_port_DYN, &sinaddr.sin_addr ) != 1 ){
+			*s = '%';
+			Errorcode = JABORT;
+			FATAL(LOG_ERR) "Link_listen: bad lpd_port value, cannot resolve IP address '%s'",
+				Lpd_port_DYN );
+		}
+		*s = '%';
+	}
+	DEBUGF(DNW2)("Link_listen: bind to IP '%s' port %d",
+		inet_ntoa( sinaddr.sin_addr ), ntohs( sinaddr.sin_port ) );
 
 	euid = geteuid();
 	if( UID_root ) (void)To_root();
 	errno = 0;
 	status = (sock = socket (AF_Protocol(), SOCK_STREAM, 0)) < 0
 		|| Link_setreuse( sock ) < 0
+		|| (Keepalive_DYN && Link_setkeepalive( sock ) < 0)
 		|| bind(sock, (struct sockaddr *)&sinaddr, sizeof(sinaddr)) < 0;
 	err = errno;
 	if( UID_root ) (void)To_uid( euid );
@@ -605,8 +621,9 @@ int Link_listen( void )
 	status = listen(sock, 64 );	/* backlog of 10 is inadequate */
 	err = errno;
 	if( status ){
-		logerr_die(LOG_ERR, "Link_listen: listen failed");
+		LOGERR_DIE(LOG_ERR) "Link_listen: listen failed");
 		(void)close( sock );
+		sock = -1;
 		err = errno;
 		return( LINK_OPEN_FAIL );
 	}
@@ -645,7 +662,7 @@ int Link_open_list( char *hostlist, char **result,
 
 	Init_line_list( &list );
 	DEBUGFC(DNW4){
-		logDebug(
+		LOGDEBUG(
 	"Link_open_line_list_type: hostlist '%s', port '%s', timeout %d, bindto 0x%lx",
 		hostlist, port, timeout, Cast_ptr_to_long(bindto) );
 	}
@@ -672,12 +689,16 @@ int Link_open_list( char *hostlist, char **result,
 /***************************************************************************
  * void Link_close( int socket )
  *    closes the link to the remote host
+ *  We first do a shutdown(*sock,1) and THEN do a close
  ***************************************************************************/
 
 void Link_close( int *sock )
 {
+	char buf[SMALLBUFFER];
 	DEBUGF(DNW4) ("Link_close: closing socket %d", *sock );
 	if( *sock >= 0 ){
+		shutdown(*sock,1);
+		while( read(*sock,buf,sizeof(buf)) > 0 );
 		(void)close(*sock);
 	}
 	*sock = -1;
@@ -792,14 +813,11 @@ int Link_send( char *host, int *sock, int timeout,
 				FD_SET_FIX((fd_set *))0,
 				FD_SET_FIX((fd_set *))0, &delay );
 			if( i > 0 ){
-				logmsg( LOG_ERR,
+				LOGMSG( LOG_ERR)
 				"Link_send: PROTOCOL ERROR - pending input from '%s' after ACK received",
 				host );
 			}
 		}
-	}
-	if( status && status != LINK_ACK_FAIL ){
-		Link_close( sock );
 	}
 	DEBUGF(DNW1)("Link_send: final status %s", Link_err_str(status) );
 	return (status);
@@ -834,18 +852,19 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 		return (LINK_OPEN_FAIL);
 	}
 	/* do the read */
-	while( status == 0 && count > 0 ){
+	while( status == 0 && (count > 0 || pcount == 0) ){
 		len = sizeof(buf);
-		if( len > count ) len = count;
+		if( pcount && len > count ) len = count;
 		/* do the read with timeout */
 		len = Read_fd_len_timeout( readtimeout, fd, buf, len );
 		err = errno;
+		DEBUGF(DNW4)("Link_copy: read %d bytes", len );
 
-		if( len > 0 ) count -= len;
+		if( pcount && len > 0 ) count -= len;
 
 		if( Alarm_timed_out || len <= 0 ){
 			/* EOF on input */
-			if( count > 0 ){
+			if( pcount && count > 0 ){
 				DEBUGF(DNW4)(
 					"Link_copy: read from '%s' failed, %0.0f bytes left - %s",
 					src, count, Errormsg(err) );
@@ -857,7 +876,6 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 			break;
 		}
 
-		DEBUGF(DNW4)("Link_copy: read %d bytes", len );
 		len = Write_fd_len_timeout(writetimeout, *sock, buf, len );
 
 		DEBUGF(DNW4)("Link_copy: write done, status %d", len );
@@ -887,7 +905,7 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 			FD_SET_FIX((fd_set *))0,
 			FD_SET_FIX((fd_set *))0, &delay );
 		if( i != 0 ){
-			logmsg( LOG_ERR,
+			LOGMSG( LOG_ERR)
 			"Link_copy: PROTOCOL ERROR - pending input from '%s' after transfer",
 			host );
 		}
@@ -901,21 +919,35 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
  * Link_dest_port_num ( char *port )
  * Get the destination port number
  * look up the service in the service directory using getservent
+ * returned in the network standard order
+ *  The port specification can be host%port
+ *  if none is specified the Lpd_port_DYN used
  ***************************************************************************/
 int Link_dest_port_num( char *port )
 {
 	struct servent *sp;
 	int port_num = 0;
+	char *s;
 
 	if( port == 0 ) port = Lpd_port_DYN;
-	if( port == 0 ) port = "printer";
+	if( port == 0 ){
+		Errorcode = JABORT;
+		FATAL( LOG_ERR)
+			"Link_dest_port_num: LOGIC ERROR! no port number!");
+	}
+	if( (s = strchr(port, '%')) ) port = s+1;
 
-	if ((sp = getservbyname(port, "tcp")) == 0) {
-		DEBUGF(DNW4)("getservbyname(\"%s\",tcp) failed", port);
-		/* try integer value */
-		port_num = htons( atoi( port ) );
-	} else {
-		port_num = sp->s_port;
+	s = 0;
+	port_num = strtol(port,&s,0);
+	port_num = htons(port_num);
+	if( s == 0 || *s ){
+		if( (sp = getservbyname(port, "tcp")) == 0) {
+			DEBUGF(DNW4)("getservbyname(\"%s\",tcp) failed", port);
+			/* try integer value */
+			port_num = 0;
+		} else {
+			port_num = sp->s_port;
+		}
 	}
 	DEBUGF(DNW1)("Link_dest_port_num: port %s = %d", port, ntohs( port_num ) );
 	return (port_num);
@@ -936,7 +968,6 @@ int Link_dest_port_num( char *port )
  *    returns 0 if '\n' read at or before *count characters
  *            0 if EOF and no characters read (*count == 0)
  *            LINK errorcode otherwise
- *    socket is closed on error.
  ***************************************************************************/
 
 int Link_line_read(char *host, int *sock, int timeout,
@@ -950,7 +981,7 @@ int Link_line_read(char *host, int *sock, int timeout,
 	max = *count;
 	*count = 0;
 	buf[0] = 0;
-	DEBUGF(DNW4) ("Link_line_read: reading %d from '%s' on %d, timeout %d",
+	DEBUGF(DNW1) ("Link_line_read: reading %d from '%s' on %d, timeout %d",
 		max, host, *sock, timeout );
 	/* check for valid socket */
 	if(*sock < 0) {
@@ -991,14 +1022,9 @@ int Link_line_read(char *host, int *sock, int timeout,
 		DEBUGF(DNW4)("Link_line_read: no LF on line from '%s'", host );
 		status = LINK_LONG_LINE_FAIL;
 	}
+	*count = len;
 
-	if( status ){
-		Link_close( sock );
-	} else {
-		*count = len;
-	}
-
-	DEBUGF(DNW4)("Link_line_read: status %d", status );
+	DEBUGF(DNW4)("Link_line_read: status %d, len %d", status, len );
 	errno = err;
 	return( status );
 }
@@ -1015,7 +1041,6 @@ int Link_line_read(char *host, int *sock, int timeout,
  *    if timeout == 0, wait indefinately
  *    returns 0 *count not read
  *        LINK errorcode otherwise
- *    socket is closed on error.
  ***************************************************************************/
 
 int Link_read(char *host, int *sock, int timeout,
@@ -1042,7 +1067,7 @@ int Link_read(char *host, int *sock, int timeout,
 	 */
 	i = Read_fd_len_timeout(timeout, *sock, str, len );
 	err = errno;
-	if( i > 0 ){
+	if( i >= 0 ){
 		*count = i;
 	}
 	DEBUGFC(DNW2){
@@ -1051,7 +1076,7 @@ int Link_read(char *host, int *sock, int timeout,
 		if( i > 0 ){
 			safestrncpy( shortpart, str );
 		}
-		logDebug( "Link_read: wanted %d, got %d, start='%s'",
+		LOGDEBUG( "Link_read: wanted %d, got %d, start='%s'",
 			len, i, shortpart );
 	}
 
@@ -1063,10 +1088,6 @@ int Link_read(char *host, int *sock, int timeout,
 		DEBUGF(DNW2)("Link_read: read %d from '%s' failed, returned %d - %s",
 			len, host, i, Errormsg(err) );
 		status = LINK_TRANSFER_FAIL;
-	}
-
-	if( status || len == 0){
-		Link_close( sock );
 	}
 
 	errno = err;
@@ -1096,8 +1117,10 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 	int status;				/* status of operation */
 	int err;					/* error */
 	double len;
+	double readcount;
 
 	len = i = status = cnt = 0;	/* shut up GCC */
+	readcount = 0;
 	*ack = 0;
 	DEBUGF(DNW1) ("Link_file_read: reading %0.0f from '%s' on %d",
 		*count, host, *sock );
@@ -1112,10 +1135,10 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 
 	/* do the read */
 	len = *count;
-	while( status == 0 && len > 0 ){
+	while( status == 0 && (*count == 0 || len > 0) ){
 		DEBUGF(DNW2)("Link_file_read: doing data read" );
 		l = sizeof(str);
-		if( l > len ) l = len;
+		if( *count && l > len ) l = len;
 		i = Read_fd_len_timeout( readtimeout, *sock, str, l );
 		err = errno;
 		if( Alarm_timed_out ){
@@ -1123,7 +1146,8 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 			status = LINK_TRANSFER_FAIL;
 		} else if( i > 0 ){
 			DEBUGF(DNW2)("Link_file_read: len %0.0f, readlen %d, read %d", len, l, i );
-			len -= i;
+			if( *count ) len -= i;
+			readcount += i;
 			cnt = Write_fd_len_timeout(writetimeout, fd, str, i );
 			err = errno;
 			if( Alarm_timed_out || cnt < 0 ){
@@ -1131,15 +1155,21 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 					i, fd, Errormsg(err) );
 				status = LINK_TRANSFER_FAIL; 
 			}
-		} else {
+		} else if( *count ){
 			DEBUGF(DNW2)("Link_file_read: read from '%s' failed - %s",
 				host, Errormsg(err) );
 			status = LINK_TRANSFER_FAIL;
+		} else {
+			break;
 		}
 	}
-	*count -= len;
+	if( *count ){
+		*count -= len;
+	} else {
+		*count = readcount;
+	}
 
-	if( status == 0 && ack ){
+	if( *count && status == 0 && ack ){
 		DEBUGF(DNW2)("Link_file_read: doing end marker byte read" );
 		i = Read_fd_len_timeout(readtimeout, *sock, str, 1 );
 		err = errno;
@@ -1158,33 +1188,9 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 			DEBUGF(DNW2)("Link_file_read: EOF and no end marker" );
 		} else {
 			DEBUGF(DNW2)("Link_file_read: end marker read from '%s' failed - %s",
-				len, host, i, Errormsg(err) );
+				host, Errormsg(err) );
 			status = LINK_TRANSFER_FAIL;
 		}
-#if 0
-We do not need to check this any more
-		if( status == 0 ){
-			/* check to see if you have some additional stuff pending */
-			fd_set readfds;
-			struct timeval delay;
-
-			memset( &delay,0,sizeof(delay));
-			FD_ZERO( &readfds );
-			FD_SET( *sock, &readfds );
-			i = select( *sock+1,
-				FD_SET_FIX((fd_set *))&readfds,
-				FD_SET_FIX((fd_set *))0,
-				FD_SET_FIX((fd_set *))0, &delay );
-			if( i != 0 ){
-				logmsg( LOG_ERR,
-				"Link_file_read: PROTOCOL ERROR - pending input from '%s' after transfer",
-				host );
-			}
-		}
-#endif
-	}
-	if( status ){
-		Link_close( sock );
 	}
 
 	DEBUGF(DNW2)("Link_file_read: status %d", status );
@@ -1200,18 +1206,26 @@ We do not need to check this any more
 #endif
 
 
+/* PAIR(LINK_OPEN_FAIL), */
+/* PAIR(LINK_TRANSFER_FAIL), */
+/* PAIR(LINK_ACK_FAIL), */
+/* PAIR(LINK_FILE_READ_FAIL), */
+/* PAIR(LINK_LONG_LINE_FAIL), */
+/* PAIR(LINK_BIND_FAIL), */
+/* PAIR(LINK_PERM_FAIL), */
+
  static struct link_err {
     char *str;
     int value;
 } link_err[] = {
 { "NO ERROR", 0 },
-PAIR(LINK_OPEN_FAIL),
-PAIR(LINK_TRANSFER_FAIL),
-PAIR(LINK_ACK_FAIL),
-PAIR(LINK_FILE_READ_FAIL),
-PAIR(LINK_LONG_LINE_FAIL),
-PAIR(LINK_BIND_FAIL),
-PAIR(LINK_PERM_FAIL),
+{"ERROR OPENING CONNECTION",LINK_OPEN_FAIL},
+{"ERROR TRANSFERRING DATA",LINK_TRANSFER_FAIL},
+{"NONZERO RFC1179 ERROR CODE FROM SERVER",LINK_ACK_FAIL},
+{"ERROR TRANSFERRING FILE",LINK_FILE_READ_FAIL},
+{"COMMAND TOO LONG FOR RFC1179, POSSIBLE BUFFER OVERRUN ATTEMPT", LINK_LONG_LINE_FAIL},
+{"CANNOT BIND TO PORT - POSSIBLE DENIAL OF SERVICE ATTACK", LINK_BIND_FAIL},
+{"NO PERMISSIONS TO MANANGE SOCKET- MAY NEED SUID INSTALLATION", LINK_BIND_FAIL},
 {0,0}
 };
 
@@ -1221,11 +1235,17 @@ const char *Link_err_str (int n)
     static char buf[40];
 	const char *s = 0;
 
-	for( i = 0; link_err[i].str && link_err[i].value != n; ++i );
+	/* DEBUG1("Link_err_str: %d\n", n ); */
+	for( i = 0; link_err[i].str && link_err[i].value != n; ++i ){
+		/* DEBUG1("Link_err_str: %d = '%s'\n", link_err[i].value,
+			link_err[i].str	); */
+	}
+	/* DEBUG1("Link_err_str: %d = '%s'\n", link_err[i].value,
+		link_err[i].str	); */
 	s = link_err[i].str;
 	if( s == 0 ){
 		s = buf;
-		(void) plp_snprintf (buf, sizeof(buf), "link error %d", n);
+		(void) SNPRINTF (buf, sizeof(buf)) "link error %d", n);
 	}
     return(s);
 }
@@ -1235,7 +1255,6 @@ const char *Link_err_str (int n)
  PAIR(ACK_STOP_Q),
  PAIR(ACK_RETRY),
  PAIR(ACK_FAIL),
- PAIR(LINK_ACK_FAIL),
  {0,0}
 };
 
@@ -1250,7 +1269,7 @@ const char *Ack_err_str (int n)
 	s = ack_err[i].str;
 	if( s == 0 ){
 		s = buf;
-		(void) plp_snprintf (buf, sizeof(buf), "ack error %d", n);
+		(void) SNPRINTF (buf, sizeof(buf)) "ack error %d", n);
 	}
     return(s);
 }
@@ -1259,7 +1278,7 @@ int AF_Protocol(void)
 {
 	/* we now know if we are using IPV4 or IPV6 from configuration */
 	int af_protocol = AF_INET;
-#if defined(IN6_ADDR)
+#if defined(IPV6)
 	if( IPV6Protocol_DYN ){
 		af_protocol = AF_INET6;
 # if defined(HAVE_RESOLV_H) && defined(RES_USE_INET6) && defined(HAVE_RES)
@@ -1284,7 +1303,7 @@ int AF_Protocol(void)
 int inet_pton( int family, const char *strptr, void *addr )
 {
 	if( family != AF_INET ){
-		fatal( LOG_ERR, "inet_pton: bad family '%d'", family );
+		FATAL(LOG_ERR) "inet_pton: bad family '%d'", family );
 	}
 #if defined(HAVE_INET_ATON)
 	return( inet_aton( strptr, addr ) );
@@ -1313,12 +1332,12 @@ int inet_pton( int family, const char *strptr, void *addr )
  * strptr = string where to place
  * len    = length
  ***************************************************************************/
-const char *inet_ntop( int family, const void *addr,
+ const char *inet_ntop( int family, const void *addr,
 	char *str, size_t len )
 {
 	char *s;
 	if( family != AF_INET ){
-		fatal( LOG_ERR, "inet_ntop: bad family '%d'", family );
+		FATAL(LOG_ERR) "inet_ntop: bad family '%d'", family );
 	}
 	s = inet_ntoa(((struct in_addr *)addr)[0]);
 	mystrncpy( str, s, len );
@@ -1349,7 +1368,7 @@ const char *inet_ntop_sockaddr( struct sockaddr *addr,
 		a = &((struct sockaddr_in6 *)addr)->sin6_addr;
 #endif
 	} else {
-		fatal( LOG_ERR, "inet_ntop_sockaddr: bad family '%d'",
+		FATAL(LOG_ERR) "inet_ntop_sockaddr: bad family '%d'",
 			addr->sa_family );
 	}
 	return( inet_ntop( addr->sa_family, a, str, len ) );

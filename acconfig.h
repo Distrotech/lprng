@@ -32,6 +32,12 @@
 #undef __CHAR_UNSIGNED__
 #endif
 
+/* Define the chooser routine */
+#undef CHOOSER_ROUTINE
+
+/* Define the clear program */
+#undef CLEAR
+
 /* Define if the closedir function returns void instead of int.  */
 #undef CLOSEDIR_VOID
 
@@ -52,10 +58,13 @@
 #undef DIRENT
 
 /* Define if you want to disable force_localhost default  */
-#undef DISABLE_FORCE_LOCALHOST
+#undef FORCE_LOCALHOST
+
+/* Define locale directory */
+#undef LOCALEDIR
 
 /* Define if you want to disable lpd_bounce default  */
-#undef DISABLE_LPD_BOUNCE
+#undef LPD_BOUNCE
 
 /* Define to 1 if NLS is requested.  */
 #undef ENABLE_NLS
@@ -89,8 +98,11 @@
 /* Define if you don't have vprintf but do have _doprnt.  */
 #undef HAVE_DOPRNT
 
+/* Define if <errno.h> */
+#undef HAVE_ERRNO
+
 /* Define if <errno.h> contains a declaration for extern int errno */
-#undef HAVE_ERRNO_DECL
+#undef HAVE_DECL_ERRNO
 
 /* Define if flock definition available */
 #undef HAVE_FLOCK_DEF
@@ -116,6 +128,10 @@
 /* Define if you have Kerberos 4 krb_sendauth defined in include file */
 #undef HAVE_KRB_AUTH_DEF
 
+/* Define if you have Kerberos 5 xfree and variants */
+#undef HAVE_KRB5_XFREE
+#undef HAVE_KRB_XFREE
+
 /* Define if your locale.h file contains LC_MESSAGES.  */
 #undef HAVE_LC_MESSAGES
 
@@ -136,6 +152,12 @@
 
 /* Define if you have a openlog prototype.  */
 #undef HAVE_OPENLOG_DEF
+
+/* Define if you have a outch prototype.  */
+#undef HAVE_OUTCH_DEF
+
+/* Define if quad_t is present on the system  */
+#undef HAVE_QUAD_T
 
 /* Define if _res defined */
 #undef HAVE_RES
@@ -181,7 +203,7 @@
 #undef HAVE_SYS_ERRLIST
 
 /* Define if sys_errlist is defined.  */
-#undef HAVE_SYS_ERRLIST_DEF
+#undef HAVE_DECL_SYS_ERRLIST
 
 /* Define if syslog() defined */
 #undef HAVE_SYSLOG_DEF
@@ -190,7 +212,8 @@
 #undef HAVE_SYS_NERR
 
 /* Define if sys_nerr has definition.  */
-#undef HAVE_SYS_NERR_DEF
+#undef HAVE_SYS_NERR
+#undef HAVE_DECL_SYS_NERR
 
 /* Define if sys_siglist has the signal strings. */
 #undef HAVE_SYS_SIGLIST
@@ -215,6 +238,9 @@
 
 /* Define if your struct tm has tm_zone.  */
 #undef HAVE_TM_ZONE
+
+/* Define if tputs() has definition  */
+#undef HAVE_TPUTS_DEF
 
 /* Define if you don't have tm_zone but do have the external array
    tzname.  */
@@ -259,6 +285,12 @@
 /* IRIX */
 #undef IRIX
 
+/* KERBEROS */
+#undef KERBEROS
+
+/* MIT_KERBEROS4 */
+#undef MIT_KERBEROS4
+
 /* Define if long int is 64 bits.  */
 #undef LONG_64_BITS
 
@@ -294,6 +326,9 @@
 /* Define to `long' if <sys/types.h> doesn't define.  */
 #undef off_t
 
+/* Define the order routine */
+#undef ORDER_ROUTINE
+
 /* make autoconf happy */
 #undef OSNAME
 #undef OSVERSION
@@ -311,11 +346,12 @@
 /* Define if you need to in order for stat and other things to work.  */
 #undef _POSIX_SOURCE
 
-/* Define if quad_t is NOT present on the system  */
-#undef quad_t
 
 /* Define as the return type of signal handlers (int or void).  */
 #undef RETSIGTYPE
+
+/* Define if a setuid compromise is possible */
+#undef SETUID_CHECK
 
 /* Define if the setvbuf function takes the buffering type as its second
    argument and the buffer pointer as the third, as on System V
@@ -342,9 +378,6 @@
 
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
-
-/* Define if you have the ANSI C header files.  */
-#undef STDLIB_DEFINES_RANDOM
 
 /* Define if you have struct stat with st_mtime_nsec */
 #undef ST_MTIMENSEC
@@ -378,6 +411,9 @@
 /* Define for Encore UMAX 4.3 that has <inq_status/cpustats.h>
    instead of <sys/cpustats.h>.  */
 #undef UMAX4_3
+
+/* Define if we the user specifies an include file */
+#undef USER_INCLUDE
 
 /* Define if we are to use the old sgttyb structure and <sgtty.h>. */
 #undef USE_SGTTYB

@@ -1,4 +1,4 @@
-.ds VE LPRng-3.6.12
+.ds VE LPRng-3.7.1
 .TH LPBANNER 1 \*(VE "LPRng"
 .ig
 lpbanner.1,v 3.33 1998/03/29 18:37:49 papowell Exp
@@ -65,11 +65,21 @@ String used on banner as main title.
 String used on banner as class.
 .IP "\fB\-? \fIvalue\fR" 5
 All other options and arguments provided by LPRng are ignored.
+.SH "EXIT STATUS"
+.PP
+The following exit values are returned:
+.TP 15
+.B "zero (0)"
+Successful completion.
+.TP
+.B "non-zero (!=0)"
+An error occurred.
 .SH "SEE ALSO"
 .LP
 lpd.conf(5),
 lpc(8),
 lpd(8),
+checkpc(8),
 lpr(1),
 lpq(1),
 lprm(1),

@@ -1,14 +1,14 @@
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
- * Copyright 1988-1999, Patrick Powell, San Diego, CA
+ * Copyright 1988-2000, Patrick Powell, San Diego, CA
  *     papowell@astart.com
  * See LICENSE for conditions of use.
  *
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getopt.c,v 5.1 1999/09/12 21:32:37 papowell Exp papowell $";
+"$Id: getopt.c,v 5.4 2000/10/11 17:07:18 papowell Exp papowell $";
 
 
 #include "lp.h"
@@ -85,7 +85,7 @@ int Getopt (int argc, char *argv[], char *optstring)
 	if (option == '-') {
 		if( *next_opt ){
 			if( Opterr ){
-				(void) fprintf (stderr, "--X option form illegal\n" );
+				(void) FPRINTF (STDERR, "--X option form illegal\n" );
 				return('?');
 			}
 		}
@@ -96,7 +96,7 @@ int Getopt (int argc, char *argv[], char *optstring)
 	 */
 	if ((match = (char *) safestrchr (optstring, option)) == 0 ){
 		if( Opterr ){
-		    (void) fprintf (stderr, "%s: Illegal option '%c'\n", Name, option);
+		    (void) FPRINTF (STDERR, "%s: Illegal option '%c'\n", Name, option);
 		}
 		return( '?' );
 	}
@@ -117,7 +117,7 @@ int Getopt (int argc, char *argv[], char *optstring)
 			}
 		}
 		if( Optarg == 0 && Opterr ) {
-			(void) fprintf (stderr,
+			(void) FPRINTF (STDERR,
 				"%s: missing argument for '%c'\n", Name, option);
 			option = '?';
 		}
