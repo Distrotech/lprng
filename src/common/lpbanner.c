@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpbanner.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
+"$Id: lpbanner.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
 
 #include "lp.h"
 
@@ -1666,7 +1666,7 @@ void Out_line( void )
 	int i, l;
 	char *str;
 	bline[sizeof(bline)-1] = 0;
-	if( width < sizeof(bline) ) bline[width] = 0;
+	if( width < (int)sizeof(bline) ) bline[width] = 0;
 	for( str = bline, i = strlen(str);
 		i > 0 && (l = write( 1, str, i)) > 0;
 		i -= l, str += l );

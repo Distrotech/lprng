@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendmail.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: sendmail.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -65,7 +65,7 @@ void Sendmail_to_user( int retval, struct job *job )
 		if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 	}
 	if( opname ){
-		n = strlen(msg);
+		n = safestrlen(msg);
 		SNPRINTF( msg+n, sizeof(msg)-n) "%s'%s'",n?" and ":"", opname );
 		SNPRINTF(buffer,sizeof(buffer))
 		"%s: %s\n", mailname?"CC":"To", opname );

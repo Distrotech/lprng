@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: krb5_auth.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
+"$Id: krb5_auth.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -384,7 +384,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 	options |= KRB5_DEFAULT_OPTIONS;
 
 	if ((retval = krb5_init_context(&context))){
-		SNPRINTF( err, errlen) "%s '%s'",
+		SNPRINTF( err, errlen)
 			"%s krb5_init_context failed - '%s' ",
 			Is_server?"on server":"on client",
 			error_message(retval) );
@@ -601,7 +601,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 
 	cksum_data.data = host;
-	cksum_data.length = strlen(host);
+	cksum_data.length = safestrlen(host);
 
 	if((retval = krb5_auth_con_init(context, &auth_context))){
 		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
@@ -927,7 +927,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 		/* pipe must have closed, return 0 */
 		SNPRINTF( err, errlen) "des_read: "
 		"Read error: length received %d != expected %d.",
-				cc, net_len);
+				(int)cc, (int)net_len);
 		return(-1);
 	}
 	/* decrypt info */
@@ -1133,7 +1133,7 @@ int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 		Host_IP.h_length );
 
 	*sock = Link_open_list( RemoteHost_DYN, real_host, 0, connect_timeout, 
-				(struct sockaddr *)&sinaddr, 1 );
+				(struct sockaddr *)&sinaddr, 0 );
 	if( *sock < 0 ){
 		/* this is to fix up the error message */
 		return(JSUCC);
@@ -1154,7 +1154,7 @@ int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 		RemotePrinter_DYN, host);
 	SNPRINTF(line, sizeof(line)) "%c%s\n", REQ_K4AUTH, RemotePrinter_DYN);
 	status = Link_send(host, sock, connect_timeout, line,
-		strlen(line), &ack);
+		safestrlen(line), &ack);
 	DEBUG1("Send_krb4_auth: krb4 auth request ACK status %d, ack %d", status, ack );
 	if( status ){
 		SETSTATUS(job) "Printer %s@%s does not support krb4 authentication",
@@ -1183,7 +1183,7 @@ int Send_krb4_auth( struct job *job, int *sock, char **real_host,
 	}
 	if(status){
 		SNPRINTF(errmsg, errlen) "cannot read status from %s@%s - %s",
-			RemotePrinter_DYN, host );
+			RemotePrinter_DYN, host, krb4_err_str(status));
 		shutdown(*sock,1);
 		return JFAIL;
 	} else {
@@ -1473,8 +1473,8 @@ int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 	}
 	if( error[0] ){
 		DEBUG2("Krb5_send: writing error to file '%s'", error );
-		if( strlen(error) < errlen-2 ){
-			memmove( error+1, error, strlen(error)+1 );
+		if( safestrlen(error) < errlen-2 ){
+			memmove( error+1, error, safestrlen(error)+1 );
 			error[0] = ' ';
 		}
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){

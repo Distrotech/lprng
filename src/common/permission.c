@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: permission.c,v 1.27 2002/04/01 17:54:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -23,39 +23,39 @@
 
  struct keywords permwords[] = {
 
-{"ACCEPT", 0, P_ACCEPT},
-{"AUTH", 0, P_AUTH},
-{"AUTHFROM", 0, P_AUTHFROM},
-{"AUTHJOB", 0, P_AUTHJOB},
-{"AUTHSAMEUSER", 0, P_AUTHSAMEUSER},
-{"AUTHTYPE", 0, P_AUTHTYPE},
-{"AUTHUSER", 0, P_AUTHUSER},
-{"CONTROLLINE", 0, P_CONTROLLINE},
-{"DEFAULT", 0, P_DEFAULT},
-{"FORWARD", 0, P_FORWARD},
-{"GROUP", 0, P_GROUP},
-{"HOST", 0, P_HOST},
-{"IFIP", 0, P_IFIP},
-{"IP", 0, P_IP},
-{"LPC", 0, P_LPC},
-{"NOMATCHFOUND", 0, 0},
-{"NOT", 0, P_NOT},
-{"PORT", 0, P_PORT},
-{"PRINTER", 0, P_PRINTER},
-{"REJECT", 0, P_REJECT},
-{"REMOTEGROUP", 0, P_REMOTEGROUP},
-{"REMOTEHOST", 0, P_REMOTEHOST},
-{"REMOTEIP", 0, P_REMOTEIP},
-{"REMOTEPORT", 0, P_REMOTEPORT},
-{"REMOTEUSER", 0, P_REMOTEUSER},
-{"SAMEHOST", 0, P_SAMEHOST},
-{"SAMEUSER", 0, P_SAMEUSER},
-{"SERVER", 0, P_SERVER},
-{"SERVICE", 0, P_SERVICE},
-{"USER", 0, P_USER},
-{"UNIXSOCKET", 0, P_UNIXSOCKET},
+{"ACCEPT", 0, P_ACCEPT,0,0,0,0},
+{"AUTH", 0, P_AUTH,0,0,0,0},
+{"AUTHFROM", 0, P_AUTHFROM,0,0,0,0},
+{"AUTHJOB", 0, P_AUTHJOB,0,0,0,0},
+{"AUTHSAMEUSER", 0, P_AUTHSAMEUSER,0,0,0,0},
+{"AUTHTYPE", 0, P_AUTHTYPE,0,0,0,0},
+{"AUTHUSER", 0, P_AUTHUSER,0,0,0,0},
+{"CONTROLLINE", 0, P_CONTROLLINE,0,0,0,0},
+{"DEFAULT", 0, P_DEFAULT,0,0,0,0},
+{"FORWARD", 0, P_FORWARD,0,0,0,0},
+{"GROUP", 0, P_GROUP,0,0,0,0},
+{"HOST", 0, P_HOST,0,0,0,0},
+{"IFIP", 0, P_IFIP,0,0,0,0},
+{"IP", 0, P_IP,0,0,0,0},
+{"LPC", 0, P_LPC,0,0,0,0},
+{"NOMATCHFOUND", 0, 0,0,0,0,0},
+{"NOT", 0, P_NOT,0,0,0,0},
+{"PORT", 0, P_PORT,0,0,0,0},
+{"PRINTER", 0, P_PRINTER,0,0,0,0},
+{"REJECT", 0, P_REJECT,0,0,0,0},
+{"REMOTEGROUP", 0, P_REMOTEGROUP,0,0,0,0},
+{"REMOTEHOST", 0, P_REMOTEHOST,0,0,0,0},
+{"REMOTEIP", 0, P_REMOTEIP,0,0,0,0},
+{"REMOTEPORT", 0, P_REMOTEPORT,0,0,0,0},
+{"REMOTEUSER", 0, P_REMOTEUSER,0,0,0,0},
+{"SAMEHOST", 0, P_SAMEHOST,0,0,0,0},
+{"SAMEUSER", 0, P_SAMEUSER,0,0,0,0},
+{"SERVER", 0, P_SERVER,0,0,0,0},
+{"SERVICE", 0, P_SERVICE,0,0,0,0},
+{"USER", 0, P_USER,0,0,0,0},
+{"UNIXSOCKET", 0, P_UNIXSOCKET,0,0,0,0},
 
-{0}
+{0,0,0,0,0,0,0}
 };
 
 char *perm_str( int n )
@@ -65,7 +65,7 @@ char *perm_str( int n )
 int perm_val( char *s )
 {
 	if( !s )return(0);
-	if( strlen(s) == 1 && isupper(cval(s)) ){
+	if( safestrlen(s) == 1 && isupper(cval(s)) ){
 		return( P_CONTROLLINE );
 	}
 	return(Get_keyval(s,permwords));
@@ -363,8 +363,8 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 
 			case P_UNIXSOCKET:
 				m = 1;
-				/* check succeeds if remotehost is localhost and port == 0 */
-				m = (Same_host(check->remotehost,&Localhost_IP) || check->port != 0);
+				/* check succeeds if connection via unix socket */
+				m = !check->unix_socket;
 				if( invert ) m = !m;
 				break;
 
@@ -619,7 +619,7 @@ int ingroup( char *group, const char *user )
 		Free_line_list(&users);
 	} else if( (grent = getgrnam( group )) ){
 		DEBUGF(DDB3)("ingroup: group id: %d\n", grent->gr_gid);
-		if( pwent && (pwent->pw_gid == grent->gr_gid) ){
+		if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
 			DEBUGF(DDB3)("ingroup: user default group id: %d\n", pwent->pw_gid);
 			result = 0;
 		} else for( members = grent->gr_mem; result && *members; ++members ){
@@ -633,7 +633,7 @@ int ingroup( char *group, const char *user )
 			DEBUGF(DDB3)("ingroup: group name '%s'", grent->gr_name);
 			/* now do match against group */
 			if( Globmatch( group, grent->gr_name ) == 0 ){
-				if( pwent && (pwent->pw_gid == grent->gr_gid) ){
+				if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
 					DEBUGF(DDB3)("ingroup: user default group id: %d\n",
 					pwent->pw_gid);
 					result = 0;
@@ -661,15 +661,20 @@ void Dump_perm_check( char *title,  struct perm_check *check )
 {
 	char buffer[SMALLBUFFER];
 	if( title ) LOGDEBUG( "*** perm_check %s ***", title );
+	buffer[0] = 0;
 	if( check ){
 		LOGDEBUG(
 		"  user '%s', rmtuser '%s', printer '%s', service '%c', lpc '%s'",
 		check->user, check->remoteuser, check->printer, check->service, check->lpc );
 		Dump_host_information( "  host", check->host );
 		Dump_host_information( "  remotehost", check->remotehost );
-		LOGDEBUG( "  ip '%s' port %d",
+/*
+		LOGDEBUG( "  ip '%s' port %d, unix_socket %d",
 			inet_ntop_sockaddr( &check->addr, buffer, sizeof(buffer)),
-			check->port);
+			check->port, check->unix_socket );
+*/
+		LOGDEBUG( "  port %d, unix_socket %d",
+			check->port, check->unix_socket );
 		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s'",
 			check->authtype, check->authfrom, check->authuser );
 	}
@@ -695,7 +700,6 @@ void Perm_check_to_list( struct line_list *list, struct perm_check *check )
 	if( check->remotehost ){
 		Set_str_value( list, HOST, check->remotehost->fqdn );
 	}
-	Set_str_value( list, ADDR, inet_ntop_sockaddr( &check->addr, buffer, sizeof(buffer)));
 	Set_decimal_value( list, PORT, check->port );
 	Set_str_value( list, AUTHTYPE, check->authtype );
 	Set_str_value( list, AUTHFROM, check->authfrom );

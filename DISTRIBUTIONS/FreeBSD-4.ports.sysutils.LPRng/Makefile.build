@@ -84,9 +84,15 @@ checkit:
 	pkg_delete ${DISTNAME}
 	${MAKE} -f Makefile.build port
 
+plist:
+	f=/usr/ports/*/${PORTNAME}/Makefile; \
+	if [ -f $$f ] ; then sed -n '1,/^$$/p' $$f >a; \
+		 sed  '1,/^$$/d' Makefile >>a; \
+		 mv a Makefile; \
+	fi
+
 # Automated PLIST and INSTALL generation
 #   - I wonder why more scripts don't have this, it would make life easier
-plist:
 #
 # First, create a new set of directories where your port can be
 # installed
@@ -127,11 +133,9 @@ plist:
 	echo  '@unexec if [ -f %D/etc/lprngtool.conf ]; then cmp -s %D/etc/lprngtool.conf.sample %D/etc/lprngtool.conf && rm -f %D/etc/lprngtool.conf || echo "If you are permanently removing this port, you should do a ``rm ${PKG_PREFIX}/etc/lprngtool.conf`` to remove config files left." | fmt ; fi' >${PLIST}; \
 	fi
 	@echo Installed files 
-	@echo Installed files 
-	(cd ${TROOT}${PREFIX} && find . -type f)
 	(cd ${TROOT}${PREFIX} && find . -type f) | \
 	${SED} -e 's/..//' -e '/info.dir/d' -e '/man[0-9]/d' \
-	  -e '/etc.*conf$$/d' -e '/etc.*printcap$$/d' \
+	  -e '/etc.*conf$$/d' -e '/etc.*printcap$$/d' | sort \
 	 >> ${PLIST}
 
 	(cd ${TROOT}${PREFIX} && find . -type f) | \
@@ -184,7 +188,7 @@ removeit:
 port:
 	rm -rf *.tgz *.bak /tmp/${PORTNAME}
 	mkdir /tmp/${PORTNAME}
-	-cp Makefile README.html distinfo files-* pkg-* /tmp/${PORTNAME}
+	-cp Makefile distinfo files-* pkg-* /tmp/${PORTNAME}
 	cd /tmp; shar ` find ${PORTNAME} -print` >${PORTNAME}.port ; rm -rf ${PORTNAME}
 	cd /tmp; sh ${PORTNAME}.port; cd ${PORTNAME}; ${MAKE} install
 

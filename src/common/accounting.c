@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: accounting.c,v 1.27 2002/04/01 17:54:50 papowell Exp $";
 
 
 #include "lp.h"
@@ -130,7 +130,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			*port++ = 0;
 			
 			DEBUG2("Do_accounting: connecting to '%s'%%'%s'",host,port);
-			if( (tempfd = Link_open(host,port,Connect_timeout_DYN,0, 0 )) < 0 ){
+			if( (tempfd = Link_open(host,port,timeout,0, 0 )) < 0 ){
 				err = errno;
 				Errorcode= JFAIL;
 				LOGERR_DIE(LOG_INFO)
@@ -165,8 +165,9 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 	if( tempfd > 0 && err == 0 && end == 0 && Accounting_check_DYN ){
 		msg[0] = 0;
 		len = 0;
-		while( len < sizeof(msg)-1
+		while( len < (int)(sizeof(msg)-1)
 			&& (n = read(tempfd,msg+len,sizeof(msg)-1-len)) > 0 ){
+			msg[len+n] = 0;
 			DEBUG1("Do_accounting: read %d, '%s'", n, msg );
 		}
 		Free_line_list(&args);

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: debug.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: debug.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 
 /*************************************************************
@@ -30,45 +30,45 @@
  struct keywords debug_vars[]		/* debugging variables */
  = {
 #if !defined(NODEBUG)
-    { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
-    { "network+1",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK },
-    { "network+2",0,FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK },
-    { "network+3",0,FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK },
-    { "network+4",0,FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK },
-    { "database",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
-    { "database+1",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK },
-    { "database+2",0,FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK },
-    { "database+3",0,FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK },
-    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK },
-    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK },
-    { "lpr",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
-    { "lpr+1",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK },
-    { "lpr+2",0,FLAG_K,(void *)&DbgFlag,DRECV2|DRECV1, DRECVMASK },
-    { "lpr+3",0,FLAG_K,(void *)&DbgFlag,DRECV3|DRECV2|DRECV1, DRECVMASK },
-    { "lpr+4",0,FLAG_K,(void *)&DbgFlag,DRECV4|DRECV3|DRECV2|DRECV1, DRECVMASK },
-    { "lpc",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
-    { "lpc+1",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK },
-    { "lpc+2",0,FLAG_K,(void *)&DbgFlag,DCTRL2|DCTRL1, DCTRLMASK },
-    { "lpc+3",0,FLAG_K,(void *)&DbgFlag,DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
-    { "lpc+4",0,FLAG_K,(void *)&DbgFlag,DCTRL4|DCTRL3|DCTRL2|DCTRL1, DCTRLMASK },
-    { "lprm",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
-    { "lprm+1",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK },
-    { "lprm+2",0,FLAG_K,(void *)&DbgFlag,DLPRM2|DLPRM1, DLPRMMASK },
-    { "lprm+3",0,FLAG_K,(void *)&DbgFlag,DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
-    { "lprm+4",0,FLAG_K,(void *)&DbgFlag,DLPRM4|DLPRM3|DLPRM2|DLPRM1, DLPRMMASK },
-    { "lpq",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
-    { "lpq+1",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK },
-    { "lpq+2",0,FLAG_K,(void *)&DbgFlag,DLPQ2|DLPQ1, DLPQMASK },
-    { "lpq+3",0,FLAG_K,(void *)&DbgFlag,DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
-    { "lpq+4",0,FLAG_K,(void *)&DbgFlag,DLPQ4|DLPQ3|DLPQ2|DLPQ1, DLPQMASK },
-    { "log",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
-    { "log+1",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK },
-    { "log+2",0,FLAG_K,(void *)&DbgFlag,DLOG2|DLOG1, DLOGMASK },
-    { "log+3",0,FLAG_K,(void *)&DbgFlag,DLOG3|DLOG2|DLOG1, DLOGMASK },
-    { "log+4",0,FLAG_K,(void *)&DbgFlag,DLOG4|DLOG3|DLOG2|DLOG1, DLOGMASK },
-    { "test",0,INTEGER_K,(void *)&DbgTest },
+    { "network",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
+    { "network+1",0,FLAG_K,(void *)&DbgFlag,DNW1, DNWMASK,0},
+    { "network+2",0,FLAG_K,(void *)&DbgFlag,DNW2|DNW1, DNWMASK,0},
+    { "network+3",0,FLAG_K,(void *)&DbgFlag,DNW3|DNW2|DNW1, DNWMASK,0},
+    { "network+4",0,FLAG_K,(void *)&DbgFlag,DNW4|DNW3|DNW2|DNW1, DNWMASK,0},
+    { "database",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
+    { "database+1",0,FLAG_K,(void *)&DbgFlag,DDB1, DDBMASK,0},
+    { "database+2",0,FLAG_K,(void *)&DbgFlag,DDB2|DDB1, DDBMASK,0},
+    { "database+3",0,FLAG_K,(void *)&DbgFlag,DDB3|DDB2|DDB1, DDBMASK,0},
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4|DDB3|DDB2|DDB1, DDBMASK,0},
+    { "database+4",0,FLAG_K,(void *)&DbgFlag,DDB4, DDBMASK,0},
+    { "lpr",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK,0},
+    { "lpr+1",0,FLAG_K,(void *)&DbgFlag,DRECV1, DRECVMASK,0},
+    { "lpr+2",0,FLAG_K,(void *)&DbgFlag,DRECV2|DRECV1, DRECVMASK,0},
+    { "lpr+3",0,FLAG_K,(void *)&DbgFlag,DRECV3|DRECV2|DRECV1, DRECVMASK,0},
+    { "lpr+4",0,FLAG_K,(void *)&DbgFlag,DRECV4|DRECV3|DRECV2|DRECV1, DRECVMASK,0},
+    { "lpc",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK,0},
+    { "lpc+1",0,FLAG_K,(void *)&DbgFlag,DCTRL1, DCTRLMASK,0},
+    { "lpc+2",0,FLAG_K,(void *)&DbgFlag,DCTRL2|DCTRL1, DCTRLMASK,0},
+    { "lpc+3",0,FLAG_K,(void *)&DbgFlag,DCTRL3|DCTRL2|DCTRL1, DCTRLMASK,0},
+    { "lpc+4",0,FLAG_K,(void *)&DbgFlag,DCTRL4|DCTRL3|DCTRL2|DCTRL1, DCTRLMASK,0},
+    { "lprm",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK,0},
+    { "lprm+1",0,FLAG_K,(void *)&DbgFlag,DLPRM1, DLPRMMASK,0},
+    { "lprm+2",0,FLAG_K,(void *)&DbgFlag,DLPRM2|DLPRM1, DLPRMMASK,0},
+    { "lprm+3",0,FLAG_K,(void *)&DbgFlag,DLPRM3|DLPRM2|DLPRM1, DLPRMMASK,0},
+    { "lprm+4",0,FLAG_K,(void *)&DbgFlag,DLPRM4|DLPRM3|DLPRM2|DLPRM1, DLPRMMASK,0},
+    { "lpq",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK,0},
+    { "lpq+1",0,FLAG_K,(void *)&DbgFlag,DLPQ1, DLPQMASK,0},
+    { "lpq+2",0,FLAG_K,(void *)&DbgFlag,DLPQ2|DLPQ1, DLPQMASK,0},
+    { "lpq+3",0,FLAG_K,(void *)&DbgFlag,DLPQ3|DLPQ2|DLPQ1, DLPQMASK,0},
+    { "lpq+4",0,FLAG_K,(void *)&DbgFlag,DLPQ4|DLPQ3|DLPQ2|DLPQ1, DLPQMASK,0},
+    { "log",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK,0},
+    { "log+1",0,FLAG_K,(void *)&DbgFlag,DLOG1, DLOGMASK,0},
+    { "log+2",0,FLAG_K,(void *)&DbgFlag,DLOG2|DLOG1, DLOGMASK,0},
+    { "log+3",0,FLAG_K,(void *)&DbgFlag,DLOG3|DLOG2|DLOG1, DLOGMASK,0},
+    { "log+4",0,FLAG_K,(void *)&DbgFlag,DLOG4|DLOG3|DLOG2|DLOG1, DLOGMASK,0},
+    { "test",0,INTEGER_K,(void *)&DbgTest,0,0,0},
 #endif
-    { (char *)0 }
+    { 0,0,0,0,0,0,0 }
 };
 
 /*
@@ -134,7 +134,7 @@ void Parse_debug (char *dbgstr, int interactive )
 			int lastflag = 0;
 			int nooutput = 0;
 		    FPRINTF (STDERR,
-	"debug usage: -D [ num | flag=num | flag=str | flag | flag@ | flag+N ]*\n");
+	"debug flags: [ num | flag=num | flag=str | flag | flag@ | flag+N ]*\n");
 		    FPRINTF (STDERR, "  flags recognized:");
 		    for (i = 0; list[i].keyword; i++) {
 				if( safestrchr( list[i].keyword, '+' ) ) continue;
@@ -169,7 +169,7 @@ void Parse_debug (char *dbgstr, int interactive )
 			}
 		    FPRINTF (STDERR, "\n");
 			Errorcode = JABORT;
-		    cleanup(0);
+			if( interactive > 0 ) cleanup(0);
 		}
 	}
 	Free_line_list(&l);

@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.9
+VERSION=3.8.10
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -51,6 +51,8 @@ AC_PATH_PROG(CHOWN,chown)dnl
 AC_SUBST(CHOWN)dnl
 AC_PATH_PROG(CHGRP,chgrp)dnl
 AC_SUBST(CHGRP)dnl
+AC_PATH_PROG(PRUTIL,pr)dnl
+AC_SUBST(PRUTIL)dnl
 
 
 dnl ----------------------------------------------------------------------------
@@ -1383,6 +1385,12 @@ dnl ---------------- START OF KERBEROS -----------------------------------------
 dnl Kerberos stuff again
 
 if test -n "$KERBEROS" ; then
+	if test -d /usr/kerberos/include; then
+		CPPFLAGS="$CPPFLAGS -I/usr/kerberos/include"
+	fi
+	if test -d /usr/kerberos/lib; then
+		LDFLAGS="$LDFLAGS -L/usr/kerberos/lib"
+	fi
 	dnl Kerberos 5 - release 1.1.1
 	found=
 	AC_CHECK_HEADERS(krb5.h,found=yes)
@@ -1534,7 +1542,8 @@ dnl ----------------- START OF OUTPUT ------------------------------------------
 
 
 if test "$ac_cv_prog_gcc" = yes; then
-	CFLAGS="$CFLAGS -Wall -Werror"
+	CFLAGS="$CFLAGS -g -W -Wall -Werror -Wno-unused "
+	CPPFLAGS="$CPPFLAGS -g -W -Wall -Werror -Wno-unused "
 fi;
 
 AC_OUTPUT(

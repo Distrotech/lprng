@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: errormsg.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: errormsg.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 
 #include "lp.h"
@@ -92,7 +92,7 @@ const char * Errormsg ( int err )
     {LOG_NOTICE, " (NOTICE)"},
     {LOG_INFO, " (INFO)"},
     {LOG_DEBUG, ""},
-    {0}
+    {0,0}
 };
 
  static char * putlogmsg(int kind)
@@ -136,7 +136,7 @@ const char * Errormsg ( int err )
 		int len;
 
 		Max_open( Syslog_fd);
-		len = strlen(msg);
+		len = safestrlen(msg);
 		msg[len] = '\n';
 		msg[len+1] = 0;
 		Write_fd_len( Syslog_fd, msg, len+1 );
@@ -188,31 +188,31 @@ const char * Errormsg ( int err )
 			setstatus( 0, "%s", log_buf );
 			use_syslog(kind, log_buf);
 		}
-		n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+		n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 		(void) SNPRINTF( s, n) "%s", Time_str(0,0) );
 		if (ShortHost_FQDN ) {
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) SNPRINTF( s, n) " %s", ShortHost_FQDN );
 		}
 		if(Debug || DbgFlag){
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) SNPRINTF(s, n) " [%d]", getpid());
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			if(Name) (void) SNPRINTF(s, n) " %s", Name);
-			n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			(void) SNPRINTF(s, n) " %s", putlogmsg(kind) );
 		}
-		n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+		n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 		(void) SNPRINTF(s, n) " %s", log_buf );
 	} else {
 		(void) SNPRINTF(stamp_buf, sizeof(stamp_buf)) "%s", log_buf );
 	}
 
-	if( strlen(stamp_buf) > sizeof(stamp_buf) - 8 ){
+	if( safestrlen(stamp_buf) > (int)sizeof(stamp_buf) - 8 ){
 		stamp_buf[sizeof(stamp_buf)-8] = 0;
-		strcpy(stamp_buf+strlen(stamp_buf),"...");
+		strcpy(stamp_buf+safestrlen(stamp_buf),"...");
 	}
-	n = strlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
+	n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 	(void) SNPRINTF(s, n) "\n" );
 
 
@@ -261,7 +261,7 @@ const char * Errormsg ( int err )
 	if( in_log == 0 ){
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
 		(void) VSNPRINTF(s, n) msg, ap);
 		log_backend (kind,log_buf);
 		in_log = 0;
@@ -293,7 +293,7 @@ const char * Errormsg ( int err )
 	if( in_log == 0 ){
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
 		(void) VSNPRINTF(s, n) msg, ap);
 		log_backend (kind, log_buf);
 		in_log = 0;
@@ -327,9 +327,9 @@ const char * Errormsg ( int err )
 		char *s;
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf)-4);
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
 		(void) VSNPRINTF(s, n) msg, ap);
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
 		if( err ) (void) SNPRINTF (s, n) " - %s", Errormsg (err));
 		log_backend (kind, log_buf);
 		in_log = 0;
@@ -363,9 +363,9 @@ const char * Errormsg ( int err )
 		char *s;
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) VSNPRINTF (s, n) msg, ap);
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		if( err ) (void) SNPRINTF (s, n) " - %s", Errormsg (err));
 		log_backend (kind, log_buf);
 		in_log = 0;
@@ -400,12 +400,12 @@ const char * Errormsg ( int err )
 	if( in_log == 0 ){
 		++in_log;
 		buffer[0] = 0;
-		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
+		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
 		(void) SNPRINTF(s, n) "Fatal error - ");
 
-		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
+		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
 		(void) VSNPRINTF (s, n) msg, ap);
-		n = strlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
+		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
 		(void) SNPRINTF (s, n) "\n" );
 
 		/* ignore error, we are dying anyways */
@@ -444,11 +444,11 @@ const char * Errormsg ( int err )
 	if( in_log ) return;
 	++in_log;
 	buffer[0] = 0;
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) SNPRINTF(s, n) "Warning - ");
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) VSNPRINTF (s, n) msg, ap);
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) SNPRINTF(s, n) "\n");
 
 	Write_fd_str( 2, buffer );
@@ -485,9 +485,9 @@ const char * Errormsg ( int err )
 	if( in_log ) return;
 	++in_log;
 	buffer[0] = 0;
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) VSNPRINTF (s, n) msg, ap);
-	n = strlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
+	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
     (void) SNPRINTF(s, n) "\n");
 
 	Write_fd_str( 2, buffer );
@@ -519,7 +519,7 @@ const char * Errormsg ( int err )
 
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
-		n = strlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
+		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
 		(void) VSNPRINTF(s, n) msg, ap);
 		log_backend(LOG_DEBUG, log_buf);
 		in_log = 0;
@@ -716,7 +716,7 @@ const char *Decode_status (plp_status_t *status)
 		(void) SNPRINTF (msg, sizeof(msg)) "died%s",
 			WCOREDUMP (*status) ? " and dumped core" : "");
 		if (WTERMSIG (*status)) {
-			(void) SNPRINTF(msg + strlen (msg), sizeof(msg)-strlen(msg))
+			(void) SNPRINTF(msg + safestrlen (msg), sizeof(msg)-safestrlen(msg))
 				 ", %s", Sigstr ((int) WTERMSIG (*status)));
 		}
     }

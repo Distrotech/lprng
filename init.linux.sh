@@ -30,6 +30,10 @@ fi
 
 RETVAL=0
 
+
+# ignore INT signal
+trap '' 2
+
 # See how we were called.
 case "$1" in
   start)

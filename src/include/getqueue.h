@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.19 2002/03/06 17:02:57 papowell Exp $
+ * $Id: getqueue.h,v 1.27 2002/04/01 17:54:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -22,7 +22,6 @@ EXTERN const char * ALL					DEFINE( = "all" );
 EXTERN const char * ATTEMPT				DEFINE( = "attempt" );
 EXTERN const char * AUTH				DEFINE( = "auth" );
 EXTERN const char * AUTHFROM			DEFINE( = "authfrom" );
-EXTERN const char * AUTHFROM_ID			DEFINE( = "authfrom_id" );
 EXTERN const char * AUTHTYPE			DEFINE( = "authtype" );
 EXTERN const char * AUTHUSER			DEFINE( = "authuser" );
 EXTERN const char * AUTOHOLD			DEFINE( = "autohold" );
@@ -117,6 +116,8 @@ EXTERN const char * QUEUENAME			DEFINE( = "Q" );
 EXTERN const char * QUEUE_CONTROL_FILE	DEFINE( = "queue_control_file" );
 EXTERN const char * QUEUE_STATUS_FILE	DEFINE( = "queue_status_file" );
 EXTERN const char * REDIRECT			DEFINE( = "redirect" );
+EXTERN const char * REMOTEHOST			DEFINE( = "remotehost" );
+EXTERN const char * REMOTEPORT			DEFINE( = "remoteport" );
 EXTERN const char * REMOTEUSER			DEFINE( = "remoteuser" );
 EXTERN const char * REMOVE_TIME			DEFINE( = "remove_time" );
 EXTERN const char * SD					DEFINE( = "sd" );
@@ -136,6 +137,7 @@ EXTERN const char * SUBSERVER			DEFINE( = "subserver" );
 EXTERN const char * TRACE				DEFINE( = "trace" );
 EXTERN const char * TRANSFERNAME		DEFINE( = "transfername" );
 EXTERN const char * OTRANSFERNAME		DEFINE( = "otransfername" );
+EXTERN const char * UNIXSOCKET			DEFINE( = "unixsocket" );
 EXTERN const char * UPDATE				DEFINE( = "update" );
 EXTERN const char * UPDATE_TIME			DEFINE( = "update_time" );
 EXTERN const char * USER				DEFINE( = "user" );
@@ -144,7 +146,7 @@ EXTERN const char * VALUE				DEFINE( = "value" );
 /* PROTOTYPES */
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
-		int only_queue_process, int create_db, int write_db, int *perr, int *pdone );
+		int only_queue_process, int *perr, int *pdone );
 char *Get_fd_image( int fd, int maxsize );
 char *Get_file_image( const char *file, int maxsize );
 int Get_fd_image_and_split( int fd,
@@ -158,7 +160,7 @@ int Get_file_image_and_split( const char *file,
 	int sort, const char *keysep, int uniq, int trim, int nocomments,
 	char **return_image );
 void Check_for_hold( struct job *job, struct line_list *spool_control );
-void Setup_job( struct job *job, struct line_list *spool_control, const char *dir,
+void Setup_job( struct job *job, struct line_list *spool_control,
 	const char *cf_name, const char *hf_name, int check_for_existence );
 int Get_hold_class( struct line_list *info, struct line_list *sq );
 void Append_Z_value( struct job *job, char *s );
@@ -207,7 +209,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 	char *xlate_format );
 int ordercomp(  const void *left, const void *right, const void *orderp);
 void Fix_control( struct job *job, char *filter, char *xlate_format );
-int Create_control( struct job *job, char *error, int errlen, char *auth_id,
+int Create_control( struct job *job, char *error, int errlen,
 	char *xlate_format );
 void Init_buf(char **buf, int *max, int *len);
 void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len );

@@ -1,5 +1,5 @@
 /**************************************************************************
- * Copyright 1994-2000 Patrick Powell, San Diego, CA <papowell@lprng.com>
+ * Copyright 1994-2002 Patrick Powell, San Diego, CA <papowell@lprng.com>
  **************************************************************************/
 
 /*
@@ -37,6 +37,8 @@
    Second Major Released Version - Tue May 23 10:43:44 PDT 2000
     Configuration and other items changed.  Read this doc.
     Treat this as a new version.
+   Minor Revision - Mon Apr  1 09:41:28 PST 2002
+     - fixed up some constants and casts 
    
    COPYRIGHT AND TERMS OF USE:
    
@@ -483,7 +485,7 @@ BUGS
  
  
  static char *const _id = "plp_snprintf V2000.08.18 Copyright Patrick Powell 1988-2000 "
- "$Id: plp_snprintf.c,v 1.19 2002/03/06 17:02:54 papowell Exp $"
+ "$Id: plp_snprintf.c,v 1.27 2002/04/01 17:54:55 papowell Exp $"
  " LOCAL REVISIONS: <NONE>";
 
 /* varargs declarations: */
@@ -528,6 +530,7 @@ union value {
 
 #undef CVAL 
 #define CVAL(s) (*((unsigned char *)s))
+#define safestrlen(s) ((s)?strlen(s):0)
 
 
  static char * plp_Errormsg ( int err, char *buffer );
@@ -553,7 +556,7 @@ int plp_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	int left;
 	char *buffer;
-	if( count < 0 ) count = 0;
+	if( (int)count < 0 ) count = 0;
 	left = count;
 	if( count == 0 ) str = 0;
 	buffer = str;
@@ -574,7 +577,7 @@ int plp_unsafe_vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 {
 	int left;
 	char *buffer;
-	if( count < 0 ) count = 0;
+	if( (int)count < 0 ) count = 0;
 	left = count;
 	if( count == 0 ) str = 0;
 	buffer = str;
@@ -905,7 +908,7 @@ fmtquad( char **buffer, int *left,
 		caps = 1;
 	}
 
-	for( i = 0; i < sizeof(quad_t); ++i ){
+	for( i = 0; i < (int)sizeof(quad_t); ++i ){
 		c = vvalue.qconvert[i];
 		convert[2*i] = 
 			(caps? "0123456789ABCDEF":"0123456789abcdef")[ (c >> 4) & 0xF];
@@ -914,7 +917,7 @@ fmtquad( char **buffer, int *left,
 	}
 	convert[2*i] = 0;
 
-	place = strlen(convert);
+	place = safestrlen(convert);
 	padlen = len - place;
 	if( padlen < 0 ) padlen = 0;
 	if( ljust ) padlen = -padlen;
@@ -948,7 +951,7 @@ fmtquad( char **buffer, int *left,
  static void mystrcat(char *dest, char *src )
 {
 	if( dest && src ){
-		dest += strlen(dest);
+		dest += safestrlen(dest);
 		strcpy(dest,src);
 	}
 }
@@ -972,13 +975,13 @@ fmtdouble( char **buffer, int *left,
 	if( ljust ) mystrcat(formatstr, "-" ); /* 1 */
 	if( zpad ) mystrcat(formatstr, "0" );	/* 1 */
 	if( len >= 0 ){
-		sprintf( formatstr+strlen(formatstr), "%d", len ); /* 3 */
+		sprintf( formatstr+safestrlen(formatstr), "%d", len ); /* 3 */
 	}
 	if( precision >= 0 ){
-		sprintf( formatstr+strlen(formatstr), ".%d", precision ); /* 3 */
+		sprintf( formatstr+safestrlen(formatstr), ".%d", precision ); /* 3 */
 	}
 	/* format string will be at most 10 chars long ... */
-	sprintf( formatstr+strlen(formatstr), "%c", fmt );
+	sprintf( formatstr+safestrlen(formatstr), "%c", fmt );
 	/* this is easier than trying to do the portable dtostr */
 	/* fprintf(stderr,"format string '%s'\n", formatstr); */
 	sprintf( convert, formatstr, value );

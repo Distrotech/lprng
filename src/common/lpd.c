@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
+"$Id: lpd.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
 
 
 #include "lp.h"
@@ -729,7 +729,6 @@ void usage(void)
 {
 	int i;
 	char *s;
-	FPRINTF( STDERR, "%s\n", Version );
 	for( i = 0; (s = msg[i]); ++i ){
 		if( i == 0 ){
 			FPRINTF( STDERR, _(s), Name);
@@ -737,7 +736,8 @@ void usage(void)
 			FPRINTF( STDERR, "%s", _(s) );
 		}
 	}
-	Parse_debug("=",1);
+	Parse_debug("=",-1);
+	FPRINTF( STDERR, "%s\n", Version );
 	exit(1);
 }
 

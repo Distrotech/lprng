@@ -1,0 +1,3 @@
+#!/usr/bin/perl -spi.bak
+s/strlen/safestrlen/g;
+s/safesafe/safe/g;

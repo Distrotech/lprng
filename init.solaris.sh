@@ -9,6 +9,10 @@
 #  (cd /etc/rc2.d; ln -s ../init.d/lprng S99lprng)
 
 
+
+# ignore INT signal
+trap '' 2
+
 case "$1" in
   start)
         # Start daemons.

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: gethostinfo.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: gethostinfo.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 /********************************************************************
  * char *get_fqdn (char *shorthost)
@@ -98,7 +98,7 @@ char *Find_fqdn( struct host_information *info, const char *shorthost )
 			shorthost );
 		return(0);
 	}
-	if( strlen(shorthost) > 64 ){
+	if( safestrlen(shorthost) > 64 ){
 		FATAL(LOG_ALERT) "Find_fqdn: hostname too long, HACKER ALERT '%s'",
 			shorthost );
 	}
@@ -415,10 +415,10 @@ int Same_host( struct host_information *host,
 						int n;
 						ls[0] = 0; rs[0] = 0;
 						for( n = 0; n < l1; ++n ){
-							SNPRINTF( ls + strlen(ls), 3) "%02x", h1[n] );
+							SNPRINTF( ls + safestrlen(ls), 3) "%02x", h1[n] );
 						}
 						for( n = 0; n < l1; ++n ){
-							SNPRINTF( rs + strlen(rs), 3) "%02x", h2[n] );
+							SNPRINTF( rs + safestrlen(rs), 3) "%02x", h2[n] );
 						}
 						LOGDEBUG("Same_host: comparing %s to %s, result %d",
 							ls, rs, result );
@@ -456,7 +456,7 @@ void Dump_host_information( char *title,  struct host_information *info )
 			SNPRINTF( msg, sizeof(msg)) "    [%d] 0x", i );
 			s = info->h_addr_list.list[i];
 			for( j = 0; j < info->h_length; ++j ){
-				len = strlen( msg );
+				len = safestrlen( msg );
 				SNPRINTF( msg+len, sizeof(msg)-len) "%02x",((unsigned char *)s)[j] );
 			}
 			LOGDEBUG( "%s", msg );
@@ -481,7 +481,7 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 	if( v == 0 ) return;
 	
 	DEBUG5("form_addr_and_mask: '%s'", v );
-	if( 4*addrlen+1 >= sizeof(buffer) ){
+	if( 4*addrlen+1 >= (int)(sizeof(buffer)) ){
 		FATAL(LOG_ERR)"form_addr_and_mask: addrlen too large - hacker attack?");
 	}
 	memset( addr, 0, addrlen );
@@ -509,18 +509,18 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
 			for( i = 0; i < bytecount; ++i ){
 				if( buffer[0] ) *t++ = '.';
 				strcpy(t,"255");
-				t += strlen(t);
+				t += safestrlen(t);
 			}
 			if( bitcount && i < addrlen ){
 				if( buffer[0] ) *t++ = '.';
 				SNPRINTF(t,6) "%d", (~((1<<(8-bitcount))-1))&0xFF);
-				t += strlen(t);
+				t += safestrlen(t);
 				++i;
 			}
 			for( ; i < addrlen; ++i ){
 				if( buffer[0] ) *t++ = '.';
 				strcpy(t,"0");
-				t += strlen(t);
+				t += safestrlen(t);
 			}
 			DEBUG6("form_addr_and_mask: len %d '%s'", m, buffer );
 			result = inet_pton(family, buffer, mask );

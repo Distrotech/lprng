@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: utilities.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: utilities.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 #include "lp.h"
 
@@ -186,7 +186,7 @@ int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len )
 int Write_fd_str( int fd, const char *msg )
 {
 	if( msg && *msg ){
-		return( Write_fd_len( fd, msg, strlen(msg) ));
+		return( Write_fd_len( fd, msg, safestrlen(msg) ));
 	}
 	return( 0 );
 }
@@ -202,7 +202,7 @@ int Write_fd_str( int fd, const char *msg )
 int Write_fd_str_timeout( int timeout, int fd, const char *msg )
 {
 	if( msg && *msg ){
-		return( Write_fd_len_timeout( timeout, fd, msg, strlen(msg) ) );
+		return( Write_fd_len_timeout( timeout, fd, msg, safestrlen(msg) ) );
 	}
 	return( 0 );
 }
@@ -442,6 +442,14 @@ int safestrcmp( const char *s1, const char *s2 )
 
 
 /* perform safe comparison, even with null pointers */
+int safestrlen( const char *s1 )
+{
+	if( s1 ) return(strlen(s1));
+	return(0);
+}
+
+
+/* perform safe comparison, even with null pointers */
 int safestrncmp( const char *s1, const char *s2, int len )
 {
 	if( (s1 == s2) && s1 == 0 ) return(0);
@@ -618,7 +626,7 @@ char *mystrncat( char *s1, const char *s2, int len )
 {
 	int size;
 	s1[len-1] = 0;
-	size = strlen( s1 );
+	size = safestrlen( s1 );
 	if( s2 && len - size > 0  ){
 		strncpy( s1+size, s2, len - size );
 	}
@@ -1086,7 +1094,7 @@ void Setup_uid(void)
  * 2. check to see if you need to do anything
  * 3. check to make sure you can
  ***************************************************************************/
- static int seteuid_wrapper( int to )
+ static int seteuid_wrapper( uid_t to )
 {
 	int err = errno;
 	uid_t euid;
@@ -1126,7 +1134,7 @@ void Setup_uid(void)
  * 2. check to see if you need to do anything
  * 3. check to make sure you can
  ***************************************************************************/
- static int setruid_wrapper( int to )
+ static int setruid_wrapper( uid_t to )
 {
 	int err = errno;
 	uid_t ruid;
@@ -1213,7 +1221,7 @@ int To_euid( int euid )
  * This is unrecoverable!
  */
 
-int setuid_wrapper(int to)
+int setuid_wrapper(uid_t to)
 {
 	int err = errno;
 	if( UID_root ){
@@ -1342,9 +1350,9 @@ int Set_full_group( int euid, int gid )
 			 */
 			char user[256];
 			safestrncpy(user,pw->pw_name);
-			if( strlen(user) != strlen(pw->pw_name) ){
-				FATAL(LOG_ERR) "Set_full_group: CONFIGURATION BOTCH! strlen of user name '%s' = %d larger than buffer size %d",
-					pw->pw_name, strlen(pw->pw_name), sizeof(user) );
+			if( safestrlen(user) != safestrlen(pw->pw_name) ){
+				FATAL(LOG_ERR) "Set_full_group: CONFIGURATION BOTCH! safestrlen of user name '%s' = %d larger than buffer size %d",
+					pw->pw_name, safestrlen(pw->pw_name), sizeof(user) );
 			}
 			if( initgroups(user, pw->pw_gid ) == -1 ){
 				err = errno;

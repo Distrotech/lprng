@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: child.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: child.c,v 1.27 2002/04/01 17:54:50 papowell Exp $";
 
 
 #include "lp.h"
@@ -308,10 +308,14 @@ plp_signal_t cleanup (int passed_signal)
 
 void Dump_unfreed_mem(char *title)
 {
+	char buffer[SMALLBUFFER];
+	buffer[0] = 0;
+	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %d\n",
+		title, getpid() );
 #if defined(DMALLOC)
+	{
 	extern int _dmalloc_outfile_fd;
 	extern char *_dmalloc_logpath;
-	char buffer[SMALLBUFFER];
 
 	if( _dmalloc_logpath && _dmalloc_outfile_fd < 0 ){
 		_dmalloc_outfile_fd = open( _dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -335,5 +339,6 @@ void Dump_unfreed_mem(char *title)
 	dmalloc_log_unfreed();
 	Write_fd_str(_dmalloc_outfile_fd, "***\n" );
 	exit(Errorcode);
+	}
 #endif
 }

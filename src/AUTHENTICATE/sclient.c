@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sclient.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: sclient.c,v 1.27 2002/04/01 17:54:50 papowell Exp $";
 
 
 /*
@@ -131,16 +131,16 @@ char *argv[];
 	fflush(STDOUT);
 	fflush(STDERR);
 	SNPRINTF(msg, sizeof(msg))"starting read from %d\n", sock );
-	write(1,msg, strlen(msg) );
+	write(1,msg, safestrlen(msg) );
 	while( (c = read( sock, buffer, sizeof(buffer) ) ) > 0 ){
 		buffer[c] = 0;
 		SNPRINTF(msg, sizeof(msg))
 			"read %d from fd %d '%s'\n", c, sock, buffer );
-		write( 1, msg, strlen(msg) );
+		write( 1, msg, safestrlen(msg) );
 	}
 	SNPRINTF(msg, sizeof(msg))
 		"last read status %d from fd %d\n", c, sock );
-	write( 1, msg, strlen(msg) );
+	write( 1, msg, safestrlen(msg) );
     return(0);
 }
 

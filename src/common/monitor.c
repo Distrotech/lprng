@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: monitor.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: monitor.c,v 1.27 2002/04/01 17:54:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -140,7 +140,7 @@ void usage(void)
 	
 
 
-int main(int argc, char *argv[], char *envp[] )
+int main(int argc, char *argv[] )
 {
 	int n, i, c, err, max_port = 0;
 	char *portname, *s;
@@ -254,8 +254,8 @@ int main(int argc, char *argv[], char *envp[] )
 						while( (s = safestrchr(in->buffer,'\n')) ){
 							*s++ = 0;
 							Decode(in->buffer);
-							memmove(in->buffer,s, strlen(s)+1 );
-							in->len = strlen(in->buffer);
+							memmove(in->buffer,s, safestrlen(s)+1 );
+							in->len = safestrlen(in->buffer);
 						}
 					} else {
 						FPRINTF( STDERR, "read error - %s\n",

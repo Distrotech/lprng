@@ -421,10 +421,6 @@
 /* Location of the UNIX socket */
 #undef UNIXSOCKETPATH
 
-/* Define if we want gdbm */
-#undef USE_GDBM
-#undef USE_GDBM_LIB
-
 /* Define if we the user specifies an include file */
 #undef USER_INCLUDE
 

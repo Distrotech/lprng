@@ -49,7 +49,6 @@ FILTER_DIR=@FILTER_DIR@
 LOCALEDIR=@LOCALEDIR@
 INIT=@INIT@
 USE_NLS=@USE_NLS@
-USE_GDBM=@USE_GDBM@
 LIBTOOL=@LIBTOOL@
 
 #=============================================================================
@@ -225,7 +224,7 @@ update:
 		s,package name \".*\",package name \"$${DIR}\",; \
 		s,^SCRIPTS=.*,SCRIPTS=$$S,;" \
 		configure.in lpd.perms.in \
-		DISTRIBUTIONS/*/Makefile DISTRIBUTIONS/Free*/README.html \
+		DISTRIBUTIONS/*/Makefile \
 		po/Makefile.in.in printcap
 	perl -spi -e 's,.*,"Project-Id-Version: $(PACKAGE) $(VERSION)\\n", if(/^"Project-Id/);' \
 		po/*.po
@@ -267,6 +266,7 @@ configure: configure.in
 	autoheader
 
 dist: update ci distclean tar send
+redist: ci distclean tar send
 
 send:
 	if [ -f ../SENDTO ] ; then (cd ..; sh SENDTO) ; fi

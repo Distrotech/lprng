@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: sendjob.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 
 #include "lp.h"
@@ -158,7 +158,7 @@ int Send_job( struct job *job, struct job *logjob,
 			SNPRINTF( msg, sizeof(msg))
 			"\nMake sure the remote host supports the LPD protocol");
 			if( geteuid() && getuid() ){
-				int v = strlen(msg);
+				int v = safestrlen(msg);
 				SNPRINTF( msg+v, sizeof(msg)-v)
 				"\nand accepts connections from this host and from non-privileged (>1023) ports");
 			}
@@ -217,16 +217,16 @@ int Send_job( struct job *job, struct job *logjob,
 			len = 0;
 			msg[0] = 0;
 			n = 0;
-			while( len < sizeof(msg)-1
+			while( len < (int)sizeof(msg)-1
 				&& (n = read(sock,msg+len,sizeof(msg)-len-1)) > 0 ){
 				msg[len+n] = 0;
 				DEBUG2("Send_job: read %d, '%s'", n, msg);
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
 					SETSTATUS(logjob) "error msg: '%s'", msg );
-					memmove(msg,s,strlen(s)+1);
+					memmove(msg,s,safestrlen(s)+1);
 				}
-				len = strlen(msg);
+				len = safestrlen(msg);
 			}
 			DEBUG2("Send_job: read %d, '%s'", n, msg);
 			if( len ) SETSTATUS(logjob) "error msg: '%s'", msg );
@@ -293,7 +293,7 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 			REQ_RECV, RemotePrinter_DYN );
 		ack = 0;
 		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
-			line, strlen(line), &ack ) )){
+			line, safestrlen(line), &ack ) )){
 			char *v;
 			if( (v = safestrchr(line,'\n')) ) *v = 0;
 			if( ack ){
@@ -344,7 +344,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 		if( s ) free(s); s = 0;
 		cf = Find_str_value(&job->info,CF_OUT_IMAGE,Value_sep);
 	}
-	size = strlen(cf);
+	size = safestrlen(cf);
 	transfername = Find_str_value(&job->info,TRANSFERNAME,Value_sep);
 
 	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
@@ -361,7 +361,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 		CONTROL_FILE, size, transfername);
 	if( !block_fd ){
 		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
-			msg, strlen(msg), &ack )) ){
+			msg, safestrlen(msg), &ack )) ){
 			if( (s = safestrchr(msg,'\n')) ) *s = 0;
 			if( ack ){
 				SNPRINTF(error,sizeof(error))
@@ -494,7 +494,7 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 			DEBUG3("Send_data_files: data file msg '%s'", msg );
 			errno = 0;
 			if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
-				msg, strlen(msg), &ack )) ){
+				msg, safestrlen(msg), &ack )) ){
 				if( (s = safestrchr(msg,'\n')) ) *s = 0;
 				if( ack ){
 					SNPRINTF(error,sizeof(error))
@@ -665,7 +665,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 		REQ_BLOCK, RemotePrinter_DYN, size );
 	DEBUG3("Send_block: sending '%s'", msg );
 	status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
-		msg, strlen(msg), &ack );
+		msg, safestrlen(msg), &ack );
 	DEBUG3("Send_block: status '%s'", Link_err_str(status) );
 	if( status ){
 		char *v;

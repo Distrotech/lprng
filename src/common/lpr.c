@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: lpr.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 #include "lp.h"
@@ -500,7 +500,7 @@ void Get_parms(int argc, char *argv[] )
 		case 'D': 	Parse_debug(Optarg,1);
 			break;
 		case 'F':
-		    if( strlen (Optarg) != 1 ){
+		    if( safestrlen (Optarg) != 1 ){
 		        DIEMSG( _("bad -F format string '%s'\n"), Optarg);
 		    }
 		    if( Format_JOB ){
@@ -727,6 +727,7 @@ void usage(void)
 	} else {
 		prmsg( LPR_msg );
 	}
+	Parse_debug("=",-1);
 	FPRINTF( STDERR, "%s\n", Version );
 	exit(1);
 }
@@ -843,7 +844,8 @@ int Make_job( struct job *job )
 			struct line_list user_list;
 			char *str, *t;
 			struct passwd *pw;
-			int found, uid;
+			int found;
+			uid_t uid;
 
 			DEBUG2("Make_job: checking '%s' for -U perms",
 				Allow_user_setting_DYN );
@@ -1060,7 +1062,7 @@ void get_job_number( struct job *job )
 { 0,  STRING_K , &Prtitle_JOB, M_PRTITLE, "T" },
 { 0,  INTEGER_K , &Pwidth_JOB, M_PWIDTH, "W" },
 { 0,  STRING_K , &Zopts_JOB, M_ZOPTS, "Z" },
-{ 0 }
+{ 0,0,0,0,0 }
 } ;
 
 

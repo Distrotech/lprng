@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.stub,v 1.19 2002/03/06 17:02:55 papowell Exp $
+ * $Id: user_auth.stub,v 1.27 2002/04/01 17:54:56 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -734,7 +734,7 @@ int md5_connect( struct job *job, int *sock, char **real_host,
 		len = 0;
 		buffer[0] = 0;
 		DEBUG1("md5_connect: error '%s'", errmsg );
-		while( len < sizeof(buffer)-1
+		while( len < (int)sizeof(buffer)-1
 			&& (n = read( *sock, buffer+len, sizeof(buffer)-len-1 )) > 0 ){
 			buffer[len+n] = 0;
 			while( (s = strchr(buffer,'\n')) ){
@@ -842,7 +842,7 @@ int md5_verify( int *sock, char *user, char *jobsize, int from_server,
 		SNPRINTF(errmsg, errlen)
 		"md5_verify: zero length response");
 		goto error;
-	} else if( len >= sizeof( input) -2 ){
+	} else if( len >= (int)sizeof( input) -2 ){
 		SNPRINTF(errmsg, errlen)
 		"md5_verify: response too long");
 		goto error;
@@ -954,7 +954,7 @@ int md5_verify( int *sock, char *user, char *jobsize, int from_server,
 		SNPRINTF(errmsg, errlen)
 		"md5_verify: zero length command");
 		goto error;
-	} else if( len >= sizeof( input) -2 ){
+	} else if( len >= (int)sizeof( input) -2 ){
 		SNPRINTF(errmsg, errlen)
 		"md5_verify: command too long");
 		goto error;
@@ -1323,7 +1323,7 @@ int md5_receive( int *sock, char *user, char *jobsize, int dest_server,
 		SNPRINTF(errmsg, errlen)
 		"md5_receive: zero length response");
 		goto error;
-	} else if( len >= sizeof( input) -2 ){
+	} else if( len >= (int)sizeof( input) -2 ){
 		SNPRINTF(errmsg, errlen)
 		"md5_receive: response too long");
 		goto error;

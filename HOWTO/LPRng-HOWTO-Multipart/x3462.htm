@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Holding and Releasing Jobs</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
+    <link rel="UP" title="Print Spooling Tutorial " href=
+    "tutorial.htm">
+    <link rel="PREVIOUS" title=
+    "Print Job Classes, User Requested Job Priority, and Form Support"
+     href="x3417.htm">
+    <link rel="NEXT" title="Load Balance Queues and Printer Pools"
+    href="x3540.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
+          (For LPRng-3.8.10)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x3417.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter 4.
+          Print Spooling Tutorial</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x3540.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN3462">4.16. Holding and
+      Releasing Jobs</a></h1>
+
+      <p>The <b class="APPLICATION">LPRng</b> software has a wide
+      range of facilities to hold or temporarily prevent jobs from
+      printing. Jobs can be individually held or all jobs submitted
+      to a queue can be held until released by an operator. Some
+      administrators use the <tt class="COMMAND">holdall</tt>
+      facility and a <b class="APPLICATION">cron</b> script to
+      cause jobs to be printed at specific times. The <tt class=
+      "COMMAND">lpc holdall</tt> command causes all jobs submitted
+      to a queue to be held until released with the <tt class=
+      "COMMAND">lpc release</tt> command. The <tt class=
+      "COMMAND">lpc noholdall</tt> command disables the <tt class=
+      "COMMAND">holdall</tt> operation.</p>
+
+      <p>Edit the printcap file so it has contents indicated below,
+      use <tt class="COMMAND">checkpc -f</tt> to check the
+      printcap, and then use <tt class="COMMAND">lpc reread</tt> to
+      restart the <b class="APPLICATION">lpd</b> server.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3476"></a>
+<pre class="SCREEN">
+    lp:force_localhost
+    lp:server
+      :sd=/var/spool/lpd/%P
+      :lp=lp2@localhost
+    lp2:force_localhost
+    lp2:server
+      :sd=/var/spool/lpd/%P
+      :lp=/tmp/lp2
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Execute the following commands to print the <tt class=
+      "FILENAME">/tmp/hi</tt> file and observe the results:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3480"></a>
+<pre class="SCREEN">
+    <tt class="PROMPT">h4: {256} %</tt> <tt class=
+"USERINPUT"><b>lpc holdall lp</b></tt>
+    Printer: lp@h4
+    lp@h4.private: holdall on
+    <tt class="PROMPT">h4: {257} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (holdall)
+     Queue: no printable jobs in queue
+    <tt class="PROMPT">h4: {258} %</tt> <tt class=
+"USERINPUT"><b>lpr /tmp/hi</b></tt>
+    <tt class="PROMPT">h4: {259} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (holdall)
+     Queue: no printable jobs in queue
+     Holding: 1 held jobs in queue
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    hold   papowell@h4+213       A   213 /tmp/hi         3 09:45:05
+    <tt class="PROMPT">h4: {260} %</tt> <tt class=
+"USERINPUT"><b>lpc release lp 213</b></tt>
+    Printer: lp@h4
+    lp: selected 'papowell@h4+213'
+    lp@h4.private: started
+    <tt class="PROMPT">h4: {261} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (holdall)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+213' removed at 09:45:22.570
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="COMMAND">lpc holdall</tt> command causes
+      all jobs to be held. We spool a job, and then use the <tt
+      class="COMMAND">lpc release</tt> command to release the
+      selected job. We disable the <tt class="COMMAND">holdall</tt>
+      operation using the <tt class="COMMAND">lpc noholdall</tt>
+      command.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3499"></a>
+<pre class="SCREEN">
+    <tt class="PROMPT">h4: {262} %</tt> <tt class=
+"USERINPUT"><b>lpc noholdall lp</b></tt>
+    Printer: lp@h4
+    lp@h4.private: holdall off
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>You can also use the <tt class="COMMAND">lpc hold</tt>
+      command to select individual jobs in a spool queue to be
+      held. This command is useful if there is a set of jobs which
+      require special handling or printing at a later date. The
+      following example shows how this command is used. We use the
+      <tt class="COMMAND">lpc stop</tt> and <tt class="COMMAND">lpc
+      start</tt> commands to simulate the normal delays in print
+      spooling operations.</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3507"></a>
+<pre class="SCREEN">
+    <tt class="PROMPT">h4: {263} %</tt> <tt class=
+"USERINPUT"><b>lpc stop lp</b></tt>
+    Printer: lp@h4
+    lp@h4.private: stopped
+    <tt class="PROMPT">h4: {264} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (printing disabled)
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+495' removed at 10:10:50.629
+    <tt class="PROMPT">h4: {265} %</tt> <tt class=
+"USERINPUT"><b>lpr /tmp/hi</b></tt>
+    <tt class="PROMPT">h4: {266} %</tt> <tt class=
+"USERINPUT"><b>lpr /tmp/hi</b></tt>
+    <tt class="PROMPT">h4: {267} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (printing disabled)
+     Queue: 2 printable jobs
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+459       A   459 /tmp/hi         3 10:40:32
+    2      papowell@h4+461       A   461 /tmp/hi         3 10:40:34
+    <tt class="PROMPT">h4: {268} %</tt> <tt class=
+"USERINPUT"><b>lpc hold lp 459</b></tt>
+    Printer: lp@h4
+    lp: selected 'papowell@h4+459'
+    lp@h4.private: updated
+    <tt class="PROMPT">h4: {269} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4  (printing disabled)
+     Queue: 1 printable job
+     Holding: 1 held jobs in queue
+     Server: no server active
+     Rank   Owner/ID           Class Job Files        Size Time
+    1      papowell@h4+461       A   461 /tmp/hi         3 10:40:34
+    hold   papowell@h4+459       A   459 /tmp/hi         3 10:40:32
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>In the next example we show how to use the <tt class=
+      "COMMAND">lpc hold</tt> command to select and hold an
+      individual job. Then we start the queue and see what
+      happens:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN3525"></a>
+<pre class="SCREEN">
+    <tt class="PROMPT">h4: {270} %</tt> <tt class=
+"USERINPUT"><b>lpc start</b></tt>
+    Printer: lp@h4
+    lp@h4.private: started
+    <tt class="PROMPT">h4: {271} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Holding: 1 held jobs in queue
+     Server: no server active
+     Status: job 'papowell@h4+461' removed at 10:41:24.873
+     Rank   Owner/ID           Class Job Files        Size Time
+    hold   papowell@h4+459       A   459 /tmp/hi         3 10:40:32
+    <tt class="PROMPT">h4: {272} %</tt> <tt class=
+"USERINPUT"><b>lpc release lp 459</b></tt>
+    Printer: lp@h4
+    lp: selected 'papowell@h4+459'
+    lp@h4.private: started
+    <tt class="PROMPT">h4: {273} %</tt> <tt class=
+"USERINPUT"><b>lpq</b></tt>
+    Printer: lp@h4
+     Queue: no printable jobs in queue
+     Status: job 'papowell@h4+459' removed at 10:41:39.457
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>As we see, the held job is not printed until we release
+      it, and then is processed normally.</p>
+
+      <p>The printcap <tt class="LITERAL">:ah</tt> (autohold)
+      option has the same effect as the <tt class="COMMAND">lpc
+      holdall</tt> command but its actions cannot be disabled by
+      the <tt class="COMMAND">lpc noholdall</tt> command.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x3417.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x3540.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Print Job
+          Classes, User Requested Job Priority, and Form
+          Support</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "tutorial.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Load Balance
+          Queues and Printer Pools</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: stty.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: stty.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 
 #include "lp.h"
@@ -196,7 +196,7 @@
 
     { "stop", &termctrl.t_stopc, CSTOP },
     { "start", &termctrl.t_startc, CSTART },
-    { 0 }
+    { 0, 0, 0 }
 };
 
 void Do_stty( int fd )
@@ -913,7 +913,7 @@ void Do_stty( int fd )
 
 	{ "stop", (char *)&(t_dat.c_cc[VSTOP]) },
 	{ "start", (char *)&(t_dat.c_cc[VSTART]) },
-	{ 0 }
+	{ 0, 0 }
 };
 
 void Do_stty( int fd )

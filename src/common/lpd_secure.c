@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpd_secure.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -225,7 +225,7 @@ int Receive_secure( int *sock, char *input )
 		error[0] = ack;
 		DEBUGF(DRECV1)("Receive_secure: sending '%s'", error );
 		(void)Link_send( ShortRemote_FQDN, sock,
-			Send_query_rw_timeout_DYN, error, strlen(error), 0 );
+			Send_query_rw_timeout_DYN, error, safestrlen(error), 0 );
 		Errorcode = JFAIL;
 	}
 
@@ -272,13 +272,13 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 	done = 0;
 	linecount = 0;
 
-	while( !done && n < sizeof(buffer)-1
+	while( !done && n < (int)sizeof(buffer)-1
 		&& (len = read( fd, buffer+n, sizeof(buffer)-1-n )) > 0 ){
 		buffer[n+len] = 0;
 		DEBUGF(DRECV1)("Do_secure_work: read %d - '%s'", len, buffer );
 		while( !done && (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
-			if( strlen(buffer) == 0 ){
+			if( safestrlen(buffer) == 0 ){
 				done = 1;
 				break;
 			}
@@ -306,8 +306,8 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 				}
 			}
 			++linecount;
-			memmove(buffer,s,strlen(s)+1);
-			n = strlen(buffer);
+			memmove(buffer,s,safestrlen(s)+1);
+			n = safestrlen(buffer);
 		}
 	}
 
@@ -328,7 +328,7 @@ int Do_secure_work( int use_line_order, char *jobsize, int from_server,
 					tempfile, Errormsg(errno));
 			goto error;
 		}
-		status = Scan_block_file( fd, error, sizeof(error), (char *)Perm_check.authuser );
+		status = Scan_block_file( fd, error, sizeof(error), header_info );
 	} else {
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
@@ -554,7 +554,12 @@ int Check_secure_perms( struct line_list *options, int from_server,
 		if( !authuser ) authuser = authfrom;
 		if( !authfrom ) authfrom = authuser;
 	}
+	Set_str_value(options, AUTHTYPE, Perm_check.authtype );
+	Set_str_value(options, AUTHFROM, authfrom );
+	Set_str_value(options, AUTHUSER, authuser );
+	authfrom = Find_str_value(options,AUTHFROM,Value_sep);
 	Perm_check.authfrom = authfrom;
+	authuser = Find_str_value(options,AUTHUSER,Value_sep);
 	Perm_check.authuser = authuser;
 	if( !authuser ){
 		SNPRINTF( error, errlen) "Printer %s@%s: missing authentication client id",
@@ -579,5 +584,5 @@ int Check_secure_perms( struct line_list *options, int from_server,
 /* this should have the form of the entries above */
  USER_RECEIVE
 #endif
-	{0}
+	{0,0,0,0,0}
 };

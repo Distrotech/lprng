@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendauth.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: sendauth.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 #include "lp.h"
 #include "sendauth.h"
@@ -146,7 +146,7 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 	/* send the message */
 	DEBUG3("Send_auth_transfer: sending '%s'", secure );
 	status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
-		secure, strlen(secure), &ack );
+		secure, safestrlen(secure), &ack );
 	DEBUG3("Send_auth_transfer: status '%s'", Link_err_str(status) );
 	if( status ){
 		/* open output file */
@@ -178,9 +178,9 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 						tempfile );
 					goto error;
 				}
-				memmove(buffer,s,strlen(s)+1);
+				memmove(buffer,s,safestrlen(s)+1);
 			}
-			len = strlen(buffer);
+			len = safestrlen(buffer);
 		}
 		if( buffer[0] ){
 			DEBUG2("Send_auth_transfer: doing '%s'", buffer);
@@ -402,9 +402,9 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 					SNPRINTF(error,errlen)"  %s\n", buffer);
 					Write_fd_str(tempfd, error );
 					DEBUG2("Pgp_send: wrote '%s'", error );
-					memmove(buffer,s,strlen(s)+1);
+					memmove(buffer,s,safestrlen(s)+1);
 				}
-				len = strlen(buffer);
+				len = safestrlen(buffer);
 			}
 			DEBUG2("Pgp_send: done" );
 			error[0] = 0;
@@ -432,7 +432,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 			SNPRINTF(error,errlen)"  %s\n", buffer);
 			Write_fd_str(tempfd, error );
 			DEBUG2("Pgp_send: wrote '%s'", error );
-			memmove(buffer,s,strlen(s)+1);
+			memmove(buffer,s,safestrlen(s)+1);
 		}
 		close( tempfd ); tempfd = -1;
 		error[0] = 0;
@@ -590,15 +590,15 @@ void Put_in_auth( int tempfd, const char *key, char *value )
  struct security SendSecuritySupported[] = {
 	/* name,       config_tag, connect,    send,   receive */
 #if defined(KERBEROS)
-	{ "kerberos*", "kerberos", 0,           Krb5_send },
+	{ "kerberos*", "kerberos", 0,           Krb5_send, 0 },
 # if defined(MIT_KERBEROS4)
-	{ "kerberos4", "kerberos", Send_krb4_auth, 0 },
+	{ "kerberos4", "kerberos", Send_krb4_auth, 0, 0 },
 # endif
 #endif
-	{ "pgp",       "pgp",      0,           Pgp_send },
-	{ "none",      "none",     0,           0 },
+	{ "pgp",       "pgp",      0,           Pgp_send,  0 },
+	{ "none",      "none",     0,           0,         0 },
 #if defined(USER_SEND)
  USER_SEND
 #endif
-	{0}
+	{0,0,0,0,0}
 };

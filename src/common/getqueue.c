@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
+"$Id: getqueue.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 
 /***************************************************************************
@@ -58,7 +58,7 @@
 
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
-		int only_queue_process, int create_db, int write_db, int *perr, int *pdone )
+		int only_queue_process, int *perr, int *pdone )
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
@@ -184,7 +184,7 @@ char *Get_fd_image( int fd, int maxsize )
 	}
 	if(DEBUGL3){
 		SNPRINTF(buffer,32)"%s",s);
-		logDebug("Get_fd_image: len %d '%s'", s?strlen(s):0, buffer );
+		logDebug("Get_fd_image: len %d '%s'", s?safestrlen(s):0, buffer );
 	}
 	return(s);
 }
@@ -298,7 +298,7 @@ void Check_for_hold( struct job *job, struct line_list *spool_control )
  *  read the control file and hold file.
  */
 
-void Setup_job( struct job *job, struct line_list *spool_control, const char *dir,
+void Setup_job( struct job *job, struct line_list *spool_control,
 	const char *cf_name, const char *hf_name, int check_for_existence )
 {
 	struct stat statb;
@@ -572,7 +572,7 @@ int Setup_cf_info( struct job *job, int check_for_existence )
 					if( s[3] ) Set_str_value(&job->info,"T",s+3);
 				} else if( c == 'O' ){
 					s = s+3;
-					if( strlen(s) ){
+					if( safestrlen(s) ){
 						for( t = s; (t = strpbrk(t," ")); ++t ){
 							*t = ',';
 						}
@@ -641,7 +641,7 @@ char *Make_hf_image( struct job *job )
 {
 	char *outstr, *s;
 	int i;
-	int len = strlen(OPENNAME);
+	int len = safestrlen(OPENNAME);
 
 	outstr = 0;
 	for( i = 0; i < job->info.count; ++i ){
@@ -825,7 +825,7 @@ void Set_spool_control( struct line_list *perm_check, const char *file,
 void intval( const char *key, struct line_list *list, struct job *job )
 {
 	int i = Find_flag_value(list,key,Value_sep);
-	int len = strlen(job->sort_key);
+	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
     "|%s.0x%08x",key,i&0xffffffff);
 	DEBUG5("intval: '%s'", job->sort_key );
@@ -834,7 +834,7 @@ void intval( const char *key, struct line_list *list, struct job *job )
 void revintval( const char *key, struct line_list *list, struct job *job )
 {
 	int i = Find_flag_value(list,key,Value_sep);
-	int len = strlen(job->sort_key);
+	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.0x%08x",key,(~i)&0xffffffff);
 	DEBUG5("revintval: '%s'", job->sort_key );
@@ -843,7 +843,7 @@ void revintval( const char *key, struct line_list *list, struct job *job )
 void strzval( const char *key, struct line_list *list, struct job *job )
 {
 	char *s = Find_str_value(list,key,Value_sep);
-	int len = strlen(job->sort_key);
+	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.%d",key,s!=0);
 	DEBUG5("strzval: '%s'", job->sort_key );
@@ -852,7 +852,7 @@ void strzval( const char *key, struct line_list *list, struct job *job )
 void strnzval( const char *key, struct line_list *list, struct job *job )
 {
 	char *s = Find_str_value(list,key,Value_sep);
-	int len = strlen(job->sort_key);
+	int len = safestrlen(job->sort_key);
 	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
 	"|%s.%d",key,(s==0 || *s == 0));
 	DEBUG5("strnzval: '%s'", job->sort_key );
@@ -862,7 +862,7 @@ void strval( const char *key, struct line_list *list, struct job *job,
 	int reverse )
 {
 	char *s = Find_str_value(list,key,Value_sep);
-	int len = strlen(job->sort_key);
+	int len = safestrlen(job->sort_key);
 	int c = 0;
 
 	if(s) c = cval(s);
@@ -1268,7 +1268,7 @@ int Check_format( int type, const char *name, struct job *job )
 
 char *Find_start(char *str, const char *key )
 {
-	int n = strlen(key);
+	int n = safestrlen(key);
 	while( (str = strstr(str,key)) && str[n] != '=' );
 	if( str ) str += (n+1);
 	return( str );
@@ -1764,7 +1764,7 @@ char *Fix_datafile_info( struct job *job, char *number, char *suffix,
 				fmt[0] = *s;
 			}
 			if( xlate_format ){
-				int l = strlen(xlate_format);
+				int l = safestrlen(xlate_format);
 				for( i = 0; i+1 < l; i+= 2 ){
 					if( (xlate_format[i] == fmt[0])
 						|| (xlate_format[i] == '*') ){
@@ -1822,17 +1822,17 @@ int ordercomp(  const void *left, const void *right, const void *orderp)
 
 	/* blank lines always come last */
 	if( (wildcard = safestrchr( order, '*' )) ){
-		wildcard = order + strlen(order);
+		wildcard = order + safestrlen(order);
 	}
 	lpos = *((const char **)left);
 	if( lpos == 0 || *lpos == 0 ){
-		lpos = order+strlen(order);
+		lpos = order+safestrlen(order);
 	} else if( !(lpos = safestrchr( order, *lpos )) ){
 		lpos = wildcard;
 	}
 	rpos = *((const char **)right);
 	if( rpos == 0 || *rpos == 0 ){
-		rpos = order+strlen(order);
+		rpos = order+safestrlen(order);
 	} else if( !(rpos = safestrchr( order, *rpos )) ){
 		rpos = wildcard;
 	}
@@ -1991,7 +1991,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 		} else {
 			if( Backwards_compatible_DYN ){
 				for( j = 0; maxclen[j].c && cccc != maxclen[j].c ; ++j );
-				if( (len = maxclen[j].len) && strlen(s+1) > len ){
+				if( (len = maxclen[j].len) && safestrlen(s+1) > len ){
 					s[len+1] = 0;
 				}
 			}
@@ -2015,7 +2015,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
 	if(DEBUGL3) Dump_job( "Fix_control: after sorting", job );
 	for( i = 0; i < controlfile.count; ++i ){
 		s = controlfile.list[i];
-		memmove(s+1,s+2,strlen(s+2)+1);
+		memmove(s+1,s+2,safestrlen(s+2)+1);
 	}
 	s = Join_line_list(&controlfile,"\n");
 	DEBUG3( "Fix_control: control info '%s'", s );
@@ -2076,7 +2076,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format )
  *
  ************************************************************************/
 
-int Create_control( struct job *job, char *error, int errlen, char *auth_id,
+int Create_control( struct job *job, char *error, int errlen,
 	char *xlate_format )
 {
 	char *s, *t, *file_hostname, *number, *priority, *datalines, *openname;
@@ -2238,7 +2238,7 @@ void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len )
 
 void Put_buf_str( const char *s, char **buf, int *max, int *len )
 {
-	if( s && *s ) Put_buf_len( s, strlen(s), buf, max, len );
+	if( s && *s ) Put_buf_len( s, safestrlen(s), buf, max, len );
 }
 
 void Free_buf(char **buf, int *max, int *len)

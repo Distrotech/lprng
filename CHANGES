@@ -1,3 +1,54 @@
+Version LPRng-3.8.10 - Sun Mar 31 11:31:19 PST 2002
+
+ printcap.5 had :as and :ae examples reversed
+  (Spotted by the guy with the red pen and the eagle eyes:
+    Craig Small <csmall@eye-net.com.au>)
+
+ Slew of patches sent in by Tim Waugh <twaugh@redhat.com> 
+   - silly little kerberos include file patch
+   - can't spell printer patch
+   - si no moleste the files in the spool queue patch
+     (already done)
+   - added configure ability to find 'pr' program
+   - GCC flags -W -Wall -Werror -Wno-unused-parms
+      - also fixed up &*)*(&)*(& unsigned and signed
+        integer casts
+
+ The authentication and connection information for permissions
+  checking is now recorded so it can be used for permissions checking.
+  and a couple of new fields have been added.
+  The following permission tags now have the indicated values
+   UNIXSOCKET - true (match or 1) if connection was over a UNIX socket,
+     i.e. - the local host.
+   When SERVICE=P 
+     REMOTEHOST - the original remotehost from which the job was sent
+      (previously was the HOST value)
+     REMOTEPORT - the original port from which the job was sent
+      (previously was undefined )
+     AUTH - true (match or 1) if job sent using authentication
+     AUTHTYPE - authentication type
+     AUTHUSER - value of authentication key for user who originated
+        job.  For example, for kerberos this is the user's principle value
+     AUTHFROM - value of authentication key for sender of job.  For example,
+        if the job was from the LPR program,  this would have the same
+        value as AUTHUSER.  However, if it was forwarded from a server,
+        it would have the server's authentication name or value.
+  lpd.perms.in update to match the new entries
+   (Requested by: Toby Blake <toby@cogsci.ed.ac.uk>)
+
+  Once again the checkpc file creation stuff is modified so that
+   it can create files in a directory NOT owned by the lpd group/user.
+   This is necessary for log files and other items.  Note that this
+   MAY cause problems for log file truncation as you need to copy
+   file contents rather than just renaming them.  But it turns out
+   that I am already doing this so it appears to be OK.
+     CAVEAT EMPTOR.
+   (Reported by: Torsten Wiebesiek <wiebesiek@tnt.uni-hannover.de>)
+
+  Usage messages now display version information as well as options
+   and available debug flags.  Idea shamelessly swiped from somebody else.
+   (Stolen from: 'Guido' Van Rossen)
+
 Version LPRng-3.8.9 - Sat Mar  2 15:02:11 PST 2002
 
   The 'unix_socket_path' and 'lpd_port' options have been modified

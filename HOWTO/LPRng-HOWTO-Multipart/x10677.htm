@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta name="generator" content="HTML Tidy, see www.w3.org">
+    <title>Message Format</title>
+    <meta name="GENERATOR" content=
+    "Modular DocBook HTML Stylesheet Version 1.71 ">
+    <link rel="HOME" title=" LPRng-HOWTO" href="index.htm">
+    <link rel="UP" title="Remote Logger Operation" href=
+    "remotelogger.htm">
+    <link rel="PREVIOUS" title="Logger Messages" href="x10672.htm">
+    <link rel="NEXT" title="Dump Messages" href="x10705.htm">
+  </head>
+
+  <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
+  "#0000FF" vlink="#840084" alink="#0000FF">
+    <div class="NAVHEADER">
+      <table summary="Header navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
+          (For LPRng-3.8.10)</th>
+        </tr>
+
+        <tr>
+          <td width="10%" align="left" valign="bottom"><a href=
+          "x10672.htm" accesskey="P">Prev</a></td>
+
+          <td width="80%" align="center" valign="bottom">Chapter
+          21. Remote Logger Operation</td>
+
+          <td width="10%" align="right" valign="bottom"><a href=
+          "x10705.htm" accesskey="N">Next</a></td>
+        </tr>
+      </table>
+      <hr align="LEFT" width="100%">
+    </div>
+
+    <div class="SECT1">
+      <h1 class="SECT1"><a name="AEN10677">21.3. Message
+      Format</a></h1>
+
+      <p>Each message is encoded as a URI escaped string. That is,
+      non-alphanumeric characters are encoded as the 3 character
+      sequence <tt class="LITERAL">%xx</tt>, where <tt class=
+      "LITERAL">xx</tt> is the hexadecimal value of the character.
+      The message has the format <tt class=
+      "LITERAL">key=value</tt>, where <tt class="LITERAL">key</tt>
+      indicates the message type. For example:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10684"></a>
+<pre class="SCREEN">
+    dump=host=h4.private%0aprinter=t1%0aprocess=1613%0a
+    update_time=1999-03-23-20:32:17.148%0a\
+    value=queue=holdall 0%25250aprinting_aborted=0x0%25250a\
+    printing_disabled=0x0%25250aspooling_disabled=\
+    0x0%25250a%250a%0a
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The following keys are used:</p>
+
+      <ol type="1">
+        <li>
+          <p>dump A status dump of the current contents of a print
+          queue.</p>
+        </li>
+      </ol>
+      <br>
+      <br>
+
+      <p>Each message has a set of headers and a value. For
+      example, the decoded dump message from the previous section
+      would be:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10691"></a>
+<pre class="SCREEN">
+    host=h4.private
+    printer=t1
+    process=1613
+    update_time=1999-03-23-20:32:17.148
+    value=queue=holdall 0%250aprinting_aborted=0x0%250a\
+    printing_disabled=0x0%250aspooling_disabled=0x0%250a%0a
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>Each line consists of a key and a value. The <tt class=
+      "LITERAL">host</tt> key indicates the host name, <tt class=
+      "LITERAL">printer</tt> is the print queue, <tt class=
+      "LITERAL">process</tt> is the process which generated the
+      report or action, <tt class="LITERAL">update_time</tt> is the
+      time at which the report was generated, and <tt class=
+      "LITERAL">value</tt> is the value of the report.</p>
+
+      <p>The decoded <tt class="LITERAL">value</tt> of the above
+      report is:</p>
+
+      <div class="INFORMALEXAMPLE">
+        <a name="AEN10701"></a>
+<pre class="SCREEN">
+    queue='holdall 0%0aprinting_aborted=0x0%0aprinting_disabled=0x0%0a\
+    spooling_disabled=0x0%0a
+</pre>
+      </div>
+      <br>
+      <br>
+
+      <p>The <tt class="LITERAL">queue</tt> key provides the
+      current value of the queue control file.</p>
+    </div>
+
+    <div class="NAVFOOTER">
+      <hr align="LEFT" width="100%">
+
+      <table summary="Footer navigation table" width="100%" border=
+      "0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="33%" align="left" valign="top"><a href=
+          "x10672.htm" accesskey="P">Prev</a></td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "index.htm" accesskey="H">Home</a></td>
+
+          <td width="33%" align="right" valign="top"><a href=
+          "x10705.htm" accesskey="N">Next</a></td>
+        </tr>
+
+        <tr>
+          <td width="33%" align="left" valign="top">Logger
+          Messages</td>
+
+          <td width="34%" align="center" valign="top"><a href=
+          "remotelogger.htm" accesskey="U">Up</a></td>
+
+          <td width="33%" align="right" valign="top">Dump
+          Messages</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: printjob.c,v 1.27 2002/04/01 17:54:55 papowell Exp $";
 
 
 #include "lp.h"
@@ -269,7 +269,7 @@ int Print_job( int output, int status_device, struct job *job,
 			}
 			SNPRINTF(msg, sizeof(msg)) "%s", s );
 			if( (s = strpbrk(msg,Whitespace)) ) *s = 0;
-			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,strlen(s+1)+1);
+			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,safestrlen(s+1)+1);
 		} else {
 			SNPRINTF(msg, sizeof(msg)) "%s", "none - passthrough" );
 		}
@@ -565,7 +565,7 @@ int Run_OF_filter( int timeout, int *of_pid, int *of_stdin, int *of_stderr,
 		SNPRINTF( msg, sizeof(msg)) "%s", s );
 		if( (s = strpbrk( msg, Whitespace )) ) *s = 0;
 		if( (s = strrchr( msg, '/')) ){
-			memmove( msg, s+1, strlen(s)+1 );
+			memmove( msg, s+1, safestrlen(s)+1 );
 		}
 		SETSTATUS(job)"printing '%s' starting OF '%s'", id, msg );
 		if( pipe( of_fd ) == -1 ){
@@ -823,7 +823,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 		return_status = Write_fd_len_timeout( timeout, of_fd, buffer, outlen );
 		DEBUG4("Write_outbuf_to_OF: Write_fd_len_timeout result %d", return_status );
 		do {
-			msglen = strlen(msg);
+			msglen = safestrlen(msg);
 			if( msglen >= msgmax ){
 				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
 				msg[0] = 0;
@@ -840,7 +840,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
 					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
-					memmove(msg,s,strlen(s)+1);
+					memmove(msg,s,safestrlen(s)+1);
 				}
 			}
 		} while( count > 0 );
@@ -855,7 +855,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 				break;
 			}
 		}
-		msglen = strlen(msg);
+		msglen = safestrlen(msg);
 		if( msglen >= msgmax ){
 			SETSTATUS(job) "%s filter msg - '%s'", title, msg );
 			msg[0] = 0;
@@ -878,7 +878,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
 			while( (s = safestrchr(msg,'\n')) ){
 				*s++ = 0;
 				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
-				memmove(msg,s,strlen(s)+1);
+				memmove(msg,s,safestrlen(s)+1);
 			}
 		}
 	}
@@ -955,7 +955,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 			}
 			DEBUG4("Get_status_from_OF: now reading, after suspend" );
 			do{
-				msglen = strlen(msg);
+				msglen = safestrlen(msg);
 				if( msglen >= msgmax ){
 					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
 					msg[0] = 0;
@@ -969,7 +969,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 					while( (s = safestrchr(msg,'\n')) ){
 						*s++ = 0;
 						SETSTATUS(job) "%s filter msg - '%s'", title, msg );
-						memmove(msg,s,strlen(s)+1);
+						memmove(msg,s,safestrlen(s)+1);
 					}
 				}
 			} while( count > 0 );
@@ -977,7 +977,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 			/* now we read the error output, just in case there is something there */
 			DEBUG4("Get_status_from_OF: now reading on fd %d, left %d",
 				of_error, left );
-			msglen = strlen(msg);
+			msglen = safestrlen(msg);
 			if( msglen >= msgmax ){
 				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
 				msg[0] = 0;
@@ -992,7 +992,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
 					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
-					memmove(msg,s,strlen(s)+1);
+					memmove(msg,s,safestrlen(s)+1);
 				}
 			} else if( count == 0 ){
 				done = 1;

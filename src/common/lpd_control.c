@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_control.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
+"$Id: lpd_control.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
 
 
 #include "lp.h"
@@ -313,18 +313,17 @@ void Do_queue_control( char *user, int action, int *sock,
 
 	switch( action ){
 	case OP_LPQ:
-		if( Do_control_lpq( user, action, sock,
-			tokens, error, errorlen ) ){
+		if( Do_control_lpq( user, action,
+			tokens ) ){
 			goto error;
 		}
 		goto done;
 	case OP_PRINTCAP:
-		Do_control_printcap( user, action, sock,
-			tokens, error, errorlen );
+		Do_control_printcap( sock );
 		goto done;
 	case OP_STATUS:
-		if( Do_control_status( user, action, sock,
-			tokens, error, errorlen ) ){
+		if( Do_control_status( sock,
+			error, errorlen ) ){
 			goto error;
 		}
 		goto done;
@@ -362,7 +361,7 @@ void Do_queue_control( char *user, int action, int *sock,
 		Set_flag_value(&Spool_control,PRINTING_ABORTED, 0);
 		Set_flag_value(&Spool_control,PRINTING_DISABLED, 0);
 	case OP_HOLD:
-		if( Do_control_file( user, action, sock,
+		if( Do_control_file( action, sock,
 			tokens, error, errorlen, 0 ) ){
 			goto error;
 		}
@@ -374,7 +373,7 @@ void Do_queue_control( char *user, int action, int *sock,
 		Remove_line_list(tokens,0); /* 'msg' */
 		start = Join_line_list(tokens," ");
 		if( start ){
-			end = start+strlen(start)-1;
+			end = start+safestrlen(start)-1;
 			*end = 0;
 		}
 		DEBUGF(DCTRL1)("Do_queue_control: msg '%s'", start );
@@ -385,35 +384,35 @@ void Do_queue_control( char *user, int action, int *sock,
 	case OP_MOVE:
 		--tokens->count;
 		start = tokens->list[tokens->count];
-		status = Do_control_file( user, action, sock,
+		status = Do_control_file( action, sock,
 			tokens, error, errorlen, start );
 		++tokens->count;
 		if( status ) goto error;
 		break;
 
 	case OP_LPRM:
-		if( Do_control_lpq( user, action, sock,
-			tokens, error, errorlen ) ){
+		if( Do_control_lpq( user, action,
+			tokens ) ){
 			goto error;
 		}
 		break;
 		
 	case OP_REDIRECT:
-		if( Do_control_redirect( user, action, sock,
+		if( Do_control_redirect( sock,
 			tokens, error, errorlen ) ){
 			goto error;
 		}
 		break;
 
 	case OP_CLASS:
-		if( Do_control_class( user, action, sock,
+		if( Do_control_class( sock,
 			tokens, error, errorlen ) ){
 			goto error;
 		}
 		break;
 
 	case OP_DEBUG:
-		if( Do_control_debug( user, action, sock,
+		if( Do_control_debug( sock,
 			tokens, error, errorlen ) ){
 			goto error;
 		}
@@ -469,7 +468,7 @@ void Do_queue_control( char *user, int action, int *sock,
 			}
 			if( kill( serverpid, signal_server ) ){
 				SNPRINTF(msg,sizeof(msg))_("server process PID %d exited\n"),
-					serverpid, Sigstr(signal_server) );
+					serverpid );
 			} else {
 				SNPRINTF(msg,sizeof(msg))_("kill server process PID %d with %s\n"),
 					serverpid, Sigstr(signal_server) );
@@ -559,7 +558,7 @@ void Do_queue_control( char *user, int action, int *sock,
 	SNPRINTF( error, sizeof(error)) "no permission");
  error:
 	DEBUGF(DCTRL2)("Do_queue_control: error msg '%s'", error );
-	if( (i = strlen(error)) ){
+	if( (i = safestrlen(error)) ){
 		SNPRINTF( msg, sizeof(msg)) "%s@%s: %s\n",
 			Printer_DYN, ShortHost_FQDN, error );
 		if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
@@ -579,7 +578,7 @@ void Do_queue_control( char *user, int action, int *sock,
  * 3. update the hold file for the control file
  ***************************************************************************/
 
-int Do_control_file( char *user, int action, int *sock,
+int Do_control_file( int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen, char *option )
 {
 	int i, permission, err;		/* ACME! Nothing but the best */
@@ -595,7 +594,7 @@ int Do_control_file( char *user, int action, int *sock,
 	Init_job(&job);
 	Free_line_list(&Sort_order);
 	if( Scan_queue( &Spool_control, &Sort_order,
-			0,0,0,0,0,1,0,0) ){
+			0,0,0,0,0,0) ){
 		err = errno;
 		SNPRINTF(error, errorlen)
 			"Do_control_file: cannot read '%s' - '%s'",
@@ -746,8 +745,8 @@ int Do_control_file( char *user, int action, int *sock,
  *  forward an OP_LPQ or OP_LPRM
  ***************************************************************************/
 
-int Do_control_lpq( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen )
+int Do_control_lpq( char *user, int action,
+	struct line_list *tokens )
 {
 	char msg[LINEBUFFER];			/* message field */
 	int i = 0;
@@ -787,8 +786,8 @@ int Do_control_lpq( char *user, int action, int *sock,
  *  report current status
  ***************************************************************************/
 
-int Do_control_status( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen )
+int Do_control_status( int *sock,
+	char *error, int errorlen )
 {
 	char msg[SMALLBUFFER];			/* message field */
 	char pr[LINEBUFFER];
@@ -807,7 +806,7 @@ int Do_control_status( char *user, int action, int *sock,
 	Free_line_list(&Spool_control);
 	Get_spool_control( Queue_control_file_DYN, &Spool_control );
 	if( Scan_queue( &Spool_control, &Sort_order, &printable,
-			&held, &move,1,0,0,&err,&done) ){
+			&held, &move,1,&err,&done) ){
 		SNPRINTF( error, errorlen)
 			"Do_control_status: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(errno) );
@@ -829,19 +828,19 @@ int Do_control_status( char *user, int action, int *sock,
 		Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 	pr_status[0] = 0;
 	if( Hld_all(&Spool_control) ){
-		len = strlen(pr_status);
+		len = safestrlen(pr_status);
 		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" holdall") );
 	}
 	if( (s = Clsses(&Spool_control)) ){
-		len = strlen(pr_status);
+		len = safestrlen(pr_status);
 		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" class=%s"),s );
 	}
 	if( Auto_hold_DYN ){
-		len = strlen(pr_status);
+		len = safestrlen(pr_status);
 		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" autohold") );
 	}
 	if( pr_status[0] ){
-		len = strlen(pr_status);
+		len = safestrlen(pr_status);
 		SNPRINTF( pr_status+len, sizeof(pr_status)-len) ")" );
 		pr_status[0] = '(';
 		
@@ -884,7 +883,7 @@ int Do_control_status( char *user, int action, int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_redirect( char *user, int action, int *sock,
+int Do_control_redirect( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char *s;
@@ -937,7 +936,7 @@ int Do_control_redirect( char *user, int action, int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_class( char *user, int action, int *sock,
+int Do_control_class( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char forward[LINEBUFFER];
@@ -993,7 +992,7 @@ int Do_control_class( char *user, int action, int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_debug( char *user, int action, int *sock,
+int Do_control_debug( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char debugging[LINEBUFFER];
@@ -1049,8 +1048,7 @@ int Do_control_debug( char *user, int action, int *sock,
  * 3. if option = HUP, send signal
  ***************************************************************************/
 
-int Do_control_printcap( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen )
+int Do_control_printcap( int *sock )
 {
 	char *printcap = 0, *s, *t, *w;
 

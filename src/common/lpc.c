@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
+"$Id: lpc.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
 
 
 /***************************************************************************
@@ -146,7 +146,8 @@ int main(int argc, char *argv[], char *envp[])
 		struct line_list user_list;
 		char *str, *t;
 		struct passwd *pw;
-		int found, uid;
+		int found;
+		uid_t uid;
 
 		DEBUG2("lpc: checking '%s' for -U perms",
 			Allow_user_setting_DYN );
@@ -490,5 +491,7 @@ void use_msg(void)
 void usage(void)
 {
 	use_msg();
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);
 }

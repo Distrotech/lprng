@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpf.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -611,7 +611,7 @@ void filter_pgm(char *stop)
 
 	inputcount = 0;
 	while( (c = getchar()) != EOF ){
-		if( inputcount < sizeof(inputline) - 3 ) inputline[inputcount++] = c;
+		if( inputcount < (int)sizeof(inputline) - 3 ) inputline[inputcount++] = c;
 		if( c == '\n' ){
 			inputline[inputcount-1] = 0;
 			if(debug)FPRINTF(STDERR,"INPUTLINE count %d '%s'\n", inputcount, inputline );

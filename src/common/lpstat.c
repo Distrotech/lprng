@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: lpstat.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -281,7 +281,7 @@ int Read_status_info( char *host, int sock,
 	do {
 		DEBUG1("Read_status_info: look_for_pr %d, in buffer already '%s'", look_for_pr, buffer );
 		if( DEBUGL2 )Dump_line_list("Read_status_info - starting list", &l );
-		count = strlen(buffer);
+		count = safestrlen(buffer);
 		n = sizeof(buffer)-count-1;
 		status = 1;
 		if( n > 0 ){
@@ -301,7 +301,7 @@ int Read_status_info( char *host, int sock,
 			*s++ = 0;
 			/* add the lines */
 			Split(&l,buffer,Line_ends,0,0,0,0,0,0);
-			memmove(buffer,s,strlen(s)+1);
+			memmove(buffer,s,safestrlen(s)+1);
 		}
 		if( DEBUGL2 )Dump_line_list("Read_status_info - status after splitting", &l );
 		if( status ){
@@ -404,7 +404,7 @@ int Read_status_info( char *host, int sock,
 				if( (s = strchr(header,':')) ){
 					*++s = 0;
 				}
-				len = strlen(header);
+				len = safestrlen(header);
 				/* find the last status_line_count lines */
 				same = 1;
 				for( i = index_list+1; i < l.count ; ++i ){
@@ -486,7 +486,7 @@ void Get_parms(int argc, char *argv[] )
      lpstat [-A] [ -d ] [ -r ] [ -R ] [ -s ] [ -t ] [ -a [list] ]
           [ -c [list] ] [ -f [list] [ -l ] ] [ -o [list] ]
           [ -p [list] [ -D] [ -l ] ] [ -P ] [ -S [list] [ -l ] ]
-          [ -u [login-ID-list] ] [ -v [list] ] [-n linecount]
+          [ -u [login-ID-list] ] [ -v [list] ] [-n linecount] [-Tdebug]
 */
 	flag_count = 0;
 	for( i = 1; i < argc; ++i ){
@@ -515,7 +515,7 @@ void Get_parms(int argc, char *argv[] )
 			case 'u': ++flag_count; u_flag = 1; if( cval(s+2) ) Add_val(&u_val,s+2); else { i += Add_val(&u_val,argv[i+1]); } break;
 			case 'v':               v_flag = 1; if( cval(s+2) ) Add_val(&v_val,s+2); else { i += Add_val(&v_val,argv[i+1]); } break;
 			case 'V': Verbose = 1; break;
-			case 'T': Parse_debug( s+2, 1 ); break;
+			case 'T': if(!cval(s+2)) usage(); Parse_debug( s+2, 1 ); break;
 			default: usage(); break;
 
 			}
@@ -587,7 +587,7 @@ void Get_parms(int argc, char *argv[] )
 "usage: %s [-A] [-d] [-l] [-r] [-R] [-s] [-t] [-a [list]]\n\
   [-c [list]] [-f [list]] [-o [list]]\n\
   [-p [list]] [-P] [-S [list]] [list]\n\
-  [-u [login-ID-list]] [-v [list]] [-V] [-n]\n\
+  [-u [login-ID-list]] [-v [list]] [-V] [-n] [-Tdbgflags]\n\
  list is a list of print queues\n\
  -A        use authentication specified by AUTH environment variable\n\
  -a [list] destination status *\n\
@@ -606,13 +606,15 @@ void Get_parms(int argc, char *argv[] )
  -u [joblist] job status information\n\
  -v [list] printer mapping *\n\
  -V        verbose mode \n\
- -Toptions diagnostic flags\n\
+ -Tdbgflags debug flags\n\
     * - long status format produced\n";
 
 
 void usage(void)
 {
 	FPRINTF( STDERR, lpstat_msg, Name );
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);
 }
 
@@ -638,7 +640,7 @@ void usage(void)
 	cmd[1] = 0;
 	SNPRINTF(cmd+1, sizeof(cmd)-1, RemotePrinter_DYN);
 	for( i = 0; options[i]; ++i ){
-		n = strlen(cmd);
+		n = safestrlen(cmd);
 		SNPRINTF(cmd+n,sizeof(cmd)-n," %s",options[i] );
 	}
 	Perm_check.remoteuser = "papowell";

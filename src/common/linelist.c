@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
+"$Id: linelist.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -53,7 +53,7 @@ char *trunc_str( char *s)
 {
 	char *t;
 	if(s && *s){
-		for( t=s+strlen(s); t > s && isspace(cval(t-1)); --t );
+		for( t=s+safestrlen(s); t > s && isspace(cval(t-1)); --t );
 		*t = 0;
 	}
 	return( s );
@@ -63,7 +63,7 @@ int Lastchar( char *s )
 {
 	int c = 0;
 	if( s && *s ){
-		s += strlen(s)-1;
+		s += safestrlen(s)-1;
 		c = cval(s);
 	}
 	return(c);
@@ -124,7 +124,7 @@ char *safestrdup (const char *p, const char *file, int line)
     char *new = 0;
 
 	if( p == 0) p = "";
-	new = malloc_or_die( strlen (p) + 1, file, line );
+	new = malloc_or_die( safestrlen (p) + 1, file, line );
 	strcpy( new, p );
 	return( new );
 }
@@ -137,7 +137,7 @@ char *safestrdup (const char *p, const char *file, int line)
 
 char *safestrdup2( const char *s1, const char *s2, const char *file, int line )
 {
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0);
 	char *s = malloc_or_die( n, file, line );
 	s[0] = 0;
 	if( s1 ) strcat(s,s1);
@@ -154,7 +154,7 @@ char *safestrdup2( const char *s1, const char *s2, const char *file, int line )
 char *safeextend2( char *s1, const char *s2, const char *file, int line )
 {
 	char *s;
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0);
 	s = realloc_or_die( s1, n, file, line );
 	if( s1 == 0 ) *s = 0;
 	if( s2 ) strcat(s,s2);
@@ -170,7 +170,7 @@ char *safeextend2( char *s1, const char *s2, const char *file, int line )
 char *safestrdup3( const char *s1, const char *s2, const char *s3,
 	const char *file, int line )
 {
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0) + (s3?strlen(s3):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0) + (s3?safestrlen(s3):0);
 	char *s = malloc_or_die( n, file, line );
 	s[0] = 0;
 	if( s1 ) strcat(s,s1);
@@ -190,7 +190,7 @@ char *safeextend3( char *s1, const char *s2, const char *s3,
 	const char *file, int line )
 {
 	char *s;
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0) + (s3?strlen(s3):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0) + (s3?safestrlen(s3):0);
 	s = realloc_or_die( s1, n, file, line );
 	if( s1 == 0 ) *s = 0;
 	if( s2 ) strcat(s,s2);
@@ -211,8 +211,8 @@ char *safeextend4( char *s1, const char *s2, const char *s3, const char *s4,
 	const char *file, int line )
 {
 	char *s;
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0)
-		+ (s3?strlen(s3):0) + (s4?strlen(s4):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0)
+		+ (s3?safestrlen(s3):0) + (s4?safestrlen(s4):0);
 	s = realloc_or_die( s1, n, file, line );
 	if( s1 == 0 ) *s = 0;
 	if( s2 ) strcat(s,s2);
@@ -231,8 +231,8 @@ char *safestrdup4( const char *s1, const char *s2,
 	const char *s3, const char *s4,
 	const char *file, int line )
 {
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0)
-		+ (s3?strlen(s3):0) + (s4?strlen(s4):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0)
+		+ (s3?safestrlen(s3):0) + (s4?safestrlen(s4):0);
 	char *s = malloc_or_die( n, file, line );
 	s[0] = 0;
 	if( s1 ) strcat(s,s1);
@@ -255,8 +255,8 @@ char *safeextend5( char *s1, const char *s2, const char *s3, const char *s4, con
 	const char *file, int line )
 {
 	char *s;
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0)
-		+ (s3?strlen(s3):0) + (s4?strlen(s4):0) + (s5?strlen(s5):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0)
+		+ (s3?safestrlen(s3):0) + (s4?safestrlen(s4):0) + (s5?safestrlen(s5):0);
 	s = realloc_or_die( s1, n, file, line );
 	if( s1 == 0 ) *s = 0;
 	if( s2 ) strcat(s,s2);
@@ -277,8 +277,8 @@ char *safestrdup5( const char *s1, const char *s2,
 	const char *s3, const char *s4, const char *s5,
 	const char *file, int line )
 {
-	int n = 1 + (s1?strlen(s1):0) + (s2?strlen(s2):0)
-		+ (s3?strlen(s3):0) + (s4?strlen(s4):0) + (s5?strlen(s5):0);
+	int n = 1 + (s1?safestrlen(s1):0) + (s2?safestrlen(s2):0)
+		+ (s3?safestrlen(s3):0) + (s4?safestrlen(s4):0) + (s5?safestrlen(s5):0);
 	char *s = malloc_or_die( n, file, line );
 	s[0] = 0;
 	if( s1 ) strcat(s,s1);
@@ -376,7 +376,7 @@ char *Add_line_list( struct line_list *l, char *str,
 		char b[40];
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
-		if( (n = strlen(b)) > sizeof(b)-10 ) strcpy( b+n,"..." );
+		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Add_line_list: '%s', sep '%s', sort %d, uniq %d",
 			b, sep, sort, uniq );
 	}
@@ -433,7 +433,7 @@ void Add_casekey_line_list( struct line_list *l, char *str,
 		char b[40];
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
-		if( (n = strlen(b)) > sizeof(b)-10 ) strcpy( b+n,"..." );
+		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Add_casekey_line_list: '%s', sep '%s', sort %d, uniq %d",
 			b, sep, sort, uniq );
 	}
@@ -548,7 +548,7 @@ void Split( struct line_list *l, char *str, const char *sep,
 		char b[40];
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
-		if( (n = strlen(b)) > sizeof(b)-10 ) strcpy( b+n,"..." );
+		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Split: str 0x%lx '%s', sep '%s', sort %d, keysep '%s', uniq %d, trim %d",
 			Cast_ptr_to_long(str), b, sep, sort, keysep, uniq, trim );
 	}
@@ -567,7 +567,7 @@ void Split( struct line_list *l, char *str, const char *sep,
 			break;
 		}
 		if( !end ){
-			t = str + strlen(str);
+			t = str + safestrlen(str);
 		}
 		DEBUG5("Split: str 0x%lx, ('%c%c...') end 0x%lx, t 0x%lx",
 			Cast_ptr_to_long(str), str[0], str[1],
@@ -599,10 +599,10 @@ char *Join_line_list( struct line_list *l, char *sep )
 	char *s, *t, *str = 0;
 	int len = 0, i, n = 0;
 
-	if( sep ) n = strlen(sep);
+	if( sep ) n = safestrlen(sep);
 	for( i = 0; i < l->count; ++i ){
 		s = l->list[i];
-		if( s && *s ) len += strlen(s) + n;
+		if( s && *s ) len += safestrlen(s) + n;
 	}
 	if( len ){
 		str = malloc_or_die(len+1,__FILE__,__LINE__);
@@ -611,7 +611,7 @@ char *Join_line_list( struct line_list *l, char *sep )
 			s = l->list[i];
 			if( s && *s ){
 				strcpy( t, s );
-				t += strlen(t);
+				t += safestrlen(t);
 				if( n ){
 					strcpy(t,sep);
 					t += n;
@@ -628,9 +628,9 @@ char *Join_line_list_with_sep( struct line_list *l, char *sep )
 	char *s = Join_line_list( l, sep );
 	int len = 0;
 
-	if( sep ) len = strlen(sep);
+	if( sep ) len = safestrlen(sep);
 	if( s ){
-		*(s+strlen(s)-len) = 0;;
+		*(s+safestrlen(s)-len) = 0;;
 	}
 	return( s );
 }
@@ -644,10 +644,10 @@ char *Join_line_list_with_quotes( struct line_list *l, char *sep )
 	char *s, *t, *str = 0;
 	int len = 0, i, n = 0;
 
-	if( sep ) n = strlen(sep);
+	if( sep ) n = safestrlen(sep);
 	for( i = 0; i < l->count; ++i ){
 		s = l->list[i];
-		if( s && *s ) len += strlen(s) + n + 2;
+		if( s && *s ) len += safestrlen(s) + n + 2;
 	}
 	if( len ){
 		str = malloc_or_die(len+1,__FILE__,__LINE__);
@@ -657,7 +657,7 @@ char *Join_line_list_with_quotes( struct line_list *l, char *sep )
 			if( s && *s ){
 				if( i ) *t++ = '\'';
 				strcpy( t, s );
-				t += strlen(t);
+				t += safestrlen(t);
 				if( i ) *t++ = '\'';
 				if( n ){
 					strcpy(t,sep);
@@ -701,7 +701,7 @@ char *Find_str_in_flat( char *str, const char *key, const char *sep )
 	int n, c = 0;
 
 	if( str == 0 || key == 0 || sep == 0 ) return( 0 );
-	n = strlen(key);
+	n = safestrlen(key);
 	for( s = str; (s = strstr(s,key)); ){
 		s += n;
 		if( *s == '=' ){
@@ -1052,7 +1052,7 @@ void Set_str_value( struct line_list *l, const char *key, const char *value )
 		char buffer[16];
 		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
 		buffer[12] = 0;
-		if( value && strlen(value) > 12 ) strcat(buffer,"...");
+		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
 		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
 			Cast_ptr_to_long(value), buffer);
 	}
@@ -1080,7 +1080,7 @@ void Set_expanded_str_value( struct line_list *l, const char *key, const char *o
 		char buffer[16];
 		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
 		buffer[12] = 0;
-		if( value && strlen(value) > 12 ) strcat(buffer,"...");
+		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
 		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
 			Cast_ptr_to_long(value), buffer);
 	}
@@ -1107,7 +1107,7 @@ void Set_casekey_str_value( struct line_list *l, const char *key, const char *va
 		char buffer[16];
 		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
 		buffer[12] = 0;
-		if( value && strlen(value) > 12 ) strcat(buffer,"...");
+		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
 		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
 			Cast_ptr_to_long(value), buffer);
 	}
@@ -1321,7 +1321,7 @@ void Find_tags( struct line_list *dest, struct line_list *l, char *key )
 
 	if( key == 0 || *key == 0 ) return;
 	mid = bot = 0; top = l->count-1;
-	len = strlen(key);
+	len = safestrlen(key);
 	DEBUG5("Find_tags: count %d, key '%s'", l->count, key );
 	while( cmp && bot <= top ){
 		mid = (top+bot)/2;
@@ -1365,7 +1365,7 @@ void Find_tags( struct line_list *dest, struct line_list *l, char *key )
 void Find_default_tags( struct line_list *dest,
 	struct keywords *var_list, char *tag )
 {
-	int len = strlen(tag);
+	int len = safestrlen(tag);
 	char *key, *value;
 
 	if( var_list ) while( var_list->keyword ){
@@ -1556,7 +1556,7 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 		for( i = 0; i < opts.count; ++i ){
 			t = opts.list[i];  
 			while( t && (t = strstr(t,"\\:")) ){
-				memmove(t, t+1, strlen(t+1)+1 );
+				memmove(t, t+1, safestrlen(t+1)+1 );
 				++t;
 			}
 		}
@@ -1622,21 +1622,21 @@ int  Build_pc_names( struct line_list *names, struct line_list *order,
 				}
 				Set_str_value(names,l.list[i],l.list[0]);
 			}
-			len = strlen(str);
+			len = safestrlen(str);
 			s = str;
 			DEBUG4("Build_pc_names: before '%s'", str );
 			*s = 0;
 			for( i = 0; i < l.count; ++i ){
 				if( *str ) *s++ = '|';
 				strcpy(s,l.list[i]);
-				s += strlen(s);
+				s += safestrlen(s);
 			}
 			for( i = 0; i < opts.count; ++i ){
 				*s++ = ':';
 				strcpy(s,opts.list[i]);
-				s += strlen(s);
+				s += safestrlen(s);
 			}
-			if( strlen(str) > len ){
+			if( safestrlen(str) > len ){
 				Errorcode = JABORT;
 				FATAL(LOG_ERR) "Build_pc_names: LINE GREW! fatal error");
 			}
@@ -1687,7 +1687,7 @@ void Build_printcap_info(
 				keyid, t );
 			keyid = safeextend3(keyid, " ", t,__FILE__,__LINE__ );
 			if( (appendline = (Lastchar(keyid) == '\\')) ){
-				keyid[strlen(keyid)-1] = 0;
+				keyid[safestrlen(keyid)-1] = 0;
 			}
 		} else {
 			DEBUG4("Build_printcap_info: old keyid '%s', new '%s'",
@@ -1700,7 +1700,7 @@ void Build_printcap_info(
 			}
 			keyid = safestrdup(t,__FILE__,__LINE__);
 			if( (appendline = (Lastchar(keyid) == '\\')) ){
-				keyid[strlen(keyid)-1] = 0;
+				keyid[safestrlen(keyid)-1] = 0;
 			}
 		}
 	}
@@ -1945,12 +1945,12 @@ void Set_var_list( struct keywords *keys, struct line_list *values )
  * - check a string for a simple keyword name
  ***************************************************************************/
 
-#define FIXV(S,V) { S, N_(S), INTEGER_K, (void *)0, V }
+#define FIXV(S,V) { S, N_(S), INTEGER_K, (void *)0, V, 0,0 }
  static struct keywords simple_words[] = {
  FIXV( "all", 1 ), FIXV( "yes", 1 ), FIXV( "allow", 1 ), FIXV( "true", 1 ),
  FIXV( "no", 0 ), FIXV( "deny", 0 ), FIXV( "false", 0 ),
  FIXV( "none", 0 ),
-{0}
+{0,0,0,0,0,0,0}
  };
 
 int Check_str_keyword( const char *name, int *value )
@@ -2032,15 +2032,15 @@ void Config_value_conversion( struct keywords *key, const char *s )
 
 
  static struct keywords Keyletter[] = {
-	{ "P", 0, STRING_K, &Printer_DYN },
-	{ "Q", 0, STRING_K, &Queue_name_DYN },
-	{ "h", 0, STRING_K, &ShortHost_FQDN },
-	{ "H", 0, STRING_K, &FQDNHost_FQDN },
-	{ "a", 0, STRING_K, &Architecture_DYN },
-	{ "R", 0, STRING_K, &RemotePrinter_DYN },
-	{ "M", 0, STRING_K, &RemoteHost_DYN },
-	{ "D", 0, STRING_K, &Current_date_DYN },
-	{ 0 }
+	{ "P", 0, STRING_K, &Printer_DYN, 0,0,0 },
+	{ "Q", 0, STRING_K, &Queue_name_DYN, 0,0,0 },
+	{ "h", 0, STRING_K, &ShortHost_FQDN, 0,0,0 },
+	{ "H", 0, STRING_K, &FQDNHost_FQDN, 0,0,0 },
+	{ "a", 0, STRING_K, &Architecture_DYN, 0,0,0 },
+	{ "R", 0, STRING_K, &RemotePrinter_DYN, 0,0,0 },
+	{ "M", 0, STRING_K, &RemoteHost_DYN, 0,0,0 },
+	{ "D", 0, STRING_K, &Current_date_DYN, 0,0,0 },
+	{ 0,0,0,0,0,0,0 }
 };
 
 void Expand_percent( char **var )
@@ -2073,7 +2073,7 @@ void Expand_percent( char **var )
 		if( t ){
 			*s = 0;
 			s += 2;
-			len = strlen(str) + strlen(t);
+			len = safestrlen(str) + safestrlen(t);
 			u = str;
 			str = safestrdup3(str,t,s,__FILE__,__LINE__);
 			if(u) free(u); u = 0;
@@ -2379,7 +2379,7 @@ int In_group( char *group, char *user )
 	pwent = getpwnam(user);
 	if( (grent = getgrnam( group )) ){
 		DEBUGF(DDB3)("In_group: group id: %d\n", grent->gr_gid);
-		if( pwent && (pwent->pw_gid == grent->gr_gid) ){
+		if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
 			DEBUGF(DDB3)("In_group: user default group id: %d\n", pwent->pw_gid);
 			result = 0;
 		} else for( members = grent->gr_mem; result && *members; ++members ){
@@ -2394,7 +2394,7 @@ int In_group( char *group, char *user )
 			DEBUGF(DDB3)("In_group: group name '%s'", grent->gr_name);
 			/* now do match against group */
 			if( Globmatch( group, grent->gr_name ) == 0 ){
-				if( pwent && (pwent->pw_gid == grent->gr_gid) ){
+				if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
 					DEBUGF(DDB3)("In_group: user default group id: %d\n",
 					pwent->pw_gid);
 					result = 0;
@@ -2575,7 +2575,7 @@ void Split_cmd_line( struct line_list *l, char *line )
 				++s;
 				t = strchr(s,c);
 			} else if( !(t = strpbrk(s, Whitespace)) ){
-				t = s+strlen(s);
+				t = s+safestrlen(s);
 			}
 			if( t ){
 				c = cval(t);
@@ -2812,15 +2812,15 @@ int Filter_file( int input_fd, int output_fd, char *error_header,
 	of_error[1] = -1;
 	buffer[0] = 0;
 	len = 0;
-	while( len < sizeof(buffer)-1
+	while( len < (int)sizeof(buffer)-1
 		&& (n = read(of_error[0],buffer+len,sizeof(buffer)-len-1)) >0 ){
 		buffer[n+len] = 0;
 		while( (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
 			SETSTATUS(job)"%s: %s", error_header, buffer );
-			memmove(buffer,s,strlen(s)+1);
+			memmove(buffer,s,safestrlen(s)+1);
 		}
-		len = strlen(buffer);
+		len = safestrlen(buffer);
 	}
 	if( buffer[0] ){
 		SETSTATUS(job)"%s: %s", error_header, buffer );
@@ -3026,15 +3026,15 @@ void Remove_sequential_separators( char *start )
 	char *end;
 	if( start == 0 || *start == 0 ) return;
 	while( strchr( File_sep, *start) ){
-		memmove(start,start+1,strlen(start+1)+1);
+		memmove(start,start+1,safestrlen(start+1)+1);
 	}
-	for( end = start + strlen(start)-1;
+	for( end = start + safestrlen(start)-1;
 		*start && (end = strpbrk( end, File_sep )); ){
 		*end-- = 0;
 	}
 	for( ; *start && (end = strpbrk(start+1,File_sep)); start = end ){
 		if( start+1 == end ){
-			memmove(start,start+1,strlen(start+1)+1);
+			memmove(start,start+1,safestrlen(start+1)+1);
 			end = start;
 		}
 	}
@@ -3056,7 +3056,7 @@ void Fix_Z_opts( struct job *job )
 		s = Prefix_option_to_option_DYN;
 		while( s && *s ){
 			if( !isalpha(cval(s)) ){
-				memmove(s,s+1,strlen(s+1)+1);
+				memmove(s,s+1,safestrlen(s+1)+1);
 			} else {
 				++s;
 			}
@@ -3064,7 +3064,7 @@ void Fix_Z_opts( struct job *job )
 		s = Prefix_option_to_option_DYN;
 		/* now we have the fixed value */
 		DEBUG4("Fix_Z_opts: prefix_options fixed '%s'", s);
-		n = strlen(s);
+		n = safestrlen(s);
 		if( n < 2 ){
 			FATAL(LOG_ERR) "Fix_Z_opts: not enough letters '%s'", s );
 		}
@@ -3101,7 +3101,7 @@ void Fix_Z_opts( struct job *job )
 			for( start = str; start && *start; start = end ){
 				c = 0;
 				if( !(end = strpbrk(start,",")) ){
-					end = start+strlen(start);
+					end = start+safestrlen(start);
 				}
 				c = *end;
 				*end = 0;
@@ -3110,7 +3110,7 @@ void Fix_Z_opts( struct job *job )
 				if( !Globmatch( pattern, start) ){
 					/* move the values up in the string, end -> ',' */
 					if( c ){
-						memmove( start,end+1, strlen(end+1)+1);
+						memmove( start,end+1, safestrlen(end+1)+1);
 					} else {
 						*start = 0;
 					}
@@ -3140,16 +3140,16 @@ void Fix_Z_opts( struct job *job )
 	DEBUG4("Fix_Z_opts: after Prefix_Z '%s'", str );
 	for( s = safestrchr(str,','); s; s = strchr(s,',') ){
 		if( cval(s+1) == ',' ){
-			memmove(s,s+1,strlen(s+1)+1);
+			memmove(s,s+1,safestrlen(s+1)+1);
 		} else {
 			++s;
 		}
 	}
 	if( str ){
 		if( cval(str) == ',' ){
-			memmove(str,str+1,strlen(str+1)+1);
+			memmove(str,str+1,safestrlen(str+1)+1);
 		}
-		if( (n = strlen(str)) && cval(str+n-1) == ',' ) str[n-1] = 0;
+		if( (n = safestrlen(str)) && cval(str+n-1) == ',' ) str[n-1] = 0;
 	}
 	DEBUG4("Fix_Z_opts: final Z '%s'", str );
 	Free_line_list(&l);
@@ -3206,7 +3206,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 				if( !isprint(c) || isspace(c) ) c = ' ';
 				strv[position] = c;
 				++position;
-				memmove(strv+position,s,strlen(s)+1);
+				memmove(strv+position,s,safestrlen(s)+1);
 				continue;
 			}
 			/* now we handle the $ */
@@ -3227,7 +3227,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 			if( c == '*' ){
 				if( flags && *flags ){
 					rest = safestrdup(rest,__FILE__,__LINE__);
-					position = strlen(strv);
+					position = safestrlen(strv);
 					l->list[count] = strv
 						 = safeextend3(strv,flags,rest,__FILE__,__LINE__);
 					if( rest ) free(rest); rest = 0;
@@ -3333,7 +3333,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 				if( space ){
 					DEBUG4("Fix_dollars: space [%d]='%s'", count, l->list[count] );
 					if( quote || nosplit ){
-						position = strlen(strv) + strlen(str) + 2;
+						position = safestrlen(strv) + safestrlen(str) + 2;
 						l->list[count] =
 							strv = safeextend5( strv," '",str,"'",rest,__FILE__,__LINE__);
 					} else {
@@ -3344,16 +3344,16 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags
 						++l->count;
 						++count;
 						l->list[count] = strv = safestrdup2(str,rest,__FILE__,__LINE__);
-						position = strlen(str);
+						position = safestrlen(str);
 					}
 				} else {
-					position = strlen(strv) + strlen(str)+strlen(tag);
+					position = safestrlen(strv) + safestrlen(str)+safestrlen(tag);
 					l->list[count] = strv
 						 = safeextend4(strv,str,tag,rest,__FILE__,__LINE__);
 				}
 				if( rest ) free(rest); rest = 0;
 			} else {
-				memmove(strv+position,rest,strlen(rest)+1);
+				memmove(strv+position,rest,safestrlen(rest)+1);
 			}
 			DEBUG4("Fix_dollars: [%d]='%s'", count, strv );
 		}
@@ -3386,7 +3386,7 @@ char *Make_pathname( const char *dir,  const char *file )
 	} else {
 		path = safestrdup2("./",file,__FILE__,__LINE__);
 	}
-	if( (s = path) ) while((s = strstr(s,"//"))) memmove(s,s+1,strlen(s)+1 );
+	if( (s = path) ) while((s = strstr(s,"//"))) memmove(s,s+1,safestrlen(s)+1 );
 	return(path);
 }
 
@@ -3430,14 +3430,14 @@ char *Escape( char *str, int level )
 	if( str == 0 || *str == 0 ) return(0);
 	if( level <= 0 ) level = 1;
 
-	len = strlen(str);
+	len = safestrlen(str);
 	for( j = 0; (c = cval(str+j)); ++j ){
 		if( c != ' ' && !isalnum( c ) ){
 			len += incr;
 		}
 	}
 	DEBUG5("Escape: level %d, allocated length %d, length %d, for '%s'",
-		level, len, strlen(str), str );
+		level, len, safestrlen(str), str );
 	s = malloc_or_die(len+1,__FILE__,__LINE__);
 	i = 0;
 	for( i = j = 0; (c = cval(str+j)); ++j ){
@@ -3449,10 +3449,10 @@ char *Escape( char *str, int level )
 			for( k = 1; k < level; ++k ){
 				/* we move the stuff after the % two positions */
 				/* s+i is the %, s+i+1 is the first digit */
-				memmove(s+i+3, s+i+1, strlen(s+i+1)+1);
+				memmove(s+i+3, s+i+1, safestrlen(s+i+1)+1);
 				memmove(s+i+1, "25", 2 );
 			}
-			i += strlen(s+i);
+			i += safestrlen(s+i);
 		} else {
 			s[i++] = c;
 		}
@@ -3476,7 +3476,7 @@ void Escape_colons( struct line_list *list )
 
 		if( str == 0 || strchr(str,':') == 0 ) continue;
 
-		len = strlen(str);
+		len = safestrlen(str);
 		for( s = str; (s = strchr(s,':')); ++s ){
 			len += 4;
 		}
@@ -3524,7 +3524,7 @@ void Unescape( char *str )
 char *Find_str_in_str( char *str, const char *key, const char *sep )
 {
 	char *s = 0, *end;
-	int len = strlen(key), c;
+	int len = safestrlen(key), c;
 
 	if(str) for( s = str; (s = strstr(s,key)); ++s ){
 		c = cval(s+len);
@@ -3623,7 +3623,7 @@ char *Fix_str( char *str )
 		}
 		s[0] = c;
 		if( c == 0 ) break;
-		memcpy(s+1,end,strlen(end)+1);
+		memcpy(s+1,end,safestrlen(end)+1);
 		++s;
 	}
 	if( *dupstr == 0 ){ free(dupstr); dupstr = 0; }
@@ -3786,12 +3786,12 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 			*s++ = 0;
 			DEBUG1("Pgp_decode: pgp output '%s'", buffer );
 			while( cval(buffer) && !isprint(cval(buffer)) ){
-				memmove(buffer,buffer+1,strlen(buffer+1)+1);
+				memmove(buffer,buffer+1,safestrlen(buffer+1)+1);
 			}
 			/* rip out extra spaces */
 			for( t = buffer; *t ; ){
 				if( isspace(cval(t)) && isspace(cval(t+1)) ){
-					memmove(t,t+1,strlen(t+1)+1);
+					memmove(t,t+1,safestrlen(t+1)+1);
 				} else {
 					++t;
 				}
@@ -3800,7 +3800,7 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 				DEBUG1("Pgp_decode: pgp final output '%s'", buffer );
 				Add_line_list( pgp_info, buffer, 0, 0, 0 );
 			}
-			memmove(buffer,s,strlen(s)+1);
+			memmove(buffer,s,safestrlen(s)+1);
 		}
 	}
 	close(error_fd[0]); error_fd[0] = -1;
@@ -3820,7 +3820,7 @@ int Pgp_decode(struct line_list *info, char *tempfile, char *pgpfile,
 		SNPRINTF(error,errlen)"Pgp_decode: exit status %d",n);
 		DEBUG1("Pgp_decode: pgp exited with status %d on host %s", n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
-		for( i = 0; (n = strlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
+		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
 			s = pgp_info->list[i];
 			SNPRINTF(error+n, errlen-n)"\n %s",s);
 			if( !*not_a_ciphertext ){
@@ -3942,12 +3942,12 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 			*s++ = 0;
 			DEBUG1("Pgp_encode: pgp output '%s'", buffer );
 			while( cval(buffer) && !isprint(cval(buffer)) ){
-				memmove(buffer,buffer+1,strlen(buffer+1)+1);
+				memmove(buffer,buffer+1,safestrlen(buffer+1)+1);
 			}
 			/* rip out extra spaces */
 			for( t = buffer; *t ; ){
 				if( isspace(cval(t)) && isspace(cval(t+1)) ){
-					memmove(t,t+1,strlen(t+1)+1);
+					memmove(t,t+1,safestrlen(t+1)+1);
 				} else {
 					++t;
 				}
@@ -3956,7 +3956,7 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 				DEBUG1("Pgp_encode: pgp final output '%s'", buffer );
 				Add_line_list( pgp_info, buffer, 0, 0, 0 );
 			}
-			memmove(buffer,s,strlen(s)+1);
+			memmove(buffer,s,safestrlen(s)+1);
 		}
 	}
 	close(error_fd[0]); error_fd[0] = -1;
@@ -3977,7 +3977,7 @@ int Pgp_encode(struct line_list *info, char *tempfile, char *pgpfile,
 		SNPRINTF(error,errlen)
 			"Pgp_encode: pgp exited with status %d on host %s", n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
-		for( i = 0; (n = strlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
+		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
 			s = pgp_info->list[i];
 			SNPRINTF(error+n, errlen-n)"\n %s",s);
 		}

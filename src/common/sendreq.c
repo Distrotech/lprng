@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: sendreq.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 
 #include "lp.h"
@@ -147,13 +147,13 @@ int Send_request(
 		char *msg = "";
 		SNPRINTF( errormsg, sizeof(errormsg)-2)
 			"cannot open connection - %s",
-			err?Errormsg(err):"bad or missing hostname", msg );
+			err?Errormsg(err):"bad or missing hostname" );
 		if( !Is_server ){
-			int v = strlen(errormsg);
+			int v = safestrlen(errormsg);
 			SNPRINTF( errormsg+v, sizeof(errormsg)-v)
 			"\nMake sure the remote host supports the LPD protocol");
 			if( geteuid() && getuid() ){
-				v = strlen(errormsg);
+				v = safestrlen(errormsg);
 				SNPRINTF( errormsg+v, sizeof(errormsg)-v)
 				"\nand accepts connections from this host and from non-privileged (>1023) ports");
 			}
@@ -172,7 +172,7 @@ int Send_request(
 			errormsg, sizeof(errormsg), cmd, security, &info );
 	} else {
 		status = Link_send( RemoteHost_DYN, &sock, transfer_timeout,
-			cmd, strlen(cmd), 0 );
+			cmd, safestrlen(cmd), 0 );
 		if( status ){
 			SNPRINTF(errormsg,sizeof(errormsg))"%s",Link_err_str(status));
 			close(sock); sock = -1;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.19 2002/03/06 17:02:52 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.27 2002/04/01 17:54:52 papowell Exp $";
 
 
 #include "lp.h"
@@ -109,7 +109,7 @@ void Service_all( struct line_list *args )
 
 		Free_line_list( &Sort_order );
 		if( Scan_queue( &Spool_control, &Sort_order,
-				&printable,&held,&move, 1, first_scan, 0, &error, &done  ) ){
+				&printable,&held,&move, 1, &error, &done  ) ){
 			continue;
 		}
 		forwarding = Find_str_value(&Spool_control,FORWARDING,Value_sep);
@@ -210,6 +210,7 @@ void Service_connection( struct line_list *args )
 		int len;
 		void *s, *addr;
 		memset( &sinaddr, 0, sizeof(sinaddr) );
+		Perm_check.unix_socket = 1;
 	 	sinaddr.sa_family = Localhost_IP.h_addrtype;
 		len = Localhost_IP.h_length;
 		if( sinaddr.sa_family == AF_INET ){
@@ -232,7 +233,6 @@ void Service_connection( struct line_list *args )
 		inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ), ntohs( port ) );
 
 	/* get the remote name and set up the various checks */
-	Perm_check.addr = sinaddr;
 
 	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr, 0 );
 	Perm_check.remotehost  =  &RemoteHost_IP;

@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 1.19 2002/03/06 17:03:01 papowell Exp $
+ * $Id: utilities.h,v 1.27 2002/04/01 17:54:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -54,6 +54,7 @@ void plp_sigpause( void );
 int safestrcasecmp (const char *s1, const char *s2);
 int safestrncasecmp (const char *s1, const char *s2, int len );
 int safestrcmp( const char *s1, const char *s2 );
+int safestrlen( const char *s1 );
 int safestrncmp( const char *s1, const char *s2, int len );
 char *safestrchr( const char *s1, int c );
 char *safestrrchr( const char *s1, int c );
@@ -81,7 +82,7 @@ int To_daemon(void);
 int To_user(void);
 int To_ruid(int ruid);
 int To_euid( int euid );
-int setuid_wrapper(int to);
+int setuid_wrapper(uid_t to);
 int Full_daemon_perms(void);
 int Full_root_perms(void);
 int Full_user_perms(void);
@@ -91,5 +92,12 @@ int Set_full_group( int euid, int gid );
 int Setdaemon_group(void);
 void Reset_daemonuid(void);
 double Space_avail( char *pathname );
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ void safefprintf (int fd, char *format,...)
+#else
+ void safefprintf (va_alist) va_dcl
+#endif
+;
 
 #endif

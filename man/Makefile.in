@@ -33,7 +33,52 @@ COMPRESS_DIR=
 COMPRESS_EXT=.gz
 COMPRESS=gzip -c
 
-all:
+PAGES= cancel.1 checkpc.8 lp.1 lpbanner.1 lpc.8 lpd.8 lpd.conf.5 \
+	 lpd.perms.5 lpf.1 lpq.1 lpr.1 lprm.1 lpstat.1 monitor.1 pclbanner.1 \
+	 printcap.5 psbanner.1
+RAW= cancel.n checkpc.n lp.n lpbanner.n lpc.n lpd.n lpd.conf.n \
+	 lpd.perms.n lpf.n lpq.n lpr.n lprm.n lpstat.n monitor.n pclbanner.n \
+	 printcap.n psbanner.n 
+
+
+# prefix
+prefix=@prefix@
+# exec prefix
+exec_prefix=@exec_prefix@
+# for binaries
+bindir=@bindir@
+# for admin type of binaries
+sbindir=@sbindir@
+# for the filters
+libexecdir=@libexecdir@
+# for the configuration stuff
+sysconfdir=@sysconfdir@
+# for the man pages
+mandir=@mandir@
+# top build directory
+top_builddir=..
+
+LPD_PERMS_PATH=@LPD_PERMS_PATH@
+LPD_CONF_PATH=@LPD_CONF_PATH@
+PRINTCAP_PATH=@PRINTCAP_PATH@
+LPD_PATH=@LPD_DIR@/lpd
+LOCKFILE=@LOCKFILE@
+
+all: ${PAGES}
+
+${PAGES}: ${RAW} Makefile
+	for i in ${PAGES} ; do \
+		v=`expr "$$i" : "\(.*\).[0-9]"` ; \
+		echo ${SRC}/$$i; \
+		sed \
+		 -e "s!_PRINTCAP_PATH_!${PRINTCAP_PATH}!" \
+		 -e "s!_LPD_PERMS_PATH_!${LPD_PERMS_PATH}!" \
+		 -e "s!_LPD_CONF_PATH_!${LPD_CONF_PATH}!" \
+		 -e "s!_LOCKFILE_!${LOCKFILE}!" \
+		${SRC}/$$v.n > $$i; \
+	done
+
+
 
 .PHONY: all clean install ci install.zman
 
@@ -60,12 +105,12 @@ update:
 #
 install:
 	for suffix in 1 2 3 4 5 6 7 8 ; do \
-	  if ls ${SRC}/*.$${suffix} >/dev/null 2>&1 ; then \
+	  if ls *.$${suffix} >/dev/null 2>&1 ; then \
 	    if [ ! -d $(DESTDIR)$(MAN)/man$${suffix} ] ; then \
 		    echo ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
 		    ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
 	    fi; \
-	    for i in ${SRC}/*.$$suffix; do \
+	    for i in *.$$suffix; do \
 		echo   $(INSTALL) -m 644 $$i $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
 		$(INSTALL)   -m 644 $$i $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
 	    done; \
@@ -74,8 +119,8 @@ install:
 
 uninstall:
 	for suffix in 1 2 3 4 5 6 7 8 ; do \
-	  if ls ${SRC}/*.$${suffix} >/dev/null 2>&1 ; then \
-	    for i in ${SRC}/*.$$suffix; do \
+	  if ls *.$${suffix} >/dev/null 2>&1 ; then \
+	    for i in *.$$suffix; do \
 		echo   rm $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
 		rm   $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
 	    done; \
@@ -85,6 +130,7 @@ uninstall:
 realclean mostlyclean distclean:: clean
 
 clean::
+	rm -f *.[0-9] ?
 
 TAGS info:
 
@@ -94,6 +140,6 @@ cifast ci:
 		(set +e; rcs -l $$1; exit 0); \
 		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
 	}; \
-	for i in *.[0-9] Makefile.in Makefile; do \
+	for i in *.n Makefile.in Makefile; do \
 		checkin $$i; \
 	done;

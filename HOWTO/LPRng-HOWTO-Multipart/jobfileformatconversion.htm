@@ -10,7 +10,7 @@
     "tutorial.htm">
     <link rel="PREVIOUS" title="Print Job Filters" href=
     "printjobfilters.htm">
-    <link rel="NEXT" title="Printcap Basics" href="x3048.htm">
+    <link rel="NEXT" title="Printcap Basics" href="x3050.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 Mar 2002
-          (For LPRng-3.8.9)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
+          (For LPRng-3.8.10)</th>
         </tr>
 
         <tr>
@@ -31,7 +31,7 @@
           Print Spooling Tutorial</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x3048.htm" accesskey="N">Next</a></td>
+          "x3050.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -51,7 +51,7 @@
       your printer.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2706"></a>
+        <a name="AEN2708"></a>
 <pre class="SCREEN">
     lp:filter=/usr/local/lib/filters/myfilter:...
     
@@ -124,7 +124,7 @@
       text or other files.</p>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN2732">4.10.1. Simple Filter
+        <h2 class="SECT2"><a name="AEN2734">4.10.1. Simple Filter
         with File Format Detection</a></h2>
 
         <p>Since this is a tutorial, we will demonstrate a simple
@@ -138,7 +138,7 @@
         For example:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2738"></a>
+          <a name="AEN2740"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {191} %</tt> <tt class=
 "USERINPUT"><b>cd /tmp</b></tt>
@@ -171,7 +171,7 @@
         simple yet very powerful shell script that does this.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2756"></a>
+          <a name="AEN2758"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # set up converters
@@ -219,7 +219,7 @@
         of the script:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2761"></a>
+          <a name="AEN2763"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {198} %</tt> <tt class=
 "USERINPUT"><b>/tmp/majik &lt;test.ps.gz</b></tt>
@@ -264,7 +264,7 @@
         "APPLICATION">majikperl</b>:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2779"></a>
+          <a name="AEN2781"></a>
 <pre class="SCREEN">
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
@@ -316,7 +316,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN2781">4.10.2. The <b class=
+        <h2 class="SECT2"><a name="AEN2783">4.10.2. The <b class=
         "APPLICATION">ifhp</b> Filter</a></h2>
 
         <p>The <a href="secftp.htm">ifhp</a> Print Filter is the
@@ -334,8 +334,8 @@
         and can do selective conversions from one format to
         others.</p>
 
-        <p>The <a href="x288.htm#POSTSCRIPT">PostScript</a> and <a
-        href="x288.htm#PCL">PCL</a> printer job languages are
+        <p>The <a href="x290.htm#POSTSCRIPT">PostScript</a> and <a
+        href="x290.htm#PCL">PCL</a> printer job languages are
         supported by most printer manufacturers. However, in order
         to have a job printed correctly the following steps must be
         taken.</p>
@@ -415,7 +415,7 @@
         <b class="APPLICATION">lpd</b>.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2824"></a>
+          <a name="AEN2826"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -434,7 +434,7 @@
         "APPLICATION">emacs</b> that shows control characters:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2831"></a>
+          <a name="AEN2833"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {200} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -618,7 +618,7 @@
         case of the jaggies.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2922"></a>
+          <a name="AEN2924"></a>
 <pre class="SCREEN">
     Input file:
     
@@ -650,7 +650,7 @@
         You can find it by using the command:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2933"></a>
+          <a name="AEN2935"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h9: {160} %</tt> <tt class=
 "USERINPUT"><b>find /usr/ -type f -name lpf -print</b></tt>
@@ -668,7 +668,7 @@
         server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2942"></a>
+          <a name="AEN2944"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -686,7 +686,7 @@
         file.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2947"></a>
+          <a name="AEN2949"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {203} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -709,7 +709,7 @@
         information.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2959"></a>
+          <a name="AEN2961"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -724,7 +724,7 @@
         <p>Now reprint the file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2962"></a>
+          <a name="AEN2964"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {206} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -747,7 +747,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN2974">4.10.4. Store and
+        <h2 class="SECT2"><a name="AEN2976">4.10.4. Store and
         Forward Spool Queues</a></h2>
 
         <p>Up to now we have assumed that associated with each
@@ -763,7 +763,7 @@
         and forward queue.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2980"></a>
+          <a name="AEN2982"></a>
 <pre class="SCREEN">
     # store and forward using classical BSD :rm:rp
     lp:rp=pr:rm=host
@@ -794,7 +794,7 @@
         to restart the <b class="APPLICATION">lpd</b> server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2993"></a>
+          <a name="AEN2995"></a>
 <pre class="SCREEN">
     lp:force_localhost
     lp:server
@@ -810,7 +810,7 @@
         "FILENAME">/tmp/hi</tt> file and observe the results: 
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2996"></a>
+          <a name="AEN2998"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {209} %</tt> <tt class=
 "USERINPUT"><b>lpr /tmp/hi</b></tt>
@@ -855,7 +855,7 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN3007">4.10.5. Filtering Job
+        <h2 class="SECT2"><a name="AEN3009">4.10.5. Filtering Job
         Files In Transit</a></h2>
 
         <p>One of the major problems with store and forward
@@ -878,7 +878,7 @@
         "APPLICATION">lpd</b> server.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3017"></a>
+          <a name="AEN3019"></a>
 <pre class="SCREEN">
     # set /tmp/testf to contain the following
     #   and chmod 755 /tmp/testf
@@ -904,7 +904,7 @@
         "FILENAME">/tmp/hi</tt> file and observe the results: 
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN3020"></a>
+          <a name="AEN3022"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {211} %</tt> <tt class=
 "USERINPUT"><b>lpr /tmp/hi</b></tt>
@@ -999,7 +999,7 @@
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x3048.htm" accesskey="N">Next</a></td>
+          "x3050.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

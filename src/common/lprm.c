@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: lprm.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -163,7 +163,8 @@ int main(int argc, char *argv[], char *envp[])
 		struct line_list user_list;
 		char *str, *t;
 		struct passwd *pw;
-		int found, uid;
+		int found;
+		uid_t uid;
 
 		DEBUG2("lprm: checking '%s' for -U perms",
 			Allow_user_setting_DYN );
@@ -389,5 +390,7 @@ void usage(void)
 	} else {
 		pr_msg(clean_msg);
 	}
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);
 }

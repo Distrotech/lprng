@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: controlword.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: controlword.c,v 1.27 2002/04/01 17:54:50 papowell Exp $";
 
 
 #include "lp.h"
@@ -17,40 +17,40 @@
 
  static struct keywords controlwords[] = {
 
-{ "ABORT", N_("ABORT"), OP_ABORT },
-{ "ACTIVE", N_("ACTIVE"), OP_ACTIVE },
-{ "CLASS", N_("CLASS"), OP_CLASS },
-{ "CLIENT", N_("CLIENT"), OP_CLIENT },
-{ "DEBUG", N_("DEBUG"), OP_DEBUG },
-{ "DEFAULTQ", N_("DEFAULTQ"), OP_DEFAULTQ },
-{ "DISABLE", N_("DISABLE"), OP_DISABLE },
-{ "DOWN", N_("DOWN"), OP_DOWN },
-{ "ENABLE", N_("ENABLE"), OP_ENABLE },
-{ "HOLD", N_("HOLD"), OP_HOLD },
-{ "HOLDALL", N_("HOLDALL"), OP_HOLDALL },
-{ "KILL", N_("KILL"), OP_KILL },
-{ "LPD", N_("LPD"), OP_LPD },
-{ "LPQ", N_("LPQ"), OP_LPQ },
-{ "LPRM", N_("LPRM"), OP_LPRM },
-{ "MOVE", N_("MOVE"), OP_MOVE },
-{ "MSG", N_("MSG"), OP_MSG },
-{ "NOHOLDALL", N_("NOHOLDALL"), OP_NOHOLDALL },
-{ "PRINTCAP", N_("PRINTCAP"), OP_PRINTCAP },
-{ "REDIRECT", N_("REDIRECT"), OP_REDIRECT },
-{ "REDO", N_("REDO"), OP_REDO },
-{ "RELEASE", N_("RELEASE"), OP_RELEASE },
-{ "REREAD", N_("REREAD"), OP_REREAD },
-{ "START", N_("START"), OP_START },
-{ "STATUS", N_("STATUS"), OP_STATUS },
-{ "STOP", N_("STOP"), OP_STOP },
-{ "TOPQ", N_("TOPQ"), OP_TOPQ },
-{ "UP", N_("UP"), OP_UP },
-{ "SERVER", N_("SERVER"), OP_SERVER },
-{ "DEFAULTS", N_("DEFAULTS"), OP_DEFAULTS },
-{ "FLUSH", N_("FLUSH"), OP_FLUSH },
-{ "LANG", N_("LANG"), OP_LANG },
+{ "ABORT", N_("ABORT"), OP_ABORT, 0, 0, 0, 0},
+{ "ACTIVE", N_("ACTIVE"), OP_ACTIVE, 0, 0, 0, 0},
+{ "CLASS", N_("CLASS"), OP_CLASS, 0, 0, 0, 0},
+{ "CLIENT", N_("CLIENT"), OP_CLIENT, 0, 0, 0, 0},
+{ "DEBUG", N_("DEBUG"), OP_DEBUG, 0, 0, 0, 0},
+{ "DEFAULTQ", N_("DEFAULTQ"), OP_DEFAULTQ, 0, 0, 0, 0},
+{ "DISABLE", N_("DISABLE"), OP_DISABLE, 0, 0, 0, 0},
+{ "DOWN", N_("DOWN"), OP_DOWN, 0, 0, 0, 0},
+{ "ENABLE", N_("ENABLE"), OP_ENABLE, 0, 0, 0, 0},
+{ "HOLD", N_("HOLD"), OP_HOLD, 0, 0, 0, 0},
+{ "HOLDALL", N_("HOLDALL"), OP_HOLDALL, 0, 0, 0, 0},
+{ "KILL", N_("KILL"), OP_KILL, 0, 0, 0, 0},
+{ "LPD", N_("LPD"), OP_LPD, 0, 0, 0, 0},
+{ "LPQ", N_("LPQ"), OP_LPQ, 0, 0, 0, 0},
+{ "LPRM", N_("LPRM"), OP_LPRM, 0, 0, 0, 0},
+{ "MOVE", N_("MOVE"), OP_MOVE, 0, 0, 0, 0},
+{ "MSG", N_("MSG"), OP_MSG, 0, 0, 0, 0},
+{ "NOHOLDALL", N_("NOHOLDALL"), OP_NOHOLDALL, 0, 0, 0, 0},
+{ "PRINTCAP", N_("PRINTCAP"), OP_PRINTCAP, 0, 0, 0, 0},
+{ "REDIRECT", N_("REDIRECT"), OP_REDIRECT, 0, 0, 0, 0},
+{ "REDO", N_("REDO"), OP_REDO, 0, 0, 0, 0},
+{ "RELEASE", N_("RELEASE"), OP_RELEASE, 0, 0, 0, 0},
+{ "REREAD", N_("REREAD"), OP_REREAD, 0, 0, 0, 0},
+{ "START", N_("START"), OP_START, 0, 0, 0, 0},
+{ "STATUS", N_("STATUS"), OP_STATUS, 0, 0, 0, 0},
+{ "STOP", N_("STOP"), OP_STOP, 0, 0, 0, 0},
+{ "TOPQ", N_("TOPQ"), OP_TOPQ, 0, 0, 0, 0},
+{ "UP", N_("UP"), OP_UP, 0, 0, 0, 0},
+{ "SERVER", N_("SERVER"), OP_SERVER, 0, 0, 0, 0},
+{ "DEFAULTS", N_("DEFAULTS"), OP_DEFAULTS, 0, 0, 0, 0},
+{ "FLUSH", N_("FLUSH"), OP_FLUSH, 0, 0, 0, 0},
+{ "LANG", N_("LANG"), OP_LANG, 0, 0, 0, 0},
 
-{0}
+{0,0,0,0,0,0,0}
 };
 
 

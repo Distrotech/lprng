@@ -10,8 +10,8 @@
     "printcapref.htm">
     <link rel="PREVIOUS" title=
     "Management Strategies for Large Installations" href=
-    "x6063.htm">
-    <link rel="NEXT" title="Lexmark Printers" href="x6173.htm">
+    "x6065.htm">
+    <link rel="NEXT" title="Lexmark Printers" href="x6175.htm">
   </head>
 
   <body class="SECT1" bgcolor="#FFFFFF" text="#000000" link=
@@ -20,19 +20,19 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 6 Mar 2002
-          (For LPRng-3.8.9)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 1 Apr 2002
+          (For LPRng-3.8.10)</th>
         </tr>
 
         <tr>
           <td width="10%" align="left" valign="bottom"><a href=
-          "x6063.htm" accesskey="P">Prev</a></td>
+          "x6065.htm" accesskey="P">Prev</a></td>
 
           <td width="80%" align="center" valign="bottom">Chapter
           12. Printcap Database</td>
 
           <td width="10%" align="right" valign="bottom"><a href=
-          "x6173.htm" accesskey="N">Next</a></td>
+          "x6175.htm" accesskey="N">Next</a></td>
         </tr>
       </table>
       <hr align="LEFT" width="100%">
@@ -46,7 +46,7 @@
       specify:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN6075"></a>
+        <a name="AEN6077"></a>
 <pre class="SCREEN">
     printcap_path=|program
 </pre>
@@ -70,7 +70,7 @@
       incorporating vendor specific code is avoided.</p>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN6083">12.18.1. How to use NIS
+        <h2 class="SECT2"><a name="AEN6085">12.18.1. How to use NIS
         and <b class="APPLICATION">LPRng</b></a></h2>
 
         <p>This note is based on material sent to the <a href=
@@ -85,7 +85,7 @@
         <p>The input to NIS is a normal printcap file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6091"></a>
+          <a name="AEN6093"></a>
 <pre class="SCREEN">
     # Classical printcap entry
     lp23a|lp23|lp|main printhost printer - KB, EUCS front Door:\
@@ -108,7 +108,7 @@
         map).</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6094"></a>
+          <a name="AEN6096"></a>
 <pre class="SCREEN">
     PRINTCAP=${sysconfdir}/printcap
     # warning : [  ] is actually [&lt;space&gt;&lt;tab&gt;] in the script
@@ -153,7 +153,7 @@
         "FILENAME">/etc/lpd.conf</tt> file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6098"></a>
+          <a name="AEN6100"></a>
 <pre class="SCREEN">
     printcap_path |/usr/local/libexec/pcfilter
 </pre>
@@ -165,7 +165,7 @@
         /usr/local/libexec/pcfilter</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6101"></a>
+          <a name="AEN6103"></a>
 <pre class="SCREEN">
     #!/bin/sh
     #/usr/local/libexec/filters/pcfilter
@@ -182,7 +182,7 @@
         <p>You can test this by using:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6104"></a>
+          <a name="AEN6106"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {314} #</tt> <tt class=
 "USERINPUT"><b>lpc client pr</b></tt>
@@ -199,12 +199,12 @@
       </div>
 
       <div class="SECT2">
-        <h2 class="SECT2"><a name="AEN6110">12.18.2. How to use NIS
+        <h2 class="SECT2"><a name="AEN6112">12.18.2. How to use NIS
         and <b class="APPLICATION">LPRng</b> - Sven
         Rudolph</a></h2>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6114"></a>
+          <a name="AEN6116"></a>
 <pre class="SCREEN">
      Date: Wed, 11 Sep 1996 00:11:02 +0200
     From: Sven Rudolph &lt;sr1@os.inf.tu-dresden.de&gt;
@@ -219,7 +219,7 @@
         for each printer to appear, e.g.:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN6117"></a>
+          <a name="AEN6119"></a>
 <pre class="SCREEN">
     ---------- start of printcap snippet
     lp1
@@ -265,7 +265,7 @@
             might require other modifications):</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6131"></a>
+              <a name="AEN6133"></a>
 <pre class="SCREEN">
     ---------- start of /var/yp/Makefile snippet
     PRINTCAP  = /etc/printcap
@@ -294,7 +294,7 @@
             <b class="APPLICATION">LPRng</b> printcap format.</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6141"></a>
+              <a name="AEN6143"></a>
 <pre class="SCREEN">
     ---------- start of /usr/lib/yp/normalize_printcap
     #! /usr/bin/perl
@@ -350,7 +350,7 @@
             is:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6144"></a>
+              <a name="AEN6146"></a>
 <pre class="SCREEN">
     lp1_1 lp1:lp=lp1@server
     lp1_2 lp1:server:oh=servername:sd=/var/spool/lpd/lp1:lp=/dev/lp1:mx=0
@@ -368,7 +368,7 @@
             "LITERAL">ypmatch</tt>:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6148"></a>
+              <a name="AEN6150"></a>
 <pre class="SCREEN">
     ---------- start of /usr/lib/yp/match_printcap
     #!/bin/sh
@@ -390,7 +390,7 @@
             <p>Now test the YP arrangement:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6152"></a>
+              <a name="AEN6154"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {316} #</tt>  cd /var/yp; make
         # this should create the printcap map
@@ -411,7 +411,7 @@
             file:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6161"></a>
+              <a name="AEN6163"></a>
 <pre class="SCREEN">
     printcap_path=|/usr/lib/yp/match_printcap
 </pre>
@@ -424,7 +424,7 @@
             <p>Test the use of the printcap path entry:</p>
 
             <div class="INFORMALEXAMPLE">
-              <a name="AEN6165"></a>
+              <a name="AEN6167"></a>
 <pre class="SCREEN">
     <tt class=
 "PROMPT">h4: {319} #</tt>  lpc client lp1 # shows the printcap for lp1
@@ -455,13 +455,13 @@
       "0" cellpadding="0" cellspacing="0">
         <tr>
           <td width="33%" align="left" valign="top"><a href=
-          "x6063.htm" accesskey="P">Prev</a></td>
+          "x6065.htm" accesskey="P">Prev</a></td>
 
           <td width="34%" align="center" valign="top"><a href=
           "index.htm" accesskey="H">Home</a></td>
 
           <td width="33%" align="right" valign="top"><a href=
-          "x6173.htm" accesskey="N">Next</a></td>
+          "x6175.htm" accesskey="N">Next</a></td>
         </tr>
 
         <tr>

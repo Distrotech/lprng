@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: merge.c,v 1.19 2002/03/06 17:02:54 papowell Exp $";
+"$Id: merge.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 /*-
@@ -178,7 +178,7 @@ Mergesort(void *base, size_t nmemb, size_t size,
 	    					break;
 	    				} else if ((*cmp)(q, p, arg) <= sense) {
 	    					t = p;
-	    					if (i == size)
+	    					if (i == (int)size)
 	    						big = 0; 
 	    					goto FASTCASE;
 	    				} else
@@ -191,7 +191,7 @@ Mergesort(void *base, size_t nmemb, size_t size,
 	    					b = p;
 	    			}
 	    			goto COPY;
- FASTCASE:	    		while (i > size)
+ FASTCASE:	    		while (i > (int)size)
 	    				if ((*cmp)(q,
 	    					p = b + (i >>= 1), arg) <= sense)
 	    					t = p;

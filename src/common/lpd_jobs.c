@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -185,10 +185,11 @@ void Update_spool_info( struct line_list *sp )
 	Free_line_list(&info);
 }
 
-int cmp_server( const void *left, const void *right, const void *arg )
+int cmp_server( const void *left, const void *right, const void *p )
 {   
     struct line_list *l, *r;
 	int tr, tl;
+	tr = (int)p;
 	l = ((struct line_list **)left)[0];
 	r = ((struct line_list **)right)[0];
 	tl = Find_flag_value(l,DONE_TIME,Value_sep);
@@ -224,7 +225,7 @@ void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done
 	Update_spool_info( subserver_info );
 
 	DEBUG1("Get_subserver_pc: scanning '%s'", Spool_dir_DYN );
-	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, 0, 0,&err, &done);
+	Scan_queue( subserver_info, 0, &printable, &held, &move, 1, &err, &done);
 	Set_flag_value(subserver_info,PRINTABLE,printable);
 	Set_flag_value(subserver_info,HELD,held);
 	Set_flag_value(subserver_info,MOVE,move);
@@ -561,7 +562,7 @@ int Do_queue_jobs( char *name, int subserver )
 		LOGDEBUG("Do_queue_jobs: after subservers next fd %d",fdx);close(fdx);};
 	/* get new job values */
 	if( Scan_queue( &Spool_control, &Sort_order,
-			&printable, &held, &move, 1, 0, 0, &error, &done ) ){
+			&printable, &held, &move, 1, &error, &done ) ){
 		LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 			Spool_dir_DYN );
 	}
@@ -636,7 +637,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 			Get_spool_control( Queue_control_file_DYN, &Spool_control);
 			if( Scan_queue( &Spool_control, &Sort_order,
-					&printable, &held, &move, 1, 0, 0, &error, &done ) ){
+					&printable, &held, &move, 1, &error, &done ) ){
 				LOGERR_DIE(LOG_ERR)"Do_queue_jobs: cannot read queue '%s'",
 					Spool_dir_DYN );
 			}
@@ -933,7 +934,7 @@ int Do_queue_jobs( char *name, int subserver )
 								out_tempfd);
 						}
 						while( isspace(cval(buffer)) ){
-							memmove(buffer,buffer+1,strlen(buffer+1)+1);
+							memmove(buffer,buffer+1,safestrlen(buffer+1)+1);
 						}
 						if( (s = strpbrk(buffer,Whitespace)) ){
 							*s = 0;
@@ -1678,17 +1679,17 @@ void Wait_for_subserver( int timeout, struct line_list *servers
  ***************************************************************************/
 
  static struct keywords keys[] = {
-	{"succ", N_("succ"), INTEGER_K, (void *)0, JSUCC},
-	{"jsucc", N_("jsucc"), INTEGER_K, (void *)0, JSUCC},
-	{"success", N_("success"), INTEGER_K, (void *)0, JSUCC},
-	{"jsuccess", N_("jsuccess"), INTEGER_K, (void *)0, JSUCC},
-	{"abort", N_("abort"), INTEGER_K, (void *)0, JABORT},
-	{"jabort", N_("jabort"), INTEGER_K, (void *)0, JABORT},
-	{"hold", N_("hold"), INTEGER_K, (void *)0, JHOLD},
-	{"jhold", N_("jhold"), INTEGER_K, (void *)0, JHOLD},
-	{"remove", N_("remove"), INTEGER_K, (void *)0, JREMOVE},
-	{"jremove", N_("jremove"), INTEGER_K, (void *)0, JREMOVE},
-	{ (char *)0 }
+	{"succ", N_("succ"), INTEGER_K, (void *)0, JSUCC,0,0},
+	{"jsucc", N_("jsucc"), INTEGER_K, (void *)0, JSUCC,0,0},
+	{"success", N_("success"), INTEGER_K, (void *)0, JSUCC,0,0},
+	{"jsuccess", N_("jsuccess"), INTEGER_K, (void *)0, JSUCC,0,0},
+	{"abort", N_("abort"), INTEGER_K, (void *)0, JABORT,0,0},
+	{"jabort", N_("jabort"), INTEGER_K, (void *)0, JABORT,0,0},
+	{"hold", N_("hold"), INTEGER_K, (void *)0, JHOLD,0,0},
+	{"jhold", N_("jhold"), INTEGER_K, (void *)0, JHOLD,0,0},
+	{"remove", N_("remove"), INTEGER_K, (void *)0, JREMOVE,0,0},
+	{"jremove", N_("jremove"), INTEGER_K, (void *)0, JREMOVE,0,0},
+	{ 0,0,0,0,0,0,0 }
 };
 
 int Decode_transfer_failure( int attempt, struct job *job )
@@ -1741,9 +1742,9 @@ int Decode_transfer_failure( int attempt, struct job *job )
 					out_tempfd);
 			}
 			while( (c = cval(line)) && strchr( Whitespace, c) ){
-				memmove( line, line+1, strlen(line+1)+1 );
+				memmove( line, line+1, safestrlen(line+1)+1 );
 			}
-			while( (len = strlen(line)) && (c = cval(line+len-1))
+			while( (len = safestrlen(line)) && (c = cval(line+len-1))
 				&& strchr( Whitespace, c) ){
 				line[len-1] = 0;
 			}
@@ -2092,22 +2093,30 @@ void Update_status( struct job *job, int status )
 
 int Check_print_perms( struct job *job )
 {
-	struct perm_check perm;
 	char *s;
 	int permission;
 
-	memset( &perm, 0, sizeof(perm) );
-	perm.service = 'P';
-	perm.printer = Printer_DYN;
-	perm.user = Find_str_value(&job->info,LOGNAME,Value_sep);
-	perm.remoteuser = perm.user;
-	perm.authuser = Find_str_value(&job->info,AUTHUSER,Value_sep);
+	memset( &Perm_check, 0, sizeof(Perm_check) );
+	Perm_check.service = 'P';
+	Perm_check.printer = Printer_DYN;
+	Perm_check.user = Find_str_value(&job->info,LOGNAME,Value_sep);
+	Perm_check.remoteuser = Perm_check.user;
+	Perm_check.authuser = Find_str_value(&job->info,AUTHUSER,Value_sep);
+	Perm_check.authfrom = Find_str_value(&job->info,AUTHFROM,Value_sep);
+	Perm_check.authtype = Find_str_value(&job->info,AUTHTYPE,Value_sep);
 	s = Find_str_value(&job->info,FROMHOST,Value_sep);
 	if( s && Find_fqdn( &PermHost_IP, s ) ){
-		perm.host = &PermHost_IP;
+		Perm_check.host = &PermHost_IP;
 	}
-	perm.remotehost = perm.host;
-	permission = Perms_check( &Perm_line_list,&perm, job, 1 );
+	s = Find_str_value(&job->info,REMOTEHOST,Value_sep);
+	if( s && Find_fqdn( &RemoteHost_IP, s ) ){
+		Perm_check.remotehost = &RemoteHost_IP;
+	} else {
+		Perm_check.remotehost = Perm_check.host;
+	}
+	Perm_check.unix_socket = Find_flag_value(&job->info,UNIXSOCKET,Value_sep);
+	Perm_check.port = Find_flag_value(&job->info,REMOTEPORT,Value_sep);
+	permission = Perms_check( &Perm_line_list,&Perm_check, job, 1 );
 	DEBUG3("Check_print_perms: permission '%s'", perm_str(permission) );
 	return( permission );
 }
@@ -2692,7 +2701,7 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 			}
 			SNPRINTF(msg, sizeof(msg)) "%s", s );
 			if( (s = strpbrk(msg,Whitespace)) ) *s = 0;
-			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,strlen(s+1)+1);
+			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,safestrlen(s+1)+1);
 		}
 		SNPRINTF(filter_title,sizeof(filter_title))"%s filter '%s'",
 			filter_name, msg );

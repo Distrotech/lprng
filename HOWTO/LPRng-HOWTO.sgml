@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 6 Mar 2002 (For LPRng-3.8.9)</subtitle>
+<subtitle> 1 Apr 2002 (For LPRng-3.8.10)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.19 2002/03/06 17:03:04 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.26 2002/04/01 17:55:01 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -500,6 +500,7 @@ systems, as well as real time and network software.</para>
 <!-- MIRRORSTART -->
 <para>Mirrors:<!-- <br> -->
 <simplelist type=vert columns=1>
+<member><ulink URL="ftp://ftp.u-aizu.ac.jp/pub/net/lpr/LPRng">ftp://ftp.u-aizu.ac.jp/pub/net/lpr/LPRng</ulink> (JA) </member>
 <member><ulink URL="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng">ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng">ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</ulink> (US) </member>
@@ -17666,6 +17667,8 @@ The following table is a summary of the available keywords.</para>
 <row><entry><acronym>IP</acronym></entry><entry>Alias for HOST</entry></row>
 <row><entry><acronym>REMOTEIP</acronym></entry><entry>Alias for REMOTEHOST</entry></row>
 <row><entry><acronym>REMOTEPORT</acronym></entry><entry>Originating TCP/IP port for the connection from the remote host making the request</entry></row>
+<row><entry><acronym>PORT</acronym></entry><entry>Alias for PORT</entry></row>
+<row><entry><acronym>UNIXSOCKET</acronym></entry><entry>Connection is on a UNIX socket, i.e. from localhost</entry></row>
 <row><entry><acronym>SAMEUSER</acronym></entry><entry>USER and REMOTEUSER matches</entry></row>
 <row><entry><acronym>SAMEHOST</acronym></entry><entry>HOST and REMOTEHOST matches</entry></row>
 <row><entry><acronym>SERVER</acronym></entry><entry>request originates on lpd server</entry></row>
@@ -17739,8 +17742,10 @@ REMOTEPORT
 are set to the the IP addresses and hostnames, and the TCP/IP port
 of the host originating the IP address respectively.
 REMOTEIP and IFHP are aliases for REMOTEPORT
-and PORT is an alias for REMOTEPORT. Thes
-are provided for backwards compatibility with older versions of &LPRng;.
+and PORT is an alias for REMOTEPORT
+and are provided for backwards compatibility with older versions of &LPRng;.
+If the connection was on a UNIX socket, then the
+UNIXSOCKET flag is set.
 For example,
 a request originating from
 <literal>10.0.0.2</literal>, port 1011 would set
@@ -17903,7 +17908,11 @@ for which there is no printing permission until the job is removed
 by administrative action.
 To accommodate these printers,
 we must accept jobs for printing and then dispose of them.
-This is done by using the SERVICE=P (printing) checks.</para>
+This is done by using the SERVICE=P (printing) checks.
+These checks are performed
+<emphasis/after/
+the job has been accepted.
+</para>
 
 <para>
 <orderedlist>

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.19 2002/03/06 17:02:51 papowell Exp $";
+"$Id: linksupport.c,v 1.27 2002/04/01 17:54:51 papowell Exp $";
 
 
 /***************************************************************************
@@ -253,7 +253,7 @@ int getconnection ( char *hostname, char *dest_port,
 		DEBUGF(DNW1)("getconnection: fqdn found %s, h_addr_list count %d",
 			LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
 		dest_sin.sin_family = LookupHost_IP.h_addrtype;
-		if( LookupHost_IP.h_length > sizeof( dest_sin.sin_addr ) ){
+		if( LookupHost_IP.h_length > (int)sizeof( dest_sin.sin_addr ) ){
 			FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
 		}
 		memcpy( &dest_sin.sin_addr,
@@ -647,7 +647,7 @@ int Link_listen( char *port_name )
 			DEBUGF(DNW1)("Link_listen: fqdn found %s, h_addr_list count %d",
 				LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
 			sinaddr.sin_family = LookupHost_IP.h_addrtype;
-			if( LookupHost_IP.h_length > sizeof( sinaddr.sin_addr ) ){
+			if( LookupHost_IP.h_length > (int)sizeof( sinaddr.sin_addr ) ){
 				FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
 			}
 			/* use the first address in the list */

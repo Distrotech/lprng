@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpd_logger.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -91,7 +91,7 @@ int Dump_queue_status(int outfd)
 		DEBUGF(DLOG2)("Dump_queue_status: checking '%s'", pr );
 		if( Setup_printer( pr, buffer, sizeof(buffer), 0 ) ) continue;
 		Free_line_list( &Sort_order );
-		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0, 0, 0 ) ){
+		if( Scan_queue( &Spool_control, &Sort_order, 0,0,0, 0, 0, 0 ) ){
 			continue;
 		}
 		Free_line_list(&info);
@@ -226,7 +226,7 @@ void Logger( struct line_list *args )
 				Errorcode = JABORT;
 				LOGERR_DIE(LOG_INFO)"Logger: read error %s", tempfile);
 			}
-			if( m < sizeof(inbuffer)-1 ){
+			if( m < (int)sizeof(inbuffer)-1 ){
 				/* we can truncate the files */
 				if( lseek( status_fd, 0, SEEK_SET) == -1 ){
 					Errorcode = JABORT;

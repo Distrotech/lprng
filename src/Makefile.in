@@ -96,7 +96,8 @@ CFLAGS:= \
 	-DLOCALEDIR=\"@LOCALEDIR@\" \
 	-DDONE_JOBS=\"@DONE_JOBS@\" \
 	-DDONE_JOBS_MAX_AGE=\"@DONE_JOBS_MAX_AGE@\" \
-	-DUNIXSOCKETPATH=\"@UNIXSOCKETPATH@\"
+	-DUNIXSOCKETPATH=\"@UNIXSOCKETPATH@\" \
+	-DPRUTIL=\"@PRUTIL@\"
 
 USER_OBJS := @USER_OBJS@
 LDFLAGS   := @LDFLAGS@
@@ -117,13 +118,13 @@ LPD_DIR    = @LPD_DIR@
 # Define G ETENV to allow the LPD_CONFIG environment
 #  variable to be used as the name of a configuration file.  In non-testing
 #  systems,  this is a security loophole.
-#CFLAGS:= $(CFLAGS) -DGETENV=\"1\" -Wall -Werror
+#CFLAGS:= $(CFLAGS) -DGETENV=\"1\"
 
 # Set location of configuration, permissions, and printcap file
 #
 #GNU
 
-# CFLAGS:= $(CFLAGS) -DFORMAT_TEST -Wall -Wformat
+# CFLAGS:= $(CFLAGS) -DFORMAT_TEST -Wformat
 
 
 ##### DMalloc Debugging Package

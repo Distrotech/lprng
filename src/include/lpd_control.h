@@ -4,7 +4,7 @@
  * Copyright 1988-2002, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_control.h,v 1.19 2002/03/06 17:02:59 papowell Exp $
+ * $Id: lpd_control.h,v 1.27 2002/04/01 17:54:57 papowell Exp $
  ***************************************************************************/
 
 
@@ -18,20 +18,19 @@ void Do_printer_work( char *user, int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen );
 void Do_queue_control( char *user, int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen );
-int Do_control_file( char *user, int action, int *sock,
+int Do_control_file( int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen, char *option );
-int Do_control_lpq( char *user, int action, int *sock,
+int Do_control_lpq( char *user, int action,
+	struct line_list *tokens );
+int Do_control_status( int *sock,
+	char *error, int errorlen );
+int Do_control_redirect( int *sock,
 	struct line_list *tokens, char *error, int errorlen );
-int Do_control_status( char *user, int action, int *sock,
+int Do_control_class( int *sock,
 	struct line_list *tokens, char *error, int errorlen );
-int Do_control_redirect( char *user, int action, int *sock,
+int Do_control_debug( int *sock,
 	struct line_list *tokens, char *error, int errorlen );
-int Do_control_class( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen );
-int Do_control_debug( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen );
-int Do_control_printcap( char *user, int action, int *sock,
-	struct line_list *tokens, char *error, int errorlen );
+int Do_control_printcap( int *sock );
 int Do_control_defaultq( int *sock );
 
 #endif

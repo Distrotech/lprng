@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpq.c,v 1.27 2002/04/01 17:54:54 papowell Exp $";
 
 
 /***************************************************************************
@@ -567,6 +567,8 @@ void usage(void)
 			FPRINTF( STDERR, "%s", _(s) );
 		}
 	}
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);
 }
 
@@ -591,7 +593,7 @@ void usage(void)
 	cmd[1] = 0;
 	SNPRINTF(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN);
 	for( i = 0; options[i]; ++i ){
-		n = strlen(cmd);
+		n = safestrlen(cmd);
 		SNPRINTF(cmd+n,sizeof(cmd)-n," %s",options[i] );
 	}
 	Perm_check.remoteuser = "papowell";

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.19 2002/03/06 17:02:50 papowell Exp $";
+"$Id: checkpc.c,v 1.27 2002/04/01 17:54:50 papowell Exp $";
 
 
 
@@ -198,21 +198,6 @@ int main( int argc, char *argv[], char *envp[] )
 				}
 			}
 			*s = '/';
-#if 0
-			if( stat( path, &statb ) ){
-				WARNMSG( "  LPD Lockfile '%s' does not exist!", path);
-				if( Fix ){
-					int euid = geteuid();
-					To_euid_root();
-					lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
-					if( lockfd > 0 ){
-						fchown( lockfd, DaemonUID, DaemonGID );
-						fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
-					}
-					To_euid(euid);
-				}
-			}
-#endif
 		}
 		if( path ) free( path ); path = 0;
 		Spool_file_perms_DYN = oldfile;
@@ -460,7 +445,9 @@ void Scan_printer(struct line_list *spooldirs)
 			}
 		}
 		/* we update all real files in this directory */
-		Check_file( cf_name, Fix, 0, 0 );
+		if( jobfile ){
+			Check_file( cf_name, Fix, 0, 0 );
+		}
 	}
 	closedir(dir);
 
@@ -478,7 +465,7 @@ void Scan_printer(struct line_list *spooldirs)
 	}
 	Free_line_list( &Sort_order );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue before maxfd %d", fdx); close(fdx); }
-	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 1, 0, 0, 0 );
+	Scan_queue( &Spool_control, &Sort_order,0,0,0,0, 0, 0 );
 	{ int fdx = open("/dev/null",O_RDWR); DEBUG1("Scan_printer: Scan_queue after maxfd %d", fdx); close(fdx); }
 
 	/*
@@ -564,7 +551,7 @@ void Check_executable_filter( char *id, char *filter_str )
 		c = cval(s);
 		if( c == '(' || strpbrk( s, "<>|;") ){
 			if(Verbose)MESSAGE("    shell script '%s'", filter_str );
-			t = filter_str + strlen(filter_str) - 1;
+			t = filter_str + safestrlen(filter_str) - 1;
 			while( isspace(cval(t)) ) --t;
 			if( cval(t) != ')' ){
 				WARNMSG("filter needs ')' at end - '%s'", filter_str );
@@ -616,14 +603,20 @@ void Make_write_file( char *file, char *printer )
 		if(Verbose)MESSAGE( "  checking '%s' file", s );
 	}
 
-	if( (fd = Checkread( s, &statb )) < 0 ){
+	if( (fd = Checkwrite( s, &statb, O_RDWR, 1, 1 )) < 0 ){
+		WARNMSG( " ** cannot open '%s' - '%s'", s, Errormsg(errno) );
 		if( Fix ){
-			fd = Checkwrite( s, &statb, O_RDWR, 1, 1 );
+			int euid = geteuid();
+			To_euid_root();
+			fd = open( s, O_RDWR|O_CREAT, Spool_file_perms_DYN  );
+			To_euid(euid);
+			if( fd < 0 ){
+				WARNMSG( " ** cannot create '%s' - '%s'", s, Errormsg(errno) );
+			}
+			Fix_owner( s );
 		}
 	}
-	if( fd < 0 ){
-		WARNMSG( " ** cannot open '%s' - '%s'", s, Errormsg(errno) );
-	} else if( Check_file( s, Fix, 0, 0 ) ){
+	if( Check_file( s, Fix, 0, 0 ) ){
 		WARNMSG("  ** ownership or permissions problem with '%s'", s );
 	}
 	if( s ) free(s); s = 0;
@@ -656,6 +649,8 @@ void usage(void)
 	for( s = usemsg; *s; ++s ){
 		FPRINTF( STDERR, "%s\n", *s );
 	}
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);
 }
 
@@ -767,7 +762,7 @@ int Fix_create_dir( char  *path, struct stat *statb )
 	char *s;
 	int err = 0;
 
-	s = path+strlen(path)-1;
+	s = path+safestrlen(path)-1;
 	if( *s == '/' ) *s = 0;
 	if( stat( path, statb ) == 0 ){
 		if( !S_ISDIR( statb->st_mode ) ){
@@ -852,7 +847,7 @@ int Check_spool_dir( char *path, int owner )
 	/* get the required group and user ids */
 	
 	if(Verbose)MESSAGE(" Checking directory: '%s'", path );
-	pathname = path+strlen(path)-1;
+	pathname = path+safestrlen(path)-1;
 	if( pathname[0] == '/' ) *pathname = 0;
 	Init_line_list(&parts);
 	if( path == 0 || path[0] != '/' || strstr(path,"/../") ){

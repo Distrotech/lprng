@@ -25,6 +25,9 @@
 #  esac
 #
 
+# ignore INT signal
+trap '' 2
+
 case "$1" in
     restart ) 
 			$0 stop

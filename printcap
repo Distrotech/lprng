@@ -1,7 +1,7 @@
 ## The Super Quick Guide to LPRng Printcaps
 ##  Patrick Powell <papowell@lprng.com>
 ##     Thu Nov 15 13:31:08 PST 2001
-# VERSION=3.8.9
+# VERSION=3.8.10
 #
 # LPD print queue configuration - Default options
 #    The printcap entry below sets defaults.  Add default options

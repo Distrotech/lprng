@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.19 2002/03/06 17:02:53 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.27 2002/04/01 17:54:53 papowell Exp $";
 
 
 #include "lp.h"
@@ -333,7 +333,7 @@ int Receive_job( int *sock, char *input )
 			}
 			Set_str_value(&job.info,OPENNAME,tempfile);
 			Set_str_value(&job.info,TRANSFERNAME,filename);
-			hold_fd = Set_up_temporary_control_file( &job, error, errlen, 0 );
+			hold_fd = Set_up_temporary_control_file( &job, error, errlen );
 			if( files.count ){
 				/* we have datafiles, FOLLOWED by a control file,
 					followed (possibly) by another control file */
@@ -381,7 +381,7 @@ int Receive_job( int *sock, char *input )
 		/* LOG( LOG_INFO) "Receive_job: error '%s'", error ); */
 		DEBUGF(DRECV1)("Receive_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
-			Send_job_rw_timeout_DYN, buffer, strlen(buffer), 0 );
+			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
 		Link_close( sock );
 		if( hold_fd >= 0 ){
 			Remove_job( &job );
@@ -580,7 +580,7 @@ int Receive_block_job( int *sock, char *input )
 		/* LOG( LOG_INFO) "Receive_block_job: error '%s'", error ); */
 		DEBUGF(DRECV1)("Receive_block_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
-			Send_job_rw_timeout_DYN, buffer, strlen(buffer), 0 );
+			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
 		Link_close( sock );
 	} else {
 		Link_close( sock );
@@ -612,7 +612,7 @@ int Receive_block_job( int *sock, char *input )
  *          0 on success
  ***************************************************************************/
 
-int Scan_block_file( int fd, char *error, int errlen, char *auth_id )
+int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info )
 {
 	char line[LINEBUFFER];
 	char buffer[LARGEBUFFER];
@@ -715,7 +715,7 @@ int Scan_block_file( int fd, char *error, int errlen, char *auth_id )
 			}
 			Set_str_value(&job.info,OPENNAME,tempfile);
 			Set_str_value(&job.info,TRANSFERNAME,filename);
-			hold_fd = Set_up_temporary_control_file( &job, error, errlen, 0 );
+			hold_fd = Set_up_temporary_control_file( &job, error, errlen );
 			if( hold_fd < 0 ) goto error;
 			if( files.count ){
 				/* we have datafiles, FOLLOWED by a control file,
@@ -735,7 +735,7 @@ int Scan_block_file( int fd, char *error, int errlen, char *auth_id )
 
 	if( files.count ){
 		/* we receive another control file */
-		if( Check_for_missing_files(&job, &files, error, errlen, auth_id, hold_fd) ){
+		if( Check_for_missing_files(&job, &files, error, errlen, header_info, hold_fd) ){
 			goto error;
 		}
 		hold_fd = -1;
@@ -838,14 +838,14 @@ int Do_perm_check( struct job *job, char *error, int errlen )
  *  spool_dir - the spool directory for this queue
  *  xlate_incoming_format - only valid for received files
  *  error, errlen - the error message information
- *  auth_id - authentication ID to put in the job
+ *  header_info - authentication ID to put in the job
  *   - if 0, do not update, this preserves copy
  *  returns: 0 - successful
  *          != 0 - error
  */
 
 int Check_for_missing_files( struct job *job, struct line_list *files,
-	char *error, int errlen, char *auth_id, int holdfile_fd )
+	char *error, int errlen, struct line_list *header_info, int holdfile_fd )
 {
 	int count;
 	struct line_list *lp = 0, datafiles;
@@ -857,6 +857,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	struct timeval start_time;
 
 	if(DEBUGL1)Dump_job("Check_for_missing_files - start", job );
+	if(DEBUGL1)Dump_line_list("Check_for_missing_files- header_info", header_info );
 
 	if( gettimeofday( &start_time, 0 ) ){
 		Errorcode = JABORT;
@@ -875,6 +876,11 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	/* we can get this as a new job or as a copy.
 	 * if we get a copy,  we do not need to check this stuff
 	 */
+	if( !Find_str_value(&job->info,REMOTEHOST,Value_sep) ){
+		Set_str_value(&job->info,REMOTEHOST,RemoteHost_IP.fqdn);
+		Set_flag_value(&job->info,UNIXSOCKET,Perm_check.unix_socket);
+		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
+	}
 	if( files ){
 		if( Do_perm_check( job, error, errlen ) == P_REJECT ){
 			status = 1;
@@ -945,7 +951,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	}
 	DEBUG1("Check_for_missing_files: hold file fd '%d'", holdfile_fd );
 
-	if( Create_control( job, error, errlen, auth_id, Xlate_incoming_format_DYN ) ){
+	if( Create_control( job, error, errlen, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Check_for_missing_files: Create_control error '%s'", error );
 		status = 1;
 		goto error;
@@ -953,8 +959,14 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	Set_str_value(&job->info,HPFORMAT,0);
 	Set_str_value(&job->info,INCOMING_TIME,0);
 
-	if( !ISNULL(auth_id) ){
-		Set_str_value(&job->info,AUTHUSER,auth_id);
+	if( header_info ){
+		char *authfrom, *authuser, *authtype;
+		authfrom = Find_str_value(header_info,AUTHFROM,Value_sep);
+		authuser = Find_str_value(header_info,AUTHUSER,Value_sep);
+		authtype = Find_str_value(header_info,AUTHTYPE,Value_sep);
+		Set_str_value(&job->info,AUTHUSER,authuser);
+		Set_str_value(&job->info,AUTHFROM,authfrom);
+		Set_str_value(&job->info,AUTHTYPE,authtype);
 	}
 	/* now we do the renaming */
 	status = 0;
@@ -1027,19 +1039,19 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 /***************************************************************************
  * int Set_up_temporary_control_file( struct job *job,
- *	char *error, int errlen, char *auth_id )
+ *	char *error, int errlen )
  *  sets up a hold file and control file
  ***************************************************************************/
 
 int Set_up_temporary_control_file( struct job *job,
-	char *error, int errlen, char *auth_id )
+	char *error, int errlen  )
 {
 	int fd = -1;
 	/* now we need to assign a control file number */
 	DEBUG1("Set_up_temporary_control_file: starting" );
 
 	/* sets identifier and hold information */
-	Setup_job( job, &Spool_control, Spool_dir_DYN, 0, 0, 0);
+	Setup_job( job, &Spool_control, 0, 0, 0);
 	/* now we get collision resolution */
 	if( (fd = Find_non_colliding_job_number( job )) < 0 ){
 		SNPRINTF(error,errlen)
@@ -1049,7 +1061,7 @@ int Set_up_temporary_control_file( struct job *job,
 	DEBUG1("Set_up_temporary_control_file: hold file fd '%d'", fd );
 	
 	/* create the control file */
-	if( Create_control( job, error, errlen, auth_id, Xlate_incoming_format_DYN ) ){
+	if( Create_control( job, error, errlen, Xlate_incoming_format_DYN ) ){
 		DEBUG1("Set_up_temporary_control_file: Create_control error '%s'", error );
 		close(fd); fd = -1;
 		goto error;

@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: TESTSUPPORT/lpd.perms.proto
 # PURPOSE: prototype printer permissions file
-# $Id: lpd.perms.in,v 1.19 2002/03/06 17:02:38 papowell Exp $
+# $Id: lpd.perms.in,v 1.27 2002/04/01 17:54:39 papowell Exp $
 ########################################################################## 
 # Printer permissions data base
 ## #
@@ -16,7 +16,7 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.8.9
+## VERSION=3.8.10
 ##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
@@ -40,11 +40,11 @@
 ## HOST         S     RH      JH    JH     JH   JH    JH
 ## GROUP        S     -       JUSR  JUSR   JUSR JUSR  JUSR
 ## IP           IP    RIP     JIP   JIP    RIP  JIP   JIP
-## PORT         N     PORT    PORT  -      PORT PORT  PORT
+## PORT         N     PORT    PORT  PORT   PORT PORT  PORT
+## UNIXSOCKET   V     SK      SK    SK     SK   SK    SK
 ## REMOTEUSER   S     -       JUSR  JUSR   JUSR CUSR  CUSR
 ## REMOTEHOST   S     RH      RH    JH     RH   RH    RH
 ## REMOTEGROUP  S     -       JUSR  JUSR   JUSR CUSR  CUSR
-## REMOTEIP     IP    RIP     RIP   JIP    RIP  RIP   RIP
 ## CONTROLLINE  S     -       CL    CL     CL   CL    CL
 ## PRINTER      S     -       PR    PR     PR   PR    PR
 ## FORWARD      V     -       SA    -      -    SA    SA
@@ -57,20 +57,24 @@
 ## AUTHUSER     S     -       AU    AU     AU   AU    AU
 ## AUTHFROM     S     -       AU    AU     AU   AU    AU
 ## AUTHSAMEUSER S     -       AU    AU     AU   AU    AU
+##   REMOTEIP is an alias for REMOTEHOST
+##   REMOTEPORT is an alias for PORT
+##   IP is an alias for HOST
+
 ## 
 ## KEY:
-##   JH = HOST          host in control file
-##   RH = REMOTEHOST    connecting host name
+##   JH = HOST          IP address/DNS name of host in control file
+##   RH = REMOTEHOST    connecting host IP address/DNS Name
 ##   JUSR = USER        user in control file
-##   CUSR = REMOTEUSER  user from control request
-##   JIP= IP            IP address of host in control file
-##   RIP= REMOTEIP      IP address of requesting host
+##   CUSR = REMOTEUSER  user making control operation request
+##   JIP= IP            IP address/DNS name of host in control file
+##   RIP= REMOTEIP      IP address/DNS name of requesting host
 ##   PORT=              connecting host origination port
+##   SK=                true (match) if connection from a unix socket
 ##   CONTROLLINE=       pattern match of control line in control file
-##   FW= IP of source of request = IP of host in control file
-##   SA= IP of source of request = IP of host in control file
-##   SU= user from request = user in control file
-##   SA= IP of source of request = IP of host in control file FROM info
+##
+##   SA= IP of source of request == IP of host in control file
+##   SU= user name making request == user in control file
 ##   SV= IP of source of request = IP of server host or server Localhost
 ##   LPC= lpc command globmatched against values
 ##   AU= Authorization check on transfer
@@ -92,20 +96,18 @@
 ##   when checking permissions for a spool queue;  they are active only when
 ##   checking permissions of a spooled job.  
 ## 
+## The UNIXSOCKET will match (true) when connection was made over a UNIX
+##   socket.
+## 
 ## The SAMEHOST match checks to see that one (or more) of the
-##  IP addresses of the host originating the request are the
-##  same as one or more of the IP addresses of the host whose
+##  IP addresses of the host originating a request is/are the
+##  matches one or more of the IP addresses of the host whose
 ##  hostname appears in the control file.
-## The SERVER match checks to see if one (or more) of the
-##  IP addresses of the host originating the request are the
-##  same as one or more of the IP addresses of the server or
-##  match the localhost's  IP address.  Note that in IPV6, there may
-##  be multiple IP addresses for a single host.
-## The FORWARD checks to see that all of the IP addresses of the
-##  IP addresses of the host originating the request are not the
-##  same as one or more of the IP addresses of the host whose
-##  hostname appears in the control file.  This is equivalent to
-##  NOT SAMEHOST
+## The SAMEHOST match checks to see that one (or more) of the
+##  IP addresses of the host originating a request is/are the
+##  matches one or more of the IP addresses of the server.
+## FORWARD  is the same as NOT SAMEHOST, i.e. - request is
+##  forwarded.
 ## 
 ## The  special key letter=patterns searches the control file
 ## line starting with the (upper case) letter, and is usually

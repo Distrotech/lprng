@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: proctitle.c,v 1.19 2002/03/06 17:02:55 papowell Exp $";
+"$Id: proctitle.c,v 1.27 2002/04/01 17:54:56 papowell Exp $";
 
 #include "lp.h"
 #include "proctitle.h"
@@ -243,7 +243,7 @@
 
 	DEBUG1("initsetproctitle: doing setup");
 	for (i = 0; envp[i] != NULL; i++)
-		envpsize += strlen(envp[i]) + 1;
+		envpsize += safestrlen(envp[i]) + 1;
 	{
 	char *s;
 	environ = (char **) malloc_or_die((sizeof (char *) * (i + 1))+envpsize+1,__FILE__,__LINE__);
@@ -251,7 +251,7 @@
 	for (i = 0; envp[i] != NULL; i++){
 		strcpy(s,envp[i]);
 		environ[i] = s;
-		s += strlen(s)+1;
+		s += safestrlen(s)+1;
 	}
 	}
 	environ[i] = NULL;
@@ -269,14 +269,14 @@
 	for (i = 0; i < argc; i++)
 	{
 		if (i==0 || LastArgv + 1 == argv[i])
-			LastArgv = argv[i] + strlen(argv[i]);
+			LastArgv = argv[i] + safestrlen(argv[i]);
 		else
 			continue;
 	}
 	for (i=0; envp[i] != NULL; i++)
 	{
 		if (LastArgv + 1 == envp[i])
-			LastArgv = envp[i] + strlen(envp[i]);
+			LastArgv = envp[i] + safestrlen(envp[i]);
 		else
 			continue;
 	}
@@ -316,7 +316,7 @@
     (void) VSNPRINTF(buf, sizeof(buf)) fmt, ap);
     VA_END;
 
-	i = strlen(buf);
+	i = safestrlen(buf);
 
 #  if SPT_TYPE == SPT_PSTAT
 	pst.pst_command = buf;
