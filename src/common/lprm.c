@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.34 2001/12/03 22:08:14 papowell Exp $";
+"$Id: lprm.c,v 1.37 2001/12/22 01:14:09 papowell Exp $";
 
 
 /***************************************************************************
@@ -211,6 +211,7 @@ int main(int argc, char *argv[], char *envp[])
 			Do_removal(args.list);
 		}
 	} else {
+		Get_printer();
 		Do_removal(args.list);
 	}
 	Free_line_list(&args);
@@ -230,7 +231,6 @@ void Do_removal(char **argv)
 	char msg[LINEBUFFER];
 
 	DEBUG1("Do_removal: start");
-	Get_printer();
 	Fix_Rm_Rp_info(0,0);
 
 	if( ISNULL(RemotePrinter_DYN) ){

@@ -15,7 +15,7 @@
 
 <book>
 <bookinfo><title> LPRng-HOWTO</title>
-<subtitle> 9 Dec 2001 (For LPRng-3.8.3)</subtitle>
+<subtitle> 21 Dec 2001 (For LPRng-3.8.4)</subtitle>
 
 <author>
 <firstname>Patrick</firstname>
@@ -37,7 +37,7 @@ Fax <fax>858-279-8424</fax>
 <holder role="mailto:papowell@lprng.com">Patrick Powell</holder>
 </copyright>
 
-<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.33 2001/12/03 22:08:29 papowell Exp $</releaseinfo>
+<releaseinfo>$Id: LPRng-HOWTO.sgml,v 1.36 2001/12/22 01:14:21 papowell Exp $</releaseinfo>
 
     <legalnotice>
      <important>
@@ -503,7 +503,7 @@ systems, as well as real time and network software.</para>
 <member><ulink URL="ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng">ftp://ftp.cs.columbia.edu/pub/archives/pkg/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng">ftp://ftp.cise.ufl.edu/pub/mirrors/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.cs.umn.edu/pub/LPRng">ftp://ftp.cs.umn.edu/pub/LPRng</ulink> (US) </member>
-<member><ulink URL="ftp://uiarchive.uiuc.edu/pub/packages/LPRng">ftp://uiarchive.uiuc.edu/pub/packages/LPRng</ulink> (US) </member>
+<member><ulink URL="ftp://uiarchive.uiuc.edu/pub/ftp/ftp.lprng.com/pub/LPRng">ftp://uiarchive.uiuc.edu/pub/ftp/ftp.lprng.com/pub/LPRng</ulink> (US) </member>
 <member><ulink URL="ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng/">ftp://ftp.sage-au.org.au/pub/printing/spooler/lprng/</ulink> (AU) </member>
 <member><ulink URL="ftp://mirror.aarnet.edu.au/pub/LPRng/">ftp://mirror.aarnet.edu.au/pub/LPRng/</ulink> (AU/NZ) </member>
 <member><ulink URL="http://mirror.aarnet.edu.au/pub/LPRng/">http://mirror.aarnet.edu.au/pub/LPRng/</ulink> (AU/NZ) </member>
@@ -1262,10 +1262,8 @@ allowing multiple &LPRng; servers to run on a single host.</para>
 </varlistentry>
 
 <varlistentry><term><literal>--with-chooser_routine=NAME </literal></term>
-
 <listitem>
 <para>name of chooser routine provided by user</para>
-
 </listitem>
 </varlistentry>
 
@@ -1300,6 +1298,18 @@ allowing multiple &LPRng; servers to run on a single host.</para>
 <para>Do not strip the executables before installing.
 For debugging and diagnostic purposes.</para>
 
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--enable-unixsocket</literal></term>
+<listitem>
+<para>enable the use of UNIX sockets for localhost connections</para>
+</listitem>
+</varlistentry>
+
+<varlistentry><term><literal>--with-unixsocketpath=PATHNAME</literal></term>
+<listitem>
+<para>the pathname of the UNIX socket</para>
 </listitem>
 </varlistentry>
 
@@ -2545,6 +2555,18 @@ by a shell.
 For this reason the &LPRng; software takes extreme precautions
 and <emphasis/sanitizes/ control file contents and file names
 so that they do not contain any control or metacharacters.
+</para>
+
+<para>
+Finally,
+you can enable the use of a Unix socket for connections to the server on
+the localhost,
+and disable the &lpd; listening socket.
+This will prevent users not on your local host from connecting to the
+&lpd; server.
+This is done by enabling this with the <literal/configure/
+<literal/--enable-unixsocket/ option,
+and then setting the <literal/lpd_port/ value to 0.
 </para>
 </sect1>
 </chapter>
@@ -22661,6 +22683,10 @@ Include indicated printcap entries in current entry<!-- <br> -->
 trailer string to send before closing printer <!-- <br> -->
 </entry></row><row><entry><link linkend="translateformat">translate_format</link></entry><entry>
 translate data format in control file <!-- <br> -->
+</entry></row><row><entry><link linkend="setuid">unix_socket</link></entry><entry>
+enable use of a UNIX socket for localhost connections <!-- <br> -->
+</entry></row><row><entry><link linkend="setuid">unix_socket_path</link></entry><entry>
+UNIX socket pathname<!-- <br> -->
 </entry></row><row><entry><link linkend="debugging">use_date</link></entry><entry>
 force date in control file <!-- <br> -->
 </entry></row><row><entry><link linkend="useidentifier">use_identifier</link></entry><entry>

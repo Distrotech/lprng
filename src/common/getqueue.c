@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getqueue.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
+"$Id: getqueue.c,v 1.37 2001/12/22 01:14:04 papowell Exp $";
 
 
 /***************************************************************************
@@ -690,16 +690,16 @@ int Set_hold_file( struct job *job, struct line_list *perm_check, int fd )
 		}
 	} else {
 		if( lseek( fd, 0, SEEK_SET ) == -1 ){
-			LOGERR_DIE(LOG_ERR) "Write_pid: lseek failed" );
+			LOGERR_DIE(LOG_ERR) "Set_hold_file: lseek failed" );
 		}
 		if( ftruncate( fd, 0 ) ){
-			LOGERR_DIE(LOG_ERR) "Write_pid: ftruncate failed" );
+			LOGERR_DIE(LOG_ERR) "Set_hold_file: ftruncate failed" );
 		}
 		if( Write_fd_str(fd, outstr) < 0 ){
 			LOGERR(LOG_INFO)"Set_hold_file: write to '%s' failed", hf_name );
 			status = 1;
 		}
-		close(fd);
+		/* close(fd); */
 	}
 
 	if( Lpq_status_file_DYN ){
@@ -890,6 +890,7 @@ void Make_sort_key( struct job *job )
 	} else {
 		/* first key is DONE_TIME - done jobs come last */
 		intval(DONE_TIME,&job->info,job);
+		intval(INCOMING_TIME,&job->info,job);
 		/* next key is REMOVE_TIME - removed jobs come before last */
 		intval(REMOVE_TIME,&job->info,job);
 		/* next key is ERROR - error jobs jobs come before removed */
@@ -1024,15 +1025,17 @@ int Read_pid( int fd, char *str, int len )
  * Write_pid( int fd )
  *   - Write the pid to a file
  **************************************************************************/
-void Write_pid( int fd, int pid, char *str )
+int Write_pid( int fd, int pid, char *str )
 {
 	char line[LINEBUFFER];
 
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
-		LOGERR_DIE(LOG_ERR) "Write_pid: lseek failed" );
+		LOGERR(LOG_ERR) "Write_pid: lseek failed" );
+		return -1;
 	}
 	if( ftruncate( fd, 0 ) ){
-		LOGERR_DIE(LOG_ERR) "Write_pid: ftruncate failed" );
+		LOGERR(LOG_ERR) "Write_pid: ftruncate failed" );
+		return -1;
 	}
 
 	if( str == 0 ){
@@ -1042,8 +1045,10 @@ void Write_pid( int fd, int pid, char *str )
 	}
 	DEBUG3( "Write_pid: pid %d, str '%s'", pid, str );
 	if( Write_fd_str( fd, line ) < 0 ){
-		LOGERR_DIE(LOG_ERR) "Write_pid: write failed" );
+		LOGERR(LOG_ERR) "Write_pid: write failed" );
+		return -1;
 	}
+	return 0;
 }
 
 /***************************************************************************
@@ -1416,6 +1421,8 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 		held = 1;
 	} else if( Find_flag_value(&job->info,REMOVE_TIME,Value_sep) ){
 		SNPRINTF(buffer,sizeof(buffer)) "remove" );
+	} else if( Find_flag_value(&job->info,INCOMING_TIME,Value_sep) ){
+		SNPRINTF(buffer,sizeof(buffer)) "incoming" );
 	} else if( (done = Find_flag_value(&job->info,DONE_TIME,Value_sep)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "done" );
 	} else if( (n = Find_flag_value(&job->info,SERVER,Value_sep))

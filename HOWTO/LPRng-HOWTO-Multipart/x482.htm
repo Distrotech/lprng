@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 9 Dec 2001
-          (For LPRng-3.8.3)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 21 Dec 2001
+          (For LPRng-3.8.4)</th>
         </tr>
 
         <tr>
@@ -569,6 +569,20 @@
             <p>Do not strip the executables before installing. For
             debugging and diagnostic purposes.</p>
           </dd>
+
+          <dt><tt class="LITERAL">--enable-unixsocket</tt></dt>
+
+          <dd>
+            <p>enable the use of UNIX sockets for localhost
+            connections</p>
+          </dd>
+
+          <dt><tt class=
+          "LITERAL">--with-unixsocketpath=PATHNAME</tt></dt>
+
+          <dd>
+            <p>the pathname of the UNIX socket</p>
+          </dd>
         </dl>
       </div>
       <br>
@@ -586,7 +600,7 @@
           use:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN816"></a>
+            <a name="AEN826"></a>
 <pre class="SCREEN">
     ./configure
     
@@ -609,7 +623,7 @@
           existing print spooling system, use:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN823"></a>
+            <a name="AEN833"></a>
 <pre class="SCREEN">
     ./configure --prefix=/usr --sysconfdir=/etc \
       --mandir=/usr/share/man
@@ -632,7 +646,7 @@
           (lightweight operation), use:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN828"></a>
+            <a name="AEN838"></a>
 <pre class="SCREEN">
     ./configure --prefix=/usr --sysconfdir=/etc \
        --mandir=/usr/share/man --disable-force_localhost

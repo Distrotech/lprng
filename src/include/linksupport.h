@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linksupport.h,v 1.34 2001/12/03 22:08:20 papowell Exp $
+ * $Id: linksupport.h,v 1.37 2001/12/22 01:14:15 papowell Exp $
  ***************************************************************************/
 
 
@@ -28,14 +28,16 @@ int Link_setkeepalive( int sock );
 int connect_timeout( int timeout,
 	int sock, struct sockaddr *name, int namelen);
 int getconnection ( char *hostname, char *dest_port,
-	int timeout, int connection_type, struct sockaddr *bindto );
+	int timeout, int connection_type, struct sockaddr *bindto, int use_unix_socket );
 void Set_linger( int sock, int n );
 int Link_listen( void );
-int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto );
+int Unix_link_listen( void );
+int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto,
+	int allow_unix_socket );
 int Link_open_type(char *host, char *port, int timeout, int connection_type,
-	struct sockaddr *bindto );
+	struct sockaddr *bindto, int allow_unix_socket );
 int Link_open_list( char *hostlist, char **result,
-	char *port, int timeout, struct sockaddr *bindto );
+	char *port, int timeout, struct sockaddr *bindto, int allow_unix_socket );
 void Link_close( int *sock );
 int Link_send( char *host, int *sock, int timeout,
 	char *sendstr, int count, int *ack );

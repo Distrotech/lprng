@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.34 2001/12/03 22:08:23 papowell Exp $
+ * $Id: portable.h,v 1.37 2001/12/22 01:14:17 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -285,6 +285,7 @@ LPRng requires ANSI Standard C compiler
 #include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include <sys/un.h>
 
 #include <sys/stat.h>
 #include <pwd.h>
@@ -354,7 +355,7 @@ typedef struct dirent plp_dir_t;
  * Patrick Powell Thu Apr  6 07:47:54 PDT 1995
  *********************************************************************/
 
-# if !defined(HAVE_STDLIB_H)
+#if !defined(HAVE_STDLIB_H)
 # ifdef HAVE_MALLOC_H
 #   include <malloc.h>
 # else
@@ -718,6 +719,9 @@ const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 #define ROOTUID 0
 #endif
 
+#ifndef HAVE_FLOCK_DEF
+extern int flock( int fd, int operation );
+#endif
 
 /**********************************************************************
  *  SUNOS Definitions

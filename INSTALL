@@ -1,4 +1,4 @@
-               LPRng Installation 
+               LPRng Installation
           Patrick Powell <papowell@lprng.com>
        Last Updated Sun Aug 19 14:49:25 PDT 2001
 
@@ -15,7 +15,7 @@ The "STANDARD configuration" is the most common configuration for UNIX/LINUX
   ./configure --prefix=/usr --sysconfdir=/etc
   make clean all
   (as root):
-     make install 
+     make install
      checkpc -f
 
 CAVEATS and WARNINGS:
@@ -26,11 +26,11 @@ CAVEATS and WARNINGS:
     to create a shared library on systems where this is supported.
 
 Solaris Users:
-   
+
    You can get precompiled versions of the GCC compiler and GNU Make
    from:
       www.sunfreeware.com
-   
+
    The LPRng code has NOT been tested with the Sun Microsystems compilers,
    and NOT been tested with 64 bit support enabled.
 
@@ -48,7 +48,7 @@ Solaris Users:
    utilities BEFORE reporting problems.
 
      You have been warned.
-   
+
 HPUX Users:
     See the following site for precompiled GCC and other tools:
          http://hpux.cae.wisc.edu/
@@ -56,7 +56,7 @@ HPUX Users:
    I STRONGLY recommend installing GCC and using GCC,  especially
    on HPUX 9.X and 10.X.  Make sure that your include files are
    the correct ones for your particular OS.
-   
+
    If you use the native or HP provided C compiler,  you will need to
    add some additional flags to allow ANSI C compatibility.  The
    -Aa and -Ae are candidates,  but you will have to check your
@@ -64,8 +64,8 @@ HPUX Users:
 
    Ryan Novosielski <novosirj@umdnj.edu> suggests that
    for HP-UX 11.0 and 11.11 you may need to use
-   --with-linker=/usr/bin/ld 
-   
+   --with-linker=/usr/bin/ld
+
      You have been warned.
 
 EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
@@ -74,8 +74,8 @@ EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
     directories.  The LPRng system depends on file locking for process
     coordination and synchronization.  Given the historical evidence
     of problems with file locks and NFS,  not to mention the terrible
-    performance impact,  it is strongly recommended that you use a file
-    system local to the server host for your spool directories.
+    performance impact,  it is strongly recommended that you use a
+    local file system for your spool directories.
 
      You have been warned.
 
@@ -130,7 +130,7 @@ LINUX, System V, Solaris:
 
 
 Other distributions:
-    You will have to hand install 
+    You will have to hand install
     startup scripts.  See the sample startup scripts on your
     system and modify them appropriately.  Usually all
     that is done is to change the path to the lpd program
@@ -156,13 +156,13 @@ CONFIGURATION
      ${sysconfdir}/lpd.conf.sample, lpd.perms.sample,
      and printcap.sample;  we make copies of the
      sample files to lpd.conf, lpd.perms and printcap respectively.
-    
+
   EXECUTABLES AND SHARED LIBRARIES:
-         (* indicates SETUID root permissions) 
+         (* indicates SETUID root permissions)
      ${bindir}/ lpr*, lprm*, lpq*, lpstat*
      ${sbindir}/lpc*, checkpc, lpd
-     ${libdir}/liblpr.so, liblib.a 
-     ${libexecdir}/filters/ lpf, banner, etc 
+     ${libdir}/liblpr.so, liblib.a
+     ${libexecdir}/filters/ lpf, banner, etc
      ${sysconfdir}/ lpd.conf, lpd.perms, printcap
      ${mandir}/ man pages
 
@@ -207,28 +207,30 @@ CONFIGURATION OPTIONS
   --with-lpd_perms_path=PATH  lpd.perms location (default: ${sysconfdir}/lpd.perms)
   --with-printcap_path=PATH   printcap location (default ${sysconfdir}/printcap)
   --with-lpd_printcap_path=PATH lpd_printcap location (default- not used )
-  --with-lockfile=PATH        lockfile PATH, default /var/run/lpd 
+  --with-lockfile=PATH        lockfile PATH, default /var/run/lpd
   --with-ld_library_path=PATH  subprocess LD_LIBRARY_PATH environment variable
                               (default: /usr/lib:/usr/local/lib)
-  --with-filter_path=PATH     subprocess PATH environment variable 
+  --with-filter_path=PATH     subprocess PATH environment variable
                               (default: /usr/bin:/usr/local/bin)
   --with-filterdir=DIR        filter directory (default ${libexecdir}/filters)
+  --with-unixsocketpath=DIR         unix socket path (default /dev/lprng)
 
      OPERATION:
 
   --disable-setuid        disable setuid root client and server executables
+  --enable-unixsocket         add unix socket for localhost connections
   --enable-priv_ports         require connections to be from privileged ports
   --disable-force_localhost   disable force_localhost default
   --disable-require_configfiles  client programs will not require lpd.conf
   --enable-kerberos            enable kerberos support
   --enable-mit_kerberos4       enable MIT Kerberos 4 support
   --disable-kerberos_checks    disable kerberos library location and checking for support
-  --with-userid=NAME          lpd runs as this userid, default daemon 
-  --with-groupid=NAME         lpd runs as this userid, default daemon 
-  --with-chooser_routine=NAME load balance queue chooser routine name in user object file 
-  --with-order_routine=NAME   queue order routine name in user object file 
-  --with-user_objs=NAME       user specified object file 
-  --with-user_include=NAME    include file with function prototypes for user object file 
+  --with-userid=NAME          lpd runs as this userid, default daemon
+  --with-groupid=NAME         lpd runs as this userid, default daemon
+  --with-chooser_routine=NAME load balance queue chooser routine name in user object file
+  --with-order_routine=NAME   queue order routine name in user object file
+  --with-user_objs=NAME       user specified object file
+  --with-user_include=NAME    include file with function prototypes for user object file
 
   CREATE AND INSTALL EXECUTABLES AND LIBRARIES
     ./configure [ configuration options ]
@@ -298,7 +300,7 @@ SECURITY WARNINGS:
   The following is the default LPRng system installation:
 
     1. All client programs are installed Setuid Root.
-    2. No checking is done for strict RFC1179 conformance by 
+    2. No checking is done for strict RFC1179 conformance by
        the lpd server
     3. By default, all client programs will connect to the server
        on the local host (force_localhost configuration option).

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: accounting.c,v 1.34 2001/12/03 22:08:08 papowell Exp $";
+"$Id: accounting.c,v 1.37 2001/12/22 01:14:02 papowell Exp $";
 
 
 #include "lp.h"
@@ -130,7 +130,7 @@ int Do_accounting( int end, char *command, struct job *job, int timeout )
 			*port++ = 0;
 			
 			DEBUG2("Do_accounting: connecting to '%s'%%'%s'",host,port);
-			if( (tempfd = Link_open(host,port,Connect_timeout_DYN,0 )) < 0 ){
+			if( (tempfd = Link_open(host,port,Connect_timeout_DYN,0, 0 )) < 0 ){
 				err = errno;
 				Errorcode= JFAIL;
 				LOGERR_DIE(LOG_INFO)

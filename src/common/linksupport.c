@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linksupport.c,v 1.34 2001/12/03 22:08:12 papowell Exp $";
+"$Id: linksupport.c,v 1.37 2001/12/22 01:14:05 papowell Exp $";
 
 
 /***************************************************************************
@@ -217,7 +217,7 @@ int connect_timeout( int timeout,
 }
 
 int getconnection ( char *hostname, char *dest_port,
-	int timeout, int connection_type, struct sockaddr *bindto )
+	int timeout, int connection_type, struct sockaddr *bindto, int use_unix_socket )
 {
 	int sock;	         /* socket */
 	int i, err;            /* ACME Generic Integers */
@@ -262,6 +262,72 @@ int getconnection ( char *hostname, char *dest_port,
 	} else if( inet_pton( AF_Protocol(), hostname, &dest_sin.sin_addr ) != 1 ){
 		DEBUGF(DNW2)("getconnection: cannot get address for '%s'", hostname );
 		return( LINK_OPEN_FAIL );
+	}
+
+	/* UNIX socket connection for localhost support */
+	DEBUGF(DNW1)("getconnection: use_unix_socket %d, Unix_socket_DYN %d, path %s", 
+		use_unix_socket, Unix_socket_DYN, Unix_socket_path_DYN );
+	/* check to see if the flag is set and the destination
+		is one of the localhost addresses */
+	if( use_unix_socket &&
+			( !Same_host(&LookupHost_IP,&Host_IP)
+			|| !Same_host(&LookupHost_IP,&Localhost_IP) ) ){
+		/* taken from Unix Network Programming, Volume 1, 2nd Edition
+		 * by W. Richard Stevens.  With great thanks to his memory
+		 * and his amazingly detailed reference monographs.
+		 */
+		struct sockaddr_un dest_un;     /* unix socket address */
+		bzero( &dest_un, sizeof(dest_un) );
+
+		DEBUGF(DNW1)("getconnection: using unix socket");
+		plp_block_all_signals( &oblock );
+		if( UID_root ) (void)To_euid_root();
+		safestrncpy( dest_un.sun_path, Unix_socket_path_DYN );
+#ifdef AF_LOCAL
+		dest_un.sun_family = AF_LOCAL;
+#else
+		dest_un.sun_family = AF_UNIX;
+#endif
+		sock = socket(dest_un.sun_family, SOCK_STREAM, 0);
+		err = errno;
+		if( UID_root ) (void)To_euid( euid );
+		plp_set_signal_mask( &oblock, 0 );
+		Max_open(sock);
+		if( sock < 0 ){
+			errno = err;
+			LOGERR_DIE(LOG_DEBUG) "getconnection: UNIX domain socket call failed");
+		}
+		DEBUGF(DNW2) ("getconnection: unix domain socket %d", sock);
+		/*
+		 * set up timeout and then make connect call
+		 */
+		errno = 0;
+		status = -1;
+		Alarm_timed_out = 0;
+		use_host = Unix_socket_path_DYN;
+		DEBUGF(DNW2)("getconnection: trying connect to UNIX domain socket '%s', timeout %d",
+			use_host, timeout );
+		status = connect_timeout(timeout,sock,
+			(struct sockaddr *) &dest_un, sizeof(dest_un));
+		err = errno;
+
+		DEBUGF(DNW2)(
+			"getconnection: connect sock %d, status %d, err '%s', timedout %d",
+			sock, status, Errormsg(err), Alarm_timed_out );
+		if( status < 0 || Alarm_timed_out ){
+			(void) close (sock);
+			sock = LINK_OPEN_FAIL;
+			if( Alarm_timed_out ) {
+				DEBUGF(DNW1)("getconnection: connection to '%s' timed out",
+					use_host);
+				err = errno = ETIMEDOUT;
+			} else {
+				DEBUGF(DNW1)("getconnection: connection to '%s' failed '%s'",
+					use_host, Errormsg(err) );
+			}
+		}
+		errno = err;
+		return (sock);
 	}
 	dest_sin.sin_port = Link_dest_port_num(dest_port);
 	if( dest_sin.sin_port == 0 ){
@@ -367,10 +433,10 @@ int getconnection ( char *hostname, char *dest_port,
 	plp_block_all_signals( &oblock );
 	if( UID_root ) (void)To_euid_root();
 	sock = socket(AF_Protocol(), connection_type, 0);
-	Max_open(sock);
 	err = errno;
 	if( UID_root ) (void)To_euid( euid );
 	plp_set_signal_mask( &oblock, 0 );
+	Max_open(sock);
 	if( sock < 0 ){
 		errno = err;
 		LOGERR_DIE(LOG_DEBUG) "getconnection: socket call failed");
@@ -546,6 +612,7 @@ void Set_linger( int sock, int n )
 	DEBUGF(DNW2) ("Set_linger: NO SO_LINGER, socket %d, value %d", sock, n);
 #endif
 }
+
 /*
  * int Link_listen(port)
  *  1. opens a socket on the current host
@@ -570,14 +637,8 @@ int Link_listen( void )
 	/*
 	 * Get the destination host address and remote port number to connect to.
 	 */
-	if( Lpd_port_DYN == 0 ){
-		Errorcode = JABORT;
-		FATAL(LOG_ERR) "Link_listen: LOGIC ERROR- no Lpd_port_DYN value");
-	}
 	sinaddr.sin_family = AF_Protocol();
 	sinaddr.sin_addr.s_addr = INADDR_ANY;
-	sinaddr.sin_port = Link_dest_port_num(Lpd_port_DYN);
-	port = ntohs( sinaddr.sin_port );
 	if( (s = safestrchr( Lpd_port_DYN, '%')) ){
 		*s = 0;
 		if( Find_fqdn( &LookupHost_IP, Lpd_port_DYN ) ){
@@ -600,10 +661,18 @@ int Link_listen( void )
 			FATAL(LOG_ERR) "Link_listen: bad lpd_port value, cannot resolve IP address '%s'",
 				Lpd_port_DYN );
 		}
+		sinaddr.sin_port = Link_dest_port_num(s+1);
 		*s = '%';
+	} else if( Lpd_port_DYN ){
+		sinaddr.sin_port = Link_dest_port_num(Lpd_port_DYN);
 	}
+	port = ntohs( sinaddr.sin_port );
 	DEBUGF(DNW2)("Link_listen: bind to IP '%s' port %d",
 		inet_ntoa( sinaddr.sin_addr ), ntohs( sinaddr.sin_port ) );
+	if( port == 0 ){
+		errno = 0;
+		return( 0 );
+	}
 
 	euid = geteuid();
 	if( UID_root ) (void)To_euid_root();
@@ -638,30 +707,104 @@ int Link_listen( void )
 	return (sock);
 }
 
-int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto )
+int Unix_link_listen( void )
+{
+	int sock;                   /* socket */
+	int status;                 /* socket */
+	struct sockaddr_un sunaddr;     /* inet socket address */
+	int euid;					/* euid at time of call*/
+	int err;
+	int omask;
+
+	euid = geteuid();
+
+	DEBUGF(DNW2)("Unix_link_listen: Unix_socket_DYN %d, path %s",
+		Unix_socket_DYN, Unix_socket_path_DYN );
+	if( !Unix_socket_DYN ){
+		return(0);
+	}
+	/*
+	 * Zero out the sunaddr struct
+	 */
+	memset(&sunaddr, 0, sizeof (sunaddr));
+	/*
+	 * Get the destination host address and remote port number to connect to.
+	 */
+	DEBUGF(DNW1)("Unix_link_listen: using unix socket");
+	safestrncpy( sunaddr.sun_path, Unix_socket_path_DYN );
+#ifdef AF_LOCAL
+	sunaddr.sun_family = AF_LOCAL;
+#else
+	sunaddr.sun_family = AF_UNIX;
+#endif
+	if( UID_root ) (void)To_euid_root();
+	unlink( sunaddr.sun_path );
+	status = ((sock = socket (sunaddr.sun_family, SOCK_STREAM, 0)) < 0);
+	err = errno;
+	if( UID_root ) (void)To_euid( euid );
+	Max_open(sock);
+	if( sock < 0 ){
+		errno = err;
+		LOGERR_DIE(LOG_DEBUG) "Unix_link_listen: UNIX domain socket call failed");
+	}
+
+	omask = umask(0);
+	if( UID_root ) (void)To_euid_root();
+	status = bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0;
+	err = errno;
+	if( UID_root ) (void)To_euid( euid );
+	umask(omask);
+	if( status ){
+		DEBUGF(DNW4)("Unix_link_listen: bind to unix port %s failed '%s'",
+			Unix_socket_path_DYN, Errormsg(err));
+		if( sock >= 0 ){
+			(void)close( sock );
+			sock = -1;
+		}
+		errno = err;
+		return( LINK_BIND_FAIL );
+	}
+	if( UID_root ) (void)To_euid_root();
+	status = listen(sock, 64 );	/* backlog of 10 is inadequate */
+	err = errno;
+	if( UID_root ) (void)To_euid( euid );
+	if( status ){
+		LOGERR_DIE(LOG_ERR) "Unix_link_listen: listen failed");
+		(void)close( sock );
+		sock = -1;
+		err = errno;
+		return( LINK_OPEN_FAIL );
+	}
+	DEBUGF(DNW4)("Unix_link_listen: socket %d", sock);
+	errno = err;
+	return (sock);
+}
+
+int Link_open(char *host, char *port, int timeout, struct sockaddr *bindto,
+	int allow_unix_socket )
 {
 	int sock;
 	DEBUGF(DNW4) ("Link_open: host '%s', port '%s', timeout %d",
 		host,port,timeout);
-	sock = Link_open_type( host, port, timeout, SOCK_STREAM, bindto );
+	sock = Link_open_type( host, port, timeout, SOCK_STREAM, bindto, allow_unix_socket );
 	DEBUGF(DNW4) ("Link_open: socket %d", sock );
 	return(sock);
 }
 
 int Link_open_type(char *host, char *port, int timeout, int connection_type,
-	struct sockaddr *bindto )
+	struct sockaddr *bindto, int allow_unix_socket )
 {
 	int sock = -1;
 	DEBUGF(DNW4)(
 		"Link_open_type: host '%s', port '%s', timeout %d, type %d",
 		host,port, timeout, connection_type );
-	sock = getconnection( host, port, timeout, connection_type, bindto );
+	sock = getconnection( host, port, timeout, connection_type, bindto, allow_unix_socket );
 	DEBUGF(DNW4) ("Link_open_type: socket %d", sock );
 	return( sock );
 }
 
 int Link_open_list( char *hostlist, char **result,
-	char *port, int timeout, struct sockaddr *bindto )
+	char *port, int timeout, struct sockaddr *bindto, int allow_unix_socket )
 {
 	int sock = -1, i, err = 0;
 	struct line_list list;
@@ -677,7 +820,7 @@ int Link_open_list( char *hostlist, char **result,
 	err = errno = 0;
 	for( i = 0; sock < 0 && i < list.count; ++i ){
 		DEBUGF(DNW4) ("Link_open_list: host trying '%s'", list.list[i] );
-		sock = getconnection( list.list[i], port, timeout, SOCK_STREAM, bindto );
+		sock = getconnection( list.list[i], port, timeout, SOCK_STREAM, bindto, allow_unix_socket );
 		err = errno;
 		DEBUGF(DNW4) ("Link_open_list: result host '%s' socket %d", list.list[i], sock );
 		if( sock >= 0 ){
@@ -1373,6 +1516,16 @@ const char *inet_ntop_sockaddr( struct sockaddr *addr,
 	} else if( addr->sa_family == AF_INET6 ){
 		a = &((struct sockaddr_in6 *)addr)->sin6_addr;
 #endif
+	} else if( addr->sa_family == 0 
+#if defined(AF_LOCAL)
+		|| addr->sa_family == AF_LOCAL 
+#endif
+#if defined(AF_UNIX)
+		|| addr->sa_family == AF_UNIX 
+#endif
+		){
+		SNPRINTF (str, len) "%s", Unix_socket_path_DYN );
+		return( str );
 	} else {
 		FATAL(LOG_ERR) "inet_ntop_sockaddr: bad family '%d'",
 			addr->sa_family );

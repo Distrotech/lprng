@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.34 2001/12/03 22:08:11 papowell Exp $";
+"$Id: linelist.c,v 1.37 2001/12/22 01:14:05 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -2220,7 +2220,7 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 		Set_str_value(env, "CONTROL", s );
 	}
 
-	if( !Is_server && Pass_env_DYN ){
+	if( Pass_env_DYN ){
 		Free_line_list(&env_names);
 		Split(&env_names,Pass_env_DYN,File_sep,1,Value_sep,1,1,0,0);
 		for( i = 0; i < env_names.count; ++i ){

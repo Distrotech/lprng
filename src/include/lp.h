@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.34 2001/12/03 22:08:20 papowell Exp $
+ * $Id: lp.h,v 1.37 2001/12/22 01:14:15 papowell Exp $
  ***************************************************************************/
 
 
@@ -115,6 +115,7 @@ EXTERN gid_t DaemonGID;    /* Daemon GID */
 EXTERN int Max_fd DEFINE(=4);	   /* Maximum FD opened */
 
 EXTERN char* Lpd_port_arg;	/* command line port value */
+EXTERN char* Lpd_socket_arg; /* command line unix socket value */
 
 extern void Max_open(int fd);
 
@@ -469,6 +470,8 @@ EXTERN int Suppress_header_DYN; /* suppress headers and/or banner page */
 EXTERN int Suspend_OF_filter_DYN; /* suspend OF filter */
 EXTERN char* Syslog_device_DYN;	/* default syslog() facility */
 EXTERN char* Trailer_on_close_DYN; /* trailer string to print when queue empties */
+EXTERN int Unix_socket_DYN;		/* use UNIX socket for localhost */
+EXTERN char* Unix_socket_path_DYN;	/* UNIX socket pathname */
 EXTERN int Use_date_DYN;		/* put date in control file */
 EXTERN int Use_identifier_DYN;	/* put identifier in control file */
 EXTERN int Use_info_cache_DYN;

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendjob.c,v 1.34 2001/12/03 22:08:16 papowell Exp $";
+"$Id: sendjob.c,v 1.37 2001/12/22 01:14:10 papowell Exp $";
 
 
 #include "lp.h"
@@ -145,7 +145,7 @@ int Send_job( struct job *job, struct job *logjob,
 		}
 	} else {
 		sock = Link_open_list( RemoteHost_DYN,
-			&real_host, 0, connect_timeout_len, 0 );
+			&real_host, 0, connect_timeout_len, 0, Unix_socket_DYN );
 	}
 
 	err = errno;

@@ -8,39 +8,18 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lockfile.c,v 1.34 2001/12/03 22:08:12 papowell Exp $";
+"$Id: lockfile.c,v 1.37 2001/12/22 01:14:06 papowell Exp $";
 
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.
  ***************************************************************************
  * File Locking Routines:
- * int Do_lock( char *filename, int *lock, int *create, struct stat *statb )
- *     filename- name of file
- *     lock- non-zero- attempt to lock, *lock = 1 if success, 0 if fail
- *     create- non-zero- if file does not exist, create
- *             *create = 1 if needed to create and success,
- *                       0 if did not need to create
- *  1. opens file;  if unable to open and create != 0, trys to
- *                  create the file; *create = 1 if created;
- *  2. call Lock_fd to check for problems such as links,
- *     permissions, and somebody playing games with symbolic links
- *
- *     Returns: fd >= 0 - fd of the file
- *              -1      - file does not exist or has error condition
- *              *lock = 0 if no unable to lock
- *                      1 if locked
- *                      -1 if timeout or other error condition
- *     Side Effect: updates statb with status
- *
- * int Lock_fd( int fd, char *filename, int *lock, struct stat *statb );
- *     Lock_fd checks for problems such as links,
- *     permissions, and somebody playing games with symbolic links
- *
- *     Returns: fd >= 0 - fd of the file
- *              -1      - file does not exist or has error condition
- *              *lock = 0 if no unable to lock
- *
+ * int Do_lock( int fd, int block );
+ *     fd - file descriptor
+ *     block - non-zero- block until lock
+ *     Returns: 0 - success
+ *             -1 - fail
  ***************************************************************************
  * Lock File Manipulation:
  * Each active server has a lock file, which it uses to record its

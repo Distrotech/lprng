@@ -51,7 +51,7 @@ rm Makefile.in.in
 ln -s /usr/share/gettext/po/Makefile.in.in .
 )
 
-sh CREATE_CONFIGURE
+#sh CREATE_CONFIGURE
     
 %build
 CFLAGS="$RPM_OPT_FLAGS" ; export CFLAGS

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.34 2001/12/03 22:08:16 papowell Exp $";
+"$Id: printjob.c,v 1.37 2001/12/22 01:14:10 papowell Exp $";
 
 
 #include "lp.h"
@@ -239,9 +239,10 @@ int Print_job( int output, int status_device, struct job *job,
 				if( !filter ) filter = IF_Filter_DYN;
 				break;
 			case 'a': case 'i': case 'o': case 's':
-				SETSTATUS(job)"bad data file format '%c', using 'if' filter", cval(format) );
+				SETSTATUS(job)"bad data file format '%c', using 'f' format", cval(format) );
 				filter_name[0] = 'i';
 				if( !filter ) filter = IF_Filter_DYN;
+				format = "f";
 				break;
 		}
 		if( !filter ){

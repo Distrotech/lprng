@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd.c,v 1.34 2001/12/03 22:08:12 papowell Exp $";
+"$Id: lpd.c,v 1.37 2001/12/22 01:14:06 papowell Exp $";
 
 
 #include "lp.h"
@@ -21,6 +21,7 @@
 #include "getqueue.h"
 #include "getopt.h"
 #include "proctitle.h"
+#include "lockfile.h"
 #if 0
 #include "patchlevel.h"
 #include "gethostinfo.h"
@@ -68,6 +69,7 @@ int main(int argc, char *argv[], char *envp[])
 	struct timeval timeval, *timeout;
 	int max_socks;		/* maximum number of sockets */
 	int n, m;	/* ACME?  Hmmm... well, ok */
+	int lockfd;	/* the lock file descriptor */
 	int err, newsock;
  	time_t last_time;	/* time that last Start_all was done */
  	time_t this_time;	/* current time */
@@ -78,8 +80,10 @@ int main(int argc, char *argv[], char *envp[])
 	int request_pipe[2], status_pipe[2];
 	int last_fork_pid_value;
 	struct line_list args;
+	struct sockaddr sinaddr;
 	char *s;
 	int first_scan = 1;
+	int unix_sock = 0;
 
 	Init_line_list( &args );
 	Is_server = 1;	/* we are the LPD server */
@@ -195,25 +199,31 @@ int main(int argc, char *argv[], char *envp[])
 	if( Lpd_port_arg ){
 		Set_DYN( &Lpd_port_DYN, Lpd_port_arg );
 	}
+	if( Lpd_socket_arg ){
+		Unix_socket_DYN = safestrcmp( Lpd_socket_arg, "off");
+		Set_DYN( &Unix_socket_path_DYN, Lpd_socket_arg );
+	}
+
+	lockfd = Lock_lpd_pid();
+	if( lockfd < 0 ){
+  		pid = Get_lpd_pid();
+		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
+  				pid );
+	}
+
+	Set_lpd_pid( lockfd );
+
 	sock = Link_listen();
 	DEBUG1("lpd: listening socket fd %d",sock);
 	if( sock < 0 ){
-		/*
-		 * try reading the lockfile
-		 */
-  		pid = Get_lpd_pid();
- 		if( pid > 0 && kill(pid,0) ) pid = 0;
 		Errorcode = 1;
-  		if( pid > 0 ){
-  			DIEMSG( _("Another print spooler is using TCP printer port, possibly lpd process '%d'"),
-  				pid );
-  		} else {
- 			if( !UID_root ){
- 				DIEMSG("Not running with ROOT perms and trying to open port '%s'", Lpd_port_DYN );
- 			}
- 			DIEMSG( _("Another print spooler is using TCP printer port - not LPRng") );
-  		}
-		Errorcode = JSUCC;
+		DIEMSG("Cannot bind to port '%s'", Lpd_port_DYN);
+	}
+	unix_sock = Unix_link_listen();
+	DEBUG1("lpd: unix listening socket fd %d, path '%s'",unix_sock, Unix_socket_path_DYN);
+	if( unix_sock < 0 ){
+		Errorcode = 1;
+		DIEMSG("Cannot bind to UNIX socket '%s'", Unix_socket_path_DYN );
 	}
 
 	/* setting nonblocking on the listening fd
@@ -262,7 +272,7 @@ int main(int argc, char *argv[], char *envp[])
 	 * Write the PID into the lockfile
 	 */
 
-	Set_lpd_pid();
+	Set_lpd_pid( lockfd );
 
 	if( Drop_root_DYN ){
 		Full_daemon_perms();
@@ -307,7 +317,8 @@ int main(int argc, char *argv[], char *envp[])
 	/* set up the wait activity */
 
 	FD_ZERO( &defreadfds );
-	FD_SET( sock, &defreadfds );
+	if( sock > 0 ) FD_SET( sock, &defreadfds );
+	if( unix_sock > 0 ) FD_SET( unix_sock, &defreadfds );
 	FD_SET( request_pipe[0], &defreadfds );
 
 	/*
@@ -404,7 +415,8 @@ int main(int argc, char *argv[], char *envp[])
 		readfds = defreadfds;
 		if( n >= max_servers || last_fork_pid_value < 0 ){
 			DEBUG1( "lpd: not accepting requests" );
-			FD_CLR( sock, &readfds );
+			if( sock > 0 ) FD_CLR( sock, &readfds );
+			if( unix_sock > 0 ) FD_CLR( unix_sock, &readfds );
 		}
 
 		max_socks = sock+1;
@@ -471,8 +483,7 @@ int main(int argc, char *argv[], char *envp[])
 			if( last_fork_pid_value < 0 ) last_fork_pid_value = 1;
 			continue;
 		}
-		if( FD_ISSET( sock, &readfds ) ){
-			struct sockaddr sinaddr;
+		if( sock > 0 && FD_ISSET( sock, &readfds ) ){
 			int len;
 			len = sizeof( sinaddr );
 			newsock = accept( sock, &sinaddr, &len );
@@ -490,7 +501,28 @@ int main(int argc, char *argv[], char *envp[])
 				Free_line_list(&args);
 			} else {
 				errno = err;
-				LOGERR(LOG_INFO) _("Service_connection: accept on listening socket failed") );
+				LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
+			}
+		}
+		if( unix_sock > 0 && FD_ISSET( unix_sock, &readfds ) ){
+			int len;
+			len = sizeof( sinaddr );
+			newsock = accept( unix_sock, &sinaddr, &len );
+			err = errno;
+			DEBUG1("lpd: unix socket connection fd %d", newsock );
+			if( newsock > 0 ){
+				pid = Start_worker( "server", &args, newsock );
+				if( pid < 0 ){
+					LOGERR(LOG_INFO) _("lpd: fork() failed") );
+					Write_fd_str( newsock, "\002Server load too high\n");
+				} else {
+					DEBUG1( "lpd: listener pid %d running", pid );
+				}
+				close( newsock );
+				Free_line_list(&args);
+			} else {
+				errno = err;
+				LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
 			}
 		}
 		if( FD_ISSET( request_pipe[0], &readfds ) 
@@ -581,40 +613,38 @@ int Get_lpd_pid(void)
 	return(pid);
 }
 
-void Set_lpd_pid(void)
+void Set_lpd_pid(int lockfd)
+{
+	/* we write our PID */
+	if( ftruncate( lockfd, 0 ) ){
+		LOGERR_DIE(LOG_ERR) _("lpd: Cannot truncate lock file") );
+	}
+	Server_pid = getpid();
+	DEBUG1( "lpd: writing lockfile fd %d with pid '%d'",lockfd,Server_pid );
+	Write_pid( lockfd, Server_pid, (char *)0 );
+}
+
+int Lock_lpd_pid(void)
 {
 	int lockfd;
 	char *path;
 	struct stat statb;
+	int euid = geteuid();
 
 	path = safestrdup3( Lockfile_DYN,".", Lpd_port_DYN, __FILE__, __LINE__ );
-	lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
+	To_euid_root();
+	lockfd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
+	if( lockfd < 0 ){
+		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open lock file '%s'"), path );
+	}
+	fchown( lockfd, DaemonUID, DaemonGID );
 	fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
-	if( lockfd < 0 ){
-		int euid = geteuid();
-		To_euid_root();
-		lockfd = Checkwrite( path, &statb, O_WRONLY|O_TRUNC, 1, 0 );
-		if( lockfd > 0 ){
-			fchown( lockfd, DaemonUID, DaemonGID );
-			fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
-		}
-		To_euid(euid);
+	To_euid(euid);
+	if( Do_lock( lockfd, 0 ) < 0 ){
+		close( lockfd );
+		lockfd = -1;
 	}
-	if( lockfd < 0 ){
-		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open '%s'"), path );
-	} else {
-		int euid = geteuid();
-		To_euid_root();
-		fchown( lockfd, DaemonUID, DaemonGID );
-		fchmod( lockfd, (statb.st_mode & ~0777) | 0644 );
-		To_euid(euid);
-		/* we write our PID */
-		Server_pid = getpid();
-		DEBUG1( "lpd: writing lockfile '%s' fd %d with pid '%d'",path,lockfd,Server_pid );
-		Write_pid( lockfd, Server_pid, (char *)0 );
-	}
-	if(path) free(path); path = 0;
-	close( lockfd );
+	return(lockfd);
 }
 
 int Read_server_status( int fd )
@@ -691,7 +721,8 @@ int Read_server_status( int fd )
 	N_("               Example: -D10,remote=5\n"),
 	N_(" -L logfile  - append log information to logfile\n"),
 	N_(" -V          - show version info\n"),
-	N_(" -p port     - listen on this port\n"),
+	N_(" -p port     - TCP/IP listen port, port = 0 disables\n"),
+	N_(" -P path     - UNIX socket path, path = off disables\n"),
 	0,
 };
 
@@ -710,7 +741,7 @@ void usage(void)
 }
 
  char LPD_optstr[] 	/* LPD options */
- = "D:FL:VX:p:" ;
+ = "D:FL:VX:p:P:" ;
 
 void Get_parms(int argc, char *argv[] )
 {
@@ -724,6 +755,7 @@ void Get_parms(int argc, char *argv[] )
 		case 'V': ++verbose; break;
         case 'X': Worker_LPD = Optarg; break;
 		case 'p': Lpd_port_arg = Optarg; break;
+		case 'P': Lpd_socket_arg = Optarg; break;
 		default: usage(); break;
 		}
 	}

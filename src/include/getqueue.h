@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getqueue.h,v 1.34 2001/12/03 22:08:19 papowell Exp $
+ * $Id: getqueue.h,v 1.37 2001/12/22 01:14:14 papowell Exp $
  ***************************************************************************/
 
 
@@ -74,6 +74,7 @@ EXTERN const char * HOST				DEFINE( = "host" );
 EXTERN const char * HPFORMAT			DEFINE( = "hpformat" );
 EXTERN const char * ID					DEFINE( = "id" );
 EXTERN const char * IDENTIFIER			DEFINE( = "A" );
+EXTERN const char * INCOMING_TIME		DEFINE( = "incoming_time" );
 EXTERN const char * INPUT				DEFINE( = "input" );
 EXTERN const char * JOBNAME				DEFINE( = "J" );
 EXTERN const char * JOBSEQ				DEFINE( = "jobseq" );
@@ -177,7 +178,7 @@ void strval( const char *key, struct line_list *list, struct job *job,
 void Make_sort_key( struct job *job );
 int Setup_printer( char *prname, char *error, int errlen, int subserver );
 int Read_pid( int fd, char *str, int len );
-void Write_pid( int fd, int pid, char *str );
+int Write_pid( int fd, int pid, char *str );
 int Patselect( struct line_list *token, struct line_list *cf, int starting );
 int Check_format( int type, const char *name, struct job *job );
 char *Find_start(char *str, const char *key );

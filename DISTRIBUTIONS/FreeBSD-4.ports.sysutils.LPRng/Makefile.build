@@ -116,6 +116,17 @@ plist:
 	${MAKE} all
 	FORCE_PKG_REGISTER=YES ${MAKE} install NO_MTREE=yes DESTDIR=${TROOT} MAKEPACKAGE=YES
 	${CP} /dev/null ${PLIST}
+	if [ "$PORTNAME" = LPRng ] ; then \
+	echo  '@unexec if [ -f %D/etc/lpd.conf ]; then cmp -s %D/etc/lpd.conf.sample %D/etc/lpd.conf && rm -f %D/etc/lpd.conf || echo "If you are permanently removing this port, you should do a ``rm ${PKG_PREFIX}/etc/lpd.conf`` to remove config files left." | fmt ; fi' >${PLIST}; \
+	echo '@unexec if [ -f %D/etc/lpd.perms ]; then cmp -s %D/etc/lpd.perms.sample %D/etc/lpd.perms && rm -f %D/etc/lpd.perms || echo "If you are permanently removing this port, you should do a ``rm ${PKG_PREFIX}/etc/lpd.perms`` to remove config files left." | fmt ; fi' >>${PLIST}; \
+	fi
+	if [ "$PORTNAME" = ifhp ] ; then \
+	echo  '@unexec if [ -f %D/etc/ifhp.conf ]; then cmp -s %D/etc/ifhp.conf.sample %D/etc/ifhp.conf && rm -f %D/etc/ifhp.conf || echo "If you are permanently removing this port, you should do a ``rm ${PKG_PREFIX}/etc/ifhp.conf`` to remove config files left." | fmt ; fi' >${PLIST}; \
+	fi
+	if [ "$PORTNAME" = LPRngTool ] ; then \
+	echo  '@unexec if [ -f %D/etc/lprngtool.conf ]; then cmp -s %D/etc/lprngtool.conf.sample %D/etc/lprngtool.conf && rm -f %D/etc/lprngtool.conf || echo "If you are permanently removing this port, you should do a ``rm ${PKG_PREFIX}/etc/lprngtool.conf`` to remove config files left." | fmt ; fi' >${PLIST}; \
+	fi
+	@echo Installed files 
 	@echo Installed files 
 	(cd ${TROOT}${PREFIX} && find . -type f)
 	(cd ${TROOT}${PREFIX} && find . -type f) | \

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.34 2001/12/03 22:08:18 papowell Exp $";
+"$Id: vars.c,v 1.37 2001/12/22 01:14:12 papowell Exp $";
 
 
 /* force local definitions */
@@ -81,6 +81,12 @@ Put all of the variables in a separate file.
 #endif
 #if !defined(DONE_JOBS_MAX_AGE)
 #error Missing DONE_JOBS_MAX_AGE definition
+#endif
+#if !defined(UNIXSOCKET)
+#error Missing UNIXSOCKET definition
+#endif
+#if !defined(UNIXSOCKETPATH)
+#error Missing UNIXSOCKETPATH definition
 #endif
 
 /*
@@ -361,8 +367,8 @@ struct keywords Pc_var_list[] = {
 { "order_routine", 0, FLAG_K, &Order_routine_DYN,0,0},
    /* orginate connections from these ports */
 { "originate_port", 0, STRING_K, &Originate_port_DYN,0,0,"=512 1023"},
-   /* if client, pass these environment variables */
-{ "pass_env", 0,  STRING_K,  &Pass_env_DYN,0,0,"=PGPPASS,PGPPATH,PGPPASSFD,LANG"},
+   /* pass these environment variables to filters (clients and lpd)*/
+{ "pass_env", 0,  STRING_K,  &Pass_env_DYN,0,0,"=PGPPASS,PGPPATH,PGPPASSFD,LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL" },
    /* lpd.perms files */
 { "perms_path", 0, STRING_K, &Printer_perms_path_DYN,1,0,"=" LPD_PERMS_PATH },
    /*  page length (in lines) */
@@ -489,6 +495,10 @@ struct keywords Pc_var_list[] = {
 { "translate_format", 0,  STRING_K,  &Xlate_format_DYN,0,0},
    /*  translate incoming job file formats - similar to tr(1) utility */
 { "translate_incoming_format", 0,  STRING_K,  &Xlate_incoming_format_DYN,0,0},
+   /*  use UNIX socket for localhost connections */
+{ "unix_socket", 0,  FLAG_K,  &Unix_socket_DYN,0,0,"=" UNIXSOCKET},
+   /*  put date in control file */
+{ "unix_socket_path", 0,  STRING_K,  &Unix_socket_path_DYN,0,0,"=" UNIXSOCKETPATH},
    /*  put date in control file */
 { "use_date", 0,  FLAG_K,  &Use_date_DYN,0,0,"1"},
    /*  put identifier in control file */

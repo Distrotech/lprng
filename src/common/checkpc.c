@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: checkpc.c,v 1.34 2001/12/03 22:08:09 papowell Exp $";
+"$Id: checkpc.c,v 1.37 2001/12/22 01:14:03 papowell Exp $";
 
 
 
@@ -110,7 +110,6 @@ int main( int argc, char *argv[], char *envp[] )
 			case 'p': ++Printcap; break;
 			case 'P': User_specified_printer = Optarg; break;
 			case 'T':
-				To_daemon();
 				initsetproctitle( argc, argv, envp );
 				Test_port( getuid(), geteuid(), serial_line );
 				exit(0);
@@ -125,6 +124,8 @@ int main( int argc, char *argv[], char *envp[] )
 	Initialize(argc, argv, envp, 'D' );
 	Setup_configuration();
 
+	To_daemon();
+
 	/* we have a user specified printcap we can check as well */
 	Free_line_list(&raw);
 	for( i = Optind; i < argc; ++i ){
@@ -136,8 +137,7 @@ int main( int argc, char *argv[], char *envp[] )
 		&PC_info_line_list, &raw, &Host_IP );
 	Free_line_list( &raw );
 
-	To_euid_root();
-	if( Fix && geteuid() ){
+	if( Fix && geteuid() && getuid() ){
 		WARNMSG("Fix option (-f) requires root permissions\n" );
 	}
 
@@ -418,17 +418,30 @@ void Scan_printer(void)
 				&& isdigit(cval(cf_name+3)) );
 
 		if( jobfile && Age && delta > Age ){
-			int n = (delta)/60 ;
+			float n = (delta)/60.0 ;
+			float a = (Age)/60.0 ;
+			char *remove = Remove?" (removing)":"";
+			char *range = "mins";
+			if( a/60 > 2 ){
+				a = a/60;
+				n = n/60;
+				range = "hours";
+				if( a/24 > 2 ){
+					a = a/24;
+					n = n/24;
+					range = "days";
+				}
+			}
             if( (statb.st_size == 0) ){
-				if( Remove || Verbose)MESSAGE( " %s:  file '%s', zero length file > %d mins old",
-					Printer_DYN, cf_name, n );
+				if( Remove || Verbose)MESSAGE( " %s:  file '%s', zero length file > %3.2f %s old%s",
+					Printer_DYN, cf_name, n, range, remove );
 				if( Remove ){
 					unlink(cf_name);
 				}
 				continue;
 			} else {
-				if( Remove || Verbose)MESSAGE( " %s:  file '%s', %ld hours old, remove > %d mins old",
-					Printer_DYN, cf_name, n,  Age );
+				if( Remove || Verbose)MESSAGE( " %s:  file '%s', age %3.2f %s > %3.2f %s maximum%s",
+					Printer_DYN, cf_name, n, range, a, range, remove );
 				if( Remove ){
 					unlink(cf_name);
 				}
@@ -747,6 +760,7 @@ int Fix_create_dir( char  *path, struct stat *statb )
 	}
 	/* we don't have a directory */
 	if( stat( path, statb ) ){
+		int euid = geteuid();
 		To_euid_root();
 		if( mkdir( path, Spool_dir_perms_DYN ) ){
 			WARNMSG( "mkdir '%s' failed, %s", path, Errormsg(errno) );
@@ -754,7 +768,7 @@ int Fix_create_dir( char  *path, struct stat *statb )
 		} else {
 			err = Fix_owner( path );
 		}
-		To_daemon();
+		To_euid(euid);
 	}
 	return( err );
 }
@@ -763,6 +777,7 @@ int Fix_owner( char *path )
 {
 	int status = 0;
 	int err;
+	int euid = geteuid();
 
 	To_euid_root();
 	WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
@@ -776,7 +791,7 @@ int Fix_owner( char *path )
 		}
 		errno = err;
 	}
-	To_daemon();
+	To_euid(euid);
 	return( status != 0 );
 }
 
@@ -784,11 +799,12 @@ int Fix_perms( char *path, int perms )
 {
 	int status;
 	int err;
+	int euid = geteuid();
 
 	To_euid_root();
 	status = chmod( path, perms );
-	To_daemon();
 	err = errno;
+	To_euid( euid );
 
 	if( status ){
 		WARNMSG( "chmod '%s' to 0%o failed, %s", path, perms,
@@ -837,7 +853,6 @@ int Check_spool_dir( char *path, int owner )
 				return( 2 );
 			}
 		}
-		To_daemon();
 		if( stat( pathname, &statb ) == 0 && S_ISDIR( statb.st_mode )
 			&& chdir( pathname ) == -1 ){
 			if( !Fix ){
@@ -864,11 +879,14 @@ int Check_spool_dir( char *path, int owner )
 	if( !owner ) return(err);
 	if( Fix ){
 		char cmd[SMALLBUFFER];
+		int euid = geteuid();
+
+		To_euid_root();
 		SNPRINTF( cmd, sizeof(cmd)) "%s -R %d %s", CHOWN, DaemonUID, path );
 		system( cmd );
 		SNPRINTF( cmd, sizeof(cmd)) "%s -R %d %s", CHGRP, DaemonGID, path );
 		system( cmd );
-		To_daemon();
+		To_euid(euid);
 	}
 	if( stat( path, &statb ) ){
 		WARNMSG( "stat of '%s' failed - %s", path, Errormsg(errno) );

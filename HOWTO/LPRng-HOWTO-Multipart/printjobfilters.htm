@@ -20,8 +20,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 9 Dec 2001
-          (For LPRng-3.8.3)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 21 Dec 2001
+          (For LPRng-3.8.4)</th>
         </tr>
 
         <tr>
@@ -93,7 +93,7 @@
       specification:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2129"></a>
+        <a name="AEN2145"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :filter=/usr/local/lib/filters/ifhp
@@ -113,7 +113,7 @@
       class="FILENAME">/tmp/testf</tt> file as shown below.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2138"></a>
+        <a name="AEN2154"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # /tmp/testf - test filter for LPRng
@@ -156,7 +156,7 @@
       <p>We can test our script, with the results shown below:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2157"></a>
+        <a name="AEN2173"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {163} %</tt> <tt class=
 "USERINPUT"><b>chmod 755 /tmp/testf</b></tt>
@@ -184,7 +184,7 @@
       restart the <b class="APPLICATION">lpd</b> server.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2168"></a>
+        <a name="AEN2184"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -199,7 +199,7 @@
       "FILENAME">/tmp/hi</tt> file and observe the results:</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN2172"></a>
+        <a name="AEN2188"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {165} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -323,7 +323,7 @@
         control file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2206"></a>
+          <a name="AEN2222"></a>
 <pre class="SCREEN">
     Hh4.private
     Ppapowell
@@ -512,7 +512,7 @@
         starting with upper case letters:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2307"></a>
+          <a name="AEN2323"></a>
 <pre class="SCREEN">
     /tmp/testf -Apapowell@h4+26681 -CA \
        -D2000-04-11-21:39:21.877 -Ff -Hh4.private ....
@@ -534,7 +534,7 @@
         following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2313"></a>
+          <a name="AEN2329"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -550,7 +550,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2318"></a>
+          <a name="AEN2334"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {169} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -574,7 +574,7 @@
         the following format:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2329"></a>
+          <a name="AEN2345"></a>
 <pre class="SCREEN">
     Option    Value Expansion
     $X        -X&lt;value&gt;
@@ -618,7 +618,7 @@
         shown below.</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2343"></a>
+          <a name="AEN2359"></a>
 <pre class="SCREEN">
     printcap:
     lp:sd=/var/spool/lpd/%P
@@ -652,7 +652,7 @@
         the printcap entry to have the following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2355"></a>
+          <a name="AEN2371"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -669,7 +669,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2360"></a>
+          <a name="AEN2376"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {175} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -702,7 +702,7 @@
         using:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2376"></a>
+          <a name="AEN2392"></a>
 <pre class="SCREEN">
     ${shell} -c "( ${if} )"
 </pre>
@@ -716,7 +716,7 @@
         printcap entry to have the following form:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2380"></a>
+          <a name="AEN2396"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -732,7 +732,7 @@
         status:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2385"></a>
+          <a name="AEN2401"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {178} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -755,7 +755,7 @@
         we find:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2395"></a>
+          <a name="AEN2411"></a>
 <pre class="SCREEN">
     PREAMBLE
     TESTF /tmp/testf
@@ -778,7 +778,7 @@
         contents, then you will see:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2398"></a>
+          <a name="AEN2414"></a>
 <pre class="SCREEN">
     lp:sd=/var/spool/lpd/%P
       :force_localhost
@@ -809,7 +809,7 @@
         and execute the following commands:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2406"></a>
+          <a name="AEN2422"></a>
 <pre class="SCREEN">
     printcap:
       lp:sd=/var/spool/lpd/%P
@@ -871,7 +871,7 @@
         file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2423"></a>
+          <a name="AEN2439"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {187} %</tt> <tt class=
 "USERINPUT"><b>cat /tmp/lp</b></tt>
@@ -996,7 +996,7 @@
         replace it with the following:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2466"></a>
+          <a name="AEN2482"></a>
 <pre class="SCREEN">
     #!/bin/sh
     # this is an example of how to use /bin/sh and LPRng
@@ -1118,7 +1118,7 @@
         "FILENAME">/tmp/lp</tt>:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2471"></a>
+          <a name="AEN2487"></a>
 <pre class="SCREEN">
     <tt class="PROMPT">h4: {188} %</tt> <tt class=
 "USERINPUT"><b>cp /dev/null /tmp/lp</b></tt>
@@ -1185,7 +1185,7 @@
         information in Perl:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2496"></a>
+          <a name="AEN2512"></a>
 <pre class="SCREEN">
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
@@ -1335,7 +1335,7 @@
         job control file:</p>
 
         <div class="INFORMALEXAMPLE">
-          <a name="AEN2546"></a>
+          <a name="AEN2562"></a>
 <pre class="SCREEN">
     Hh4.private
     Ppapowell
@@ -1525,7 +1525,7 @@
         selection.</p>
 
         <div class="INFORMALTABLE">
-          <a name="AEN2652"></a>
+          <a name="AEN2668"></a>
 
           <table border="1" class="CALSTABLE">
             <thead>

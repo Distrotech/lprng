@@ -1,3 +1,82 @@
+Version LPRng-3.8.4 - Thu Dec 13 08:25:17 PST 2001
+
+   ARGH! ARGH!  screwed up lpq -a by forgetting to
+   get the 'all' printer information.  Doh!
+   (Spotted by and slapped his forehead by:
+      Patrick Powell <papowell@lprng.com>)
+
+   "Why do we need a TCP/IP port?"  quoth the raven,  I mean
+   Craig Small <csmall@eye-net.com.au>.
+   "I have a version that has this facility..." respondeth
+   Patrick ("Mr. Grumpy") Powell.  "But I think you will not
+    be happy".  I merged the two versions.  Be Happy.
+
+   configure:
+     Added these options
+       --enable-unix_socket  (default disabled)
+       --with-unix_socket_path=PATH  (default /dev/lprng)
+
+   /etc/lpd.conf:
+    OPTION      TYPE   DEFAULT PURPOSE
+     unix_socket FLAG   1       enables/disables the UNIX socket
+     unix_socket_path STR   /dev/lprng    path to the pipe using this
+
+    Also: lpd_port = 0 will disable the TCP/IP port
+
+     lpd -p 0    - disables the TCP/IP port
+       or /etc/lpd.conf  lpd_port=0
+     lpd -P /path   - enables, unix socket specified by path
+       or /etc/lpd.conf  unix_socket@
+     lpd -P off     - disable unix socket
+
+      Permissions:
+       Connections to the UNIX socket will appear to come
+       from localhost, (127.0.0.1) port 0.  You can use the
+       UNIXSOCKET to check for this condition, or explicitly for
+       localhost/port 0
+         ACCEPT/REJECT ... UNIXSOCKET
+    Also updated the INSTALL note.
+
+   checkpc:  I was using 'To_daemon()' calls all through the
+     code.  This was not needed and would cause a substantial
+     slowdown in operation.  I now do exactly ONE call at the
+     start of operations.
+
+   updated the config.guess and config.sub to the latest version
+   provided by autoconf.
+
+   Incoming jobs now have a status entry.  This is to support IPP
+   and status reporting for incoming jobs.  The idea is that you
+   can start transferring a job and then,  when the whole job is
+   transferred,  the job will be done.  To make this happen you
+   need to put an entry in the queue to act as a place holder and
+   reserve the job number for this action.  When transfering an
+   IPP job,  you can send it in chunks.  This now allows the IPP
+   system to send the job header (request), set up the job status,
+   and then the job contents.  Just to make life interesting...
+
+   Found some places where I was using 'sizeof(xxx)' instead of a
+   passed value for an error message buffer.  Very short error
+   messages - 3 chars long... :-)
+
+   LPD now REALLY uses the lock files to prevent multiple
+   instances from running.  This might/will/could break on
+   systems that NFS mount their lock directories.
+
+   Cleaned up the error message about bad print job formats.
+    Clearly there are some REALLY strange printing systems out there.
+    (reported by: Phil Moses <pmoses@physics.ucsd.edu>)
+
+   Checkpc -A XX -r now has nicer format:
+     t1:  file 'hfA877', age 24.57 hours > 24.00 hours maximum
+     (Spotted by: (Craig Small) csmall@eye-net.com.au)
+
+   Added the following to the pass_env options:
+	LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
+	LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
+	LC_IDENTIFICATION LC_ALL
+    This should help with LOCALE support.
+
 Version LPRng-3.8.3 - Mon Dec 10 20:40:02 PST 2001
 
    Fixed the operation of 'lpr -Pxx' when printcap for xxx
@@ -53,7 +132,7 @@ Version LPRng-3.8.3 - Mon Dec 10 20:40:02 PST 2001
    are in the ${PREFIX}/man/manX directories.
 
    I gave up and cheated:  you get an obnoxious warning to
-   either create /usr/man or to make a symbolic link from 
+   either create /usr/man or to make a symbolic link from
    to /usr/share/man from /usr/man before installation starts.
    I know, I know.  But I don't have that many brain cells
    left to fry...
@@ -113,7 +192,7 @@ Version LPRng-3.8.2 - Mon Dec  3 12:26:52 PST 2001
 
   Added 'PrintingCookbook' to the distribution.
 
-  The 'shorthost' DNS lookup result was not being set correctly 
+  The 'shorthost' DNS lookup result was not being set correctly
   if DNS lookup failed and you had to drop back to using IP address.
   Clearly the shorthost form of IP10.0.0.1 is IP10.0.0.1, not
   IP10.
@@ -178,14 +257,14 @@ Release LPRng 3.8.0 Mon Oct 15 12:09:13 PDT 2001
 
    At line 174 in accounting.c:
      } else if( safestrncasecmp( s, "hold", 4 ) ){
-   This should be 
+   This should be
      } else if( !safestrncasecmp( s, "hold", 4 ) ){
    otherwise anything send back to lpd from the accounting filter
    other than accept will result in a JHOLD!
     (Spotted by: "C. L. McAvaney" <chrismc@deakin.edu.au>)
 
    Added :force_ipaddr_hostname option.  This causes the IP address of the
-   remote host to be used for the hostname, overriding the information 
+   remote host to be used for the hostname, overriding the information
    in the control file.  This can be used when you really need the
    IP address rather than the hostname in the control file.
      (Needed by: Rick Cochran <rcc2@cornell.edu>)
@@ -206,7 +285,7 @@ Release LPRng 3.7.8 Tue Sep 25 12:35:46 PDT 2001
    (Found totally by accident: Patrick Powell <papowell@astart.com>)
 
   lpr '-Y' (enable lpr_filter) processing fixed up a bit.  Now has better
-   diagnostics and information. 
+   diagnostics and information.
 
   An extremely rare but annoying network condition causes LPQ print
   status to fail.  When running as root (setuid root),  and doing an LPQ
@@ -226,7 +305,7 @@ Release LPRng 3.7.7 Fri Sep 14 15:54:48 PDT 2001
   checkpc whooped its cookies when running checkpc -f and
   the device is /dev/null (lp=/dev/null).   Apparently I
   cannot set /dev/null to use blocking IO...  Sigh...  So I
-  do not count 'changing non-blocking IO to blocking IO' 
+  do not count 'changing non-blocking IO to blocking IO'
   as an error.
 
   i8n French Translation (gettext) added.
@@ -244,7 +323,7 @@ Release LPRng 3.7.7 Fri Sep 14 15:54:48 PDT 2001
 	   D = default (if present),  otherwise keep original
   It now handles the case where no translation is required
   correctly.
-  (Prompted by a question from: 
+  (Prompted by a question from:
      Rainer Tammer <rainer.tammer@spg.schulergroup.com>)
 
   Did not check to see that I was a client before doing
@@ -296,7 +375,7 @@ Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
   (Noticed by: David E. Cross <crossd@cs.rpi.edu>)
 
   A slew of patches from Crutcher Dunnavant at redhat.com:
-  From the LPRng-3.7.4-23.src.rpm at the RedHat ftp site: 
+  From the LPRng-3.7.4-23.src.rpm at the RedHat ftp site:
     LPRng-3.7.4-direct.patch - fixed a typeo in vars.c
     LPRng-3.7.4-inet_ntop.patch - conflicting/duplicate
         definition of inet_ntop.
@@ -347,7 +426,7 @@ Release LPRng 3.7.5 Sun Sep  2 12:43:39 PDT 2001
   { "prefix_option_to_option", 0, STRING_K, &Prefix_option_to_option_DYN,0,0},
   (From: Anthony R Iano-Fletcher <Anthony.Iano-Fletcher@cbel.cit.nih.gov>)
 
-  Redid the authentication documentation and code...  cleaned it up a bit. 
+  Redid the authentication documentation and code...  cleaned it up a bit.
   And comments.  And printcap.5 updated, HOWTO updated.  Sort of works now.
   Fixed up '$a' filter options so that :af=xxx is put on command line only
   if it is NOT a filter.  This clears up the mysterious Linux Printfilter
@@ -439,7 +518,7 @@ Release LPRng 3.7.2 Fri Dec 22 10:45:00 PST 2000
     would get duplicate entries. Solved the 'mystery duplicate printer'
     problem observed during testing.
 
-  Natter in the README and INSTALL for Solaris users. 
+  Natter in the README and INSTALL for Solaris users.
 
 Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
@@ -475,7 +554,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
          If no default then original is retained.
 
      The bq_format default is now 'f', not 'l'.
-    
+
      Example:
        bq_format=f    (default)
           all processed files have 'f' format
@@ -485,7 +564,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
    3. lpr -k option is now re-enabled to allow lpr to handle
        pipe input without creating large data files.  Note
        that if you kill programs off then you might end up
-       with a truncated job. 
+       with a truncated job.
 
        You can use:  cat | lpr -k  OR cat | lpr -k -- -
 
@@ -501,7 +580,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
       SEND JOB DIRECTLY TO REMOTE TCP/IP PORT:
           lpr -Y -Phost%port file1 file2
-       OR: 
+       OR:
           use :direct flag in printcap
           In your ${HOME}/.printcap or /etc/printcap file put:
             lp:direct:lp=h14%9100:remote_support=R:client
@@ -530,7 +609,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
              Effectively:
                    ${filter} <file |/smbclient //server/share
 
-      SEND JOB TO LPD SPOOLER (Network Print Server): 
+      SEND JOB TO LPD SPOOLER (Network Print Server):
           Ummm... well we already do this.  The :direct flag
       and the -Y flag are basically NO-OPS for this.
 
@@ -552,7 +631,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
            lpr -Y -Phost%port -X userfilter file
         OR:
            lp:direct:...:filter=userfilter:client
-           
+
            Effectively:
                cat file | userfilter >host%port
 
@@ -579,13 +658,13 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
                 send control file
                 send a 'expect BIG file' command
-                cat userfile | filter > server 
+                cat userfile | filter > server
 
          You can also add -X userfilter and get:
 
                 send control file
                 send a 'expect BIG file' command
-                cat userfile | userfilter > server 
+                cat userfile | userfilter > server
 
 
        This is done so that you could run
@@ -690,7 +769,7 @@ Release LPRng 3.7.1 - Tue Nov 28 06:33:32 PST 2000
 
  In LPRng/common/linelist.c,  many missing checks for null pointers.
    (Found in a core dump supplied by: Mike Whitson <mwhitson@MIT.EDU>)
- 
+
  lpr -o option is now the same as lpr -Z option
    (Suggestion to save sanity of SYSV users by: Joseph Krahn <jkrahn@nc.rr.com>)
 
@@ -974,11 +1053,11 @@ Release LPRng 3.6.23 - Fri Aug 11 08:03:23 PDT 2000
     who sent me the following information)
 
      Summary of HP's Extensions to RFC-1179
-     
+
      1. 4-Digit Job Numbers
      HP preserves the System V-style 4-digit sequence number, or job number, in
      file names and attributes, while BSD uses 3-digit job numbers.
-     
+
      2. Control and Data File Naming Conventions
      Control files are named in the following format:
         cA<seqn><host>
@@ -991,7 +1070,7 @@ Release LPRng 3.6.23 - Fri Aug 11 08:03:23 PDT 2000
          ea<seqn><host>   through   ez<seqn><host>     ... etc. ...
      So the first data file name in a request begins with "dA", the second with
      "dB", the 27th with "da", the 28th with "db", and so forth.
-     
+
      3. HP-Specific BSD Job Attributes (Control File Lines)
      The following control file lines are extensions of RFC-1179:
         R<login>
@@ -1228,15 +1307,15 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
   --with-lpd_perms_path=PATH        path of lpd.perms (default: ${sysconfdir}/lpd.perms)
   --with-printcap_path=PATH         path of printcap (default ${sysconfdir}/printcap)
   --with-lpd_printcap_path=PATH     path of lpd_printcap (default ${sysconfdir}/lpd_printcap)
-  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd 
-  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value 
-  --with-filter_path=PATH           filter PATH value 
-  --with-userid=NAME                run LPRng software as this userid, default daemon 
-  --with-groupid=NAME               run LPRng software as this groupid, default daemon 
-  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file 
-  --with-order_routine=NAME         queue order routine name in user object file 
-  --with-user_objs=NAME             user specified object file 
-  --with-user_include=NAME          include file with function prototypes for user object file 
+  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd
+  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value
+  --with-filter_path=PATH           filter PATH value
+  --with-userid=NAME                run LPRng software as this userid, default daemon
+  --with-groupid=NAME               run LPRng software as this groupid, default daemon
+  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file
+  --with-order_routine=NAME         queue order routine name in user object file
+  --with-user_objs=NAME             user specified object file
+  --with-user_include=NAME          include file with function prototypes for user object file
   --with-filterdir=DIR              filter directory (default ${libexecdir}/filters)
   --disable-strip                   disable stripping binaries by default
   --enable-nls           use Native Language Support
@@ -1281,7 +1360,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
    do this:
      cd ${BUILD}/.../LPRng;
      ${SYSTEMSRC}/.../LPRng/configure --prefix=/usr/local --sysconfdir=/etc
-     make 
+     make
      make install XX=${MIRROR} -> puts thing in
               ${MIRROR}/usr/local
               ${MIRROR}/etc
@@ -1419,7 +1498,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
     by the options.
    (Discovered by: Patrick Powell <papowell@lprng.com>)
   Retested Kerberos 5 and Kerberos4 stuff with Kerberos 1.1.1,
-   found problems with compilation,  fixed them. 
+   found problems with compilation,  fixed them.
    (Helped by: Mike Whitson <mwhitson@MIT.EDU>)
   Updated Version and Copyright information.
   Added configure --enable-kerberos option for folks who need to build
@@ -1623,13 +1702,13 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
        executed by the 'make install' step.
 
      c) "pseudo root" or "PREFIX" support
- 
+
        I have put a "${INSTALL_PREFIX}" variable at all points where
        a normal script would have a target.  Thus if you do:
 
            mkdir /var/tmp/LPRng-root
            make install INSTALL_PREFIX=/var/tmp/LPRng-root
- 
+
        you will find that all of the files are now put in sub
        directories of /var/tmp/LPRng-root.  You can now do:
 
@@ -1651,7 +1730,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
      e) If you want to see how to use these, look in the DISTRIBUTIONS
      directory.
 
-     Here is the postinstall.freebsd.sh : - comments are marked with *** .... 
+     Here is the postinstall.freebsd.sh : - comments are marked with *** ....
 
      # FreeBSD Convenience Script for Source Install
      # -- START --
@@ -1660,7 +1739,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
      #  If you are building a PORT, see the
      #  DISTRIBUTIONS/Freebsd directory for a complete port
      #  building package.
-     # 
+     #
      # This is the shell script that does the postinstall
      # dynamic fixup
      #  It needs to be massaged with the information for
@@ -1708,7 +1787,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
      ****    when you are generating a 'chroot' image.  Then you test for this in the
      ****    script and put things in a nice place when you are making a package,
      ****    and then forcefully reinstall them.
-     
+
      fix () {
         v=`echo $1 | sed -e 's/[:;].*//'`;
         p=`echo $2 | sed -e 's/[:;].*//'`; d=`dirname $p`;
@@ -1804,9 +1883,9 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
              echo "WARNING: configuration files missing from package!"
          fi
      fi
-     
+
   Here is the postinstall.linux.sh:
-    
+
 	# LINUX/RedHat Source Installation Convenience Script
 	# -- START --
 	# CHANGES,v 1.1 2001/08/21 20:33:14 root Exp
@@ -1852,7 +1931,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
    Discovered that the 'generate banner' code was not working, and
      has probably not worked since 3.5.4.  Shows how many people
      use this.  Fixed.
-     
+
    Discovered that the 'af=|/...' option caused 'orphaned' children
      which would hang around until the main lpd server process
      exited.  Problem unsolvable on the systems where the problem
@@ -1881,7 +1960,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
       directory by: Dmitry Bely <dbely@mail.ru>)
 
   We don't steal,  we borrow:  the :sh flag in the printcap causes
-   lpr to act like the -h (no header) flag was present.     
+   lpr to act like the -h (no header) flag was present.
    (Showing the tattered edges from cutting it out of the
      the FreeBSD lpr code, sent by: Garance A Drosihn <gad@eclipse.acs.rpi.edu>)
 
@@ -1896,7 +1975,7 @@ Release LPRng 3.6.14 Sat May  6 08:46:26 PDT 2000
 	wildcard as well as the normal information.  And finally, checkpc
     will squawk if you try to use a wildcard as a queue name,
     rather than an alias.
-   
+
   You can now do run time load balancing using user specified program
    OR a built in filter.
 
@@ -2101,7 +2180,7 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
       to set the 'key' value.  Yes, yes, I know there are only approx
       76**16 = 5 * 10*29 possible keys using this.  Tough.  A key for the
       user name (login name) and the md5_id need to be present
-     
+
          Example:
          User Keyfile
            # from the configuration information: md5_id=key
@@ -2146,7 +2225,7 @@ Release LPRng 3.6.13 Fri Jan 28 08:03:07 PST 2000
 
   #define SENDING
   #include "user_auth.stub"
-  
+
    struct security SendSecuritySupported[] = {
       /* name,       config_tag, connect,    send,   receive */
       { "kerberos4", "kerberos", Send_krb4_auth, 0, 0 },
@@ -2353,7 +2432,7 @@ Release LPRng 3.6.10 Sun Sep 12 19:46:33 PDT 1999
 Release LPRng 3.6.9 Mon Aug 30 13:30:58 PDT 1999
   reverse_priority_order flag - priority z-aZ-A, i.e. - A is lowest
    (Requested by: Dennis Bush <Dennis.Bush@dowjones.com>)
-  LPD now does a chdir("/") so that it is in a well known location. 
+  LPD now does a chdir("/") so that it is in a well known location.
    (Requested by: Craig Small <csmall@eye-net.com.au>)
   Time used to sort job is now the arrival time of the last byte
    of the job.
@@ -2363,7 +2442,7 @@ Release LPRng 3.6.8 Fri Aug 27 17:06:10 PDT 1999
   ***
   *** printcap, lpd.conf, lpd.perms now default to:
   ***  /usr/local/etc/{ printcap, lpd.conf, lpd.perms}
-  *** 
+  ***
      You may want to do:
        ln -s /etc/printcap /usr/local/etc/printcap
      OR
@@ -2376,7 +2455,7 @@ Release LPRng 3.6.8 Fri Aug 27 17:06:10 PDT 1999
   that I have just given up.
 
   You might as well assume that the following is true for a default install.
- 
+
   Updated configuration to be a little more consistent with other packages
    default installation directories:
 	 ${prefix}  is usually /usr/local
@@ -2443,7 +2522,7 @@ Release LPRng 3.6.6 Sun Aug 22 10:42:20 PDT 1999
     lpd active.
     (Patch from: Stephen Fischer <fischer@cse.unsw.edu.au>)
   LPD bounce queues changed the 'N' data in the control file.  Should not
-    do this. 
+    do this.
     (Noticed by: John Rothlisberger <rthlsbrj@pprd.abbott.com>)
 
   New timeout - exit_linger_timeout
@@ -2499,7 +2578,7 @@ Release LPRng 3.6.6 Sun Aug 22 10:42:20 PDT 1999
     READING from the socket until we get an eof.  We then close
     (with the linger) the socket.
 
-    Here are the problems that this tries to solve.  
+    Here are the problems that this tries to solve.
 
     When you send a job to a printer over a socket connection,
     you stuff the files into a socket and then expect the OS to
@@ -2610,7 +2689,7 @@ Release LPRng 3.6.4 Sat Jul 24 14:29:09 PDT 1999
        writable = no
        create mode = 0700
     man pages and HOWTO have been update to reflect these changes.
-   
+
   commmon/linelist.c: Escape() had a malloc() size error.
   man/lpd.8 man page editted and fixed up for consistency.
    (Found by: Patrick Powell <papowell@lprng.com>)
@@ -2648,7 +2727,7 @@ Release LPRng 3.6.3 Fri Jul 16 16:01:27 PDT 1999
     --enable-nls           use Native Language Support
     --with-included-gettext use the GNU gettext library included here
     --with-catgets          use catgets functions if available
- 
+
   MAKE INSTALL changes
      These tie into the changes with configure.  You should be aware of them.
      You have been warned.
@@ -2659,7 +2738,7 @@ Release LPRng 3.6.3 Fri Jul 16 16:01:27 PDT 1999
      Note 2: RedHat Linux
        To put LPD in /usr/sbin/lpd,  admin in /usr/sbin, and other stuff in /usr/bin
        configure -with-lpd_conf=/usr/libexec/lpd -with-admindir=/usr/sbin --prefix=bin
-    
+
   Minor fix to configure, src/Makefile to link only lpq with terminal library
     (Supplied by: Roderich Schupp  <rsch@ExperTeam.de>)
   Set spool_dir_perms to 0600 instead of 042600.
@@ -2891,7 +2970,7 @@ Release LPRng 3.6.1 Mon Mar 22 09:42:07 PST 1999
      these hosts
   short_status_length=N
      Number of status lines to return when return_short_status matched
-     
+
   LPC added commands
     active   - checks for an active server
     local (all | printer) - show printcap and configuration information
@@ -2973,7 +3052,7 @@ Release LPRng 3.6.1 Mon Mar 22 09:42:07 PST 1999
      :of=....
      :if=....
 
-  
+
   Bug fixes:
     Gadzillions.  Many.  Some were not bugs but simply inconsistencies with
   documentation.  Sometimes documentation changed, sometimes the code.
@@ -3062,7 +3141,7 @@ Release LPRng 3.5.3 Mon Nov  9 10:07:42 PST 1998
     The LPD server now accepts jobs for spooling WITHOUT extensively
     checking the spool queue.  This eliminates problems with printing
     to queues with a large number of entries.
-   
+
   Speed Improvement:
     A bit of time analysis showed that LPRng was spending a large
     amount of time during queue scanning in the fcmp() routine.
@@ -3224,7 +3303,7 @@ Release LPRng 3.4.11 Thu Apr 30 11:46:25 PDT 1998
        LPC start, up, kill, topq, release, or redo
 
   4. LPQ and LPC will report if there is an aborted job condition.
- 
+
   Note that for most users, the default action is now the desired
   action, i.e. - to continue processing jobs.
 
@@ -3257,7 +3336,7 @@ Release LPRng 3.4.11 Thu Apr 30 11:46:25 PDT 1998
 
   Extended Functionality:  'mail_from' option
     Allows specification of the 'From:' user.  If not specified
-    default is to use the printer name. 
+    default is to use the printer name.
    (Patch By: Rainer Schoepf <schoepf@uni-mainz.de>)
   Portability Extension:
    LPD_CONF_PATH compilation option
@@ -3279,7 +3358,7 @@ Release LPRng 3.4.11 Thu Apr 30 11:46:25 PDT 1998
      (Reported by: wcolburn@nmt.edu (William Colburn (aka Schlake)))
    get_max_servers did not get max servers.
      (Patch by: Don Badrak <dbadrak@gesg34.geo.census.gov>)
-   
+
 
 Release LPRng 3.4.10 Thu Apr 23 18:01:37 PDT 1998
   Added Functionality:
@@ -3380,7 +3459,7 @@ Release LPRng 3.4.7 Wed Apr 15 08:40:25 PDT 1998
     Jobs that did not get permission to print and were flagged
     with JREMOVE did not get removed.
      (Reported by: Al Marquardt <almar@uiuc.edu>)
- 
+
     When putting in a new 'From this host' line in a control file,
     did not remove the old one.  Also 'Q' entry as well.
      (Reported by: Al Marquardt <almar@uiuc.edu>)
@@ -3402,7 +3481,7 @@ Release LPRng 3.4.6 Tue Mar 31 18:10:59 PST 1998
     is set AND the job arrives without a Q entry THEN
     the name of the queue it was spooled to is used.
     (Noticed by:Cortney Sampson <sampson@physics.utoronto.ca>)
-  
+
     Missing initialization in src/common/permissions.c
     Discoverer got the 'Gold Star with Flashy Sequins' bug hunting
     award.
@@ -3431,7 +3510,7 @@ Release LPRng 3.4.5 Sun Mar 29 18:37:09 PST 1998
     to find problems.  But if you do not truncate the log file, it
     can grow to enormous lengths.  The max_log_file_size#nnn
     (size in Kbytes, default = 0 or unlimited size)
-    printcap/configuration variable will 
+    printcap/configuration variable will
     cause the LPD server to check for the size of the log file
     on opening it and if larger than max_log_file_size K bytes
     truncate it to min_log_file_size
@@ -3503,7 +3582,7 @@ Release LPRng 3.4.4
   Fixed up LPRng-HOWTO,  created new version.
 
   snprintf() used instead of plp_snprintf()
-    (Reported by: lots and lots of folks, including 
+    (Reported by: lots and lots of folks, including
         "Reinhard Zierke" <zierke@informatik.uni-hamburg.de>)
 
 Release LPRng 3.4.3
@@ -3527,7 +3606,7 @@ Release LPRng 3.4.3
       (malloc) memory that would never get deleted.  If there were jobs
       to be printed,  the main() process would then fork and create a
       server process.
- 
+
       In the current version,  the main() process will create a pipe(),
       and then fork the child process,  which will call the *&I*(&()
       Setup_printer() code,  and then checks for work.  If there is NO
@@ -3567,7 +3646,7 @@ Release LPRng 3.4.3
        redirect a queue, then it must be active for jobs to be redirected.
        C'est la Vie.
        (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
- 
+
      Some logging numbers were not being reported correctly.  They now should be.
        (Reported by:  Gary Cender <gcender@eng.dowjones.com>)
 
@@ -3749,7 +3828,7 @@ Release LPRng 3-3-6
        to reject,  the action will not be performed.
     3. While users can perform a kill or abort operation,  they can
        only do this while their job is active or at the top of the queue.
-    
+
 Release LPRng 3-3-5
   HOWTO and README:
    The HOWTO/LPRng-HOWTO has been extensively editted and extended.
@@ -3836,7 +3915,7 @@ Release LPRng 3-3-5
    "active" but no data is being transferred.
      If you are having problems with network connections and lost data
    at the end of jobs, try using:
-       :socket_linger#120 
+       :socket_linger#120
    in the printcap for the printer.
 
    LPRng executables default to SUID root at installation:
@@ -3923,7 +4002,7 @@ Release LPRng 3-3-5
      lpq, lpc, etc., programs.
      (Noted by: Patrick Powell <papowell@lprng.com>)
 
-   Jobs were being thrown away with Send_try#0 
+   Jobs were being thrown away with Send_try#0
      (Patch by: George Lindholm <lindholm@ucs.ubc.ca>)
 
 Release LPRng 3-3-4
@@ -4036,7 +4115,7 @@ Release LPRng 3-2-9
     Typo in src/common/linksupport.c caused very wierd error messages to be
     printed.
     (Reported by:  lots and lots of people)
-   
+
 
 Release LPRng 3-2-8
   Bug Fixes:
@@ -4231,7 +4310,7 @@ Release LPRng 3-2-4
       rw_pipe() has a minor portability problem clean up.
     LPQ, LPR, LPRM option checks were done incorrectly.
       (Reported by: Scott Nelson <nelson@canopus.llnl.gov>)
-    umask(0177) should really be umask(0077) to allow correct directory 
+    umask(0177) should really be umask(0077) to allow correct directory
       permissions checking.
       (Reported and fixed by: Guy Geens <Guy.Geens@elis.rug.ac.be>)
     lpd - the lpc reread function sends a signal to the LPD server,
@@ -4470,7 +4549,7 @@ Release LPRng 3-1-4
     Find_non_colliding_job_number() did not check to see if job priority
       was available, and was generating bogus hold file names.  This only
       occurs when data files are sent first.
- 
+
 Release LPRng 3-1-3
 
   New Functionality - Kerberos authentication uses encryption
@@ -4481,7 +4560,7 @@ Release LPRng 3-1-3
     Fix_str(): missing null pointer check
       (Reported by: Christian Kuehnke" <Christian.Kuehnke@arbi.Informatik.Uni-Oldenburg.DE>)
 
-    
+
 
 Release LPRng 3-1-2
 
@@ -4563,7 +4642,7 @@ Release LPRng 3-1-1
 
   New Functionality:
 
-    Support for client to server and server to server authentication. 
+    Support for client to server and server to server authentication.
     See README.authentication and lpd(8) man page, as well as
     README.pgp_authentication.  Currently, pgp is supported for
     client to server and server to server authentication; Kerberos
@@ -4585,9 +4664,9 @@ Release LPRng 3-1-1
     Support for lp(1) simulation (Solaris SystemV R4) print facilities
     now built in.  This is done by checking the name that the program
     is invoked with:
-      lpr invoked as lp - simulates lp operation 
-      lpq invoked as lpstat - simulates lpstat operation 
-      lprm invoked as cancel - simulates cancel operation 
+      lpr invoked as lp - simulates lp operation
+      lpq invoked as lpstat - simulates lpstat operation
+      lprm invoked as cancel - simulates cancel operation
     Note that this is not full functionality,  but it will provide
     a usable interface for programs that need lp, lpstat, and clean.
 
@@ -4653,7 +4732,7 @@ Release LPRng 3-1-1
       printed.
       (Reported by: Chao-Wen Young <kiki@eng.dowjones.com>)
     gethostbyname() has a possible problem.  Added checks for
-      parameters. 
+      parameters.
       (Reported by: Jens Thiel <thielj@uran.informatik.uni-bonn.de>)
     printcap '@' operator did not set clear entries.
       (Reported by: Park Jae-hyon <jhpark@entropy.kaist.ac.kr>)
@@ -4691,12 +4770,12 @@ Release LPRng 2-4-3
           is not used as a printer.  However,  it can be referenced by
           :tc=: entries.  For example,  the following shows how to
           use this facility.
-  
+
       @filter:if=/bin/whatever:of=/bin/whatever
       @banner:sh:sb
       @spool:sd=/var/spool/%P
       p1:tc=@filter:tc=@banner:@spool
-  
+
       In addition,  the following printcap entries have %P (printer),
       %h (short host name), and %H (Fully qualfied domain name of
       host) replaced by the current values before jobs are processed;
@@ -4746,7 +4825,7 @@ Release LPRng 2-4-2
       and 'noholdall';  LPQ: autohold and holdall status reporting
       added.
     lockfile.c: Added #if !defined(LOCKDEV) code to not do locking
-      on serial devices. 
+      on serial devices.
       (Reported by: bennett@nomolog.nagoya-u.ac.jp (Bennett))
     Printcap printer names: primary printer names starting with
       punctuation are now treated as simply entries and not valid names.
@@ -4876,7 +4955,7 @@ Release LPRng 2-3-11
     MAJOR ADDITIONAL FUNCTIONALITY:
     Logger: filter error output is now written to the logger as well as
       status information.
-    
+
     lpr -p and LPD: the pr filter support was not updated.  It now invokes the
       traditional 'pr' program correctly.
       (Reported by: K.D. Meyer" <meyer@uni-trier.de)
@@ -4980,7 +5059,7 @@ Release LPRng 2-3-7
 Release LPRng 2-3-6
     LPR/lpd_rcvjob.c - snprint() replaced by plp_snprintf()
     src/common/defaults.c - erroneous LD_LIBRARY_PATH= and PATH= values in
-      configuration variables. 
+      configuration variables.
       (Reported by Jens Thiel <thielj@athene.informatik.uni-bonn.de>)
 
  LPRng 2-3-5
@@ -4988,7 +5067,7 @@ Release LPRng 2-3-6
       lpd crashes with an segmentation fault when it's getting started.
       fixed by: Dirk Wrocklage <dirkw@uni-paderborn.de>
     permissions.c, globmatch.c - updated error reporting, and added
-      check for user's default group when checking GROUP permissions. 
+      check for user's default group when checking GROUP permissions.
       (Stefan Monnier" <stefan.monnier@lia.di.epfl.ch> and
       Ron Roskens <roskens@cs.umn.edu>) Also, changed strcmp to strcasecmp
       to make comparisons case insensitive.
@@ -5262,7 +5341,7 @@ Release LPRng 2-1-3
 
 
 Release LPRng 2-1-2
-    STATVFS typeo corrected in in configure.in, portable.h, freespace.c 
+    STATVFS typeo corrected in in configure.in, portable.h, freespace.c
       (curt@ltpmail.gsfc.nasa.gov (Curt Tilmes))
     Missing VARARGS declaration for setstatus() in lp.h
       (Marc Baudoin <Marc.Baudoin@hsc.fr.net>)
@@ -5466,11 +5545,11 @@ Release LPRng 1-2-1
     i.e. - if you have CONTROL permission you also can remove files.
 
 Release LPRng 1-2-0
-    Documentation - DOC/Intro and DOC/Install 
+    Documentation - DOC/Intro and DOC/Install
     Filters: CTI-ifhp-1.1.1 lp-pipe-1.0.0  lp-support-1.0.0 psfilter-1.0.2
     Fixed a minor bug in LPD/lpd.c - geteuid() missing
 
-   
+
 Release LPRng 1-1-2
 
     Documentation (Introduction, and Installation) added
@@ -5481,7 +5560,7 @@ Release LPRng 1-1-2
       directories needed (autoconf does not fix up $(INSTALL) correctly)
       lookup loop for remote hosts in common/checkremote.c
       Link_listened(void) missing in include/lp.h
-    
+
 Release LPRng 1-1-1
 
     Added lp,lpsched, lp-pipes support
@@ -5511,7 +5590,7 @@ Release LPRng 1Alpha9
     Fixed up a very very very rare problem with file locking by
     redoing some tests.
 
-    Added the checkpc -T serial_line option 
+    Added the checkpc -T serial_line option
     This performs a whole series of portability tests, all of which
     need to pass.
 
@@ -5548,7 +5627,7 @@ Release LPRng 1Alpha8
     Fixed up the configure.in file to use the old dnl, socket, etc. libraries.
 
     man/Makefile and src/Makefile modified to use INCLUDE=.. so that configure
-    can be run from another directory.  This is very very strange autoconf 
+    can be run from another directory.  This is very very strange autoconf
     dependency,  but who cares, as long as it works.
 
     Fixed up a whole minor mess of writes and timeout interactions.  Who would
@@ -5589,7 +5668,7 @@ Mon Jul 24 09:29:15 PDT 1995 Patrick Powell
 
     Fixed Send_job() to make it more robust in the face of protocol
     errors.  The numbers of times a job is retried is set by the
-    Connection_retry value. 
+    Connection_retry value.
 
     Modified the LPC status reporting to make it clearer.
     Removed a redundant error message.

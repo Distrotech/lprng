@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_jobs.c,v 1.34 2001/12/03 22:08:13 papowell Exp $";
+"$Id: lpd_jobs.c,v 1.37 2001/12/22 01:14:07 papowell Exp $";
 
 #include "lp.h"
 #include "accounting.h"
@@ -1098,7 +1098,7 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 
 			/* we have to chdir to the destination directory */
-			i =  Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0 );
+			i =  Check_for_missing_files( &jcopy, 0, errormsg, sizeof(errormsg), 0, -1 );
 			Free_job(&jcopy);
 
 			/* now we switch back to the old context */
@@ -2129,7 +2129,7 @@ void Setup_user_reporting( struct job *job )
 		
 	DEBUG3("setup_logger_fd: host '%s', port '%s', protocol %d",
 		host, port, prot_num );
-	Mail_fd = Link_open_type(host, port, 10, prot_num, 0 );
+	Mail_fd = Link_open_type(host, port, 10, prot_num, 0, 0 );
 	DEBUG3("Setup_user_reporting: Mail_fd '%d'", Mail_fd );
 
 	if( Mail_fd > 0 && prot_num == SOCK_STREAM && Exit_linger_timeout_DYN > 0 ){
@@ -2431,7 +2431,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 					Printer_DYN, lp_device );
 			}
 			DEBUG1( "Printer_open: doing link open '%s'", lp_device );
-			*status_fd = device_fd = Link_open( host, port, connect_tmout, 0 );
+			*status_fd = device_fd = Link_open( host, port, connect_tmout, 0, 0 );
             err = errno;
 			break;
 		}
@@ -2641,8 +2641,9 @@ void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 				if( !filter ) filter = IF_Filter_DYN;
 				break;
 			case 'a': case 'i': case 'o': case 's':
-				SETSTATUS(job)"bad data file format '%c', using 'if' filter", cval(format) );
+				SETSTATUS(job)"bad data file format '%c', using 'f' format", cval(format) );
 				filter_name[0] = 'i';
+				format = "f";
 				if( !filter ) filter = IF_Filter_DYN;
 				break;
 		}

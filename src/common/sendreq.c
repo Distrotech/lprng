@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.34 2001/12/03 22:08:17 papowell Exp $";
+"$Id: sendreq.c,v 1.37 2001/12/22 01:14:11 papowell Exp $";
 
 
 #include "lp.h"
@@ -140,7 +140,7 @@ int Send_request(
 		if( status ) goto error;
 	} else {
 		sock = Link_open_list( RemoteHost_DYN,
-			&real_host, 0, connnect_timeout, 0 );
+			&real_host, 0, connnect_timeout, 0, Unix_socket_DYN );
 	}
 	err = errno;
 	if( sock < 0 ){

@@ -19,8 +19,8 @@
       <table summary="Header navigation table" width="100%" border=
       "0" cellpadding="0" cellspacing="0">
         <tr>
-          <th colspan="3" align="center">LPRng-HOWTO: 9 Dec 2001
-          (For LPRng-3.8.3)</th>
+          <th colspan="3" align="center">LPRng-HOWTO: 21 Dec 2001
+          (For LPRng-3.8.4)</th>
         </tr>
 
         <tr>
@@ -67,7 +67,7 @@
       printing for authenticated users.</p>
 
       <div class="INFORMALEXAMPLE">
-        <a name="AEN1331"></a>
+        <a name="AEN1341"></a>
 <pre class="SCREEN">
     [printers]
         path = /var/spool/lpd/samba
@@ -125,7 +125,7 @@
           class="APPLICATION">cron</b> facility:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN1348"></a>
+            <a name="AEN1358"></a>
 <pre class="SCREEN">
     find /var/spool/lpd/samba -type f -mtime 2d -exec rm -f {} \;
 </pre>
@@ -149,7 +149,7 @@
           can be one of the following:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN1358"></a>
+            <a name="AEN1368"></a>
 <pre class="SCREEN">
     [printers]
       #
@@ -193,7 +193,7 @@
           other LPRng commands as well. For example:</p>
 
           <div class="INFORMALEXAMPLE">
-            <a name="AEN1371"></a>
+            <a name="AEN1381"></a>
 <pre class="SCREEN">
     [printers]
         guest ok = yes

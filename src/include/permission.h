@@ -4,7 +4,7 @@
  * Copyright 1988-2001, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: permission.h,v 1.34 2001/12/03 22:08:23 papowell Exp $
+ * $Id: permission.h,v 1.37 2001/12/22 01:14:17 papowell Exp $
  ***************************************************************************/
 
 
@@ -50,6 +50,7 @@
 #define P_AUTHSAMEUSER	26	/* from same authenticated user name */
 #define P_AUTHJOB		27	/* job has authentication */
 #define P_REMOTEPORT	28	/* alias for PORT */
+#define P_UNIXSOCKET	29	/* connection via unixsocket - localhost + port 0 */
 
 /*
  * First character of protocol to letter mappings
@@ -74,7 +75,7 @@ struct perm_check {
 							/* or HOST if no control file */
 	int	port;				/* port for remote connection */
 	const char *printer;			/* printer name */
-	struct sockaddr *addr;	/* IF address information */
+	struct sockaddr addr;	/* IF address information */
 	int service;			/* first character service */
 	const char *lpc;				/* lpc operation */
 

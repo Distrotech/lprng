@@ -111,7 +111,7 @@ header: Makefile
 
 # define default target
 .PHONY: all warn TAGS clean uninstall install  info dvi check \
-	realclean mostlyclean distclean dist update ci cifiles $(ALLDIRS)
+	tar send realclean mostlyclean distclean dist update ci cifiles $(ALLDIRS) \
 
 MAKETARGET=all
 
@@ -135,6 +135,7 @@ install: all
 	if [ "${POSTINSTALL}" != "NO" -a "${POSTINSTALL}" != "no" ] ; then \
 		MAKEINSTALL=YES DESTDIR=$(DESTDIR) $(SHELL) postinstall ; \
 	fi;
+	@echo "";
 
 info dvi check:
 
@@ -146,7 +147,7 @@ src/lpd.conf:
 	cd src; $(MAKE) MAKETARGET=lpd.conf
 
 realclean mostlyclean distclean: clean
-	rm -f DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/*.tgz ;
+	rm -rf DISTRIBUTIONS/FreeBSD*/work DISTRIBUTIONS/FreeBSD*/*.tgz ;
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(ALLDIRS)
 	rm -f `find . -type f -name '*.old' -print` \
 	 `find . -type f -name '*.bak' -print` \
@@ -259,10 +260,13 @@ tar: distclean
 		cd ..; \
 		tar zXcf /tmp/X.LPRng $${DIR}.tgz $${DIR}; \
 		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
+	@echo ""
 
 configure: configure.in
 	autoconf
 	autoheader
 
-dist: update ci distclean tar
-	if [ -f ../SEND* ] ; then (cd ..; sh SEND*) ; fi
+dist: update ci distclean tar send
+
+send:
+	if [ -f ../SENDTO ] ; then (cd ..; sh SENDTO) ; fi

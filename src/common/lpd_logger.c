@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_logger.c,v 1.34 2001/12/03 22:08:13 papowell Exp $";
+"$Id: lpd_logger.c,v 1.37 2001/12/22 01:14:07 papowell Exp $";
 
 
 #include "lp.h"
@@ -261,7 +261,7 @@ void Logger( struct line_list *args )
 			DEBUGF(DLOG2)("Logger: writefd fd %d, max timeout %d, left %d",
 					writefd, timeout, left );
 			if( left <= 0 || writefd == -2 ){
-				writefd = Link_open(host, port, Connect_timeout_DYN, 0 );
+				writefd = Link_open(host, port, Connect_timeout_DYN, 0, 0 );
 				DEBUGF(DLOG2)("Logger: open fd %d, host '%s', port '%s'",
 						writefd, host, port );
 				if( writefd >= 0 ){

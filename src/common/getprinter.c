@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: getprinter.c,v 1.34 2001/12/03 22:08:10 papowell Exp $";
+"$Id: getprinter.c,v 1.37 2001/12/22 01:14:04 papowell Exp $";
 
 
 #include "lp.h"
@@ -147,28 +147,29 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 				"conflicting printcap entries :lp=%s:rm=%s",
 				Lp_device_DYN, RemoteHost_DYN );
 		}
+		/* if a client and have direct, then we need to use
+		 * the LP values
+		 */
 		if( !Is_server && Direct_DYN
 			&& strchr( "/|", cval(Lp_device_DYN)) ){
 			Set_DYN(&RemotePrinter_DYN, 0 );
 			Set_DYN(&RemoteHost_DYN, 0 );
 			goto done;
 		}
-		if( !Is_server && (Force_localhost_DYN && !Direct_DYN) ){
+		/* are we a client? then we have to use the lp=pr@xx,
+		 * and then the 'rp' value
+		 */
+		if( !Is_server && !Direct_DYN && Force_localhost_DYN ){
 			/* we force a connection to the localhost using
 			 * the print queue primary name
 			 */
-#if 0
-			if( safestrchr( Lp_device_DYN, '@' ) ){
+			if( !ISNULL(Lp_device_DYN) && safestrchr( Lp_device_DYN, '@' ) ){
 				Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
 				s = safestrchr( RemotePrinter_DYN, '@');
 				if( s ) *s++ = 0;
-			} else {
+			} else if( ISNULL( RemotePrinter_DYN ) ){
 				Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 			}
-			Set_DYN( &RemoteHost_DYN, LOCALHOST );
-			Set_DYN( &Lp_device_DYN, 0 );
-#endif
-			Set_DYN( &RemotePrinter_DYN, Printer_DYN );
 			Set_DYN( &RemoteHost_DYN, LOCALHOST );
 			Set_DYN( &Lp_device_DYN, 0 );
 		} else if( safestrchr( Lp_device_DYN, '@' ) ){

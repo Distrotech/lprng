@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: permission.c,v 1.34 2001/12/03 22:08:15 papowell Exp $";
+"$Id: permission.c,v 1.37 2001/12/22 01:14:10 papowell Exp $";
 
 
 #include "lp.h"
@@ -53,6 +53,7 @@
 {"SERVER", 0, P_SERVER},
 {"SERVICE", 0, P_SERVICE},
 {"USER", 0, P_USER},
+{"UNIXSOCKET", 0, P_UNIXSOCKET},
 
 {0}
 };
@@ -360,6 +361,13 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				if( invert ) m = !m;
 				break;
 
+			case P_UNIXSOCKET:
+				m = 1;
+				/* check succeeds if remotehost is localhost and port == 0 */
+				m = (Same_host(check->remotehost,&Localhost_IP) || check->port != 0);
+				if( invert ) m = !m;
+				break;
+
 			case P_DEFAULT:
 				
 				DEBUGF(DDB3)("Perms_check: DEFAULT - %d, values.count %d",
@@ -660,8 +668,7 @@ void Dump_perm_check( char *title,  struct perm_check *check )
 		Dump_host_information( "  host", check->host );
 		Dump_host_information( "  remotehost", check->remotehost );
 		LOGDEBUG( "  ip '%s' port %d",
-			check->addr?
-				inet_ntop_sockaddr( check->addr, buffer, sizeof(buffer)):"<NONE>",
+			inet_ntop_sockaddr( &check->addr, buffer, sizeof(buffer)),
 			check->port);
 		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s'",
 			check->authtype, check->authfrom, check->authuser );
@@ -688,10 +695,8 @@ void Perm_check_to_list( struct line_list *list, struct perm_check *check )
 	if( check->remotehost ){
 		Set_str_value( list, HOST, check->remotehost->fqdn );
 	}
-	if( check->addr ){
-		Set_str_value( list, ADDR, inet_ntop_sockaddr( check->addr, buffer, sizeof(buffer)));
-		Set_decimal_value( list, PORT, check->port );
-	}
+	Set_str_value( list, ADDR, inet_ntop_sockaddr( &check->addr, buffer, sizeof(buffer)));
+	Set_decimal_value( list, PORT, check->port );
 	Set_str_value( list, AUTHTYPE, check->authtype );
 	Set_str_value( list, AUTHFROM, check->authfrom );
 	Set_str_value( list, AUTHUSER, check->authuser );

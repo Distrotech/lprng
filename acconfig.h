@@ -415,6 +415,12 @@
    instead of <sys/cpustats.h>.  */
 #undef UMAX4_3
 
+/* Define if you want a UNIX socket used */
+#undef UNIXSOCKET
+
+/* Location of the UNIX socket */
+#undef UNIXSOCKETPATH
+
 /* Define if we want gdbm */
 #undef USE_GDBM
 #undef USE_GDBM_LIB

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_dispatch.c,v 1.4 2001/12/03 22:08:13 papowell Exp $";
+"$Id: lpd_dispatch.c,v 1.7 2001/12/22 01:14:07 papowell Exp $";
 
 
 #include "lp.h"
@@ -154,6 +154,7 @@ void Service_connection( struct line_list *args )
 	int port = 0;
 	struct sockaddr sinaddr;
 
+	memset( &sinaddr, 0, sizeof(sinaddr) );
 	Name = "SERVER";
 	setproctitle( "lpd %s", Name );
 	(void) plp_signal (SIGHUP, cleanup );
@@ -175,12 +176,26 @@ void Service_connection( struct line_list *args )
 		LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
 	}
 
+	DEBUG1("Service_connection: family %d, AF_LOCAL %d, AF_UNIX %d",
+		sinaddr.sa_family, AF_LOCAL, AF_UNIX );
 	if( sinaddr.sa_family == AF_INET ){
 		port = ((struct sockaddr_in *)&sinaddr)->sin_port;
 #if defined(IPV6)
 	} else if( sinaddr.sa_family == AF_INET6 ){
 		port = ((struct sockaddr_in6 * )&sinaddr)->sin6_port;
 #endif
+	} else if( sinaddr.sa_family == 0
+#if defined(AF_LOCAL)
+	 	|| sinaddr.sa_family == AF_LOCAL
+#endif
+#if defined(AF_UNIX)
+	 	|| sinaddr.sa_family == AF_UNIX
+#endif
+		){
+		/* force the localhost address */
+		memset( &sinaddr, 0, sizeof(sinaddr) );
+	 	sinaddr.sa_family = AF_INET;
+		inet_pton( sinaddr.sa_family, "127.0.0.1", &((struct sockaddr_in *)(&sinaddr))->sin_addr );
 	} else {
 		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
 	}
@@ -189,7 +204,7 @@ void Service_connection( struct line_list *args )
 		inet_ntop_sockaddr( &sinaddr, buffer, sizeof(buffer) ), ntohs( port ) );
 
 	/* get the remote name and set up the various checks */
-	Perm_check.addr = &sinaddr;
+	Perm_check.addr = sinaddr;
 
 	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr, 0 );
 	Perm_check.remotehost  =  &RemoteHost_IP;

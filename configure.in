@@ -8,7 +8,7 @@ AC_INIT(Makefile.in)
 
 
 PACKAGE=LPRng
-VERSION=3.8.3
+VERSION=3.8.4
 
 
 AC_CONFIG_AUX_DIR(.)
@@ -57,6 +57,30 @@ AC_SUBST(CHGRP)dnl
 dnl ----------------------------------------------------------------------------
 dnl ----------- XXXXXX START OF OPTIONS ----------------------------------------
 
+dnl check to see if we use a unix socket as well as TCP/IP port 515
+AC_MSG_CHECKING(if UNIX socket for localhost connections)
+AC_ARG_ENABLE( unixsocket,
+[  --enable-unixsocket               add unix socket for localhost connections],
+[v=yes;UNIXSOCKET=1;],
+[v=no;UNIXSOCKET=0;],
+],
+[v=no;],
+)
+AC_MSG_RESULT($v)
+AC_SUBST(UNIXSOCKET)
+
+
+dnl Unix socket pathname
+AC_MSG_CHECKING(unix socket pathname)
+AC_ARG_WITH(unixsocketpath,
+[  --with-unixsocketpath=DIR         unix socket path (default /var/run/lprng)],
+UNIXSOCKETPATH=$withval,
+UNIXSOCKETPATH=/var/run/lprng
+)
+AC_MSG_RESULT($UNIXSOCKETPATH)
+AC_SUBST(UNIXSOCKETPATH)
+
+
 dnl check to see if setuid is suppressed
 AC_MSG_CHECKING(if installing clients setuid)
 AC_ARG_ENABLE( setuid,
@@ -67,7 +91,7 @@ PERMS=SUID_ROOT_PERMS
 AC_MSG_RESULT($PERMS)
 AC_SUBST(PERMS)
 
-dnl check to see if setuid is suppressed
+dnl check to see if priv ports required
 AC_MSG_CHECKING(require connections from priviledged ports)
 AC_ARG_ENABLE( priv_ports,
 [  --enable-priv_ports               require connections from privileged ports],

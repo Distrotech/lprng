@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 1.34 2001/12/03 22:08:15 papowell Exp $";
+"$Id: lpstat.c,v 1.37 2001/12/22 01:14:09 papowell Exp $";
 
 
 /***************************************************************************
@@ -137,20 +137,9 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if( All_printers ){
-		Merge_line_list( &request_list, &All_line_list,0,1,1);
+		Merge_line_list( &request_list, &All_line_list,0,0,0);
 	}
-	for( i = 0; i < Printer_list.count; ++i ){
-		s = Printer_list.list[i];
-		if( Find_key_in_list( &All_line_list, s, Value_sep, 0 ) == 0 ){
-			if( !All_printers ){
-				DEBUG1("lpstat: printer in option list '%s'", s);
-				Add_line_list( &request_list, s, 0, 1, 1 );
-			}
-		} else {
-			DEBUG1("lpstat: option in option list '%s'", s);
-			Add_line_list( &options, s, 0, 1, 1 );
-		}
-	}
+	Merge_line_list( &request_list, &Printer_list,0,0,0);
 	Check_max(&options,2);
 	if( options.count ){
 		for( i = options.count; i > 0 ; --i ){
@@ -168,7 +157,7 @@ int main(int argc, char *argv[], char *envp[])
 		o_flag = 1;
 		flag_count = 1;
 	}
-	if(DEBUGL1)Dump_line_list("lpstat - printers", &request_list);
+	if(DEBUGL1)Dump_line_list("lpstat - printer request list", &request_list);
 	if(DEBUGL1)Dump_line_list("lpstat - options", &options);
 
 	if( r_flag ){
@@ -227,9 +216,7 @@ void Show_status(char **argv, int display_format)
 
 	DEBUG1("Show_status: start");
 	/* set up configuration */
-	Get_printer();
 	Fix_Rm_Rp_info(0,0);
-
 
 	if( Check_for_rg_group( Logname_DYN ) ){
 		SNPRINTF( msg, sizeof(msg))
@@ -336,59 +323,69 @@ int Read_status_info( char *host, int sock,
 				|| Find_exists_value(&Printer_list,t,0) ){
 				++index_list;
 			} else {
+				DEBUG2("Read_status_info: printer found [%d] '%s', total %d", index_list, s, l.count );
 				look_for_pr = 0;
 			}
 		}
 		while( index_list < l.count && (s = l.list[index_list]) ){
 			DEBUG2("Read_status_info: checking [%d] '%s', total %d", index_list, s, l.count );
 			if( s && !isspace(cval(s)) && (t = strstr(s,"Printer:")) ){
+				DEBUG2("Read_status_info: printer heading '%s'", t );
 				if( Find_exists_value(&Printer_list,t,0) ){
+					DEBUG2("Read_status_info: already done '%s'", t );
+					++index_list;
 					look_for_pr = 1;
 					goto again;
-				} else {
-					Add_line_list(&Printer_list,t,0,1,0);
-					/* parse the printer line */
-					if( display_format == 0 ){
-						char msg[SMALLBUFFER];
-						int nospool, noprint; 
-						nospool = (strstr( s, "(spooling disabled)") != 0);
-						noprint = (strstr( s, "(printing disabled)") != 0);
-						/* Write_fd_str( output, "ANALYZE " );
-						if( Write_fd_str( output, s ) < 0
-							|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-						*/
-						if( a_flag ){
-							if( !nospool ){
-								SNPRINTF(msg,sizeof(msg))
-								"%s accepting requests since %s\n",
-								Printer_DYN, Time_str(0,0) );
-							} else {
-								SNPRINTF(msg,sizeof(msg))
-								"%s not accepting requests since %s -\n\tunknown reason\n",
-								Printer_DYN, Pretty_time(0) );
-							}
-							if( Write_fd_str( output, msg ) < 0 ) return(1);
-						}
-						if( p_flag ){
-							SNPRINTF(msg,sizeof(msg))
-							"printer %s unknown state. %s since %s. available\n",
-							Printer_DYN, noprint?"disabled":"enabled",
-							Pretty_time(0));
-							if( Write_fd_str( output, msg ) < 0 ) return(1);
-						}
-						if( p_flag && D_flag ){
-							SNPRINTF(msg,sizeof(msg))
-								"\tDescription: %s@%s\n",
-										RemotePrinter_DYN, RemoteHost_DYN ); 
-							if( Write_fd_str( output, msg ) < 0 ) return(1);
-						}
-					} else {
-						if( Write_fd_str( output, s ) < 0
-							|| Write_fd_str( output, "\n" ) < 0 ) return(1);
-					}
-					++index_list;
-					continue;
 				}
+				Add_line_list(&Printer_list,t,0,1,0);
+				/* parse the printer line */
+				if( (t = strchr(t, ':')) ){
+					++t;
+					while( isspace(cval(t)) ) ++t;
+					Set_DYN(&Printer_DYN,t );
+					for( t = Printer_DYN; t && !isspace(cval(t)); ++t );
+					if( isspace(cval(t)) ) *t = 0;
+				}
+				if( display_format == 0 ){
+					char msg[SMALLBUFFER];
+					int nospool, noprint; 
+					nospool = (strstr( s, "(spooling disabled)") != 0);
+					noprint = (strstr( s, "(printing disabled)") != 0);
+					/* Write_fd_str( output, "ANALYZE " );
+					if( Write_fd_str( output, s ) < 0
+						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
+					*/
+					if( a_flag ){
+						if( !nospool ){
+							SNPRINTF(msg,sizeof(msg))
+							"%s accepting requests since %s\n",
+							Printer_DYN, Time_str(0,0) );
+						} else {
+							SNPRINTF(msg,sizeof(msg))
+							"%s not accepting requests since %s -\n\tunknown reason\n",
+							Printer_DYN, Time_str(0,0) );
+						}
+						if( Write_fd_str( output, msg ) < 0 ) return(1);
+					}
+					if( p_flag ){
+						SNPRINTF(msg,sizeof(msg))
+						"printer %s unknown state. %s since %s. available\n",
+						Printer_DYN, noprint?"disabled":"enabled",
+						Pretty_time(0));
+						if( Write_fd_str( output, msg ) < 0 ) return(1);
+					}
+					if( p_flag && D_flag ){
+						SNPRINTF(msg,sizeof(msg))
+							"\tDescription: %s@%s\n",
+									RemotePrinter_DYN, RemoteHost_DYN ); 
+						if( Write_fd_str( output, msg ) < 0 ) return(1);
+					}
+				} else {
+					if( Write_fd_str( output, s ) < 0
+						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
+				}
+				++index_list;
+				continue;
 			}
 			if( display_format == 0 ){
 				++index_list;
