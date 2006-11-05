@@ -1,26 +1,45 @@
 #!/bin/sh
-M4PATH=/usr/local/share/aclocal
-export M4PATH
 set -e
+for n in install-sh mkinstalldirs; do
+	if [ -e "$n" ] ; then
+		:
+	elif [ -e "$COPYFROM/$n" ] ; then
+		install "$COPYFROM/$n" .
+	elif [ -e "/usr/share/automake/$n" ] ; then
+		install "/usr/share/automake/$n" .
+	elif [ -e "/usr/local/share/automake/$n" ] ; then
+		install "/usr/local/share/automake/$n" .
+	else
+		echo "Could not find $n, please place a copy or symlink into this dir!"
+		exit 1
+	fi
+done
 rm -f aclocal.m4 libtool config.cache config.status
+echo "Running aclocal..."
 aclocal
 grep 'libtool.m4 - Configure' aclocal.m4 || {
 cat /usr/local/share/aclocal/libtool14.m4 >>aclocal.m4
 }
+echo "Running autoconf..."
 autoconf
-#autoreconf --force --install
-gettextize --force --copy </dev/null
+echo "Running libtoolize..."
+echo "" >/dev/tty; libtoolize --force --copy
+echo "Running gettextize..."
+echo "(This will most likely demand some things that can be ignored)"
+echo "" > /dev/tty ; gettextize --force --copy --no-changelog < /dev/null
 rm -f po/Makevars
 mv po/Makevars.template po/Makevars
-echo "" >/dev/tty; libtoolize14 --force --copy
 grep 'SED=' ltmain.sh || {
  (	head -1 ltmain.sh ; echo "SED=sed"; cat ltmain.sh ) >ltmain
 	rm -f ltmain.sh
 	mv ltmain ltmain.sh
 }
 
+perl -spi.bak -e 's/AC_OUTPUT\( po\/Makefile.in/AC_OUTPUT(/;' configure.in
 perl -spi.bak -e '
 	if(/--disable-nls.*Native/){s/--disable/--enable/; s/do not //;}
 	s/, USE_NLS=yes/, USE_NLS=no/; ' aclocal.m4
+echo "Running autoconf..."
 autoconf
+echo "Running autoheader..."
 autoheader
