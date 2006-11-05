@@ -1,3 +1,0 @@
-#!/usr/bin/perl -sp
-s/<!-- EPS.S//;
-s/EPS.E -->//;
