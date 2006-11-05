@@ -63,6 +63,8 @@ INSTALLCMD=@INSTALL@
 #
 SHELL_PATH=@SHELL@
 SHELL = @SHELL@
+MKINSTALLDIRS = @MKINSTALLDIRS@
+mkinstalldirs = $(SHELL) $(MKINSTALLDIRS)
 
 #**********************  Helpful definitions *******************************
 SRC=@srcdir@
@@ -114,7 +116,7 @@ warn:
 	fi;
 
 files:
-	${SRC}/mkinstalldirs ${TMP}LPD
+	${mkinstalldirs} ${TMP}LPD
 	cp -r ${SRC}/LPD/* ${TMP}LPD
 	touch ${TMP}t1_lp ${TMP}t5_lp ${TMP}t6_lp
 

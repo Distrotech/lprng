@@ -72,6 +72,9 @@ sysconfdir=@sysconfdir@
 # libraries
 libdir=@libdir@
 
+MKINSTALLDIRS = @MKINSTALLDIRS@
+mkinstalldirs = $(SHELL) $(MKINSTALLDIRS)
+
 # install options
 
 STRIP=@STRIP_OPTION@
@@ -344,7 +347,7 @@ install: all
 	for i in ${DESTDIR}${bindir} ${DESTDIR}${sbindir} \
 		$(DESTDIR)$(libdir) ${DESTDIR}${sysconfdir} \
 		${DESTDIR}${LPD_DIR} ${DESTDIR}${FILTER_DIR}; do \
-	  if [ ! -d $$i ] ; then ${SRC}/mkinstalldirs $$i ; fi; \
+	  if [ ! -d $$i ] ; then ${mkinstalldirs} $$i ; fi; \
 	done;
 
 	${LIBTOOL} --mode=install $(INSTALLCMD) liblpr.la $(DESTDIR)$(libdir)/liblpr.la
