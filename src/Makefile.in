@@ -1,0 +1,688 @@
+##########################################################################
+# LPRng - An Extended Print Spooler System
+#
+# Copyright 1988-2001 Patrick Powell, San Diego, California
+#     papowell@lprng.com
+# See LICENSE for conditions of use.
+#
+###########################################################################
+# MODULE: Makefile
+# Makefile.in,v 1.1 2001/08/21 20:33:17 root Exp
+###########################################################################
+#
+
+#************** GENERAL CONFIGURATION INFORMATION ************************
+# where user commands are installed: lpr, lpq, lprm, lpc.
+# Also the SysV emulation commands: lp, lpstat.
+# If these paths are /usr/lib, /usr/ucb etc., make sure you
+# have backup copies of the system version!
+#
+#
+# These are automatically sedded in by the "configure" script, but you
+# may need to change them if you're on a strange version of UNIX.
+
+
+PACKAGE=@PACKAGE@
+VERSION=@VERSION@
+
+# where the source directory is
+SRC=@srcdir@
+top_srcdir=@top_srcdir@
+top_builddir=..
+# which make we are using
+@SET_MAKE@
+
+# what C compiler to use.
+CC:=@CC@
+
+# what command to use to "ranlib" or "lorder" the library.
+RANLIB=@RANLIB@
+
+# what C preprocessor to use.
+CPP:=@CPP@
+
+# how to install stuff.
+INSTALLCMD=@INSTALL@
+# a shell interpreter that's as close to the POSIX shell as possible.
+SHELL_PATH=@SHELL@
+SHELL = @SHELL@
+
+# loader for c programs
+LDCC=@LDCC@
+
+# any libs that need to be used to get these programs to compile:
+LIBS= @LIBS@ @LTLIBINTL@
+
+# what libtool
+LIBTOOL=@LIBTOOL@
+
+### PATHS ####
+# prefix
+prefix=@prefix@
+# exec prefix
+exec_prefix=@exec_prefix@
+# for binaries
+bindir=@bindir@
+# for admin type of binaries
+sbindir=@sbindir@
+# for the filters
+libexecdir=@libexecdir@
+# for the configuration stuff
+sysconfdir=@sysconfdir@
+# libraries
+libdir=@libdir@
+
+# install options
+
+STRIP=@STRIP_OPTION@
+
+CFLAGS:= \
+	-I${top_builddir} -I. \
+	-I${SRC}/include -I${SRC}/common \
+	@CPPFLAGS@ @CFLAGS@ @DEFS@
+
+USER_OBJS := @USER_OBJS@
+LDFLAGS   := @LDFLAGS@
+
+FILTER_DIR = @FILTER_DIR@
+LPD_DIR    = @LPD_DIR@
+
+
+#********************** End of configure modifiable settings ************
+
+
+#********************** OPTIONAL DEFINITIONS ****************************
+# These are various flags and settings that will be used by the
+# compiler to generate code
+#
+
+#### ****** TESTING AND SECURITY LOOPHOLE ******************************
+# Define G ETENV to allow the LPD_CONF environment
+#  variable to be used as the name of a configuration file.  In non-testing
+#  systems,  this is a security loophole.
+#CFLAGS:= $(CFLAGS) -DGETENV=\"1\"
+
+# Set location of configuration, permissions, and printcap file
+#
+#GNU
+
+# CFLAGS:= $(CFLAGS) -DFORMAT_TEST -Wformat
+
+
+##### DMalloc Debugging Package
+#
+#CFLAGS:= $(CFLAGS) -DDMALLOC
+#LIBS:= $(LIBS) -ldmalloc
+
+
+
+#********************* OVERRIDING CONFIGURES' GUESSES ******************
+#
+#
+# If you get errors similar to the ones below, it may be
+# because "configure" guessed wrong. You can override the
+# guesses here, by uncommenting the appropriate line...
+
+# "recvfiles.c: unknown struct fsb has no size":
+# define STATFS: to use statfs(2) (BSD)
+#        STATVFS: to use statvfs(2) (SVR4)
+#     others for system specific cases
+#
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=ULTRIX_STATFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=SVR3_STATFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=STATVFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=STATFS
+
+# define MAKE_USE_STTY = 
+#    SGTTYB   to use struct sgttyb and <sgtty.h> (BSD)
+#    TERMIO  to use struct termio and <termio.h> (old sysV)
+#    TERMIOS to use struct termios and <termio.h> (SVR4)
+#
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=SGTTYB
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=TERMIO
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=TERMIOS
+
+# a better way to do this is to edit the "ARGH" section of portable.h,
+# and add the appropriate lines to the section for your OS, or add a new
+# section if one doesn't exist; then you can send me the patches and
+# I'll incorporate them into the distribution.
+
+#
+# You might discover that the default locking mechanism
+# does not work.  Try one of the following to override the
+# configured value: fcntl(), lockf(), flock(), and 0 to suppress locking
+#
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_fcntl
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_lockf
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_flock
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=0
+#
+
+# SETPROCTITLE - overwrites the program argument information
+#   when ps is used, displays status.  Used only by LPD
+# if this does not work, define the following
+# CFLAGS:= $(CFLAGS) -DNO_SETPROCTITLE
+
+
+SRCDIRS=${SRC}/common ${SRC}/AUTHENTICATE
+INCLUDE=.. ${SRC}/include
+
+VPATH=..:.:${SRC}/include:${SRC}/common:${SRC}
+
+########################################################################
+
+.SUFFIXES: .lo .sh
+LINK =  $(LIBTOOL) --mode=link $(LDCC) $(LDFLAGS) -o $@
+.c.lo:
+	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c $<
+
+#**********************  End of Configurable Part ****************************
+
+TARGET= \
+	lprng_certs lprng_index_certs \
+	lpc lpd lpq lpr lprm lpf checkpc lp lpstat \
+	lpbanner monitor ./lpd.conf
+
+NONTARGET = sserver sclient
+
+LPD_OBJS= lpd.o
+LPR_OBJS= lpr.o
+LPQ_OBJS= lpq.o
+LPSTAT_OBJS= lpstat.o
+LPRM_OBJS= lprm.o
+LPC_OBJS= lpc.o
+CHECKPC_OBJS = checkpc.o
+LPF_OBJS = lpf.o plp_snprintf.o
+MONITOR_OBJS= monitor.o getopt.o
+LPBANNER_OBJS= lpbanner.o plp_snprintf.o
+
+LIBLPR_OBJS = \
+	accounting.lo child.lo controlword.lo copyright.lo \
+	debug.lo errormsg.lo fileopen.lo gethostinfo.lo \
+	getopt.lo getprinter.lo getqueue.lo globmatch.lo \
+	initialize.lo krb5_auth.lo \
+	linelist.lo linksupport.lo lockfile.lo \
+	lpd_control.lo lpd_dispatch.lo lpd_jobs.lo lpd_logger.lo lpd_rcvjob.lo \
+	lpd_remove.lo sendauth.lo lpd_secure.lo lpd_status.lo \
+	merge.lo permission.lo plp_snprintf.lo printjob.lo \
+	proctitle.lo  sendjob.lo sendmail.lo sendreq.lo ssl_auth.lo \
+	stty.lo user_auth.lo utilities.lo vars.lo md5.lo $(USER_OBJS)
+
+ALL_OBJS = $(LIBLPR_OBJS) \
+	$(LPR_OBJS) $(LPQ_OBJS) $(LPC_OBJS) $(LPRM_OBJS) $(LPD_OBJS) \
+	$(CHECKPC_OBJS) $(LPF_OBJS) $(LPRACCNT_OBJS) $(MONITOR_OBJS) $(LPBANNER_OBJS)
+
+all: $(TARGET)
+
+relink:
+	rm -f ${TARGET}
+
+defs.h: Makefile
+	cp /dev/null $@
+	echo "#define " CHOWN \"@CHOWN@\" >>$@
+	echo "#define " CHGRP \"@CHGRP@\" >>$@
+	echo "#define " PRINTCAP_PATH \"@PRINTCAP_PATH@\" >>$@
+	echo "#define " LPD_PRINTCAP_PATH \"@LPD_PRINTCAP_PATH@\" >>$@
+	echo "#define " LPD_PERMS_PATH \"@LPD_PERMS_PATH@\" >>$@
+	echo "#define " LPD_CONF_PATH \"@LPD_CONF_PATH@\" >>$@
+	echo "#define " REQUIRE_CONFIGFILES \"@REQUIRE_CONFIGFILES@\" >>$@
+	echo "#define " FILTER_PATH \"@FILTER_PATH@\" >>$@
+	echo "#define " LD_LIBRARY_PATH \"@LD_LIBRARY_PATH@\" >>$@
+	echo "#define " LOCKFILE \"@LOCKFILE@\" >>$@
+	echo "#define " CLEAR \"@CLEAR@\" >>$@
+	echo "#define " USERID \"@USERID@\" >>$@
+	echo "#define " GROUPID \"@GROUPID@\" >>$@
+	echo "#define " LOCALEDIR \"@LOCALEDIR@\" >>$@
+	echo "#define " DONE_JOBS \"@DONE_JOBS@\" >>$@
+	echo "#define " DONE_JOBS_MAX_AGE \"@DONE_JOBS_MAX_AGE@\" >>$@
+	echo "#define " UNIXSOCKETPATH \"@UNIXSOCKETPATH@\" >>$@
+	echo "#define " PRUTIL \"@PRUTIL@\" >>$@
+	echo "#define " OPENSSL \"@OPENSSL@\" >>$@
+	echo "#define " SSL_CA_FILE \"@SSL_CA_FILE@\" >>$@
+	echo "#define " SSL_CA_KEY \"@SSL_CA_KEY@\" >>$@
+	echo "#define " SSL_CRL_FILE \"@SSL_CRL_FILE@\" >>$@
+	echo "#define " SSL_CERTS_DIR \"@SSL_CERTS_DIR@\" >>$@
+	echo "#define " SSL_SERVER_CERT \"@SSL_SERVER_CERT@\" >>$@
+	echo "#define " SSL_SERVER_PASSWORD_FILE \"@SSL_SERVER_PASSWORD_FILE@\" >>$@
+	echo "#define " SD_DEFAULT \"@SD_DEFAULT@\" >>$@
+
+.PHONY: all ci clean \
+	uninstall realclean mostlyclean distclean \
+	TAGS info generate
+
+# we want to force defaults to be updated whenever we
+# change the options in Makefile or Makefile.bsd
+#GNU
+vars.o vars.lo: Makefile
+#
+#BSD vars.o: Makefile.bsd
+
+#
+# use RANLIB with no ordering, or lorder/tsort if it is there
+# if you do not have either, fall back and just build archive
+# This appears to cover all cases for portability
+#
+
+
+liblpr.la: $(LIBLPR_OBJS)
+	$(LINK) $(LIBLPR_OBJS) -rpath ${libdir}
+
+lpd: $(LPD_OBJS) liblpr.la
+	$(LINK) ${LPD_OBJS} liblpr.la $(LIBS)
+lpr: $(LPR_OBJS) liblpr.la
+	$(LINK) ${LPR_OBJS} liblpr.la $(LIBS)
+lpq: $(LPQ_OBJS) liblpr.la
+	$(LINK) ${LPQ_OBJS} liblpr.la $(LIBS)
+lpstat: $(LPSTAT_OBJS) liblpr.la
+	$(LINK) ${LPSTAT_OBJS} liblpr.la $(LIBS)
+lprm: $(LPRM_OBJS) liblpr.la
+	$(LINK) ${LPRM_OBJS} liblpr.la $(LIBS)
+lpc: $(LPC_OBJS) liblpr.la
+	$(LINK) ${LPC_OBJS} liblpr.la $(LIBS)
+checkpc: $(CHECKPC_OBJS) liblpr.la
+	$(LINK) ${CHECKPC_OBJS} liblpr.la $(LIBS)
+lpf: $(LPF_OBJS) liblpr.la
+	$(LINK) ${LPF_OBJS} $(LIBS)
+lpbanner: $(LPBANNER_OBJS) liblpr.la
+	$(LINK) ${LPBANNER_OBJS} $(LIBS)
+monitor: $(MONITOR_OBJS) liblpr.la
+	$(LINK) ${MONITOR_OBJS} liblpr.la $(LIBS)
+
+authenticate_pgp: ${SRC}/AUTHENTICATE/authenticate_pgp.sh
+	rm -f $@; cp ${SRC}/AUTHENTICATE/authenticate_pgp.sh $@; chmod 555 $@
+
+sserver: sserver.o liblpr.la
+	$(LINK) sserver liblpr.la $(LIBS)
+sclient: sclient.o liblpr.la
+	$(LINK) sclient liblpr.la $(LIBS)
+
+cancel:
+	rm -f $@; ln -s lprm $@ 
+lp: lpr
+	rm -f $@; ln -s lpr $@
+
+###########################################################################
+# lpd.conf
+
+./lpd.conf: Makefile vars.c
+	set -e; \
+	rm -f $@ ; \
+	echo "# lpd.conf" >/tmp/$@.$$$$ ; \
+	echo "# VERSION=$(VERSION)" >>/tmp/$@.$$$$ ; \
+	$(CPP) $(CFLAGS) -C ${SRC}/common/vars.c \
+	 | /bin/sh ../UTILS/make_lpd_conf >>/tmp/$@.$$$$ ; \
+	chmod 644 /tmp/$@.$$$$ ; \
+	cp /tmp/$@.$$$$ $@ ; rm /tmp/$@.$$$$
+
+.sh:
+	set -e ; \
+	rm -f $@ ; \
+	sed \
+	-e "s,@OPENSSL.,@OPENSSL@," \
+	-e "s,@SSL_CA_FILE.,@SSL_CA_FILE@," \
+	-e "s,@SSL_CA_KEY.,@SSL_CA_KEY@," \
+	-e "s,@SSL_CRL_FILE.,@SSL_CRL_FILE@," \
+	-e "s,@SSL_SERVER_CERT.,@SSL_SERVER_CERT@," \
+	-e "s,@SSL_SERVER_PASSWORD_FILE.,@SSL_SERVER_PASSWORD_FILE@," \
+	-e "s,@SSL_CERTS_DIR.,@SSL_CERTS_DIR@," \
+	$< >$@
+	chmod 755 $@
+
+lprng_certs: Makefile lprng_certs.sh
+lprng_index_certs: Makefile lprng_index_certs.sh
+
+###########################################################################
+#
+
+NORM_PERMS=0755
+SUID_ROOT_PERMS=04755 -o root
+
+###########################################################################
+
+install: all
+	echo "Clients are being installed @PERMS@";
+	for i in ${DESTDIR}${bindir} ${DESTDIR}${sbindir} \
+		$(DESTDIR)$(libdir) ${DESTDIR}${sysconfdir} \
+		${DESTDIR}${LPD_DIR} ${DESTDIR}${FILTER_DIR}; do \
+	  if [ ! -d $$i ] ; then ${SRC}/mkinstalldirs $$i ; fi; \
+	done;
+
+	${LIBTOOL} --mode=install $(INSTALLCMD) liblpr.la $(DESTDIR)$(libdir)/liblpr.la
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpq ${DESTDIR}${bindir}/lpq
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lprm ${DESTDIR}${bindir}/lprm
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpr ${DESTDIR}${bindir}/lpr
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpstat ${DESTDIR}${bindir}/lpstat
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(@PERMS@) lpc ${DESTDIR}${sbindir}/lpc
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpd ${DESTDIR}${LPD_DIR}/lpd
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpf ${DESTDIR}${FILTER_DIR}/lpf
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) lpbanner ${DESTDIR}${FILTER_DIR}/lpbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) pclbanner ${DESTDIR}${FILTER_DIR}/pclbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD}    -m $(NORM_PERMS) psbanner ${DESTDIR}${FILTER_DIR}/psbanner
+	${LIBTOOL} --mode=install ${INSTALLCMD} ${STRIP} -m $(NORM_PERMS) checkpc ${DESTDIR}${sbindir}/checkpc
+	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_certs ${DESTDIR}${sbindir}/lprng_certs
+	${LIBTOOL} --mode=install ${INSTALLCMD}     -m $(NORM_PERMS) lprng_index_certs ${DESTDIR}${sbindir}/lprng_index_certs
+	cd ${DESTDIR}${bindir}; rm -f lp; ln -s  lpr  lp; echo " SYMLINK `pwd`/lp"
+	cd ${DESTDIR}${bindir}; rm -f cancel; ln -s lprm  cancel; echo " SYMLINK `pwd`/cancel"
+
+uninstall:
+
+###########################################################################
+
+
+clean::
+	-rm -rf *.o *.tmp *core *.a ? ?.bak ?.orig $(TARGET) $(NONTARGET) st[0-9]* \
+	tags ./lpd.conf */*.old */*.bak */*.orig .libs *.lo *.la log defs.h
+
+realclean mostlyclean distclean:: clean
+	-rm -f Makefile Makefile.bsd pclbanner psbanner
+
+info:
+tags TAGS:
+	ctags -t -d `ls common/*.c include/*.h | sed -e '/checkpc.c/d' `
+
+###########################################################################
+
+CI=
+#CO=-kv
+CO=-l
+
+cifiles:
+	if [ ! -d RCS ] ; then mkdir RCS ; fi ;
+	checkin() { \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
+	}; \
+	for i in *; do \
+		if [ -f "$$i" ] ; then \
+			case $$i in \
+				Makefile*|*install* ) echo $$i; checkin $$i ;; \
+				*.in ) echo $$i; checkin $$i ;; \
+			esac; \
+		fi; \
+	done;
+
+cifast ci: cifiles
+	checkin() { \
+		(set +e; rcs -l $$1; exit 0); \
+		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
+	}; \
+	for i in *; do \
+		if [ -d "$$i" ] ; then \
+			case $$i in \
+			RCS ) ;; \
+			* ) if [ ! -d $$i/RCS ] ; then mkdir $$i/RCS ; fi ; \
+				for j in $$i/*; do \
+					if [ -f "$$j" ] ; then \
+						checkin $$j; \
+					fi; \
+				done; \
+				;; \
+			esac; \
+		fi; \
+	done;
+
+depend:
+	${CC} ${CFLAGS} -MM >${SRC}/deps.d ${SRC}/common/*.c
+	perl -spi.bak -e 's/^(.*)\.o:/$$1.lo $$1.o:/' ${SRC}/deps.d
+	chmod +w Makefile Makefile.in
+	perl -spi.bak -e '$$_ = "" if( /^\#DEPENDENCIES/../^EOF/ )' Makefile
+	perl -spi.bak -e '$$_ = "" if( /^\#DEPENDENCIES/../^EOF/ )' Makefile.in
+	chmod +w Makefile Makefile.in
+	(echo "#DEPENDENCIES ######"; cat ${SRC}/deps.d) >>Makefile
+	(echo "#DEPENDENCIES ######"; cat ${SRC}/deps.d) >>Makefile.in
+
+#DEPENDENCIES ######
+accounting.lo accounting.o: common/accounting.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/accounting.h \
+  include/getqueue.h include/errorcodes.h include/child.h \
+  include/linksupport.h include/fileopen.h
+checkpc.lo checkpc.o: common/checkpc.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h defs.h include/getopt.h \
+  include/checkpc.h include/patchlevel.h include/getprinter.h \
+  include/getqueue.h include/initialize.h include/lockfile.h \
+  include/fileopen.h include/child.h include/stty.h include/proctitle.h \
+  include/lpd_remove.h include/linksupport.h include/gethostinfo.h
+child.lo child.o: common/child.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getqueue.h \
+  include/getopt.h include/gethostinfo.h include/proctitle.h \
+  include/linksupport.h include/child.h
+controlword.lo controlword.o: common/controlword.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/control.h
+copyright.lo copyright.o: common/copyright.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/patchlevel.h \
+  include/license.h include/copyright.h
+debug.lo debug.o: common/debug.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/getopt.h include/child.h
+errormsg.lo errormsg.o: common/errormsg.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/child.h include/getopt.h include/getqueue.h
+fileopen.lo fileopen.o: common/fileopen.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/fileopen.h \
+  include/errorcodes.h include/child.h
+gethostinfo.lo gethostinfo.o: common/gethostinfo.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/gethostinfo.h \
+  include/linksupport.h include/getqueue.h include/globmatch.h
+getopt.lo getopt.o: common/getopt.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h
+getprinter.lo getprinter.o: common/getprinter.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/gethostinfo.h \
+  include/getprinter.h include/getqueue.h include/child.h
+getqueue.lo getqueue.o: common/getqueue.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/errorcodes.h include/fileopen.h include/getprinter.h \
+  include/gethostinfo.h include/getqueue.h include/globmatch.h \
+  include/permission.h include/lockfile.h include/merge.h
+globmatch.lo globmatch.o: common/globmatch.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h
+initialize.lo initialize.o: common/initialize.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h defs.h include/initialize.h \
+  include/getopt.h include/child.h include/gethostinfo.h \
+  include/proctitle.h include/getqueue.h include/errorcodes.h
+krb5_auth.lo krb5_auth.o: common/krb5_auth.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/fileopen.h include/child.h include/getqueue.h \
+  include/linksupport.h include/gethostinfo.h include/permission.h \
+  include/lpd_secure.h include/lpd_dispatch.h include/krb5_auth.h
+linelist.lo linelist.o: common/linelist.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/globmatch.h include/gethostinfo.h include/child.h \
+  include/fileopen.h include/getqueue.h include/getprinter.h \
+  include/lpd_logger.h include/lpd_dispatch.h include/lpd_jobs.h
+linksupport.lo linksupport.o: common/linksupport.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/linksupport.h \
+  include/gethostinfo.h include/errorcodes.h
+lockfile.lo lockfile.o: common/lockfile.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/lockfile.h \
+  include/fileopen.h
+lpbanner.lo lpbanner.o: common/lpbanner.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h
+lpc.lo lpc.o: common/lpc.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h defs.h include/initialize.h \
+  include/getprinter.h include/sendreq.h include/child.h \
+  include/control.h include/getopt.h include/patchlevel.h \
+  include/errorcodes.h include/lpc.h
+lpd.lo lpd.o: common/lpd.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/fileopen.h include/errorcodes.h include/initialize.h \
+  include/linksupport.h include/lpd_logger.h include/getqueue.h \
+  include/getopt.h include/proctitle.h include/lockfile.h include/lpd.h
+lpd_control.lo lpd_control.o: common/lpd_control.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getopt.h \
+  include/proctitle.h include/control.h include/child.h \
+  include/getprinter.h include/getqueue.h include/fileopen.h \
+  include/globmatch.h include/permission.h include/gethostinfo.h \
+  include/lpd_control.h
+lpd_dispatch.lo lpd_dispatch.o: common/lpd_dispatch.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/getqueue.h include/getprinter.h include/gethostinfo.h \
+  include/linksupport.h include/child.h include/fileopen.h \
+  include/permission.h include/proctitle.h include/lpd_rcvjob.h \
+  include/lpd_remove.h include/lpd_status.h include/lpd_control.h \
+  include/lpd_secure.h include/krb5_auth.h include/lpd_dispatch.h
+lpd_jobs.lo lpd_jobs.o: common/lpd_jobs.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/accounting.h \
+  include/child.h include/errorcodes.h include/fileopen.h \
+  include/gethostinfo.h include/getopt.h include/getprinter.h \
+  include/getqueue.h include/linksupport.h include/lockfile.h \
+  include/lpd_remove.h include/merge.h include/permission.h \
+  include/printjob.h include/proctitle.h include/sendjob.h \
+  include/sendmail.h include/stty.h include/lpd_jobs.h \
+  include/lpd_rcvjob.h
+lpd_logger.lo lpd_logger.o: common/lpd_logger.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/errorcodes.h include/fileopen.h include/getopt.h \
+  include/getprinter.h include/getqueue.h include/linksupport.h \
+  include/proctitle.h include/lpd_logger.h
+lpd_rcvjob.lo lpd_rcvjob.o: common/lpd_rcvjob.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/errorcodes.h include/fileopen.h include/gethostinfo.h \
+  include/getopt.h include/getqueue.h include/linksupport.h \
+  include/lockfile.h include/permission.h include/proctitle.h \
+  include/lpd_remove.h include/lpd_rcvjob.h include/lpd_jobs.h
+lpd_remove.lo lpd_remove.o: common/lpd_remove.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/lpd_remove.h \
+  include/getqueue.h include/getprinter.h include/gethostinfo.h \
+  include/getopt.h include/permission.h include/child.h \
+  include/proctitle.h include/fileopen.h include/sendreq.h
+lpd_secure.lo lpd_secure.o: common/lpd_secure.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/user_auth.h \
+  include/lpd_dispatch.h include/getopt.h include/getqueue.h \
+  include/proctitle.h include/permission.h include/linksupport.h \
+  include/errorcodes.h include/fileopen.h include/lpd_rcvjob.h \
+  include/child.h include/globmatch.h include/lpd_jobs.h \
+  include/krb5_auth.h include/lpd_secure.h
+lpd_status.lo lpd_status.o: common/lpd_status.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getopt.h \
+  include/gethostinfo.h include/proctitle.h include/getprinter.h \
+  include/getqueue.h include/child.h include/fileopen.h include/sendreq.h \
+  include/globmatch.h include/permission.h include/lockfile.h \
+  include/errorcodes.h include/lpd_jobs.h include/lpd_status.h
+lpf.lo lpf.o: common/lpf.c include/portable.h ../config.h
+lpq.lo lpq.o: common/lpq.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/getopt.h include/getprinter.h include/getqueue.h \
+  include/initialize.h include/linksupport.h include/patchlevel.h \
+  include/sendreq.h include/lpq.h
+lpr.lo lpr.o: common/lpr.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/errorcodes.h include/fileopen.h include/getopt.h \
+  include/getprinter.h include/getqueue.h include/gethostinfo.h \
+  include/initialize.h include/linksupport.h include/patchlevel.h \
+  include/printjob.h include/sendjob.h include/lpd_jobs.h include/lpr.h
+lprm.lo lprm.o: common/lprm.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/getopt.h include/getprinter.h include/getqueue.h \
+  include/initialize.h include/linksupport.h include/patchlevel.h \
+  include/sendreq.h include/lprm.h
+lpstat.lo lpstat.o: common/lpstat.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/getopt.h include/getprinter.h include/initialize.h \
+  include/linksupport.h include/patchlevel.h include/sendreq.h \
+  include/lpstat.h
+md5.lo md5.o: common/md5.c include/md5.h
+merge.lo merge.o: common/merge.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/merge.h
+monitor.lo monitor.o: common/monitor.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getopt.h \
+  include/linksupport.h include/getqueue.h
+permission.lo permission.o: common/permission.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/fileopen.h \
+  include/globmatch.h include/gethostinfo.h include/getqueue.h \
+  include/permission.h include/linksupport.h
+plp_snprintf.lo plp_snprintf.o: common/plp_snprintf.c ../config.h
+printjob.lo printjob.o: common/printjob.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/printjob.h include/getqueue.h include/child.h \
+  include/fileopen.h
+proctitle.lo proctitle.o: common/proctitle.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/proctitle.h
+sendauth.lo sendauth.o: common/sendauth.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/user_auth.h \
+  include/sendjob.h include/globmatch.h include/permission.h \
+  include/getqueue.h include/errorcodes.h include/linksupport.h \
+  include/krb5_auth.h include/fileopen.h include/child.h \
+  include/gethostinfo.h include/sendauth.h
+sendjob.lo sendjob.o: common/sendjob.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/accounting.h \
+  include/errorcodes.h include/fileopen.h include/getqueue.h \
+  include/user_auth.h include/linksupport.h include/sendjob.h \
+  include/sendauth.h
+sendmail.lo sendmail.o: common/sendmail.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/errorcodes.h \
+  include/fileopen.h include/getqueue.h include/sendmail.h \
+  include/child.h
+sendreq.lo sendreq.o: common/sendreq.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/child.h \
+  include/fileopen.h include/getqueue.h include/linksupport.h \
+  include/readstatus.h include/user_auth.h include/sendreq.h \
+  include/sendauth.h
+ssl_auth.lo ssl_auth.o: common/ssl_auth.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/fileopen.h \
+  include/errorcodes.h include/getqueue.h include/user_auth.h \
+  include/lpd_secure.h include/ssl_auth.h
+stty.lo stty.o: common/stty.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/stty.h
+user_auth.lo user_auth.o: common/user_auth.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/user_auth.h \
+  include/krb5_auth.h include/errorcodes.h include/fileopen.h \
+  include/linksupport.h include/child.h include/getqueue.h \
+  include/lpd_secure.h include/lpd_dispatch.h include/permission.h \
+  include/ssl_auth.h include/md5.h
+user_objs.lo user_objs.o: common/user_objs.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getqueue.h
+utilities.lo utilities.o: common/utilities.c include/lp.h include/portable.h \
+  ../config.h include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h include/getopt.h \
+  include/errorcodes.h
+vars.lo vars.o: common/vars.c include/lp.h include/portable.h ../config.h \
+  include/linelist.h include/utilities.h include/debug.h \
+  include/errormsg.h include/plp_snprintf.h defs.h include/child.h \
+  include/gethostinfo.h include/getqueue.h include/accounting.h \
+  include/permission.h include/printjob.h
