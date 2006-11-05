@@ -16,6 +16,8 @@
 SRC = @srcdir@
 VPATH=${SRC}
 INSTALL=@INSTALL@
+MKINSTALLDIRS = @MKINSTALLDIRS@
+mkinstalldirs = $(SHELL) $(MKINSTALLDIRS)
 
 # change MANEXT to .gz or .Z if you use compressed manpages.
 MANEXT =
@@ -118,8 +120,8 @@ install:
 	for suffix in 1 2 3 4 5 6 7 8 ; do \
 	  if ls *.$${suffix} >/dev/null 2>&1 ; then \
 	    if [ ! -d $(DESTDIR)$(MAN)/man$${suffix} ] ; then \
-		    echo ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
-		    ${SRC}/mkinstalldirs $(DESTDIR)$(MAN)/man$${suffix}; \
+		    echo ${mkinstalldirs} $(DESTDIR)$(MAN)/man$${suffix}; \
+		    ${mkinstalldirs} $(DESTDIR)$(MAN)/man$${suffix}; \
 	    fi; \
 	    for i in *.$$suffix; do \
 		echo   $(INSTALL) -m 644 $$i $(DESTDIR)$(MAN)/man$$suffix/`basename $$i`$(MANEXT); \
