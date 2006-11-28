@@ -452,6 +452,10 @@ void Get_parms(int argc, char *argv[] )
 	}
 }
 
+
+
+void use_msg(void)
+{
  char *msg[] ={
  N_("usage: %s [-a][-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]\n"),
  N_(" with no command, reads from STDIN\n"),
@@ -499,8 +503,6 @@ void Get_parms(int argc, char *argv[] )
  N_("      server (printer | all) - server config and printcap\n"),
 	0} ;
 
-void use_msg(void)
-{
 	int i;
 	char *s;
 	for( i = 0; (s = msg[i]); ++i ){
