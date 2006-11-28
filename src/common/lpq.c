@@ -449,7 +449,7 @@ void Term_clear()
 	if( (pid = dofork(0)) == 0 ){
 		setuid( OriginalRUID );
 		close_on_exec(3);
-		execl(CLEAR,0);
+		execl(CLEAR,CLEAR,NULL);
 		exit(1);
 	} else if( pid < 0 ){
 		LOGERR_DIE(LOG_ERR) _("fork() failed") );
