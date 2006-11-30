@@ -922,7 +922,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 		nstored = 0;
 	}
 	
-	if ((cc = Read_fd_len_timeout(transfer_timeout, fd, len_buf, 4)) != 4) {
+	if ((cc = Read_fd_len_timeout(transfer_timeout, fd, (char*)len_buf, 4)) != 4) {
 		/* XXX can't read enough, pipe must have closed */
 		return(0);
 	}
