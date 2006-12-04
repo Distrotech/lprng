@@ -2755,6 +2755,8 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 		} else {
 			Full_user_perms();
 		}
+
+		close_on_exec(passfd->count);
 		for( i = 0; i < passfd->count; ++i ){
 			fd = Cast_ptr_to_int(passfd->list[i]);
 			if( dup2(fd,i) == -1 ){
@@ -2764,7 +2766,6 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 				exit(JFAIL);
 			}
 		}
-		close_on_exec(passfd->count);
 		execve(cmd.list[0],cmd.list,env.list);
 		SNPRINTF(error,sizeof(error))
 			"Make_passthrough: pid %d, execve '%s' failed - '%s'\n", getpid(),
