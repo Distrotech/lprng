@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpr.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "child.h"
 #include "errorcodes.h"
@@ -1171,7 +1167,7 @@ double Check_files( struct job *job )
 	double size = 0;
 	int i, fd, printable = 1;
 	struct stat statb;
-	char *s, *tempfile;
+	char *s, *cs, *tempfile;
 	char buffer[SMALLBUFFER];
 	struct line_list *lp;
 
@@ -1203,8 +1199,10 @@ double Check_files( struct job *job )
 			job->datafiles.list[job->datafiles.count++] = (void *) lp;
 			Set_str_value(lp,OPENNAME,tempfile);
 			Set_str_value(lp,DFTRANSFERNAME,s);
-			Clean_meta(s);
-			Set_str_value(lp,"N",s);
+			cs = safestrdup(s,__FILE__,__LINE__);
+			Clean_meta(cs);          /* this will destroy the name fix by sharkey3 */
+			Set_str_value(lp,"N",cs);
+			free(cs);
 			Set_flag_value(lp,COPIES,1);
 			SNPRINTF(buffer,sizeof(buffer))"%c",Format_JOB);
 			Set_str_value(lp,FORMAT,buffer);
