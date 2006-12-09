@@ -84,7 +84,7 @@ and :forward_server: (forward server) entries use these.
 .PP
 .SH "GENERAL CONFIGURATION PARAMETERS"
 .PP
-Some of the following paramters take lists of files or directories.
+Some of the following parameters take lists of files or directories.
 Unless otherwise explicitly stated,
 these lists can be separated by commas (,),
 semicolons (;), or colons, (punctuation)
@@ -112,7 +112,7 @@ and
 man pages for details.
 .TP
 \fBallow_getenv\fR (default: "LPD_CONF")
-This option specifies an enviorinment variable
+This option specifies an environment variable
 whose value is a configuration file.
 Use of this is restricted to test purposes,
 and SUID ROOT client and server will not run when the variable is enabled.
@@ -200,8 +200,8 @@ The time to wait for a device open or connection to complete.
 A zero value is infinite timeout.
 .TP
 \fBretry_nolink\fR (default: true)
-When TRUE and the LPD server is printing or transfering a job,
-then an indefinate number of attempts to connect to or open the IO device
+When TRUE and the LPD server is printing or transferring a job,
+then an indefinite number of attempts to connect to or open the IO device
 will be made.
 .TP
 \fBdefault_banner_printer\fR (default: "")
@@ -380,7 +380,7 @@ only 3 digit numbers will be used.
 The port that \fBlpd\fR binds to, and that \fBlpr\fR and
 the other client programs send their requests to.
 The specification has the format ipaddr%port.
-If the ipaddress is specified then a bind to only this address and
+If the IP address is specified then a bind to only this address and
 port is done.
 If the port value is not a number
 a service lookup is performed and the corresponding
@@ -435,7 +435,7 @@ for a job to be accepted.
 If 0, there is no limit;
 if the parameter is the name of a file rather than a number,
 the file must contain a numerical minimum free value (in Kbytes).
-This value is overriden by the printcap
+This value is overridden by the printcap
 .I mi
 field value.
 .TP
@@ -459,7 +459,7 @@ of bk_of_filter_options value is appended instead
 .TP
 \fBoriginate_port\fR
 (default: "721 731")
-A range of port numbers to orginate requests from.
+A range of port numbers to originate requests from.
 When sending service requests,
 the software will try to open and bind to these ports to
 originate a request to a server.
@@ -572,6 +572,11 @@ Permissions of the spool files.
 .TP
 \fBsyslog_device\fR (default: /dev/console)
 Log to this device if all else fails.
+.TP
+.BR unix_socket_path " (default: /var/run/lprng/socket)"
+Location of the Unix socket that lpd listens on and LPRng clients
+attempt to communicate to when host is localhost. Set to \fIoff\fR
+to disable listening and connecting via a Unix socket.
 .TP
 \fBuse_date\fR (default: no)
 No information about this parameter available.
