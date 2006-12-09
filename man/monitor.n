@@ -1,4 +1,4 @@
-.TH monitor 1 2006-17-12 "LPRng" "monitor command"
+.TH monitor 1 2006-12-09 "LPRng" "monitor command"
 .SH NAME
 monitor \- receive logging information from LPD
 .SH SYNOPSIS

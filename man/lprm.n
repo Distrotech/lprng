@@ -1,4 +1,4 @@
-.TH LPRM 1 2006-17-12 "LPRng" "lprm command"
+.TH LPRM 1 2006-12-09 "LPRng" "lprm command"
 .SH NAME
 lprm \- remove jobs from the line printer spooling queue
 .SH SYNOPSIS

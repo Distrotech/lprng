@@ -1,6 +1,4 @@
-.\"
-.\" $Id$
-.TH LPD.PERMS 5 2006-17-12 "LPRng" "lpd.perms file"
+.TH LPD.PERMS 5 2006-12-09 "LPRng" "lpd.perms file"
 .SH NAME
 
 lpd.perms \- permissions control file for the LPRng line printer spooler system

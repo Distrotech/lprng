@@ -1,4 +1,4 @@
-.TH LPQ 1 2006-17-12 "LPRng" "lpq command"
+.TH LPQ 1 2006-12-09 "LPRng" "lpq command"
 .SH NAME
 lpq \- spool queue examination program
 .SH SYNOPSIS
