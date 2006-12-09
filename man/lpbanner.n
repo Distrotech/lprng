@@ -1,4 +1,4 @@
-.TH LPBANNER 1 2006-17-12 "LPRng" "lpbanner filter"
+.TH LPBANNER 1 2006-12-09 "LPRng" "lpbanner filter"
 .SH NAME
 lpbanner, pclbanner, psbanner \- printer banners in text, PCL and PostScript
 .SH SYNOPSIS

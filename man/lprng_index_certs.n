@@ -1,4 +1,4 @@
-.TH LPRNG_INDEX_CERTS 2006-17-12 "LPRng" "LPRNG_INDEX_CERTS command"
+.TH LPRNG_INDEX_CERTS 2006-12-09 "LPRng" "LPRNG_INDEX_CERTS command"
 .SH NAME
 lprng_index_certs \- lprng SSL certificate management
 .SH SYNOPSIS

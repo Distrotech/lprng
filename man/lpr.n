@@ -1,4 +1,4 @@
-.TH LPR 1 2006-17-12 "LPRng" "lpr command"
+.TH LPR 1 2006-12-09 "LPRng" "lpr command"
 .SH NAME
 lpr \- off line print
 .SH SYNOPSIS

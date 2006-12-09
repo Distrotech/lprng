@@ -1,4 +1,4 @@
-.TH PRINTCAP 5 2006-17-12 "LPRng" "lpd configuration"
+.TH PRINTCAP 5 2006-12-09 "LPRng" "lpd configuration"
 .SH NAME
 printcap \- printer capability data base
 .SH SYNOPSIS
