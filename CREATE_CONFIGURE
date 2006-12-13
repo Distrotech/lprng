@@ -9,6 +9,16 @@ for n in install-sh mkinstalldirs; do
 		install "/usr/share/automake/$n" .
 	elif [ -e "/usr/local/share/automake/$n" ] ; then
 		install "/usr/local/share/automake/$n" .
+	elif [ -e "/usr/share/automake-1.10/$n" ] ; then
+		install "/usr/share/automake-1.10/$n" .
+	elif [ -e "/usr/share/automake-1.9/$n" ] ; then
+		install "/usr/share/automake-1.9/$n" .
+	elif [ -e "/usr/share/automake-1.8/$n" ] ; then
+		install "/usr/share/automake-1.8/$n" .
+	elif [ -e "/usr/share/automake-1.7/$n" ] ; then
+		install "/usr/share/automake-1.7/$n" .
+	elif [ -e "/usr/share/automake-1.4/$n" ] ; then
+		install "/usr/share/automake-1.4/$n" .
 	else
 		echo "Could not find $n, please place a copy or symlink into this dir!"
 		exit 1
