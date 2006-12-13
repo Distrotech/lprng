@@ -112,7 +112,7 @@ header: Makefile
 
 # define default target
 .PHONY: all warn TAGS clean uninstall install  info dvi check \
-	tar send realclean mostlyclean distclean dist update ci cifiles $(ALLDIRS) \
+	tar send realclean mostlyclean distclean dist update $(ALLDIRS) \
 
 MAKETARGET=all
 
@@ -171,41 +171,6 @@ realclean mostlyclean distclean: clean
 uninstall:
 	echo "you must uninstall by hand"
 
-ci: cifiles
-	for i in $(ALLDIRS); do \
-		case $$i in \
-		po ) ;; \
-		* ) $(MAKE) MAKETARGET=$@ $$i ;; \
-		esac; \
-	done;
-	chmod 755 `find . -name install-sh -print`
-	chmod 755 `find . -name mkinstalldirs -print`
-
-#CI=
-#CO=-kv
-CO=-l
-
-cifiles:
-	for i in . $(ALLDIRS); do \
-		if test ! -d $$i/RCS ; then \
-			mkdir $$i/RCS; \
-		fi; \
-	done;
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	for i in * */Makefile po/* ; do \
-		if test -f "$$i" ; then \
-			case "$$i" in  \
-			*.mo ) ;; \
-			config.* ) ;; \
-			configure ) ;; \
-			* ) checkin $$i ;; \
-			esac; \
-		fi; \
-	done;
-
 ###############################################################################
 # Update the patch level when you make a new version
 # do this before you start changes
@@ -249,35 +214,3 @@ update:
 	for i in po ; do \
 		(cd $$i ; $(MAKE) update-po ); \
 	done
-
-###############################################################################
-# Make a gnutar distribution
-#   - note that not all the source tree is sent out
-#
-###############################################################################
-
-tar: distclean
-	chmod a+x STANDARD_configuration configure
-	rm -f */Makefile Makefile
-	chmod 755 `find . -name install-sh -print`
-	chmod 755 `find . -name mkinstalldirs -print`
-	chmod -R +w .
-	if [ -x /bin/pwd ] ; then DIR=`/bin/pwd`; fi ; \
-	if [ -x /usr/bin/pwd ] ; then DIR=`/usr/bin/pwd`; fi ; \
-	echo $${DIR}; \
-	DIR=`echo $${DIR} | sed 's,.*/,,'`; \
-		cd ..; \
-		tar '--exclude=RCS' -zcf $${DIR}.tgz $${DIR}; \
-		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
-	@echo ""
-
-configure: configure.in
-	autoconf
-	autoheader
-	chmod a+x STANDARD_configuration configure
-
-dist: update ci distclean tar send
-redist: ci distclean tar send
-
-send:
-	if [ -f ../SENDTO ] ; then (cd ..; sh SENDTO) ; fi

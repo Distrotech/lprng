@@ -249,7 +249,7 @@ defs.h: Makefile
 	echo "#define " SSL_SERVER_PASSWORD_FILE \"@SSL_SERVER_PASSWORD_FILE@\" >>$@
 	echo "#define " SD_DEFAULT \"@SD_DEFAULT@\" >>$@
 
-.PHONY: all ci clean \
+.PHONY: all clean \
 	uninstall realclean mostlyclean distclean \
 	TAGS info generate
 
@@ -388,41 +388,6 @@ tags TAGS:
 CI=
 #CO=-kv
 CO=-l
-
-cifiles:
-	if [ ! -d RCS ] ; then mkdir RCS ; fi ;
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	for i in *; do \
-		if [ -f "$$i" ] ; then \
-			case $$i in \
-				Makefile*|*install* ) echo $$i; checkin $$i ;; \
-				*.in ) echo $$i; checkin $$i ;; \
-			esac; \
-		fi; \
-	done;
-
-cifast ci: cifiles
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	for i in *; do \
-		if [ -d "$$i" ] ; then \
-			case $$i in \
-			RCS ) ;; \
-			* ) if [ ! -d $$i/RCS ] ; then mkdir $$i/RCS ; fi ; \
-				for j in $$i/*; do \
-					if [ -f "$$j" ] ; then \
-						checkin $$j; \
-					fi; \
-				done; \
-				;; \
-			esac; \
-		fi; \
-	done;
 
 depend:
 	${CC} ${CFLAGS} -MM >${SRC}/deps.d ${SRC}/common/*.c

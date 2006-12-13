@@ -12,24 +12,9 @@
 # Makefile.in,v 3.7 1998/03/30 01:54:50 papowell Exp
 ########################################################################## 
 
-all: ci
+all:
 
-.PHONY: all clean install ci realclean mostlyclean distclean clean
-
-CI=
-CO=-kv
-
-ci:
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	dirs=`find . -type d -name RCS -print | sed -e s/.RCS//`; \
-	echo dirs $$dirs; \
-	for i in $$dirs ; do \
-		(cd $$i; echo CWD `pwd`; \
-		for j in * ; do if [ -f $$j ] ; then checkin $$j; fi ; done; \
-	); done;
+.PHONY: all clean install realclean mostlyclean distclean clean
 
 realclean mostlyclean distclean clean:
 	cd FreeBSD-4.ports.systutils.LPRng; make clean

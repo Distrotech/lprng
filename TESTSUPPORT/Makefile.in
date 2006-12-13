@@ -97,7 +97,7 @@ install all: warn files bin perms pc
 	@echo "and put " ${TMP}LPD " in your path"
 
 
-.PHONY: all warn files bin perms pc ci clean \
+.PHONY: all warn files bin perms pc clean \
 	uninstall realclean mostlyclean distclean \
 	tags info
 
@@ -165,17 +165,6 @@ ${TMP}LPD/dbserver: ${SRC}/dbserver.sh
 
 ${TMP}LPD/clearlog: ${SRC}/clearlog
 	$(INSTALLCMD) -m 755 ${SRC}/clearlog $@
-
-CI=
-CO=-kv
-cifast ci:
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	for i in *; do \
-		if test -f "$$i" ; then checkin $$i; fi; \
-	done;
 
 clean::
 	-rm -f *.o core *.old
