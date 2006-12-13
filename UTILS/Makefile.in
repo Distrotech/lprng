@@ -17,7 +17,7 @@ AWK=@AWK@
 
 all clean:
 
-.PHONY: all clean ci cifast install realclean mostlyclean distclean
+.PHONY: all clean install realclean mostlyclean distclean
 
 realclean mostlyclean distclean:
 	for i in ${SRC}/*.in; do \
@@ -28,17 +28,3 @@ realclean mostlyclean distclean:
 
 install:
 
-CI=
-CO=-kv
-
-cifast ci:
-	checkin() { \
-		(set +e; rcs -l $$1; exit 0); \
-		ci $(CI) -l -u -f -mUpdate -t-Initial $$1; \
-	}; \
-	for i in *; do \
-		echo $$i ; \
-		if [ -f "$$i" ] ; then \
-			checkin $$i; \
-		fi; \
-	done;
