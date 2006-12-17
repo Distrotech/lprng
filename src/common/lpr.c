@@ -1248,10 +1248,6 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
         DIEMSG (err, file,_("cannot read it"));
     } else if (format != 'p' && format != 'f' ){
         printable = 1;
-    } else if (is_exec ( buf, n)) {
-        DIEMSG (err, file,_("executable program"));
-    } else if (is_arch ( buf, n)) {
-        DIEMSG (err, file,_("archive file"));
     } else {
         printable = 1;
 		if( Min_printable_count_DYN && n > Min_printable_count_DYN ){
@@ -1267,127 +1263,6 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
 			_("unprintable characters at start of file, check your LANG environment variable as well as the input file"));
     }
     return(printable);
-}
-
-/***************************************************************************
- * The is_exec and is_arch are system dependent functions which
- * check if a file is an executable or archive file, based on the
- * information in the header.  Note that most of the time we will end
- * up with a non-printable character in the first 100 characters,  so
- * this test is moot.
- *
- * I swear I must have been out of my mind when I put these tests in.
- * In fact,  why bother with them?  
- *
- * Patrick Powell Wed Apr 12 19:58:58 PDT 1995
- *   On review, I agree with myself. Sun Jan 31 06:36:28 PST 1999
- ***************************************************************************/
-
-#if defined(HAVE_A_OUT_H) && !defined(_AIX41)
-#include <a.out.h>
-#endif
-
-#ifdef HAVE_EXECHDR_H
-#include <sys/exechdr.h>
-#endif
-
-/* this causes trouble, eg. on SunOS. */
-#ifdef IS_NEXT
-#  ifdef HAVE_SYS_LOADER_H
-#    include <sys/loader.h>
-#  endif
-#  ifdef HAVE_NLIST_H
-#    include <nlist.h>
-#  endif
-#  ifdef HAVE_STAB_H
-#    include <stab.h>
-#  endif
-#  ifdef HAVE_RELOC_H
-#   include <reloc.h>
-#  endif
-#endif /* IS_NEXT */
-
-#if defined(HAVE_FILEHDR_H) && !defined(HAVE_A_OUT_H)
-#include <filehdr.h>
-#endif
-
-#if defined(HAVE_AOUTHDR_H) && !defined(HAVE_A_OUT_H)
-#include <aouthdr.h>
-#endif
-
-#ifdef HAVE_SGS_H
-#include <sgs.h>
-#endif
-
-/***************************************************************************
- * I really don't want to know.  This alone tempts me to rip the code out
- * Patrick Powell Wed Apr 12 19:58:58 PDT 1995
- ***************************************************************************/
-#ifndef XYZZQ_
-#define XYZZQ_ 1		/* ugh! antediluvian BSDism, I think */
-#endif
-
-#ifndef N_BADMAG
-#  ifdef NMAGIC
-#    define N_BADMAG(x) \
-	   ((x).a_magic!=OMAGIC && (x).a_magic!=NMAGIC && (x).a_magic!=ZMAGIC)
-#  else				/* no NMAGIC */
-#    ifdef MAG_OVERLAY		/* AIX */
-#      define N_BADMAG(x) (x.a_magic == MAG_OVERLAY)
-#    endif				/* MAG_OVERLAY */
-#  endif				/* NMAGIC */
-#endif				/* N_BADMAG */
-
-int is_exec( char *buf, int n)
-{
-    int i = 0;
-
-#ifdef N_BADMAG		/* BSD, non-mips Ultrix */
-#  ifdef HAVE_STRUCT_EXEC
-    if (n >= (int)sizeof (struct exec)){
-		i |= !(N_BADMAG ((*(struct exec *) buf)));
-	}
-#  else
-    if (n >= (int)sizeof (struct aouthdr)){
-		i |= !(N_BADMAG ((*(struct aouthdr *) buf)));
-	}
-#  endif
-#endif
-
-#ifdef ISCOFF		/* SVR4, mips Ultrix */
-    if (n >= (int)sizeof (struct filehdr)){
-		i |= (ISCOFF (((struct filehdr *) buf)->f_magic));
-	}
-#endif
-
-#ifdef MH_MAGIC		/* NeXT */
-    if (n >= (int)sizeof (struct mach_header)){
-		i |= (((struct mach_header *) buf)->magic == MH_MAGIC);
-	}
-#endif
-
-#ifdef IS_DATAGEN	/* Data General (forget it! ;) */
-    {
-		if( n > (int)sizeof (struct header)){
-			i |= ISMAGIC (((struct header *)buff->magic_number));
-		}
-    }
-#endif
-
-    return (i);
-}
-
-#include <ar.h>
-
-int is_arch(char *buf, int n)
-{
-	int i = 0;
-#ifdef ARMAG
-	if( n >= SARMAG ){
-		i = !memcmp( buf, ARMAG, SARMAG);
-	}
-#endif				/* ARMAG */
-    return(i);
 }
 
 void Dienoarg(int option)

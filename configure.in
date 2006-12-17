@@ -680,14 +680,14 @@ AC_MSG_RESULT([using CPPFLAGS=\"${CPPFLAGS}\", CFLAGS=\"${CFLAGS}\"])
 dnl ----------------------------------------------------------------------------
 dnl headers:
 
-AC_CHECK_HEADERS(a_out.h aouthdr.h ar.h arpa/inet.h arpa/nameser.h assert.h)
+AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h)
 AC_CHECK_HEADERS(com_err.h compat.h ctype.h ctypes.h dirent.h errno.h)
-AC_CHECK_HEADERS(exechdr.h fcntl.h filehdr.h grp.h limits.h locale.h)
+AC_CHECK_HEADERS(fcntl.h grp.h limits.h locale.h)
 AC_CHECK_HEADERS(machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h)
-AC_CHECK_HEADERS(nlist.h pwd.h reloc.h resolv.h select.h setjmp.h)
-AC_CHECK_HEADERS(sgs.h sgtty.h signal.h stab.h stdarg.h stdio.h)
+AC_CHECK_HEADERS(pwd.h resolv.h select.h setjmp.h)
+AC_CHECK_HEADERS(sgtty.h signal.h stdarg.h stdio.h)
 AC_CHECK_HEADERS(stdlib.h string.h strings.h sys/dir.h sys/exec.h sys/exechdr.h)
-AC_CHECK_HEADERS(sys/fcntl.h sys/file.h sys/ioctl.h sys/loader.h sys/mount.h sys/ndir.h)
+AC_CHECK_HEADERS(sys/fcntl.h sys/file.h sys/ioctl.h sys/mount.h sys/ndir.h)
 AC_CHECK_HEADERS(sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/signal.h sys/socket.h)
 AC_CHECK_HEADERS(sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h)
 AC_CHECK_HEADERS(sys/termiox.h sys/time.h sys/ttold.h sys/ttycom.h sys/types.h sys/utsname.h)
@@ -811,23 +811,6 @@ if test "$ac_cv_struct_term" = "termios"; then
 	if test "$ac_cv_header_sys_termiox_h" = yes; then
 		AC_DEFINE(USE_TERMIOX,1,[use termiox])
 	fi
-fi
-
-dnl ----------------------------------------------------------------------------
-
-AC_CACHE_CHECK(checking for struct exec,
-ac_cv_struct_exec,
-[
-ac_cv_struct_exec=no
-if test "$ac_cv_header_a_out_h" != no ; then
-  AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <a.out.h>],[struct exec b; b.a_text = 0],
-	ac_cv_struct_exec=yes, ac_cv_struct_exec=no )
-fi
-])
-if test "$ac_cv_struct_exec" = yes; then
-  AC_DEFINE(HAVE_STRUCT_EXEC,1,[have struct exec])
 fi
 
 dnl ----------------------------------------------------------------------------
