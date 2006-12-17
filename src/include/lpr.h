@@ -54,8 +54,6 @@ void get_job_number( struct job *job );
 double Copy_STDIN( struct job *job );
 double Check_files( struct job *job );
 int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
-int is_exec( char *buf, int n);
-int is_arch(char *buf, int n);
 void Dienoarg(int option);
 void Check_int_dup (int option, int *value, char *arg, int maxvalue);
 void Check_str_dup(int option, char **value, char *arg, int maxlen );
