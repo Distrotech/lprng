@@ -1433,8 +1433,8 @@ int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, cha
 	} else if( WIFSIGNALED(procstatus) ){
 		n = WTERMSIG(procstatus);
 		SNPRINTF(error,errlen)
-		Is_server?"server":"client",
 		"Pgp_encode: on %s, pgp died with signal %d, '%s'",
+			Is_server?"server":"client",
 			n, Sigstr(n));
 		status = JFAIL;
 		goto error;

@@ -203,7 +203,7 @@ char *Get_file_image( const char *file, off_t maxsize )
 	int fd;
 
 	if( file == 0 ) return(0);
-	DEBUG3("Get_file_image: '%s', maxsize %d", file, maxsize );
+	DEBUG3("Get_file_image: '%s', maxsize %ld", file, (long)maxsize );
 	if( (fd = Checkread( file, &statb )) >= 0 ){
 		s = Get_fd_image( fd, maxsize );
 		close(fd);

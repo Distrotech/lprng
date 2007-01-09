@@ -195,7 +195,7 @@ void Logger( struct line_list *args )
 	/* OK, we try to open a connection to the logger */
 	if( !(s = safestrchr( host, '%')) ){
 		int len = strlen(host);
-		SNPRINTF(host+len, sizeof(host)-len) "%2001" );
+		SNPRINTF(host+len, sizeof(host)-len) "%%2001" );
 	}
 
 	readfd = Find_flag_value(args,INPUT);
