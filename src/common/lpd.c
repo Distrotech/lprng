@@ -521,7 +521,7 @@ int main(int argc, char *argv[], char *envp[])
 				&& Servers_line_list.count > 0 && server_processes_started < Poll_servers_started_DYN
 				&& number_of_servers + server_processes_started < max_servers-4 ){
 				DEBUG1("lpd: elapsed time %d, server_started_time %d, max_servers %d, number_of_servers %d, started %d",
-					elapsed_time, server_started_time, max_servers, number_of_servers, server_processes_started );
+					(int)elapsed_time, (int)server_started_time, max_servers, number_of_servers, server_processes_started );
 
 				/* find the first entry WITHOUT a '.' as first character */
 				for( forced_start = doit = 0; doit < Servers_line_list.count; ++doit ){

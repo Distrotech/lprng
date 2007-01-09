@@ -912,7 +912,7 @@ int Link_send( char *host, int *sock, int timeout,
 
 	DEBUGF(DNW1)( "Link_send: host '%s' socket %d, timeout %d",
 		host, *sock, timeout );
-	DEBUGF(DNW1)( "Link_send: str '%s', count %d, ack 0x%x",
+	DEBUGF(DNW1)( "Link_send: str '%s', count %d, ack 0x%p",
 		sendstr, count , ack );
 
 	/*
@@ -1315,7 +1315,7 @@ int Link_read(char *host, int *sock, int timeout,
 
 	if( Alarm_timed_out ){
 		DEBUGF(DNW2)("Link_read: read %d from '%s' timed out",
-			len, host, i );
+			len, host );
 		status = LINK_TRANSFER_FAIL;
 	} else if( i < 0 ) {
 		DEBUGF(DNW2)("Link_read: read %d from '%s' failed, returned %d - %s",

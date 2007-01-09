@@ -997,7 +997,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 		/* first, we see if there is no work and no server active */
 		DEBUG1("Do_queue_jobs: fd %d, job_to_do %d, use_subserver %d, working %d",
-			job_to_do, use_subserver, working );
+			fd, job_to_do, use_subserver, working );
 
 		if( job_to_do < 0 && !working && chooser_did_not_find_server == 0 ){
 			DEBUG1("Do_queue_jobs: nothing to do");
@@ -3079,7 +3079,7 @@ int Move_job(int fd, struct job *job, struct line_list *sp,
 				Set_str_value( &datafiles, from, path );
 			} else {
 				SNPRINTF(errmsg,errlen)"cannot copy '%s' to subserver '%s' queue directory '%s'",
-					datafile, pr, sd );
+					from?from:"<no DFTRANSDERNAME>", pr, sd );
 				Set_str_value(&job->info,ERROR,errmsg);
 				fail = 1;
 				goto move_error;

@@ -280,7 +280,7 @@
 		else
 			continue;
 	}
-	DEBUG1("initsetproctitle: Argv 0x%lx, LastArgv 0x%lx", Argv, LastArgv);
+	DEBUG1("initsetproctitle: Argv 0x%p, LastArgv 0x%p", Argv, LastArgv);
 #else
 	DEBUG1("initsetproctitle: using builtin");
 #endif

@@ -823,7 +823,7 @@ int Do_control_status( int *sock,
 	Free_line_list(&Sort_order);
 
 	DEBUGF(DCTRL1)( "Do_control_status: printable %d, held %d, move %d, err %d, done %d",
-		printable, held, move, error, done );
+		printable, held, move, err, done );
 
 	/* now check to see if there is a server and unspooler process active */
 	serverpid = Server_active( Printer_DYN );

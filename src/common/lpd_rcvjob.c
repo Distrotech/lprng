@@ -1429,7 +1429,7 @@ int Find_non_colliding_job_number( struct job *job )
 			Set_str_value(&job->info,HF_NAME,hold_file);
 		}
 	}
-	DEBUGF(DRECV1)("Find_non_colliding_job_number: fd %d", hold_file );
+	DEBUGF(DRECV1)("Find_non_colliding_job_number: fd %d", job_ticket_fd );
 	return( job_ticket_fd );
 }
 
