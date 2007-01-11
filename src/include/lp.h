@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -100,8 +99,8 @@ extern struct call_list Calls[];
 
 
 #ifdef HAVE_STDARGS
-void setstatus( struct job *job, char *fmt, ... );
-void setmessage( struct job *job, const char *header, char *fmt, ... );
+void setstatus( struct job *job, char *fmt, ... ) PRINTFATTR(2,3);
+void setmessage( struct job *job, const char *header, char *fmt, ... ) PRINTFATTR(3,4);
 #else 
 void setstatus( va_alist );
 void setmessage( va_alist );

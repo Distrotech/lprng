@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 
 #include "child.h"
@@ -625,7 +621,7 @@ int Receive_block_job( int *sock, char *input )
 	DEBUGF(DRECV4)("Receive_block_job: receiving '%s' %0.0f bytes ", tempfile, file_len );
 	status = Link_file_read( ShortRemote_FQDN, sock,
 		Send_job_rw_timeout_DYN, 0, temp_fd, &read_len, &ack );
-	DEBUGF(DRECV4)("Receive_block_job: received %d bytes ", read_len );
+	DEBUGF(DRECV4)("Receive_block_job: received %0.0f bytes ", read_len );
 	if( status ){
 		SNPRINTF( error, errlen-4)
 			_("%s: transfer of '%s' from '%s' failed"), Printer_DYN,
