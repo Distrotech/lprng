@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: utilities.h,v 1.74 2004/09/24 20:20:01 papowell Exp $
  ***************************************************************************/
 
 
@@ -27,7 +26,7 @@ EXTERN jmp_buf Timeout_env;
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...)
+ void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
 #else
  void safefprintf (va_alist) va_dcl
 #endif
@@ -94,7 +93,7 @@ void Reset_daemonuid(void);
 double Space_avail( char *pathname );
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...)
+ void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
 #else
  void safefprintf (va_alist) va_dcl
 #endif

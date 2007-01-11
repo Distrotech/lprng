@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpf.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 /***************************************************************************
  *  Filter template and frontend.
  *
@@ -97,23 +93,29 @@
  * compiling with the -DDEBUG option.
  */
 
+#include <config.h>
 #include "portable.h"
-
-/* VARARGS3 */
-#ifdef HAVE_STDARGS
-int	plp_snprintf (char *str, size_t count, const char *fmt, ...);
-int	plp_vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
-#else
-int plp_snprintf ();
-int plp_vsnprintf ();
-#endif
+#include "plp_snprintf.h"
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...);
+ static void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+;
 #else
- void safefprintf ();
+ static void safefprintf ();
 #endif
+#ifdef HAVE_STDARGS
+static void logerr(char *msg, ...) PRINTFATTR(1,2)
+#else
+static void logerr( va_alist ) va_dcl
+#endif
+;
+#ifdef HAVE_STDARGS
+static void logerr_die(char *msg, ...) PRINTFATTR(1,2)
+#else
+static void logerr_die( va_alist ) va_dcl
+#endif
+;
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -187,8 +189,6 @@ int  accounting_fd;
 int crlf;	/* change lf to CRLF */
 
 void getargs( int argc, char *argv[], char *envp[] );
-void logerr( char *msg, ... );
-void logerr_die( char *msg, ... );
 extern void banner( void );
 extern void doaccnt( void );
 extern void filter_pgm( char * );
@@ -235,7 +235,7 @@ int main( int argc, char *argv[], char *envp[] )
 	return(0);
 }
 
-int Write_fd_str( int fd, const char *msg )
+static int Write_fd_str( int fd, const char *msg )
 {
 	int n;
 	n = strlen(msg);
@@ -269,49 +269,25 @@ int Write_fd_str( int fd, const char *msg )
  * Extract the necessary definitions for error message reporting
  ****************************************************************************/
 
-#if !defined(HAVE_STRERROR)
-# undef  num_errors
-# if defined(HAVE_SYS_ERRLIST)
-#  if !defined(HAVE_DECL_SYS_ERRLIST)
-     extern const char *const sys_errlist[];
-#  endif
-#  if defined(HAVE_SYS_NERR)
-#   if !defined(HAVE_DECL_SYS_NERR)
-      extern int sys_nerr;
-#   endif
-#   define num_errors    (sys_nerr)
-#  endif
-# endif
-# if !defined(num_errors)
-#   define num_errors   (-1)            /* always use "errno=%d" */
-# endif
-#endif
-
-const char * Errormsg ( int err )
-{
-    const char *cp;
-
-#if defined(HAVE_STRERROR)
-	cp = strerror(err);
+#ifdef HAVE_STRERROR
+#define Errormsg strerror
 #else
-# if defined(HAVE_SYS_ERRLIST)
-    if (err >= 0 && err <= num_errors) {
-		cp = sys_errlist[err];
-    } else
-# endif
-	{
+static const char * Errormsg ( int err )
+{
+	if( err == 0 ){
+		return "No Error";
+	} else {
 		static char msgbuf[32];     /* holds "errno=%d". */
-		(void) SNPRINTF(msgbuf, sizeof(msgbuf)) "errno=%d", err);
-		cp = msgbuf;
-    }
-#endif
-    return (cp);
+		(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
+		return msgbuf;
+	}
 }
+#endif
 
 #ifdef HAVE_STDARGS
-void logerr(char *msg, ...)
+static void logerr(char *msg, ...)
 #else
-void logerr( va_alist ) va_dcl
+static void logerr( va_alist ) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -334,9 +310,9 @@ void logerr( va_alist ) va_dcl
 }
 
 #ifdef HAVE_STDARGS
-void logerr_die(char *msg, ...)
+static void logerr_die(char *msg, ...)
 #else
-void logerr_die( va_alist ) va_dcl
+static void logerr_die( va_alist ) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS

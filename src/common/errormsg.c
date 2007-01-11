@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: errormsg.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "errormsg.h"
 #include "errorcodes.h"
@@ -37,48 +33,18 @@
  ****************************************************************************/
 /****************************************************************************/
 
-#if !defined(HAVE_STRERROR)
-# undef  num_errors
-# if defined(HAVE_SYS_ERRLIST)
-#  if !defined(HAVE_DECL_SYS_ERRLIST)
-     extern const char *const sys_errlist[];
-#  endif
-#  if defined(HAVE_SYS_NERR)
-#   if !defined(HAVE_DECL_SYS_NERR)
-      extern int sys_nerr;
-#   endif
-#   define num_errors    (sys_nerr)
-#  endif
-# endif
-# if !defined(num_errors)
-#   define num_errors   (-1)            /* always use "errno=%d" */
-# endif
-#endif
-
+#ifndef HAVE_STRERROR
 const char * Errormsg ( int err )
 {
-    const char *cp;
-
 	if( err == 0 ){
-		cp = "No Error";
+		return "No Error";
 	} else {
-#if defined(HAVE_STRERROR)
-		cp = strerror(err);
-#else
-# if defined(HAVE_SYS_ERRLIST)
-		if (err >= 0 && err < num_errors) {
-			cp = sys_errlist[err];
-		}
-# endif
-#endif
-	}
-	if( !cp ){
 		static char msgbuf[32];     /* holds "errno=%d". */
 		(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
-		cp = msgbuf;
+		return msgbuf;
 	}
-    return (cp);
 }
+#endif
 
  struct msgkind {
     int var;

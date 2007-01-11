@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -861,6 +860,12 @@ extern int innetgr(const char *netgroup,
 # define SNPRINTF(X,Y) plp_snprintf(X,Y,
 # define VSNPRINTF(X,Y) plp_vsnprintf(X,Y,
 # define SETSTATUS(X) setstatus(X,
+#endif
+
+#ifdef __GNUC__
+# define PRINTFATTR(fmtofs,dotsofs) __attribute__ ((format (printf, fmtofs, dotsofs)))
+#else
+# define PRINTFATTR(fmtofs,dotsofs)
 #endif
 
 #endif

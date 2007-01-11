@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: errormsg.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 #ifndef _ERRORMSG_H_
@@ -30,60 +29,65 @@
 #define MESSAGE Message
 #endif
 
+
 /* PROTOTYPES */
+#ifdef HAVE_STRERROR
+#define Errormsg strerror
+#else
 const char * Errormsg ( int err );
+#endif
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logmsg(int kind, char *msg,...)
+ void logmsg(int kind, char *msg,...) PRINTFATTR(2,3)
 #else
  void logmsg(va_alist) va_dcl
 #endif
 ;
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void fatal (int kind, char *msg,...)
+ void fatal (int kind, char *msg,...) PRINTFATTR(2,3)
 #else
  void fatal (va_alist) va_dcl
 #endif
 ;
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logerr (int kind, char *msg,...)
+ void logerr (int kind, char *msg,...) PRINTFATTR(2,3)
 #else
  void logerr (va_alist) va_dcl
 #endif
 ;
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logerr_die (int kind, char *msg,...)
+ void logerr_die (int kind, char *msg,...) PRINTFATTR(2,3)
 #else
  void logerr_die (va_alist) va_dcl
 #endif
 ;
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Diemsg (char *msg,...)
+ void Diemsg (char *msg,...) PRINTFATTR(1,2)
 #else
  void Diemsg (va_alist) va_dcl
 #endif
 ;
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Warnmsg (char *msg,...)
+ void Warnmsg (char *msg,...) PRINTFATTR(1,2)
 #else
  void Warnmsg (va_alist) va_dcl
 #endif
 ;
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Message (char *msg,...)
+ void Message (char *msg,...) PRINTFATTR(1,2)
 #else
  void Message (va_alist) va_dcl
 #endif
 ;
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void logDebug (char *msg,...)
+ void logDebug (char *msg,...) PRINTFATTR(1,2)
 #else
  void logDebug (va_alist) va_dcl
 #endif
@@ -91,16 +95,17 @@ const char * Errormsg ( int err );
 const char *Sigstr (int n);
 const char *Decode_status (plp_status_t *status);
 char *Server_status( int d );
+struct job;
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void setstatus (struct job *job,char *fmt,...)
+ void setstatus (struct job *job,char *fmt,...) PRINTFATTR(2,3)
 #else
  void setstatus (va_alist) va_dcl
 #endif
 ;
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void setmessage (struct job *job,const char *header, char *fmt,...)
+ void setmessage (struct job *job,const char *header, char *fmt,...) PRINTFATTR(3,4)
 #else
  void setmessage (va_alist) va_dcl
 #endif

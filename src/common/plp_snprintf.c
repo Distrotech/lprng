@@ -485,8 +485,7 @@
  
  
  static char *const _id = "plp_snprintf V2000.08.18 Copyright Patrick Powell 1988-2000 "
- "$Id: plp_snprintf.c,v 1.74 2004/09/24 20:19:58 papowell Exp $"
- " LOCAL REVISIONS: <NONE>";
+ " - lprng ";
 
 /* varargs declarations: */
 
@@ -527,6 +526,13 @@
 #endif
 	double dvalue;
 };
+
+#ifdef __GNUC__
+# define PRINTFATTR(fmtofs,dotsofs) __attribute__ ((format (printf, fmtofs, dotsofs)))
+#else
+# define PRINTFATTR(fmtofs,dotsofs)
+#endif
+#include "plp_snprintf.h"
 
 #undef CVAL 
 #define CVAL(s) (*((unsigned char *)s))
