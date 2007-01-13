@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: linelist.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 #include "lp.h"
 #include "errorcodes.h"
 #include "globmatch.h"
@@ -2240,7 +2237,7 @@ void Setup_env_for_process( struct line_list *env, struct job *job )
 
 	Init_line_list(&env_names);
 	if( (pw = getpwuid( getuid())) == 0 ){
-		LOGERR_DIE(LOG_INFO) "setup_envp: getpwuid(%d) failed", getuid());
+		LOGERR_DIE(LOG_INFO) "setup_envp: getpwuid(%ld) failed", (long)getuid());
 	}
 	Set_str_value(env,"PRINTER",Printer_DYN);
 	Set_str_value(env,"USER",pw->pw_name);
@@ -2416,9 +2413,9 @@ int In_group( char *group, char *user )
 	/* first try getgrnam, see if it is a group */
 	pwent = getpwnam(user);
 	if( (grent = getgrnam( group )) ){
-		DEBUGF(DDB3)("In_group: group id: %d\n", grent->gr_gid);
-		if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
-			DEBUGF(DDB3)("In_group: user default group id: %d\n", pwent->pw_gid);
+		DEBUGF(DDB3)("In_group: group id: %ld\n", (long)grent->gr_gid);
+		if( pwent && ((long)pwent->pw_gid == (long)grent->gr_gid) ){
+			DEBUGF(DDB3)("In_group: user default group id: %ld\n", (long)pwent->pw_gid);
 			result = 0;
 		} else for( members = grent->gr_mem; result && *members; ++members ){
 			DEBUGF(DDB3)("In_group: member '%s'", *members);
@@ -2432,9 +2429,9 @@ int In_group( char *group, char *user )
 			DEBUGF(DDB3)("In_group: group name '%s'", grent->gr_name);
 			/* now do match against group */
 			if( Globmatch( group, grent->gr_name ) == 0 ){
-				if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
-					DEBUGF(DDB3)("In_group: user default group id: %d\n",
-					pwent->pw_gid);
+				if( pwent && ((long)pwent->pw_gid == (long)grent->gr_gid) ){
+					DEBUGF(DDB3)("In_group: user default group id: %ld\n",
+					(long)pwent->pw_gid);
 					result = 0;
 				} else {
 					DEBUGF(DDB3)("In_group: found '%s'", grent->gr_name);
@@ -2761,14 +2758,14 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
 			fd = Cast_ptr_to_int(passfd->list[i]);
 			if( dup2(fd,i) == -1 ){
 				SNPRINTF(error,sizeof(error))
-					"Make_passthrough: pid %d, dup2(%d,%d) failed", getpid(), fd, i );
+					"Make_passthrough: pid %ld, dup2(%d,%d) failed", (long)getpid(), fd, i );
 				Write_fd_str(2,error);
 				exit(JFAIL);
 			}
 		}
 		execve(cmd.list[0],cmd.list,env.list);
 		SNPRINTF(error,sizeof(error))
-			"Make_passthrough: pid %d, execve '%s' failed - '%s'\n", getpid(),
+			"Make_passthrough: pid %ld, execve '%s' failed - '%s'\n", (long)getpid(),
 			cmd.list[0], Errormsg(errno) );
 		Write_fd_str(2,error);
 		exit(JABORT);

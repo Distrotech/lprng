@@ -101,7 +101,7 @@ int main(int argc, char *argv[], char *envp[])
         LOGDEBUG("lpr: after init open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -143,7 +143,7 @@ int main(int argc, char *argv[], char *envp[])
         LOGDEBUG("lpr: after Make_job open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -892,7 +892,7 @@ int Make_job( struct job *job )
 						uid = pw->pw_uid;
 					}
 				}
-				DEBUG2( "Make_job: uid '%d'", uid );
+				DEBUG2( "Make_job: uid '%ld'", (long)uid );
 				found = ( uid == OriginalRUID );
 				DEBUG2( "Make_job: found '%d'", found );
 			}

@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_control.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "getopt.h"
 #include "proctitle.h"
@@ -470,11 +466,11 @@ void Do_queue_control( char *user, int action, int *sock,
 				kill( serverpid, SIGQUIT );
 			}
 			if( kill( serverpid, signal_server ) ){
-				SNPRINTF(msg,sizeof(msg))_("server process PID %d exited\n"),
-					serverpid );
+				SNPRINTF(msg,sizeof(msg))_("server process PID %ld exited\n"),
+					(long)serverpid );
 			} else {
-				SNPRINTF(msg,sizeof(msg))_("kill server process PID %d with %s\n"),
-					serverpid, Sigstr(signal_server) );
+				SNPRINTF(msg,sizeof(msg))_("kill server process PID %ld with %s\n"),
+					(long)serverpid, Sigstr(signal_server) );
 			}
 			Write_fd_str(*sock,msg);
 		}
@@ -526,7 +522,7 @@ void Do_queue_control( char *user, int action, int *sock,
 		}
 	}
 
-	DEBUGF(DCTRL4)("Do_queue_control: server pid %d", serverpid );
+	DEBUGF(DCTRL4)("Do_queue_control: server pid %ld", (long)serverpid );
 
 	/* start the server if necessary */
 	switch( action ){

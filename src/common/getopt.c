@@ -7,11 +7,8 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: getopt.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
+#include "getopt.h"
 /**** ENDINCLUDE ****/
 
 

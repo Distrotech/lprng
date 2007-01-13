@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: child.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "getqueue.h"
 #include "getopt.h"
@@ -51,7 +47,7 @@ pid_t plp_waitpid (pid_t pid, plp_status_t *statusPtr, int options)
 {
 	int report;
 	memset(statusPtr,0,sizeof(statusPtr[0]));
-	DEBUG2("plp_waitpid: pid %d, options %d", pid, options );
+	DEBUG2("plp_waitpid: pid %ld, options %d", (long)pid, options );
 	report = waitpid(pid, statusPtr, options );
 	DEBUG2("plp_waitpid: returned %d, status %s", report,
 		Decode_status( statusPtr ) );
@@ -310,8 +306,8 @@ void Dump_unfreed_mem(char *title)
 {
 	char buffer[SMALLBUFFER];
 	buffer[0] = 0;
-	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %d\n",
-		title, getpid() );
+	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %ld\n",
+		title, (long)getpid() );
 #if defined(DMALLOC)
 	{
 	extern int dmalloc_outfile_fd;
@@ -321,8 +317,8 @@ void Dump_unfreed_mem(char *title)
 		dmalloc_outfile_fd = open( dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		Max_open( dmalloc_outfile_fd );
 	}
-	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %d\n",
-		title, getpid() );
+	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %ld\n",
+		title, (long)getpid() );
 	Write_fd_str(dmalloc_outfile_fd, buffer );
 	if(Outbuf) free(Outbuf); Outbuf = 0;
 	if(Inbuf) free(Inbuf); Inbuf = 0;

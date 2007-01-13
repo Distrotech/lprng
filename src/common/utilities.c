@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: utilities.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
 #include "lp.h"
 
 #include "utilities.h"
@@ -1066,10 +1063,10 @@ void Setup_uid(void)
 		OriginalRUID = getuid();	
 		OriginalEGID = getegid();	
 		OriginalRGID = getgid();	
-		DEBUG1("Setup_uid: OriginalEUID %d, OriginalRUID %d",
-			OriginalEUID, OriginalRUID );
-		DEBUG1("Setup_uid: OriginalEGID %d, OriginalRGID %d",
-			OriginalEGID, OriginalRGID );
+		DEBUG1("Setup_uid: OriginalEUID %ld, OriginalRUID %ld",
+			(long)OriginalEUID, (long)OriginalRUID );
+		DEBUG1("Setup_uid: OriginalEGID %ld, OriginalRGID %ld",
+			(long)OriginalEGID, (long)OriginalRGID );
 		/* we now make sure that we are able to use setuid() */
 		/* notice that setuid() will work if EUID or RUID is 0 */
 		if( OriginalEUID == ROOTUID || OriginalRUID == ROOTUID ){
@@ -1082,20 +1079,20 @@ void Setup_uid(void)
 #				endif
 				){
 				FATAL(LOG_ERR)
-					"Setup_uid: RUID/EUID Start %d/%d seteuid failed",
-					OriginalRUID, OriginalEUID);
+					"Setup_uid: RUID/EUID Start %ld/%ld seteuid failed",
+					(long)OriginalRUID, (long)OriginalEUID);
 			}
 			if( getuid() != ROOTUID ){
 				FATAL(LOG_ERR)
-				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %d/%d, now %d/%d",
-					OriginalRUID, OriginalEUID, 
-					getuid(), geteuid() );
+				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %ld/%ld, now %ld/%ld",
+					(long)OriginalRUID, (long)OriginalEUID,
+					(long)getuid(), (long)geteuid() );
 			}
 			UID_root = 1;
 		}
-		DEBUG1( "Setup_uid: Original RUID/EUID %d/%d, RUID/EUID %d/%d",
-					OriginalRUID, OriginalEUID, 
-					getuid(), geteuid() );
+		DEBUG1( "Setup_uid: Original RUID/EUID %ld/%ld, RUID/EUID %ld/%ld",
+					(long)OriginalRUID, (long)OriginalEUID,
+					(long)getuid(), (long)geteuid() );
 		SetRootUID = 1;
 	}
 	errno = err;
@@ -1114,8 +1111,8 @@ void Setup_uid(void)
 
 
 	DEBUG4(
-		"seteuid_wrapper: Before RUID/EUID %d/%d, DaemonUID %d, UID_root %d",
-		OriginalRUID, OriginalEUID, DaemonUID, UID_root );
+		"seteuid_wrapper: Before RUID/EUID %ld/%ld, DaemonUID %ld, UID_root %ld",
+		(long)OriginalRUID, (long)OriginalEUID, (long)DaemonUID, (long)UID_root );
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( ROOTUID ) ){
@@ -1135,7 +1132,7 @@ void Setup_uid(void)
 #endif
 	}
 	euid = geteuid();
-	DEBUG4( "seteuid_wrapper: After uid/euid %d/%d", getuid(), euid );
+	DEBUG4( "seteuid_wrapper: After uid/euid %ld/%ld", (long)getuid(), (long)euid );
 	errno = err;
 	return( to != euid );
 }
@@ -1154,8 +1151,8 @@ void Setup_uid(void)
 
 
 	DEBUG4(
-		"setruid_wrapper: Before RUID/EUID %d/%d, DaemonUID %d, UID_root %d",
-		OriginalRUID, OriginalEUID, DaemonUID, UID_root );
+		"setruid_wrapper: Before RUID/EUID %ld/%ld, DaemonUID %ld, UID_root %ld",
+		(long)OriginalRUID, (long)OriginalEUID, (long)DaemonUID, (long)UID_root );
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( ROOTUID ) ){
@@ -1182,7 +1179,7 @@ void Setup_uid(void)
 #endif
 	}
 	ruid = getuid();
-	DEBUG4( "setruid_wrapper: After uid/euid %d/%d", getuid(), geteuid() );
+	DEBUG4( "setruid_wrapper: After uid/euid %ld/%ld", (long)getuid(), (long)geteuid() );
 	errno = err;
 	return( to != ruid );
 }
@@ -1242,12 +1239,12 @@ int setuid_wrapper(uid_t to)
 		if( setuid( (uid_t)ROOTUID ) ){
 			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(ROOTUID) failed!!");
 		}
-		if( setuid( (uid_t)to ) ){
-			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(%d) failed!!", to);
+		if( setuid( to ) ){
+			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(%ld) failed!!", (long)to);
 		}
 		if( to ) UID_root = 0;
 	}
-    DEBUG4("after setuid: (%d, %d)", getuid(),geteuid());
+    DEBUG4("after setuid: (%ld, %ld)", (long)getuid(),(long)geteuid());
 	errno = err;
 	return( to != getuid() || to != geteuid() );
 }
@@ -1331,9 +1328,9 @@ int Getdaemon_group(void)
 			gid = gr->gr_gid;
 		}
 	}
-	DEBUG4( "Getdaemon_group: gid '%d'", gid );
+	DEBUG4( "Getdaemon_group: gid '%ld'", (long)gid );
 	if( gid == 0 ) gid = getgid();
-	DEBUG4( "Getdaemon_group: final gid '%d'", gid );
+	DEBUG4( "Getdaemon_group: final gid '%ld'", (long)gid );
 	return( gid );
 }
 
@@ -1422,7 +1419,7 @@ void Reset_daemonuid(void)
             DaemonUID = uid;
         }
     }
-    DEBUG4( "DaemonUID %d", DaemonUID );
+    DEBUG4( "DaemonUID %ld", (long)DaemonUID );
 }
 
 

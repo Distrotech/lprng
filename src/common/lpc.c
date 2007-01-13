@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpc.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 /***************************************************************************
  * SYNOPSIS
  *      lpc [ -PPrinter] [-S Server] [-U username ][-V] [-D debug] [command]
@@ -167,7 +163,7 @@ int main(int argc, char *argv[], char *envp[])
 					uid = pw->pw_uid;
 				}
 			}
-			DEBUG2( "lpc: uid '%d'", uid );
+			DEBUG2( "lpc: uid '%ld'", (long)uid );
 			found = ( uid == OriginalRUID );
 			DEBUG2( "lpc: found '%d'", found );
 		}
@@ -360,14 +356,14 @@ void doaction( struct line_list *args )
 		}
 		while( (result = plp_waitpid(pid,&status,0)) != pid ){
 			int err = errno;
-			DEBUG1("lpc: waitpid(%d) returned %d, err '%s'",
-				pid, result, Errormsg(err) );
+			DEBUG1("lpc: waitpid(%ld) returned %ld, err '%s'",
+				(long)pid, (long)result, Errormsg(err) );
 			if( err == EINTR ) continue; 
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("doaction: waitpid(%d) failed"), pid);
+			LOGERR_DIE(LOG_ERR) _("doaction: waitpid(%ld) failed"), (long)pid);
 		} 
-		DEBUG1("lpc: system pid %d, exit status %s",
-			result, Decode_status( &status ) );
+		DEBUG1("lpc: system pid %ld, exit status %s",
+			(long)result, Decode_status( &status ) );
 	} else {
 		/*
 		 * rearrange the options so that you have

@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lprm.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
@@ -183,9 +179,9 @@ int main(int argc, char *argv[], char *envp[])
 					uid = pw->pw_uid;
 				}
 			}
-			DEBUG2( "lprm: uid '%d'", uid );
+			DEBUG2( "lprm: uid '%ld'", (long)uid );
 			found = ( uid == OriginalRUID );
-			DEBUG2( "lprm: found '%d'", found );
+			DEBUG2( "lprm: found '%ld'", (long)found );
 		}
 		if( !found ){
 			DEBUG1( "-U (username) can only be used by ROOT or authorized users" );

@@ -864,8 +864,10 @@ extern int innetgr(const char *netgroup,
 
 #ifdef __GNUC__
 # define PRINTFATTR(fmtofs,dotsofs) __attribute__ ((format (printf, fmtofs, dotsofs)))
+# define NORETURN __attribute__ ((noreturn))
 #else
 # define PRINTFATTR(fmtofs,dotsofs)
+# define NORETURN
 #endif
 
 #endif

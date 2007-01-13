@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: fileopen.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "fileopen.h"
 #include "errorcodes.h"
@@ -61,7 +57,7 @@ int Checkread( const char *file, struct stat *statb )
 	if( status >= 0 && !(S_ISREG(statb->st_mode))){
 		/* AHA!  not a regular file! */
 		DEBUG3( "Checkread: '%s' not regular file, mode = 0%o",
-			file, statb->st_mode );
+			file, (unsigned int)statb->st_mode );
 		status = -1;
 	}
 
@@ -153,7 +149,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 	if( status >= 0 && (S_ISDIR(statb->st_mode))){
 		/* AHA!  Directory! */
 		DEBUG3( "Checkwrite: '%s' directory, mode 0%o",
-			file, statb->st_mode );
+			file, (unsigned int)statb->st_mode );
 		status = -1;
 	}
 	if( fd == 0 ){
