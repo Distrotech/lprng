@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: printjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "errorcodes.h"
 #include "printjob.h"
@@ -138,7 +134,7 @@ int Print_job( int output, int status_device, struct job *job,
 		LOGDEBUG("Print_job: at start open fd's");
 		for( i = 0; i < 20; ++i ){
 			if( fstat(i,&statb) == 0 ){
-				LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+				LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
 			}
 		}
 	}
@@ -338,7 +334,7 @@ int Print_job( int output, int status_device, struct job *job,
 			if(DEBUGL5){
 				LOGDEBUG("Print_job: doing '%s' open fd's", openname);
 				for( i = 0; i < 20; ++i ) if( fstat(i,&statb) == 0 )
-					 LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+					 LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
 			}
 			Init_buf(&Outbuf, &Outmax, &Outlen );
 			if( files_printed++ && (!No_FF_separator_DYN || FF_separator_DYN) && FF_str ){
@@ -561,7 +557,7 @@ int Print_job( int output, int status_device, struct job *job,
 		LOGDEBUG("Print_job: at end open fd's");
 		for( i = 0; i < 20; ++i ){
 			if( fstat(i,&statb) == 0 ){
-				LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+				LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
 			}
 		}
 	}
@@ -759,7 +755,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
 		LOGDEBUG("Print_banner: at start open fd's");
 		for( i = 0; i < 20; ++i ){
 			if( fstat(i,&statb) == 0 ){
-				LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+				LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
 			}
 		}
 	}
@@ -816,7 +812,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
 		LOGDEBUG("Print_banner: at end open fd's");
 		for( i = 0; i < 20; ++i ){
 			if( fstat(i,&statb) == 0 ){
-				LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+				LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
 			}
 		}
 	}

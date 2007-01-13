@@ -162,7 +162,7 @@ const char * Errormsg ( int err )
 		}
 		if(Debug || DbgFlag){
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) SNPRINTF(s, n) " [%d]", getpid());
+			(void) SNPRINTF(s, n) " [%ld]", (long)getpid());
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
 			if(Name) (void) SNPRINTF(s, n) " %s", Name);
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;

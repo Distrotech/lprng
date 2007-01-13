@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: initialize.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 #include "lp.h"
 #include "defs.h"
 #include "initialize.h"
@@ -84,7 +81,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
         LOGDEBUG("Initialize: starting with open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -133,7 +130,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
         LOGDEBUG("Initialize: before setlocale");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -150,7 +147,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
         LOGDEBUG("Initialize: ending with open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -217,9 +214,9 @@ void Setup_configuration()
 		Set_DYN( &Logname_DYN, s );
 		if(s) free(s); s = 0;
 	}
-	DEBUG1( "Is_server %d, DaemonUID %d, DaemonGID %d, UID %d, EUID %d, GID %d, EGID %d",
-		Is_server, DaemonUID, DaemonGID,
-		getuid(), geteuid(), getgid(), getegid() );
+	DEBUG1( "Is_server %ld, DaemonUID %ld, DaemonGID %ld, UID %ld, EUID %ld, GID %ld, EGID %ld",
+		(long)Is_server, (long)DaemonUID, (long)DaemonGID,
+		(long)getuid(), (long)geteuid(), (long)getgid(), (long)getegid() );
 
 	DEBUG1("Setup_configuration: Host '%s', ShortHost '%s', user '%s'",
 		FQDNHost_FQDN, ShortHost_FQDN, Logname_DYN );
@@ -316,7 +313,7 @@ char *Get_user_information( void )
 	if( name == 0 ) name = getenv( "LOGNAME" );
 	if( name == 0 ) name = getenv( "USER" );
 	if( name == 0 ){
-		SNPRINTF( uid_msg, sizeof(uid_msg)) "UID_%d", uid );
+		SNPRINTF( uid_msg, sizeof(uid_msg)) "UID_%ld", (long)uid );
 		name = uid_msg;
 	}
 	name = safestrdup(name,__FILE__,__LINE__);

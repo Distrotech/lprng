@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: permission.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "fileopen.h"
 #include "globmatch.h"
@@ -631,9 +627,9 @@ int ingroup( char *group, const char *user )
 		result = match_group( &users,user,0);
 		Free_line_list(&users);
 	} else if( (grent = getgrnam( group )) ){
-		DEBUGF(DDB3)("ingroup: group id: %d\n", grent->gr_gid);
-		if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
-			DEBUGF(DDB3)("ingroup: user default group id: %d\n", pwent->pw_gid);
+		DEBUGF(DDB3)("ingroup: group id: %ld\n", (long)grent->gr_gid);
+		if( pwent && ((long)pwent->pw_gid == (long)grent->gr_gid) ){
+			DEBUGF(DDB3)("ingroup: user default group id: %ld\n", (long)pwent->pw_gid);
 			result = 0;
 		} else for( members = grent->gr_mem; result && *members; ++members ){
 			DEBUGF(DDB3)("ingroup: member '%s'", *members);
@@ -646,9 +642,9 @@ int ingroup( char *group, const char *user )
 			DEBUGF(DDB3)("ingroup: group name '%s'", grent->gr_name);
 			/* now do match against group */
 			if( Globmatch( group, grent->gr_name ) == 0 ){
-				if( pwent && ((int)pwent->pw_gid == (int)grent->gr_gid) ){
-					DEBUGF(DDB3)("ingroup: user default group id: %d\n",
-					pwent->pw_gid);
+				if( pwent && ((long)pwent->pw_gid == (long)grent->gr_gid) ){
+					DEBUGF(DDB3)("ingroup: user default group id: %ld\n",
+					(long)pwent->pw_gid);
 					result = 0;
 				} else {
 					DEBUGF(DDB3)("ingroup: found '%s'", grent->gr_name);

@@ -7,11 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: checkpc.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
-
 #include "lp.h"
 #include "defs.h"
 #include "getopt.h"
@@ -175,7 +170,7 @@ int main( int argc, char *argv[], char *envp[] )
 
 	DEBUG1("Effective UID %d, Real UID %d, Effective GID %d, Real GID %d",
 		euid, ruid, egid, rgid );
-	if(Verbose)MESSAGE(" DaemonUID %d, DaemonGID %d", DaemonUID, DaemonGID );
+	if(Verbose)MESSAGE(" DaemonUID %ld, DaemonGID %ld", (long)DaemonUID, (long)DaemonGID );
 
 
 	if(Verbose )MESSAGE("Using Config file '%s'", Config_file_DYN);
@@ -215,7 +210,7 @@ int main( int argc, char *argv[], char *envp[] )
         LOGDEBUG("main: START open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -241,7 +236,7 @@ int main( int argc, char *argv[], char *envp[] )
         LOGDEBUG("main: END open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -313,7 +308,7 @@ void Scan_printer(struct line_list *spooldirs)
         LOGDEBUG("Scan_printer: START open fd's");
         for( i = 0; i < 20; ++i ){
             if( fstat(i,&statb) == 0 ){
-                LOGDEBUG("  fd %d (0%o)", i, statb.st_mode&S_IFMT);
+                LOGDEBUG("  fd %d (0%o)", i, (unsigned int)(statb.st_mode&S_IFMT));
             }
         }
     }
@@ -737,15 +732,15 @@ int Check_file( char  *path, int fix, int age, int rmflag )
 	}
 
 	if( statb.st_uid != DaemonUID || statb.st_gid != DaemonGID ){
-		WARNMSG( "owner/group of '%s' are %d/%d, not %d/%d", path,
-			(int)(statb.st_uid), (int)(statb.st_gid), DaemonUID, DaemonGID );
+		WARNMSG( "owner/group of '%s' are %ld/%ld, not %ld/%ld", path,
+			(long)(statb.st_uid), (long)(statb.st_gid), (long)DaemonUID, (long)DaemonGID );
 		if( fix ){
 			if( Fix_owner( path ) ) err = 2;
 		}
 	}
 	if( 07777 & (statb.st_mode ^ Spool_file_perms_DYN) ){
 		WARNMSG( "permissions of '%s' are 0%o, not 0%o", path,
-			statb.st_mode & 07777, Spool_file_perms_DYN );
+			(unsigned int)(statb.st_mode & 07777), Spool_file_perms_DYN );
 		if( fix ){
 			if( Fix_perms( path, Spool_file_perms_DYN ) ) err = 1;
 		}
@@ -850,10 +845,10 @@ int Fix_owner( char *path )
 	int euid = geteuid();
 
 	To_euid_root();
-	WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
+	WARNMSG( "  changing ownership '%s' to %ld/%ld", path, (long)DaemonUID, (long)DaemonGID );
 	chown( path, DaemonUID, DaemonGID );
 	if( geteuid() == ROOTUID ){
-		WARNMSG( "  changing ownership '%s' to %d/%d", path, DaemonUID, DaemonGID );
+		WARNMSG( "  changing ownership '%s' to %ld/%ld", path, (long)DaemonUID, (long)DaemonGID );
 		status = chown( path, DaemonUID, DaemonGID );
 		err = errno;
 		if( status ){
@@ -926,19 +921,19 @@ int Check_spool_dir( char *path, int owner )
 		if( stat( pathname, &statb ) == 0 && S_ISDIR( statb.st_mode )
 			&& chdir( pathname ) == -1 ){
 			if( !Fix ){
-				WARNMSG( "cannot chdir to '%s' as UID %d, GRP %d - '%s'",
-					pathname, geteuid(), getegid(), Errormsg(errno) );
+				WARNMSG( "cannot chdir to '%s' as UID %ld, GRP %ld - '%s'",
+					pathname, (long)geteuid(), (long)getegid(), Errormsg(errno) );
 			} else {
 				Fix_perms( pathname, Spool_dir_perms_DYN );
 				if( chdir( pathname ) == -1 ){
-					WARNMSG( "Permission change FAILED: cannot chdir to '%s' as UID %d, GRP %d - '%s'",
-					pathname, geteuid(), getegid(), Errormsg(errno) );
+					WARNMSG( "Permission change FAILED: cannot chdir to '%s' as UID %ld, GRP %ld - '%s'",
+					pathname, (long)geteuid(), (long)getegid(), Errormsg(errno) );
 					Fix_owner( pathname );
 					Fix_perms( pathname, Spool_dir_perms_DYN );
 				}
 				if( chdir( pathname ) == -1 ){
-					WARNMSG( "Owner and Permission change FAILED: cannot chdir to '%s' as UID %d, GRP %d - '%s'",
-					pathname, geteuid(), getegid(), Errormsg(errno) );
+					WARNMSG( "Owner and Permission change FAILED: cannot chdir to '%s' as UID %ld, GRP %ld - '%s'",
+					pathname, (long)geteuid(), (long)getegid(), Errormsg(errno) );
 				}
 			}
 		}
@@ -952,9 +947,9 @@ int Check_spool_dir( char *path, int owner )
 		int euid = geteuid();
 
 		To_euid_root();
-		SNPRINTF( cmd, sizeof(cmd)) "%s -R %d %s", CHOWN, DaemonUID, path );
+		SNPRINTF( cmd, sizeof(cmd)) "%s -R %ld %s", CHOWN, (long)DaemonUID, path );
 		system( cmd );
-		SNPRINTF( cmd, sizeof(cmd)) "%s -R %d %s", CHGRP, DaemonGID, path );
+		SNPRINTF( cmd, sizeof(cmd)) "%s -R %ld %s", CHGRP, (long)DaemonGID, path );
 		system( cmd );
 		To_euid(euid);
 	}
@@ -965,8 +960,8 @@ int Check_spool_dir( char *path, int owner )
 	}
 	/* now we look at the last directory */
 	if( statb.st_uid != DaemonUID || statb.st_gid != DaemonGID ){
-		WARNMSG( "owner/group of '%s' are %d/%d, not %d/%d", path,
-			(int)(statb.st_uid), (int)(statb.st_gid), DaemonUID, DaemonGID );
+		WARNMSG( "owner/group of '%s' are %ld/%ld, not %ld/%ld", path,
+			(long)(statb.st_uid), (long)(statb.st_gid), (long)DaemonUID, (long)DaemonGID );
 		err = 1;
 		if( Fix ){
 			if( Fix_owner( path ) ) err = 2;
@@ -974,7 +969,7 @@ int Check_spool_dir( char *path, int owner )
 	}
 	if( 07777 & (statb.st_mode ^ Spool_dir_perms_DYN) ){
 		WARNMSG( "permissions of '%s' are 0%o, not 0%o", path,
-			statb.st_mode & 07777, Spool_dir_perms_DYN );
+			(unsigned int)(statb.st_mode & 07777), Spool_dir_perms_DYN );
 		err = 1;
 		if( Fix ){
 			if( Fix_perms( path, Spool_dir_perms_DYN ) ) err = 1;
@@ -1231,8 +1226,8 @@ void Test_port(int ruid, int euid, char *serial_line )
 			FPRINTF( STDERR, "fork failed - %s", Errormsg(errno) );
 		} else if( pid == 0 ){
 			/* default for status */
-			SNPRINTF( t1, sizeof(t1)) "/tmp/t1XXX%d", getpid() );
-			SNPRINTF( t2, sizeof(t2)) "/tmp/t2XXX%d", getpid() );
+			SNPRINTF( t1, sizeof(t1)) "/tmp/t1XXX%ld", (long)getpid() );
+			SNPRINTF( t2, sizeof(t2)) "/tmp/t2XXX%ld", (long)getpid() );
 			diffcmd = "diff -c %s %s 1>&2";
 			ttyfd = 1;	/*STDOUT is reported */
 			sttycmd = "stty -a 2>%s";	/* on STDERR */
@@ -1328,7 +1323,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	/*
 	 * check out Lockf
 	 */
-	SNPRINTF( line, sizeof(line)) "/tmp/XX%dXX", getpid() );
+	SNPRINTF( line, sizeof(line)) "/tmp/XX%ldXX", (long)getpid() );
 	FPRINTF( STDERR, "Checking Lockf '%s'\n", line );
 	if( (fd = Checkwrite(line, &statb, O_RDWR, 1, 0 )) < 0) {
 		err = errno;
@@ -1517,7 +1512,7 @@ int Check_path_list( char *plist, int allow_missing )
 				}
 			} else {
 				close(fd);
-				if(Verbose)MESSAGE("  found '%s', mod 0%o", path, statb.st_mode );
+				if(Verbose)MESSAGE("  found '%s', mod 0%o", path, (unsigned int)statb.st_mode );
 				++found_pc;
 				if( (statb.st_mode & 0444) != 0444 ){
 					WARNMSG(" '%s' is not world readable", path );

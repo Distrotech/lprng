@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: child.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -18,13 +17,13 @@ void Dump_pinfo( char *title, struct line_list *p ) ;
 int Countpid(void);
 void Killchildren( int sig );
 pid_t dofork( int new_process_group );
-plp_signal_t cleanup_USR1 (int passed_signal);
-plp_signal_t cleanup_HUP (int passed_signal);
-plp_signal_t cleanup_INT (int passed_signal);
-plp_signal_t cleanup_QUIT (int passed_signal);
-plp_signal_t cleanup_TERM (int passed_signal);
+plp_signal_t cleanup_USR1 (int passed_signal) NORETURN;
+plp_signal_t cleanup_HUP (int passed_signal) NORETURN;
+plp_signal_t cleanup_INT (int passed_signal) NORETURN;
+plp_signal_t cleanup_QUIT (int passed_signal) NORETURN;
+plp_signal_t cleanup_TERM (int passed_signal) NORETURN;
 void Max_open( int fd );
-plp_signal_t cleanup (int passed_signal);
+plp_signal_t cleanup (int passed_signal) NORETURN;
 void Dump_unfreed_mem(char *title);
 
 #endif

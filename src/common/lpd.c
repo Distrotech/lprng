@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "child.h"
 #include "fileopen.h"
@@ -155,10 +151,10 @@ int main(int argc, char *argv[], char *envp[])
 	Get_parms(argc, argv);      /* scan input args */
 
 	Initialize(argc, argv, envp, 'D' );
-	DEBUG1("Get_parms: UID_root %d, OriginalRUID %d", UID_root, OriginalRUID);
+	DEBUG1("Get_parms: UID_root %ld, OriginalRUID %ld", (long)UID_root, (long)OriginalRUID);
 
 	if( UID_root && (OriginalRUID != ROOTUID) ){
-		FATAL(LOG_ERR) "lpd installed SETUID root and started by user %d! Possible hacker attack", OriginalRUID);
+		FATAL(LOG_ERR) "lpd installed SETUID root and started by user %ld! Possible hacker attack", (long)OriginalRUID);
 	}
 
 	Setup_configuration();
