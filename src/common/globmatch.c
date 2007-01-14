@@ -7,10 +7,8 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: globmatch.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 #include "lp.h"
+#include "globmatch.h"
 
 /**** ENDINCLUDE ****/
 

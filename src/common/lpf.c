@@ -496,7 +496,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 /*
  * suspend_ofilter():  suspends the output filter, waits for a signal
  */
-void suspend_ofilter(void)
+static void suspend_ofilter(void)
 {
 	fflush(stdout);
 	fflush(stderr);

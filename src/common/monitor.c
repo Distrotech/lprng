@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: monitor.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "linelist.h"
 #include "getopt.h"
@@ -28,7 +24,9 @@
  */
 
 
+#ifndef HAVE_ERRNO_DECL
 extern int errno;
+#endif
 
 int udp_open( int port );
 int tcp_open( int port );
@@ -64,7 +62,7 @@ struct info {
 struct info *inbuffers;
 int max_in_buffers;
 
-void Add_buffer( int n )
+static void Add_buffer( int n )
 {
 	int len = max_in_buffers, count;
 
@@ -86,7 +84,7 @@ void Add_buffer( int n )
 		n, Cast_ptr_to_long(inbuffers), max_in_buffers );
 }
 
-void Clear_buffer( int n )
+static void Clear_buffer( int n )
 {
 	struct info *in;
 	if(debug)FPRINTF(STDERR,"Clear_buffer: n %d\n", n );
@@ -95,7 +93,7 @@ void Clear_buffer( int n )
 	in->len = 0;
 }
 
-struct info *Save_outbuf_len( int n,  char *str, int len )
+static struct info *Save_outbuf_len( int n,  char *str, int len )
 {
 	struct info *in;
 
@@ -123,7 +121,7 @@ struct info *Save_outbuf_len( int n,  char *str, int len )
 	return( in );
 }
 
-void usage(void)
+static void usage(void)
 {
 	char *s;
 
