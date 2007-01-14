@@ -437,7 +437,7 @@ int Read_status_info( char *host, int sock,
 	return(0);
 }
 
-void Term_clear()
+void Term_clear(void)
 {
 #if defined(CLEAR) 
 	int pid, n;

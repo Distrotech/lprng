@@ -3824,7 +3824,7 @@ int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args 
 
 void Do_work( char *name, struct line_list *args )
 {
-	void  (*proc)() = 0;
+	WorkerProc *proc = NULL;
 	Logger_fd = Find_flag_value(args, LOGGER);
 	Status_fd = Find_flag_value(args, STATUS_FD);
 	Mail_fd = Find_flag_value(args, MAIL_FD);

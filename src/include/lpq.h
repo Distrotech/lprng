@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpq.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -28,7 +27,7 @@ void Show_status(char **argv);
 int Read_status_info( char *host, int sock,
 	int output, int timeout, int displayformat,
 	int status_line_count );
-void Term_clear();
+void Term_clear(void);
 void Get_parms(int argc, char *argv[] );
 void usage(void);
 

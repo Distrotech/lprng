@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: linelist.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -25,7 +24,7 @@ struct line_list {
 	int max;		/* maximum number of entries */
 };
 
-typedef void (WorkerProc)();
+typedef void (WorkerProc)( struct line_list *args );
 
 /*
  * data structure for job
