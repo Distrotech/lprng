@@ -39,7 +39,7 @@
 LPRng requires ANSI Standard C compiler
 #endif
 
-#include "config.h"
+#include <config.h>
 
 #ifdef HAVE_CTYPE_H
 #include <ctype.h>
@@ -361,10 +361,6 @@ typedef struct dirent plp_dir_t;
    void *malloc(size_t);
    void free(void *);
 # endif
-#endif
-
-#ifndef HAVE_ERRNO_DECL
- extern int errno;
 #endif
 
 /*********************************************************************

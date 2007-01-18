@@ -1,3 +1,9 @@
+
+
+   THIS FILE IS SEVERLY OUT OF DATE AND NEEDS A REWRITE....
+   MANY THINGS HAVE CHANGED QUITE A BIT...
+
+
                LPRng Installation
           Patrick Powell <papowell@lprng.com>
        Last Updated Sun Aug 19 14:49:25 PDT 2001
@@ -60,14 +66,9 @@ CAVEATS and WARNINGS:
 
     The LPRng software requires an ANSI C compiler and a make utility that is
     compatible with Gnu Make (verson 3.73 or later) or FreeBSD 4.2 or later.
-    LPRng is compiled and tested using GCC and Gnu Make.  It uses libtool
-    to create a shared library on systems where this is supported.  Due to
-	security concerns with dynamic or shared libraries,  LPRng by default is
-    compiled as statically linked executables.  Before using dynamic or
-    shared libraries,  please check on the security implications of doing so
-    for SETUID ROOT or executables running as ROOT.
+    LPRng is compiled and tested using GCC and Gnu Make.
 
-INCLUDE FILES AND LIBRARIES 
+INCLUDE FILES AND LIBRARIES
 
 If you are using GETOPT or Kerberos you may need to extend the search
 paths for include files and libraries.  See the STANDARD_configuration
@@ -129,6 +130,8 @@ EXTREMELY IMPORTANT WARNING FOR THE SANITY OF SYSADMINS
      You have been warned.
 
 SYSTEM STARTUP SCRIPTS
+
+These are not available in the current version!
 
 The software install procedures will attempt to create and install
 a startup script for the following systems:
@@ -220,7 +223,7 @@ CONFIGURATION
          printcap:   /etc/printcap (/etc/printcap.sample)
 
   EXECUTABLES AND SHARED LIBRARIES:
-         (* indicates SETUID root permissions)
+         (* indicates SETUID root permissions, not set by current makefiles)
      ${bindir}/ lpr*, lprm*, lpq*, lpstat*
      ${sbindir}/lpc*, checkpc, lpd
      ${libdir}/liblpr.so, liblib.a
@@ -287,9 +290,9 @@ CONFIGURATION OPTIONS
 	  --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
 										   use 'no' to disable installation and lpd startup
 	  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd
-	  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib
+	  --with-filter-ld-libary-path=PATH filter LD_LIBRARY_PATH value, default empty (was /lib:/usr/lib:/usr/local/lib in earlier versions)
 	  --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin
-	  --with-localedir=PATH   specify locale information directory
+	  --with-localedir=PATH             specify locale information directory
 
   OPERATIONAL 
 
@@ -300,29 +303,17 @@ CONFIGURATION OPTIONS
 	  --enable-kerberos                 enable kerberos support
 	  --enable-mit_kerberos4            enable MIT Kerberos 4 support
 	  --disable-kerberos_checks         disable kerberos library location and checking for support
-	  --disable-werror                  disable -Werror compile flag
-	  --disable-strip                   disable stripping binaries by default
-	  --enable-shared=PKGS  build shared libraries default=no
-	  --enable-static=PKGS  build static libraries default=yes
-	  --enable-fast-install=PKGS  optimize for fast installation default=yes
-	  --disable-libtool-lock  avoid locking (might break parallel builds)
-	  --disable-rpath         do not hardcode runtime library paths
-	  --enable-nls           use Native Language Support
-	  --enable-tcpwrappers             use tcp wrappers (-lwrap)
-	  --disable-ssl                 disable ssl support
+	  --enable-nls                      use Native Language Support
+	  --enable-tcpwrappers              use tcp wrappers (-lwrap)
+	  --disable-ssl                     disable ssl support
 
 	  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)
 	  --with-userid=NAME                run LPRng software as this userid, default daemon
 	  --with-groupid=NAME               run LPRng software as this groupid, default daemon
 	  --with-done_jobs=N                retain last N job status, default 1
 	  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry
-	  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file
-	  --with-order_routine=NAME         queue order routine name in user object file
-	  --with-user_objs=NAME             user specified object file
-	  --with-user_include=NAME          include file with function prototypes for user object file
 	  --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)
-	  --with-gnu-ld           assume the C compiler uses GNU ld default=no
-	  --with-pic              try to use only PIC/non-PIC objects default=use both
+	  --with-gnu-ld                     assume the C compiler uses GNU ld default=no
 	  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
 	  --without-libiconv-prefix     don't search for libiconv in includedir and libdir
 	  --with-libintl-prefix=DIR  search for libintl in DIR/include and DIR/lib
@@ -400,6 +391,7 @@ SECURITY WARNINGS:
   The following is the default LPRng system installation:
 
     1. All client programs are installed Setuid Root.
+       (NOT in the current version, yet undecided if that will come back)
     2. No checking is done for strict RFC1179 conformance by
        the lpd server
     3. By default, all client programs will connect to the server
@@ -490,9 +482,6 @@ The simplest way to compile this package is:
      messages telling which features it is checking for.
 
   2. Type `make' to compile the package.
-
-  3. Optionally, type `make check' to run any self-tests that come with
-     the package.
 
   4. Type `make install' to install the programs and any data files and
      documentation.
@@ -635,3 +624,80 @@ operates.
      script, and exit.
 
 `configure' also accepts some other, not widely useful, options.
+
+TODO:
+From old Makefile, things to give to CFLAGS, rewrite as
+documentation what to pass to configure as CFLAGS arguments...
+
+#********************** OPTIONAL DEFINITIONS ****************************
+# These are various flags and settings that will be used by the
+# compiler to generate code
+#
+
+#### ****** TESTING AND SECURITY LOOPHOLE ******************************
+# Define G ETENV to allow the LPD_CONF environment
+#  variable to be used as the name of a configuration file.  In non-testing
+#  systems,  this is a security loophole.
+#CFLAGS:= $(CFLAGS) -DGETENV=\"1\"
+
+# Set location of configuration, permissions, and printcap file
+#
+#GNU
+
+# CFLAGS:= $(CFLAGS) -DFORMAT_TEST -Wformat
+
+
+##### DMalloc Debugging Package
+#
+#CFLAGS:= $(CFLAGS) -DDMALLOC
+#LIBS:= $(LIBS) -ldmalloc
+
+
+
+#********************* OVERRIDING CONFIGURES' GUESSES ******************
+#
+#
+# If you get errors similar to the ones below, it may be
+# because "configure" guessed wrong. You can override the
+# guesses here, by uncommenting the appropriate line...
+
+# "recvfiles.c: unknown struct fsb has no size":
+# define STATFS: to use statfs(2) (BSD)
+#        STATVFS: to use statvfs(2) (SVR4)
+#     others for system specific cases
+#
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=ULTRIX_STATFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=SVR3_STATFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=STATVFS
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STATFS=STATFS
+
+# define MAKE_USE_STTY = 
+#    SGTTYB   to use struct sgttyb and <sgtty.h> (BSD)
+#    TERMIO  to use struct termio and <termio.h> (old sysV)
+#    TERMIOS to use struct termios and <termio.h> (SVR4)
+#
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=SGTTYB
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=TERMIO
+# CFLAGS:= $(CFLAGS) -DMAKE_USE_STTY=TERMIOS
+
+# a better way to do this is to edit the "ARGH" section of portable.h,
+# and add the appropriate lines to the section for your OS, or add a new
+# section if one doesn't exist; then you can send me the patches and
+# I'll incorporate them into the distribution.
+
+#
+# You might discover that the default locking mechanism
+# does not work.  Try one of the following to override the
+# configured value: fcntl(), lockf(), flock(), and 0 to suppress locking
+#
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_fcntl
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_lockf
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=devlock_flock
+# CFLAGS:= $(CFLAGS) -DLOCK_DEVS=0
+#
+
+# SETPROCTITLE - overwrites the program argument information
+#   when ps is used, displays status.  Used only by LPD
+# if this does not work, define the following
+# CFLAGS:= $(CFLAGS) -DNO_SETPROCTITLE
+
