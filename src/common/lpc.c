@@ -58,7 +58,6 @@
  */
 
 #include "lp.h"
-#include "defs.h"
 #include "initialize.h"
 #include "getprinter.h"
 #include "sendreq.h"

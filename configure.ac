@@ -1,409 +1,230 @@
-dnl process this file with GNU autoconf to produce a configure script.
-dnl
-dnl $Id: configure.in,v 1.74 2004/09/24 20:19:52 papowell Exp $
-
-dnl ----------------------------------------------------------------------------
-dnl ----------------- START OF GENERAL CONFIGURATION ---------------------------
-AC_INIT(Makefile.in)
-
-
-PACKAGE=LPRng
-VERSION=3.8.28
-
-
-AC_CONFIG_AUX_DIR(.)
+AC_INIT(LPRng,3.8.29,lprng-devel@lists.sf.net)
 AC_CANONICAL_SYSTEM
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_SRCDIR(src/common/lpr.c)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(LPRng,3.8.29)
+ALL_LINGUAS="fr de"
 
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package])
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version])
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
-ALL_LINGUAS="fr"
-
-if test -z "$LOCALEDIR" ; then
-    LOCALEDIR='${prefix}/share/locale'
-fi;
-WITH_LOCALEDIR dnl
-export LOCALEDIR
-
-WITH_CCOPTS dnl
-WITH_CPPOPTS dnl
-WITH_LDOPTS dnl
+AM_MAINTAINER_MODE
 
 AC_PREFIX_DEFAULT(/usr/local)
-AC_SUBST(INSTALL)
-AC_SUBST(INSTALL_MAN)
-AC_SUBST(SHELL)
-AC_SUBST(CPP)
-AC_SUBST(CFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(LDFLAGS)
-AC_SUBST(LDCC)
 
+mysaved_CFLAGSset="${CFLAGS+set}"
+AC_PROG_CC
+if test "$ac_cv_prog_gcc" = yes; then
+	if test "$mysaved_CFLAGSset" != set ; then
+		CFLAGS="-g -W -Wall -Wno-unused -Wstrict-prototypes -Wmissing-prototypes"
+	fi
+fi;
+AC_SYS_LARGEFILE
 
-dnl check for awk
 AC_PROG_AWK
 AC_SUBST(AWK)
 AC_PATH_PROG(SED,sed)dnl
 AC_SUBST(SED)dnl
 AC_PATH_PROG(PERL,perl)dnl
 AC_SUBST(PERL)dnl
+dnl -- TODO:
+dnl this is used in checkpc, why not just use "chown" there?
+dnl same with chgrp
+dnl --
 AC_PATH_PROG(CHOWN,chown)dnl
-AC_SUBST(CHOWN)dnl
+AC_DEFINE_UNQUOTED(CHOWN, "$CHOWN",[full path to chown])
 AC_PATH_PROG(CHGRP,chgrp)dnl
-AC_SUBST(CHGRP)dnl
+AC_DEFINE_UNQUOTED(CHGRP, "$CHGRP",[full path to chgrp])
 AC_PATH_PROG(PRUTIL,pr)dnl
-AC_SUBST(PRUTIL)dnl
+AC_DEFINE_UNQUOTED(PRUTIL, "$PRUTIL",[full path to prutil])
 AC_PATH_PROG(OPENSSL,openssl)dnl
 AC_SUBST(OPENSSL)dnl
+AC_DEFINE_UNQUOTED(OPENSSL, "$OPENSSL",[full path to openssl])
 AC_PATH_PROG(PGP_PATH,pgp)dnl
 AC_SUBST(PGP_PATH)dnl
 AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH",[pgp path])
 
-
-dnl ----------------------------------------------------------------------------
-dnl ----------- XXXXXX START OF OPTIONS ----------------------------------------
-
-dnl Unix socket pathname
-AC_MSG_CHECKING(unix socket pathname)
-AC_ARG_WITH(unix_socket_path,
-[  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)],
-UNIXSOCKETPATH=$withval,
-UNIXSOCKETPATH=/var/run/lprng
-)
-AC_MSG_RESULT($UNIXSOCKETPATH)
-AC_SUBST(UNIXSOCKETPATH)
-
-CONFIG_SUBDIR=lpd
-AC_MSG_CHECKING(configuration information subdirectory)
-AC_ARG_WITH(config_subdir,
-[  --with-config_subdir=CONFIG_SUBDIR configuration subdirectory (default 'lpd')],
-CONFIG_SUBDIR=$withval,
-)
-AC_MSG_RESULT($CONFIG_SUBDIR)
-AC_SUBST(CONFIG_SUBDIR)
-
-
-dnl check to see if setuid is suppressed
-AC_MSG_CHECKING(if installing clients setuid)
-AC_ARG_ENABLE( setuid,
-[  --disable-setuid                  do not install client executables setuid root],
-[
-if test "$enableval" = "yes" ; then
-	PERMS=SUID_ROOT_PERMS
-else
-	PERMS=NORM_PERMS
-fi
-],
-[
-	PERMS=SUID_ROOT_PERMS
-],
-)
-AC_MSG_RESULT($PERMS)
-AC_SUBST(PERMS)
+dnl dnl check to see if setuid is suppressed
+dnl AC_ARG_ENABLE( setuid,
+dnl [  --disable-setuid                  do not install client executables setuid root],
+dnl [
+dnl if test "$enableval" = "yes" ; then
+dnl 	PERMS=SUID_ROOT_PERMS
+dnl else
+dnl 	PERMS=NORM_PERMS
+dnl fi
+dnl ],
+dnl [ PERMS=SUID_ROOT_PERMS ],
+dnl )
+dnl AC_MSG_NOTICE([installing client with $PERMS])
+dnl AC_SUBST(PERMS)
 
 dnl check to see if priv ports required
-AC_MSG_CHECKING(require connections from priviledged ports)
-AC_ARG_ENABLE( priv_ports,
+ENABLE_BOOLEAN(priv_ports,
 [  --enable-priv_ports               require connections from privileged ports],
-[
-if test "$enableval" = "yes" ; then
-	v=yes;  PRIV_PORTS="";
-else
-	v=no; PRIV_PORTS="#";
-fi
-],
-[
-	v=no; PRIV_PORTS="#";
-]
-)
-AC_MSG_RESULT($v);dnl
+"no",
+[require connections from priviledged ports: $v],
+[PRIV_PORTS=""],[PRIV_PORTS="#"])
 AC_SUBST(PRIV_PORTS)
 
 dnl check to see if force_localhost is suppressed
-AC_MSG_CHECKING(disable force_localhost default)
-AC_ARG_ENABLE( force_localhost,
+ENABLE_BOOLEAN(force_localhost,
 [  --disable-force_localhost         disable force_localhost default],
-[
-if test "$enableval" = "yes" ; then
-	v=enabled;  FORCE_LOCALHOST=1;
-else
-	v=disabled; FORCE_LOCALHOST=0;
-fi
-],
-[
-	v=enabled;  FORCE_LOCALHOST=1;
-]
-)
-AC_MSG_RESULT($v)
+"yes",
+[force_localhost is default                : $v],
+[FORCE_LOCALHOST=1],[FORCE_LOCALHOST=0])
 AC_DEFINE_UNQUOTED(FORCE_LOCALHOST,"$FORCE_LOCALHOST",[Force Localhost (force_localhost)])
 
 dnl check to see if clients require lpd.conf and printcap
-AC_MSG_CHECKING(require_configfiles default)
-AC_ARG_ENABLE( require_configfiles,
+ENABLE_BOOLEAN(require_configfiles,
 [  --disable-require_configfiles     client programs require lpd.conf, printcap],
-[
-if test "$enableval" = "yes" ; then
-	v=yes;  REQUIRE_CONFIGFILES=1;
-else
-	v=no; REQUIRE_CONFIGFILES=0;
-fi
-],
-[
-	v=yes;  REQUIRE_CONFIGFILES=1;
-]
-)
-AC_MSG_RESULT($v)
-AC_SUBST(REQUIRE_CONFIGFILES)
+"yes",
+[client programs require lpd.conf, printcap: $v],
+[REQUIRE_CONFIGFILES=1], [REQUIRE_CONFIGFILES=0])
+AC_DEFINE_UNQUOTED(REQUIRE_CONFIGFILES, "$REQUIRE_CONFIGFILES",[require configfiles])
 
 dnl check to see if kerberos is disabled
-AC_MSG_CHECKING(if Kerberos authentication is enabled)
-AC_ARG_ENABLE( kerberos,
+AH_TEMPLATE(KERBEROS,[enable Kerberos support])
+ENABLE_BOOLEAN(kerberos,
 [  --enable-kerberos                 enable kerberos support],
-[
-if test "$enableval" = "yes" ; then
-	v=enabled;  KERBEROS=1;AC_DEFINE_UNQUOTED(KERBEROS,"$KERBEROS",[kerberos])
-else
-	v=disabled; KERBEROS=;
-fi
-],
-[
-	v=disabled; KERBEROS=;
-]
-)
-AC_MSG_RESULT($v (KERBEROS $KERBEROS));dnl
+"no",
+[enable kerberos support                   : $v],
+[KERBEROS=1;
+AC_DEFINE_UNQUOTED(KERBEROS,"1")],
+[KERBEROS=""])
 AC_SUBST(KERBEROS)
 
 dnl check to see if MIT Kerberos 4 support is enabled
-AC_MSG_CHECKING(if MIT Kerberos4 is enabled)
-AC_ARG_ENABLE( mit_kerberos4,
+AH_TEMPLATE(MIT_KERBEROS4,[enable MIT Kerberos 4 support])
+ENABLE_BOOLEAN(mit_kerberos4,
 [  --enable-mit_kerberos4            enable MIT Kerberos 4 support],
-[
-if test "$enableval" = "yes" ; then
-	v=enabled; MIT_KERBEROS4=1;AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4",[kerberos 4 support])
-else
-	v=disabled; MIT_KERBEROS4=;
-fi
-],
-[
-	v=disabled; MIT_KERBEROS4=;
-]
-)
-AC_MSG_RESULT($v (MIT_KERBEROS4 $MIT_KERBEROS4));dnl
+"no",
+[enable MIT kerberos 4 support             : $v],
+[MIT_KERBEROS4=1;
+AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4")],
+[MIT_KERBEROS4=""])
 AC_SUBST(MIT_KERBEROS4)
 
 dnl find kerberos libraries
-AC_MSG_CHECKING(if Kerberos libraries are to located and other checks)
-AC_ARG_ENABLE( --disable-kerberos_checks,
+ENABLE_BOOLEAN(kerberos_checks,
 [  --disable-kerberos_checks         disable kerberos library location and checking for support],
-[
-if test "$enableval" = "yes" ; then
-	v=enabled; KERBEROS_CHECKS=1;
-else
-	v=disabled; KERBEROS_CHECKS=;
-fi
-],
-[
-	v=enabled; KERBEROS_CHECKS=1;
-]
-)
-AC_MSG_RESULT($v (KERBEROS_CHECKS $KERBEROS_CHECKS));dnl
+"yes",
+[locate Kerberos libraries and check       : $v],
+[KERBEROS_CHECKS=1],[KERBEROS_CHECKS=""])
 
-dnl Specify install dir for lpd
-AC_MSG_CHECKING(where to install the lpd binary)
-AC_ARG_WITH(lpddir,
+WITH_DIR(lpddir,
 [  --with-lpddir=DIR                 lpd executable directory (default \${sbindir})],
-LPD_DIR=$withval,
-LPD_DIR=\${sbindir}
-)
-AC_MSG_RESULT($LPD_DIR)
-AC_SUBST(LPD_DIR)
+[lpdbindir],['${sbindir}'],
+[directory to place lpd executable into    : $lpdbindir])
 
-dnl  lpd.conf location
-AC_MSG_CHECKING(lpd.conf location)
-AC_ARG_WITH(lpd_conf_path,
-[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf)],
-LPD_CONF_PATH=$withval,
-LPD_CONF_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.conf,
+AC_ARG_WITH(config_subdir,
+[  --with-config_subdir=SUBDIR configuration subdirectory (default 'lpd')],
+CONFIGSUBDIR=$withval,CONFIGSUBDIR=lpd
 )
-AC_MSG_RESULT($LPD_CONF_PATH)
-AC_SUBST(LPD_CONF_PATH)
+configdir=\${sysconfdir}/${CONFIGSUBDIR}
+AC_MSG_NOTICE([configuration directory          configdir= $configdir])
+AC_SUBST(configdir)
 
-dnl  lpd.perms location
-dnl
-AC_MSG_CHECKING(lpd.perms location)
-AC_ARG_WITH(lpd_perms_path,
-[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${sysconfdir}/${CONFIG_SUBDIR}/lpd/lpd.perms)],
-LPD_PERMS_PATH=$withval,
-LPD_PERMS_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd.perms,
-)
-AC_MSG_RESULT($LPD_PERMS_PATH)
-AC_SUBST(LPD_PERMS_PATH)
+WITH_DIR(lpd_conf_path,
+[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${configdir}/lpd.conf)],
+[LPD_CONF_PATH],['${configdir}/lpd.conf'],
+[lpd.conf location                         : $LPD_CONF_PATH])
 
-dnl  printcap location
-dnl
-AC_MSG_CHECKING(printcap location)
-AC_ARG_WITH(printcap_path,
+WITH_DIR(lpd_perms_path,
+[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${configdir}/lpd.perms)],
+[LPD_PERMS_PATH],['${configdir}/lpd.perms'],
+[lpd.perms location                        : $LPD_PERMS_PATH])
+
+WITH_DIR(printcap_path,
 [  --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)],
-PRINTCAP_PATH=$withval,
-PRINTCAP_PATH=\${sysconfdir}/printcap,
-)
-AC_MSG_RESULT($PRINTCAP_PATH)
-AC_SUBST(PRINTCAP_PATH)
+[PRINTCAP_PATH],['${sysconfdir}/printcap'],
+[printcap location                         : $PRINTCAP_PATH])
 
-dnl  lpd_printcap location
-dnl
-AC_MSG_CHECKING(lpd_printcap location)
-AC_ARG_WITH(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap)],
-LPD_PRINTCAP_PATH=$withval,
-LPD_PRINTCAP_PATH=\${sysconfdir}/${CONFIG_SUBDIR}/lpd_printcap,
-)
-AC_MSG_RESULT($LPD_PRINTCAP_PATH)
-AC_SUBST(LPD_PRINTCAP_PATH)
-dnl  startup file location
-dnl
-AC_MSG_CHECKING(startup (initialization) file location)
-AC_ARG_WITH(initpath,
-[  --with-initpath=PATH              path of lpd startup file (default /usr/local/etc/rc.d/lprng.sh)
-                                       use 'no' to disable installation and lpd startup],
-INIT=$withval,
-INIT=,
-)
-AC_MSG_RESULT($INIT)
-AC_SUBST(INIT)
+WITH_DIR(lpd_printcap_path,
+[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${configdir}/lpd_printcap)],
+[LPD_PRINTCAP_PATH],['${configdir}/lpd_printcap'],
+[lpd_printcap location                     : $LPD_PRINTCAP_PATH])
 
-dnl  lockfile PATH value
-dnl
-AC_MSG_CHECKING(lockfile PATH value)
-AC_ARG_WITH(lockfile,
+WITH_DIR(localedir,
+[  --with-localedir=PATH   specify locale information directory],
+[LOCALEDIR],['${prefix}/share/locale'],
+[locale information directory is           : $LOCALEDIR])
+export LOCALEDIR
+
+WITH_DIR(unix_socket_path,
+[  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)],
+[UNIXSOCKETPATH],[/var/run/lprng],
+[unix socket path is                       : $UNIXSOCKETPATH])
+
+WITH_DIR(lockfile,
 [  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd ],
-LOCKFILE="$withval", LOCKFILE="/var/run/lpd",
-)
-AC_MSG_RESULT("$LOCKFILE")
-AC_SUBST(LOCKFILE)
+[LOCKFILE],['/var/run/lpd'],
+[lockfile directory                        : $LOCKFILE])
 
-
-dnl  default SPOOL directory value (:sd)
-dnl
-AC_MSG_CHECKING(default spool directory, :sd=SPOOLDIR/%P)
-AC_ARG_WITH(spooldir,
+WITH_DIR(spooldir,
 [  --with-spooldir=PATH              default spool directory, default /var/spool/lpd ],
-SD_DEFAULT="$withval", SD_DEFAULT="/var/spool/lpd",
-)
-AC_MSG_RESULT("$SD_DEFAULT")
-AC_SUBST(SD_DEFAULT)
+[SD_DEFAULT],['/var/spool/lpd'],
+[default spool directory (:sd=SPOOLDIR/%P) : $SD_DEFAULT])
 
-dnl  LD_LIBRARY_PATH value
+WITH_DIR(filterdir,
+[  --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)],
+[filterdir],['${libexecdir}/filters'],
+[filter directory                filterdir = $filterdir])
+
+dnl  FILTER_LD_PATH (LD_LIBRARY_PATH for filters) value
 dnl
-AC_MSG_CHECKING(LD_LIBRARY_PATH value)
 AC_ARG_WITH(ld_library_path,
-[  --with-ld_libary_path=PATH        LD_LIBRARY_PATH value, default /lib:/usr/lib:/usr/local/lib ],
-LD_LIBRARY_PATH="$withval",
-LD_LIBRARY_PATH="/lib:/usr/lib:/usr/local/lib"
+[  --with-filter-ld-library-path=PATH        FILTER_LD_PATH value, default empty (for Solaris you might need /lib:/usr/lib:/usr/local/lib) ],
+FILTER_LD_PATH="$withval",
+FILTER_LD_PATH=""
 )
-AC_MSG_RESULT("$LD_LIBRARY_PATH")
-AC_SUBST(LD_LIBRARY_PATH)
+AC_MSG_NOTICE([filter LD_LIBRARY_PATH:    FILTER_LD_PATH = $FILTER_LD_PATH])
+AC_SUBST(FILTER_LD_PATH)
+AC_DEFINE_UNQUOTED(FILTER_LD_PATH, "$FILTER_LD_PATH",[default LD_LIBRARY_PATH for filters])
 
 dnl  filter PATH value
 dnl
-AC_MSG_CHECKING(filter PATH value)
-AC_ARG_WITH(filter_path,
-[  --with-filter_path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin ],
+AC_ARG_WITH(filter-path,
+[  --with-filter-path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin ],
 FILTER_PATH="$withval",
 FILTER_PATH="/bin:/usr/bin:/usr/local/bin"
 )
-AC_MSG_RESULT("$FILTER_PATH")
+AC_MSG_NOTICE([filter PATH:                  FILTER_PATH = $FILTER_PATH])
 AC_SUBST(FILTER_PATH)
+AC_DEFINE_UNQUOTED(FILTER_PATH, "$FILTER_PATH",[default PATH for filters])
 
 dnl  user name
 dnl
-AC_MSG_CHECKING(run lpd as userid)
 AC_ARG_WITH(userid,
 [  --with-userid=NAME                run LPRng software as this userid, default daemon ],
 USERID="$withval", USERID="daemon",
 )
-AC_MSG_RESULT("$USERID")
-AC_SUBST(USERID)
+AC_MSG_NOTICE([userID to run lpd as                      : $USERID])
+AC_DEFINE_UNQUOTED(USERID, "$USERID",[userid to run LPRng as, default daemon])
 
 dnl  group value
 dnl
-AC_MSG_CHECKING(run lpd as groupid)
 AC_ARG_WITH(groupid,
 [  --with-groupid=NAME               run LPRng software as this groupid, default daemon ],
 GROUPID="$withval", GROUPID="daemon",
 )
-AC_MSG_RESULT("$GROUPID")
-AC_SUBST(GROUPID)
-
+AC_MSG_NOTICE([groupID to run lpd as                     : $GROUPID])
+AC_DEFINE_UNQUOTED(GROUPID, "$GROUPID",[groupid to run LPRng as, default daemon])
 
 dnl  done_jobs value
 dnl
-AC_MSG_CHECKING(retain status for N jobs)
 AC_ARG_WITH(done_jobs,
 [  --with-done_jobs=N                retain last N job status, default 1],
 DONE_JOBS="$withval", DONE_JOBS="1",
 )
-AC_MSG_RESULT("$DONE_JOBS")
-AC_SUBST(DONE_JOBS)
-
+AC_MSG_NOTICE([number of job status to retain            : $DONE_JOBS])
+AC_DEFINE_UNQUOTED(DONE_JOBS, "$DONE_JOBS",[number of jobs to retain status of])
 
 dnl  done_jobs_max_age value
 dnl
-AC_MSG_CHECKING(retain status for jobs less than N seconds old, default 0 - no expiry)
 AC_ARG_WITH(done_jobs_max_age,
 [  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry],
 DONE_JOBS_MAX_AGE="$withval", DONE_JOBS_MAX_AGE="0",
 )
-AC_MSG_RESULT("$DONE_JOBS_MAX_AGE")
-AC_SUBST(DONE_JOBS_MAX_AGE)
-
-dnl  chooser routine
-dnl
-AC_MSG_CHECKING(load balance queue chooser routine name)
-AC_ARG_WITH(chooser_routine,
-[  --with-chooser_routine=NAME       load balance queue chooser routine name in user object file ],
-[
-CHOOSER_ROUTINE="$withval"
-AC_DEFINE_UNQUOTED(CHOOSER_ROUTINE,$CHOOSER_ROUTINE,[Chooser routine])
-]
-)
-AC_MSG_RESULT("$CHOOSER_ROUTINE")
-
-dnl  queue order routine
-dnl
-AC_MSG_CHECKING(queue order routine name)
-AC_ARG_WITH(order_routine,
-[  --with-order_routine=NAME         queue order routine name in user object file ],
-[
-ORDER_ROUTINE="$withval"
-AC_DEFINE_UNQUOTED(ORDER_ROUTINE,"$ORDER_ROUTINE",[job order routine])
-]
-)
-AC_MSG_RESULT("$ORDER_ROUTINE")
-
-dnl  user specified object files
-dnl
-AC_MSG_CHECKING(user specified object file)
-AC_ARG_WITH(user_objs,
-[  --with-user_objs=NAME             user specified object file ],
-USER_OBJS="$withval"
-)
-AC_MSG_RESULT("$USER_OBJS")
-AC_SUBST(USER_OBJS)
-
-dnl  user specified include files
-dnl
-AC_MSG_CHECKING(user specified include file for user object files)
-AC_ARG_WITH(user_include,
-[  --with-user_include=NAME          include file with function prototypes for user object file ],
-[
-USER_INCLUDE="$withval"
-AC_DEFINE_UNQUOTED(USER_INCLUDE,"$USER_INCLUDE",[user specified include files])
-]
-)
-AC_MSG_RESULT("$USER_INCLUDE")
+AC_MSG_NOTICE([max age to retain job status (0=no expiry): $DONE_JOBS_MAX_AGE])
+AC_DEFINE_UNQUOTED(DONE_JOBS_MAX_AGE, "$DONE_JOBS_MAX_AGE",[number of seconds to retain job status])
 
 dnl  clear program
 dnl
@@ -420,121 +241,8 @@ if test -n "$CLEAR" ; then
 	AC_DEFINE_UNQUOTED(CLEAR,"$CLEAR",[screen clear program])
 fi
 
-dnl  ps -what options
-dnl
-AC_MSG_CHECKING(ps options for displaying all processes)
-if test -z "$PSHOWALL" ; then
-  if ps -ax >/dev/null 2>/dev/null; then
-  	PSHOWALL="-ax"
-  elif ps -e >/dev/null 2>/dev/null;  then
-  	PSHOWALL="-e"
-  else
-  	AC_MSG_WARN(ps not available or -ax AND -e options do not work)
-  	AC_MSG_WARN(specify options in the PSHOWALL environment variable);
-	exit 1
-  fi
-fi
-AC_MSG_RESULT("using ${PSHOWALL}")
-AC_SUBST(PSHOWALL)
-
-dnl ----------------------------------------------------------------------------
-dnl ----------- XXXXXX END OF OPTIONS ------------------------------------------
-AC_MSG_CHECKING(filter directory)
-AC_ARG_WITH(filterdir,
-[  --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)],
-FILTER_DIR=$withval,
-FILTER_DIR=\${libexecdir}/filters,
-)
-AC_MSG_RESULT($FILTER_DIR)
-AC_SUBST(FILTER_DIR)
-
-dnl default use -Werror
-AC_MSG_CHECKING(disable -Werror flag)
-AC_ARG_ENABLE( werror,
-[  --disable-werror                  disable -Werror compile flag],
-[
-if test "$enableval" = "yes" ; then
-	v=yes;  werror=" -Werror ";
-else
-	v=no; werror="";
-fi
-],
-[
-	v=yes;  werror=" -Werror ";
-]
-)
-AC_MSG_RESULT($v)
-
-dnl default strip binaries 
-AC_MSG_CHECKING(disable stripped binaries)
-AC_ARG_ENABLE( strip,
-[  --disable-strip                   disable stripping binaries by default],
-[
-if test "$enableval" = "yes" ; then
-	v=yes;  STRIP_OPTION=" -s ";
-else
-	v=no; STRIP_OPTION="";
-fi
-],
-[
-	v=yes;  STRIP_OPTION=" -s ";
-]
-)
-AC_MSG_RESULT($v)
-AC_SUBST(STRIP_OPTION)
-
-dnl ----------------------------------------------------------------------------
-dnl ------------   OS Checks  --------------------------------------------------
-changequote(, )dnl
-release=`uname -r 2>/dev/null; exit 0`;
-version=`echo $target_os | sed -e 's/[^0-9][^0-9]*//' -e 's/\./X/' -e 's/\.//g' -e 's/X/./' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
-if test "$version" -eq 0 ; then
-	version=`echo $release | sed -e 's/-.*//' -e 's/\.//g' \
-	| awk '{ v=$1+0; if( v > 0 ){ while( v < 100 || int(v) != v ){v = v * 10;}}; print v; }' `;
-fi
-osword=`echo $target_os | sed -e 's/[0-9].*//'`; export osword
-changequote([, ])dnl
-AC_MSG_RESULT([Target is $target, arch $target_cpu, os $target_os, release $release, version $version])
-
-AC_DEFINE_UNQUOTED(TARGETARCHITECTURE,"$target_cpu",[target CPU])
-AC_DEFINE_UNQUOTED(OSNAME,"$osword",[OS name])
-AC_DEFINE_UNQUOTED(OSVERSION,$version,[OS version])
-OSNAME=$osword
-OSVERSION=$version
-AC_SUBST(OSNAME)dnl
-AC_SUBST(OSVERSION)dnl
-
-
 dnl ----------------------------------------------------------------------------
 dnl -----------   C compiler checks    -----------------------------------------
-
-AC_PROG_CPP
-AC_PROG_CC
-
-AC_AIX
-AC_ISC_POSIX
-AC_MINIX
-
-
-if test "$ac_cv_prog_gcc" = yes; then
-	cat >conftest.c <<EOF
-#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-yes
-#endif
-EOF
-    if ${CC-cc} -E conftest.c | egrep yes >/dev/null 2>&1; then
-        gcc -v
-		echo "WARNING: gcc -O (version 2.4.5 and below) produces incorrect code"
-		echo "  for lpd.c and other large routines. Update your GCC compiler"
-		exit 1
-	fi;
-fi;
-
-LDCC="$CC"
-
-AC_DISABLE_SHARED
-AM_PROG_LIBTOOL
 
 AC_C_CONST
 AC_C_INLINE
@@ -553,7 +261,6 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 
-
 AC_CHECK_TYPES( fd_set,,,[
 #include <sys/types.h>
 #include <sys/time.h>
@@ -565,72 +272,12 @@ AC_CHECK_TYPES( socklen_t,,,[
 #include <sys/socket.h>
 ] )
 
-AC_CACHE_CHECK(checking for long long,
-ac_cv_long_long,
-[
-AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-], [printf("%d",sizeof(long long));],
-ac_cv_long_long=yes, ac_cv_long_long=no)
-])
-if test $ac_cv_long_long = yes; then
-  AC_DEFINE(HAVE_LONG_LONG,1,[have long long])
-fi
-
-AC_CACHE_CHECK(checking for long double,
-ac_cv_long_double,
-[
-AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-], [printf("%d",sizeof(long double));],
-ac_cv_long_double=yes, ac_cv_long_double=no)
-])
-if test $ac_cv_long_double = yes; then
-  AC_DEFINE(HAVE_LONG_DOUBLE,1,[have long double])
-fi
-
-AC_CACHE_CHECK(checking for quad_t,
-ac_cv_quad_t,
-[
-AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-], [printf("%d",sizeof(quad_t));],
-ac_cv_quad_t=yes, ac_cv_quad_t=no)
-])
-if test $ac_cv_quad_t = yes; then
-  AC_DEFINE(HAVE_QUAD_T,1,[have quad_t])
-fi
-
-
-dnl ----------------------------------------------------------------------------
-dnl OS dependency checks
+dnl ****************OS-specific code*******************
+dnl I'd like to see this removed, but that would need some
+dnl checks if everything can be done by predfined compiler
+dnl symbols.
 checklibs=
 case $target_os in
-	 *linux* )
-		no_resolv_lib=yes;
-		case $release in
-changequote(, )dnl
-		2.2.1[0-5]* )
-changequote([, ])dnl
-			AC_DEFINE(SETUID_CHECK,1,[run setuid check])
-			AC_MSG_WARN([Kernel may have SETUID compromise.  Update kernel])
-			;;
-		esac
-		CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64"
-		CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64"
-		;;
-	 *bsdi* )
-		LDCC=shlicc
-		dnl BSDI uses this for setproctitle
-		AC_CHECK_LIB(util, setproctitle, [LIBS="-lutil $LIBS"])
-		;;
-	 *bsd* )
-		dnl *BSD uses this for setproctitle
-		AC_CHECK_LIB(util, setproctitle, [LIBS="-lutil $LIBS"])
-		;;
 	 *unicos* )
 		checklibs=no
 		;;
@@ -651,7 +298,6 @@ changequote([, ])dnl
 	*solaris* )
 		AC_DEFINE(SVR4,1,[SVR4])
 		AC_DEFINE_UNQUOTED(SOLARIS,$version,[Solaris version])
-		no_resolv_lib=yes;
 		;;
 	*hpux* )
 		AC_DEFINE(_HPUX_SOURCE,1,[_HPUX_SOURCE])
@@ -667,9 +313,9 @@ changequote([, ])dnl
 		if test "$ac_cv_prog_gcc" != yes; then
 			CPPFLAGS="$CPPFLAGS -std";
 			CFLAGS="$CFLAGS -std";
-        else
-            CPPFLAGS="$CPPFLAGS -DAES_SOURCE"
-            CFLAGS="$CFLAGS -DAES_SOURCE"
+		else
+			CPPFLAGS="$CPPFLAGS -DAES_SOURCE"
+			CFLAGS="$CFLAGS -DAES_SOURCE"
 		fi
 		;;
 	*mips-sni* )
@@ -680,19 +326,7 @@ AC_MSG_RESULT([using CPPFLAGS=\"${CPPFLAGS}\", CFLAGS=\"${CFLAGS}\"])
 dnl ----------------------------------------------------------------------------
 dnl headers:
 
-AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h)
-AC_CHECK_HEADERS(com_err.h compat.h ctype.h ctypes.h dirent.h errno.h)
-AC_CHECK_HEADERS(fcntl.h grp.h limits.h locale.h)
-AC_CHECK_HEADERS(machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h)
-AC_CHECK_HEADERS(pwd.h resolv.h select.h setjmp.h)
-AC_CHECK_HEADERS(sgtty.h signal.h stdarg.h stdio.h)
-AC_CHECK_HEADERS(stdlib.h string.h strings.h sys/dir.h sys/exec.h sys/exechdr.h)
-AC_CHECK_HEADERS(sys/fcntl.h sys/file.h sys/ioctl.h sys/mount.h sys/ndir.h)
-AC_CHECK_HEADERS(sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/signal.h sys/socket.h)
-AC_CHECK_HEADERS(sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h)
-AC_CHECK_HEADERS(sys/termiox.h sys/time.h sys/ttold.h sys/ttycom.h sys/types.h sys/utsname.h)
-AC_CHECK_HEADERS(sys/vfs.h sys/wait.h syslog.h term.h termcap.h termio.h)
-AC_CHECK_HEADERS(termios.h time.h unistd.h utsname.h varargs.h vmparam.h)
+AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h com_err.h compat.h ctype.h ctypes.h dirent.h errno.h fcntl.h filehdr.h grp.h limits.h locale.h machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h pwd.h resolv.h select.h setjmp.h sgtty.h signal.h stab.h stdarg.h stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h sys/fcntl.h sys/file.h sys/ioctl.h sys/mount.h sys/ndir.h sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/signal.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h sys/termiox.h sys/time.h sys/ttold.h sys/ttycom.h sys/types.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h term.h termcap.h termio.h termios.h time.h unistd.h utsname.h varargs.h vmparam.h)
 
 dnl ----------------------------------------------------------------------------
 dnl libraries:
@@ -744,17 +378,13 @@ fi
 dnl ----------------------------------------------------------------------------
 dnl function checks:
 
-AC_CHECK_FUNCS(_res cfsetispeed fcntl flock gethostbyname2 getdtablesize)
-AC_CHECK_FUNCS(gethostname getrlimit inet_aton inet_ntop inet_pton)
-AC_CHECK_FUNCS(innetgr initgroups killpg lockf mkstemp)
-AC_CHECK_FUNCS(mktemp openlog putenv random rand setenv seteuid setgroups setlocale setpgid setproctitle)
-AC_CHECK_FUNCS(setresuid setreuid setruid setsid sigaction)
-AC_CHECK_FUNCS(sigprocmask siglongjmp socketpair strcasecmp)
-AC_CHECK_FUNCS(strchr strdup strerror strncasecmp sysconf sysinfo)
-AC_CHECK_FUNCS(tcdrain tcflush tcsetattr uname unsetenv wait3 waitpid)
+dnl BSDs have this:
+AC_CHECK_LIB(util, setproctitle, [LIBS="-lutil $LIBS"])
+
+AC_CHECK_FUNCS(_res cfsetispeed fcntl flock gethostbyname2 getdtablesize gethostname getrlimit inet_aton inet_ntop inet_pton innetgr initgroups killpg lockf mkstemp mktemp openlog putenv random rand setenv seteuid setgroups setlocale setpgid setproctitle setresuid setreuid setruid setsid sigaction sigprocmask siglongjmp socketpair strcasecmp strchr strdup strerror strncasecmp sysconf sysinfo tcdrain tcflush tcsetattr uname unsetenv wait3 waitpid)
 
 if test ! "$ac_cv_func_setreuid" = yes -a ! "$ac_cv_func_seteuid" = yes -a ! "$ac_cv_func_setresuid" = yes; then
-	echo "WARNING: missing setreuid(), seteuid(), and setresuid()"
+	AC_MSG_WARN([missing setreuid(), seteuid(), and setresuid()])
 fi
 
 AC_FUNC_VFORK
@@ -811,22 +441,6 @@ if test "$ac_cv_struct_term" = "termios"; then
 	if test "$ac_cv_header_sys_termiox_h" = yes; then
 		AC_DEFINE(USE_TERMIOX,1,[use termiox])
 	fi
-fi
-
-dnl ----------------------------------------------------------------------------
-
-dnl test to see if long long is defined
-
-AC_CACHE_CHECK(checking for long long,
-ac_cv_long_long,
-[
-AC_TRY_COMPILE([
-#include <sys/types.h>
-],[long long x; x = 0],
-ac_cv_long_long=yes, ac_cv_long_long=no)
-])
-if test "$ac_cv_long_long" = yes; then
-  AC_DEFINE(HAVE_LONG_LONG,1,[have long long])
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -974,88 +588,6 @@ fi
 dnl ----------------------------------------------------------------------------
 dnl
 
-AC_CACHE_CHECK(for errno,
-ac_cv_errno,
-[
-AC_TRY_LINK(,[extern int errno; return (errno);],
-	ac_cv_errno=yes, ac_cv_errno=no)
-])
-if test "$ac_cv_errno" = yes; then
-	AC_DEFINE(HAVE_ERRNO,1,[have errno])
-	AC_CACHE_CHECK(for errno declaration,
-	ac_cv_decl_errno,
-	[
-	AC_TRY_COMPILE([
-	#include <stdio.h>
-	#ifdef HAVE_STDLIB_H
-	#include <stdlib.h>
-	#endif
-	#ifdef HAVE_UNISTD_H
-	#include <unistd.h>
-	#endif
-	#ifdef HAVE_ERRNO_H
-	#include <errno.h>
-	],[return(sys_nerr);],
-		ac_cv_decl_errno=yes, ac_cv_decl_errno=no)
-	])
-	if test "$ac_cv_decl_errno" = yes; then
-		AC_DEFINE(HAVE_DECL_ERRNO,1,[have errno declaration])
-	fi;
-fi
-
-AC_CACHE_CHECK(for sys_nerr,
-ac_cv_sys_nerr,
-[
-AC_TRY_LINK(,[extern int sys_nerr; return (sys_nerr);],
-	ac_cv_sys_nerr=yes, ac_cv_sys_nerr=no)
-])
-if test "$ac_cv_sys_nerr" = yes; then
-	AC_DEFINE(HAVE_SYS_NERR,1,[have sys_nerr])
-	AC_CACHE_CHECK(for sys_nerr declaration,
-	ac_cv_decl_sys_nerr,
-	[
-	AC_TRY_COMPILE([
-	#include <stdio.h>
-	#ifdef HAVE_STDLIB_H
-	#include <stdlib.h>
-	#endif
-	#ifdef HAVE_UNISTD_H
-	#include <unistd.h>
-	#endif],[return(sys_nerr);],
-	ac_cv_decl_sys_nerr_def=yes, ac_cv_decl_sys_nerr_def=no)
-	])
-	if test "$ac_cv_decl_sys_nerr" = yes; then
-		AC_DEFINE(HAVE_DECL_SYS_NERR,1,[have sys_nerr declaration])
-	fi
-fi
-
-AC_CACHE_CHECK(for sys_errlist array,
-ac_cv_sys_errlist,
-[AC_TRY_LINK(,[extern char *sys_errlist[];
-	sys_errlist[0];],
-	ac_cv_sys_errlist=yes, ac_cv_sys_errlist=no)
-])
-if test "$ac_cv_sys_errlist" = yes; then
-	AC_DEFINE(HAVE_SYS_ERRLIST,1,[have sys_errlist])
-	AC_CACHE_CHECK(for sys_errlist declaration,
-	ac_cv_sys_errlist_def,
-	[AC_TRY_COMPILE([
-	#include <stdio.h>
-	#include <errno.h>
-	#ifdef HAVE_STDLIB_H
-	#include <stdlib.h>
-	#endif
-	#ifdef HAVE_UNISTD_H
-	#include <unistd.h>
-	#endif],[char *s = sys_errlist[0]; return(*s);],
-	ac_cv_decl_sys_errlist=yes, ac_cv_decl_sys_errlist=no)
-	])
-	if test "$ac_cv_decl_sys_errlist" = yes; then
-		AC_DEFINE(HAVE_DECL_SYS_ERRLIST,1,[sys_errlist declared])
-	fi
-fi
-
-
 AC_CACHE_CHECK(for setproctitle declaration,
 ac_cv_decl_setproctitle_def,
 [AC_TRY_COMPILE([
@@ -1080,45 +612,7 @@ fi
 dnl ----------------------------------------------------------------------------
 dnl sys_siglist array (list of signals)
 
-AC_CACHE_CHECK(for sys_siglist declaration,
-ac_cv_decl_sys_siglist_def,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <signal.h>],
-[printf("%s",sys_siglist[0]);],
-ac_cv_decl_sys_siglist_def=yes, ac_cv_decl_sys_siglist_def=no)
-])
-if test "$ac_cv_decl_sys_siglist_def" = yes; then
-    AC_DEFINE(HAVE_SYS_SIGLIST_DEF,1,[sys_siglist defined])
-	ac_cv_sys_siglist=yes
-fi
 
-AC_CACHE_CHECK(for _sys_siglist declaration,
-ac_cv_decl__sys_siglist_def,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <signal.h>],
-[printf("%s",_sys_siglist[0]);],
-ac_cv_decl__sys_siglist_def=yes, ac_cv_decl__sys_siglist_def=no)
-])
-if test "$ac_cv_decl__sys_siglist_def" = yes; then
-    AC_DEFINE(HAVE__SYS_SIGLIST_DEF,1,[_sys_siglist defined])
-	ac_cv__sys_siglist=yes
-fi
 
 AC_CACHE_CHECK(for sys_siglist array,
 ac_cv_sys_siglist,
@@ -1129,8 +623,29 @@ ac_cv_sys_siglist=yes, ac_cv_sys_siglist=no)
 ])
 if test "$ac_cv_sys_siglist" = yes; then
     AC_DEFINE(HAVE_SYS_SIGLIST,1,[have sys_syslist])
-fi
-
+	AC_CACHE_CHECK(for sys_siglist declaration,
+	ac_cv_decl_sys_siglist_def,
+	[AC_TRY_COMPILE([
+#include <stdio.h>
+#include <sys/types.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_SIGNAL_H
+#include <sys/signal.h>
+#endif
+#include <signal.h>],
+	[printf("%s",sys_siglist[0]);],
+	ac_cv_decl_sys_siglist_def=yes, ac_cv_decl_sys_siglist_def=no)
+	])
+	if test "$ac_cv_decl_sys_siglist_def" = yes; then
+	    AC_DEFINE(HAVE_SYS_SIGLIST_DEF,1,[sys_siglist defined])
+		ac_cv_sys_siglist=yes
+	fi
+else
 AC_CACHE_CHECK(for _sys_siglist array,
 ac_cv__sys_siglist,
 [AC_TRY_LINK([
@@ -1140,6 +655,29 @@ ac_cv__sys_siglist=yes, ac_cv__sys_siglist=no)
 ])
 if test "$ac_cv__sys_siglist" = yes; then
     AC_DEFINE(HAVE__SYS_SIGLIST,1,[have _sys_siglist])
+	AC_CACHE_CHECK(for _sys_siglist declaration,
+	ac_cv_decl__sys_siglist_def,
+	[AC_TRY_COMPILE([
+#include <stdio.h>
+#include <sys/types.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_SIGNAL_H
+#include <sys/signal.h>
+#endif
+#include <signal.h>],
+	[printf("%s",_sys_siglist[0]);],
+	ac_cv_decl__sys_siglist_def=yes, ac_cv_decl__sys_siglist_def=no)
+	])
+	if test "$ac_cv_decl__sys_siglist_def" = yes; then
+	    AC_DEFINE(HAVE__SYS_SIGLIST_DEF,1,[_sys_siglist defined])
+		ac_cv__sys_siglist=yes
+	fi
+fi
 fi
 
 dnl ----------------------------------------------------------------------------
@@ -1405,35 +943,6 @@ AC_MSG_RESULT(using $SHELL (FORCED))
 
 AM_GNU_GETTEXT([external])
 
-dnl XX AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
-dnl XX  if test "${USE_NLS}" = yes; then
-dnl XX    AC_MSG_RESULT([Using NLS, localedir ${LOCALEDIR}, need intl/libintl.a - "${USE_INCLUDED_LIBINTL}" ])
-dnl XX    if test "${USE_INCLUDED_LIBINTL}" = yes ; then
-dnl XX       CPPFLAGS="$CPPFLAGS -I \${top_builddir}/intl"
-dnl XX 	  AC_MSG_RESULT([using \${top_builddir}/intl])
-dnl XX 	  if test "$nls_cv_force_use_gnu_gettext" = no ; then
-dnl XX 		echo "NLS enabled and requested system gettext support not available."
-dnl XX 		echo " You may need to use:"
-dnl XX 		echo "  configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'"
-dnl XX 		echo " See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
-dnl XX 		exit 1;
-dnl XX       fi
-dnl XX 	  if test ! -f ${srcdir}/intl/gettext.h ; then
-dnl XX 		echo "gettext code is not in the ${srcdir}/intl directory."
-dnl XX 		echo "See ${srcdir}/ABOUT-NLS.LPRng in the LPRng distribution for details."
-dnl XX 		exit 1;
-dnl XX 	  fi
-dnl XX    fi
-dnl XX    LIBS="$INTLLIBS $LIBS"
-dnl XX  else
-dnl XX    AC_MSG_RESULT([No NLS])
-dnl XX  fi   
-dnl XX  if test "$XGETTEXT" = "" ; then
-dnl XX 	 XGETTEXT=xgettext;
-dnl XX  fi
-dnl XX  AC_MSG_RESULT(using XGETTEXT $XGETTEXT)
-
-
 if test "${enable_nls}" = yes -a "$nls_cv_force_use_gnu_gettext" != yes \
 	-a "$gt_use_preinstalled_gnugettext" != "yes" ; then
 	   AC_MSG_ERROR([
@@ -1498,6 +1007,9 @@ fi
 )
 AC_MSG_RESULT($v);dnl
 
+dnl This does far too much by hand, try to just check for
+dnl the headers and libs...
+
 dnl Now look for OpenSSL
 ac_openssl_lib_dir=
 ac_openssl_inc_dir=
@@ -1558,7 +1070,9 @@ if test "$SSL_ENABLE" != ""; then
 		save_LIBS=$LIBS
 		save_LDFLAGS=$LDFLAGS
 		LIBS="-lssl -lcrypto $LIBS"
-		LDFLAGS="$LDFLAGS -L$dir "
+		if test "X$dir" != "X/usr/lib" ; then
+			LDFLAGS="$LDFLAGS -L$dir "
+		fi
 		AC_TRY_LINK_FUNC(SSL_load_error_strings,ac_linked_libssl="true",
 			ac_linked_libssl="false");
 		AC_TRY_LINK_FUNC(RC4_set_key,ac_linked_libcrypto="true",
@@ -1574,7 +1088,9 @@ if test "$SSL_ENABLE" != ""; then
 	done
 	if test "$ac_found_openssl_lib_dir" != "no"; then
 	   	echo "found in $ac_found_openssl_lib_dir"
-		CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir " ;
+		if test "X$ac_found_openssl_inc_dir" != "X/usr/include" ; then
+			CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir " ;
+		fi
 	else
 		echo "not found."
 		SSL_ENABLE=""
@@ -1588,9 +1104,9 @@ dnl  ssl certificate authority CERT file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority CERT file)
 AC_ARG_WITH(ssl_ca_file,
-[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt)],
+[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${configdir}/ssl.ca/ca.crt)],
 SSL_CA_FILE=$withval,
-SSL_CA_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.crt,
+SSL_CA_FILE=\${configdir}/ssl.ca/ca.crt,
 )
 AC_MSG_RESULT($SSL_CA_FILE)
 AC_SUBST(SSL_CA_FILE)
@@ -1599,9 +1115,9 @@ dnl  ssl certificate authority private key file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority private key file)
 AC_ARG_WITH(ssl_ca_key,
-[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key)],
+[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${configdir}/ssl.ca/ca.key)],
 SSL_CA_KEY=$withval,
-SSL_CA_KEY=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.ca/ca.key,
+SSL_CA_KEY=\${configdir}/ssl.ca/ca.key,
 )
 AC_MSG_RESULT($SSL_CA_KEY)
 AC_SUBST(SSL_CA_KEY)
@@ -1610,9 +1126,9 @@ dnl  ssl certificate authority certs working directory
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority certs working directory)
 AC_ARG_WITH(ssl_certs_dir,
-[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs/)],
+[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${configdir}/ssl.certs/)],
 SSL_CERTS_DIR=$withval,
-SSL_CERTS_DIR=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.certs,
+SSL_CERTS_DIR=\${configdir}/ssl.certs,
 )
 AC_MSG_RESULT($SSL_CERTS_DIR)
 AC_SUBST(SSL_CERTS_DIR)
@@ -1621,9 +1137,9 @@ dnl  ssl certificate revocation list
 dnl
 AC_MSG_CHECKING(ssl Certificate Revocation List (CRL) file)
 AC_ARG_WITH(ssl_crl_file,
-[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl)],
+[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${configdir}/ssl.crl/ssl.crl)],
 SSL_CRL_FILE=$withval,
-SSL_CRL_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.crl/ssl.crl,
+SSL_CRL_FILE=\${configdir}/ssl.crl/ssl.crl,
 )
 AC_MSG_RESULT($SSL_CRL_FILE)
 AC_SUBST(SSL_CRL_FILE)
@@ -1632,9 +1148,9 @@ dnl  ssl server certificate file
 dnl
 AC_MSG_CHECKING(ssl server certificate file)
 AC_ARG_WITH(ssl_server_cert,
-[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt)],
+[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${configdir}/ssl.server/server.crt)],
 SSL_SERVER_CERT=$withval,
-SSL_SERVER_CERT=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.crt,
+SSL_SERVER_CERT=\${configdir}/ssl.server/server.crt,
 )
 AC_MSG_RESULT($SSL_SERVER_CERT)
 AC_SUBST(SSL_SERVER_CERT)
@@ -1643,9 +1159,9 @@ dnl  ssl server password file for private key file
 dnl
 AC_MSG_CHECKING(ssl server password file for private key file)
 AC_ARG_WITH(ssl_server_password_file,
-[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd)],
+[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${configdir}/ssl.server/server.pwd)],
 SSL_SERVER_PASSWORD_FILE=$withval,
-SSL_SERVER_PASSWORD_FILE=\${sysconfdir}/${CONFIG_SUBDIR}/ssl.server/server.pwd,
+SSL_SERVER_PASSWORD_FILE=\${configdir}/ssl.server/server.pwd,
 )
 AC_MSG_RESULT($SSL_SERVER_PASSWORD_FILE)
 AC_SUBST(SSL_SERVER_PASSWORD_FILE)
@@ -1829,17 +1345,9 @@ dnl ---------------- END OF KERBEROS -----------------------------------------
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF OUTPUT ------------------------------------------
 
-
-if test "$ac_cv_prog_gcc" = yes; then
-	CFLAGS="$CFLAGS -g -W -Wall $werror -Wno-unused "
-	CPPFLAGS="$CPPFLAGS -g -W -Wall $werror -Wno-unused "
-fi;
-
 AC_OUTPUT(
 [
 Makefile
-TESTSUPPORT/Makefile
-DISTRIBUTIONS/Makefile
 UTILS/LPRng.pm
 UTILS/Makefile
 UTILS/accounting.pl

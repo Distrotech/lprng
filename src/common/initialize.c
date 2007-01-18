@@ -8,7 +8,6 @@
  ***************************************************************************/
 
 #include "lp.h"
-#include "defs.h"
 #include "initialize.h"
 #include "getopt.h"
 #include "child.h"

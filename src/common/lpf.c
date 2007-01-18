@@ -137,10 +137,6 @@ static void logerr_die( va_alist ) va_dcl
 # include <sys/file.h>
 #endif
 
-#ifndef HAVE_ERRNO_DECL
-extern int errno;
-#endif
-
 #ifdef HAVE_SYS_FCNTL_H
 # include <sys/fcntl.h>
 #endif

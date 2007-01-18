@@ -15,4 +15,4 @@ src/common/lprm.c
 src/common/sendjob.c
 src/common/sendmail.c
 src/common/sendreq.c
-src/common/vars.c
+src/vars.c

@@ -23,11 +23,6 @@
  *   default is to use UDP.
  */
 
-
-#ifndef HAVE_ERRNO_DECL
-extern int errno;
-#endif
-
 int udp_open( int port );
 int tcp_open( int port );
 

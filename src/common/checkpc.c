@@ -8,7 +8,6 @@
  ***************************************************************************/
 
 #include "lp.h"
-#include "defs.h"
 #include "getopt.h"
 #include "checkpc.h"
 #include "patchlevel.h"

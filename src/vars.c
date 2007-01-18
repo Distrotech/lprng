@@ -7,17 +7,12 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: vars.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
-
 /* force local definitions */
 #define EXTERN
 #define DEFINE(X) X
 #define DEFS
 
 #include "lp.h"
-#include "defs.h"
 #include "child.h"
 #include "gethostinfo.h"
 #include "getqueue.h"
@@ -65,8 +60,8 @@ Put all of the variables in a separate file.
 #if !defined(FILTER_PATH)
 #define FILTER_PATH "/bin:/usr/bin:/usr/contrib/bin:/usr/local/bin:/usr/ucb:/usr/sbin:/usr/etc:/etc"
 #endif
-#if !defined(LD_LIBRARY_PATH)
-#define LD_LIBRARY_PATH "/lib:/usr/lib:/usr/5lib:/usr/ucblib"
+#if !defined(FILTER_LD_PATH)
+#define FILTER_LD_PATH ""
 #endif
 #if !defined(LOCKFILE)
 #error Missing LOCKFILE definition
@@ -228,7 +223,7 @@ struct keywords Pc_var_list[] = {
    /* default filter */
 { "filter", 0, STRING_K, &Filter_DYN,0,0,0},
    /* filter LD_LIBRARY_PATH value */
-{ "filter_ld_path", 0, STRING_K, &Filter_ld_path_DYN,0,0,"=" LD_LIBRARY_PATH },
+{ "filter_ld_path", 0, STRING_K, &Filter_ld_path_DYN,0,0,"=" FILTER_LD_PATH },
    /* filter options */
 { "filter_options", 0, STRING_K, &Filter_options_DYN,0,0,"=$A $B $C $D $E $F $G $H $I $J $K $L $M $N $O $P $Q $R $S $T $U $V $W $X $Y $Z $a $b $c $d $e $f $g $h $i $j $k $l $m $n $o $p $q $r $s $t $u $v $w $x $y $z $-a"},
    /* filter PATH environment variable */
