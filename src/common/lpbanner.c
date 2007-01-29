@@ -83,32 +83,21 @@
  * debug     - sets debug level
  * verbose   - echo to a log file
  *
- *	The functions fatal(), logerr(), and logerr_die() can be used to report
- *	status. The variable errorcode can be set by the user before calling
- *	these functions, and will be the exit value of the program. Its default
- *	value will be 2 (abort status).
- *	fatal() reports a fatal message, and terminates.
- *	logerr() reports a message, appends information indicated by errno
- *	(see perror(2) for details), and then returns.
- *	logerr_die() will call logerr(), and then will exit with errorcode
- *	status.
- *	Both fatal() and logerr_die() call the cleanup() function before exit.
  *
  * DEBUGGING:  a simple minded debugging version can be enabled by
  * compiling with the -DDEBUG option.
  */
 
 
-int errorcode;
-char *name;		/* name of filter */
-int debug, verbose, width = 80, length = 66, xwidth, ylength, literal, indent;
-char *zopts, *class, *job, *login, *accntname, *host;
-char *printer, *accntfile, *format;
-char *controlfile;
-char *bnrname, *comment;
-int npages;	/* number of pages */
-int special;
-char *queuename, *errorfile;
+static char *name;		/* name of filter */
+static int debug, verbose, width = 80, length = 66, xwidth, ylength, literal, indent;
+static char *zopts, *class, *job, *login, *accntname, *host;
+static char *printer, *accntfile, *format;
+static char *controlfile;
+static char *bnrname, *comment;
+static int npages;	/* number of pages */
+static int special;
+static char *queuename, *errorfile;
 
 #define GLYPHSIZE 15
 struct glyph{
@@ -126,7 +115,6 @@ struct font{
 static void banner( void );
 static void cleanup( void );
 static void getargs( int argc, char *argv[], char *envp[] );
-static char *Time_str(int shortform, time_t tm);
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
  static void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
@@ -1441,10 +1429,10 @@ struct font Font9x8 = {
 	12, 8, 9, g9x8 
 };
 
-void Out_line( void );
-void breakline( int c );
-void bigprint( struct font *font, char *line );
-void do_char( struct font *font, struct glyph *glyph,
+static void Out_line( void );
+static void breakline( int c );
+static void bigprint( struct font *font, char *line );
+static void do_char( struct font *font, struct glyph *glyph,
 	char *str, int line, int wid );
 /*
  * Print a banner
@@ -1474,9 +1462,11 @@ static int breaksize = 3;	/* numbers of rows in break */
  */
  static void userinfo( void )
 {
+	time_t tmp;
+	time(&tmp);
 	(void) SNPRINTF( bline, sizeof(bline)) "User:  %s@%s (%s)", login, host, bnrname);
 	Out_line();
-	(void) SNPRINTF( bline, sizeof(bline)) "Date:  %s", Time_str(0,0));
+	strftime(bline,sizeof(bline),"Date: %b %d %H:%M:%S", localtime(&tmp));
 	Out_line();
 	(void) SNPRINTF( bline, sizeof(bline)) "Job:   %s", job );
 	Out_line();
@@ -1681,37 +1671,6 @@ void Out_line( void )
 		i -= l, str += l );
 }
 
-/*
- * Time_str: return "cleaned up" ctime() string...
- *
- * Thu Aug 4 12:34:17 BST 1994 -> Aug  4 12:34:17
- * Thu Aug 4 12:34:17 BST 1994 -> 12:34:17
- */
-
-static char *Time_str(int shortform, time_t tm)
-{
-    time_t tvec;
-    static char s[99];
-	char *t;
-
-	if( tm ){
-		tvec = tm;
-	} else {
-		(void) time (&tvec);
-	}
-    (void)strcpy( s, ctime(&tvec) );
-	t = s;
-	s[29] = 0;
-	if( shortform > 0 ){
-		t = &s[11];
-		s[19] = 0;
-	} else if( shortform == 0 ){
-		t = &s[4];
-		s[19] = 0;
-	}
-	return(t);
-}
-
 void do_char( struct font *font, struct glyph *glyph,
 	char *str, int line, int wid )
 {
@@ -1729,13 +1688,6 @@ void do_char( struct font *font, struct glyph *glyph,
 		}
 		++s;
 	}
-}
-
-static int Write_fd_str( int fd, const char *buf )
-{
-	int n;
-	n = strlen(buf);
-	return write(fd,buf,n);
 }
 
 /* VARARGS2 */
@@ -1758,6 +1710,6 @@ static int Write_fd_str( int fd, const char *buf )
 
 	buf[0] = 0;
 	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
-	Write_fd_str(fd,buf);
+	write(fd, buf, strlen(buf));
 }
 
