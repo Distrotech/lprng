@@ -7,10 +7,9 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpbanner.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-#include "lp.h"
+#include <config.h>
+#include "portable.h"
+#include "plp_snprintf.h"
 
 /***************************************************************************
  *  Filter template and frontend.
@@ -124,9 +123,17 @@ struct font{
 	struct glyph *glyph;	/* glyphs */
 };
 
-void banner( void );
-void cleanup( void );
-void getargs( int argc, char *argv[], char *envp[] );
+static void banner( void );
+static void cleanup( void );
+static void getargs( int argc, char *argv[], char *envp[] );
+static char *Time_str(int shortform, time_t tm);
+/* VARARGS2 */
+#ifdef HAVE_STDARGS
+ static void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+;
+#else
+ static void safefprintf ();
+#endif
 
 int main( int argc, char *argv[], char *envp[] )
 {
@@ -141,7 +148,6 @@ int main( int argc, char *argv[], char *envp[] )
 	banner();
 	return(0);
 }
-
 
 void getargs( int argc, char *argv[], char *envp[] )
 {
@@ -1455,13 +1461,13 @@ void do_char( struct font *font, struct glyph *glyph,
  *     - bottomblast
  */
 
-char bline[1024];
-int bigjobnumber, biglogname, bigfromhost, bigjobname;
-int top_break,	/* break lines at top of page */
+static char bline[1024];
+static int bigjobnumber, biglogname, bigfromhost, bigjobname;
+static int top_break,	/* break lines at top of page */
 	top_sep,	/* separator from info at top of page */
 	bottom_sep,	/* separator from info at bottom of page */
 	bottom_break;	/* break lines at bottom of page */
-int breaksize = 3;	/* numbers of rows in break */
+static int breaksize = 3;	/* numbers of rows in break */
 
 /*
  * userinfo: just p rintf the information
@@ -1483,7 +1489,7 @@ int breaksize = 3;	/* numbers of rows in break */
  * i.e.- printed on the page
  */
 
-void seebig( int *len, int bigletter_height, int *big )
+static void seebig( int *len, int bigletter_height, int *big )
 {
 	*big = 0;
 	if( *len > bigletter_height ){
@@ -1496,7 +1502,7 @@ void seebig( int *len, int bigletter_height, int *big )
  * banner: does all the actual work
  */
 
-char *isnull( char *s )
+static char *isnull( char *s )
 {
 	if( s == 0 ) s = "";
 	return( s );
@@ -1682,7 +1688,7 @@ void Out_line( void )
  * Thu Aug 4 12:34:17 BST 1994 -> 12:34:17
  */
 
-char *Time_str(int shortform, time_t tm)
+static char *Time_str(int shortform, time_t tm)
 {
     time_t tvec;
     static char s[99];
@@ -1725,7 +1731,7 @@ void do_char( struct font *font, struct glyph *glyph,
 	}
 }
 
-int Write_fd_str( int fd, const char *buf )
+static int Write_fd_str( int fd, const char *buf )
 {
 	int n;
 	n = strlen(buf);
