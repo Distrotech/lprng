@@ -276,17 +276,12 @@ void Do_removal(char **argv)
  ***************************************************************************/
 
  extern char *next_opt;
- char LPRM_optstr[]   /* LPRM options */
- = "AaD:P:U:V" ;
- char CLEAN_optstr[]   /* CLEAN options */
- = "AD:" ;
+static void Get_parms_clean(int argc, char *argv[] );
+static void Get_parms_lprm(int argc, char *argv[] );
 
 void Get_parms(int argc, char *argv[] )
 {
-	int option;
 	char *name;
-
-
 	if( argv[0] && (Name = strrchr( argv[0], '/' )) ) {
 		++Name;
 	} else {
@@ -295,29 +290,23 @@ void Get_parms(int argc, char *argv[] )
 	/* check to see if we simulate (poorly) the LP options */
 	if( Name && safestrcmp( Name, "clean" ) == 0 ){
 		LP_mode = 1;
-		while ((option = Getopt (argc, argv, CLEAN_optstr )) != EOF)
-		switch (option) {
-		case 'A': Auth = 1; break;
-		case 'D':
-			Parse_debug( Optarg, 1 );
-			break;
-		default: usage(); break;
-		}
-		if( Optind < argc ){
-			name = argv[argc-1];
-			Get_all_printcap_entries();
-			if( safestrcasecmp(name,ALL) ){
-				if( Find_exists_value( &All_line_list, name, Hash_value_sep ) ){
-					Set_DYN(&Printer_DYN,name);
-					argv[argc-1] = 0;
-				}
-			} else {
-				All_printers = 1;
-				Set_DYN(&Printer_DYN,"all");
-			}
-		}
-	} else {
-		while ((option = Getopt (argc, argv, LPRM_optstr )) != EOF)
+		Get_parms_clean(argc,argv);
+	}
+	else {
+		Get_parms_lprm(argc,argv);
+	}
+
+	if( Verbose ){
+		FPRINTF( STDERR, "%s\n", Version );
+		if( Verbose > 1 ) Printlist( Copyright, 1 );
+	}
+}
+
+
+static void Get_parms_lprm(int argc, char *argv[] )
+{
+	int option;
+	while ((option = Getopt (argc, argv, "AaD:P:U:V" )) != EOF)
 		switch (option) {
 		case 'A': Auth = 1; break;
 		case 'a': All_printers = 1; Set_DYN(&Printer_DYN,"all"); break;
@@ -327,12 +316,55 @@ void Get_parms(int argc, char *argv[] )
 		case 'P': Set_DYN(&Printer_DYN, Optarg); break;
 		default: usage(); break;
 		}
-	}
-	if( Verbose ){
-		FPRINTF( STDERR, "%s\n", Version );
-		if( Verbose > 1 ) Printlist( Copyright, 1 );
+}
+
+static void Get_parms_clean(int argc, char *argv[] )
+{
+	char *name;
+	int option;
+
+	while ((option = Getopt (argc, argv, "AD:" )) != EOF)
+		switch (option) {
+		case 'A': Auth = 1; break;
+		case 'D':
+			Parse_debug( Optarg, 1 );
+			break;
+		default: usage(); break;
+		}
+
+	if( Optind < argc ){
+		name = argv[argc-1];
+		Get_all_printcap_entries();
+
+		if( safestrcasecmp(name,ALL) != 0){
+			if( Find_exists_value( &All_line_list, name, Hash_value_sep ) ){
+				Set_DYN(&Printer_DYN,name);
+				argv[argc-1] = 0;
+			}
+		} else {
+			All_printers = 1;
+			Set_DYN(&Printer_DYN,"all");
+		}
+
 	}
 }
+
+static void prmsg( char **msg )
+{
+	int i;
+	char *s;
+	for( i = 0; (s = msg[i]); ++i ){
+		if( i == 0 ){
+			FPRINTF(STDERR, _(s), Name );
+		} else {
+			FPRINTF(STDERR, "%s", _(s) );
+		}
+	}
+}
+
+
+void usage(void)
+{
 
  char *clean_msg[] = {
  N_(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"),
@@ -367,25 +399,11 @@ void Get_parms(int argc, char *argv[] )
  N_("  Note: lprm removes only jobs for which you have removal permission\n"),
 	0 };
 
-void pr_msg( char **msg )
-{
-	int i;
-	char *s;
-	for( i = 0; (s = msg[i]); ++i ){
-		if( i == 0 ){
-			FPRINTF(STDERR, _(s), Name );
-		} else {
-			FPRINTF(STDERR, "%s", _(s) );
-		}
-	}
-}
 
-void usage(void)
-{
 	if( !LP_mode ){
-		pr_msg(lprm_msg);
+		prmsg(lprm_msg);
 	} else {
-		pr_msg(clean_msg);
+		prmsg(clean_msg);
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
