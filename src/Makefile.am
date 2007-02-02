@@ -33,8 +33,8 @@ noinst_PROGRAMS = monitor
 # noinst_PROGRAMS = sserver sclient
 
 install-exec-hook:
-	ln lpr $(DESTDIR)$(bindir)/lp
-	ln lprm $(DESTDIR)$(bindir)/cancel
+	ln $(DESTDIR)$(bindir)/lpr $(DESTDIR)$(bindir)/lp
+	ln $(DESTDIR)$(bindir)/lprm $(DESTDIR)$(bindir)/cancel
 # - think about making things suid at install time
 
 COMMON_SOURCES = common/accounting.c common/child.c common/controlword.c \
