@@ -198,7 +198,7 @@ int main(int argc, char *argv[], char *envp[])
 	return(0);
 }
 
-void Show_status(char **argv)
+static void Show_status(char **argv)
 {
 	int fd;
 	char msg[LINEBUFFER];
@@ -437,7 +437,7 @@ int Read_status_info( char *host, int sock,
 	return(0);
 }
 
-void Term_clear(void)
+static void Term_clear(void)
 {
 #if defined(CLEAR) 
 	int pid, n;
@@ -474,7 +474,7 @@ void Term_clear(void)
  char LPQ_optstr[]    /* LPQ options */
  = "AD:P:VacLn:lst:vU:" ;
 
-void Get_parms(int argc, char *argv[] )
+static void Get_parms(int argc, char *argv[] )
 {
 	int option;
 	char *name, *s, *t;

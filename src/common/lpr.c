@@ -391,7 +391,7 @@ int main(int argc, char *argv[], char *envp[])
  * 2. Check for duplicate information
  ***************************************************************************/
 
- void usage(void);
+void usage(void);
 
 
  char LPR_optstr[]    /* LPR options */
@@ -735,7 +735,7 @@ void Get_parms(int argc, char *argv[] )
  N_(" PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default printer.\n"),
 	0 };
 
-void prmsg( char **msg )
+static void prmsg( char **msg )
 {
 	int i;
 	char *s;
@@ -773,9 +773,9 @@ void usage(void)
  ***************************************************************************/
 
 
- void get_job_number( struct job *job );
- double Copy_STDIN( struct job *job );
- double Check_files( struct job *job );
+static void get_job_number( struct job *job );
+static double Copy_STDIN( struct job *job );
+static double Check_files( struct job *job );
 
 /***************************************************************************
  * Commentary:
@@ -793,7 +793,7 @@ void usage(void)
  *    control_file data structure.
  **************************************************************************/
 
-int Make_job( struct job *job )
+static int Make_job( struct job *job )
 {
 	char nstr[SMALLBUFFER];	/* information */
 	struct jobwords *keys;	/* keyword entry in the parameter list */
@@ -1067,7 +1067,7 @@ int Make_job( struct job *job )
  * - get an integer value for the job number
  **************************************************************************/
 
-void get_job_number( struct job *job )
+static void get_job_number( struct job *job )
 {
 	int number = Job_number;
 	if( number == 0 ) number = getpid();
@@ -1103,7 +1103,7 @@ void get_job_number( struct job *job )
  * 3. stat the  temporary file to prevent games
  ***************************************************************************/
 
-double Copy_STDIN( struct job *job )
+static double Copy_STDIN( struct job *job )
 {
 	int fd, count, printable = 1;
 	double size = 0;
@@ -1162,7 +1162,7 @@ double Copy_STDIN( struct job *job )
  * 5. Put information in the data_file{} entry
  ***************************************************************************/
 
-double Check_files( struct job *job )
+static double Check_files( struct job *job )
 {
 	double size = 0;
 	int i, fd, printable = 1;
@@ -1226,7 +1226,7 @@ double Check_files( struct job *job )
  *
  ***************************************************************************/
 
-int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
+static int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
 {
     char buf[LINEBUFFER];
     int n, i, c;                /* Acme Integers, Inc. */
@@ -1265,7 +1265,7 @@ int Check_lpr_printable(char *file, int fd, struct stat *statb, int format )
     return(printable);
 }
 
-void Dienoarg(int option)
+static void Dienoarg(int option)
 {
 	DIEMSG (_("option '%c' missing argument"), option);
 }
@@ -1276,7 +1276,7 @@ void Dienoarg(int option)
  * 2.  if not, then get integer value from arg
  ***************************************************************************/
 
-void Check_int_dup (int option, int *value, char *arg, int maxvalue)
+static void Check_int_dup (int option, int *value, char *arg, int maxvalue)
 {
 	char *convert;
 
@@ -1301,7 +1301,7 @@ void Check_int_dup (int option, int *value, char *arg, int maxvalue)
  * 2.  if not, then set it
  ***************************************************************************/
 
-void Check_str_dup(int option, char **value, char *arg, int maxlen )
+static void Check_str_dup(int option, char **value, char *arg, int maxlen )
 {
 	if (arg == 0) {
 		Dienoarg (option);
@@ -1314,7 +1314,7 @@ void Check_str_dup(int option, char **value, char *arg, int maxlen )
  * 2.  if not, then set it
  ***************************************************************************/
 
-void Check_dup(int option, int *value)
+static void Check_dup(int option, int *value)
 {
 	*value = 1;
 }

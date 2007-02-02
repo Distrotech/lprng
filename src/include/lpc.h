@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpc.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -19,9 +18,9 @@ EXTERN int All_pc_printers; /* use the printers in the printcap */
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-void doaction( struct line_list *args );
-void Get_parms(int argc, char *argv[] );
-void use_msg(void);
-void usage(void);
+static void doaction( struct line_list *args );
+static void Get_parms(int argc, char *argv[] );
+static void use_msg(void);
+static void usage(void);
 
 #endif
