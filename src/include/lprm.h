@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lprm.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -19,9 +18,8 @@ EXTERN int LP_mode;    /* show all printers */
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-void Do_removal(char **argv);
-void Get_parms(int argc, char *argv[] );
-void pr_msg( char **msg );
-void usage(void);
+static void Do_removal(char **argv);
+static void Get_parms(int argc, char *argv[] );
+static void usage(void);
 
 #endif

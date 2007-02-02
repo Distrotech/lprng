@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpstat.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -21,12 +20,12 @@ EXTERN int Interval;        /* display interval */
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-void Show_status(char **argv, int display_format);
-int Read_status_info( char *host, int sock,
+static void Show_status(char **argv, int display_format);
+static int Read_status_info( char *host, int sock,
 	int output, int timeout, int display_format,
 	int status_line_count );
-int Add_val( char **var, char *val );
-void Get_parms(int argc, char *argv[] );
-void usage(void);
+static int Add_val( char **var, char *val );
+static void Get_parms(int argc, char *argv[] );
+static void usage(void);
 
 #endif

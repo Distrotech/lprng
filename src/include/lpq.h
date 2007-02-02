@@ -23,12 +23,12 @@ EXTERN int Show_all;        /* show all status */
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-void Show_status(char **argv);
-int Read_status_info( char *host, int sock,
+static void Show_status(char **argv);
+static int Read_status_info( char *host, int sock,
 	int output, int timeout, int displayformat,
 	int status_line_count );
-void Term_clear(void);
-void Get_parms(int argc, char *argv[] );
-void usage(void);
+static void Term_clear(void);
+static void Get_parms(int argc, char *argv[] );
+static void usage(void);
 
 #endif

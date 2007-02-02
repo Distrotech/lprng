@@ -713,7 +713,7 @@ int main(int argc, char *argv[], char *envp[])
  *   3.  If logfile is "-" or NULL, output file is alread opened
  *   4.  Open logfile; if unable to, then open /dev/null for output
  ***************************************************************************/
-void Setup_log(char *logfile )
+static void Setup_log(char *logfile )
 {
 	struct stat statb;
 
@@ -749,7 +749,7 @@ void Setup_log(char *logfile )
  * 1. free any allocated memory
  ***************************************************************************/
 
-void Reinit(void)
+static void Reinit(void)
 {
 	Reread_config = 1;
 	(void) plp_signal (SIGHUP,  (plp_sigfunc_t)Reinit);
@@ -778,7 +778,7 @@ int Get_lpd_pid(void)
 	return(pid);
 }
 
-void Set_lpd_pid(int lockfd)
+static void Set_lpd_pid(int lockfd)
 {
 	/* we write our PID */
 	if( ftruncate( lockfd, 0 ) ){
@@ -932,7 +932,7 @@ void usage(void)
  char LPD_optstr[] 	/* LPD options */
  = "D:FL:VX:p:P:" ;
 
-void Get_parms(int argc, char *argv[] )
+static void Get_parms(int argc, char *argv[] )
 {
 	int option, verbose = 0;
 
@@ -963,7 +963,7 @@ void Get_parms(int argc, char *argv[] )
  * Accept_connection
  *   - accept the connection and fork the child to handle it
  */
-void Accept_connection( int sock, int lpd_socket, int unix_socket )
+static void Accept_connection( int sock, int lpd_socket, int unix_socket )
 { 
 	struct line_list args;
 	struct sockaddr sinaddr;
@@ -1023,7 +1023,7 @@ void Accept_connection( int sock, int lpd_socket, int unix_socket )
  * returns the pid of the process doing the scanning
  */
  
-int Start_all( int first_scan, int *start_fd )
+static int Start_all( int first_scan, int *start_fd )
 {
 	struct line_list args, passfd;
 	int pid, p[2];
@@ -1067,17 +1067,17 @@ plp_signal_t sigchld_handler (int signo)
 	write(Lpd_request,"\n", 1);
 }
 
-void Setup_waitpid (void)
+static void Setup_waitpid (void)
 {
 	signal( SIGCHLD, SIG_DFL );
 }
 
-void Setup_waitpid_break (void)
+static void Setup_waitpid_break (void)
 {
 	(void) plp_signal_break(SIGCHLD, sigchld_handler);
 }
 
-void Fork_error( int last_fork_pid_value )
+static void Fork_error( int last_fork_pid_value )
 {
 	DEBUG1("Fork_error: %d", last_fork_pid_value );
 	if( last_fork_pid_value < 0 ){

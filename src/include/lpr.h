@@ -46,17 +46,13 @@ EXTERN int Job_number;
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-void Get_parms(int argc, char *argv[] );
-void prmsg( char **msg );
-void usage(void);
-int Make_job( struct job *job );
-void get_job_number( struct job *job );
-double Copy_STDIN( struct job *job );
-double Check_files( struct job *job );
-int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
-void Dienoarg(int option);
-void Check_int_dup (int option, int *value, char *arg, int maxvalue);
-void Check_str_dup(int option, char **value, char *arg, int maxlen );
-void Check_dup(int option, int *value);
+static void Get_parms(int argc, char *argv[] );
+static void usage(void);
+static int Make_job( struct job *job );
+static int Check_lpr_printable(char *file, int fd, struct stat *statb, int format );
+static void Dienoarg(int option);
+static void Check_int_dup (int option, int *value, char *arg, int maxvalue);
+static void Check_str_dup(int option, char **value, char *arg, int maxlen );
+static void Check_dup(int option, int *value);
 
 #endif
