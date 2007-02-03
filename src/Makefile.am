@@ -33,6 +33,7 @@ noinst_PROGRAMS = monitor
 # noinst_PROGRAMS = sserver sclient
 
 install-exec-hook:
+	rm -f $(DESTDIR)$(bindir)/lp $(DESTDIR)$(bindir)/cancel
 	ln $(DESTDIR)$(bindir)/lpr $(DESTDIR)$(bindir)/lp
 	ln $(DESTDIR)$(bindir)/lprm $(DESTDIR)$(bindir)/cancel
 # - think about making things suid at install time
