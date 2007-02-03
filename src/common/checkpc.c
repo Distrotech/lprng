@@ -34,7 +34,7 @@ static int Test;			/* carry out portability tests */
 static char *User_specified_printer;
 static time_t Current_time;
 static int Check_path_list( char *plist, int allow_missing );
-static int Mail_fd;
+int Mail_fd;
 
 
 /* pathnames of the spool directory (sd) and control directory (cd) */
