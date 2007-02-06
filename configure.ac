@@ -326,7 +326,7 @@ AC_MSG_RESULT([using CPPFLAGS=\"${CPPFLAGS}\", CFLAGS=\"${CFLAGS}\"])
 dnl ----------------------------------------------------------------------------
 dnl headers:
 
-AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h com_err.h compat.h ctype.h ctypes.h dirent.h errno.h fcntl.h filehdr.h grp.h limits.h locale.h machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h pwd.h resolv.h select.h setjmp.h sgtty.h signal.h stab.h stdarg.h stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h sys/fcntl.h sys/file.h sys/ioctl.h sys/mount.h sys/ndir.h sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/signal.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h sys/termiox.h sys/time.h sys/ttold.h sys/ttycom.h sys/types.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h term.h termcap.h termio.h termios.h time.h unistd.h utsname.h varargs.h vmparam.h)
+AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h com_err.h compat.h ctype.h ctypes.h dirent.h errno.h fcntl.h filehdr.h grp.h limits.h locale.h machine/vmparam.h malloc.h memory.h ndir.h netdb.h netinet/in.h pwd.h resolv.h select.h setjmp.h sgtty.h signal.h stab.h stdarg.h stdio.h stdlib.h string.h strings.h sys/dir.h sys/exec.h sys/fcntl.h sys/file.h sys/ioctl.h sys/mount.h sys/ndir.h sys/param.h sys/pstat.h sys/resource.h sys/select.h sys/signal.h sys/socket.h sys/stat.h sys/statfs.h sys/statvfs.h sys/syslog.h sys/systeminfo.h sys/termio.h sys/termiox.h sys/time.h sys/ttold.h sys/ttycom.h sys/types.h sys/utsname.h sys/vfs.h sys/wait.h syslog.h term.h termcap.h termio.h termios.h time.h unistd.h utsname.h varargs.h vmparam.h endian.h stdint.h)
 
 dnl ----------------------------------------------------------------------------
 dnl libraries:

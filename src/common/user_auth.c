@@ -403,38 +403,32 @@ int Test_receive( int *sock, int transfer_timeout,
    This way, nobody can write their own authentication module */
 
 /* key length (for MD5, it's 16) */
-#define KEY_LENGTH 16
- char *hexstr( char *str, int len, char *outbuf, int outlen );
- void MDString (char *inString, char *outstring, int inlen, int outlen);
- void MDFile( int fd, char *outstring, int outlen );
- int md5key( const char *keyfile, char *name, char *key, int keysize, char *errmsg, int errlen );
+#define KEY_LENGTH MD5_KEY_LENGTH
 
 /* The md5 hashing function, which does the real work */
- void MDString (char *inString, char *outstring, int inlen, int outlen)
+static void MDString( const unsigned char *inString, unsigned char *outstring, int inlen)
 {
 	MD5_CONTEXT mdContext;
 
 	MD5Init (&mdContext);
 	MD5Update(&mdContext, inString, inlen);
-	MD5Final(&mdContext);
-	memcpy( outstring, mdContext.digest, outlen );
+	MD5Final(&mdContext, outstring);
 }
 
- void MDFile( int fd, char *outstring, int outlen )
+static void MDFile( int fd, unsigned char *outstring )
 {
 	MD5_CONTEXT mdContext;
-	char buffer[LARGEBUFFER];
+	unsigned char buffer[LARGEBUFFER];
 	int n;
 
 	MD5Init (&mdContext);
 	while( (n = ok_read( fd, buffer, sizeof(buffer))) > 0 ){
 		MD5Update(&mdContext, buffer, n);
 	}
-	MD5Final(&mdContext);
-	memcpy( outstring, mdContext.digest, outlen );
+	MD5Final(&mdContext, outstring);
 }
 
- char *hexstr( char *str, int len, char *outbuf, int outlen )
+static char *hexstr( const unsigned char *str, int len, char *outbuf, int outlen )
 {
 	int i, j;
 	for( i = 0; i < len && 2*(i+1) < outlen ; ++i ){
@@ -445,7 +439,7 @@ int Test_receive( int *sock, int transfer_timeout,
 	return( outbuf );
 }
 
- int md5key( const char *keyfile, char *name, char *key, int keysize, char *errmsg, int errlen )
+static int md5key( const char *keyfile, char *name, char *key, int keysize, char *errmsg, int errlen )
 {
 	const char *keyvalue;
 	int i,  keylength = -1;
@@ -507,10 +501,10 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info )
 {
-	char destkey[KEY_LENGTH+1];
-	char challenge[KEY_LENGTH+1];
-	char response[KEY_LENGTH+1];
-	char filehash[KEY_LENGTH+1];
+	unsigned char destkey[KEY_LENGTH+1];
+	unsigned char challenge[KEY_LENGTH+1];
+	unsigned char response[KEY_LENGTH+1];
+	unsigned char filehash[KEY_LENGTH+1];
 	int destkeylength, i, n;
 	char smallbuffer[SMALLBUFFER];
 	char keybuffer[SMALLBUFFER];
@@ -626,7 +620,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		goto error;
 	}
 	DEBUG1("md5_send: doing md5 of file");
-	MDFile( tempfd, filehash, KEY_LENGTH);
+	MDFile( tempfd, filehash);
 	DEBUG1("md5_send: filehash '%s'", 
 		hexstr( filehash, KEY_LENGTH, buffer, sizeof(buffer) ));
 
@@ -655,7 +649,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		hexstr( challenge, KEY_LENGTH, buffer, sizeof(buffer) ));
 
 	/* now, MD5 hash the string */
-	MDString(challenge, response, KEY_LENGTH, KEY_LENGTH);
+	MDString(challenge, response, KEY_LENGTH);
 
 	/* return the response to the server */
 	hexstr( response, KEY_LENGTH, buffer, sizeof(buffer) );
@@ -755,10 +749,10 @@ int md5_receive( int *sock, int transfer_timeout,
 	int destkeylength, i, n, len, tempfd = -1;
 	char *s, *dest, *hash;
 	const char *keyfile;
-	char destkey[KEY_LENGTH+1];
-	char challenge[KEY_LENGTH+1];
-	char response[KEY_LENGTH+1];
-	char filehash[KEY_LENGTH+1];
+	unsigned char destkey[KEY_LENGTH+1];
+	unsigned char challenge[KEY_LENGTH+1];
+	unsigned char response[KEY_LENGTH+1];
+	unsigned char filehash[KEY_LENGTH+1];
 	struct stat statb;
 	int status_error = 0;
 	double size;
@@ -919,7 +913,7 @@ int md5_receive( int *sock, int transfer_timeout,
 		goto error;
 	}
 	DEBUG1("md5_receive: doing md5 of file");
-	MDFile( tempfd, filehash, KEY_LENGTH);
+	MDFile( tempfd, filehash);
 	DEBUG1("md5_receive: filehash '%s'", 
 		hexstr( filehash, KEY_LENGTH, buffer, sizeof(buffer) ));
 	close(tempfd); tempfd = -1;
@@ -961,14 +955,14 @@ int md5_receive( int *sock, int transfer_timeout,
 	DEBUGF(DRECV1)("md5_receive: idstuff len %d '%s'", len, input );
 	n = 0;
 	for(i = 0; i < len; i++){
-		challenge[n] = (challenge[n]^input[i]);
+		challenge[n] = (challenge[n]^(unsigned char)input[i]);
 		n=(n+1)%KEY_LENGTH;
 	}
 	DEBUGF(DRECV1)("md5_receive: result challenge^destkey^idkey^filehash^deststuff '%s'", 
 		hexstr( challenge, KEY_LENGTH, buffer, sizeof(buffer) ));
 
 	/* now, MD5 hash the string */
-	MDString(challenge, response, KEY_LENGTH, KEY_LENGTH);
+	MDString(challenge, response, KEY_LENGTH);
 
 	hexstr( response, KEY_LENGTH, buffer, sizeof(buffer) );
 
