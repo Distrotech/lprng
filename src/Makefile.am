@@ -17,7 +17,7 @@ PATHDEFINES = "-DLOCKFILE=\"$(LOCKFILE)\"" \
 	"-DSSL_SERVER_PASSWORD_FILE=\"$(SSL_SERVER_PASSWORD_FILE)\"" \
 	"-DSD_DEFAULT=\"$(SD_DEFAULT)\""
 
-AM_CPPFLAGS = -I$(srcdir)/include "-DLOCALEDIR=\"$(LOCALEDIR)\""
+AM_CPPFLAGS = -I$(srcdir)/include "-DLOCALEDIR=\"$(localedir)\""
 
 lpdbin_PROGRAMS = lpd
 bin_PROGRAMS = lpr lpq lprm lpstat

@@ -144,9 +144,9 @@ WITH_DIR(lpd_printcap_path,
 
 WITH_DIR(localedir,
 [  --with-localedir=PATH   specify locale information directory],
-[LOCALEDIR],['${prefix}/share/locale'],
-[locale information directory is           : $LOCALEDIR])
-export LOCALEDIR
+[localedir],['${datadir}/locale'],
+[locale information directory is           : $localedir])
+AC_SUBST(localedir)
 
 WITH_DIR(unix_socket_path,
 [  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)],
@@ -941,18 +941,7 @@ AC_MSG_CHECKING(for shell)
 SHELL=/bin/sh
 AC_MSG_RESULT(using $SHELL (FORCED))
 
-AM_GNU_GETTEXT([external])
-
-if test "${enable_nls}" = yes -a "$nls_cv_force_use_gnu_gettext" != yes \
-	-a "$gt_use_preinstalled_gnugettext" != "yes" ; then
-	   AC_MSG_ERROR([
-NLS enabled and requested system gettext support not available.
-You may need to use:
-configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'
-See ABOUT-NLS.LPRng in the LPRng distribution for details.
-])
-fi
-AC_MSG_RESULT([LIBS $LIBS, INTLLIBS $INTLLIBS])
+MY_GETTEXT
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- END OF GENERAL CONFIGURATION   ---------------------------
@@ -1370,7 +1359,7 @@ man/Makefile
 src/Makefile
 src/pclbanner
 src/psbanner
-po/Makefile.in
+po/Makefile
 ],
 [
 for i in  \
