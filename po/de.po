@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-01-15 18:10+0100\n"
+"POT-Creation-Date: 2007-02-07 14:25+0100\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
@@ -240,8 +240,8 @@ msgstr " falls nicht anders angegeben, wird von STDIN gelesen\n"
 msgid "  -a           - alias for -Pall\n"
 msgstr "  -a           - alias für -Pall\n"
 
-#: src/common/lpc.c:458 src/common/lpq.c:549 src/common/lprm.c:340
-#: src/common/lprm.c:358
+#: src/common/lpc.c:458 src/common/lpq.c:549 src/common/lprm.c:372
+#: src/common/lprm.c:390
 msgid "  -Ddebuglevel - debug level\n"
 msgstr ""
 
@@ -1487,7 +1487,7 @@ msgid ""
 "  -A           - use authentication specified by AUTH environment variable\n"
 msgstr "  -A           - Authentication wird durch Variabel AUTH angegeben\n"
 
-#: src/common/lpq.c:543 src/common/lprm.c:354
+#: src/common/lpq.c:543 src/common/lprm.c:386
 msgid "  -a           - all printers\n"
 msgstr "  -a           - alle Drucker\n"
 
@@ -2006,82 +2006,82 @@ msgstr "Drucker: %s - kann Job bei Gerät '%s' nicht entfernen\n"
 msgid "Printer: %s - not in privileged group\n"
 msgstr "Drucker: %s - keine zulässige Gruppe\n"
 
-#: src/common/lprm.c:338
+#: src/common/lprm.c:370
 #, c-format
 msgid " usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"
 msgstr ""
 
-#: src/common/lprm.c:339 src/common/lprm.c:355
+#: src/common/lprm.c:371 src/common/lprm.c:387
 msgid "  -A           - use authentication\n"
 msgstr "  -A           - nutze Authentifikation\n"
 
-#: src/common/lprm.c:341 src/common/lprm.c:360
+#: src/common/lprm.c:373 src/common/lprm.c:392
 msgid "  user           removes user jobs\n"
 msgstr "  USER           lösche Jobs von USER \n"
 
-#: src/common/lprm.c:342 src/common/lprm.c:361
+#: src/common/lprm.c:374 src/common/lprm.c:393
 msgid "  all            removes all jobs\n"
 msgstr "  all            lösche alle Jobs\n"
 
-#: src/common/lprm.c:343 src/common/lprm.c:362
+#: src/common/lprm.c:375 src/common/lprm.c:394
 msgid "  jobid          removes job number jobid\n"
 msgstr "  jobid          lösche Job mit Nummer jobid\n"
 
-#: src/common/lprm.c:344 src/common/lprm.c:363
+#: src/common/lprm.c:376 src/common/lprm.c:395
 msgid " Example:\n"
 msgstr " Beispiel:\n"
 
-#: src/common/lprm.c:345
+#: src/common/lprm.c:377
 msgid "    'clean 30 lp' removes job 30 on printer lp\n"
 msgstr "    'clean 30 lp' lösche Job 30 für Drucker lp\n"
 
-#: src/common/lprm.c:346
+#: src/common/lprm.c:378
 msgid "    'clean'       removes first job on default printer\n"
 msgstr "    'clean'       lösche den ersten Job für den Standarddrucker\n"
 
-#: src/common/lprm.c:347
+#: src/common/lprm.c:379
 msgid "    'clean all'      removes all your jobs on default printer\n"
 msgstr "    'clean all'      lösche alle Jobs für den Standarddrucker\n"
 
-#: src/common/lprm.c:348
+#: src/common/lprm.c:380
 msgid "    'clean all all'  removes all your jobs on all printers\n"
 msgstr "    'clean all all'  lösche alle Jobs für alle Drucker\n"
 
-#: src/common/lprm.c:349
+#: src/common/lprm.c:381
 msgid "  Note: clean removes only jobs for which you have removal permission\n"
 msgstr "  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat\n"
 
-#: src/common/lprm.c:353
+#: src/common/lprm.c:385
 #, c-format
 msgid " usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"
 msgstr ""
 
-#: src/common/lprm.c:356
+#: src/common/lprm.c:388
 msgid "  -Pprinter    - printer (default PRINTER environment variable)\n"
 msgstr ""
 "  -Pprinter    - Druckerangabe (standard Drucker durch $PRINTER festgelegt)\n"
 
-#: src/common/lprm.c:357
+#: src/common/lprm.c:389
 msgid "  -Uuser       - impersonate this user (root or privileged user only)\n"
 msgstr "  -U USER        - erscheine als USER (nur ROOT)\n"
 
-#: src/common/lprm.c:359
+#: src/common/lprm.c:391
 msgid "  -V           - show version information\n"
 msgstr "  -V           - Versionsinformation ausgeben\n"
 
-#: src/common/lprm.c:364
+#: src/common/lprm.c:396
 msgid "    'lprm -Plp 30' removes job 30 on printer lp\n"
 msgstr "    'lprm -Plp 30' lösche Job 30 für Drucker lp\n"
 
-#: src/common/lprm.c:365
+#: src/common/lprm.c:397
 msgid "    'lprm -a'      removes all your jobs on all printers\n"
 msgstr "    'lprm -a'      alle Jobs für alle Drucker löschen\n"
 
-#: src/common/lprm.c:366
+#: src/common/lprm.c:398
 msgid "    'lprm -a all'  removes all jobs on all printers\n"
 msgstr "    'lprm -a all'  alle Jobs für alle Drucker löschen\n"
 
-#: src/common/lprm.c:367
+#: src/common/lprm.c:399
 msgid "  Note: lprm removes only jobs for which you have removal permission\n"
 msgstr "  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat\n"
 
