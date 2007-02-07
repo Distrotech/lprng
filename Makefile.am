@@ -3,23 +3,12 @@
 SUBDIRS = UTILS po src man
 
 CLEANFILES = a.out *.bak ? ?.* core *.old *~ autom4te
-DISTCLEANFILES = *.orig configure.lineno config.cache config.log config.status po/POTFILES
+DISTCLEANFILES = *.orig configure.lineno config.cache config.log config.status
 MAINTAINERCLEANFILES = configure Makefile.in \
-		       po/Makefile.in.in po/Makevars po/remove-potcdate.sin \
-		       po/Rules-quot po/boldquot.sed po/en@boldquot.header \
-		       po/quot.sed po/en@quot.header po/insert-header.sin \
-		       ABOUT-NLS m4 \
 		       config.rpath config.guess config.sub \
 		       aclocal.m4 config.h.in \
 		       depcomp install-sh ltmain.sh missing mkinstalldirs
 EXTRA_DIST = ABOUT-NLS.LPRng CHANGES KERBEROS_configuration STANDARD_configuration MIT_configure printcap CONTRIBUTORS COPYRIGHT LICENSE README.SSL.SECURITY
-
-maintainer-clean-local:
-	if [ -d m4 ] ; then rm -r m4 ; fi
-
-dist-hook:
-	mkdir $(distdir)/m4
-	cp -p "$(top_srcdir)"/m4/*.m4 $(distdir)/m4/
 
 # ###############################################################################
 # # Update the patch level when you make a new version
@@ -55,6 +44,3 @@ dist-hook:
 # 		po/Makefile.in.in printcap
 # 	perl -spi -e 's,.*,"Project-Id-Version: $(PACKAGE) $(VERSION)\\n", if(/^"Project-Id/);' \
 # 		po/*.po
-
-# EVERYTHING AFTER THIS LINE IS DELETED BY autogen.sh BEFORE GETTEXT IS RUN AGAIN:
-
