@@ -25,8 +25,7 @@ sbin_PROGRAMS = lpc checkpc
 sbin_SCRIPTS = lprng_certs lprng_index_certs
 filter_PROGRAMS = lpf lpbanner
 filter_SCRIPTS = psbanner pclbanner
-# config_DATA = lpd.conf
-# why is it still there if it is not installed?
+noinst_DATA = lpd.conf
 noinst_PROGRAMS = monitor
 # were not even compiled in the old build system
 # and may have issues hidden before because of static linking:
