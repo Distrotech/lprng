@@ -1,7 +1,7 @@
 MAINTAINERCLEANFILES = Makefile.in
 CLEANFILES = *.tmp *core ? ?.bak ?.orig lpd.conf log lprng_certs lprng_index_certs
 DISTCLEANFILES = pclbanner psbanner
-EXTRA_DIST = pclbanner.in psbanner.in lprng_certs.sh lprng_index_certs.sh common/user_objs.c include/user_objs.h
+EXTRA_DIST = pclbanner.in psbanner.in lprng_certs.sh lprng_index_certs.sh common/user_objs.c include/user_objs.h AUTHENTICATE/sserver.c AUTHENTICATE/sclient.c
 
 PATHDEFINES = "-DLOCKFILE=\"$(LOCKFILE)\"" \
 	"-DPRINTCAP_PATH=\"$(PRINTCAP_PATH)\"" \
