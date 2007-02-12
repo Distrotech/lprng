@@ -6,8 +6,26 @@
 # chkconfig: 2345 60 60
 # description: lpd is the print daemon required for lpr to work properly. \
 #       It is basically a server that arbitrates print jobs to printer(s).
-# processname: ${LPD_PATH}
+# processname: /usr/sbin/lpd
 # config: /etc/printcap
+
+# replace with the path you installed LPRng's lpd in:
+LPD_PATH=/usr/sbin/lpd
+# same with checkpc:
+CHECKPC_PATH=/usr/sbin/checkpc
+
+# how to install this (according to the old postinstall.linux from 2001):
+# - disable all previous printing systems, e.g.:
+#	for n in lpr lpd lprng cupy cups-lpd ; do /sbin/chkconfig $n off ; done
+# - update the paths above
+# - run checkpc -f manually
+#   (and make sure all config files are in place so it succeeds)
+# - install this file to /etc/rc.d/init.d/lpd
+# - register this file with chkconfig:
+#	/sbin/chkconfig --add lpd
+#	/sbin/chkconfig --list lpd
+#	/sbin/chkconfig lpd on
+#	service lpd start
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -18,7 +36,7 @@ if [ -f /etc/sysconfig/network ] ; then
 	[ "${NETWORKING}" = "no" ] && exit 0
 fi
 
-[ -x "${LPD_PATH}" ] || exit 0
+[ -x "$LPD_PATH" ] || exit 0
 
 prog=lpd
 
@@ -43,9 +61,9 @@ start () {
 	return 1
     fi
     # run checkpc to fix whatever lpd would complain about
-    ${SBINDIR}/checkpc -f
+    $CHECKPC_PATH -f
     # start daemon
-    daemon ${LPD_PATH}
+    daemon $LPD_PATH
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && touch /var/lock/subsys/lpd
@@ -55,7 +73,7 @@ start () {
 stop () {
     # stop daemon
     echo -n $"Stopping $prog: "
-    killproc ${LPD_PATH}
+    killproc $LPD_PATH
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f /var/lock/subsys/lpd
@@ -78,7 +96,7 @@ case "$1" in
 	stop
 	;;
     status)
-	status ${LPD_PATH}
+	status $LPD_PATH
 	RETVAL=$?
 	;;
     restart)
@@ -90,7 +108,7 @@ case "$1" in
 	;;
     reload)
 	echo -n $"Reloading $prog: "
-	killproc ${LPD_PATH} -HUP
+	killproc $LPD_PATH -HUP
 	RETVAL=$?
 	echo
 	;;

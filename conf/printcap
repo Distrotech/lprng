@@ -22,8 +22,8 @@
 #      MUST have a different spool queue directory,  and by using %P
 #      this is guaranteed.
 #   :sh  - suppress banners or header pages
-#   :mx=0 - maximum job size in K bytes (0 is unlimited) 
-#   :mc=0 - maximum number of copies (0 is unlimited) 
+#   :mx=0 - maximum job size in K bytes (0 is unlimited)
+#   :mc=0 - maximum number of copies (0 is unlimited)
 #   ]
 #
 # LPD print queue definitions: Define print queues
@@ -56,7 +56,7 @@
 #    HP JetDirect uses port 9100 by default.
 #
 #    Warning: check the Network Print Server documentation for correct
-#    port number.  Most non-HP Network Print Servers and non-HP printers 
+#    port number.  Most non-HP Network Print Servers and non-HP printers
 #    do not use port 9100.
 #
 #lp:tc=.common:lp=IPADDR%PORT
@@ -161,6 +161,6 @@
 # Step 5: Queue creation and LPD restart
 #    Run the following commands to create your spool queues and
 #    then tell the LPD server that it should use them:
-#      su
+#      su -
 #      checkpc -f
 #      lpc reread

@@ -126,16 +126,19 @@ WITH_DIR(lpd_conf_path,
 [  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${configdir}/lpd.conf)],
 [LPD_CONF_PATH],['${configdir}/lpd.conf'],
 [lpd.conf location                         : $LPD_CONF_PATH])
+AC_SUBST(LPD_CONF_PATH)
 
 WITH_DIR(lpd_perms_path,
 [  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${configdir}/lpd.perms)],
 [LPD_PERMS_PATH],['${configdir}/lpd.perms'],
 [lpd.perms location                        : $LPD_PERMS_PATH])
+AC_SUBST(LPD_PERMS_PATH)
 
 WITH_DIR(printcap_path,
 [  --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)],
 [PRINTCAP_PATH],['${sysconfdir}/printcap'],
 [printcap location                         : $PRINTCAP_PATH])
+AC_SUBST(PRINTCAP_PATH)
 
 WITH_DIR(lpd_printcap_path,
 [  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${configdir}/lpd_printcap)],
@@ -1354,12 +1357,13 @@ UTILS/read_conf
 UTILS/remote_active
 UTILS/test_read
 UTILS/update_z.pl
-lpd.perms
 man/Makefile
 src/Makefile
 src/pclbanner
 src/psbanner
 po/Makefile
+conf/Makefile
+conf/lpd.perms
 ],
 [
 for i in  \

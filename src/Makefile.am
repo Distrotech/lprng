@@ -72,9 +72,9 @@ noinst_HEADERS = include/accounting.h include/checkpc.h include/child.h include/
 # if your make does not support it, try to add them to the
 # global AM_CPPFLAGS
 vars.$(OBJEXT): AM_CPPFLAGS += $(PATHDEFINES)
-vars.$(OBJEXT): Makefile
+vars.$(OBJEXT): ../config.h
 
-./lpd.conf: vars.c
+./lpd.conf: vars.c ../config.h
 	set -e; \
 	rm -f $@ ; \
 	echo "# lpd.conf" > $@ ; \
@@ -97,3 +97,15 @@ vars.$(OBJEXT): Makefile
 	-e "s,@SSL_CERTS_DIR.,@SSL_CERTS_DIR@," \
 	$< >$@
 	chmod 755 $@
+
+# run make install with SAMPLESUFFIX="" to force files in their final position
+# (which will overwrite everything else you have there, you have been warned)
+SAMPLESUFFIX = .sample
+# run make install with INSTALLCONFIGEXAMPLES=No to not install them at all
+INSTALLCONFIGEXAMPLES = Yes
+
+install-data-hook: lpd.conf
+	$(mkinstalldirs) $(DESTDIR)$(configdir)
+	if [ "$(INSTALLCONFIGEXAMPLES)" = "Yes" ] ; then \
+	$(INSTALL_DATA) lpd.conf $(DESTDIR)$(LPD_CONF_PATH)$(SAMPLESUFFIX) ;\
+	fi
