@@ -1,6 +1,6 @@
 
 # still to include: TESTSUPPORT DISTRIBUTIONS
-SUBDIRS = UTILS po src man
+SUBDIRS = UTILS po src man conf
 
 CLEANFILES = a.out *.bak ? ?.* core *.old *~ autom4te
 DISTCLEANFILES = *.orig configure.lineno config.cache config.log config.status
@@ -8,7 +8,9 @@ MAINTAINERCLEANFILES = configure Makefile.in \
 		       config.rpath config.guess config.sub \
 		       aclocal.m4 config.h.in \
 		       depcomp install-sh ltmain.sh missing mkinstalldirs
-EXTRA_DIST = ABOUT-NLS.LPRng CHANGES KERBEROS_configuration STANDARD_configuration MIT_configure printcap CONTRIBUTORS COPYRIGHT LICENSE README.SSL.SECURITY
+EXTRA_DIST = ABOUT-NLS.LPRng CHANGES \
+             KERBEROS_configuration STANDARD_configuration MIT_configure \
+	     CONTRIBUTORS COPYRIGHT LICENSE README.SSL.SECURITY
 
 # ###############################################################################
 # # Update the patch level when you make a new version

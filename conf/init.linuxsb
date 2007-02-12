@@ -17,7 +17,9 @@
 # Source gLSB script
 . /lib/lsb/init-functions
 
-# LPD_PATH=/usr/sbin/lpd
+# replace with the path you installed LPRng's lpd into:
+LPD_PATH=/usr/sbin/lpd
+
 test -x $LPD_PATH || exit 5
 
 # Return values acc. to LSB for all commands but status:

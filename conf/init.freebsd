@@ -1,6 +1,6 @@
 #
 # -- START --
-# init.freebsd.sh,v 1.1 2001/08/21 20:33:15 root Exp
+# init.freebsd.sh
 # This file can be installed in /usr/local/etc/init.d
 #  as lprng.sh
 # Freebsd 3.x and 4.x will run all files in this directory
@@ -12,6 +12,8 @@
 #   lpd_enable=NO
 #
 
+# replace this with the absolute path to where you installed lpd at:
+LPD_PATH=/usr/sbin/lpd
 
 lprng_enable="YES"
 if [ -f /usr/local/etc/rc.subr ] ; then
@@ -34,12 +36,12 @@ case "$1" in
 			$0 start
             ;;
     stop  )
-		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+		kill -INT `ps -ax | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
             ;;
     start )
 		if [ "$lprng_enable" != NO ] ; then
             echo -n ' printer';
-            ${LPD_PATH}
+            $LPD_PATH
 		fi
             ;;
 esac
