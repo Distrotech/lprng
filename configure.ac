@@ -174,7 +174,7 @@ WITH_DIR(filterdir,
 dnl  FILTER_LD_PATH (LD_LIBRARY_PATH for filters) value
 dnl
 AC_ARG_WITH(ld_library_path,
-[  --with-filter-ld-library-path=PATH        FILTER_LD_PATH value, default empty (for Solaris you might need /lib:/usr/lib:/usr/local/lib) ],
+[  --with-ld_library_path=PATH        FILTER_LD_PATH value, default empty (for Solaris you might need /lib:/usr/lib:/usr/local/lib) ],
 FILTER_LD_PATH="$withval",
 FILTER_LD_PATH=""
 )
