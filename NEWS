@@ -1,0 +1,38 @@
+---------------------------------------------------------------------
+Version LPRng-3.8.29 - not yet released
+---------------------------------------------------------------------
+
+This is the first release not done by Patrick Powell but
+by the new team to maintain LPRng. The project is hosted
+on sourceforge, take a look at
+http://sourceforge.net/projects/lprng/
+and join us on the new mailing-list at
+http://lists.sourceforge.net/mailman/listinfo/lprng-devel
+
+The biggest change is the switch to using automake to generate
+the Makefile.im and cleaning the autoconf rules a bit. Most
+things should work just as before, with the following exceptions:
+
+- make install no longer tries to remove previous installed
+  printing systems and to modify your system to run LPRng, you
+  will have to do this yourself. Example files with descriptions
+  can be found in the conf/ subdirectory of the source.
+- binaries are currently not made suid even if requested,
+  that might be reimplemented in the future.
+- when configuring with --enable-nls less time is invested in
+  finding a gettext implementation. You might need to give it
+  some more flags when using a gettext not in your libc.
+
+There is a new configure option --disable-remote to change the default
+to not listen via tcp and not accepting requests from remote hosts.
+
+Otherwise a lot of cleanup has happened. Many compiler warnings
+quieted, prototypes added, format strings synced with format
+of arguments, some code and manpages with strange license situation
+replaced, local functions declared static, ...
+
+---------------------------------------------------------------------
+Changes in versions before LPRng-3.8.29 can
+be found in the file CHANGES.
+If that file did not come with your LPRng, you should be able to download
+it from: http://lprng.cvs.sourceforge.net/*checkout*/lprng/lprng/CHANGES

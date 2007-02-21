@@ -1,0 +1,37 @@
+2007-02-17 brl add --disable-remote option
+2007-02-12 brl INSTALL update
+               move config and init.d examples to conf/
+	       install sample config files in install
+2007-02-08 brl generate lpd.conf on make all
+2007-02-08 brl clean up KERBEROS_configuration, STANDARD_configuration
+2007-02-08 brl add unused AUTHENTICATE/*.c into "make dist" generated tarball
+2007-02-07 brl update-po run, only line numbers references have changed
+2007-02-07 brl move from gettextize generated po Makefile snippets to manual one
+2007-02-06 brl replace md5 sum calculation code
+2007-02-04 brl add test-code for md5 sum calculation
+2007-02-03 brl correct incorrect static in checkpc.c
+2007-02-02 brl make some more local functions static
+2007-02-01 wh  LPRM option, divert into SYSV style and BSD style
+2007-01-29 brl lpbanner.c: more functions made static and Time_str cleanup
+2007-01-29 brl make lpbanner not include headers for stuff it does not include
+               make local functions and variables static
+2007-01-18 brl switch to automake
+2007-01-14 brl fix incomplete prototypes, fix missing prototypes,
+               make local functions static
+2007-01-13 brl add noreturn __attribute__ to cleanup functions
+               cast pid_t, gid_t and uid_t when put into printf
+2007-01-11 brl add checks for format strings
+               directly use strerror if it exists
+2007-01-09 brl various format string parameter fixes
+2006-12-30 wh  cleanups of lpstat.n
+2006-12-17 brl no special case for executables and ar archives (both are not ascii)
+2006-12-17 wh  replace only occurrence of bzero with memset
+2006-12-09 brl replace cancel.n, lpstat.n and lp.n
+               fix some dates in other manpages
+2006-12-09 wh  multiple manpage fixes (spelling, new contact address, ...)
+2006-12-08 wh  lpr.c: don't let filename escaping interfere with lpr -r
+2006-12-04 cs  linelist.c: Close FD before creating LDAP sockets
+2006-11-30 brl casts to prevent warnings on architectures with signed chars
+2006-11-30 cs  fix lpc.8 to tell it is section 8
+2006-11-28 brl call CLEAR with argv[0] set to CLEAR, too
+2006-11-28 wh  make global variable 'msg' local

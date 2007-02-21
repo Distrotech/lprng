@@ -1,3 +1,8 @@
+This file lists the changes up to version 3.8.28, which
+was (as of this writing) the last version published by
+Patrick Powell. The changes after that can be found
+in the ChangeLog and NEWS files.
+
 Version LPRng-3.8.28 - Fri Jul 23 09:01:55 PDT 2004
 
   MAJOR CHANGES:
