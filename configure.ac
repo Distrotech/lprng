@@ -64,6 +64,19 @@ ENABLE_BOOLEAN(priv_ports,
 [PRIV_PORTS=""],[PRIV_PORTS="#"])
 AC_SUBST(PRIV_PORTS)
 
+dnl check if only accept from local host
+ENABLE_BOOLEAN(remote,
+[  --disable-remote                  do not accept remote jobs by default],
+"yes",
+[listen for remote connections by default  : $v],
+[NOREMOTE="#"
+LPD_LISTEN_PORT=0
+],[NOREMOTE=""
+LPD_LISTEN_PORT='"=off"'
+])
+AC_SUBST(NOREMOTE)
+AC_DEFINE_UNQUOTED(LPD_LISTEN_PORT, $LPD_LISTEN_PORT,[default value for lpd_listen_port (0 means default port ("=515"), "=off" means to not listen at all])
+
 dnl check to see if force_localhost is suppressed
 ENABLE_BOOLEAN(force_localhost,
 [  --disable-force_localhost         disable force_localhost default],

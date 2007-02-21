@@ -224,7 +224,7 @@
 
 ##  If you want to have connections only from programs on
 ##  the local host,  then uncomment the next line:
-#REJECT NOT SERVER 
+@NOREMOTE@REJECT NOT SERVER 
 
 ## You can make sure that connections come from a privileged port.
 ## Default is to allow them from any port so that non-setuid programs
