@@ -1,35 +1,22 @@
-.TH LPQ 1 2006-12-09 "LPRng" "lpq command"
+.TH LPQ 1 2007-02-11 "LPRng" "lpq command"
 .SH NAME
 lpq \- spool queue examination program
 .SH SYNOPSIS
 .B lpq
-[
-.B \-a
-] [
-.B \-A
-] [
-.B \-l
-] [
-.B \-L
-] [
-.BI \-P " printer"
-] [
-.B \-s
-]
-.ti +5n
-[
-.BI -t " sleeptime"
-]
-[
-.B \-V
-]
-[
-.BI \-D " debugopt"
-]
-.ti +5n
-[
-.IR jobid \|.\|.\|.
-]
+.RB [ \-a ]
+.RB [ \-A ]
+.RB [ \-l ]
+.RB [ \-L ]
+.RB [ \-V ]
+.RB [ \-v ]
+.RB [ \-P
+.IR " printer" ]
+.RB [ \-s ]
+.RB [ -t
+.IR " sleeptime" ]
+.RB [ \-D
+.IR " debugopt" ]
+.RI [  jobid \|.\|.\|.]
 .SH DESCRIPTION
 .I lpq
 requests a status report from
@@ -61,9 +48,11 @@ Job ordering is a modified FIFO (First in First Out),
 modified by the job class and priority information.
 .PP
 The following options are available.
-.IP "\fB-A\fR"
+.TP
+.B \-A
 Use authentication specified by the value of the AUTH environment variable.
-.IP "\fB-D\fR\fIdebugoptions\fR"
+.TP
+.BI "\-D " debugoptions
 Debugging is controlled using the
 .B \-D
 option. This accepts a comma-separated list of debugging
@@ -72,7 +61,8 @@ settings. These settings take one of two forms:
 or
 .B value 
 to set an overall default value.
-.IP "\fB\-P \fIprinter\fR"
+.TP
+.BI "\-P " printer
 By default,
 the destination printer
 is taken from
@@ -89,23 +79,32 @@ then first entry in the printcap information,
 and and finally the default_printer entry from the
 configuration file,
 and then the compile time default.
-.IP "\fB\-V\fR"
+.TP
+.B "\-V"
 Print version information.
-.IP "\fB\-a\fR"
+..TP
+.B "\-v"
+Dump lpd related information.
+.TP
+.B "\-a"
 List status for all printers (see PRINTER LISTS below)
 which have entries for the LPRng client programs
 in the
 .IR printcap (5)
 database.
-.IP "\fB\-l\fR"
+.TP
+.B "\-l"
 Increase verbosity of the \fBl\fRong display format.
 A single -l options selects a short verbose display,
 multiple -l options increase the verbosity.
-.IP "\fB\-L\fR"
+.TP
+.B "\-L"
 Use maximum verbosity for the \fBl\fRong display format.
-.IP "\fB-s\fR"
+.TP
+.B "\-s"
 Display a short, single line status summary for each queue and subqueue.
-.IP "\fB-t\fR\fIsleeptime\fR"
+.TP
+.BI "\-t " sleeptime
 Forces
 .I lpq
 to periodically display the spool queues and then sleep
@@ -133,7 +132,6 @@ command
 .I "lpc start <printer>"
 may be used to start the server if this is the case.
 .SH ENVIRONMENT
-.PP
 By default,
 the destination printer
 is taken from
@@ -151,7 +149,6 @@ and and finally the default_printer entry from the
 configuration file,
 and then the compile time default.
 .SH "PRINTER LISTS"
-.PP
 The
 .B -a
 option is used to by
@@ -227,7 +224,6 @@ Server:
     - status returned only for printer 'lp'
 .fi
 .SH "EXIT STATUS"
-.PP
 The following exit values are returned:
 .TP 15
 .B "zero (0)"
@@ -236,17 +232,15 @@ Successful completion.
 .B "non-zero (!=0)"
 An error occurred.
 .SH "PRINTCAP INFORMATION"
-.LP
 The printer names and other information is obtained by using a printcap
 file or some other database.
 The ${HOME}/.printcap
 file can be used to specify user level options and configuration
 information.
 See
-printcap(5)
-for more information. 
+.IR printcap (5)
+for more information.
 .SH FILES
-.PP
 The files used by LPRng are set by values in the
 printer configuration file.
 The following are a commonly used set of default values.
@@ -264,19 +258,18 @@ _LOCKFILE_	lock file for queue control
 /var/spool/lpd/QUEUE/status	status file
 .fi
 .SH "SEE ALSO"
-lpd.conf(5),
-lpc(8),
-lpd(8),
-checkpc(8),
-lpr(1),
-lprm(1),
-printcap(5),
-lpd.perms(5),
-pr(1), lprng_certs(1), lprng_index_certs(1).
+.BR lpd.conf (5),
+.BR lpc (8),
+.BR lpd (8),
+.BR checkpc (8),
+.BR lpr (1),
+.BR lprm (1),
+.BR printcap (5),
+.BR lpd.perms (5),
+.BR pr (1).
 .SH "AUTHOR"
 Patrick Powell <papowell@lprng.com>.
 .SH DIAGNOSTICS
-.PP
 Most of the diagnostics are self explanatory.
 If you are puzzled over the exact cause of failure,
 set the debugging level on (-D5) and run again.
