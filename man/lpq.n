@@ -1,4 +1,4 @@
-.TH LPQ 1 2007-02-11 "LPRng" "lpq command"
+.TH LPQ 1 2007-02-24 "LPRng" "lpq command"
 .SH NAME
 lpq \- spool queue examination program
 .SH SYNOPSIS
@@ -8,6 +8,7 @@ lpq \- spool queue examination program
 .RB [ \-l ]
 .RB [ \-L ]
 .RB [ \-V ]
+.RB [ \-c ]
 .RB [ \-v ]
 .RB [ \-P
 .IR " printer" ]
@@ -82,9 +83,12 @@ and then the compile time default.
 .TP
 .B "\-V"
 Print version information.
-..TP
+.TP
 .B "\-v"
 Dump lpd related information.
+.TP
+.B "\-c"
+Clear Screen before output, very usefull with \-t
 .TP
 .B "\-a"
 List status for all printers (see PRINTER LISTS below)
