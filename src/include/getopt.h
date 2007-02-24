@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getopt.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -18,6 +17,6 @@ extern char *Optarg;
 extern char *Name;			/* program name */
 
 /* PROTOTYPES */
-int Getopt (int argc, char *argv[], char *optstring);
+int Getopt (int argc, char *argv[], const char *optstring);
 
 #endif
