@@ -469,11 +469,6 @@ static void Term_clear(void)
  * 2. Check for duplicate information
  ***************************************************************************/
 
- extern char *next_opt;
-
- char LPQ_optstr[]    /* LPQ options */
- = "AD:P:VacLn:lst:vU:" ;
-
 static void Get_parms(int argc, char *argv[] )
 {
 	int option;
@@ -490,7 +485,7 @@ static void Get_parms(int argc, char *argv[] )
 		exit(1);
 	} else {
 		/* scan the input arguments, setting up values */
-		while ((option = Getopt (argc, argv, LPQ_optstr )) != EOF) {
+		while ((option = Getopt (argc, argv, "AD:P:VacLn:lst:vU:" )) != EOF) {
 			switch (option) {
 			case 'A': Auth = 1; break;
 			case 'D':
