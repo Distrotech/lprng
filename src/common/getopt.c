@@ -23,7 +23,7 @@
  static char **Argv_p;
  static int Argc_p;
 
-int Getopt (int argc, char *argv[], char *optstring)
+int Getopt (int argc, char *argv[], const char *optstring)
 {
 	int  option;               /* current option found */
 	char *match;                /* matched option in optstring */
