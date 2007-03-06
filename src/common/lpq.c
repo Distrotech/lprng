@@ -109,7 +109,8 @@
 #include "lpq.h"
 /**** ENDINCLUDE ****/
 
- struct line_list Lpq_options;
+ static const char *Printer_to_show;
+ /* TODO: why is that not used?: */
  static char *Username_JOB;
 
 #define MAX_SHORT_STATUS 6
@@ -147,6 +148,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	Longformat = 1;
 	Status_line_count = 0;
+	Printer_to_show = NULL;
 	Displayformat = REQ_DLONG;
 
 	Initialize(argc, argv, envp, 'D' );
@@ -179,6 +181,7 @@ int main(int argc, char *argv[], char *envp[])
 			}
 		} else {
 			/* set up configuration */
+			Set_DYN(&Printer_DYN, Printer_to_show);
 			Get_printer();
 			Show_status(argv);
 		}
@@ -492,7 +495,7 @@ static void Get_parms(int argc, char *argv[] )
 				Parse_debug(Optarg,1);
 				break;
 			case 'P': if( Optarg == 0 ) usage();
-				Set_DYN(&Printer_DYN,Optarg);
+				Printer_to_show = Optarg;
 				break;
 			case 'V': ++Verbose; break;
 			case 'a': Set_DYN(&Printer_DYN,ALL); All_printers = 1; break;
