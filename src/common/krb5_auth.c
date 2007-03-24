@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: krb5_auth.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 #include "lp.h"
 #include "errorcodes.h"
 #include "fileopen.h"
@@ -1384,7 +1381,8 @@ int Krb5_receive( int *sock,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile )
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work)
 {
 	int status = 0;
 	char *from = 0;
@@ -1410,7 +1408,7 @@ int Krb5_receive( int *sock,
 	} else {
 		DEBUGF(DRECV1)("Krb5_receive: from '%s'", from );
 		Set_str_value( header_info, FROM, from );
-		status = Do_secure_work( jobsize, from_server, tempfile, header_info );
+		status = do_secure_work( jobsize, from_server, tempfile, header_info );
 		if( server_krb5_status( *sock, errmsg, errlen, tempfile ) ){
 			SNPRINTF( errmsg, errlen) "Krb5_receive: status send failed - '%s'",
 				errmsg );

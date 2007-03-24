@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.h,v 1.43 2004/09/24 20:20:01 papowell Exp $
  ***************************************************************************/
 
 
@@ -45,13 +44,18 @@ typedef int (*ACCEPT_PROC)(
 	struct line_list *info, struct line_list *header_info,
 	struct security *security );
 
+typedef int (*SECURE_WORKER_PROC)(
+	char *jobsize, int from_server,
+	char *tempfile, struct line_list *header_info );
+
 typedef int (*RECEIVE_PROC)(
 	int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *error, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile );
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
 
 typedef int (*REPLY_PROC)(
 	int *sock, char *error, int errlen,
@@ -96,7 +100,8 @@ int Test_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile );
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
 int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info );
@@ -105,7 +110,8 @@ int md5_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile );
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
 int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen );
 int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
@@ -123,6 +129,7 @@ int Pgp_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile );
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
 
 #endif

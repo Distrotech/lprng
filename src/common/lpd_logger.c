@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_logger.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "child.h"
 #include "errorcodes.h"
@@ -22,6 +18,7 @@
 #include "proctitle.h"
 
 #include "lpd_logger.h"
+#include "lpd_worker.h"
 
 /***************************************************************************
  * Setup_logger()

@@ -37,35 +37,38 @@ install-exec-hook:
 	ln $(DESTDIR)$(bindir)/lprm $(DESTDIR)$(bindir)/cancel
 # - think about making things suid at install time
 
-COMMON_SOURCES = common/accounting.c common/child.c common/controlword.c \
+COMMON_SOURCES = common/child.c \
 	common/copyright.c common/debug.c common/errormsg.c \
 	common/fileopen.c common/gethostinfo.c common/getopt.c \
 	common/getprinter.c common/getqueue.c common/globmatch.c \
 	common/initialize.c common/krb5_auth.c common/linelist.c \
-	common/linksupport.c common/lockfile.c common/lpd_control.c \
-	common/lpd_dispatch.c common/lpd_jobs.c common/lpd_logger.c \
-	common/lpd_rcvjob.c common/lpd_remove.c common/sendauth.c \
-	common/lpd_secure.c common/lpd_status.c common/merge.c \
-	common/permission.c common/plp_snprintf.c common/printjob.c \
-	common/proctitle.c  common/sendjob.c common/sendmail.c \
-	common/sendreq.c common/ssl_auth.c common/stty.c \
+	common/linksupport.c common/lockfile.c common/merge.c \
+	common/plp_snprintf.c common/printjob.c \
+	common/proctitle.c common/sendjob.c common/sendauth.c \
+	common/sendreq.c common/ssl_auth.c \
 	common/user_auth.c common/utilities.c vars.c \
 	common/md5.c
+SEND_SOURCES = common/openprinter.c common/stty.c
 
-lpd_SOURCES = common/lpd.c $(COMMON_SOURCES)
-lpr_SOURCES = common/lpr.c $(COMMON_SOURCES)
+lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
+	common/lpd_control.c common/sendmail.c common/lpd_dispatch.c \
+	common/lpd_logger.c common/lpd_rcvjob.c common/lpd_remove.c \
+	common/lpd_secure.c common/lpd_status.c \
+	common/permission.c common/accounting.c common/controlword.c \
+	$(SEND_SOURCES) $(COMMON_SOURCES)
+lpr_SOURCES = common/lpr.c $(SEND_SOURCES) $(COMMON_SOURCES)
 lpq_SOURCES = common/lpq.c $(COMMON_SOURCES)
 lpstat_SOURCES = common/lpstat.c $(COMMON_SOURCES)
 lprm_SOURCES = common/lprm.c $(COMMON_SOURCES)
-lpc_SOURCES = common/lpc.c $(COMMON_SOURCES)
-checkpc_SOURCES = common/checkpc.c $(COMMON_SOURCES)
+lpc_SOURCES = common/lpc.c common/controlword.c $(COMMON_SOURCES)
+checkpc_SOURCES = common/checkpc.c  common/stty.c $(COMMON_SOURCES)
 lpf_SOURCES = common/lpf.c common/plp_snprintf.c
 lpbanner_SOURCES = common/lpbanner.c common/plp_snprintf.c
 monitor_SOURCES = common/monitor.c $(COMMON_SOURCES)
 # sserver_SOURCES = AUTHENTICATE/sserver.c
 # sclient_SOURCES = AUTHENTICATE/sclient.c
 
-noinst_HEADERS = include/accounting.h include/checkpc.h include/child.h include/control.h include/copyright.h include/debug.h include/errorcodes.h include/errormsg.h include/fileopen.h include/gethostinfo.h include/getopt.h include/getprinter.h include/getqueue.h include/globmatch.h include/initialize.h include/krb5_auth.h include/license.h include/linelist.h include/linksupport.h include/lockfile.h include/lpc.h include/lpd_control.h include/lpd_dispatch.h include/lpd.h include/lpd_jobs.h include/lpd_logger.h include/lpd_rcvjob.h include/lpd_remove.h include/lpd_secure.h include/lpd_status.h include/lp.h include/lpq.h include/lpr.h include/lprm.h include/lpstat.h include/md5.h include/merge.h include/patchlevel.h include/permission.h include/plp_snprintf.h include/portable.h include/printjob.h include/proctitle.h include/readstatus.h include/sendauth.h include/sendjob.h include/sendmail.h include/sendreq.h include/ssl_auth.h include/stty.h include/user_auth.h include/utilities.h
+noinst_HEADERS = include/accounting.h include/checkpc.h include/child.h include/control.h include/copyright.h include/debug.h include/errorcodes.h include/errormsg.h include/fileopen.h include/gethostinfo.h include/getopt.h include/getprinter.h include/getqueue.h include/globmatch.h include/initialize.h include/krb5_auth.h include/license.h include/linelist.h include/linksupport.h include/lockfile.h include/lpc.h include/lpd_control.h include/lpd_dispatch.h include/lpd.h include/lpd_jobs.h include/lpd_logger.h include/lpd_rcvjob.h include/lpd_remove.h include/lpd_secure.h include/lpd_status.h include/lp.h include/lpq.h include/lpr.h include/lprm.h include/lpstat.h include/md5.h include/merge.h include/patchlevel.h include/permission.h include/plp_snprintf.h include/portable.h include/printjob.h include/proctitle.h include/readstatus.h include/sendauth.h include/sendjob.h include/sendmail.h include/sendreq.h include/ssl_auth.h include/stty.h include/user_auth.h include/utilities.h include/openprinter.h include/lpd_worker.h
 
 # vars.c needs all the defines for defaults.
 # This only adds them for vars.c, which might need GNU make

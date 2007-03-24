@@ -29,7 +29,8 @@ to not listen via tcp and not accepting requests from remote hosts.
 Otherwise a lot of cleanup has happened. Many compiler warnings
 quieted, prototypes added, format strings synced with format
 of arguments, some code and manpages with strange license situation
-replaced, local functions declared static, ...
+replaced, local functions declared static, moving some code around
+to not have to link all lpd code in all other binaries...
 
 ---------------------------------------------------------------------
 Changes in versions before LPRng-3.8.29 can
