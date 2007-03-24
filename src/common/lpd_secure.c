@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_secure.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "user_auth.h"
 #include "lpd_dispatch.h"
@@ -218,7 +214,7 @@ int Receive_secure( int *sock, char *input )
 		&info,
 		error+1, sizeof(error)-1,
 		&header_info,
-		security, tempfile );
+		security, tempfile, Do_secure_work);
 
  error:
 	DEBUGF(DRECV1)("Receive_secure: status %d, ack %d, error '%s'",

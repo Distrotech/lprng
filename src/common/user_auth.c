@@ -4,7 +4,6 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.43 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -259,7 +258,8 @@ int Test_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile )
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work)
 {
 	int tempfd, status, n;
 	char buffer[LARGEBUFFER];
@@ -318,7 +318,7 @@ int Test_receive( int *sock, int transfer_timeout,
 	 *** to the socket,  and arrange protocol can handle this.
 	 ***/
 
-	status = Do_secure_work( jobsize, from_server, tempfile, header_info );
+	status = do_secure_work( jobsize, from_server, tempfile, header_info );
 
 	/*** if an error message is returned, you should write this
 	 *** message to the tempfile and the proceed to send the contents
@@ -741,7 +741,8 @@ int md5_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile )
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work)
 {
 	char input[SMALLBUFFER];
 	char buffer[LARGEBUFFER];
@@ -977,7 +978,7 @@ int md5_receive( int *sock, int transfer_timeout,
 	
 	DEBUGF(DRECV1)("md5_receive: success" );
 	Set_str_value(header_info,FROM,dest);
-	status_error = Do_secure_work( jobsize, from_server, tempfile, header_info );
+	status_error = do_secure_work( jobsize, from_server, tempfile, header_info );
 	DEBUGF(DRECV1)("md5_receive: Do_secure_work returned %d", status_error );
 
 	/* we now have the encoded output */
@@ -1646,7 +1647,8 @@ int Pgp_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile )
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work)
 {
 	char *pgpfile;
 	int tempfd, status, n;
@@ -1741,7 +1743,7 @@ int Pgp_receive( int *sock, int transfer_timeout,
 		goto error;
 	}
 
-	status = Do_secure_work( jobsize, from_server, tempfile, header_info );
+	status = do_secure_work( jobsize, from_server, tempfile, header_info );
 
 	Free_line_list( &pgp_info);
  	status = Pgp_encode(transfer_timeout, info, tempfile, pgpfile, &pgp_info,

@@ -18,6 +18,7 @@
 #include "getopt.h"
 #include "proctitle.h"
 #include "lockfile.h"
+#include "lpd_worker.h"
 
 /* force local definitions */
 #undef EXTERN

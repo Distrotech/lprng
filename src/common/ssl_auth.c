@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: ssl_auth.c,v 1.43 2004/09/24 20:19:59 papowell Exp $";
-
-
 #include "lp.h"
 #include "fileopen.h"
 #include "errorcodes.h"
@@ -852,7 +848,8 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile )
+	struct security *security, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work)
 {
 	int tempfd, status, n, len;
 	char buffer[LARGEBUFFER];
@@ -921,7 +918,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	 *** to the socket,  and arrange protocol can handle this.
 	 ***/
 
-	status = Do_secure_work( jobsize, from_server, tempfile, header_info );
+	status = do_secure_work( jobsize, from_server, tempfile, header_info );
 
 	/*** if an error message is returned, you should write this
 	 *** message to the tempfile and the proceed to send the contents

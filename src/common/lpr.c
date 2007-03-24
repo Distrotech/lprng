@@ -20,7 +20,7 @@
 #include "patchlevel.h"
 #include "printjob.h"
 #include "sendjob.h"
-#include "lpd_jobs.h"
+#include "openprinter.h"
 
 /**** ENDINCLUDE ****/
 

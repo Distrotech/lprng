@@ -290,9 +290,6 @@ char *Find_str_in_str( char *str, const char *key, const char *sep );
 int Find_key_in_list( struct line_list *l, const char *key, const char *sep, int *m );
 char *Fix_str( char *str );
 int Shutdown_or_close( int fd );
-void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
-int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args );
-void Do_work( char *name, struct line_list *args );
-int Start_worker( char *name, struct line_list *parms, int fd );
+void Fix_bq_format( int format, struct line_list *datafile );
 
 #endif
