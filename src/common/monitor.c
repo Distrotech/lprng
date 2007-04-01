@@ -212,7 +212,7 @@ int main(int argc, char *argv[] )
 		err = errno;
 		if( debug ) FPRINTF(STDERR,"monitor: select returned %d\n", n );
 		if( n < 0 ){
-			FPRINTF( STDERR, "select error - %s\n", Errormsg(errno) );
+			FPRINTF( STDERR, "select error - %s\n", Errormsg(err) );
 			if( err != EINTR ) break;
 		}
 		if( n > 0 ) for( i = 0; i < max_port; ++i ){
@@ -344,7 +344,7 @@ void Decode( char *in )
 }
 int udp_open( int port )
 {
-	int i, fd, err;
+	int i, fd;
 	struct sockaddr_in sinaddr;
 
 	sinaddr.sin_family = AF_INET;
@@ -353,14 +353,13 @@ int udp_open( int port )
 
 	fd = socket( AF_INET, SOCK_DGRAM, 0 );
 	Max_open(fd);
-	err = errno;
+
 	if( fd < 0 ){
-		FPRINTF(STDERR,"udp_open: socket call failed - %s\n", Errormsg(err) );
+		FPRINTF(STDERR,"udp_open: socket call failed - %s\n", Errormsg(errno) );
 		return( -1 );
 	}
-	i = -1;
+
 	i = bind( fd, (struct sockaddr *) & sinaddr, sizeof (sinaddr) );
-	err = errno;
 
 	if( i < 0 ){
 		FPRINTF(STDERR,"udp_open: bind to '%s port %d' failed - %s\n",
@@ -384,7 +383,7 @@ int udp_open( int port )
 
 int tcp_open( int port )
 {
-	int i, fd, err;
+	int i, fd;
 	struct sockaddr_in sinaddr;
 
 	sinaddr.sin_family = AF_INET;
@@ -393,15 +392,14 @@ int tcp_open( int port )
 
 	fd = socket( AF_INET, SOCK_STREAM, 0 );
 	Max_open(fd);
-	err = errno;
+
 	if( fd < 0 ){
-		FPRINTF(STDERR,"tcp_open: socket call failed - %s\n", Errormsg(err) );
+		FPRINTF(STDERR,"tcp_open: socket call failed - %s\n", Errormsg(errno) );
 		return( -1 );
 	}
 	i = Link_setreuse( fd );
 	if( i >= 0 ) i = bind( fd, (struct sockaddr *) & sinaddr, sizeof (sinaddr) );
 	if( i >= 0 ) i = listen( fd, 10 );
-	err = errno;
 
 	if( i < 0 ){
 		FPRINTF(STDERR,"tcp_open: connect to '%s port %d' failed - %s\n",
