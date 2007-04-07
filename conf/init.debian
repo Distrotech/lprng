@@ -38,11 +38,9 @@ cleanup()
 
   for dir in $(find /var/spool/lpd/* -type d -print)
   do
-    printer=${dir##*/}
-
-    rm -f ${dir}/${printer}
-    rm -f ${dir}/control.${printer}
-    rm -f ${dir}/unspooler.${printer}
+    rm -f ${dir}/lock.pr
+    rm -f ${dir}/control.pr
+    rm -f ${dir}/unspooler.pr
   done
 }
 
