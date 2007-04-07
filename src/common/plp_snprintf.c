@@ -536,8 +536,6 @@
 
 #undef CVAL 
 #define CVAL(s) (*((unsigned char *)s))
-#define safestrlen(s) ((s)?strlen(s):0)
-
 
  static char * plp_Errormsg ( int err, char *buffer );
  static void dopr( int visible_control, char **buffer, int *left,
@@ -939,7 +937,7 @@
 	}
 	convert[2*i] = 0;
 
-	place = safestrlen(convert);
+	place = strlen(convert);
 	padlen = len - place;
 	if( padlen < 0 ) padlen = 0;
 	if( ljust ) padlen = -padlen;
@@ -973,7 +971,7 @@
  static void mystrcat(char *dest, char *src )
 {
 	if( dest && src ){
-		dest += safestrlen(dest);
+		dest += strlen(dest);
 		strcpy(dest,src);
 	}
 }
@@ -997,13 +995,13 @@
 	if( ljust ) mystrcat(formatstr, "-" ); /* 1 */
 	if( zpad ) mystrcat(formatstr, "0" );	/* 1 */
 	if( len >= 0 ){
-		sprintf( formatstr+safestrlen(formatstr), "%d", len ); /* 3 */
+		sprintf( formatstr+strlen(formatstr), "%d", len ); /* 3 */
 	}
 	if( precision >= 0 ){
-		sprintf( formatstr+safestrlen(formatstr), ".%d", precision ); /* 3 */
+		sprintf( formatstr+strlen(formatstr), ".%d", precision ); /* 3 */
 	}
 	/* format string will be at most 10 chars long ... */
-	sprintf( formatstr+safestrlen(formatstr), "%c", fmt );
+	sprintf( formatstr+strlen(formatstr), "%c", fmt );
 	/* this is easier than trying to do the portable dtostr */
 	/* fprintf(stderr,"format string '%s'\n", formatstr); */
 	sprintf( convert, formatstr, value );

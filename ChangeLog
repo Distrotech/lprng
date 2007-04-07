@@ -1,3 +1,4 @@
+2007-04-07 brl remove unecessary mystrlen from plp_snprintf
 2007-04-01 elfring remove some needless variable assignments in monitor.c
 2007-03-18 brl demerge code to make binaries a bit smaller
 2007-03-06 brl fix lpq with -t on remote printer
