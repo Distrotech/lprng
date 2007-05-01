@@ -111,9 +111,9 @@ int Test_connect( struct job *job, int *sock,
 	char *errmsg, int errlen,
 	struct security *security, struct line_list *info )
 {
-	char *cmd, *secure = "TEST\n";
+	char *secure = "TEST\n";
 	int status = 0, ack = 0;
-	
+
 	if(DEBUGL1)Dump_line_list("Test_connect: info", info );
 	DEBUG3("Test_connect: sending '%s'", secure);
 	status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
@@ -138,9 +138,8 @@ int Test_accept( int *sock, int transfer_timeout,
 	struct line_list *info, struct line_list *header_info,
 	struct security *security )
 {
-	int status, n, len;
+	int status, len;
 	char input[SMALLBUFFER];
-	char *value;
 
 	DEBUGFC(DRECV1)Dump_line_list("Test_accept: info", info );
 	DEBUGFC(DRECV1)Dump_line_list("Test_accept: header_info", header_info );
@@ -1038,7 +1037,6 @@ int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int 
 			DEBUG1("Pgp_get_pgppassfd: PGPPASS '%s'", s );
 			*pgppass = s;
 		} else if( (s = getenv( "PGPPASSFD" )) ){
-			char buffer[128];
 			t = 0;
 			pgppassfd = strtol(s,&t,10);
 			if( pgppassfd <= 0 || !t || *t || fstat(pgppassfd, &statb)  ){

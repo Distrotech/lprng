@@ -363,13 +363,13 @@ int Do_queue_jobs( char *name, int subserver )
 	int lock_fd;	/* fd for files */
 	char buffer[SMALLBUFFER], *savename = 0, errmsg[SMALLBUFFER];
 	char *path, *s, *id, *tempfile, *transfername, *openname,
-		*new_dest, *move_dest, *pr, *hf_name, *sd, *from, *forwarding;
+		*new_dest, *move_dest, *pr, *hf_name, *forwarding;
 	struct stat statb;
 	int i, j, mod, fd, pid, printable, held, move, destinations,
 		destination, use_subserver, job_to_do, working, printing_enabled,
-		all_done, fail, job_index, change, in_tempfd, out_tempfd, len,
+		all_done, job_index, change, in_tempfd, out_tempfd, len,
 		chooser_did_not_find_server, error, done, done_remove, check_for_done;
-	struct line_list servers, tinfo, *sp, *datafile, chooser_list, chooser_env;
+	struct line_list servers, tinfo, *sp, chooser_list, chooser_env;
 	plp_block_mask oblock;
 	struct job job;
 	int jobs_printed = 0;

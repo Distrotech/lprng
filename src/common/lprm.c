@@ -281,7 +281,6 @@ static void Get_parms_lprm(int argc, char *argv[] );
 
 void Get_parms(int argc, char *argv[] )
 {
-	char *name;
 	if( argv[0] && (Name = strrchr( argv[0], '/' )) ) {
 		++Name;
 	} else {

@@ -1014,13 +1014,13 @@ int Do_perm_check( struct job *job, char *error, int errlen )
 int Check_for_missing_files( struct job *job, struct line_list *files,
 	char *error, int errlen, struct line_list *header_info, int holdfile_fd )
 {
-	int count, fd, i, status = 0, copies;
+	int count, i, status = 0, copies;
 	struct line_list *lp = 0, datafiles;
 	char *openname, *transfername;
 	double jobsize;
 	struct stat statb;
 	struct timeval start_time;
-	char *fromhost, *file_hostname, *number, *priority, *cf;
+	char *fromhost, *file_hostname, *number;
 
 	Init_line_list(&datafiles);
 
@@ -1689,14 +1689,10 @@ int Get_route( struct job *job, char *error, int errlen )
 void Generate_control_file( struct job *job )
 {
 	/* generate the control file */
-	struct stat statb;
-	int i, fd = -1;
+	int i;
 	char *cf = 0;
 	char *openname, *transfername, *datafiles;
 	struct line_list dups, *lp;
-	char *priority = Find_str_value(&job->info,PRIORITY);
-	char *number = Find_str_value( &job->info,NUMBER);
-	char *file_hostname = Find_str_value(&job->info,FILE_HOSTNAME);
 
 	Init_line_list( &dups );
 	for( i = 0; i < job->info.count; ++i ){

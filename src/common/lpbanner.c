@@ -37,8 +37,7 @@
  *  The front end will extract parameters,  then call the filter()
  *  routine,  which is responsible for carrying out the required filter
  *  actions. filter() is invoked with the printer device on fd 1,
- *	and error log on fd 2.  The npages variable is used to record the
- *  number of pages that were used.
+ *	and error log on fd 2.
  *  The "halt string", which is a sequence of characters that
  *  should cause the filter to suspend itself, is passed to filter.
  *  When these characters are detected,  the "suspend_ofilter()" routine should be
@@ -79,7 +78,6 @@
  * special   -snumber      int      Special Variable for passing flags
  * accntfile file          char*    AF, accounting file
  *
- * npages    - number of pages for accounting
  * debug     - sets debug level
  * verbose   - echo to a log file
  *
@@ -95,7 +93,6 @@ static char *zopts, *class, *job, *login, *accntname, *host;
 static char *printer, *accntfile, *format;
 static char *controlfile;
 static char *bnrname, *comment;
-static int npages;	/* number of pages */
 static int special;
 static char *queuename, *errorfile;
 
@@ -113,7 +110,6 @@ struct font{
 };
 
 static void banner( void );
-static void cleanup( void );
 static void getargs( int argc, char *argv[], char *envp[] );
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
