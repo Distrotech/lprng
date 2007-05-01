@@ -17,7 +17,19 @@
 #include "getprinter.h"
 #include "linelist.h"
 
-/**** ENDINCLUDE ****/
+/* Forward declartions: */
+static int Find_last_key( struct line_list *l, const char *key, const char *sep, int *m );
+static int Find_last_casekey( struct line_list *l, const char *key, const char *sep, int *m );
+static int Find_first_casekey( struct line_list *l, const char *key, const char *sep, int *m );
+static const char *Fix_val( const char *s );
+static void Read_file_and_split( struct line_list *list, char *file,
+	const char *linesep, int sort, const char *keysep, int uniq,
+	int trim, int nocomment );
+static void Find_pc_info( char *name, struct line_list *info,
+	struct line_list *aliases, struct line_list *names,
+	struct line_list *order, struct line_list *input,
+	int depth, int wildcard );
+static void Config_value_conversion( struct keywords *key, const char *s );
 
 /* lowercase and uppercase (destructive) a string */
 void lowercase( char *s )
@@ -53,7 +65,7 @@ char *trunc_str( char *s)
 	return( s );
 }
 
-int Lastchar( char *s )
+static int Lastchar( char *s )
 {
 	int c = 0;
 	if( s && *s ){
@@ -414,7 +426,7 @@ char *Add_line_list( struct line_list *l, char *str,
  *  uniq = 1 - only one value
  */
 
-void Add_casekey_line_list( struct line_list *l, char *str,
+static void Add_casekey_line_list( struct line_list *l, char *str,
 		const char *sep, int sort, int uniq )
 {
 	char *s = 0;
@@ -461,20 +473,6 @@ void Add_casekey_line_list( struct line_list *l, char *str,
 	/* if(DEBUGL4)Dump_line_list("Add_casekey_line_list: result", l); */
 }
 
-/*
- * Prefix_line_list( struct line_list *l, char *str )
- *  put the str at the front of the line list
- */
-void Prefix_line_list( struct line_list *l, char *str )
-{
-	Check_max(l, 2);
-	str = safestrdup( str,__FILE__,__LINE__);
-
-	memmove( &l->list[1], &l->list[0], l->count * sizeof(l->list[0]) );
-	l->list[0] = str;
-	++l->count;
-}
-
 void Merge_line_list( struct line_list *dest, struct line_list *src,
 	char *sep, int sort, int uniq )
 {
@@ -498,21 +496,6 @@ void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
 			dest->list[dest->count++] = (void *)dp;
 		}
 	}
-}
-
-
-void Move_line_list( struct line_list *dest, struct line_list *src )
-{
-	int i;
-	
-	Free_line_list(dest);
-	Check_max(dest,src->count);
-	for( i = 0; i < src->count; ++i ){
-		dest->list[i] = src->list[i];
-		src->list[i] = 0;
-	}
-	src->count = 0;
-	dest->count = i;
 }
 
 /*
@@ -626,41 +609,6 @@ char *Join_line_list_with_sep( struct line_list *l, char *sep )
 	return( s );
 }
 
-/*
- * join the line list with a separator, putting quotes around
- *  the entries starting at position 1.
- */
-char *Join_line_list_with_quotes( struct line_list *l, char *sep )
-{
-	char *s, *t, *str = 0;
-	int len = 0, i, n = 0;
-
-	if( sep ) n = safestrlen(sep);
-	for( i = 0; i < l->count; ++i ){
-		s = l->list[i];
-		if( s && *s ) len += safestrlen(s) + n + 2;
-	}
-	if( len ){
-		str = malloc_or_die(len+1,__FILE__,__LINE__);
-		t = str;
-		for( i = 0; i < l->count; ++i ){
-			s = l->list[i];
-			if( s && *s ){
-				if( i ) *t++ = '\'';
-				strcpy( t, s );
-				t += safestrlen(t);
-				if( i ) *t++ = '\'';
-				if( n ){
-					strcpy(t,sep);
-					t += n;
-				}
-			}
-		}
-		*t = 0;
-	}
-	return( str );
-}
-
 void Dump_line_list( const char *title, struct line_list *l )
 {
 	int i;
@@ -683,30 +631,6 @@ void Dump_line_list_sub( const char *title, struct line_list *l )
 
 
 /*
- * Find_str_in_flat
- *   find the string value starting with key and ending with sep
- */
-char *Find_str_in_flat( char *str, const char *key, const char *sep )
-{
-	char *s, *end;
-	int n, c = 0;
-
-	if( str == 0 || key == 0 || sep == 0 ) return( 0 );
-	n = safestrlen(key);
-	for( s = str; (s = strstr(s,key)); ){
-		s += n;
-		if( *s == '=' ){
-			++s;
-			if( (end = safestrpbrk( s, sep )) ) { c = *end; *end = c; }
-			s = safestrdup(s,__FILE__,__LINE__);
-			if( end ) *end = c;
-			return( s );
-		}
-	}
-	return( 0 );
-}
-
-/*
  * int Find_first_key( struct line_list *l, char *key, char *sep, int *mid )
  * int Find_last_key( struct line_list *l, char *key, char *sep, int *mid )
  *  Search the list for the last corresponding key value
@@ -719,7 +643,7 @@ char *Find_str_in_flat( char *str, const char *key, const char *sep )
  *                  >0 if list[*at] > key
  */
 
-int Find_last_key( struct line_list *l, const char *key, const char *sep, int *m )
+static int Find_last_key( struct line_list *l, const char *key, const char *sep, int *m )
 {
 	int c=0, cmp=-1, cmpl = 0, bot, top, mid;
 	char *s, *t;
@@ -769,7 +693,7 @@ int Find_last_key( struct line_list *l, const char *key, const char *sep, int *m
  *                  >0 if list[*at] > key
  */
 
-int Find_last_casekey( struct line_list *l, const char *key, const char *sep, int *m )
+static int Find_last_casekey( struct line_list *l, const char *key, const char *sep, int *m )
 {
 	int c=0, cmp=-1, cmpl = 0, bot, top, mid;
 	char *s, *t;
@@ -841,7 +765,7 @@ int Find_first_key( struct line_list *l, const char *key, const char *sep, int *
 	return( cmp );
 }
 
-int Find_first_casekey( struct line_list *l, const char *key, const char *sep, int *m )
+static int Find_first_casekey( struct line_list *l, const char *key, const char *sep, int *m )
 {
 	int c=0, cmp=-1, cmpl = 0, bot, top, mid;
 	char *s, *t;
@@ -889,7 +813,7 @@ int Find_first_casekey( struct line_list *l, const char *key, const char *sep, i
  *  If key does not exist, we return "0"
  */
 
-const char *Find_value( struct line_list *l, const char *key )
+static const char *Find_value( struct line_list *l, const char *key )
 {
 	const char *s = "0";
 	int mid, cmp = -1;
@@ -903,25 +827,6 @@ const char *Find_value( struct line_list *l, const char *key )
 	}
 	DEBUG4( "Find_value: key '%s', value '%s'", key, s );
 	return(s);
-}
-
-/*
- * char *Find_first_letter( struct line_list *l, char letter, int *mid )
- *   return the first entry starting with the letter
- */
-
-char *Find_first_letter( struct line_list *l, const char letter, int *mid )
-{
-	char *s = 0;
-	int i;
-	if(l)for( i = 0; i < l->count; ++i ){
-		if( (s = l->list[i])[0] == letter ){
-			if( mid ) *mid = i;
-			DEBUG4( "Find_first_letter: letter '%c', at [%d]=value '%s'", letter, i, s );
-			return(s+1);
-		}
-	}
-	return(0);
 }
 
 /*
@@ -1049,36 +954,7 @@ void Set_str_value( struct line_list *l, const char *key, const char *value )
 		Remove_line_list(l,mid);
 	}
 }
- 
-/*
- * Set_expanded_str_value( struct line_list *l, char *key, char *value )
- *   set a string value in an ordered, sorted list
- */
-void Set_expanded_str_value( struct line_list *l, const char *key, const char *orig )
-{
-	char *s = 0;
-	char *value = 0;
-	int mid;
-	if( key == 0 ) return;
-	value = Fix_str( (char *)orig );
-	if(DEBUGL6){
-		char buffer[16];
-		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
-		buffer[12] = 0;
-		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
-		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
-			Cast_ptr_to_long(value), buffer);
-	}
-	if( value && *value ){
-		s = safestrdup3(key,"=",value,__FILE__,__LINE__);
-		Add_line_list(l,s,Hash_value_sep,1,1);
-		if(s) free(s); s = 0;
-	} else if( !Find_first_key(l, key, Hash_value_sep, &mid ) ){
-		Remove_line_list(l,mid);
-	}
-	if( value ) free(value); value = 0;
-}
- 
+
 /*
  * Set_casekey_str_value( struct line_list *l, char *key, char *value )
  *   set an string value in an ordered, sorted list, with case sensitive keys
@@ -1178,7 +1054,7 @@ void Remove_line_list( struct line_list *l, int mid )
  * Remove_duplicates_line_list( struct line_list *l )
  *   Remove duplicate entries in the list
  */
-void Remove_duplicates_line_list( struct line_list *l )
+static void Remove_duplicates_line_list( struct line_list *l )
 {
 	char *s, *t;
 	int i, j;
@@ -1285,8 +1161,7 @@ double Find_double_value( struct line_list *l, const char *key )
  *  returns: "0", "1","0",  "xx",  "xx"
  */
 
-
-const char *Fix_val( const char *s )
+static const char *Fix_val( const char *s )
 {
 	int c = 0;
 	if( s ){
@@ -1502,7 +1377,7 @@ void Read_fd_and_split( struct line_list *list, int fd,
 	if( sv ) free( sv );
 }
 
-void Read_file_and_split( struct line_list *list, char *file,
+static void Read_file_and_split( struct line_list *list, char *file,
 	const char *linesep, int sort, const char *keysep, int uniq,
 	int trim, int nocomment )
 {
@@ -1535,7 +1410,7 @@ void Read_file_and_split( struct line_list *list, char *file,
  *   if it is not in the names lists, add to order list
  *   put the names and aliases in the names list
  */
-int  Build_pc_names( struct line_list *names, struct line_list *order,
+static int  Build_pc_names( struct line_list *names, struct line_list *order,
 	char *str, struct host_information *hostname  )
 {
 	char *s, *t;
@@ -1793,7 +1668,7 @@ char *Select_pc_info( const char *id,
 	return( found );
 }
 
-void Find_pc_info( char *name,
+static void Find_pc_info( char *name,
 	struct line_list *info,
 	struct line_list *aliases,
 	struct line_list *names,
@@ -1943,7 +1818,7 @@ void Set_var_list( struct keywords *keys, struct line_list *values )
 {0,0,0,0,0,0,0}
  };
 
-int Check_str_keyword( const char *name, int *value )
+static int Check_str_keyword( const char *name, int *value )
 {
 	struct keywords *keys;
 	for( keys = simple_words; keys->keyword; ++keys ){
@@ -1959,7 +1834,7 @@ int Check_str_keyword( const char *name, int *value )
  * void Config_value_conversion( struct keyword *key, char *value )
  *  set the value of the variable as required
  ***************************************************************************/
-void Config_value_conversion( struct keywords *key, const char *s )
+static void Config_value_conversion( struct keywords *key, const char *s )
 {
 	int i = 0, c = 0, value = 0;
 	char *end;		/* end of conversion */
@@ -2145,22 +2020,6 @@ void Clear_config( void )
 	for( l = Allocs; *l; ++l ) Free_line_list(*l);
 }
 
-char *Find_default_var_value( void *v )
-{
-	struct keywords *k;
-	char *s;
-	for( k = Pc_var_list; (s = k->keyword); ++k ){
-		if( k->type == STRING_K && k->variable == v ){
-			s = k->default_value;
-			if( s && cval(s) == '=' ) ++s;
-			DEBUG1("Find_default_var_value: found 0x%lx key '%s' '%s'",
-				(long)v, k->keyword, s );
-			return( s );
-		}
-	}
-	return(0);
-}
-
 /***************************************************************************
  * void Get_config( char *names )
  *  gets the configuration information from a list of files
@@ -2225,7 +2084,7 @@ void close_on_exec( int fd )
     }
 }
 
-void Setup_env_for_process( struct line_list *env, struct job *job )
+static void Setup_env_for_process( struct line_list *env, struct job *job )
 {
 	struct line_list env_names;
 	struct passwd *pw;
@@ -2396,7 +2255,7 @@ void Filterprintcap( struct line_list *raw, struct line_list *filters,
  *  wildcard (*) in group name, and then scan only if we need to
  ***************************************************************************/
 
-int In_group( char *group, char *user )
+static int In_group( char *group, char *user )
 {
 	struct group *grent;
 	struct passwd *pwent;
@@ -2493,7 +2352,7 @@ int Check_for_rg_group( char *user )
  ***************************************************************************/
 
 
-char *Init_tempfile( void )
+static char *Init_tempfile( void )
 {
 	char *dir = 0, *s;
 	struct stat statb;
@@ -2919,14 +2778,14 @@ void Clean_name( char *s )
  * Find a possible bad character in a line
  */
 
-int Is_meta( int c )
+static int Is_meta( int c )
 {
 	return( !( isspace(c) || isalnum( c )
 		|| (Safe_chars_DYN && safestrchr(Safe_chars_DYN,c))
 		|| safestrchr( LESS_SAFE, c ) ) );
 }
 
-char *Find_meta( char *s )
+static char *Find_meta( char *s )
 {
 	int c = 0;
 	if( s ){
@@ -3053,25 +2912,6 @@ void Dump_default_parms( int fd, char *title, struct keywords *k )
  *     OS Z -> O and S to Z
  *     Z  S -> Z to S
  ***************************************************************************/
-
-void Remove_sequential_separators( char *start )
-{
-	char *end;
-	if( start == 0 || *start == 0 ) return;
-	while( strchr( File_sep, *start) ){
-		memmove(start,start+1,safestrlen(start+1)+1);
-	}
-	for( end = start + safestrlen(start)-1;
-		*start && (end = strpbrk( end, File_sep )); ){
-		*end-- = 0;
-	}
-	for( ; *start && (end = strpbrk(start+1,File_sep)); start = end ){
-		if( start+1 == end ){
-			memmove(start,start+1,safestrlen(start+1)+1);
-			end = start;
-		}
-	}
-}
 
 void Fix_Z_opts( struct job *job )
 {
@@ -3556,72 +3396,6 @@ void Unescape( char *str )
 	}
 	s[i] = 0;
 	DEBUG5("Unescape '%s'", s );
-}
-
-#if 0
-char *Find_str_in_str( char *str, const char *key, const char *sep )
-{
-	char *s = 0, *end;
-	int len = safestrlen(key), c;
-
-	if(str) for( s = str; (s = strstr(s,key)); ++s ){
-		c = cval(s+len);
-		if( !(safestrchr(Hash_value_sep, c) || safestrchr(sep, c)) ) continue;
-		if( s > str && !safestrchr(sep,cval(s-1)) ) continue;
-		s += len;
-		if( (end = safestrpbrk(s,sep)) ){ c = *end; *end = 0; }
-		/* skip over sep character
-		 * x@;  -> x@\000  - get null str
-		 * x;   -> x\000  - get null str
-		 * x=v;  -> x=v  - get v
-		 */
-		if( *s ) ++s;
-		if( *s ){
-			s = safestrdup(s,__FILE__,__LINE__);
-		} else {
-			s = 0;
-		}
-		if( end ) *end = c;
-		break;
-	}
-	return(s);
-}
-#endif
-
-/*
- * int Find_key_in_list( struct line_list *l, char *key, char *sep, int *mid )
- *  Search and unsorted list for a key value, starting at *mid.
- *
- *  The list has lines of the form:
- *    key [separator] value
- *  returns:
- *    *at = index of last tested value
- *    return value: 0 if found;
- *                  <0 if list[*at] < key
- *                  >0 if list[*at] > key
- */
-
-int Find_key_in_list( struct line_list *l, const char *key, const char *sep, int *m )
-{
-	int mid = 0, cmp = -1, c = 0;
-	char *s, *t;
-	if( m ) mid = *m;
-	DEBUG5("Find_key_in_list: start %d, count %d, key '%s'", mid, l->count, key );
-	while( mid < l->count ){
-		s = l->list[mid];
-		t = 0;
-		if( sep && (t = safestrpbrk(s, sep )) ) { c = *t; *t = 0; }
-		cmp = safestrcasecmp(key,s);
-		if( t ) *t = c;
-		DEBUG5("Find_key_in_list: cmp %d, mid %d", cmp, mid);
-		if( cmp == 0 ){
-			if( m ) *m = mid;
-			break;
-		}
-		++mid;
-	}
-	DEBUG5("Find_key_in_list: key '%s', cmp %d, mid %d", key, cmp, mid );
-	return( cmp );
 }
 
 /***************************************************************************

@@ -1,3 +1,4 @@
+2007-05-01 brl linelist.c: remove unused functions, made local functions static
 2007-05-01 brl remove some unused variables gcc complains about
 2007-04-07 brl remove unecessary mystrlen from plp_snprintf
 2007-04-01 elfring remove some needless variable assignments in monitor.c
