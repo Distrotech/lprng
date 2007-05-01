@@ -410,7 +410,6 @@ int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_
 	int i, c, n, copies = 0, last_format = 0;
 	struct line_list cf_line_list;
 	struct line_list *datafile = 0;
-	struct stat statb;
 	char buffer[SMALLBUFFER], *t;
 	char *file_found, *priority;
 	char *names = 0;
@@ -605,9 +604,8 @@ void Set_job_ticket_datafile_info( struct job *job )
 		lp = (void *)job->datafiles.list[linecount];
 		if(DEBUGL4)Dump_line_list("Set_job_ticket_datafile_info - info", lp );
 		for( i = 0; i < lp->count; ++i ){
-			int c;
 			s = lp->list[i];
-			
+
 			if( !strncmp(s,"openname", 8 ) ) continue;
 			if( !strncmp(s,"otransfername", 13 ) ) continue;
 			dataline = safeextend3(dataline, s, "\002",__FILE__,__LINE__);

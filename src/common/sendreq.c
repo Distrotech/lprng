@@ -137,7 +137,6 @@ int Send_request(
 		&real_host, connnect_timeout, 0, Unix_socket_path_DYN , errmsg, sizeof(errmsg) );
 	err = errno;
 	if( sock < 0 ){
-		char *msg = "";
 		SNPRINTF( errormsg, sizeof(errormsg)-2)
 			"cannot open connection - %s",
 			errmsg[0]?errmsg:( err?Errormsg(err):"bad or missing hostname" ) );

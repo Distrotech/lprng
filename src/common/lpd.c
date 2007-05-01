@@ -68,7 +68,7 @@ int main(int argc, char *argv[], char *envp[])
 	fd_set defreadfds, readfds;	/* for select() */
 	int max_socks = 0;		/* maximum number of sockets */
 	int lockfd;	/* the lock file descriptor */
-	int err, newsock;
+	int err;
  	time_t last_time;	/* time that last Start_all was done */
 	time_t server_started_time;	/* time servers were started */
 	plp_status_t status;
@@ -78,7 +78,6 @@ int main(int argc, char *argv[], char *envp[])
 	int request_pipe[2], status_pipe[2];
 	int last_fork_pid_value;
 	struct line_list args;
-	struct sockaddr sinaddr;
 	int first_scan = 1;
 	int unix_sock = 0;
 	int ipp_sock = 0;

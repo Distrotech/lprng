@@ -30,7 +30,6 @@ static int Noaccount;
 static int Nolog,  Nostatus,  Fix,  Age, Printcap;
 static int Truncate = -1;
 static int Remove;
-static int Test;			/* carry out portability tests */
 static char *User_specified_printer;
 static time_t Current_time;
 static int Check_path_list( char *plist, int allow_missing );
