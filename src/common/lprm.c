@@ -348,61 +348,41 @@ static void Get_parms_clean(int argc, char *argv[] )
 	}
 }
 
-static void prmsg( char **msg )
+static void usage(void)
 {
-	int i;
-	char *s;
-	for( i = 0; (s = msg[i]); ++i ){
-		if( i == 0 ){
-			FPRINTF(STDERR, _(s), Name );
-		} else {
-			FPRINTF(STDERR, "%s", _(s) );
-		}
-	}
-}
-
-
-void usage(void)
-{
-
- char *clean_msg[] = {
- N_(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"),
- N_("  -A           - use authentication\n"),
- N_("  -Ddebuglevel - debug level\n"),
- N_("  user           removes user jobs\n"),
- N_("  all            removes all jobs\n"),
- N_("  jobid          removes job number jobid\n"),
- N_(" Example:\n"),
- N_("    'clean 30 lp' removes job 30 on printer lp\n"),
- N_("    'clean'       removes first job on default printer\n"),
- N_("    'clean all'      removes all your jobs on default printer\n"),
- N_("    'clean all all'  removes all your jobs on all printers\n"),
- N_("  Note: clean removes only jobs for which you have removal permission\n"),
-	0 };
-
- char *lprm_msg[] =  {
- N_(" usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"),
- N_("  -a           - all printers\n"),
- N_("  -A           - use authentication\n"),
- N_("  -Pprinter    - printer (default PRINTER environment variable)\n"),
- N_("  -Uuser       - impersonate this user (root or privileged user only)\n"),
- N_("  -Ddebuglevel - debug level\n"),
- N_("  -V           - show version information\n"),
- N_("  user           removes user jobs\n"),
- N_("  all            removes all jobs\n"),
- N_("  jobid          removes job number jobid\n"),
- N_(" Example:\n"),
- N_("    'lprm -Plp 30' removes job 30 on printer lp\n"),
- N_("    'lprm -a'      removes all your jobs on all printers\n"),
- N_("    'lprm -a all'  removes all jobs on all printers\n"),
- N_("  Note: lprm removes only jobs for which you have removal permission\n"),
-	0 };
-
-
 	if( !LP_mode ){
-		prmsg(lprm_msg);
+		FPRINTF(STDERR,
+_(" usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"
+"  -a           - all printers\n"
+"  -A           - use authentication\n"
+"  -Pprinter    - printer (default PRINTER environment variable)\n"
+"  -Uuser       - impersonate this user (root or privileged user only)\n"
+"  -Ddebuglevel - debug level\n"
+"  -V           - show version information\n"
+"  user           removes user jobs\n"
+"  all            removes all jobs\n"
+"  jobid          removes job number jobid\n"
+" Example:\n"
+"    'lprm -Plp 30' removes job 30 on printer lp\n"
+"    'lprm -a'      removes all your jobs on all printers\n"
+"    'lprm -a all'  removes all jobs on all printers\n"
+"  Note: lprm removes only jobs for which you have removal permission\n"),
+			Name );
 	} else {
-		prmsg(clean_msg);
+		FPRINTF(STDERR,
+_(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"
+"  -A           - use authentication\n"
+"  -Ddebuglevel - debug level\n"
+"  user           removes user jobs\n"
+"  all            removes all jobs\n"
+"  jobid          removes job number jobid\n"
+" Example:\n"
+"    'clean 30 lp' removes job 30 on printer lp\n"
+"    'clean'       removes first job on default printer\n"
+"    'clean all'      removes all your jobs on default printer\n"
+"    'clean all all'  removes all your jobs on all printers\n"
+"  Note: clean removes only jobs for which you have removal permission\n"),
+			Name );
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
