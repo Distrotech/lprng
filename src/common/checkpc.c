@@ -627,32 +627,25 @@ void Make_write_file( char *file, char *printer )
 	if( fd >= 0 ) close(fd); fd = -1;
 }
 
- char *usemsg[] = {
-	"checkpc [-aflprsV] [-A age] [-D debuglevel] [-P printer] [-t size]",
-	"   Check printcap for printer information and fix files where possible",
-	" Option:",
-	" -a             do not create accounting info (:af) file",
-	" -f             fix missing files and inconsistent file permissions",
-	" -l             do not create logging info (:lf) file",
-	" -p             verbose printcap information",
-	" -r             remove job files older than -A age seconds",
-	" -s             do not create filter status (:ps) info file",
-	" -t size[kM]    truncate log files (:lf) to size (k=Kbyte, M=Mbytes)",
-	" -A age[DHMS]   remove files of form ?f[A-Z][0-9][0-9][0-9] older than",
-	"                age, D days (default), H hours, M minutes, S seconds",
-	" -D debuglevel  set debug level",
-	" -P printer     check or fix only this printer entry",
-	" -V             really verbose information",
-	" -T line        portability diagnostic, use serial line device for stty test",
-	0
-};
-
-void usage(void)
+static void usage(void)
 {
-	char **s;
-	for( s = usemsg; *s; ++s ){
-		FPRINTF( STDERR, "%s\n", *s );
-	}
+	FPRINTF( STDERR,
+"checkpc [-aflprsV] [-A age] [-D debuglevel] [-P printer] [-t size]\n"
+"   Check printcap for printer information and fix files where possible\n"
+" Option:\n"
+" -a             do not create accounting info (:af) file\n"
+" -f             fix missing files and inconsistent file permissions\n"
+" -l             do not create logging info (:lf) file\n"
+" -p             verbose printcap information\n"
+" -r             remove job files older than -A age seconds\n"
+" -s             do not create filter status (:ps) info file\n"
+" -t size[kM]    truncate log files (:lf) to size (k=Kbyte, M=Mbytes)\n"
+" -A age[DHMS]   remove files of form ?f[A-Z][0-9][0-9][0-9] older than\n"
+"                age, D days (default), H hours, M minutes, S seconds\n"
+" -D debuglevel  set debug level\n"
+" -P printer     check or fix only this printer entry\n"
+" -V             really verbose information\n"
+" -T line        portability diagnostic, use serial line device for stty test\n");
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);

@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
-#: src/common/lpc.c:271 src/common/lpc.c:436 src/common/lpq.c:526
+#: src/common/lpc.c:271 src/common/lpc.c:436 src/common/lpq.c:545
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-02-07 14:25+0100\n"
+"POT-Creation-Date: 2007-05-04 14:40+0200\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
@@ -160,18 +160,18 @@ msgstr ""
 msgid ""
 "authentication requested (-A option) and AUTH environment variable not set"
 msgstr ""
-"Authentifizierung notwendig (Option -A) und Variable AUTH nicht gesetzt"
+"Authentifizierung verlangt (Option -A) aber keine Umgebungsvariable AUTH"
 
 #: src/common/lpc.c:198
 msgid "exit"
 msgstr "exit"
 
-#: src/common/lpc.c:243 src/common/lpq.c:212
+#: src/common/lpc.c:243 src/common/lpq.c:236
 #, c-format
 msgid "Printer: %s - cannot get status from device '%s'\n"
 msgstr "Drucker: %s - keine Statusinformation von Gerät '%s'\n"
 
-#: src/common/lpc.c:250 src/common/lpq.c:234 src/common/lprm.c:254
+#: src/common/lpc.c:250 src/common/lpq.c:258 src/common/lprm.c:254
 #, c-format
 msgid "Printer: %s - direct connection to device '%s'\n"
 msgstr "Drucker: %s - Direktverbindung zum Gerät '%s'\n"
@@ -181,17 +181,17 @@ msgstr "Drucker: %s - Direktverbindung zum Gerät '%s'\n"
 msgid "Locale information directory '%s'\n"
 msgstr "Lokales Verzeichnis '%s'\n"
 
-#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:525
+#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:544
 #, c-format
 msgid "LANG environment variable '%s'\n"
 msgstr "Variable LANG ist: '%s'\n"
 
-#: src/common/lpc.c:273 src/common/lpc.c:438 src/common/lpq.c:528
+#: src/common/lpc.c:273 src/common/lpc.c:438 src/common/lpq.c:547
 #, c-format
 msgid "gettext translation information '%s'\n"
 msgstr "gettext: Übersetzungen '%s'\n"
 
-#: src/common/lpc.c:275 src/common/lpc.c:440 src/common/lpq.c:530
+#: src/common/lpc.c:275 src/common/lpc.c:440 src/common/lpq.c:549
 msgid "No translation available\n"
 msgstr "keine Übersetzung vorhanden\n"
 
@@ -226,224 +226,111 @@ msgstr ""
 msgid "doaction: waitpid(%ld) failed"
 msgstr "doaction: waitpid(%ld) fehlgeschlagen"
 
-#: src/common/lpc.c:455
+#: src/common/lpc.c:453
 #, c-format
 msgid ""
 "usage: %s [-a][-Ddebuglevel][-Pprinter][-Shost][-Uusername][-V] [command]\n"
-msgstr ""
-
-#: src/common/lpc.c:456
-msgid " with no command, reads from STDIN\n"
-msgstr " falls nicht anders angegeben, wird von STDIN gelesen\n"
-
-#: src/common/lpc.c:457
-msgid "  -a           - alias for -Pall\n"
-msgstr "  -a           - alias für -Pall\n"
-
-#: src/common/lpc.c:458 src/common/lpq.c:549 src/common/lprm.c:372
-#: src/common/lprm.c:390
-msgid "  -Ddebuglevel - debug level\n"
-msgstr ""
-
-#: src/common/lpc.c:459
-msgid "  -Pprinter    - printer\n"
-msgstr "  -Pprinter    - Druckername\n"
-
-#: src/common/lpc.c:460
-msgid "  -Pprinter@host - printer on lpd server on host\n"
-msgstr "  -Pprinter@HOST - Drucker des lpd-Servers auf HOST nutzen\n"
-
-#: src/common/lpc.c:461
-msgid "  -Shost       - connect to lpd server on host\n"
-msgstr "  -SHOST       - Verbinden zum lpd-Server auf HOST\n"
-
-#: src/common/lpc.c:462
-msgid "  -Uuser       - identify command as coming from user\n"
-msgstr "  -U USER       - als USER firmieren\n"
-
-#: src/common/lpc.c:463
-msgid "  -V           - increase information verbosity\n"
-msgstr "  -V           - Gesprächiger werden\n"
-
-#: src/common/lpc.c:464
-msgid " commands:\n"
-msgstr " Befehle:\n"
-
-#: src/common/lpc.c:465
-#, fuzzy
-msgid " active    (printer[@host])        - check for active server\n"
-msgstr " activ    (printer[@host])        - suche nach aktiven Servern\n"
-
-#: src/common/lpc.c:466
-msgid " abort     (printer[@host] | all)  - stop server\n"
-msgstr " abort     (printer[@host] | all)  - Server halt\n"
-
-#: src/common/lpc.c:467
-msgid ""
+" with no command, reads from STDIN\n"
+"  -a           - alias for -Pall\n"
+"  -Ddebuglevel - debug level\n"
+"  -Pprinter    - printer\n"
+"  -Pprinter@host - printer on lpd server on host\n"
+"  -Shost       - connect to lpd server on host\n"
+"  -Uuser       - identify command as coming from user\n"
+"  -V           - increase information verbosity\n"
+" commands:\n"
+" active    (printer[@host])        - check for active server\n"
+" abort     (printer[@host] | all)  - stop server\n"
 " class     printer[@host] (class | off)      - show/set class printing\n"
-msgstr ""
-" class     printer[@host] (class | off)      - Setzen/Anzeigen von "
-"Druckerklassen\n"
-
-#: src/common/lpc.c:468
-msgid " disable   (printer[@host] | all)  - disable queueing\n"
-msgstr " disable   (printer[@host] | all)  - Warteschlange abschalten\n"
-
-#: src/common/lpc.c:469
-msgid ""
+" disable   (printer[@host] | all)  - disable queueing\n"
 " debug     (printer[@host] | all) debugparms - set debug level for printer\n"
-msgstr ""
-" debug     (printer[@host] | all) debugparms - setze debug level für "
-"printer\n"
-
-#: src/common/lpc.c:470
-msgid " down      (printer[@host] | all)  - disable printing and queueing\n"
-msgstr ""
-" down      (printer[@host] | all)  - Drucken und Warteschlange abschalten\n"
-
-#: src/common/lpc.c:471
-msgid " enable    (printer[@host] | all)  - enable queueing\n"
-msgstr " enable    (printer[@host] | all)  - Warteschlange einschalten\n"
-
-#: src/common/lpc.c:472
-msgid " flush     (printer[@host] | all)  - flush cached status\n"
-msgstr " flush     (printer[@host] | all)  - Statusspeicher leeren\n"
-
-#: src/common/lpc.c:473
-msgid ""
+" down      (printer[@host] | all)  - disable printing and queueing\n"
+" enable    (printer[@host] | all)  - enable queueing\n"
+" flush     (printer[@host] | all)  - flush cached status\n"
 " hold      (printer[@host] | all) (name[@host] | job | all)*   - hold job\n"
-msgstr ""
-" hold      (printer[@host] | all) (name[@host] | job | all)*   - Job "
-"anhalten\n"
-
-#: src/common/lpc.c:474
-msgid " holdall   (printer[@host] | all)  - hold all jobs on\n"
-msgstr " holdall   (printer[@host] | all)  - alle Jobs anhalten\n"
-
-#: src/common/lpc.c:475
-msgid " kill      (printer[@host] | all)  - stop and restart server\n"
-msgstr " kill      (printer[@host] | all)  - Halt und Server Neustart\n"
-
-#: src/common/lpc.c:476
-msgid " lpd       (printer[@host])        - get LPD PID \n"
-msgstr " lpd       (printer[@host])        - PID von LPD ermitteln \n"
-
-#: src/common/lpc.c:477
-msgid ""
+" holdall   (printer[@host] | all)  - hold all jobs on\n"
+" kill      (printer[@host] | all)  - stop and restart server\n"
+" lpd       (printer[@host])        - get LPD PID \n"
 " lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke LPQ\n"
-msgstr ""
-" lpq       (printer[@host] | all) (name[@host] | job | all)*   - LPQ "
-"aufrufen\n"
-
-#: src/common/lpc.c:478
-msgid ""
 " lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke "
 "LPRM\n"
-msgstr ""
-" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - LPRM "
-"aufrufen\n"
-
-#: src/common/lpc.c:479
-msgid " msg       printer message text  - set status message\n"
-msgstr " msg       printer message text  - Statustext setzen\n"
-
-#: src/common/lpc.c:480
-msgid " move      printer (user|jobid)* target - move jobs to new queue\n"
-msgstr ""
-" move      printer (user|jobid)* target - verschiebe Jobs zu einer neuen "
-"Warteschlange\n"
-
-#: src/common/lpc.c:481
-msgid " noholdall (printer[@host] | all)  - hold all jobs off\n"
-msgstr " noholdall (printer[@host] | all)  - Alle Jobs weitermachen\n"
-
-#: src/common/lpc.c:482
-msgid " printcap  (printer[@host] | all)  - report printcap values\n"
-msgstr " printcap  (printer[@host] | all)  - Melde printcap Daten\n"
-
-#: src/common/lpc.c:483
-msgid " quit                              - exit LPC\n"
-msgstr " quit                              -  LPC beenden\n"
-
-#: src/common/lpc.c:484
-msgid ""
+" msg       printer message text  - set status message\n"
+" move      printer (user|jobid)* target - move jobs to new queue\n"
+" noholdall (printer[@host] | all)  - hold all jobs off\n"
+" printcap  (printer[@host] | all)  - report printcap values\n"
+" quit                              - exit LPC\n"
 " redirect  (printer[@host] | all) (printer@host | off )*       - redirect "
 "jobs\n"
-msgstr ""
-" redirect  (printer[@host] | all) (printer@host | off )*       - Jobs "
-"umleiten\n"
-
-#: src/common/lpc.c:485
-msgid ""
 " redo      (printer[@host] | all) (name[@host] | job | all)*   - reprint "
 "jobs\n"
-msgstr ""
-" redo      (printer[@host] | all) (name[@host] | job | all)*   - Job "
-"wiederholen\n"
-
-#: src/common/lpc.c:486
-msgid ""
 " release   (printer[@host] | all) (name[@host] | job | all)*   - release "
 "jobs\n"
-msgstr ""
-" release   (printer[@host] | all) (name[@host] | job | all)*   - Jobs "
-"freigeben\n"
-
-#: src/common/lpc.c:487
-msgid " reread                            - LPD reread database information\n"
-msgstr " reread                            - Konfiguration neulesen\n"
-
-#: src/common/lpc.c:488
-msgid " start     (printer[@host] | all)  - start printing\n"
-msgstr " start     (printer[@host] | all)  - start drucken\n"
-
-#: src/common/lpc.c:489
-msgid " status    (printer[@host] | all)  - status of printers\n"
-msgstr " status    (printer[@host] | all)  - Status des Druckers\n"
-
-#: src/common/lpc.c:490
-msgid " stop      (printer[@host] | all)  - stop  printing\n"
-msgstr " stop      (printer[@host] | all)  - Drucken stoppen\n"
-
-#: src/common/lpc.c:491
-msgid ""
+" reread                            - LPD reread database information\n"
+" start     (printer[@host] | all)  - start printing\n"
+" status    (printer[@host] | all)  - status of printers\n"
+" stop      (printer[@host] | all)  - stop  printing\n"
 " topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder "
 "jobs\n"
-msgstr ""
-" topq      (printer[@host] | all) (name[@host] | job | all)*   - "
-"Neuorganisation der Jobs\n"
-
-#: src/common/lpc.c:492
-msgid " up        (printer[@host] | all) - enable printing and queueing\n"
-msgstr ""
-" up        (printer[@host] | all) - Drucken und Warteschlange einschalten\n"
-
-#: src/common/lpc.c:493
-msgid "   diagnostic:\n"
-msgstr "   Diagnose:\n"
-
-#: src/common/lpc.c:494
-msgid "      defaultq               - show default queue for LPD server\n"
-msgstr "      defaultq               - Zeige standard Warteschlange\n"
-
-#: src/common/lpc.c:495
-msgid "      defaults               - show default configuration values\n"
-msgstr "      defaults               - Zeige standard Einstellungen\n"
-
-#: src/common/lpc.c:496
-msgid ""
+" up        (printer[@host] | all) - enable printing and queueing\n"
+"   diagnostic:\n"
+"      defaultq               - show default queue for LPD server\n"
+"      defaults               - show default configuration values\n"
 "      lang                   - show current i18n (iNTERNATIONALIZATIONn) "
 "support\n"
+"      client (printer | all) - client config and printcap information\n"
+"      server (printer | all) - server config and printcap\n"
 msgstr ""
-"      lang                   - Zeige aktuelle i18n (iNTERNATIONALIZATIONn)\n"
-
-#: src/common/lpc.c:497
-msgid "      client (printer | all) - client config and printcap information\n"
-msgstr "      client (printer | all) - Klient Einstellung und printcap\n"
-
-#: src/common/lpc.c:498
-msgid "      server (printer | all) - server config and printcap\n"
-msgstr "      server (printer | all) - Server Einstellung und printcap\n"
+"Verwendung: %s [-a][-Ddebuglevel][-Pdrucker][-Shost][-Uname][-V] [befehl]\n"
+" Befehle werden von STDIN gelesen, falls keiner angegeben wurde.\n"
+"  -a           - alias für -Pall\n"
+"  -Ddebuglevel - debug level\n"
+"  -Pprinter    - Druckername\n"
+"  -Pprinter@HOST - Drucker des lpd-Servers auf HOST nutzen\n"
+"  -SHOST       - Verbinden zum lpd-Server auf HOST\n"
+"  -U USER      - ausgeben als USER (nur als root möglich)\n"
+"  -V           - Gesprächiger werden\n"
+" Befehle:\n"
+" active    (printer[@host])        - suche nach aktiven Servern\n"
+" abort     (printer[@host] | all)  - Server anhalten\n"
+" class     printer[@host] (class | off) - Setzen/Anzeigen von "
+"Druckerklassen\n"
+" disable   (printer[@host] | all)  - Warteschlange abschalten\n"
+" debug     (printer[@host] | all) debugparms - setze debug level\n"
+" down      (printer[@host] | all)  - Drucken und Warteschlange abschalten\n"
+" enable    (printer[@host] | all)  - Warteschlange einschalten\n"
+" flush     (printer[@host] | all)  - Statusspeicher leeren\n"
+" hold      (printer[@host] | all) (name[@host] | job | all)* - Job "
+"zurückhalten\n"
+" holdall   (printer[@host] | all)  - alle Jobs zurückhalten\n"
+" kill      (printer[@host] | all)  - Server anhalten und neu starten\n"
+" lpd       (printer[@host])        - PID von LPD ermitteln \n"
+" lpq       (printer[@host] | all) (name[@host] | job | all)* - LPQ aufrufen\n"
+" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - LPRM "
+"aufrufen\n"
+" msg       printer message text    - Statustext setzen\n"
+" move      printer (user|jobid)* target - Jobs in eine andere Warteschlange\n"
+"                                          verschieben\n"
+" noholdall (printer[@host] | all)  - Alle Jobs weitermachen\n"
+" printcap  (printer[@host] | all)  - printcap Daten ausgeben\n"
+" quit                              - LPC beenden\n"
+" redirect  (printer[@host] | all) (printer@host | off )* - Jobs umleiten\n"
+" redo      (printer[@host] | all) (name[@host] | job | all)* - Job "
+"wiederholen\n"
+" release   (printer[@host] | all) (name[@host] | job | all)*   - Jobs "
+"freigeben\n"
+" reread                            - Konfiguration neu lesen\n"
+" start     (printer[@host] | all)  - Drucken einschalten\n"
+" status    (printer[@host] | all)  - Status des Druckers ausgeben\n"
+" stop      (printer[@host] | all)  - Drucken ausschalten\n"
+" topq      (printer[@host] | all) (name[@host] | job | all)*\n"
+"                                   - Neuorganisation der Jobs\n"
+" up        (printer[@host] | all) - Drucken und Warteschlange einschalten\n"
+"   Diagnostisches:\n"
+"      defaultq                    - Zeige standard Warteschlange\n"
+"      defaults                    - Zeige standard Einstellungen\n"
+"      lang                        - Zeige aktuelle Spracheinstellungen\n"
+"      client (printer | all)      - Klient Einstellung und printcap\n"
+"      server (printer | all)      - Server Einstellung und printcap\n"
 
 #: src/common/lpd.c:171
 msgid "No LPD lockfile specified!"
@@ -502,62 +389,44 @@ msgstr ""
 msgid "lpd: Cannot open lock file '%s'"
 msgstr ""
 
-#: src/common/lpd.c:904
+#: src/common/lpd.c:906
 #, c-format
 msgid ""
 "usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP "
 "destination port]\n"
-msgstr ""
-
-#: src/common/lpd.c:905
-msgid " Options\n"
-msgstr " Optionen\n"
-
-#: src/common/lpd.c:906
-msgid " -D dbg      - set debug level and flags\n"
-msgstr " -D dbg      - setze debug level und flags\n"
-
-#: src/common/lpd.c:907
-msgid " -F          - run in foreground, log to STDERR\n"
-msgstr " -F          - im Vordergrund laufen,Protokoll nach STDERR\n"
-
-#: src/common/lpd.c:908
-msgid " -L logfile  - append log information to logfile\n"
-msgstr " -L logfile  - Protokoll an logfile anhängen\n"
-
-#: src/common/lpd.c:909
-msgid " -V          - show version info\n"
-msgstr " -V          - Versionsangaben\n"
-
-#: src/common/lpd.c:910
-msgid ""
+" Options\n"
+" -D dbg      - set debug level and flags\n"
+" -F          - run in foreground, log to STDERR\n"
+" -L logfile  - append log information to logfile\n"
+" -V          - show version info\n"
 " -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port "
 "(lpd_listen_port)\n"
-msgstr ""
-" -p PORT     - Lauschen auf TCP/IP Port PORT, 'off' schaltet Lauschen ab "
-"(lpd_listen_port)\n"
-
-#: src/common/lpd.c:911
-msgid ""
 " -P path     - UNIX socket path, 'off' disables UNIX listening socket "
 "(unix_socket_path)\n"
+" -R port     - remote LPD server port (lpd_port)\n"
 msgstr ""
-" -P PATH     - Lauschen auf UNIX Socket PATH, 'off' schaltet Lauschen ab "
-"(unix_socket_path)\n"
+"Verwendung: %s [-FV][-D dbg][-L log][-P path][-p port][-R port]\n"
+" Optionen\n"
+" -D dbg      - setze debug level und flags\n"
+" -F          - im Vordergrund laufen, Protokoll nach STDERR\n"
+" -L logfile  - Protokoll an logfile anhängen\n"
+" -V          - Versionsangaben\n"
+" -p PORT     - Lauschen auf TCP/IP Port PORT, 'off' schaltet Lauschen ab\n"
+"               (lpd_listen_port)\n"
+" -P PATH     - Lauschen auf UNIX Socket PATH, 'off' schaltet Lauschen ab\n"
+"               (unix_socket_path)\n"
+" -R PORT     - zu kontaktierender TCP/IP Port bei entfernten LPD-Servern\n"
+"               (lpd_port)\n"
 
-#: src/common/lpd.c:912
-msgid " -R port     - remote LPD server port (lpd_port)\n"
-msgstr " -R PORT     - ferner LPD-Server PORT (lpd_port)\n"
-
-#: src/common/lpd.c:1006
+#: src/common/lpd.c:995
 msgid "lpd: fork() failed"
 msgstr ""
 
-#: src/common/lpd.c:1017
+#: src/common/lpd.c:1006
 msgid "lpd: accept on listening socket failed"
 msgstr ""
 
-#: src/common/lpd.c:1036
+#: src/common/lpd.c:1025
 msgid "Start_all: pipe failed!"
 msgstr ""
 
@@ -728,266 +597,266 @@ msgstr ""
 msgid "debugging override off"
 msgstr ""
 
-#: src/common/lpd_jobs.c:424
+#: src/common/lpd_jobs.c:426
 #, c-format
 msgid "Do_queue_jobs: cannot open lockfile '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:756 src/common/lpd_jobs.c:2298
+#: src/common/lpd_jobs.c:758 src/common/lpd_jobs.c:2300
 #, c-format
 msgid "cannot update job ticket file for '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:759
+#: src/common/lpd_jobs.c:761
 #, c-format
 msgid "Do_queue_jobs: cannot update job ticket file for '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:763
+#: src/common/lpd_jobs.c:765
 #, c-format
 msgid "removing job '%s' - no permissions"
 msgstr "Kein Recht Job '%s' zu löschen"
 
-#: src/common/lpd_jobs.c:1031
+#: src/common/lpd_jobs.c:1033
 #, c-format
 msgid "Do_queue_jobs: LOGIC ERROR - no identifer '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1040
+#: src/common/lpd_jobs.c:1042
 #, c-format
 msgid "Do_queue_jobs: FORWARDING LOOP - '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1062
+#: src/common/lpd_jobs.c:1064
 #, fuzzy, c-format
 msgid "cannot update job ticket file '%s'"
 msgstr "Kann Datei '%s' nicht öffnen; '%s'"
 
-#: src/common/lpd_jobs.c:1064
+#: src/common/lpd_jobs.c:1066
 #, c-format
 msgid "Do_queue_jobs: cannot update job ticket file '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1111
+#: src/common/lpd_jobs.c:1113
 #, c-format
 msgid "Do_queue_jobs: LOGIC ERROR! new_dest and use_subserver == %d"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1127 src/common/lpd_jobs.c:1188
+#: src/common/lpd_jobs.c:1129 src/common/lpd_jobs.c:1190
 msgid "sleeping, waiting for processes to exit"
 msgstr "Warte bis Prozess endet"
 
-#: src/common/lpd_jobs.c:1168
+#: src/common/lpd_jobs.c:1170
 #, c-format
 msgid "Do_queue_jobs: write to fd '%d' failed"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1358
+#: src/common/lpd_jobs.c:1360
 #, c-format
 msgid "Remote_job: %d datafiles and only allowed %d"
 msgstr "Remote_job: %d Datafiles, Erlaubt sind %d"
 
-#: src/common/lpd_jobs.c:1391
+#: src/common/lpd_jobs.c:1393
 #, c-format
 msgid "link failure while sending job '%s'"
 msgstr "Versandfehler bei Job '%s'"
 
-#: src/common/lpd_jobs.c:1397
+#: src/common/lpd_jobs.c:1399
 #, c-format
 msgid "no permission to spool job '%s'"
 msgstr "Kein Recht Job '%s' zu spoolen"
 
-#: src/common/lpd_jobs.c:1403
+#: src/common/lpd_jobs.c:1405
 #, c-format
 msgid "failed to send job '%s'"
 msgstr "Job '%s' nicht verschickt"
 
-#: src/common/lpd_jobs.c:1570
+#: src/common/lpd_jobs.c:1572
 msgid "Fork_subserver: fork failed"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1644
+#: src/common/lpd_jobs.c:1646
 #, c-format
 msgid "subserver pid %ld exit status '%s'"
 msgstr "Unterserver PID %ld exit status '%s'"
 
-#: src/common/lpd_jobs.c:1648
+#: src/common/lpd_jobs.c:1650
 #, fuzzy, c-format
 msgid "subserver pid %ld died with signal '%s'"
 msgstr "Unterserver pid %d beendet mit Signal '%s'"
 
-#: src/common/lpd_jobs.c:1694
+#: src/common/lpd_jobs.c:1696
 msgid "Wait_for_subserver: Mergesort failed"
 msgstr "Wait_for_subserver: Mergesort fehlgeschlagen"
 
-#: src/common/lpd_jobs.c:1705
+#: src/common/lpd_jobs.c:1707
 #, c-format
 msgid "Wait_for_subserver: LOGIC ERROR! waiting for pid %d failed"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1730
+#: src/common/lpd_jobs.c:1732
 msgid "succ"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1731
+#: src/common/lpd_jobs.c:1733
 msgid "jsucc"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1732
+#: src/common/lpd_jobs.c:1734
 msgid "success"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1733
+#: src/common/lpd_jobs.c:1735
 msgid "jsuccess"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1734
+#: src/common/lpd_jobs.c:1736
 msgid "abort"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1735
+#: src/common/lpd_jobs.c:1737
 msgid "jabort"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1736
+#: src/common/lpd_jobs.c:1738
 msgid "hold"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1737
+#: src/common/lpd_jobs.c:1739
 msgid "jhold"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1738
+#: src/common/lpd_jobs.c:1740
 msgid "remove"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1739
+#: src/common/lpd_jobs.c:1741
 msgid "jremove"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1914
+#: src/common/lpd_jobs.c:1916
 #, c-format
 msgid "Update_status: no identifier for '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:1947 src/common/lpd_jobs.c:2054
-#: src/common/lpd_jobs.c:2096 src/common/lpd_jobs.c:2140
+#: src/common/lpd_jobs.c:1949 src/common/lpd_jobs.c:2056
+#: src/common/lpd_jobs.c:2098 src/common/lpd_jobs.c:2142
 #, c-format
 msgid "job '%s' saved"
 msgstr "Job '%s' gespeichert"
 
-#: src/common/lpd_jobs.c:1952 src/common/lpd_jobs.c:2060
-#: src/common/lpd_jobs.c:2102 src/common/lpd_jobs.c:2146
+#: src/common/lpd_jobs.c:1954 src/common/lpd_jobs.c:2062
+#: src/common/lpd_jobs.c:2104 src/common/lpd_jobs.c:2148
 #, c-format
 msgid "could not remove job '%s'"
 msgstr "Job '%s' nicht entfernt"
 
-#: src/common/lpd_jobs.c:1954 src/common/lpd_jobs.c:2062
-#: src/common/lpd_jobs.c:2104 src/common/lpd_jobs.c:2148
+#: src/common/lpd_jobs.c:1956 src/common/lpd_jobs.c:2064
+#: src/common/lpd_jobs.c:2106 src/common/lpd_jobs.c:2150
 #, c-format
 msgid "job '%s' removed"
 msgstr "job '%s' entfernt"
 
-#: src/common/lpd_jobs.c:1984
+#: src/common/lpd_jobs.c:1986
 #, c-format
 msgid "job '%s', attempt %d, allowed %d"
 msgstr "job '%s', %d Versuche,%d möglich"
 
-#: src/common/lpd_jobs.c:1988
+#: src/common/lpd_jobs.c:1990
 msgid "treating as successful"
 msgstr "wird als Erfolg beurteilt"
 
-#: src/common/lpd_jobs.c:1989
+#: src/common/lpd_jobs.c:1991
 msgid "retrying job"
 msgstr "Wiedervorlage"
 
-#: src/common/lpd_jobs.c:1990
+#: src/common/lpd_jobs.c:1992
 msgid "no retry"
 msgstr "Keine Wiedervorlage"
 
-#: src/common/lpd_jobs.c:1991
+#: src/common/lpd_jobs.c:1993
 msgid "aborting server"
 msgstr "Server beenden"
 
-#: src/common/lpd_jobs.c:1992
+#: src/common/lpd_jobs.c:1994
 msgid "removing job - status JREMOVE"
 msgstr "entferne Job - status JREMOVE"
 
-#: src/common/lpd_jobs.c:1993
+#: src/common/lpd_jobs.c:1995
 msgid "holding job"
 msgstr "halte Job"
 
-#: src/common/lpd_jobs.c:1996
+#: src/common/lpd_jobs.c:1998
 #, c-format
 msgid "unexpected status 0x%x"
 msgstr "unerwarteter Status 0x%x"
 
-#: src/common/lpd_jobs.c:2001
+#: src/common/lpd_jobs.c:2003
 #, c-format
 msgid "job '%s', %s"
 msgstr ""
 
-#: src/common/lpd_jobs.c:2005
+#: src/common/lpd_jobs.c:2007
 #, c-format
 msgid "job '%s' attempt %d, trying %d times"
 msgstr "job '%s' Versuch %d , Versuche %d mal"
 
-#: src/common/lpd_jobs.c:2008
+#: src/common/lpd_jobs.c:2010
 #, c-format
 msgid "job '%s' attempt %d, trying indefinitely"
 msgstr "job '%s' Versuche %d, Versuch weiter"
 
-#: src/common/lpd_jobs.c:2027
+#: src/common/lpd_jobs.c:2029
 msgid "failed, no retry"
 msgstr "Fehlschlag, kein weiteren Versuche"
 
-#: src/common/lpd_jobs.c:2058
+#: src/common/lpd_jobs.c:2060
 #, c-format
 msgid "removing job '%s' - JFAILNORETRY"
 msgstr "Entferne Job '%s' - JFAILNORETRY"
 
-#: src/common/lpd_jobs.c:2070
+#: src/common/lpd_jobs.c:2072
 msgid "aborting operations"
 msgstr "Aktion abgebrochen"
 
-#: src/common/lpd_jobs.c:2100
+#: src/common/lpd_jobs.c:2102
 #, c-format
 msgid "removing job '%s' - JABORT"
 msgstr "Entferne Job '%s' - JABORT"
 
-#: src/common/lpd_jobs.c:2109
+#: src/common/lpd_jobs.c:2111
 msgid "stopping printing on filter JABORT exit code"
 msgstr "kein Druck (auf Filter) exit code JABORT"
 
-#: src/common/lpd_jobs.c:2119
+#: src/common/lpd_jobs.c:2121
 msgid "removing destination due to errors"
 msgstr "Entferne Ziel wg. Fehlern"
 
-#: src/common/lpd_jobs.c:2130
+#: src/common/lpd_jobs.c:2132
 msgid "too many errors"
 msgstr "zu viele Fehler"
 
-#: src/common/lpd_jobs.c:2144
+#: src/common/lpd_jobs.c:2146
 #, c-format
 msgid "removing job '%s' - JREMOVE"
 msgstr "Entferne Job '%s' - JREMOVE"
 
-#: src/common/lpd_jobs.c:2272
+#: src/common/lpd_jobs.c:2274
 #, c-format
 msgid "Service_worker: cannot open lockfile '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:2301
+#: src/common/lpd_jobs.c:2303
 #, c-format
 msgid "Service_worker: cannot update job ticket file for '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:2309
+#: src/common/lpd_jobs.c:2311
 #, c-format
 msgid "Service_worker: no identifier for '%s'"
 msgstr ""
 
-#: src/common/lpd_jobs.c:2979
+#: src/common/lpd_jobs.c:2752
 #, c-format
 msgid "job '%s' removed- status expired"
 msgstr "Job '%s' entfernt- Status abgelaufen"
@@ -1006,7 +875,7 @@ msgid "%s: cannot set up print queue"
 msgstr "Kann Warteschlange %s nicht starten"
 
 #: src/common/lpd_rcvjob.c:181 src/common/lpd_rcvjob.c:580
-#: src/common/lpd_secure.c:189
+#: src/common/lpd_secure.c:185
 #, c-format
 msgid "%s: spooling disabled"
 msgstr "%s: spooling abgeschaltet"
@@ -1045,7 +914,7 @@ msgid "size %0.3fK exceeds %dK"
 msgstr "Größe %0.3fK überschreitet %dK"
 
 #: src/common/lpd_rcvjob.c:290 src/common/lpd_rcvjob.c:602
-#: src/common/lpd_secure.c:203
+#: src/common/lpd_secure.c:199
 #, c-format
 msgid "%s: insufficient file space"
 msgstr "%s: zu wenig Speicher"
@@ -1170,32 +1039,32 @@ msgstr "UPS: '%s' wurde nicht entfernt"
 msgid " ERROR: "
 msgstr " FEHLER: "
 
-#: src/common/lpd_secure.c:82
+#: src/common/lpd_secure.c:78
 #, c-format
 msgid "bad command line '%s'"
 msgstr "Commandozeile fehlerhaft '%s'"
 
-#: src/common/lpd_secure.c:114
+#: src/common/lpd_secure.c:110
 #, c-format
 msgid "bad printer name '%s'"
 msgstr "Druckername falsch '%s'"
 
-#: src/common/lpd_secure.c:125
+#: src/common/lpd_secure.c:121
 #, c-format
 msgid "bad printer '%s'"
 msgstr "Falscher Drucker '%s'"
 
-#: src/common/lpd_secure.c:167
+#: src/common/lpd_secure.c:163
 #, c-format
 msgid "unsupported authentication '%s'"
 msgstr "Authentifizierung nicht unterstüzt '%s'"
 
-#: src/common/lpd_secure.c:174
+#: src/common/lpd_secure.c:170
 #, c-format
 msgid "no receive method supported for '%s'"
 msgstr "Kein Empfang unterstützt für '%s'"
 
-#: src/common/lpd_secure.c:196
+#: src/common/lpd_secure.c:192
 #, c-format
 msgid "%s: job size %0.0f is larger than %d K"
 msgstr "%s: Jobgröße von %0.3fK ist größer als %d K"
@@ -1444,93 +1313,71 @@ msgstr ""
 msgid " Filter_status: "
 msgstr "Filterstatus: "
 
-#: src/common/lpq.c:156
+#: src/common/lpq.c:118
+#, c-format
+msgid ""
+"usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"
+"  -A           - use authentication specified by AUTH environment variable\n"
+"  -a           - all printers\n"
+"  -c           - clear screen before update\n"
+"  -l           - increase (lengthen) detailed status information\n"
+"                 additional l flags add more detail.\n"
+"  -L           - maximum detailed status information\n"
+"  -n linecount - linecount lines of detailed status information\n"
+"  -Ddebuglevel - debug level\n"
+"  -Pprinter    - specify printer\n"
+"  -s           - short (summary) format\n"
+"  -tsleeptime  - sleeptime between updates\n"
+"  -V           - print version information\n"
+"  -v           - print in key: value format\n"
+msgstr ""
+"Verwendung: %s [-aAclV] [-Ddebuglevel] [-Pdrucker] [-t SECS]\n"
+"  -A           - benutze die durch die Umgebungsvariable AUTH angegebenene\n"
+"                 Authentifikation\n"
+"  -a           - alle Drucker\n"
+"  -c           - Bildschirm löschen vor Neuausgabe\n"
+"  -l           - zeige detaillierte Statusinformation\n"
+"                 zusätzliche l Flags zeigen noch mehr Details\n"
+"  -L           - wirklich alle Statusinformation\n"
+"  -n NR        - NR Zeilen an Statusinformation\n"
+"  -Pprinter    - Druckerangabe\n"
+"  -s           - Kurzfassung\n"
+"  -t SECS      - Ausgabe nach SECS Sekunden wiederholen\n"
+"  -V           - Versionsinformation anzeigen\n"
+"  -v           - im Ausgabeformat Schlüssel: Wert\n"
+
+#: src/common/lpq.c:179
 msgid "authentication requested (-A) and no AUTH environment variable"
 msgstr ""
-"Authentifizierung notwendig (Option -A) und Variable AUTH nicht gesetzt"
+"Authentifizierung verlangt (Option -A) aber keine Umgebungsvariable AUTH"
 
-#: src/common/lpq.c:220
+#: src/common/lpq.c:244
 #, c-format
 msgid "Printer: %s is %s@%s\n"
 msgstr "Drucker: %s ist %s@%s\n"
 
-#: src/common/lpq.c:227
+#: src/common/lpq.c:251
 #, c-format
 msgid "Printer: %s - cannot use printer, not in privileged group\n"
 msgstr "Drucker: %s - Nutzung unzulässig, nicht in der zugelassenen Gruppe\n"
 
-#: src/common/lpq.c:343 src/common/lpq.c:348 src/common/lpq.c:358
-#: src/common/lpq.c:405 src/common/lpq.c:412
+#: src/common/lpq.c:367 src/common/lpq.c:372 src/common/lpq.c:382
+#: src/common/lpq.c:429 src/common/lpq.c:436
 msgid "Printer:"
 msgstr "Drucker:"
 
-#: src/common/lpq.c:451
+#: src/common/lpq.c:475
 msgid "fork() failed"
 msgstr ""
 
-#: src/common/lpq.c:458
+#: src/common/lpq.c:482
 #, c-format
 msgid "Term_clear: waitpid(%d) failed"
 msgstr ""
 
-#: src/common/lpq.c:489
+#: src/common/lpq.c:508
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq:  Bitte lpstat von LPRng benutzen\n"
-
-#: src/common/lpq.c:541
-#, c-format
-msgid "usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"
-msgstr ""
-
-#: src/common/lpq.c:542
-msgid ""
-"  -A           - use authentication specified by AUTH environment variable\n"
-msgstr "  -A           - Authentication wird durch Variabel AUTH angegeben\n"
-
-#: src/common/lpq.c:543 src/common/lprm.c:386
-msgid "  -a           - all printers\n"
-msgstr "  -a           - alle Drucker\n"
-
-#: src/common/lpq.c:544
-#, fuzzy
-msgid "  -c           - clear screen before update\n"
-msgstr "  -c           - Bildschirm löschen vor Neuausgabe"
-
-#: src/common/lpq.c:545
-msgid "  -l           - increase (lengthen) detailed status information\n"
-msgstr "  -l           - zeige detaillierte Statusinformation\n"
-
-#: src/common/lpq.c:546
-msgid "                 additional l flags add more detail.\n"
-msgstr "                 zusätzliche l Flags zeigen noch mehr Details\n"
-
-#: src/common/lpq.c:547
-msgid "  -L           - maximum detailed status information\n"
-msgstr "  -L           - wirklich alle Statusinformation\n"
-
-#: src/common/lpq.c:548
-msgid "  -n linecount - linecount lines of detailed status information\n"
-msgstr "  -n NR       - NR Zeilen an Statusinformation\n"
-
-#: src/common/lpq.c:550
-msgid "  -Pprinter    - specify printer\n"
-msgstr "  -Pprinter    - Druckerangabe\n"
-
-#: src/common/lpq.c:551
-msgid "  -s           - short (summary) format\n"
-msgstr "  -s           - Kurzfassung\n"
-
-#: src/common/lpq.c:552
-msgid "  -tsleeptime  - sleeptime between updates\n"
-msgstr "  -t Zeit  - Zeit-lang warten vor Neuausgabe\n"
-
-#: src/common/lpq.c:553
-msgid "  -V           - print version information\n"
-msgstr "  -V           - Versionsinformation anzeigen\n"
-
-#: src/common/lpq.c:554
-msgid "  -v           - print in key: value format\n"
-msgstr " -v           - Ausgabeformat  key: value\n"
 
 #: src/common/lpr.c:157
 msgid "nothing to print"
@@ -1550,7 +1397,7 @@ msgstr "Kein Zugriff auf %s@%s"
 msgid "%d data files and maximum allowed %d"
 msgstr "%d Datenfiles und %d maximal zulässig"
 
-#: src/common/lpr.c:221 src/common/lpr.c:1183
+#: src/common/lpr.c:221 src/common/lpr.c:1162
 #, c-format
 msgid "Cannot open file '%s', %s"
 msgstr "Kann Datei '%s' nicht öffnen; '%s'"
@@ -1633,365 +1480,260 @@ msgstr "Fehlender Email Name"
 msgid "duplicate format specification -%c\n"
 msgstr "Doppelte Formatangabe -%c\n"
 
-#: src/common/lpr.c:667
-#, c-format
-msgid ""
-"Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"
-msgstr ""
-
 #: src/common/lpr.c:668
-msgid ""
-"   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]\n"
-msgstr ""
-
-#: src/common/lpr.c:669
-msgid ""
-"   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w width ] [-r]\n"
-msgstr ""
-
-#: src/common/lpr.c:670
-msgid "   [-Ddebugopt ] [--] [ filenames ...  ]\n"
-msgstr ""
-
-#: src/common/lpr.c:671 src/common/lpr.c:710
-msgid ""
-" -A          - use authentication specified by AUTH environment variable\n"
-msgstr "  -A           - Authentication wird durch Variabel AUTH angegeben\n"
-
-#: src/common/lpr.c:672 src/common/lpr.c:711
-msgid ""
-" -B          - filter files and reduce job to single file before sending\n"
-msgstr ""
-" -B         - Filter Files und reduzierte Job auf ein File vor dem Senden\n"
-
-#: src/common/lpr.c:673
-msgid " -C class    - job class\n"
-msgstr "-C Klasse   - Job Klasse\n"
-
-#: src/common/lpr.c:674
-msgid " -D debugopt - debugging flags\n"
-msgstr ""
-
-#: src/common/lpr.c:675
-msgid " -F format   - job format\n"
-msgstr "-F format   - Job Format\n"
-
-#: src/common/lpr.c:676
-msgid "   -b,-l        - binary or literal format\n"
-msgstr "   -b,-l        - binäry oder direktes Format\n"
-
-#: src/common/lpr.c:677
-msgid "    c,d,f,g,l,m,p,t,v are also format options\n"
-msgstr "    c,d,f,g,l,m,p,t,v  sind Formatangaben\n"
-
-#: src/common/lpr.c:678 src/common/lpr.c:716
-msgid " -G          - filter individual job files before sending\n"
-msgstr " -G          - filter einzelne Jobs vor dem Senden\n"
-
-#: src/common/lpr.c:679
-msgid " -J info     - banner and job information\n"
-msgstr "-J info     - banner und Job Angaben\n"
-
-#: src/common/lpr.c:680
-msgid " -K copies, -# copies   - number of copies\n"
-msgstr "-K NR, -# NR   - Anzahl der Kopien\n"
-
-#: src/common/lpr.c:681
-msgid " -P printer[@host] - printer on host\n"
-msgstr "-P Drucker[@HOST] - Drucke auf Drucker von HOST\n"
-
-#: src/common/lpr.c:682
-msgid " -Q          - put 'queuename' in control file\n"
-msgstr "-Q          - Name der Warteschlage im Controlfile speichern\n"
-
-#: src/common/lpr.c:683
-msgid " -Raccntname - accounting information\n"
-msgstr " -Raccntname - Angaben zur Abrechnung\n"
-
-#: src/common/lpr.c:684
-msgid " -T title    - title for 'pr' (-p) formatting\n"
-msgstr "-T title    - Titel für Formatierung mit 'pr' (-p)\n"
-
-#: src/common/lpr.c:685
-msgid " -U username - override user name (restricted)\n"
-msgstr " -U USER - benutze USER als Name (restricted)\n"
-
-#: src/common/lpr.c:686
-msgid " -V          - Verbose information during spooling\n"
-msgstr " -V          - Zeige Information während des Spooling\n"
-
-#: src/common/lpr.c:687 src/common/lpr.c:730
-msgid " -X path     - user specified filter for job files\n"
-msgstr " -X path     - nutze benutzerspezifizierten Filter für die Jobs\n"
-
-#: src/common/lpr.c:688 src/common/lpr.c:731
-msgid " -Y          - connect and send to TCP/IP port (direct mode)\n"
-msgstr " -Y          - Verbinden und Senden an  TCP/IP Port (direct)\n"
-
-#: src/common/lpr.c:689
-msgid " -Z options  - options to pass to filter\n"
-msgstr " -Z options  - Optionen für den Filter\n"
-
-#: src/common/lpr.c:690
-msgid " -h          - no header or banner page\n"
-msgstr " -h          - Kein Titelblatt oder Banner\n"
-
-#: src/common/lpr.c:691
-msgid " -i indent   - indentation\n"
-msgstr " -i indent   - Einrücken\n"
-
-#: src/common/lpr.c:692
-msgid " -k          - do not use tempfile when sending to server\n"
-msgstr " -k          - keine temporären Files erstellen bei Senden\n"
-
-#: src/common/lpr.c:693
-msgid " -m mailaddr - mail final status to mailaddr\n"
-msgstr " -m EMAIL - sende Abschlußbericht an EMAIL\n"
-
-#: src/common/lpr.c:694
-msgid " -r          - remove files after spooling\n"
-msgstr " -r          - lösche Dateien nach dem Spooling\n"
-
-#: src/common/lpr.c:695
-msgid " -w width    - width to use\n"
-msgstr " -w breite  - Nutzbare Breite\n"
-
-#: src/common/lpr.c:696 src/common/lpr.c:733
-msgid " --          - end of options, files follow\n"
-msgstr " --          - Ende aller Optionen, Files folgen\n"
-
-#: src/common/lpr.c:697 src/common/lpr.c:734
-msgid " filename '-'  reads from STDIN\n"
-msgstr " Filename '-' bedeutet: Lese von STDIN\n"
-
-#: src/common/lpr.c:698
-msgid ""
-" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default "
-"printer.\n"
-msgstr ""
-"Die Variablen PRINTER, LPDEST, NPRINTER, NGPRINTER bestimmen den standard "
-"Drucker\n"
-
-#: src/common/lpr.c:702
 #, c-format
-msgid "Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"
-msgstr ""
-
-#: src/common/lpr.c:703
-msgid "  [-f form-name] [-H special-handling]\n"
-msgstr ""
-
-#: src/common/lpr.c:704
-msgid "  [-n number] [-o options] [-P page-list]\n"
-msgstr ""
-
-#: src/common/lpr.c:705
-msgid "  [-q priority-level] [-S character-set]\n"
-msgstr ""
-
-#: src/common/lpr.c:706
-msgid "  [-S print-wheel] [-t title]\n"
-msgstr ""
-
-#: src/common/lpr.c:707
-msgid "  [-T content-type [-r]] [-y mode-list]\n"
-msgstr ""
-
-#: src/common/lpr.c:708
-msgid "  [-Ddebugopt ] [ filenames ...  ]\n"
-msgstr ""
-
-#: src/common/lpr.c:709
-msgid " lp simulator using LPRng,  functionality may differ slightly\n"
-msgstr " lp simulator von LPRng, Unterschiede mögen bestehen\n"
-
-#: src/common/lpr.c:712
-msgid " -c          - (make copy before printing - ignored)\n"
-msgstr " -c          - (Kopieren vor dem Drucken  - ignoriert)\n"
-
-#: src/common/lpr.c:713
-msgid " -d printer[@host]  - printer on host\n"
-msgstr " -d Drucker[@HOST]  - Drucke auf Drucker von HOST\n"
-
-#: src/common/lpr.c:714
-msgid " -D debugflags  - debugging flags\n"
-msgstr ""
-
-#: src/common/lpr.c:715
-msgid " -f formname - first letter used as job format\n"
-msgstr " -f formname - Erster Buchstabe bestimmt Job Format\n"
-
-#: src/common/lpr.c:717
-msgid " -H handling - (passed as -Z handling)\n"
-msgstr " -H Option - (Weitergeleitet als -Z Option)\n"
-
-#: src/common/lpr.c:718
-msgid " -m          - mail sent to $USER on completion\n"
-msgstr " -m    - Schicke Abschlußbericht als Email an $USER\n"
-
-#: src/common/lpr.c:719
-msgid " -n copies   - number of copies\n"
-msgstr " -n NR - Anzahl von Kopien\n"
-
-#: src/common/lpr.c:720
-msgid " -o option     nobanner, width recognized\n"
-msgstr " -o option     Kein Banner, Breite erkannt\n"
-
-#: src/common/lpr.c:721
-msgid "               (others passed as -Z option)\n"
-msgstr "               (Alles andere als -Z option weitergegeben)\n"
-
-#: src/common/lpr.c:722
-msgid " -P pagelist - (print page list - ignored)\n"
-msgstr " -P pagelist - (Drucke Seitenliste -ignoriert)\n"
-
-#: src/common/lpr.c:723
-msgid " -p          - (notification on completion - ignored)\n"
-msgstr " -p          - (Meldung am Ende  - ignoriert)\n"
-
-#: src/common/lpr.c:724
-msgid " -q          - priority - 0 -> Z (highest), 25 -> A (lowest)\n"
-msgstr " -q          - Priotität - 0 -> Z (Höchste), 25 -> A (Kleinste)\n"
-
-#: src/common/lpr.c:725
-msgid " -s          - (suppress messages - ignored)\n"
-msgstr "-s          - (unterdrücke Ausgaben - ignoriert)\n"
-
-#: src/common/lpr.c:726
-msgid " -S charset  - (passed as -Z charset)\n"
-msgstr " -S charset  - (Weitergeleitet als -Z charset)\n"
-
-#: src/common/lpr.c:727
-msgid " -t title    - job title\n"
-msgstr " -t title    - Jobtitel\n"
-
-#: src/common/lpr.c:728
-msgid " -T content  - (passed as -Z content)\n"
-msgstr " -T content  - (Weitergeleitet als -Z content)\n"
-
-#: src/common/lpr.c:729
-msgid " -w          - (write message on completion - ignored)\n"
-msgstr " -w          - (Schicke Nachricht bei Beendigung - ignoriert)\n"
-
-#: src/common/lpr.c:732
-msgid " -y mode     - (passed as -Z mode)\n"
-msgstr " -y mode     -(Weitergeleitet als -Z mode)\n"
-
-#: src/common/lpr.c:735
 msgid ""
+"Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"
+"  [-f form-name] [-H special-handling]\n"
+"  [-n number] [-o options] [-P page-list]\n"
+"  [-q priority-level] [-S character-set]\n"
+"  [-S print-wheel] [-t title]\n"
+"  [-T content-type [-r]] [-y mode-list]\n"
+"  [-Ddebugopt ] [ filenames ...  ]\n"
+" lp simulator using LPRng,  functionality may differ slightly\n"
+" -A          - use authentication specified by AUTH environment variable\n"
+" -B          - filter files and reduce job to single file before sending\n"
+" -c          - (make copy before printing - ignored)\n"
+" -d printer[@host]  - printer on host\n"
+" -D debugflags  - debugging flags\n"
+" -f formname - first letter used as job format\n"
+" -G          - filter individual job files before sending\n"
+" -H handling - (passed as -Z handling)\n"
+" -m          - mail sent to $USER on completion\n"
+" -n copies   - number of copies\n"
+" -o option     nobanner, width recognized\n"
+"               (others passed as -Z option)\n"
+" -P pagelist - (print page list - ignored)\n"
+" -p          - (notification on completion - ignored)\n"
+" -q          - priority - 0 -> Z (highest), 25 -> A (lowest)\n"
+" -s          - (suppress messages - ignored)\n"
+" -S charset  - (passed as -Z charset)\n"
+" -t title    - job title\n"
+" -T content  - (passed as -Z content)\n"
+" -w          - (write message on completion - ignored)\n"
+" -X path     - user specified filter for job files\n"
+" -Y          - connect and send to TCP/IP port (direct mode)\n"
+" -y mode     - (passed as -Z mode)\n"
+" --          - end of options, files follow\n"
+" filename '-'  reads from STDIN\n"
 " PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default "
 "printer.\n"
 msgstr ""
-"Die Variablen PRINTER, LPDEST, NPRINTER, NGPRINTER bestimmen den standard "
-"Drucker\n"
+"Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d drucker@[host]]\n"
+"  [-f FORMAT] [-H special-handling]\n"
+"  [-n NR] [-o Optionen] [-P Seitenzahlen]\n"
+"  [-q Priorität] [-S Zeichensatz]\n"
+"  [-t Titel] [-T content-type [-r]] [-y mode-list]\n"
+"  [-Ddebugopt ] [ DATEINAMEN ...  ]\n"
+" lp Simulation durch LPRng (Leichte Unterschiede nicht ausgeschlossen)\n"
+" -A          - benutze die durch die Umgebungsvariable AUTH angegebenene\n"
+"               Authentifikationsmethode\n"
+" -B          - Filter Files und reduziere Job auf ein File vor dem Senden\n"
+" -c          - (Kopieren vor dem Drucken  - ignoriert)\n"
+" -d Drucker[@HOST]  - Drucke auf Drucker von HOST\n"
+" -D debugflags  - debugging flags\n"
+" -f FORMAT   - Erster Buchstabe bestimmt Job Format\n"
+" -G          - filter einzelne Jobs vor dem Senden\n"
+" -H Option   - (Weitergeleitet als -Z Option)\n"
+" -m          - Schicke Abschlußbericht als Email an $USER\n"
+" -n NR       - Anzahl von Kopien\n"
+" -o option   - 'nobanner' und 'width' Optionen werden erkannt,\n"
+"               alles andere wird als -Z option weitergeleitet\n"
+" -P pagelist - (Drucke Seitenliste - ignoriert)\n"
+" -p          - (Meldung am Ende  - ignoriert)\n"
+" -q          - Priorität - 0 -> Z (Höchste), 25 -> A (Kleinste)\n"
+" -s          - (unterdrücke Ausgaben - ignoriert)\n"
+" -S charset  - (Weitergeleitet als -Z charset)\n"
+" -t title    - Jobtitel\n"
+" -T content  - (Weitergeleitet als -Z content)\n"
+" -w          - (Schicke Nachricht bei Beendigung - ignoriert)\n"
+" -X path     - nutze benutzerspezifizierten Filter für die Jobs\n"
+" -Y          - direktes Verbinden und Senden an TCP/IP Port\n"
+" -y mode     - (Weitergeleitet als -Z mode)\n"
+" --          - Ende aller Optionen, nur noch DATEINAMEN folgen\n"
+" Dateiname '-' bedeutet: Lese von STDIN\n"
+" Die Variablen PRINTER, LPDEST, NPRINTER, NGPRINTER bestimmen den\n"
+"standard Drucker\n"
 
-#: src/common/lpr.c:822
+#: src/common/lpr.c:704
+#, c-format
+msgid ""
+"Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"
+"   [-(K|#)copies] [-Q] [-Raccountname]  [-Ttitle]  [-Uuser[@host]] [-V]\n"
+"   [-Zoptions] [-b] [-m mailaddr] [-h] [-i indent] [-l] [-w width ] [-r]\n"
+"   [-Ddebugopt ] [--] [ filenames ...  ]\n"
+" -A          - use authentication specified by AUTH environment variable\n"
+" -B          - filter files and reduce job to single file before sending\n"
+" -C class    - job class\n"
+" -D debugopt - debugging flags\n"
+" -F format   - job format\n"
+"   -b,-l        - binary or literal format\n"
+"    c,d,f,g,l,m,p,t,v are also format options\n"
+" -G          - filter individual job files before sending\n"
+" -J info     - banner and job information\n"
+" -K copies, -# copies   - number of copies\n"
+" -P printer[@host] - printer on host\n"
+" -Q          - put 'queuename' in control file\n"
+" -Raccntname - accounting information\n"
+" -T title    - title for 'pr' (-p) formatting\n"
+" -U username - override user name (restricted)\n"
+" -V          - Verbose information during spooling\n"
+" -X path     - user specified filter for job files\n"
+" -Y          - connect and send to TCP/IP port (direct mode)\n"
+" -Z options  - options to pass to filter\n"
+" -h          - no header or banner page\n"
+" -i indent   - indentation\n"
+" -k          - do not use tempfile when sending to server\n"
+" -m mailaddr - mail final status to mailaddr\n"
+" -r          - remove files after spooling\n"
+" -w width    - width to use\n"
+" --          - end of options, files follow\n"
+" filename '-'  reads from STDIN\n"
+" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default "
+"printer.\n"
+msgstr ""
+"Verwendung: %s [-Pdrucker[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G]\n"
+"   [-Jinfo] [-(K|#)kopien] [-Q] [-Raccount]  [-Ttitel]  [-Uuser[@host]]\n"
+"   [-V] [-Zoptions] [-b] [-m mailaddr] [-h] [-i einrück] [-l] [-w breite]\n"
+"   [-r] [-Ddebugopt ] [--] [ DATEINAMEN ...  ]\n"
+" -A           - benutze die durch die Umgebungsvariable AUTH angegebenene\n"
+"                Authentifikationsmethode\n"
+" -B           - Filter Files und reduziere Job auf ein File vor dem Senden\n"
+" -C Klasse    - Job Klasse\n"
+" -D debugopt  - debugging flags\n"
+" -F format    - Job Format\n"
+"   -b,-l      - binäry oder direktes Format\n"
+"    c,d,f,g,l,m,p,t,v  sind auch Formatangaben\n"
+" -G           - filtere einzelne Jobs vor dem Senden\n"
+" -J info      - banner und Job Angaben\n"
+" -K NR, -# NR - Anzahl der Kopien\n"
+" -P Drucker[@HOST] - Drucke auf Drucker von HOST\n"
+" -Q          - Name der Warteschlage im Controlfile speichern\n"
+" -Raccntname - Angaben zur Abrechnung\n"
+" -T title    - Titel für Formatierung mit 'pr' (-p)\n"
+" -U USER     - ausgeben als USER (nur als root möglich)\n"
+" -V          - Zeige Information während der Verarbeitung\n"
+" -X path     - nutze benutzerspezifizierten Filter für die Jobs\n"
+" -Y          - direktes Verbinden und Senden an TCP/IP Port\n"
+" -Z options  - Optionen für den Filter\n"
+" -h          - Kein Titelblatt oder Banner\n"
+" -i indent   - Einrücken\n"
+" -k          - keine temporären Files erstellen beim Senden\n"
+" -m EMAIL    - sende Abschlußbericht an EMAIL\n"
+" -r          - lösche Dateien nach dem Spooling\n"
+" -w breite   - Nutzbare Breite\n"
+" --          - Ende aller Optionen, nur noch DATEINAMEN folgen\n"
+" Dateiname '-' bedeutet: Lese von STDIN\n"
+" Die Variablen PRINTER, LPDEST, NPRINTER, NGPRINTER bestimmen den\n"
+"standard Drucker\n"
+
+#: src/common/lpr.c:801
 msgid "Priority (first letter of Class) not 'A' (lowest) to 'Z' (highest)"
 msgstr ""
 "Priotität (erster Buchstabe der Klasse) aber nicht 'A' (Kleinste) bis "
 "'Z' (Höchste)"
 
-#: src/common/lpr.c:846 src/common/lpr.c:851
+#: src/common/lpr.c:825 src/common/lpr.c:830
 msgid "(STDIN)"
 msgstr ""
 
-#: src/common/lpr.c:900
+#: src/common/lpr.c:879
 msgid "-U (username) can only be used by ROOT"
 msgstr "-U (username) kann nur ROOT benutzen"
 
-#: src/common/lpr.c:916
+#: src/common/lpr.c:895
 #, c-format
 msgid "Get_local_host: '%s' FQDN name not found!"
 msgstr "Get_local_host: '%s' FQDN nicht gefunden!"
 
-#: src/common/lpr.c:943
+#: src/common/lpr.c:922
 #, c-format
 msgid "Bad format specification '%c'"
 msgstr "Falsche Formatangaben '%c'"
 
-#: src/common/lpr.c:950
+#: src/common/lpr.c:929
 #, c-format
 msgid "Sorry, can only print %d files at a time, split job up"
 msgstr "Es sind nur %d Files möglich, Job besser aufteilen"
 
-#: src/common/lpr.c:956
+#: src/common/lpr.c:935
 #, c-format
 msgid "Maximum of %d copies allowed"
 msgstr "Maximal %d Kopien möglich"
 
-#: src/common/lpr.c:1020
+#: src/common/lpr.c:999
 msgid "authentication conficts with -k option"
 msgstr "Authentication widerspricht der Option -k"
 
-#: src/common/lpr.c:1023
+#: src/common/lpr.c:1002
 msgid "send_block_format configuration option conficts with -k option"
 msgstr "send_block_format Einstellungen widersprechen der Option -k"
 
-#: src/common/lpr.c:1026
+#: src/common/lpr.c:1005
 msgid "send_data_first configuration option conficts with -k option"
 msgstr "send_data_first Einstellung widerspricht der Option -k"
 
-#: src/common/lpr.c:1029
+#: src/common/lpr.c:1008
 msgid "multiple copies conficts with -k option"
 msgstr "Anzahl der Kopien widerspricht der Option -k"
 
-#: src/common/lpr.c:1032
+#: src/common/lpr.c:1011
 msgid "files on command line conflicts with -k option"
 msgstr "Files auf der Kommandozeile widersprechen der Option -k"
 
-#: src/common/lpr.c:1120
+#: src/common/lpr.c:1099
 msgid "Make_temp_fd failed"
 msgstr ""
 
-#: src/common/lpr.c:1122
+#: src/common/lpr.c:1101
 msgid "You have closed STDIN! cannot pipe from a closed connection"
 msgstr "STDIN ist geschlossen! Pipe kann daher nicht gelesen werden"
 
-#: src/common/lpr.c:1129
+#: src/common/lpr.c:1108
 msgid "Copy_STDIN: write to temp file failed"
 msgstr ""
 
-#: src/common/lpr.c:1134
+#: src/common/lpr.c:1113
 #, c-format
 msgid "Copy_STDIN: stat of temp fd '%d' failed"
 msgstr ""
 
-#: src/common/lpr.c:1190
+#: src/common/lpr.c:1169
 #, c-format
 msgid "Check_files: stat of temp fd '%d' failed"
 msgstr ""
 
-#: src/common/lpr.c:1234
+#: src/common/lpr.c:1213
 #, c-format
 msgid "cannot print '%s': %s"
 msgstr "'%s' kann nicht drucken werden: %s"
 
-#: src/common/lpr.c:1243
+#: src/common/lpr.c:1222
 msgid "not a regular file"
 msgstr "keine richtige Datei"
 
-#: src/common/lpr.c:1248
+#: src/common/lpr.c:1227
 msgid "cannot read it"
 msgstr "kann es nicht lesen"
 
-#: src/common/lpr.c:1263
+#: src/common/lpr.c:1242
 msgid ""
 "unprintable characters at start of file, check your LANG environment "
 "variable as well as the input file"
 msgstr ""
 "Nichtdurckfähige Buchstaben am Anfang des File, $LANG und das File überprüfen"
 
-#: src/common/lpr.c:1270
+#: src/common/lpr.c:1249
 #, c-format
 msgid "option '%c' missing argument"
 msgstr "Option '%c' fehlt das Argument"
 
-#: src/common/lpr.c:1289
+#: src/common/lpr.c:1268
 #, c-format
 msgid "option %c parameter `%s` is not positive integer value"
 msgstr "Option %c Parameter `%s` ist keine positive ganze Zahl"
 
-#: src/common/lpr.c:1293
+#: src/common/lpr.c:1272
 #, c-format
 msgid "option %c parameter `%s` is not integer value from 0 - %d"
 msgstr "Option %c Parameter `%s` ist keine ganze Zahl zwischen 0 und %d"
@@ -2006,84 +1748,71 @@ msgstr "Drucker: %s - kann Job bei Gerät '%s' nicht entfernen\n"
 msgid "Printer: %s - not in privileged group\n"
 msgstr "Drucker: %s - keine zulässige Gruppe\n"
 
-#: src/common/lprm.c:370
+#: src/common/lprm.c:355
 #, c-format
-msgid " usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"
+msgid ""
+" usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"
+"  -a           - all printers\n"
+"  -A           - use authentication\n"
+"  -Pprinter    - printer (default PRINTER environment variable)\n"
+"  -Uuser       - impersonate this user (root or privileged user only)\n"
+"  -Ddebuglevel - debug level\n"
+"  -V           - show version information\n"
+"  user           removes user jobs\n"
+"  all            removes all jobs\n"
+"  jobid          removes job number jobid\n"
+" Example:\n"
+"    'lprm -Plp 30' removes job 30 on printer lp\n"
+"    'lprm -a'      removes all your jobs on all printers\n"
+"    'lprm -a all'  removes all jobs on all printers\n"
+"  Note: lprm removes only jobs for which you have removal permission\n"
 msgstr ""
-
-#: src/common/lprm.c:371 src/common/lprm.c:387
-msgid "  -A           - use authentication\n"
-msgstr "  -A           - nutze Authentifikation\n"
-
-#: src/common/lprm.c:373 src/common/lprm.c:392
-msgid "  user           removes user jobs\n"
-msgstr "  USER           lösche Jobs von USER \n"
-
-#: src/common/lprm.c:374 src/common/lprm.c:393
-msgid "  all            removes all jobs\n"
-msgstr "  all            lösche alle Jobs\n"
-
-#: src/common/lprm.c:375 src/common/lprm.c:394
-msgid "  jobid          removes job number jobid\n"
-msgstr "  jobid          lösche Job mit Nummer jobid\n"
-
-#: src/common/lprm.c:376 src/common/lprm.c:395
-msgid " Example:\n"
-msgstr " Beispiel:\n"
-
-#: src/common/lprm.c:377
-msgid "    'clean 30 lp' removes job 30 on printer lp\n"
-msgstr "    'clean 30 lp' lösche Job 30 für Drucker lp\n"
-
-#: src/common/lprm.c:378
-msgid "    'clean'       removes first job on default printer\n"
-msgstr "    'clean'       lösche den ersten Job für den Standarddrucker\n"
-
-#: src/common/lprm.c:379
-msgid "    'clean all'      removes all your jobs on default printer\n"
-msgstr "    'clean all'      lösche alle Jobs für den Standarddrucker\n"
-
-#: src/common/lprm.c:380
-msgid "    'clean all all'  removes all your jobs on all printers\n"
-msgstr "    'clean all all'  lösche alle Jobs für alle Drucker\n"
-
-#: src/common/lprm.c:381
-msgid "  Note: clean removes only jobs for which you have removal permission\n"
-msgstr "  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat\n"
-
-#: src/common/lprm.c:385
-#, c-format
-msgid " usage: %s [-A] [-a | -Pprinter] [-Ddebuglevel] (jobid|user|'all')*\n"
-msgstr ""
-
-#: src/common/lprm.c:388
-msgid "  -Pprinter    - printer (default PRINTER environment variable)\n"
-msgstr ""
+" Verwendung: %s [-A] [-a | -Pdrucker] [-Ddebuglevel] (JOBID|USER|'all')*\n"
+"  -a           - alle Drucker\n"
+"  -A           - benutze die durch die Umgebungsvariable AUTH angegebenene\n"
+"                 Authentifikation\n"
 "  -Pprinter    - Druckerangabe (standard Drucker durch $PRINTER festgelegt)\n"
+"  -U USER      - ausgeben als USER (nur als root möglich)\n"
+"  -Ddebuglevel - debug level\n"
+"  -V           - Versionsinformation ausgeben\n"
+"  USER           lösche Jobs von Benutzer USER\n"
+"  all            lösche alle Jobs\n"
+"  JOBID          lösche Job mit Nummer JOBID\n"
+" Beispiele:\n"
+"    'lprm -Plp 30' lösche Job 30 für Drucker lp\n"
+"    'lprm -a'      alle Jobs für alle Drucker löschen\n"
+"    'lprm -a all'  alle Jobs für alle Drucker löschen\n"
+"  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat.\n"
 
-#: src/common/lprm.c:389
-msgid "  -Uuser       - impersonate this user (root or privileged user only)\n"
-msgstr "  -U USER        - erscheine als USER (nur ROOT)\n"
-
-#: src/common/lprm.c:391
-msgid "  -V           - show version information\n"
-msgstr "  -V           - Versionsinformation ausgeben\n"
-
-#: src/common/lprm.c:396
-msgid "    'lprm -Plp 30' removes job 30 on printer lp\n"
-msgstr "    'lprm -Plp 30' lösche Job 30 für Drucker lp\n"
-
-#: src/common/lprm.c:397
-msgid "    'lprm -a'      removes all your jobs on all printers\n"
-msgstr "    'lprm -a'      alle Jobs für alle Drucker löschen\n"
-
-#: src/common/lprm.c:398
-msgid "    'lprm -a all'  removes all jobs on all printers\n"
-msgstr "    'lprm -a all'  alle Jobs für alle Drucker löschen\n"
-
-#: src/common/lprm.c:399
-msgid "  Note: lprm removes only jobs for which you have removal permission\n"
-msgstr "  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat\n"
+#: src/common/lprm.c:373
+#, c-format
+msgid ""
+" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"
+"  -A           - use authentication\n"
+"  -Ddebuglevel - debug level\n"
+"  user           removes user jobs\n"
+"  all            removes all jobs\n"
+"  jobid          removes job number jobid\n"
+" Example:\n"
+"    'clean 30 lp' removes job 30 on printer lp\n"
+"    'clean'       removes first job on default printer\n"
+"    'clean all'      removes all your jobs on default printer\n"
+"    'clean all all'  removes all your jobs on all printers\n"
+"  Note: clean removes only jobs for which you have removal permission\n"
+msgstr ""
+" Verwendung: %s [-A] [-Ddebuglevel] (JOBID|USER|'all')* [DRUCKER]\n"
+"  -A           - benutze die durch die Umgebungsvariable AUTH angegebenene\n"
+"                 Authentifikation\n"
+"  -Ddebuglevel - debug level\n"
+"  USER           lösche Jobs von Benutzer USER\n"
+"  all            lösche alle Jobs\n"
+"  JOBID          lösche Job mit Nummer JOBID\n"
+" Beispiele:\n"
+"    'clean 30 lp' lösche Job 30 für Drucker lp\n"
+"    'clean'       lösche den ersten Job für den Standarddrucker\n"
+"    'clean all'      lösche alle Jobs für den Standarddrucker\n"
+"    'clean all all'  lösche alle Jobs für alle Drucker\n"
+"  Hinweis: Man kann nur Jobs löschen wenn man das Recht dazu hat.\n"
 
 #: src/common/sendjob.c:168
 #, c-format
@@ -2115,9 +1844,3 @@ msgstr " qualvoll verstorben.\n"
 #, fuzzy, c-format
 msgid "no network support for '%s' operation"
 msgstr " Keine Netzwerkunterstützung für Aktion '%s'"
-
-#~ msgid "executable program"
-#~ msgstr "Ausführbares Programm"
-
-#~ msgid "archive file"
-#~ msgstr "Archivfile"

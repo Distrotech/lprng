@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpstat.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 /***************************************************************************
  * LPRng - An Extended Print Spooler System
  *
@@ -62,16 +58,46 @@
 #include "lpstat.h"
 /**** ENDINCLUDE ****/
 
- int A_flag, P_flag, R_flag, S_flag, a_flag, c_flag, d_flag, f_flag, l_flag, n_flag,
+static int A_flag, P_flag, R_flag, S_flag, a_flag, c_flag, d_flag, f_flag, l_flag, n_flag,
 	o_flag, p_flag, r_flag, s_flag, t_flag, u_flag, v_flag, flag_count,
 	D_flag, Found_flag;
- char *S_val, *a_val, *c_val, *f_val, *o_val, *p_val, *u_val, *v_val;
- struct line_list S_list, f_list;
+static char *S_val, *a_val, *c_val, *f_val, *o_val, *p_val, *u_val, *v_val;
+static struct line_list S_list, f_list;
 
- struct line_list Lpq_options;
- int Rawformat;
+int Rawformat;
 
-#define MAX_SHORT_STATUS 6
+static void usage(void)
+{
+	FPRINTF( STDERR,
+"usage: %s [-A] [-d] [-l] [-r] [-R] [-s] [-t] [-a [list]]\n"
+"  [-c [list]] [-f [list]] [-o [list]]\n"
+"  [-p [list]] [-P] [-S [list]] [list]\n"
+"  [-u [login-ID-list]] [-v [list]] [-V] [-n] [-Tdbgflags]\n"
+" list is a list of print queues\n"
+" -A        use authentication specified by AUTH environment variable\n"
+" -a [list] destination status *\n"
+" -c [list] class status *\n"
+" -d        print default destination\n"
+" -f [list] forms status *\n"
+" -o [list] job or printer status *\n"
+" -n        each -n increases number of status lines (default 1) *\n"
+" -N        maximum number of status lines *\n"
+" -p [list] printer status *\n"
+" -P        paper types - ignored\n"
+" -r        scheduler status\n"
+" -s        summary status information - short format\n"
+" -S [list] character set - ignored\n"
+" -t        all status information - long format\n"
+" -u [joblist] job status information\n"
+" -v [list] printer mapping *\n"
+" -V        verbose mode \n"
+" -Tdbgflags debug flags\n"
+"    * - long status format produced\n", Name);
+
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
+	exit(1);
+}
 
 /***************************************************************************
  * main()
@@ -581,45 +607,6 @@ void Get_parms(int argc, char *argv[] )
 		LOGDEBUG("v_flag %d, v_val '%s'", v_flag, v_val );
 		Dump_line_list("lpstat - Printer_list", &Printer_list);
 	}
-}
-
- static char *lpstat_msg[] = {
-	"usage: %s [-A] [-d] [-l] [-r] [-R] [-s] [-t] [-a [list]]\n",
-	"  [-c [list]] [-f [list]] [-o [list]]\n",
-	"  [-p [list]] [-P] [-S [list]] [list]\n",
-	"  [-u [login-ID-list]] [-v [list]] [-V] [-n] [-Tdbgflags]\n",
-	" list is a list of print queues\n",
-	" -A        use authentication specified by AUTH environment variable\n",
-	" -a [list] destination status *\n",
-	" -c [list] class status *\n",
-	" -d        print default destination\n",
-	" -f [list] forms status *\n",
-	" -o [list] job or printer status *\n",
-	" -n        each -n increases number of status lines (default 1) *\n",
-	" -N        maximum number of status lines *\n",
-	" -p [list] printer status *\n",
-	" -P        paper types - ignored\n",
-	" -r        scheduler status\n",
-	" -s        summary status information - short format\n",
-	" -S [list] character set - ignored\n",
-	" -t        all status information - long format\n",
-	" -u [joblist] job status information\n",
-	" -v [list] printer mapping *\n",
-	" -V        verbose mode \n",
-	" -Tdbgflags debug flags\n",
-	"    * - long status format produced\n",
-	0 };
-
-
-void usage(void)
-{
-	char **sptr, *s;
-	for( sptr= lpstat_msg; (s = *sptr); ++sptr ){
-			FPRINTF( STDERR, s, Name );
-	}
-	Parse_debug("=",-1);
-	FPRINTF( STDOUT, "%s\n", Version );
-	exit(1);
 }
 
 #if 0

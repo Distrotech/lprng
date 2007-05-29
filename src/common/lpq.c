@@ -113,7 +113,28 @@
  /* TODO: why is that not used?: */
  static char *Username_JOB;
 
-#define MAX_SHORT_STATUS 6
+static void usage(void)
+{
+	FPRINTF( STDERR, _("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"
+"  -A           - use authentication specified by AUTH environment variable\n"
+"  -a           - all printers\n"
+"  -c           - clear screen before update\n"
+"  -l           - increase (lengthen) detailed status information\n"
+"                 additional l flags add more detail.\n"
+"  -L           - maximum detailed status information\n"
+"  -n linecount - linecount lines of detailed status information\n"
+"  -Ddebuglevel - debug level\n"
+"  -Pprinter    - specify printer\n"
+"  -s           - short (summary) format\n"
+"  -tsleeptime  - sleeptime between updates\n"
+"  -V           - print version information\n"
+"  -v           - print in key: value format\n"), Name );
+
+	Parse_debug("=",-1);
+	FPRINTF( STDOUT, "%s\n", Version );
+	exit(1);
+}
+
 
 /***************************************************************************
  * main()
@@ -533,39 +554,6 @@ static void Get_parms(int argc, char *argv[] )
 			Printlist( Copyright, 2 );
 		}
 	}
-}
-
- char *lpq_msg[] = {
- N_("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"),
- N_("  -A           - use authentication specified by AUTH environment variable\n"),
- N_("  -a           - all printers\n"),
- N_("  -c           - clear screen before update\n"),
- N_("  -l           - increase (lengthen) detailed status information\n"),
- N_("                 additional l flags add more detail.\n"),
- N_("  -L           - maximum detailed status information\n"),
- N_("  -n linecount - linecount lines of detailed status information\n"),
- N_("  -Ddebuglevel - debug level\n"),
- N_("  -Pprinter    - specify printer\n"),
- N_("  -s           - short (summary) format\n"),
- N_("  -tsleeptime  - sleeptime between updates\n"),
- N_("  -V           - print version information\n"),
- N_("  -v           - print in key: value format\n"),
- 0 };
- 
-void usage(void)
-{
-	char *s;
-	int i;
-	for( i = 0; (s = lpq_msg[i]); ++i ){
-		if( i == 0 ){
-			FPRINTF( STDERR, _(s), Name );
-		} else {
-			FPRINTF( STDERR, "%s", _(s) );
-		}
-	}
-	Parse_debug("=",-1);
-	FPRINTF( STDOUT, "%s\n", Version );
-	exit(1);
 }
 
 #if 0

@@ -900,36 +900,25 @@ int Read_server_status( int fd )
  * 2. Check for duplicate information
  ***************************************************************************/
 
- static char *msg[] = {
-	N_("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destination port]\n"),
-	N_(" Options\n"),
-	N_(" -D dbg      - set debug level and flags\n"),
-	N_(" -F          - run in foreground, log to STDERR\n"),
-	N_(" -L logfile  - append log information to logfile\n"),
-	N_(" -V          - show version info\n"),
-	N_(" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"),
-	N_(" -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"),
-	N_(" -R port     - remote LPD server port (lpd_port)\n"),
-	0,
-};
-
-void usage(void)
+static void usage(void)
 {
-	int i;
-	char *s;
-	for( i = 0; (s = msg[i]); ++i ){
-		if( i == 0 ){
-			FPRINTF( STDERR, _(s), Name);
-		} else {
-			FPRINTF( STDERR, "%s", _(s) );
-		}
-	}
+	FPRINTF( STDERR,
+_("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destination port]\n"
+" Options\n"
+" -D dbg      - set debug level and flags\n"
+" -F          - run in foreground, log to STDERR\n"
+" -L logfile  - append log information to logfile\n"
+" -V          - show version info\n"
+" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"
+" -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"
+" -R port     - remote LPD server port (lpd_port)\n"), Name );
+
 	Parse_debug("=",-1);
 	FPRINTF( STDERR, "%s\n", Version );
 	exit(1);
 }
 
- char LPD_optstr[] 	/* LPD options */
+static const char LPD_optstr[] 	/* LPD options */
  = "D:FL:VX:p:P:" ;
 
 static void Get_parms(int argc, char *argv[] )
