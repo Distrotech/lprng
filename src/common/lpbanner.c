@@ -1532,7 +1532,7 @@ void banner(void)
 		strncpy( jobnumber, controlfile+3, 3 );
 		jobnumber[3] = 0;
 	}
-	if(jobnumber && *jobnumber ) seebig( &len, Font9x8.height, &bigjobnumber );
+	if( *jobnumber ) seebig( &len, Font9x8.height, &bigjobnumber );
 	if(bnrname && *bnrname) seebig( &len, Font9x8.height, &biglogname );
 	if(host && *host ) seebig( &len, Font9x8.height, &bigfromhost );
 	if(job && *job) seebig( &len, Font9x8.height, &bigjobname );
