@@ -12,6 +12,9 @@ EXTRA_DIST = ABOUT-NLS.LPRng CHANGES \
              KERBEROS_configuration STANDARD_configuration MIT_configure \
 	     CONTRIBUTORS COPYRIGHT LICENSE README.SSL.SECURITY
 
+update-po:
+	(cd po && $(MAKE) $(AM_MAKEFLAGS) update-po) || exit 1
+
 # ###############################################################################
 # # Update the patch level when you make a new version
 # # do this before you start changes
