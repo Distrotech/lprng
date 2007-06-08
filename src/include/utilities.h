@@ -24,14 +24,6 @@ EXTERN jmp_buf Timeout_env;
 #  define Set_timeout() (setjmp(Timeout_env)==0)
 #endif
 
-/* VARARGS2 */
-#ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
-#else
- void safefprintf (va_alist) va_dcl
-#endif
-;
-
 /* PROTOTYPES */
 char *Time_str(int shortform, time_t t);
 char *Pretty_time( time_t t );
@@ -93,10 +85,9 @@ void Reset_daemonuid(void);
 double Space_avail( char *pathname );
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+ int safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
 #else
- void safefprintf (va_alist) va_dcl
+ int safefprintf (va_alist) va_dcl
 #endif
 ;
-
 #endif

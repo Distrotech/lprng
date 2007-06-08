@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:25+0200\n"
+"POT-Creation-Date: 2007-06-08 17:30+0200\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
@@ -156,7 +156,8 @@ msgstr ""
 msgid "PPD"
 msgstr ""
 
-#: src/common/lpc.c:129 src/common/lpr.c:91 src/common/lprm.c:146
+#: src/common/lpc.c:129 src/common/lpq.c:179 src/common/lpstat.c:143
+#: src/common/lpr.c:91 src/common/lprm.c:146
 msgid ""
 "authentication requested (-A option) and AUTH environment variable not set"
 msgstr ""
@@ -1387,11 +1388,6 @@ msgstr ""
 "  -V           - Versionsinformation anzeigen\n"
 "  -v           - im Ausgabeformat Schlüssel: Wert\n"
 
-#: src/common/lpq.c:179
-msgid "authentication requested (-A) and no AUTH environment variable"
-msgstr ""
-"Authentifizierung verlangt (Option -A) aber keine Umgebungsvariable AUTH"
-
 #: src/common/lpq.c:244
 #, c-format
 msgid "Printer: %s is %s@%s\n"
@@ -1419,6 +1415,61 @@ msgstr ""
 #: src/common/lpq.c:508
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq:  Bitte lpstat von LPRng benutzen\n"
+
+#: src/common/lpstat.c:191
+msgid "scheduler is running\n"
+msgstr ""
+
+#: src/common/lpstat.c:195
+msgid "no system default destination\n"
+msgstr ""
+
+#: src/common/lpstat.c:197
+#, c-format
+msgid "system default destination: %s\n"
+msgstr ""
+
+#: src/common/lpstat.c:204
+#, c-format
+msgid "system for %s: %s\n"
+msgstr ""
+
+#: src/common/lpstat.c:246
+#, c-format
+msgid "  Printer: %s - cannot use printer, not in privileged group\n"
+msgstr "  Drucker: %s - Nutzung unzulässig, nicht in der zugelassenen Gruppe\n"
+
+#: src/common/lpstat.c:255
+#, c-format
+msgid " Printer: %s - direct connection to device '%s'\n"
+msgstr " Drucker: %s - Direktverbindung zum Gerät '%s'\n"
+
+#: src/common/lpstat.c:383
+#, c-format
+msgid ""
+"%s not accepting requests since %s -\n"
+"\tunknown reason\n"
+msgstr ""
+
+#: src/common/lpstat.c:385
+#, c-format
+msgid "%s accepting requests since %s\n"
+msgstr "%s nimmt Aufträge an seit %s\n"
+
+#: src/common/lpstat.c:393
+#, c-format
+msgid "printer %s unknown state. disabled since %s. available\n"
+msgstr ""
+
+#: src/common/lpstat.c:394
+#, c-format
+msgid "printer %s unknown state. enabled since %s. available\n"
+msgstr ""
+
+#: src/common/lpstat.c:400
+#, c-format
+msgid "\tDescription: %s@%s\n"
+msgstr "\tBeschreibung: %s@%s\n"
 
 #: src/common/lpr.c:157
 msgid "nothing to print"

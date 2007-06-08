@@ -1493,9 +1493,9 @@ double Space_avail( char *pathname )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...)
+ int safefprintf (int fd, char *format,...)
 #else
- void safefprintf (va_alist) va_dcl
+ int safefprintf (va_alist) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -1510,5 +1510,5 @@ double Space_avail( char *pathname )
     VA_SHIFT (format, char *);
 
 	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
-	Write_fd_str( fd, buf );
+	return Write_fd_str( fd, buf );
 }

@@ -176,7 +176,7 @@ int main(int argc, char *argv[], char *envp[])
 	Setup_configuration();
 	Get_parms(argc, argv );      /* scan input args */
 	if( Auth && !getenv("AUTH") ){
-		FPRINTF(STDERR,_("authentication requested (-A) and no AUTH environment variable"));
+		FPRINTF(STDERR,_("authentication requested (-A option) and AUTH environment variable not set"));
 		usage();
 	}
 

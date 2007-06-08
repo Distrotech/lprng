@@ -109,7 +109,7 @@ int main(int argc, char *argv[], char *envp[])
 {
 	int i;
 	struct line_list l, options, request_list;
-	char msg[SMALLBUFFER], *s;
+	char *s;
 
 	Init_line_list(&l);
 	Init_line_list(&options);
@@ -139,7 +139,8 @@ int main(int argc, char *argv[], char *envp[])
 	Setup_configuration();
 	Get_parms(argc, argv );      /* scan input args */
 	if( A_flag && !getenv( "AUTH" ) ){
-		FPRINTF(STDERR,"lpstat: requested authenticated transfer (-A) and AUTH environment variable not set");
+		FPRINTF(STDERR,
+		_("authentication requested (-A option) and AUTH environment variable not set") );
 		usage();
 	}
 
@@ -187,23 +188,20 @@ int main(int argc, char *argv[], char *envp[])
 	if(DEBUGL1)Dump_line_list("lpstat - options", &options);
 
 	if( r_flag ){
-		Write_fd_str(1,"scheduler is running\n");
+		Write_fd_str(1,_("scheduler is running\n"));
 	}
 	if( d_flag ){
 		if( Printer_DYN == 0 ){
-			Write_fd_str(1,"no system default destination\n");
+			Write_fd_str(1,_("no system default destination\n"));
 		} else {
-			SNPRINTF(msg,sizeof(msg))
-				"system default destination: %s\n", Printer_DYN);
-			Write_fd_str(1,msg);
+			safefprintf(1, _("system default destination: %s\n"), Printer_DYN);
 		}
 	}
 	if( v_flag ){
 		for( i = 0; i < request_list.count; ++i ){
 			Set_DYN(&Printer_DYN,request_list.list[i] );
 			Fix_Rm_Rp_info(0,0);
-			SNPRINTF(msg,sizeof(msg)) "system for %s: %s\n", Printer_DYN, RemoteHost_DYN);
-			Write_fd_str(1,msg);
+			safefprintf(1, _("system for %s: %s\n"), Printer_DYN, RemoteHost_DYN);
 		}
 	}
 
@@ -238,26 +236,24 @@ int main(int argc, char *argv[], char *envp[])
 void Show_status(char **argv, int display_format)
 {
 	int fd;
-	char msg[LINEBUFFER];
 
 	DEBUG1("Show_status: start");
 	/* set up configuration */
 	Fix_Rm_Rp_info(0,0);
 
 	if( Check_for_rg_group( Logname_DYN ) ){
-		SNPRINTF( msg, sizeof(msg))
-			"  Printer: %s - cannot use printer, not in privileged group\n", Printer_DYN );
-		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+		if(  safefprintf(1,
+			_("  Printer: %s - cannot use printer, not in privileged group\n"),
+			Printer_DYN ) < 0 ) cleanup(0);
 		return;
 	}
 	if( A_flag ){
 		Set_DYN(&Auth_DYN, getenv("AUTH"));
 	}
 	if( Direct_DYN && Lp_device_DYN ){
-		SNPRINTF( msg, sizeof(msg))
+		if(  safefprintf(1,
 			_(" Printer: %s - direct connection to device '%s'\n"),
-			Printer_DYN, Lp_device_DYN );
-		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
+			Printer_DYN, Lp_device_DYN ) < 0 ) cleanup(0);
 		return;
 	}
 	fd = Send_request( 'Q', Displayformat,
@@ -373,8 +369,8 @@ int Read_status_info( char *host, int sock,
 					if( isspace(cval(t)) ) *t = 0;
 				}
 				if( display_format == 0 ){
-					char msg[SMALLBUFFER];
-					int nospool, noprint; 
+					int err;
+					int nospool, noprint;
 					nospool = (strstr( s, "(spooling disabled)") != 0);
 					noprint = (strstr( s, "(printing disabled)") != 0);
 					/* Write_fd_str( output, "ANALYZE " );
@@ -382,29 +378,28 @@ int Read_status_info( char *host, int sock,
 						|| Write_fd_str( output, "\n" ) < 0 ) return(1);
 					*/
 					if( a_flag ){
-						if( !nospool ){
-							SNPRINTF(msg,sizeof(msg))
-							"%s accepting requests since %s\n",
-							Printer_DYN, Time_str(0,0) );
-						} else {
-							SNPRINTF(msg,sizeof(msg))
-							"%s not accepting requests since %s -\n\tunknown reason\n",
-							Printer_DYN, Time_str(0,0) );
-						}
-						if( Write_fd_str( output, msg ) < 0 ) return(1);
+						err = safefprintf(output,
+							nospool?
+							_("%s not accepting requests since %s -\n\tunknown reason\n")
+							:
+							_("%s accepting requests since %s\n"),
+							Printer_DYN, Time_str(0,0));
+						if( err < 0 )
+							return(1);
 					}
 					if( p_flag ){
-						SNPRINTF(msg,sizeof(msg))
-						"printer %s unknown state. %s since %s. available\n",
-						Printer_DYN, noprint?"disabled":"enabled",
-						Pretty_time(0));
-						if( Write_fd_str( output, msg ) < 0 ) return(1);
+						err = safefprintf(output,
+								noprint?
+_("printer %s unknown state. disabled since %s. available\n"):
+_("printer %s unknown state. enabled since %s. available\n"),
+							Printer_DYN, Pretty_time(0));
+						if( err < 0 ) return(1);
 					}
 					if( p_flag && D_flag ){
-						SNPRINTF(msg,sizeof(msg))
-							"\tDescription: %s@%s\n",
-									RemotePrinter_DYN, RemoteHost_DYN ); 
-						if( Write_fd_str( output, msg ) < 0 ) return(1);
+						err = safefprintf(output,
+							_("\tDescription: %s@%s\n"),
+							RemotePrinter_DYN, RemoteHost_DYN);
+						if( err < 0 ) return(1);
 					}
 				} else {
 					if( Write_fd_str( output, s ) < 0
