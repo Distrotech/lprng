@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 17:30+0200\n"
+"POT-Creation-Date: 2007-06-08 17:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -199,10 +199,6 @@ msgstr ""
 
 #: src/common/lpc.c:307 src/common/lpc.c:318 src/common/lpc.c:336
 msgid "all"
-msgstr ""
-
-#: src/common/lpc.c:312 src/common/lpc.c:321
-msgid "\n"
 msgstr ""
 
 #: src/common/lpc.c:313 src/common/lpc.c:322

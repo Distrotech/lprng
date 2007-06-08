@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 17:30+0200\n"
+"POT-Creation-Date: 2007-06-08 17:51+0200\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -201,10 +201,6 @@ msgstr "FR TRANSLATION TEST"
 #: src/common/lpc.c:307 src/common/lpc.c:318 src/common/lpc.c:336
 msgid "all"
 msgstr "all"
-
-#: src/common/lpc.c:312 src/common/lpc.c:321
-msgid "\n"
-msgstr "\n"
 
 #: src/common/lpc.c:313 src/common/lpc.c:322
 msgid "# Printcap Information\n"

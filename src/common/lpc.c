@@ -309,7 +309,7 @@ void doaction( struct line_list *args )
 					Show_all_printcap_entries();
 				} else {
 					Set_DYN(&Printer_DYN,args->list[argspos]);
-					if( Write_fd_str( 1,_("\n")) < 0 ) cleanup(0);
+					if( Write_fd_str( 1,"\n") < 0 ) cleanup(0);
 					if( Write_fd_str( 1,_("# Printcap Information\n")) < 0 ) cleanup(0);
 					Show_formatted_info();
 				}
@@ -318,7 +318,7 @@ void doaction( struct line_list *args )
 			|| !safestrcasecmp( Printer_DYN, _("all") ) ){
 			Show_all_printcap_entries();
 		} else {
-			if( Write_fd_str( 1,_("\n")) < 0 ) cleanup(0);
+			if( Write_fd_str( 1,"\n") < 0 ) cleanup(0);
 			if( Write_fd_str( 1,_("# Printcap Information\n")) < 0 ) cleanup(0);
 			Show_formatted_info();
 		}
