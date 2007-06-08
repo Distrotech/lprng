@@ -20,9 +20,6 @@
 #ifdef IS_AUX
 # include <compat.h>
 #endif
-#if defined (HAVE_LOCALE_H)
-# include <locale.h>
-#endif
 
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
@@ -133,10 +130,7 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
             }
         }
     }
-#if defined (HAVE_LOCALE_H)
 	setlocale(LC_ALL, "");
-#endif
-	/* FPRINTF(STDERR,"LOCALEDIR '" LOCALEDIR "'\n"); FPRINTF(STDERR,"PACKAGE '" PACKAGE "'\n"); */
 	bindtextdomain (PACKAGE, LOCALEDIR);
 	textdomain (PACKAGE);
 

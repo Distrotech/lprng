@@ -690,6 +690,8 @@ const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 
 #if HAVE_LOCALE_H
 # include <locale.h>
+#else
+# define setlocale(category, locale)
 #endif
 
 #if ENABLE_NLS
