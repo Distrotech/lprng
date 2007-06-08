@@ -1,3 +1,4 @@
+2007-06-08 brl move some #ifdefs into portable.h
 2007-06-08 wh/brl mark messages to be translated in various files
 2007-05-31 brl revert 10_linelist_closefd patch that slipped in earlier
 2007-05-04 brl make programs' usage message into single string constants

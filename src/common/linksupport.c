@@ -573,11 +573,7 @@ int getconnection ( char *xhostname,
 			goto next_addr;
 		}
 	} else {
-#if defined(HAVE_SOCKLEN_T)
 		socklen_t len;
-#else
-		int len;
-#endif
 		len = sizeof( src_sin );
 		if( getsockname( sock, (struct sockaddr *)&src_sin, &len ) < 0 ){
 			LOGERR_DIE(LOG_ERR)"getconnnection: getsockname failed" );
@@ -599,11 +595,7 @@ int getconnection ( char *xhostname,
 void Set_linger( int sock, int n )
 {
 #ifdef SO_LINGER
-#if defined(HAVE_SOCKLEN_T)
 	socklen_t len;
-#else
-	int len;
-#endif
 	struct linger option;
 	len = sizeof( option );
 

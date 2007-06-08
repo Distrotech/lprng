@@ -1233,11 +1233,7 @@ int Receive_k4auth( int *sock, char *input )
 	struct line_list values;
 	int ack = ACK_SUCCESS;
 	int k4error=0;
-#if defined(HAVE_SOCKLEN_T)
 	socklen_t sin_len;
-#else
-	int sin_len;
-#endif
 
 	struct sockaddr_in faddr;
 	int len;

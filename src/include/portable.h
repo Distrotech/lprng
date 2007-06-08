@@ -307,6 +307,10 @@ LPRng requires ANSI Standard C compiler
 # define strrchr		rindex
 #endif
 
+#ifndef HAVE_SOCKLEN_T
+typedef int socklen_t;
+#endif
+
 /* case insensitive compare for OS without it */
 #if !defined(HAVE_STRCASECMP)
  int strcasecmp (const char *s1, const char *s2);

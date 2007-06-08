@@ -957,11 +957,7 @@ static void Accept_connection( int sock, int lpd_socket, int unix_socket )
 	struct line_list args;
 	struct sockaddr sinaddr;
 	int newsock, err, pid;
-#if defined(HAVE_SOCKLEN_T)
 	socklen_t len;
-#else
-	int len;
-#endif
 	Init_line_list(&args);
 	len = sizeof( sinaddr );
 	newsock = accept( sock, &sinaddr, &len );
