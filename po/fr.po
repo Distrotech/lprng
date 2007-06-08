@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:19+0200\n"
+"POT-Creation-Date: 2007-06-08 16:25+0200\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -1330,6 +1330,45 @@ msgstr " Status: "
 msgid " Filter_status: "
 msgstr " Filter_status: "
 
+#: src/common/lpd_dispatch.c:37
+#, fuzzy, c-format
+msgid "Dispatch_input: bad request line '%s' from %s"
+msgstr "Dispatch_input: mauvaise ligne '%s' demandée %s"
+
+#: src/common/lpd_dispatch.c:187
+msgid "Service_connection: getpeername failed"
+msgstr "Service_connection: getpeername a échoué"
+
+#: src/common/lpd_dispatch.c:234
+#, fuzzy
+msgid "Service_connection: BAD LocalHost_IP value"
+msgstr "Service_connection: ne peut demander à lire"
+
+#: src/common/lpd_dispatch.c:240
+#, c-format
+msgid "Service_connection: bad protocol family '%d'"
+msgstr "Service_connection: mauvaise famille '%d' de protocole"
+
+#: src/common/lpd_dispatch.c:271
+#, fuzzy
+msgid "no connect permissions"
+msgstr "pas d'autorisations de connexion"
+
+#: src/common/lpd_dispatch.c:293
+#, c-format
+msgid "Service_connection: peek of length %d failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:334
+#, c-format
+msgid "Service_connection: cannot read request from %s in %d seconds"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:338
+#, c-format
+msgid "Service_connection: short request line '%s', from '%s'"
+msgstr ""
+
 #: src/common/lpq.c:118
 #, fuzzy, c-format
 msgid ""
@@ -1886,24 +1925,6 @@ msgstr ""
 #, fuzzy, c-format
 msgid "%s: missing argument for '%c'\n"
 msgstr "%s: option '%c' manque un argument\n"
-
-#~ msgid "Service_connection: getpeername failed"
-#~ msgstr "Service_connection: getpeername a échoué"
-
-#~ msgid "Service_connection: bad protocol family '%d'"
-#~ msgstr "Service_connection: mauvaise famille '%d' de protocole"
-
-#~ msgid "Service_connection: cannot read request"
-#~ msgstr "Service_connection: ne peut demander à lire"
-
-#~ msgid "Service_connection: bad request line '%s'"
-#~ msgstr "Service_connection: mauvaise ligne '%s' demandée"
-
-#~ msgid "no connect permissions\n"
-#~ msgstr "pas d'autorisations de connexion\n"
-
-#~ msgid "Dispatch_input: bad request line '%s'"
-#~ msgstr "Dispatch_input: mauvaise ligne '%s' demandée"
 
 #~ msgid "                 Example: -D10,remote=5\n"
 #~ msgstr "                 Exemple: -D10,remote=5\n"
