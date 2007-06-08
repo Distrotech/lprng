@@ -262,18 +262,18 @@ void Service_connection( struct line_list *args )
 		Merge_line_list(&Perm_line_list,&RawPerm_line_list,0,0,0);
 		Filterprintcap( &Perm_line_list, &Perm_filters_line_list, "");
 	}
-   
+
 	Perm_check.service = 'X';
 
 	permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
 	if( permission == P_REJECT ){
 		DEBUG1("Service_connection: no perms on talk socket '%d' from %s", talk, from_addr );
-		Write_fd_str( talk, _("\001no connect permissions\n") );
+		safefprintf(talk, "\001%s\n", _("no connect permissions"));
 		cleanup(0);
 	}
 
 	memset(input,0,sizeof(input));
-	
+
 	do {
 		int my_len = sizeof( input ) - 1;
 		static int timeout;

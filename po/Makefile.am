@@ -26,6 +26,7 @@ POTFILES.in = \
 	src/common/lpd_remove.c\
 	src/common/lpd_secure.c\
 	src/common/lpd_status.c\
+	src/common/lpd_dispatch.c\
 	src/common/lpq.c\
 	src/common/lpr.c\
 	src/common/lprm.c\

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:19+0200\n"
+"POT-Creation-Date: 2007-06-08 16:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1231,6 +1231,43 @@ msgstr ""
 
 #: src/common/lpd_status.c:1044
 msgid " Filter_status: "
+msgstr ""
+
+#: src/common/lpd_dispatch.c:37
+#, c-format
+msgid "Dispatch_input: bad request line '%s' from %s"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:187
+msgid "Service_connection: getpeername failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:234
+msgid "Service_connection: BAD LocalHost_IP value"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:240
+#, c-format
+msgid "Service_connection: bad protocol family '%d'"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:271
+msgid "no connect permissions"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:293
+#, c-format
+msgid "Service_connection: peek of length %d failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:334
+#, c-format
+msgid "Service_connection: cannot read request from %s in %d seconds"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:338
+#, c-format
+msgid "Service_connection: short request line '%s', from '%s'"
 msgstr ""
 
 #: src/common/lpq.c:118

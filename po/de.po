@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:19+0200\n"
+"POT-Creation-Date: 2007-06-08 16:25+0200\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
@@ -222,7 +222,7 @@ msgid "fork failed - '%s'"
 msgstr ""
 
 #: src/common/lpc.c:362
-#, fuzzy, c-format
+#, c-format
 msgid "doaction: waitpid(%ld) failed"
 msgstr "doaction: waitpid(%ld) fehlgeschlagen"
 
@@ -462,9 +462,9 @@ msgid "not implemented yet"
 msgstr "Nicht Eingebaut"
 
 #: src/common/lpd_control.c:469
-#, fuzzy, c-format
+#, c-format
 msgid "server process PID %ld exited\n"
-msgstr "Serverprocess PID %ld beendet\n"
+msgstr "Serverprozess PID %ld beendet\n"
 
 #: src/common/lpd_control.c:472
 #, fuzzy, c-format
@@ -1316,6 +1316,43 @@ msgstr ""
 #: src/common/lpd_status.c:1044
 msgid " Filter_status: "
 msgstr "Filterstatus: "
+
+#: src/common/lpd_dispatch.c:37
+#, c-format
+msgid "Dispatch_input: bad request line '%s' from %s"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:187
+msgid "Service_connection: getpeername failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:234
+msgid "Service_connection: BAD LocalHost_IP value"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:240
+#, c-format
+msgid "Service_connection: bad protocol family '%d'"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:271
+msgid "no connect permissions"
+msgstr "Verbindungsaufnahme nicht erlaubt"
+
+#: src/common/lpd_dispatch.c:293
+#, c-format
+msgid "Service_connection: peek of length %d failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:334
+#, c-format
+msgid "Service_connection: cannot read request from %s in %d seconds"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:338
+#, c-format
+msgid "Service_connection: short request line '%s', from '%s'"
+msgstr ""
 
 #: src/common/lpq.c:118
 #, c-format

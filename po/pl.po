@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-b1\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:19+0200\n"
+"POT-Creation-Date: 2007-06-08 16:25+0200\n"
 "PO-Revision-Date: 2007-05-31 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -1329,6 +1329,43 @@ msgstr " Status: "
 #: src/common/lpd_status.c:1044
 msgid " Filter_status: "
 msgstr " Status_filtra: "
+
+#: src/common/lpd_dispatch.c:37
+#, c-format
+msgid "Dispatch_input: bad request line '%s' from %s"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:187
+msgid "Service_connection: getpeername failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:234
+msgid "Service_connection: BAD LocalHost_IP value"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:240
+#, c-format
+msgid "Service_connection: bad protocol family '%d'"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:271
+msgid "no connect permissions"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:293
+#, c-format
+msgid "Service_connection: peek of length %d failed"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:334
+#, c-format
+msgid "Service_connection: cannot read request from %s in %d seconds"
+msgstr ""
+
+#: src/common/lpd_dispatch.c:338
+#, c-format
+msgid "Service_connection: short request line '%s', from '%s'"
+msgstr ""
 
 #: src/common/lpq.c:118
 #, c-format
