@@ -219,11 +219,7 @@ int main(int argc, char *argv[] )
 			if( FD_ISSET(i, &testfds) ){
 				if( debug ) FPRINTF(STDERR,"monitor: input on %d\n", i );
 				if( i == tcp_fd ){
-#if defined(HAVE_SOCKLEN_T)
 					socklen_t len;
-#else
-					int len;
-#endif
 					struct sockaddr_in sinaddr;
 					len = sizeof( sinaddr );
 					i = accept( tcp_fd, (struct sockaddr *)&sinaddr, &len );

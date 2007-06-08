@@ -177,11 +177,7 @@ void Service_connection( struct line_list *args )
 	Set_block_io(talk);
 
 	{
-#if defined(HAVE_SOCKLEN_T)
 		socklen_t len;
-#else
-		int len;
-#endif
 		len = sizeof( sinaddr );
 		if( getpeername( talk, &sinaddr, &len ) ){
 			LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
