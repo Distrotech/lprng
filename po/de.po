@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-05-04 14:40+0200\n"
+"POT-Creation-Date: 2007-06-08 15:04+0200\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
@@ -1841,6 +1841,20 @@ msgid " died a horrible death.\n"
 msgstr " qualvoll verstorben.\n"
 
 #: src/common/sendreq.c:118
-#, fuzzy, c-format
+#,  c-format
 msgid "no network support for '%s' operation"
 msgstr " Keine Netzwerkunterstützung für Aktion '%s'"
+
+#: src/common/getopt.c:89
+msgid "--X option form illegal\n"
+msgstr "Optionen der Form --X werden nicht unterstützt.\n"
+
+#: src/common/getopt.c:100
+#, c-format
+msgid "%s: Illegal option '%c'\n"
+msgstr "%s: unbekannte Option '%c'.\n"
+
+#: src/common/getopt.c:122
+#, c-format
+msgid "%s: missing argument for '%c'\n"
+msgstr "%s: Option '%c' fehlt ein Argument.\n"

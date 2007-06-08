@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-b1\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-05-04 14:40+0200\n"
+"POT-Creation-Date: 2007-06-08 15:04+0200\n"
 "PO-Revision-Date: 2007-05-31 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -1864,3 +1864,17 @@ msgstr " zmar³o okropn± ¶mierci±.\n"
 #, c-format
 msgid "no network support for '%s' operation"
 msgstr "brak obs³ugi sieci dla operacji '%s'"
+
+#: src/common/getopt.c:89
+msgid "--X option form illegal\n"
+msgstr ""
+
+#: src/common/getopt.c:100
+#, c-format
+msgid "%s: Illegal option '%c'\n"
+msgstr ""
+
+#: src/common/getopt.c:122
+#, fuzzy, c-format
+msgid "%s: missing argument for '%c'\n"
+msgstr "%s: przy opcji '%c' brakuje argumentu\n"

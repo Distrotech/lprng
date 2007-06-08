@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-05-04 14:40+0200\n"
+"POT-Creation-Date: 2007-06-08 15:04+0200\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -1868,6 +1868,20 @@ msgstr " mort d'une mort horrible.\n"
 #, fuzzy, c-format
 msgid "no network support for '%s' operation"
 msgstr "pas de support réseau pour la demande"
+
+#: src/common/getopt.c:89
+msgid "--X option form illegal\n"
+msgstr ""
+
+#: src/common/getopt.c:100
+#, c-format
+msgid "%s: Illegal option '%c'\n"
+msgstr ""
+
+#: src/common/getopt.c:122
+#, fuzzy, c-format
+msgid "%s: missing argument for '%c'\n"
+msgstr "%s: option '%c' manque un argument\n"
 
 #~ msgid "Service_connection: getpeername failed"
 #~ msgstr "Service_connection: getpeername a échoué"
