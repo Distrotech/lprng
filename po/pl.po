@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-b1\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 15:04+0200\n"
+"POT-Creation-Date: 2007-06-08 16:19+0200\n"
 "PO-Revision-Date: 2007-05-31 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -427,6 +427,10 @@ msgstr ""
 #: src/common/lpd.c:995
 msgid "lpd: fork() failed"
 msgstr "lpd: fork() nie powiod³o siê"
+
+#: src/common/lpd.c:997
+msgid "Server load too high"
+msgstr ""
 
 #: src/common/lpd.c:1006
 msgid "lpd: accept on listening socket failed"

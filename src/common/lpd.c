@@ -994,7 +994,7 @@ static void Accept_connection( int sock, int lpd_socket, int unix_socket )
 		if( pid < 0 ){
 			LOGERR(LOG_INFO) _("lpd: fork() failed") );
 			if( lpd_socket ){
-				Write_fd_str( newsock, "\002Server load too high\n");
+				safefprintf(newsock, "\002%s\n", _("Server load too high"));
 			}
 		} else {
 			DEBUG1( "lpd: listener pid %d running", pid );

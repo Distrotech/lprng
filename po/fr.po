@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 15:04+0200\n"
+"POT-Creation-Date: 2007-06-08 16:19+0200\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -429,6 +429,10 @@ msgstr ""
 #: src/common/lpd.c:995
 msgid "lpd: fork() failed"
 msgstr "lpd: fork() a échoué"
+
+#: src/common/lpd.c:997
+msgid "Server load too high"
+msgstr ""
 
 #: src/common/lpd.c:1006
 #, fuzzy
