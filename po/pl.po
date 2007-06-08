@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-b1\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 17:30+0200\n"
+"POT-Creation-Date: 2007-06-08 17:51+0200\n"
 "PO-Revision-Date: 2007-05-31 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -203,10 +203,6 @@ msgstr "TEST T£UMACZENIA"
 #: src/common/lpc.c:307 src/common/lpc.c:318 src/common/lpc.c:336
 msgid "all"
 msgstr "wszystko"
-
-#: src/common/lpc.c:312 src/common/lpc.c:321
-msgid "\n"
-msgstr "\n"
 
 #: src/common/lpc.c:313 src/common/lpc.c:322
 msgid "# Printcap Information\n"
@@ -1971,12 +1967,3 @@ msgstr ""
 #, fuzzy, c-format
 msgid "%s: missing argument for '%c'\n"
 msgstr "%s: przy opcji '%c' brakuje argumentu\n"
-
-#, fuzzy
-#~ msgid "authentication requested (-A) and AUTH environment variable not set"
-#~ msgstr ""
-#~ "¿±dano uwierzytelnienia (opcja -A), ale nie ustawiono zmiennej "
-#~ "¶rodowiskowej AUTH"
-
-#~ msgid "authentication requested (-A) and no AUTH environment variable"
-#~ msgstr "¿±dano uwierzytelnienia (-A), ale brak zmiennej ¶rodowiskowej AUTH"
