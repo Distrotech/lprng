@@ -86,7 +86,7 @@ int Getopt (int argc, char *argv[], const char *optstring)
 	if (option == '-') {
 		if( *next_opt ){
 			if( Opterr ){
-				(void) FPRINTF (STDERR, "--X option form illegal\n" );
+				(void) FPRINTF (STDERR, _("--X option form illegal\n") );
 				return('?');
 			}
 		}
@@ -97,7 +97,7 @@ int Getopt (int argc, char *argv[], const char *optstring)
 	 */
 	if ((match = (char *) safestrchr (optstring, option)) == 0 ){
 		if( Opterr ){
-		    (void) FPRINTF (STDERR, "%s: Illegal option '%c'\n", Name, option);
+		    (void) FPRINTF (STDERR, _("%s: Illegal option '%c'\n"), Name, option);
 		}
 		return( '?' );
 	}
@@ -119,7 +119,7 @@ int Getopt (int argc, char *argv[], const char *optstring)
 		}
 		if( Optarg == 0 && Opterr ) {
 			(void) FPRINTF (STDERR,
-				"%s: missing argument for '%c'\n", Name, option);
+				_("%s: missing argument for '%c'\n"), Name, option);
 			option = '?';
 		}
 		next_opt = 0;

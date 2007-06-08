@@ -32,6 +32,7 @@ POTFILES.in = \
 	src/common/sendjob.c\
 	src/common/sendmail.c\
 	src/common/sendreq.c\
+	src/common/getopt.c\
 	src/vars.c
 COPYRIGHT_HOLDER = Patrick Powell at al.
 # This is the email address or URL to which the translators shall report
