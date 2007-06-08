@@ -838,17 +838,6 @@ extern int innetgr(const char *netgroup,
 #define Cast_ptr_to_int(v) ((int)(long)(v))
 #define Cast_ptr_to_long(v) ((long)(v))
 
-/* for testing, set -Wall -Wformat and then make */
-
-#if defined(FORMAT_TEST)
-# define FPRINTF fprintf
-# define PRINTF printf
-# define STDOUT stdout
-# define STDERR stderr
-# define SNPRINTF(X,Y) printf(
-# define VSNPRINTF(X,Y) vprintf(
-# define SETSTATUS(X) printf(
-#else
 # define FPRINTF safefprintf
 # define PRINTF safeprintf
 # define STDOUT 1
@@ -856,7 +845,6 @@ extern int innetgr(const char *netgroup,
 # define SNPRINTF(X,Y) plp_snprintf(X,Y,
 # define VSNPRINTF(X,Y) plp_vsnprintf(X,Y,
 # define SETSTATUS(X) setstatus(X,
-#endif
 
 #ifdef __GNUC__
 # define PRINTFATTR(fmtofs,dotsofs) __attribute__ ((format (printf, fmtofs, dotsofs)))
