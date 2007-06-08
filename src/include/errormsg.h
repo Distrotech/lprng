@@ -9,16 +9,6 @@
 #ifndef _ERRORMSG_H_
 #define _ERRORMSG_H_ 1
 
-#if defined(FORMAT_TEST)
-#define LOGMSG(X) printf(
-#define FATAL(X) printf(
-#define LOGERR(X) printf(
-#define LOGERR_DIE(X) printf(
-#define LOGDEBUG printf
-#define DIEMSG printf
-#define WARNMSG printf
-#define MESSAGE printf
-#else
 #define LOGMSG(X) logmsg(X,
 #define FATAL(X) fatal(X,
 #define LOGERR(X) logerr(X,
@@ -27,8 +17,6 @@
 #define DIEMSG Diemsg
 #define WARNMSG Warnmsg
 #define MESSAGE Message
-#endif
-
 
 /* PROTOTYPES */
 #ifdef HAVE_STRERROR

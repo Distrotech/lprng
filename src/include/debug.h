@@ -124,27 +124,6 @@ EXTERN int DbgTest;	/* debug flags */
 
 void Parse_debug( char *arg, int interactive);
 
-
-/* we define these and then run gcc -Wformat -Wall to find
- * debug statements with bad formats
- */
-#if defined(FORMAT_TEST)
-#undef DEBUG1
-#undef DEBUG2
-#undef DEBUG3
-#undef DEBUG4
-#undef DEBUG5
-#undef DEBUG6
-#undef DEBUG7
-#define DEBUG1 printf
-#define DEBUG2 printf
-#define DEBUG3 printf
-#define DEBUG4 printf
-#define DEBUG5 printf
-#define DEBUG6 printf
-#define DEBUG7 printf
-#endif
-
 /* PRO TO TYPES */
 
 #endif
