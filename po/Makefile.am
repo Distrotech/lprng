@@ -28,6 +28,7 @@ POTFILES.in = \
 	src/common/lpd_status.c\
 	src/common/lpd_dispatch.c\
 	src/common/lpq.c\
+	src/common/lpstat.c\
 	src/common/lpr.c\
 	src/common/lprm.c\
 	src/common/sendjob.c\

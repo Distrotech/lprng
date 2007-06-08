@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-b1\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2007-06-08 16:25+0200\n"
+"POT-Creation-Date: 2007-06-08 17:30+0200\n"
 "PO-Revision-Date: 2007-05-31 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -155,7 +155,8 @@ msgstr "LANG"
 msgid "PPD"
 msgstr "PPD"
 
-#: src/common/lpc.c:129 src/common/lpr.c:91 src/common/lprm.c:146
+#: src/common/lpc.c:129 src/common/lpq.c:179 src/common/lpstat.c:143
+#: src/common/lpr.c:91 src/common/lprm.c:146
 msgid ""
 "authentication requested (-A option) and AUTH environment variable not set"
 msgstr ""
@@ -1401,10 +1402,6 @@ msgstr ""
 "  -V           - wypisanie informacji o wersji\n"
 "  -v           - wypisanie w postaci klucz: warto¶æ\n"
 
-#: src/common/lpq.c:179
-msgid "authentication requested (-A) and no AUTH environment variable"
-msgstr "¿±dano uwierzytelnienia (-A), ale brak zmiennej ¶rodowiskowej AUTH"
-
 #: src/common/lpq.c:244
 #, c-format
 msgid "Printer: %s is %s@%s\n"
@@ -1432,6 +1429,61 @@ msgstr "Term_clear: waitpid(%d) nie powiod³o siê"
 #: src/common/lpq.c:508
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq:  proszê u¿yæ programu LPRng lpstat\n"
+
+#: src/common/lpstat.c:191
+msgid "scheduler is running\n"
+msgstr ""
+
+#: src/common/lpstat.c:195
+msgid "no system default destination\n"
+msgstr ""
+
+#: src/common/lpstat.c:197
+#, c-format
+msgid "system default destination: %s\n"
+msgstr ""
+
+#: src/common/lpstat.c:204
+#, c-format
+msgid "system for %s: %s\n"
+msgstr ""
+
+#: src/common/lpstat.c:246
+#, fuzzy, c-format
+msgid "  Printer: %s - cannot use printer, not in privileged group\n"
+msgstr "Drukarka: %s - nie mo¿na u¿yæ drukarki, spoza grupy uprzywilejowanej\n"
+
+#: src/common/lpstat.c:255
+#, fuzzy, c-format
+msgid " Printer: %s - direct connection to device '%s'\n"
+msgstr "Drukarka: %s - bezpo¶rednie po³±czenie z urz±dzeniem '%s'\n"
+
+#: src/common/lpstat.c:383
+#, c-format
+msgid ""
+"%s not accepting requests since %s -\n"
+"\tunknown reason\n"
+msgstr ""
+
+#: src/common/lpstat.c:385
+#, c-format
+msgid "%s accepting requests since %s\n"
+msgstr ""
+
+#: src/common/lpstat.c:393
+#, c-format
+msgid "printer %s unknown state. disabled since %s. available\n"
+msgstr ""
+
+#: src/common/lpstat.c:394
+#, c-format
+msgid "printer %s unknown state. enabled since %s. available\n"
+msgstr ""
+
+#: src/common/lpstat.c:400
+#, c-format
+msgid "\tDescription: %s@%s\n"
+msgstr ""
 
 #: src/common/lpr.c:157
 msgid "nothing to print"
@@ -1919,3 +1971,12 @@ msgstr ""
 #, fuzzy, c-format
 msgid "%s: missing argument for '%c'\n"
 msgstr "%s: przy opcji '%c' brakuje argumentu\n"
+
+#, fuzzy
+#~ msgid "authentication requested (-A) and AUTH environment variable not set"
+#~ msgstr ""
+#~ "¿±dano uwierzytelnienia (opcja -A), ale nie ustawiono zmiennej "
+#~ "¶rodowiskowej AUTH"
+
+#~ msgid "authentication requested (-A) and no AUTH environment variable"
+#~ msgstr "¿±dano uwierzytelnienia (-A), ale brak zmiennej ¶rodowiskowej AUTH"
