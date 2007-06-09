@@ -245,7 +245,7 @@ void Do_queue_control( char *user, int action, int *sock,
 	int status, change;
 	int signal_server = SIGUSR1;
 	struct line_list l;
-	char *Action = "updated";
+	const char *Action = "updated";
 	/* first get the printer name */
 
 	Init_line_list(&l);

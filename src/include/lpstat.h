@@ -20,11 +20,10 @@ EXTERN int Interval;        /* display interval */
 
 /* PROTOTYPES */
 int main(int argc, char *argv[], char *envp[]);
-static void Show_status(char **argv, int display_format);
+static void Show_status(int display_format);
 static int Read_status_info( char *host, int sock,
 	int output, int timeout, int display_format,
 	int status_line_count );
-static int Add_val( char **var, char *val );
 static void Get_parms(int argc, char *argv[] );
 static void usage(void);
 

@@ -205,7 +205,6 @@ int main(int argc, char *argv[], char *envp[])
 	Errorcode = 0;
 	Is_server = 0;
 	cleanup(0);
-	return(0);
 }
 
 void doaction( struct line_list *args )

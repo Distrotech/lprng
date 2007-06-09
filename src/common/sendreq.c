@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: sendreq.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
-
 #include "lp.h"
 
 #include "child.h"
@@ -104,7 +100,7 @@ int Send_request(
 	if( Remote_support_DYN ) uppercase( Remote_support_DYN );
 	if( islower(class) ) class = toupper(class);
 	if( safestrchr( Remote_support_DYN, class ) == 0 ){
-		char *m = "unknown";
+		const char *m = "unknown";
 		switch( class ){
 		case 'R': m = "lpr"; break;
 		case 'M': m = "lprm"; break;

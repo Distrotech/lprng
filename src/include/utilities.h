@@ -28,7 +28,7 @@ EXTERN jmp_buf Timeout_env;
 char *Time_str(int shortform, time_t t);
 char *Pretty_time( time_t t );
 time_t Convert_to_time_t( char *str );
-void Printlist( char **m, int fd );
+void Printlist( const char **m, int fd );
 int Write_fd_len( int fd, const char *msg, int len );
 int Write_fd_len_timeout( int timeout, int fd, const char *msg, int len );
 int Write_fd_str( int fd, const char *msg );
@@ -82,10 +82,10 @@ int Getdaemon_group(void);
 int Set_full_group( int euid, int gid );
 int Setdaemon_group(void);
 void Reset_daemonuid(void);
-double Space_avail( char *pathname );
+double Space_avail( const char *pathname );
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- int safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+ int safefprintf (int fd, const char *format,...) PRINTFATTR(2,3)
 #else
  int safefprintf (va_alist) va_dcl
 #endif

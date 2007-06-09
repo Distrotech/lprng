@@ -218,7 +218,6 @@ int main(int argc, char *argv[], char *envp[])
 	Errorcode = 0;
 	DEBUG1("lprm: cleaning up");
 	cleanup(0);
-	return(0);
 }
 
 

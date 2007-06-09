@@ -41,9 +41,9 @@ int Link_open_list( char *hostlist, char **result,
 	int timeout, struct sockaddr *bindto, char *unix_socket_path, char *errmsg, int errlen );
 void Link_close( int timeout, int *sock );
 int Link_send( char *host, int *sock, int timeout,
-	char *sendstr, int count, int *ack );
+	const char *sendstr, int count, int *ack );
 int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
-	char *src, int fd, double pcount);
+	const char *src, int fd, double pcount);
 int Link_dest_port_num( char *port );
 int Link_line_read(char *host, int *sock, int timeout,
 	  char *buf, int *count );

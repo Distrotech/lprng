@@ -38,7 +38,7 @@ fd_set readfds;
 fd_set testfds;
 int debug;
 
-char *prog = "???";
+const char *prog = "???";
 
 /*****************************************************************
  * Command line options and Debugging information

@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: controlword.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "control.h"
 /**** ENDINCLUDE ****/
@@ -65,7 +61,7 @@ int Get_controlword( char *s )
 	return( Get_keyval( s, controlwords ) );
 }
 
-char *Get_controlstr( int c )
+const char *Get_controlstr( int c )
 {
 	return( Get_keystr( c, controlwords ) );
 }

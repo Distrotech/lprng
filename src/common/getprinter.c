@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: getprinter.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "gethostinfo.h"
 #include "getprinter.h"
@@ -353,7 +349,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 
 void Get_all_printcap_entries(void)
 {
-	char *s, *t;
+	const char *s, *t;
 	int i;
 
 	/*

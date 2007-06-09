@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: sendjob.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
-
 #include "lp.h"
 
 #include "accounting.h"
@@ -434,7 +430,8 @@ int Send_data_files( int *sock, struct job *job, struct job *logjob,
 	int count, fd, err, status = 0, ack;
 	double size;
 	struct line_list *lp;
-	char *openname, *transfername, *id, *s;
+	const char *openname, *transfername, *id;
+	char *s;
 	char msg[SMALLBUFFER];
 	char error[SMALLBUFFER];
 	struct stat statb;

@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: stty.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
-
 #include "lp.h"
 #include "stty.h"
 /**** ENDINCLUDE ****/
@@ -630,7 +626,7 @@ void Do_stty( int fd )
 #endif
 
  static struct bauds {
-	char *string;
+	const char *string;
 	int baud;
 	int speed;
 }     bauds[] = {
@@ -678,7 +674,7 @@ void Do_stty( int fd )
 };
 
  struct s_term_dat {
-	char *name;
+	const char *name;
 	uint or_dat;
 	uint and_dat;
 };
@@ -907,7 +903,7 @@ void Do_stty( int fd )
  struct termios t_dat;
 
  static struct special {
-	char *name;
+	const char *name;
 	char *cp;
 }       special[] = {
 

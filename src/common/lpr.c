@@ -381,7 +381,6 @@ int main(int argc, char *argv[], char *envp[])
 	Free_job(&prjob);
 	Free_line_list(&Files);
 	cleanup(0);
-	return(0);
 }
 
 

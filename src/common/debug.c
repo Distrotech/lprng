@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
- "$Id: debug.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 /*************************************************************
  * void Get_debug_parm(int argc, char *argv[], struct keywords *list)
  * Scan the command line for -D debugparms
@@ -88,7 +84,7 @@
 
 */
 
-	static char *guide[] = {
+	static const char *guide[] = {
 	" use on command line, or in printcap :db=... entry", 
 	" for server:",
 	"   print:     show queue (printing) actions, larger number, more information",
@@ -107,10 +103,11 @@
 	"   database:  show low level database actions.",
 		0
 	};
-void Parse_debug (char *dbgstr, int interactive )
+void Parse_debug (const char *dbgstr, int interactive )
 {
 #if !defined(NODEBUG)
-	char *key, *convert, *end;
+	char *key, *end;
+	const char *convert;
 	int i, n, found, count;
 	struct keywords *list = debug_vars;
 	struct line_list l;

@@ -106,12 +106,12 @@
     expect to get back NULL or error message
  */
 
-int Test_connect( struct job *job, int *sock,
+int Test_connect( struct job *job UNUSED, int *sock,
 	int transfer_timeout,
 	char *errmsg, int errlen,
-	struct security *security, struct line_list *info )
+	struct security *security UNUSED, struct line_list *info )
 {
-	char *secure = "TEST\n";
+	const char *secure = "TEST\n";
 	int status = 0, ack = 0;
 
 	if(DEBUGL1)Dump_line_list("Test_connect: info", info );
@@ -133,10 +133,10 @@ int Test_connect( struct job *job, int *sock,
 }
 
 int Test_accept( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	char *errmsg, int errlen,
+	char *user UNUSED, char *jobsize UNUSED, int from_server UNUSED,
+	char *authtype UNUSED, char *errmsg, int errlen,
 	struct line_list *info, struct line_list *header_info,
-	struct security *security )
+	struct security *security UNUSED)
 {
 	int status, len;
 	char input[SMALLBUFFER];
@@ -188,7 +188,7 @@ int Test_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *errmsg, int errlen,
-	struct security *security, struct line_list *info )
+	struct security *security UNUSED, struct line_list *info )
 {
 	char buffer[LARGEBUFFER];
 	struct stat statb;
@@ -253,11 +253,11 @@ int Test_send( int *sock,
 }
 
 int Test_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
+	char *user UNUSED, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	int tempfd, status, n;
@@ -498,7 +498,7 @@ static int md5key( const char *keyfile, char *name, char *key, int keysize, char
 
 int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
-	struct security *security, struct line_list *info )
+	struct security *security UNUSED, struct line_list *info )
 {
 	unsigned char destkey[KEY_LENGTH+1];
 	unsigned char challenge[KEY_LENGTH+1];
@@ -736,11 +736,11 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 
 
 int md5_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
+	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	char input[SMALLBUFFER];
@@ -1484,7 +1484,7 @@ int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, cha
 
 int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
-	struct security *security, struct line_list *info )
+	struct security *security UNUSED, struct line_list *info )
 {
 	char *pgpfile;
 	struct line_list pgp_info;
@@ -1641,11 +1641,11 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 }
 
 int Pgp_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
+	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	char *pgpfile;

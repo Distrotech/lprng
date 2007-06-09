@@ -219,7 +219,6 @@ int main(int argc, char *argv[], char *envp[])
 	Errorcode = 0;
 	DEBUG1("lpq: cleaning up");
 	cleanup(0);
-	return(0);
 }
 
 static void Show_status(char **argv)

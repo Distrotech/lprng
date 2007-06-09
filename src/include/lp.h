@@ -60,9 +60,9 @@ struct line_list;
 EXTERN int Optind;			/* next argv to process */
 EXTERN int Opterr DEFINE(=1); /* Zero disables errors msgs */
 EXTERN char *Optarg;		/* Pointer to option argument */
-EXTERN char *Name;			/* Name of program */
+EXTERN const char *Name;	/* Name of program */
 
-extern char *Copyright[];	/* Copyright info */
+extern const char *Copyright[];	/* Copyright info */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
 EXTERN int Server_pid;		/* PID of server */
@@ -97,14 +97,6 @@ extern struct call_list Calls[];
 #endif
 
 
-
-#ifdef HAVE_STDARGS
-void setstatus( struct job *job, char *fmt, ... ) PRINTFATTR(2,3);
-void setmessage( struct job *job, const char *header, char *fmt, ... ) PRINTFATTR(3,4);
-#else 
-void setstatus( va_alist );
-void setmessage( va_alist );
-#endif
 void send_to_logger( int sfd, int mfd, struct job *job, const char *header, char *msg );
 
 /***************************************************************************

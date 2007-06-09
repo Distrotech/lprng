@@ -12,7 +12,7 @@
 
 /**** ENDINCLUDE ****/
 
-int glob_pattern( char *pattern, const char *str )
+static int glob_pattern( const char *pattern, const char *str )
 {
 	int result = 1;
 	int len, c, invert;
@@ -92,7 +92,7 @@ int glob_pattern( char *pattern, const char *str )
 	return( result );
 }
 
-int Globmatch( char *pattern, const char *str )
+int Globmatch( const char *pattern, const char *str )
 {
 	int result;
 
@@ -105,7 +105,7 @@ int Globmatch( char *pattern, const char *str )
 	return( result );
 }
 
-int Globmatch_list( struct line_list *l, char *str )
+int Globmatch_list( struct line_list *l, const char *str )
 {
 	int result = 1, i;
 	for( i = 0; result && i < l->count; ++i ){

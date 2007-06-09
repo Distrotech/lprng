@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: getqueue.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 /***************************************************************************
  * Commentary
  * Patrick Powell Thu Apr 27 21:48:38 PDT 1995
@@ -411,7 +407,7 @@ int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_
 	struct line_list cf_line_list;
 	struct line_list *datafile = 0;
 	char buffer[SMALLBUFFER], *t;
-	char *file_found, *priority;
+	const char *file_found, *priority;
 	char *names = 0;
 	int returnstatus = 0;
 	int hpformat;
@@ -1353,7 +1349,7 @@ void Free_job( struct job *job )
 void Copy_job( struct job *dest, struct job *src )
 {
 	Merge_line_list( &dest->info, &src->info, 0,0,0 );
-	Merge_listof_line_list( &dest->datafiles, &src->datafiles, 0,0,0 );
+	Merge_listof_line_list( &dest->datafiles, &src->datafiles);
 	Merge_line_list( &dest->destination, &src->destination, 0,0,0 );
 }
 
@@ -1388,7 +1384,8 @@ char *Fix_job_number( struct job *job, int n )
 
 char *Make_identifier( struct job *job )
 {
-	char *user, *host, *s, *id;
+	const char *user, *host;
+	char *s, *id;
 	char number[32];
 	int n;
 
@@ -1411,7 +1408,7 @@ char *Make_identifier( struct job *job )
 	return(s);
 }
 
-void Dump_job( char *title, struct job *job )
+void Dump_job( const char *title, struct job *job )
 {
 	int i;
 	struct line_list *lp;
@@ -1712,8 +1709,8 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
  static char BSD_order[] = "HPJCLIMWT1234" ;
  static char LPRng_order[] = "HPJCLIMWT1234*" ;
 
-char *Fix_datafile_infox( struct job *job, char *number, char *suffix,
-	char *xlate_format, int update_df_names )
+char *Fix_datafile_infox( struct job *job, const char *number, const char *suffix,
+	const char *xlate_format, int update_df_names )
 {
 	int i, copies, linecount, count, jobcopies, copy, group, offset;
 	char *s, *Nline, *transfername, *dataline;
@@ -1893,7 +1890,8 @@ int ordercomp(  const void *left, const void *right, const void *orderp)
 void Fix_control( struct job *job, char *filter, char *xlate_format,
 	int update_df_names )
 {
-	char *s, *t, *file_hostname, *number, *priority, *order;
+	char *s, *t;
+	const char *file_hostname, *number, *priority, *order;
 	char buffer[SMALLBUFFER], pr[2];
 	int tempfd, tempfc;
 	int i, n, j, cccc, wildcard, len;

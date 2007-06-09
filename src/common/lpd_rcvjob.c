@@ -489,7 +489,6 @@ int Receive_job( int *sock, char *input )
 	Free_line_list(&l);
 
 	cleanup( 0 );
-	return(0);
 }
 
 /***************************************************************************
@@ -639,7 +638,7 @@ int Receive_block_job( int *sock, char *input )
 		goto error;
 	}
 
-	if( Scan_block_file( temp_fd, error, errlen-4, 0 ) ){
+	if( Scan_block_file( temp_fd, error, errlen-4 ) ){
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -706,7 +705,7 @@ int Receive_block_job( int *sock, char *input )
  *          0 on success
  ***************************************************************************/
 
-int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info )
+int Scan_block_file( int fd, char *error, int errlen )
 {
 	char line[LINEBUFFER];
 	char buffer[LARGEBUFFER];

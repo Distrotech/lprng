@@ -87,7 +87,7 @@
  */
 
 
-static char *name;		/* name of filter */
+static const char *name;		/* name of filter */
 static int debug, verbose, width = 80, length = 66, xwidth, ylength, literal, indent;
 static char *zopts, *class, *job, *login, *accntname, *host;
 static char *printer, *accntfile, *format;
@@ -106,14 +106,14 @@ struct font{
 	int height;	/* height from top to bottom */
 	int width;	/* width in pixels */
 	int above;	/* max height above baseline */
-	struct glyph *glyph;	/* glyphs */
+	const struct glyph *glyph;	/* glyphs */
 };
 
 static void banner( void );
 static void getargs( int argc, char *argv[], char *envp[] );
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- static void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+ static void safefprintf (int fd, const char *format,...) PRINTFATTR(2,3)
 ;
 #else
  static void safefprintf ();
@@ -133,7 +133,7 @@ int main( int argc, char *argv[], char *envp[] )
 	return(0);
 }
 
-void getargs( int argc, char *argv[], char *envp[] )
+static void getargs( int argc, char *argv[], char *envp[] )
 {
 	int i, c;		/* argument index */
 	char *arg, *optargv;	/* argument */
@@ -151,7 +151,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 		optargv = &arg[2];
 		if( arg[2] == 0 ){
-			optargv = argv[i++];
+			optargv = argv[++i];
 			if( optargv == 0 ){
 				FPRINTF( STDERR, "missing option '%c' value", c );
 				i = argc;
@@ -335,7 +335,7 @@ The struct glyph{} array is the set of glyphs for each character.
 #define X111111_ 0176
 #define X1111111 0177
 
-struct glyph g9x8[] = {
+static const struct glyph g9x8[] = {
 	{ ' ', 0, 8, {
 	X_______,
 	X_______,
@@ -1421,14 +1421,14 @@ struct glyph g9x8[] = {
   9 by 8 font:
   12 rows high, 8 cols wide, 9 lines above baseline
  */
-struct font Font9x8 = {
+static const struct font Font9x8 = {
 	12, 8, 9, g9x8 
 };
 
 static void Out_line( void );
 static void breakline( int c );
-static void bigprint( struct font *font, char *line );
-static void do_char( struct font *font, struct glyph *glyph,
+static void bigprint( const struct font *font, const char *line );
+static void do_char( const struct font *font, const struct glyph *glyph,
 	char *str, int line, int wid );
 /*
  * Print a banner
@@ -1488,13 +1488,13 @@ static void seebig( int *len, int bigletter_height, int *big )
  * banner: does all the actual work
  */
 
-static char *isnull( char *s )
+static const char *isnull( const char *s )
 {
 	if( s == 0 ) s = "";
 	return( s );
 }
 
-void banner(void)
+static void banner(void)
 {
 	int len;					/* length of page */
 	int i;                      /* ACME integers, INC */
@@ -1601,7 +1601,7 @@ void banner(void)
 	}
 }
 
-void breakline( int c )
+static void breakline( int c )
 {
 	int i;
 
@@ -1628,7 +1628,7 @@ void breakline( int c )
  *
  ***************************************************************************/
 
-void bigprint( struct font *font, char *line )
+static void bigprint( const struct font *font, const char *line )
 {
 	int i, j, k, len;                   /* ACME Integers, Inc. */
 
@@ -1653,10 +1653,10 @@ void bigprint( struct font *font, char *line )
  * don't do if fail is invalid.
  ***************************************************************************/
 
-void Out_line( void )
+static void Out_line( void )
 {
 	int i, l;
-	char *str;
+	const char *str;
 	bline[sizeof(bline)-1] = 0;
 	if( width < (int)sizeof(bline) ) bline[width] = 0;
 	for( str = bline, i = strlen(str);
@@ -1667,11 +1667,11 @@ void Out_line( void )
 		i -= l, str += l );
 }
 
-void do_char( struct font *font, struct glyph *glyph,
+static void do_char( const struct font *font, const struct glyph *glyph,
 	char *str, int line, int wid )
 {
 	int chars, i, j, k;
-	char *s;
+	const char *s;
 
 	/* if(debug)FPRINTF(STDERR,"do_char: '%c', wid %d\n", glyph->ch, wid ); */
 	chars = (font->width+7)/8;	/* calculate the row */
@@ -1688,7 +1688,7 @@ void do_char( struct font *font, struct glyph *glyph,
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...)
+ static void safefprintf (int fd, const char *format,...)
 #else
  void safefprintf (va_alist) va_dcl
 #endif

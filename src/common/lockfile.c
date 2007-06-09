@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lockfile.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 /***************************************************************************
  * MODULE: lockfile.c
  * lock file manipulation procedures.
@@ -89,7 +86,7 @@ int Do_lock( int fd, int block )
 		}
 		errno = err;
 	}
-#endif
+#else
 #if defined(HAVE_LOCKF)
 	if( code == -2 ){
 		int err;
@@ -112,7 +109,7 @@ int Do_lock( int fd, int block )
 		}
 		errno = err;
 	}
-#endif
+#else
 #if defined(HAVE_FCNTL)
 	if( code == -2 ){
 		struct flock file_lock;
@@ -137,90 +134,12 @@ int Do_lock( int fd, int block )
 		errno = err;
 	}
 #endif
+#endif
+#endif
 
 	DEBUG3 ("Do_lock: status %d", code);
 	return( code);
 }
-
-
-
-/***************************************************************************
- * Do_unlock( fd )
- * unlocks a lock on a file;
- * Returns: < 0 if lock fn failed
- *            0 if successful
- ***************************************************************************/
-
-int Do_unlock( int fd )
-{
-    int code = -2;
-
-	DEBUG3("Do_unlock: fd %d", fd );
-
-#if defined(HAVE_FLOCK)
-	if( code == -2 ){
-		int err;
-		int how;
-
-		how = LOCK_EX|LOCK_UN;
-		DEBUG3 ("Do_unlock: using flock" );
-		code = flock( fd, how );
-		err = errno;
-		if( code < 0 ){
-			DEBUG1( "Do_unlock: flock failed '%s'", Errormsg( err ));
-			code = -1;
-		} else {
-			code = 0;
-		}
-		errno = err;
-	}
-#endif
-#if defined(HAVE_LOCKF)
-	if( code == -2 ){
-		int err;
-		int how;
-
-		how = F_ULOCK;
-
-		DEBUG3 ("Do_unlock: using lockf" );
-		code = lockf( fd, how, 0);
-		err = errno;
-		if( code < 0 ){
-			DEBUG1( "Do_unlock: lockf failed '%s'", Errormsg( err));
-			code = -1;
-		} else {
-			code = 0;
-		}
-		errno = err;
-	}
-#endif
-#if defined(HAVE_FCNTL)
-	if( code == -2 ){
-		struct flock file_lock;
-		int err;
-		int how;
-		DEBUG3 ("Do_unlock: using fcntl with SEEK_SET" );
-
-		how = F_SETLK;
-		memset( &file_lock, 0, sizeof( file_lock ) );
-		file_lock.l_type = F_UNLCK;
-		file_lock.l_whence = SEEK_SET;
-		code = fcntl( fd, how, &file_lock);
-		err = errno;
-		if( code < 0 ){
-			code = -1;
-		} else {
-			code = 0;
-		}
-		DEBUG3 ("devlock_fcntl: status %d", code );
-		errno = err;
-	}
-#endif
-
-	DEBUG3 ("Do_unlock: status %d", code);
-	return( code);
-}
-
 
 
 

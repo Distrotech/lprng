@@ -212,7 +212,7 @@ int main(int argc, char *argv[], char *envp[])
 	for( i = 0; i < request_list.count; ++i ){
 		s = request_list.list[i];
 		Set_DYN(&Printer_DYN,s );
-		Show_status(options.list, 0);
+		Show_status(0);
 	}
 
 	Free_line_list( &Printer_list );
@@ -220,7 +220,7 @@ int main(int argc, char *argv[], char *envp[])
 		for( i = 0; i < request_list.count; ++i ){
 			s = request_list.list[i];
 			Set_DYN(&Printer_DYN,s );
-			Show_status(options.list, 1);
+			Show_status(1);
 		}
 	}
 
@@ -233,7 +233,7 @@ int main(int argc, char *argv[], char *envp[])
 	return(0);
 }
 
-void Show_status(char **argv, int display_format)
+static void Show_status(int display_format)
 {
 	int fd;
 
@@ -469,7 +469,7 @@ _("printer %s unknown state. enabled since %s. available\n"),
 	DEBUG1("Read_status_info: done" );
 	return(0);
 }
-int Add_val( char **var, char *val )
+static int Add_val( char **var, char *val )
 {
 	int c = 0;
 	if( val && cval(val) != '-' ){
@@ -563,7 +563,7 @@ void Get_parms(int argc, char *argv[] )
 
 #undef SX
 #define SX(X,Y,Z) \
-	if((X)&&!(Y))Y="all"; Split(&Z,Y,", ",1,0,1,1,0,0);
+	Split(&Z,((X)&&!(Y))?"all":Y,", ",1,0,1,1,0,0);
 	SX(a_flag,a_val,Printer_list);
 	SX(c_flag,c_val,Printer_list);
 	SX(f_flag,f_val,f_list);

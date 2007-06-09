@@ -96,23 +96,15 @@ time_t Convert_to_time_t( char *str )
 }
 
 /***************************************************************************
- * Print the usage message list or any list of strings
- *  Use for copyright printing as well
+ *  Use for copyright printing
  ***************************************************************************/
 
-void Printlist( char **m, int fd )
+void Printlist( const char **m, int fd )
 {
-	char msg[SMALLBUFFER];
 	if( m ){
-		if( *m ){
-			SNPRINTF( msg,sizeof(msg)) _(*m), Name );
-			Write_fd_str(fd, msg);
-			Write_fd_str(fd,"\n");
-			++m;
-		}
 		for( ; *m; ++m ){
-			SNPRINTF( msg,sizeof(msg)) "%s\n", _(*m) );
-			Write_fd_str(fd, msg);
+			Write_fd_str(fd, *m);
+			Write_fd_str(fd,"\n");
 		}
 	}
 }
@@ -868,7 +860,7 @@ int Read_write_timeout(
  *  #define Set_timeout(t,s) (setjmp(Timeout_env)==0 && Set_timeout_alarm(t,s))
  */
 
- static plp_signal_t timeout_alarm (int sig)
+ static plp_signal_t timeout_alarm (int sig UNUSED)
 {
 	Alarm_timed_out = 1;
 	signal( SIGALRM, SIG_IGN );
@@ -881,7 +873,7 @@ int Read_write_timeout(
 }
 
 
- static plp_signal_t timeout_break (int sig)
+ static plp_signal_t timeout_break (int sig UNUSED)
 {
 	Alarm_timed_out = 1;
 	signal( SIGALRM, SIG_IGN );
@@ -1279,7 +1271,7 @@ int Full_user_perms(void)
 
 int Getdaemon(void)
 {
-	char *str = 0;
+	const char *str = 0;
 	char *t;
 	struct passwd *pw;
 	int uid;
@@ -1287,7 +1279,7 @@ int Getdaemon(void)
 	str = Daemon_user_DYN;
 	DEBUG4( "Getdaemon: using '%s'", str );
 	if(!str) str = "daemon";
-	t = str;
+	t = (char*)str;
 	uid = strtol( str, &t, 10 );
 	if( str == t || *t ){
 		/* try getpasswd */
@@ -1310,7 +1302,7 @@ int Getdaemon(void)
 
 int Getdaemon_group(void)
 {
-	char *str = 0;
+	const char *str = 0;
 	char *t;
 	struct group *gr;
 	gid_t gid;
@@ -1319,7 +1311,7 @@ int Getdaemon_group(void)
 	DEBUG4( "Getdaemon_group: Daemon_group_DYN '%s'", str );
 	if( !str ) str = "daemon";
 	DEBUG4( "Getdaemon_group: name '%s'", str );
-	t = str;
+	t = (char*)str;
 	gid = strtol( str, &t, 10 );
 	if( str == t ){
 		/* try getpasswd */
@@ -1478,7 +1470,7 @@ void Reset_daemonuid(void)
  * Check_space() - check to see if there is enough space
  ***************************************************************************/
 
-double Space_avail( char *pathname )
+double Space_avail( const char *pathname )
 {
 	double space = 0;
 	plp_struct_statfs fsb;
@@ -1493,7 +1485,7 @@ double Space_avail( char *pathname )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- int safefprintf (int fd, char *format,...)
+ int safefprintf (int fd, const char *format,...)
 #else
  int safefprintf (va_alist) va_dcl
 #endif

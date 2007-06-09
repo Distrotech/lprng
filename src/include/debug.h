@@ -122,7 +122,7 @@ EXTERN int DbgTest;	/* debug flags */
 
 #define IP_TEST 0x0001		/* test IP address */
 
-void Parse_debug( char *arg, int interactive);
+void Parse_debug( const char *arg, int interactive);
 
 /* PRO TO TYPES */
 

@@ -884,7 +884,7 @@ void Link_close( int timeout, int *sock )
  ***************************************************************************/
 
 int Link_send( char *host, int *sock, int timeout,
-	char *sendstr, int count, int *ack )
+	const char *sendstr, int count, int *ack )
 {
 	int i;      /* Watch out for longjmp * ACME Integers, Inc. */
 	int status;		/* return status */
@@ -989,7 +989,7 @@ int Link_send( char *host, int *sock, int timeout,
  *      returns 0 if successful, LINK errorcode if failure
  ***************************************************************************/
 int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
-	char *src, int fd, double pcount)
+	const char *src, int fd, double pcount)
 {
 	char buf[LARGEBUFFER];      /* buffer */
 	int len;              /* ACME Integer, Inc. */
@@ -1440,7 +1440,7 @@ int Link_file_read(char *host, int *sock, int readtimeout, int writetimeout,
 /* PAIR(LINK_PERM_FAIL), */
 
  static struct link_err {
-    char *str;
+    const char *str;
     int value;
 } link_err[] = {
 { "NO ERROR", 0 },

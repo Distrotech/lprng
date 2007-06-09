@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: gethostinfo.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
 /********************************************************************
  * char *get_fqdn (char *shorthost)
  * get the fully-qualified domain name for a host.
@@ -435,7 +432,7 @@ int Same_host( struct host_information *host,
  * Dump file information
  ***************************************************************************/
 
-void Dump_host_information( char *title,  struct host_information *info )
+void Dump_host_information( const char *title,  struct host_information *info )
 {
 	int i, j;
 	char **list;

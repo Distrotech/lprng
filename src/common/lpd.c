@@ -680,15 +680,15 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		if( sock > 0 && FD_ISSET( sock, &readfds ) ){
 			DEBUG1("lpd: accept on LPD socket");
-			Accept_connection( sock, 0, 0 );
+			Accept_connection( sock, 0 );
 		}
 		if( unix_sock > 0 && FD_ISSET( unix_sock, &readfds ) ){
 			DEBUG1("lpd: accept on UNIX socket");
-			Accept_connection( unix_sock, 0, 1 );
+			Accept_connection( unix_sock, 0 );
 		}
 		if( ipp_sock > 0 && FD_ISSET( ipp_sock, &readfds ) ){
 			DEBUG1("lpd: accept on IPP socket");
-			Accept_connection( ipp_sock, 0, 0 );
+			Accept_connection( ipp_sock, 0 );
 		}
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
@@ -701,7 +701,6 @@ int main(int argc, char *argv[], char *envp[])
 	}while( 1 );
 	Free_line_list(&args);
 	cleanup(0);
-	return(0);
 }
 
 /***************************************************************************
@@ -952,7 +951,7 @@ static void Get_parms(int argc, char *argv[] )
  * Accept_connection
  *   - accept the connection and fork the child to handle it
  */
-static void Accept_connection( int sock, int lpd_socket, int unix_socket )
+static void Accept_connection( int sock, int lpd_socket )
 { 
 	struct line_list args;
 	struct sockaddr sinaddr;
@@ -1046,7 +1045,7 @@ static int Start_all( int first_scan, int *start_fd )
 	return(pid);
 }
 
-plp_signal_t sigchld_handler (int signo)
+plp_signal_t sigchld_handler (int signo UNUSED)
 {
 	signal( SIGCHLD, SIG_DFL );
 	write(Lpd_request,"\n", 1);

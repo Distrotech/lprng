@@ -13,8 +13,7 @@
 #define _GLOBMATCH_H_ 1
 
 /* PROTOTYPES */
-int glob_pattern( char *pattern, const char *str );
-int Globmatch( char *pattern, const char *str );
-int Globmatch_list( struct line_list *l, char *str );
+int Globmatch( const char *pattern, const char *str );
+int Globmatch_list( struct line_list *l, const char *str );
 
 #endif

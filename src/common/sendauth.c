@@ -7,9 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: sendauth.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
-
 #include "lp.h"
 #include "user_auth.h"
 #include "sendjob.h"
@@ -258,7 +255,8 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	struct job *job, char *error, int errlen )
 {
 	struct security *security = 0;
-	char buffer[SMALLBUFFER], *tag, *key, *from, *client, *destination;
+	char buffer[SMALLBUFFER], *from, *client, *destination;
+	const char *tag, *key;
 
 	if( name == 0 ){
 		if( Is_server ){

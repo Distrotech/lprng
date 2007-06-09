@@ -14,7 +14,6 @@
 
 /* PROTOTYPES */
 int Do_lock( int fd, int block );
-int Do_unlock( int fd );
 int LockDevice(int fd, int block );
 
 #endif
