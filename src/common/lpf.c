@@ -99,19 +99,19 @@
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- static void safefprintf (int fd, char *format,...) PRINTFATTR(2,3)
+ static void safefprintf (int fd, const char *format,...) PRINTFATTR(2,3)
 ;
 #else
  static void safefprintf ();
 #endif
 #ifdef HAVE_STDARGS
-static void logerr(char *msg, ...) PRINTFATTR(1,2)
+static void logerr(const char *msg, ...) PRINTFATTR(1,2)
 #else
 static void logerr( va_alist ) va_dcl
 #endif
 ;
 #ifdef HAVE_STDARGS
-static void logerr_die(char *msg, ...) PRINTFATTR(1,2)
+static void logerr_die(const char *msg, ...) PRINTFATTR(1,2)
 #else
 static void logerr_die( va_alist ) va_dcl
 #endif
@@ -166,29 +166,29 @@ XX ** NO VARARGS ** XX
 # endif
 #endif
 
-char *Time_str(int shortform, time_t t);
+static char *lpf_time_str(void);
+static void filter_pgm(const char *stop);
 
 /*
  * default exit status, causes abort
  */
-int errorcode;
-char *name;		/* name of filter */
+static int errorcode = 2;
+static const char *name;		/* name of filter */
 /* set from flags */
-int debug, width, length, xwidth, ylength, literal, indent;
-char *zopts, *class, *job, *login, *accntname, *host, *accntfile, *format;
-char *printer, *controlfile, *bnrname, *comment;
-char *queuename, *errorfile;
-int npages;	/* number of pages */
-char *statusfile;
-char filter_stop[] = "\031\001";	/* sent to cause filter to suspend */
-int  accounting_fd;
-int crlf;	/* change lf to CRLF */
+static int debug = 0;
+static int width = 80, length = 72, xwidth = 1440, ylength = -1;
+static int literal = 0, indent = 0;
+static const char *zopts = NULL, *class = NULL, *job = NULL, *login = NULL;
+static const char *accntname = NULL, *host = NULL, *accntfile= NULL;
+static const char *format = NULL, *printer = NULL, *controlfile = NULL;
+static const char *bnrname = NULL, *comment = NULL, *queuename = NULL;
+static const char *errorfile = NULL, *statusfile = NULL;
+static int npages;	/* number of pages */
+static int accounting_fd;
+static int crlf = 0;	/* change lf to CRLF */
 
-void getargs( int argc, char *argv[], char *envp[] );
-extern void banner( void );
-extern void doaccnt( void );
-extern void filter_pgm( char * );
-int of_filter;
+static void getargs( int argc, char *argv[], char *envp[] );
+static int of_filter;
 
 int main( int argc, char *argv[], char *envp[] )
 {
@@ -224,7 +224,7 @@ int main( int argc, char *argv[], char *envp[] )
 	(void)signal( SIGQUIT, SIG_DFL );
 	(void)signal( SIGCHLD, SIG_DFL );
 	if( of_filter || (format && format[0] == 'o') ){
-		filter_pgm( filter_stop );
+		filter_pgm( "031\001" );
 	} else {
 		filter_pgm( (char *)0 );
 	}
@@ -240,7 +240,7 @@ static int Write_fd_str( int fd, const char *msg )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void safefprintf (int fd, char *format,...)
+ void safefprintf (int fd, const char *format,...)
 #else
  void safefprintf (va_alist) va_dcl
 #endif
@@ -281,7 +281,7 @@ static const char * Errormsg ( int err )
 #endif
 
 #ifdef HAVE_STDARGS
-static void logerr(char *msg, ...)
+static void logerr(const char *msg, ...)
 #else
 static void logerr( va_alist ) va_dcl
 #endif
@@ -306,7 +306,7 @@ static void logerr( va_alist ) va_dcl
 }
 
 #ifdef HAVE_STDARGS
-static void logerr_die(char *msg, ...)
+static void logerr_die(const char *msg, ...)
 #else
 static void logerr_die( va_alist ) va_dcl
 #endif
@@ -336,22 +336,19 @@ static void logerr_die( va_alist ) va_dcl
  *	writes the accounting information to the accounting file
  *  This has the format: user host printer pages format date
  */
-void doaccnt(void)
+static void doaccnt(void)
 {
-	time_t t;
 	char buffer[256];
 	FILE *f;
 	int l, len, c;
 
-	t = time((time_t *)0);
-		
 	SNPRINTF(buffer, sizeof(buffer)) "%s\t%s\t%s\t%7d\t%s\t%s\n",
-		login? login: "NULL", 
-		host? host: "NULL", 
-		printer? printer: "NULL", 
+		login? login: "NULL",
+		host? host: "NULL",
+		printer? printer: "NULL",
 		npages,
-		format? format: "NULL", 
-		Time_str(0,0));
+		format? format: "NULL",
+		lpf_time_str());
 	len = strlen( buffer );
 	if( accounting_fd < 0 ){
 		if(accntfile && (f = fopen(accntfile, "a" )) != NULL ) {
@@ -368,19 +365,20 @@ void doaccnt(void)
 	}
 }
 
-void getargs( int argc, char *argv[], char *envp[] )
+static void getargs( int argc, char *argv[], char *envp[] )
 {
 	int i, c;		/* argument index */
 	char *arg, *optargv;	/* argument */
 	char *s, *end;
+	const char *n;
 
 	if( (name = argv[0]) == 0 ) name = "FILTER";
-	if( (s = strrchr( name, '/' )) ){
-		++s;
+	if( (n = strrchr( name, '/' )) ){
+		++n;
 	} else {
-		s = name;
+		n = name;
 	}
-	of_filter =  (strstr( s, "of" ) != 0);
+	of_filter =  (strstr( n, "of" ) != 0);
 	for( i = 1; i < argc && (arg = argv[i])[0] == '-'; ++i ){
 		if( (c = arg[1]) == 0 ){
 			FPRINTF( STDERR, "missing option flag");
@@ -393,7 +391,7 @@ void getargs( int argc, char *argv[], char *envp[] )
 		}
 		optargv = &arg[2];
 		if( arg[2] == 0 ){
-			optargv = argv[i++];
+			optargv = argv[++i];
 			if( optargv == 0 ){
 				FPRINTF( STDERR, "missing option '%c' value", c );
 				i = argc;
@@ -506,7 +504,7 @@ static void suspend_ofilter(void)
  * if any.
  ******************************************/
 
-void filter_pgm(char *stop)
+static void filter_pgm(const char *stop)
 {
 	int c;
 	int state, i, xout, lastc;
@@ -587,32 +585,21 @@ void filter_pgm(char *stop)
  * Thu Aug 4 12:34:17 BST 1994 -> 12:34:17
  */
 
-char *Time_str(int shortform, time_t t)
+static char *lpf_time_str(void)
 {
     static char buffer[99];
 	struct tm *tmptr;
 	struct timeval tv;
 
 	tv.tv_usec = 0;
-	if( t == 0 ){
-		if( gettimeofday( &tv, 0 ) == -1 ){
-			logerr_die( "Time_str: gettimeofday failed");
-		}
-		t = tv.tv_sec;
+	if( gettimeofday( &tv, 0 ) == -1 ){
+		logerr_die( "Time_str: gettimeofday failed");
 	}
-	tmptr = localtime( &t );
-	if( shortform ){
-		SNPRINTF( buffer, sizeof(buffer))
-			"%02d:%02d:%02d.%03d",
-			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
-			(int)(tv.tv_usec/1000) );
-	} else {
-		SNPRINTF( buffer, sizeof(buffer))
-			"%d-%02d-%02d-%02d:%02d:%02d.%03d",
-			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
-			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
-			(int)(tv.tv_usec/1000) );
-	}
-	/* now format the time */
+	tmptr = localtime( &tv.tv_sec );
+	SNPRINTF( buffer, sizeof(buffer))
+		"%d-%02d-%02d-%02d:%02d:%02d.%03d",
+		tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
+		tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
+		(int)(tv.tv_usec/1000) );
 	return( buffer );
 }
