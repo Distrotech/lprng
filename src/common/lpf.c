@@ -224,7 +224,7 @@ int main( int argc, char *argv[], char *envp[] )
 	(void)signal( SIGQUIT, SIG_DFL );
 	(void)signal( SIGCHLD, SIG_DFL );
 	if( of_filter || (format && format[0] == 'o') ){
-		filter_pgm( "031\001" );
+		filter_pgm( "\031\001" );
 	} else {
 		filter_pgm( (char *)0 );
 	}
