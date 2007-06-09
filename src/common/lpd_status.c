@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_status.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "getopt.h"
 #include "gethostinfo.h"
@@ -261,7 +257,8 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	char msg[SMALLBUFFER], buffer[SMALLBUFFER], error[SMALLBUFFER],
 		number[LINEBUFFER], header[LARGEBUFFER];
 	char sizestr[SIZEW+TIMEW+32];
-	char *pr, *s, *t, *path, *identifier,
+	const char *identifier, *cs;
+	char *pr, *s, *t, *path,
 		*jobname, *joberror, *class, *priority, *d_identifier,
 		*job_time, *d_error, *d_dest, *cftransfername, *hf_name, *filenames,
 		*tempfile = 0, *file = 0, *end_of_name;
@@ -301,7 +298,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	msg[0] = 0;
 	header[0] = 0;
 	error[0] = 0;
-	pr = s = 0;
+	pr = 0; s = 0;
 
 	safestrncpy(buffer,Printer_DYN);
 	status = Setup_printer( Printer_DYN, error, sizeof(error), 0);
@@ -469,20 +466,23 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		SNPRINTF( header, sizeof(header)) "%s: ",
 			Server_queue_name_DYN?"Server Printer":"Printer" );
 	}
-	len = safestrlen(header);
+	len = strlen(header);
 	SNPRINTF( header+len, sizeof(header)-len) "%s@%s",
 		Printer_DYN, Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 	if( safestrcasecmp( buffer, Printer_DYN ) ){
-		len = safestrlen(header);
+		len = strlen(header);
 		SNPRINTF( header+len, sizeof(header)-len) _(" (originally %s)"), buffer );
 	}
-	end_of_name = header+safestrlen(header);
+	end_of_name = header+strlen(header);
 
+/* TODO: gcc complains that is never looked at. And indeed it looks like
+ * status is checked above and it does not end up here.
+ * Why is this code here? - brl */
 	if( status ){
-		len = safestrlen( header );
+		len = strlen( header );
 		if( displayformat == REQ_VERBOSE ){
 			safestrncat( header, _("\n Error: ") );
-			len = safestrlen( header );
+			len = strlen( header );
 		}
 		if( error[0] ){
 			SNPRINTF( header+len, sizeof(header)-len)
@@ -709,9 +709,9 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 						Find_flag_value(&job.destination,COPY_DONE);
 					d_identifier =
 						Find_str_value(&job.destination,IDENTIFIER);
-					s = Find_str_value(&job.destination, PRSTATUS);
-					if( !s ) s = "";
-					SNPRINTF(number, sizeof(number))" - %-8s", s );
+					cs = Find_str_value(&job.destination, PRSTATUS);
+					if( !cs ) cs = "";
+					SNPRINTF(number, sizeof(number))" - %-8s", cs );
 					SNPRINTF( msg, sizeof(msg))
 						"%-*s %-*s ", RANKW, number, OWNERW, d_identifier );
 					len = safestrlen(msg);
@@ -856,20 +856,20 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		len = safestrlen( header );
 		if( displayformat == REQ_VERBOSE ){
 			if ( Server_names_DYN ) {
-				s = "Subservers";
+				cs = "Subservers";
 			} else {
-				s = "Destinations";
+				cs = "Destinations";
 			}
 			SNPRINTF( header+len, sizeof(header)-len)
-			_("\n %s: "), s );
+			_("\n %s: "), cs );
 		} else {
 			if ( Server_names_DYN ) {
-				s = "subservers";
+				cs = "subservers";
 			} else {
-				s = "destinations";
+				cs = "destinations";
 			}
 			SNPRINTF( header+len, sizeof(header)-len)
-			_(" (%s"), s );
+			_(" (%s"), cs );
 		}
 		for( ix = 0; ix < info.count; ++ix ){
 			len = safestrlen( header );
@@ -1258,7 +1258,7 @@ void Print_status_info( int *sock, char *file,
 	char *prefix, int status_lines, int max_size )
 {
 	char *image;
-	static char *atmsg = " at ";
+	static const char *atmsg = " at ";
 	struct line_list l;
 	int start, i;
 	Init_line_list(&l);

@@ -10,8 +10,7 @@
 #define _LPD_WORKER_H_ 1
 
 void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
-int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args );
-void Do_work( char *name, struct line_list *args );
-int Start_worker( char *name, struct line_list *parms, int fd );
+int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list *args );
+int Start_worker( const char *name, struct line_list *parms, int fd );
 
 #endif

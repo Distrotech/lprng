@@ -12,13 +12,6 @@
 /**** ENDINCLUDE ****/
 
 
-# if 0
-   --------- now in lp.h ---------
- int Optind;                 /* next argv to process */
- int Opterr = 1;                 /* Zero disables errors msgs */
- char *Optarg;               /* Pointer to option argument */
- char *Name;					/* Name of program */
-#endif
  static char *next_opt;			    /* pointer to next option char */
  static char **Argv_p;
  static int Argc_p;

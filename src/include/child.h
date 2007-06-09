@@ -13,7 +13,6 @@
 
 /* PROTOTYPES */
 pid_t plp_waitpid (pid_t pid, plp_status_t *statusPtr, int options);
-void Dump_pinfo( char *title, struct line_list *p ) ;
 int Countpid(void);
 void Killchildren( int sig );
 pid_t dofork( int new_process_group );
@@ -24,6 +23,5 @@ plp_signal_t cleanup_QUIT (int passed_signal) NORETURN;
 plp_signal_t cleanup_TERM (int passed_signal) NORETURN;
 void Max_open( int fd );
 plp_signal_t cleanup (int passed_signal) NORETURN;
-void Dump_unfreed_mem(char *title);
 
 #endif

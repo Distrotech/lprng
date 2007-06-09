@@ -72,7 +72,7 @@ int Dump_queue_status(int outfd)
 	char buffer[SMALLBUFFER];
 	/* char *esc_lf_2 = Escape("\n", 2); */
 	/* char *esc_lf_2 = "%25250a"; */
-	char *esc_lf_1 = "%250a";
+	const char *esc_lf_1 = "%250a";
 	struct stat statb;
 
 	s = sp = 0;

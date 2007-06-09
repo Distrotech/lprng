@@ -59,7 +59,7 @@ char *Get_remote_hostbyaddr( struct host_information *info,
 	struct sockaddr *sinaddr, int force_ip_addr_use );
 int Same_host( struct host_information *host,
 	struct host_information *remote );
-void Dump_host_information( char *title,  struct host_information *info );
+void Dump_host_information( const char *title,  struct host_information *info );
 void form_addr_and_mask(char *v, char *addr,char *mask,
 	int addrlen, int family );
 int cmp_ip_addr( char *h, char *a, char *m, int len );

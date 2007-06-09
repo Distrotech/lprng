@@ -14,7 +14,7 @@
 
 extern int Optind, Opterr;
 extern char *Optarg;
-extern char *Name;			/* program name */
+extern const char *Name;		/* program name */
 
 /* PROTOTYPES */
 int Getopt (int argc, char *argv[], const char *optstring);

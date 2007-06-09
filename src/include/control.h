@@ -48,6 +48,6 @@
 /* PROTOTYPES */
 
 int Get_controlword( char *s );
-char *Get_controlstr( int c );
+const char *Get_controlstr( int c );
 
 #endif

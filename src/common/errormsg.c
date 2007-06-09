@@ -48,7 +48,7 @@ const char * Errormsg ( int err )
 
  struct msgkind {
     int var;
-    char *str;
+    const char *str;
 };
 
  static struct msgkind msg_name[] = {
@@ -61,7 +61,7 @@ const char * Errormsg ( int err )
     {0,0}
 };
 
- static char * putlogmsg(int kind)
+ static const char * putlogmsg(int kind)
 {
     int i;
     static char b[32];
@@ -205,7 +205,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logmsg(int kind, char *msg,...)
+ void logmsg(int kind, const char *msg,...)
 #else
  void logmsg(va_alist) va_dcl
 #endif
@@ -238,7 +238,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void fatal (int kind, char *msg,...)
+ void fatal (int kind, const char *msg,...)
 #else
  void fatal (va_alist) va_dcl
 #endif
@@ -271,7 +271,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logerr (int kind, char *msg,...)
+ void logerr (int kind, const char *msg,...)
 #else
  void logerr (va_alist) va_dcl
 #endif
@@ -306,7 +306,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void logerr_die (int kind, char *msg,...)
+ void logerr_die (int kind, const char *msg,...)
 #else
  void logerr_die (va_alist) va_dcl
 #endif
@@ -348,7 +348,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Diemsg (char *msg,...)
+ void Diemsg (const char *msg,...)
 #else
  void Diemsg (va_alist) va_dcl
 #endif
@@ -391,7 +391,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Warnmsg (char *msg,...)
+ void Warnmsg (const char *msg,...)
 #else
  void Warnmsg (va_alist) va_dcl
 #endif
@@ -432,7 +432,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void Message (char *msg,...)
+ void Message (const char *msg,...)
 #else
  void Message (va_alist) va_dcl
 #endif
@@ -465,7 +465,7 @@ const char * Errormsg ( int err )
 
 /* VARARGS1 */
 #ifdef HAVE_STDARGS
- void logDebug (char *msg,...)
+ void logDebug (const char *msg,...)
 #else
  void logDebug (va_alist) va_dcl
 #endif
@@ -501,7 +501,7 @@ const char * Errormsg ( int err )
  ***************************************************************************/
 
  struct signame {
-    char *str;
+    const char *str;
     int value;
 };
 
@@ -714,9 +714,9 @@ const char *Decode_status (plp_status_t *status)
 	{0,0}
 	};
 
-char *Server_status( int d )
+const char *Server_status( int d )
 {
-	char *s;
+	const char *s;
 	int i;
 	static char msg[LINEBUFFER];
 
@@ -734,7 +734,7 @@ char *Server_status( int d )
  */
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void setstatus (struct job *job,char *fmt,...)
+ void setstatus (struct job *job,const char *fmt,...)
 #else
  void setstatus (va_alist) va_dcl
 #endif
@@ -785,7 +785,7 @@ char *Server_status( int d )
 
 /* VARARGS2 */
 #ifdef HAVE_STDARGS
- void setmessage (struct job *job,const char *header, char *fmt,...)
+ void setmessage (struct job *job,const char *header, const char *fmt,...)
 #else
  void setmessage (va_alist) va_dcl
 #endif

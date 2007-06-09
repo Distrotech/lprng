@@ -7,15 +7,11 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: copyright.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
-
-
 #include "lp.h"
 #include "patchlevel.h"
 /**** ENDINCLUDE ****/
 
-char *Copyright[] = {
+const char *Copyright[] = {
  PATCHLEVEL
 #if defined(KERBEROS)
  ", Kerberos5"

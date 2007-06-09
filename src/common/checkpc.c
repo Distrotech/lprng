@@ -46,7 +46,8 @@ int main( int argc, char *argv[], char *envp[] )
 	char *printcap;
 	/*char *serial_line = 0;*/
 	struct line_list raw, spooldirs;
-	char *s, *t;
+	const char *s, *t;
+	char *p;
 	struct stat statb;
 
 	(void)signal( SIGPIPE, SIG_IGN );
@@ -185,17 +186,17 @@ int main( int argc, char *argv[], char *envp[] )
 		if(Verbose)MESSAGE( "LPD lockfile '%s'", path );
 		if( path[0] != '/' ){
 			WARNMSG( "Warning: LPD lockfile '%s' not absolute path", path );
-		} else if( !(s = safestrrchr(path+1,'/')) ){
+		} else if( !(p = safestrrchr(path+1,'/')) ){
 			WARNMSG( "Warning: bad LPD lockfile '%s' path format", path );
 		} else {
-			*s = 0;
+			*p = 0;
 			if( stat( path, &statb ) ){
 				WARNMSG( "  LPD Lockfile directory '%s' does not exist!", path);
 				if( Fix ){
 					mkdir_path( path );
 				}
 			}
-			*s = '/';
+			*p = '/';
 		}
 		if( path ) free( path ); path = 0;
 		Spool_file_perms_DYN = oldfile;
@@ -277,7 +278,7 @@ void mkdir_path( char *path )
  ***************************************************************************/
 
  /* check for these names and values */
- static char *filter_names[] = {
+ static const char *filter_names[] = {
 	"filter", "bp", "bs", "be", 0
 	};
 
@@ -285,7 +286,8 @@ void Scan_printer(struct line_list *spooldirs)
 {
 	DIR *dir;
 	struct dirent *d;
-	char *s, *cf_name, **names;		/* ACME pointers */
+	char *s, *cf_name;		/* ACME pointers */
+	const char *cs, **names;
 	int jobfile;
 	struct stat statb;
 	int fd = 0;				/* device file descriptor */
@@ -369,7 +371,7 @@ void Scan_printer(struct line_list *spooldirs)
 	 * check the permissions of files and directories
 	 * Also remove old job or control files
 	 */
-	if( Check_spool_dir( Spool_dir_DYN, 1 ) > 1 ){
+	if( Check_spool_dir( Spool_dir_DYN ) > 1 ){
 		WARNMSG( "  Printer_DYN '%s' spool dir '%s' needs fixing",
 			Printer_DYN, Spool_dir_DYN );
 		return;
@@ -418,8 +420,8 @@ void Scan_printer(struct line_list *spooldirs)
 		if( jobfile && Age && delta > Age ){
 			float n = (delta)/60.0 ;
 			float a = (Age)/60.0 ;
-			char *remove = Remove?" (removing)":"";
-			char *range = "mins";
+			const char *remove = Remove?" (removing)":"";
+			const char *range = "mins";
 			if( a/60 > 2 ){
 				a = a/60;
 				n = n/60;
@@ -459,7 +461,7 @@ void Scan_printer(struct line_list *spooldirs)
 	Fix_clean(Log_file_DYN,Nolog);
 	Fix_clean(Accounting_file_DYN,Noaccount);
 	if( (s = Ppd_file_DYN) ){
-		Check_read_file( s, Fix, 0644, 0 );
+		Check_read_file( s, Fix, 0644 );
 	}
 	/*
 	 * get the jobs in the queue
@@ -507,8 +509,8 @@ void Scan_printer(struct line_list *spooldirs)
 		Check_executable_filter( error, 0 );
 	}
 
-	for( names = filter_names; (s = *names); ++names ){
-		Check_executable_filter( s, 0 );
+	for( names = filter_names; (cs = *names); ++names ){
+		Check_executable_filter( cs, 0 );
 	}
 
 	/* check the Lpd_port_DYN */
@@ -524,7 +526,7 @@ void Scan_printer(struct line_list *spooldirs)
 	}
 }
 
-void Check_executable_filter( char *id, char *filter_str )
+void Check_executable_filter( const char *id, char *filter_str )
 {
 	struct line_list files;
 	char *s, *t;
@@ -760,7 +762,7 @@ int Check_file( char  *path, int fix, int age, int rmflag )
  *    int fix  - fix or check
  ***************************************************************************/
 
-int Check_read_file( char  *path, int fix, int perms, int owner )
+int Check_read_file( char  *path, int fix, int perms )
 {
 	struct stat statb;
 	int err = 0;
@@ -783,7 +785,6 @@ int Check_read_file( char  *path, int fix, int perms, int owner )
 	}
 	if( (fd = Checkread( path, &statb )) < 0 ){
 		if( fix ){
-			if( owner ) Fix_owner( path );
 			Fix_perms( path, perms );
 		} else {
 			WARNMSG( " %s: cannot open %s - %s", Printer_DYN?Printer_DYN:"",
@@ -875,7 +876,7 @@ int Fix_perms( char *path, int perms )
  * Check to see that the spool directory exists, and create it if necessary
  ***************************************************************************/
 
-int Check_spool_dir( char *path, int owner )
+int Check_spool_dir( char *path )
 {
 	struct stat statb;
 	struct line_list parts;
@@ -932,7 +933,6 @@ int Check_spool_dir( char *path, int owner )
 	if(pathname) free(pathname); pathname = 0;
 	Free_line_list(&parts);
 	/* now we do chown if necessary */
-	if( !owner ) return(err);
 	if( Fix ){
 		char cmd[SMALLBUFFER];
 		int euid = geteuid();
@@ -990,8 +990,8 @@ void Test_port(int ruid, int euid, char *serial_line )
 	char t2[LINEBUFFER];
 	char stty[LINEBUFFER];
 	char diff[LINEBUFFER];
-	char *sttycmd;
-	char *diffcmd;
+	const char *sttycmd;
+	const char *diffcmd;
 	int ttyfd;
 	static pid_t pid, result;
 	plp_status_t status;

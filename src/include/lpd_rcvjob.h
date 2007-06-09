@@ -15,7 +15,7 @@
 /* PROTOTYPES */
 int Receive_job( int *sock, char *input );
 int Receive_block_job( int *sock, char *input );
-int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info );
+int Scan_block_file( int fd, char *error, int errlen );
 int Read_one_line( int timeout, int fd, char *buffer, int maxlen );
 int Check_space( double jobsize, int min_space, char *pathname );
 int Do_perm_check( struct job *job, char *error, int errlen );

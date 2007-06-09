@@ -129,6 +129,7 @@
  * 
  ***************************************************************************/
 
+static void Add_banner_to_job( struct job *job );
 
 /*
  * Signal handler to set flags and terminate system calls
@@ -246,7 +247,7 @@ void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done
  *  dump the server information list
  ***************************************************************************/
 
-void Dump_subserver_info( char *title, struct line_list *l)
+static void Dump_subserver_info( const char *title, struct line_list *l)
 {
 	char buffer[LINEBUFFER];
 	int i;
@@ -1235,7 +1236,6 @@ int Do_queue_jobs( char *name, int subserver )
 		goto again;
 	}
 	cleanup(0);
-	return(0);
 }
 
 /***************************************************************************
@@ -2196,7 +2196,8 @@ int Check_print_perms( struct job *job )
 void Setup_user_reporting( struct job *job )
 {
 	char *host = Find_str_value(&job->info,MAILNAME);
-	char *port = 0, *protocol = "UDP", *s;
+	char *port = 0, *s;
+	const char *protocol = "UDP";
 	int prot_num = SOCK_DGRAM;
 	char errmsg[SMALLBUFFER];
 
@@ -2397,9 +2398,10 @@ void Service_worker( struct line_list *args )
 	cleanup(0);
 }
 
-void Add_banner_to_job( struct job *job )
+static void Add_banner_to_job( struct job *job )
 {
-	char *banner_name, *tempfile;
+	const char *banner_name;
+	char *tempfile;
 	struct line_list *lp;
 	int tempfd;
 
@@ -2465,7 +2467,8 @@ void Add_banner_to_job( struct job *job )
 void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 {
 	struct line_list *datafile;
-	char *tempfile, *openname, *format, *s, *filter, *id, *old_lp_value;
+	char *tempfile, *openname, *s, *filter, *id, *old_lp_value;
+	const char *format;
 	char filter_name[8], filter_title[64], msg[SMALLBUFFER],
 		filtermsgbuffer[SMALLBUFFER];
 	struct stat statb;

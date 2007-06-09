@@ -69,7 +69,7 @@ pid_t plp_waitpid (pid_t pid, plp_status_t *statusPtr, int options)
  * Killchildren( signal ) - kill all children of this process
  ***************************************************************************/
 
-void Dump_pinfo( char *title, struct line_list *p ) 
+static void Dump_pinfo( const char *title, struct line_list *p ) 
 {
 	int i, pid;
 	LOGDEBUG("*** Dump_pinfo %s - count %d ***", title, p->count );
@@ -128,7 +128,7 @@ pid_t dofork( int new_process_group )
 {
 	pid_t pid;
 	int i;
-	char *s;
+	const char *s;
 
 	pid = fork();
 	if( pid == 0 ){
@@ -245,6 +245,8 @@ void Max_open( int fd )
 	}
 }
 
+static void Dump_unfreed_mem(const char *title);
+
 plp_signal_t cleanup (int passed_signal)
 {
 	plp_block_mask oblock;
@@ -302,7 +304,7 @@ plp_signal_t cleanup (int passed_signal)
 	exit(Errorcode);
 }
 
-void Dump_unfreed_mem(char *title)
+static void Dump_unfreed_mem(const char *title)
 {
 	char buffer[SMALLBUFFER];
 	buffer[0] = 0;

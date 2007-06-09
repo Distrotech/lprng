@@ -65,13 +65,13 @@ struct job{
  */
 
 struct keywords{
-    char *keyword;		/* name of keyword */
-	char *translation;	/* translation for display */
-    int type;			/* type of entry */
-    void *variable;		/* address of variable */
+	const char *keyword;	/* name of keyword */
+	const char *translation;/* translation for display */
+	int type;		/* type of entry */
+	void *variable;		/* address of variable */
 	int  maxval;		/* value of token */
 	int  flag;			/* flag for variable */
-	char *default_value;		/* default value */
+	const char *default_value;	/* default value */
 };
 
 struct jobwords{
@@ -79,7 +79,7 @@ struct jobwords{
     int type;			/* type of entry */
     void *variable;		/* address of variable */
 	int  maxlen;		/* length of value */
-	char *key;			/* key we use for value */
+	const char *key;			/* key we use for value */
 };
 
 /*
@@ -122,20 +122,20 @@ EXTERN struct line_list *Allocs[]
 /*
  * Constants
  */
-EXTERN char *Option_value_sep DEFINE( = " \t=#@" );
-EXTERN char *Hash_value_sep DEFINE( = "=#" );
-EXTERN char *Whitespace DEFINE( = " \t\n\f" );
-EXTERN char *List_sep DEFINE( = "[] \t\n\f," );
-EXTERN char *Linespace DEFINE( = " \t" );
-EXTERN char *File_sep DEFINE( = " \t,;:" );
-EXTERN char *Strict_file_sep DEFINE( = ";:" );
-EXTERN char *Perm_sep DEFINE( = "=,;" );
-EXTERN char *Arg_sep DEFINE( = ",;" );
-EXTERN char *Name_sep DEFINE( = "|:" );
-EXTERN char *Line_ends DEFINE( = "\n\014\004\024" );
-EXTERN char *Line_ends_and_colon DEFINE( = "\n\014\004\024:" );
-EXTERN char *Printcap_sep DEFINE( = "|:" );
-EXTERN char *Host_sep DEFINE( = "{} \t," );
+EXTERN const char *Option_value_sep DEFINE( = " \t=#@" );
+EXTERN const char *Hash_value_sep DEFINE( = "=#" );
+EXTERN const char *Whitespace DEFINE( = " \t\n\f" );
+EXTERN const char *List_sep DEFINE( = "[] \t\n\f," );
+EXTERN const char *Linespace DEFINE( = " \t" );
+EXTERN const char *File_sep DEFINE( = " \t,;:" );
+EXTERN const char *Strict_file_sep DEFINE( = ";:" );
+EXTERN const char *Perm_sep DEFINE( = "=,;" );
+EXTERN const char *Arg_sep DEFINE( = ",;" );
+EXTERN const char *Name_sep DEFINE( = "|:" );
+EXTERN const char *Line_ends DEFINE( = "\n\014\004\024" );
+EXTERN const char *Line_ends_and_colon DEFINE( = "\n\014\004\024:" );
+EXTERN const char *Printcap_sep DEFINE( = "|:" );
+EXTERN const char *Host_sep DEFINE( = "{} \t," );
 
 /* PROTOTYPES */
 void lowercase( char *s );
@@ -164,16 +164,15 @@ void Init_line_list( struct line_list *l );
 void Free_line_list( struct line_list *l );
 void Free_listof_line_list( struct line_list *l );
 void Check_max( struct line_list *l, int incr );
-char *Add_line_list( struct line_list *l, char *str,
+char *Add_line_list( struct line_list *l, const char *str,
 		const char *sep, int sort, int uniq );
 void Merge_line_list( struct line_list *dest, struct line_list *src,
-	char *sep, int sort, int uniq );
-void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
-	char *sep, int sort, int uniq );
-void Split( struct line_list *l, char *str, const char *sep,
-	int sort, const char *keysep, int uniq, int trim, int nocomments, char *escape );
-char *Join_line_list( struct line_list *l, char *sep );
-char *Join_line_list_with_sep( struct line_list *l, char *sep );
+	const char *sep, int sort, int uniq );
+void Merge_listof_line_list( struct line_list *dest, struct line_list *src);
+void Split( struct line_list *l, const char *str, const char *sep,
+	int sort, const char *keysep, int uniq, int trim, int nocomments, const char *escape );
+char *Join_line_list( struct line_list *l, const char *sep );
+char *Join_line_list_with_sep( struct line_list *l, const char *sep );
 void Dump_line_list( const char *title, struct line_list *l );
 void Dump_line_list_sub( const char *title, struct line_list *l );
 char *Find_str_in_flat( char *str, const char *key, const char *sep );
@@ -191,9 +190,9 @@ void Remove_line_list( struct line_list *l, int mid );
 int Find_flag_value( struct line_list *l, const char *key );
 int Find_decimal_value( struct line_list *l, const char *key );
 double Find_double_value( struct line_list *l, const char *key );
-void Find_tags( struct line_list *dest, struct line_list *l, char *key );
+void Find_tags( struct line_list *dest, struct line_list *l, const char *key );
 void Find_default_tags( struct line_list *dest,
-	struct keywords *var_list, char *tag );
+	struct keywords *var_list, const char *tag );
 void Read_file_list( int required, struct line_list *model, char *str,
 	const char *linesep, int sort, const char *keysep, int uniq, int trim,
 	int marker, int doinclude, int nocomment, int depth, int maxdepth );
@@ -233,22 +232,22 @@ void Clear_tempfile_list(void);
 void Unlink_tempfiles(void);
 void Remove_tempfiles(void);
 void Split_cmd_line( struct line_list *l, char *line );
-int Make_passthrough( char *line, char *flags, struct line_list *passfd,
+int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 	struct job *job, struct line_list *env_init );
-int Filter_file( int timeout, int input_fd, int output_fd, char *error_header,
-	char *pgm, char * filter_options, struct job *job,
+int Filter_file( int timeout, int input_fd, int output_fd, const char *error_header,
+	char *pgm, const char * filter_options, struct job *job,
 	struct line_list *env, int verbose );
 char *Is_clean_name( char *s );
 void Clean_name( char *s );
 void Clean_meta( char *t );
-void Dump_parms( char *title, struct keywords *k );
-void Dump_default_parms( int fd, char *title, struct keywords *k );
+void Dump_parms( const char *title, struct keywords *k );
+void Dump_default_parms( int fd, const char *title, struct keywords *k );
 void Fix_Z_opts( struct job *job );
-void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags );
+void Fix_dollars( struct line_list *l, struct job *job, int nosplit, const char *flags );
 char *Make_pathname( const char *dir,  const char *file );
 int Get_keyval( char *s, struct keywords *controlwords );
-char *Get_keystr( int c, struct keywords *controlwords );
-char *Escape( char *str, int level );
+const char *Get_keystr( int c, struct keywords *controlwords );
+char *Escape( const char *str, int level );
 void Escape_colons( struct line_list *list );
 void Unescape( char *str );
 char *Fix_str( char *str );

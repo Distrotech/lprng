@@ -24,6 +24,8 @@
 /* this file contains code that was formerly in linelist.c but split
  * out as it is only needed in lpd and pulls much code with it */
 
+static void Do_work( const char *name, struct line_list *args );
+
 /*
  *  Support for non-copy on write fork as for NT
  *   1. Preparation for the fork is done by calling 'Setup_lpd_call'
@@ -88,7 +90,7 @@ void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
  *  returns: pid of child or -1 if fork failed.
  */
 
-int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args )
+int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list *args )
 {
 	int pid, fd, i, n, newfd;
 	struct line_list env;
@@ -152,7 +154,7 @@ int Make_lpd_call( char *name, struct line_list *passfd, struct line_list *args 
 	return(0);
 }
 
-void Do_work( char *name, struct line_list *args )
+static void Do_work( const char *name, struct line_list *args )
 {
 	WorkerProc *proc = NULL;
 	Logger_fd = Find_flag_value(args, LOGGER);
@@ -184,7 +186,7 @@ void Do_work( char *name, struct line_list *args )
  *   - adds an input FD
  */
 
-int Start_worker( char *name, struct line_list *parms, int fd )
+int Start_worker( const char *name, struct line_list *parms, int fd )
 {
 	struct line_list passfd, args;
 	int pid;

@@ -90,7 +90,7 @@ struct perm_check {
 EXTERN struct perm_check Perm_check;
 
 /* PROTOTYPES */
-char *perm_str( int n );
+const char *perm_str( int n );
 int perm_val( char *s );
 int Perms_check( struct line_list *perms, struct perm_check *check,
 	struct job *job, int job_check );
@@ -102,7 +102,7 @@ int match_range( struct line_list *list, int port, int invert );
 int match_char( struct line_list *list, int value, int invert );
 int match_group( struct line_list *list, const char *str, int invert );
 int ingroup( char *group, const char *user );
-void Dump_perm_check( char *title,  struct perm_check *check );
+void Dump_perm_check( const char *title,  struct perm_check *check );
 void Perm_check_to_list( struct line_list *list, struct perm_check *check );
 
 #endif

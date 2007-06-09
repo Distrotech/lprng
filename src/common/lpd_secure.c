@@ -246,7 +246,6 @@ int Receive_secure( int *sock, char *input )
 		}
 	}
 	cleanup(0);
-	return(0);
 }
 
 int Do_secure_work( char *jobsize, int from_server,
@@ -329,7 +328,7 @@ int Do_secure_work( char *jobsize, int from_server,
 					tempfile, Errormsg(errno));
 			goto error;
 		}
-		status = Scan_block_file( fd, error, sizeof(error), header_info );
+		status = Scan_block_file( fd, error, sizeof(error) );
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
 			SNPRINTF( error, sizeof(error))
@@ -392,7 +391,8 @@ struct security *Fix_receive_auth( char *name, struct line_list *info )
 	if( s->name == 0 ){
 		s = 0;
 	} else {
-		char buffer[64], *str;
+		char buffer[64];
+		const char *str;
 		if( !(str = s->config_tag) ) str = s->name;
 		SNPRINTF(buffer,sizeof(buffer))"%s_", str );
 		Find_default_tags( info, Pc_var_list, buffer );

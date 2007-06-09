@@ -68,6 +68,12 @@
  * 
  ****************************************************************************/
 
+static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, int *of_stderr,
+	int output, char **outbuf, int *outmax, int *outlen,
+	struct job *job, const char *id, int terminate_of,
+	char *msgbuffer, int msglen );
+
+
  
 /****************************************************************************
  * int Print_job( int output, - output device
@@ -116,7 +122,8 @@ int Print_job( int output, int status_device, struct job *job,
 	char msg[SMALLBUFFER];
 	char filter_name[8], filter_title[64], msgbuffer[SMALLBUFFER],
 		filtermsgbuffer[SMALLBUFFER];
-	char *id, *s, *banner_name, *transfername, *openname, *format;
+	const char *id, *s, *banner_name, *transfername, *openname, *format;
+	char *t;
 	struct line_list *datafile, files;
 	struct stat statb;
 
@@ -265,8 +272,8 @@ int Print_job( int output, int status_device, struct job *job,
 				if( !(s = strchr(filter,'/')) ) s = filter;
 			}
 			SNPRINTF(msg, sizeof(msg)) "%s", s );
-			if( (s = strpbrk(msg,Whitespace)) ) *s = 0;
-			if( (s = strrchr(msg,'/')) ) memmove(msg,s+1,safestrlen(s+1)+1);
+			if( (t = strpbrk(msg,Whitespace)) ) *t = 0;
+			if( (t = strrchr(msg,'/')) ) memmove(msg,t+1,strlen(t+1)+1);
 		} else {
 			SNPRINTF(msg, sizeof(msg)) "%s", "none - passthrough" );
 		}
@@ -575,9 +582,9 @@ int Print_job( int output, int status_device, struct job *job,
 
  static const char *Filter_stop = "\031\001";
 
-int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, int *of_stderr,
+static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, int *of_stderr,
 	int output, char **outbuf, int *outmax, int *outlen,
-	struct job *job, char *id, int terminate_of,
+	struct job *job, const char *id, int terminate_of,
 	char *msgbuffer, int msglen )
 {
 	char msg[SMALLBUFFER];
@@ -740,7 +747,7 @@ int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, int *of_
  * check for a small or large banner as necessary
  */
 
-void Print_banner( char *name, char *pgm, struct job *job )
+void Print_banner( const char *name, char *pgm, struct job *job )
 {
 	char buffer[LARGEBUFFER];
 	int len, n;
@@ -837,7 +844,7 @@ void Print_banner( char *name, char *pgm, struct job *job )
  *     JRDERR     -  (-1 originally) - error reading or writing
  */
 
-int Write_outbuf_to_OF( struct job *job, char *title,
+int Write_outbuf_to_OF( struct job *job, const char *title,
 	int of_fd, char *buffer, int outlen,
 	int of_error, char *msg, int msgmax,
 	int timeout, int poll_for_status, char *status_file )
@@ -958,7 +965,7 @@ int Write_outbuf_to_OF( struct job *job, char *title,
  *   JTIMEOUT - timeout
  */
 
-int Get_status_from_OF( struct job *job, char *title, int of_pid,
+int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 	int of_error, char *msg, int msgmax,
 	int timeout, int suspend, int max_wait, char *status_file )
 {
@@ -1088,7 +1095,7 @@ int Get_status_from_OF( struct job *job, char *title, int of_pid,
  *
  ****************************************************************************/
 
-int Wait_for_pid( int of_pid, char *name, int suspend, int timeout )
+int Wait_for_pid( int of_pid, const char *name, int suspend, int timeout )
 {
 	int pid, err, return_code;
  	plp_status_t ps_status;

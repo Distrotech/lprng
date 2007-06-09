@@ -12,7 +12,7 @@
 #ifndef _GETQUEUE_H
 #define _GETQUEUE_H
 
-EXTERN char *CTRL_A_str DEFINE( = "\001" );
+EXTERN const char *CTRL_A_str DEFINE( = "\001" );
 
 /* SSL */
 EXTERN const char * ACTION				DEFINE( = "action" );
@@ -204,7 +204,7 @@ void Free_job( struct job *job );
 void Copy_job( struct job *dest, struct job *src );
 char *Fix_job_number( struct job *job, int n );
 char *Make_identifier( struct job *job );
-void Dump_job( char *title, struct job *job );
+void Dump_job( const char *title, struct job *job );
 void Job_printable( struct job *job, struct line_list *spool_control,
 	int *pprintable, int *pheld, int *pmove, int *perr, int *pdone );
 int Server_active( char *file );
@@ -212,8 +212,8 @@ void Update_destination( struct job *job );
 int Get_destination( struct job *job, int n );
 int Get_destination_by_name( struct job *job, char *name );
 int Trim_status_file( int status_fd, char *file, int max, int min );
-char *Fix_datafile_infox( struct job *job, char *number, char *suffix,
-	char *xlate_format, int update_df_names );
+char *Fix_datafile_infox( struct job *job, const char *number, const char *suffix,
+	const char *xlate_format, int update_df_names );
 int ordercomp(  const void *left, const void *right, const void *orderp);
 void Fix_control( struct job *job, char *filter, char *xlate_format,
 	int update_df_names );

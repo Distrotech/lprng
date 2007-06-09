@@ -55,7 +55,7 @@
 {0,0,0,0,0,0,0}
 };
 
-char *perm_str( int n )
+const char *perm_str( int n )
 {
 	return(Get_keystr(n,permwords));
 }
@@ -666,7 +666,7 @@ int ingroup( char *group, const char *user )
  * Dump perm_check information
  ***************************************************************************/
 
-void Dump_perm_check( char *title,  struct perm_check *check )
+void Dump_perm_check( const char *title,  struct perm_check *check )
 {
 	char buffer[SMALLBUFFER];
 	if( title ) LOGDEBUG( "*** perm_check %s ***", title );

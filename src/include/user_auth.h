@@ -68,8 +68,8 @@ typedef int (*RCV_DONE_PROC)( int *sock,
 	struct security *security );
 
 struct security {
-	char *name;				/* authentication name */
-	char *config_tag;		/* use this tag for configuration information */
+	const char *name;				/* authentication name */
+	const char *config_tag;		/* use this tag for configuration information */
 	int auth_flags;				/* flags */
 #define IP_SOCKET_ONLY	1 /* use TCP/IP socket only */
 	CONNECT_PROC client_connect;	/* client to server connection, talk to verify */

@@ -369,22 +369,23 @@ void Check_max( struct line_list *l, int incr )
  *  returns:  added string
  */
 
-char *Add_line_list( struct line_list *l, char *str,
+char *Add_line_list( struct line_list *l, const char *instr,
 		const char *sep, int sort, int uniq )
 {
 	char *s = 0;
+	char *str;
 	int c = 0, cmp, mid;
 	if(DEBUGL5){
 		char b[48];
 		int n;
-		SNPRINTF( b,sizeof(b)-8)"%s",str );
+		SNPRINTF( b,sizeof(b)-8)"%s",instr );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Add_line_list: '%s', sep '%s', sort %d, uniq %d",
 			b, sep, sort, uniq );
 	}
 
 	Check_max(l, 2);
-	str = safestrdup( str,__FILE__,__LINE__);
+	str = safestrdup( instr,__FILE__,__LINE__);
 	if( sort == 0 ){
 		l->list[l->count++] = str;
 	} else {
@@ -419,7 +420,7 @@ char *Add_line_list( struct line_list *l, char *str,
 
 /*
  *void Add_casekey_line_list( struct line_list *l, char *str,
- *  char *sep, int sort, int uniq )
+ *  char *sep )
  *  - add a copy of str to the line list, using case sensitive keys
  *  sep      - key separator, used for sorting
  *  sort = 1 - sort the values
@@ -427,7 +428,7 @@ char *Add_line_list( struct line_list *l, char *str,
  */
 
 static void Add_casekey_line_list( struct line_list *l, char *str,
-		const char *sep, int sort, int uniq )
+		const char *sep)
 {
 	char *s = 0;
 	int c = 0, cmp, mid;
@@ -436,15 +437,12 @@ static void Add_casekey_line_list( struct line_list *l, char *str,
 		int n;
 		SNPRINTF( b,sizeof(b)-8)"%s",str );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
-		LOGDEBUG("Add_casekey_line_list: '%s', sep '%s', sort %d, uniq %d",
-			b, sep, sort, uniq );
+		LOGDEBUG("Add_casekey_line_list: '%s', sep '%s', sort 1, uniq 1",
+			b, sep );
 	}
 
 	Check_max(l, 2);
 	str = safestrdup( str,__FILE__,__LINE__);
-	if( sort == 0 ){
-		l->list[l->count++] = str;
-	} else {
 		s = 0;
 		if( sep && (s = safestrpbrk( str, sep )) ){ c = *s; *s = 0; }
 		/* find everything <= the mid point */
@@ -452,7 +450,7 @@ static void Add_casekey_line_list( struct line_list *l, char *str,
 		cmp = Find_last_casekey( l, str, sep, &mid );
 		if( s ) *s = c;
 		/* str < list[mid+1] */
-		if( cmp == 0 && uniq ){
+		if( cmp == 0 ){
 			/* we replace */
 			free( l->list[mid] );		
 			l->list[mid] = str;
@@ -469,12 +467,11 @@ static void Add_casekey_line_list( struct line_list *l, char *str,
 				sizeof( char * ) * (l->count - mid));
 			l->list[mid] = str;
 		}
-	}
 	/* if(DEBUGL4)Dump_line_list("Add_casekey_line_list: result", l); */
 }
 
 void Merge_line_list( struct line_list *dest, struct line_list *src,
-	char *sep, int sort, int uniq )
+	const char *sep, int sort, int uniq )
 {
 	int i;
 	for( i = 0; i < src->count; ++i ){
@@ -482,8 +479,7 @@ void Merge_line_list( struct line_list *dest, struct line_list *src,
 	}
 }
 
-void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
-	char *sep, int sort, int uniq )
+void Merge_listof_line_list( struct line_list *dest, struct line_list *src)
 {
 	struct line_list *sp, *dp;
 	int i;
@@ -492,7 +488,7 @@ void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
 			Check_max( dest, 1 );
 			dp = malloc_or_die(sizeof(dp[0]),__FILE__,__LINE__);
 			memset(dp,0,sizeof(dp[0]));
-			Merge_line_list( dp, sp, sep, sort, uniq);
+			Merge_line_list( dp, sp, 0, 0, 0);
 			dest->list[dest->count++] = (void *)dp;
 		}
 	}
@@ -512,10 +508,11 @@ void Merge_listof_line_list( struct line_list *dest, struct line_list *src,
  *     i.e. - escape = ":" then \: would be replace by :
  *
  */
-void Split( struct line_list *l, char *str, const char *sep,
-	int sort, const char *keysep, int uniq, int trim, int nocomments, char *escape )
+void Split( struct line_list *l, const char *str, const char *sep,
+	int sort, const char *keysep, int uniq, int trim, int nocomments, const char *escape )
 {
-	char *end = 0, *t, *buffer = 0;
+	const char *end = 0, *t;
+	char *buffer = 0;
 	int len, blen = 0;
 	if(DEBUGL5){
 		char b[40];
@@ -568,7 +565,7 @@ void Split( struct line_list *l, char *str, const char *sep,
 	if( buffer ) free(buffer);
 }
 
-char *Join_line_list( struct line_list *l, char *sep )
+char *Join_line_list( struct line_list *l, const char *sep )
 {
 	char *s, *t, *str = 0;
 	int len = 0, i, n = 0;
@@ -597,7 +594,7 @@ char *Join_line_list( struct line_list *l, char *sep )
 	return( str );
 }
 
-char *Join_line_list_with_sep( struct line_list *l, char *sep )
+char *Join_line_list_with_sep( struct line_list *l, const char *sep )
 {
 	char *s = Join_line_list( l, sep );
 	int len = 0;
@@ -817,7 +814,7 @@ static const char *Find_value( struct line_list *l, const char *key )
 {
 	const char *s = "0";
 	int mid, cmp = -1;
-	char *sep = Option_value_sep;
+	const char *sep = Option_value_sep;
 
 	DEBUG5("Find_value: key '%s', sep '%s'", key, sep );
 	if( l ) cmp = Find_first_key( l, key, sep, &mid );
@@ -872,7 +869,7 @@ char *Find_str_value( struct line_list *l, const char *key )
 {
 	char *s = 0;
 	int mid, cmp = -1;
-	char *sep = Option_value_sep;
+	const char *sep = Option_value_sep;
 
 	if( l ) cmp = Find_first_key( l, key, sep, &mid );
 	if( cmp==0 ){
@@ -974,7 +971,7 @@ void Set_casekey_str_value( struct line_list *l, const char *key, const char *va
 	}
 	if( value && *value ){
 		s = safestrdup3(key,"=",value,__FILE__,__LINE__);
-		Add_casekey_line_list(l,s,Hash_value_sep,1,1);
+		Add_casekey_line_list(l,s,Hash_value_sep);
 		if(s) free(s); s = 0;
 	} else if( !Find_first_casekey(l, key, Hash_value_sep, &mid ) ){
 		Remove_line_list(l,mid);
@@ -1186,7 +1183,7 @@ static const char *Fix_val( const char *s )
  * to list
  */
 
-void Find_tags( struct line_list *dest, struct line_list *l, char *key )
+void Find_tags( struct line_list *dest, struct line_list *l, const char *key )
 {
 	int cmp=-1, cmpl = 0, bot, top, mid, len;
 	char *s;
@@ -1235,10 +1232,10 @@ void Find_tags( struct line_list *dest, struct line_list *l, char *key )
  */
 
 void Find_default_tags( struct line_list *dest,
-	struct keywords *var_list, char *tag )
+	struct keywords *var_list, const char *tag )
 {
 	int len = safestrlen(tag);
-	char *key, *value;
+	const char *key, *value;
 
 	if( var_list ) while( var_list->keyword ){
 		if( !strncmp((key = var_list->keyword), tag, len)
@@ -2492,7 +2489,7 @@ void Split_cmd_line( struct line_list *l, char *line )
  *  struct line_list *env_init  - environment
  ***************************************************************************/
 
-int Make_passthrough( char *line, char *flags, struct line_list *passfd,
+int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 	struct job *job, struct line_list *env_init )
 {
 	int c, i, pid = -1, noopts, root, newfd, fd;
@@ -2647,8 +2644,8 @@ int Make_passthrough( char *line, char *flags, struct line_list *passfd,
  *   if it exits with error status, we get JSIGNAL
  */
 
-int Filter_file( int timeout, int input_fd, int output_fd, char *error_header,
-	char *pgm, char * filter_options, struct job *job,
+int Filter_file( int timeout, int input_fd, int output_fd, const char *error_header,
+	char *pgm, const char * filter_options, struct job *job,
 	struct line_list *env, int verbose )
 {
 	int innull_fd, outnull_fd, pid, len, n;
@@ -2815,7 +2812,7 @@ void Clean_meta( char *t )
  *   entries in the array.
  **********************************************************************/
 
-void Dump_parms( char *title, struct keywords *k )
+void Dump_parms( const char *title, struct keywords *k )
 {
 	char *s;
 	void *p;
@@ -2855,9 +2852,9 @@ void Dump_parms( char *title, struct keywords *k )
  *   entries in the array.
  **********************************************************************/
 
-void Dump_default_parms( int fd, char *title, struct keywords *k )
+void Dump_default_parms( int fd, const char *title, struct keywords *k )
 {
-	char *def, *key;
+	const char *def, *key;
 	char buffer[2*SMALLBUFFER];
 	int n;
 
@@ -3049,7 +3046,7 @@ void Fix_Z_opts( struct job *job )
  *  flags -   flags to use for $*
  ***************************************************************************/
 
-void Fix_dollars( struct line_list *l, struct job *job, int nosplit, char *flags )
+void Fix_dollars( struct line_list *l, struct job *job, int nosplit, const char *flags )
 {
 	int i, j, count, space, notag, kind, n, c, position, quote;
 	const char *str;
@@ -3275,7 +3272,7 @@ char *Make_pathname( const char *dir,  const char *file )
 int Get_keyval( char *s, struct keywords *controlwords )
 {
 	int i;
-	char *t;
+	const char *t;
 	for( i = 0; controlwords[i].keyword; ++i ){
 		if(
 			safestrcasecmp( s, controlwords[i].keyword ) == 0
@@ -3287,7 +3284,7 @@ int Get_keyval( char *s, struct keywords *controlwords )
 	return( 0 );
 }
 
-char *Get_keystr( int c, struct keywords *controlwords )
+const char *Get_keystr( int c, struct keywords *controlwords )
 {
 	int i;
 	for( i = 0; controlwords[i].keyword; ++i ){
@@ -3298,7 +3295,7 @@ char *Get_keystr( int c, struct keywords *controlwords )
 	return( 0 );
 }
 
-char *Escape( char *str, int level )
+char *Escape( const char *str, int level )
 {
 	char *s = 0;
 	int i, c, j, k, incr = 3*level;
