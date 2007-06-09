@@ -1,3 +1,4 @@
+2007-06-09 brl clean up lpf.c and fix bug with spaces before arguments
 2007-06-08 brl move some #ifdefs into portable.h
 2007-06-08 wh/brl mark messages to be translated in various files
 2007-05-31 brl revert 10_linelist_closefd patch that slipped in earlier
