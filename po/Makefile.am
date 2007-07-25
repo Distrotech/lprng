@@ -10,7 +10,7 @@
 # Please note that the actual code of GNU gettext is covered by the GNU
 # General Public License and is *not* in the public domain.
 
-LINGUAS = de fr pl
+LINGUAS = de fr pl vi
 # what is in the POTFILES.in file in gettextize-style:
 # i.e. all files that include N_() or _()
 # if a file is added to this list, touch it so this Makefile sees it.
