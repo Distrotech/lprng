@@ -5,10 +5,10 @@
 #: src/common/lpc.c:271 src/common/lpc.c:436 src/common/lpq.c:545
 msgid ""
 msgstr ""
-"Project-Id-Version: lprng 3.8.29-b1\n"
+"Project-Id-Version: lprng 3.8.29-rc4\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
 "POT-Creation-Date: 2007-06-08 17:51+0200\n"
-"PO-Revision-Date: 2007-07-14 22:47+0930\n"
+"PO-Revision-Date: 2007-08-08 22:32+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -156,10 +156,8 @@ msgstr "PPD"
 
 #: src/common/lpc.c:129 src/common/lpq.c:179 src/common/lpstat.c:143
 #: src/common/lpr.c:91 src/common/lprm.c:146
-msgid ""
-"authentication requested (-A option) and AUTH environment variable not set"
-msgstr ""
-"yêu cầu xác thực (tùy chọn -A) nhưng chưa đặt biến môi trường xác thực AUTH"
+msgid "authentication requested (-A option) and AUTH environment variable not set"
+msgstr "yêu cầu xác thực (tùy chọn -A) nhưng chưa đặt biến môi trường xác thực AUTH"
 
 #: src/common/lpc.c:198
 msgid "exit"
@@ -247,36 +245,29 @@ msgid ""
 " kill      (printer[@host] | all)  - stop and restart server\n"
 " lpd       (printer[@host])        - get LPD PID \n"
 " lpq       (printer[@host] | all) (name[@host] | job | all)*   - invoke LPQ\n"
-" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke "
-"LPRM\n"
+" lprm      (printer[@host] | all) (name[@host]|host|job| all)* - invoke LPRM\n"
 " msg       printer message text  - set status message\n"
 " move      printer (user|jobid)* target - move jobs to new queue\n"
 " noholdall (printer[@host] | all)  - hold all jobs off\n"
 " printcap  (printer[@host] | all)  - report printcap values\n"
 " quit                              - exit LPC\n"
-" redirect  (printer[@host] | all) (printer@host | off )*       - redirect "
-"jobs\n"
-" redo      (printer[@host] | all) (name[@host] | job | all)*   - reprint "
-"jobs\n"
-" release   (printer[@host] | all) (name[@host] | job | all)*   - release "
-"jobs\n"
+" redirect  (printer[@host] | all) (printer@host | off )*       - redirect jobs\n"
+" redo      (printer[@host] | all) (name[@host] | job | all)*   - reprint jobs\n"
+" release   (printer[@host] | all) (name[@host] | job | all)*   - release jobs\n"
 " reread                            - LPD reread database information\n"
 " start     (printer[@host] | all)  - start printing\n"
 " status    (printer[@host] | all)  - status of printers\n"
 " stop      (printer[@host] | all)  - stop  printing\n"
-" topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder "
-"jobs\n"
+" topq      (printer[@host] | all) (name[@host] | job | all)*   - reorder jobs\n"
 " up        (printer[@host] | all) - enable printing and queueing\n"
 "   diagnostic:\n"
 "      defaultq               - show default queue for LPD server\n"
 "      defaults               - show default configuration values\n"
-"      lang                   - show current i18n (iNTERNATIONALIZATIONn) "
-"support\n"
+"      lang                   - show current i18n (iNTERNATIONALIZATIONn) support\n"
 "      client (printer | all) - client config and printcap information\n"
 "      server (printer | all) - server config and printcap\n"
 msgstr ""
-"cách sử dụng: %s [-a][-Dcấp_gỡ_lỗi][-Pmáy_in][-Smáy][-Utên_người_dùng][-V] "
-"[lệnh]\n"
+"cách sử dụng: %s [-a][-Dcấp_gỡ_lỗi][-Pmáy_in][-Smáy][-Utên_người_dùng][-V] [lệnh]\n"
 " không có lệnh thì đọc từ thiết bị nhập chuẩn STDIN\n"
 "  -a           \t\t— bí danh cho « -Pall »\n"
 "  -Dcấp_gỡ_lỗi \t— cấp gỡ lỗi\n"
@@ -316,8 +307,7 @@ msgstr ""
 "\t(_giữ lại_)\n"
 " holdall   (máy_in[@máy] | all)\t— giữ lại mọi công việc đã bật\n"
 "\t(_giữ lại tất cả_)\n"
-" kill      (máy_in[@máy] | all) \t\t— dừng chạy rồi khởi chạy lại trình phục "
-"vụ\n"
+" kill      (máy_in[@máy] | all) \t\t— dừng chạy rồi khởi chạy lại trình phục vụ\n"
 "\t(_giết_)\n"
 " lpd       (máy_in[@máy])\t\t\t— lấy PID của LPD\n"
 " lpq       (máy_in[@máy] | all) (tên[@máy] | job | all)*\n"
@@ -344,8 +334,7 @@ msgstr ""
 " release   (máy_in[@máy] | all) (tên[@máy] | job | all)*\n"
 "\t\t\tphát hành công việc\n"
 "\t(_phát hành_)\n"
-" reread                            \t\t— LPD đọc lại thông tin cơ sở dữ "
-"liệu\n"
+" reread                            \t\t— LPD đọc lại thông tin cơ sở dữ liệu\n"
 "\t(_đọc lại_)\n"
 " start     (máy_in[@máy] | all)\t\t— bắt đầu in\n"
 "\t(_bắt đầu_)\n"
@@ -359,18 +348,15 @@ msgstr ""
 " up        (máy_in[@máy] | all) \t— bật khả năng in và dùng hàng đợi\n"
 "\n"
 "   chẩn đoán:\n"
-"      defaultq               \t— hiện hàng đợi mặc định cho trình phục vụ "
-"LPD\n"
+"      defaultq               \t— hiện hàng đợi mặc định cho trình phục vụ LPD\n"
 "\t\t(_hàng đợi mặc định [viết tắt_)\n"
 "      defaults               \t— hiện các giá trị cấu hình mặc định\n"
 "\t\t(_các mặc định_)\n"
 "      lang                  \t— hiện cấp hỗ trợ quốc tế hoá hiện thời\n"
 "\t\t(_ngôn ngữ [viết tắt]_)\n"
-"      client (máy_in | all) \t— thông tin về cấu hình trình khách và "
-"printcap\n"
+"      client (máy_in | all) \t— thông tin về cấu hình trình khách và printcap\n"
 "\t\t(_khách_)\n"
-"      server (máy_in | all) — thông tin về cấu hình trình phục vụ và "
-"printcap\n"
+"      server (máy_in | all) — thông tin về cấu hình trình phục vụ và printcap\n"
 "\t\t(_máy/trình phục vụ_)\n"
 
 #: src/common/lpd.c:171
@@ -405,9 +391,7 @@ msgstr "lpd: lỗi chọn."
 
 #: src/common/lpd.c:696
 msgid "lpd: Lpd_request pipe EOF! cannot happen"
-msgstr ""
-"lpd: gặp kết thúc tập tin khi gửi yêu cầu Lpd_request qua ống dẫn: không thể "
-"xảy ra."
+msgstr "lpd: gặp kết thúc tập tin khi gửi yêu cầu Lpd_request qua ống dẫn: không thể xảy ra."
 
 #: src/common/lpd.c:722 src/common/lpd.c:725
 msgid "Setup_log: open /dev/null failed"
@@ -435,21 +419,17 @@ msgstr "lpd: không thể mở tập tin khoá « %s »"
 #: src/common/lpd.c:906
 #, c-format
 msgid ""
-"usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP "
-"destination port]\n"
+"usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destination port]\n"
 " Options\n"
 " -D dbg      - set debug level and flags\n"
 " -F          - run in foreground, log to STDERR\n"
 " -L logfile  - append log information to logfile\n"
 " -V          - show version info\n"
-" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port "
-"(lpd_listen_port)\n"
-" -P path     - UNIX socket path, 'off' disables UNIX listening socket "
-"(unix_socket_path)\n"
+" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"
+" -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"
 " -R port     - remote LPD server port (lpd_port)\n"
 msgstr ""
-"cách sử dụng: %s [-FV][-D cấp_gỡ_lỗi][-L bản_ghi][-P đường_dẫn][-p cổng][-R "
-"CX]\n"
+"cách sử dụng: %s [-FV][-D cấp_gỡ_lỗi][-L bản_ghi][-P đường_dẫn][-p cổng][-R CX]\n"
 "[CX\t\tcổng đích TCP/IP LPD từ xa\n"
 "\n"
 " Tùy chọn\n"
@@ -469,7 +449,7 @@ msgstr "lpd: fork() bị lỗi"
 
 #: src/common/lpd.c:997
 msgid "Server load too high"
-msgstr ""
+msgstr "Trọng tải quá lớn trên máy phục vụ"
 
 #: src/common/lpd.c:1006
 msgid "lpd: accept on listening socket failed"
@@ -609,7 +589,7 @@ msgstr "%s: không thể đặt tập tin giữ lại %s\n"
 
 #: src/common/lpd_control.c:836
 msgid " holdall"
-msgstr "giữ lại tất cả"
+msgstr " giữ lại tất cả"
 
 #: src/common/lpd_control.c:840
 #, c-format
@@ -1338,7 +1318,7 @@ msgstr " Hàng đợi: không có công việc có thể in\n"
 #: src/common/lpd_status.c:991
 #, c-format
 msgid " Queue: %d printable job%s\n"
-msgstr "Hàng đợi: %d công việc có thể in%s\n"
+msgstr " Hàng đợi: %d công việc có thể in%s\n"
 
 #: src/common/lpd_status.c:997
 #, c-format
@@ -1370,45 +1350,44 @@ msgstr " Trạng thái: "
 
 #: src/common/lpd_status.c:1044
 msgid " Filter_status: "
-msgstr " Trạng_thái_lọc:"
+msgstr " Trạng_thái_lọc: "
 
 #: src/common/lpd_dispatch.c:37
 #, c-format
 msgid "Dispatch_input: bad request line '%s' from %s"
-msgstr ""
+msgstr "Dispatch_input: dòng yêu cầu sai « %s » từ « %s »"
 
 #: src/common/lpd_dispatch.c:187
 msgid "Service_connection: getpeername failed"
-msgstr ""
+msgstr "Service_connection: getpeername (lấy tên ngang hàng) bị lỗi"
 
 #: src/common/lpd_dispatch.c:234
 msgid "Service_connection: BAD LocalHost_IP value"
-msgstr ""
+msgstr "Service_connection: giá trị LocalHost_IP SAI"
 
 #: src/common/lpd_dispatch.c:240
 #, c-format
 msgid "Service_connection: bad protocol family '%d'"
-msgstr ""
+msgstr "Service_connection: họ giao thức sai « %d »"
 
 #: src/common/lpd_dispatch.c:271
-#, fuzzy
 msgid "no connect permissions"
-msgstr "  không có quyền « %s »\n"
+msgstr "không có quyền kết nối"
 
 #: src/common/lpd_dispatch.c:293
 #, c-format
 msgid "Service_connection: peek of length %d failed"
-msgstr ""
+msgstr "Service_connection: hé nhìn có độ dài %d bị lỗi"
 
 #: src/common/lpd_dispatch.c:334
 #, c-format
 msgid "Service_connection: cannot read request from %s in %d seconds"
-msgstr ""
+msgstr "Service_connection: không thể đọc yêu cầu từ %s trong %d giây"
 
 #: src/common/lpd_dispatch.c:338
 #, c-format
 msgid "Service_connection: short request line '%s', from '%s'"
-msgstr ""
+msgstr "Service_connection: dòng yêu cầu ngắn « %s », từ « %s »"
 
 #: src/common/lpq.c:118
 #, c-format
@@ -1452,8 +1431,7 @@ msgstr "Máy in: %s là %s@%s\n"
 #: src/common/lpq.c:251
 #, c-format
 msgid "Printer: %s - cannot use printer, not in privileged group\n"
-msgstr ""
-"Máy in: %s — không thể sử dụng máy in vì không phải trong nhóm có quyền\n"
+msgstr "Máy in: %s — không thể sử dụng máy in vì không phải trong nhóm có quyền\n"
 
 #: src/common/lpq.c:367 src/common/lpq.c:372 src/common/lpq.c:382
 #: src/common/lpq.c:429 src/common/lpq.c:436
@@ -1475,32 +1453,31 @@ msgstr "lpq:  hãy dùng chưng trình thống kê lpstat LPRng\n"
 
 #: src/common/lpstat.c:191
 msgid "scheduler is running\n"
-msgstr ""
+msgstr "bộ lập lịch biểu đang chạy\n"
 
 #: src/common/lpstat.c:195
 msgid "no system default destination\n"
-msgstr ""
+msgstr "không có đích mặc định trên hệ thống\n"
 
 #: src/common/lpstat.c:197
 #, c-format
 msgid "system default destination: %s\n"
-msgstr ""
+msgstr "đích mặc định trên hệ thống: %s\n"
 
 #: src/common/lpstat.c:204
 #, c-format
 msgid "system for %s: %s\n"
-msgstr ""
+msgstr "hệ thống cho %s: %s\n"
 
 #: src/common/lpstat.c:246
-#, fuzzy, c-format
+#, c-format
 msgid "  Printer: %s - cannot use printer, not in privileged group\n"
-msgstr ""
-"Máy in: %s — không thể sử dụng máy in vì không phải trong nhóm có quyền\n"
+msgstr "  Máy in: %s — không thể sử dụng máy in vì không phải trong nhóm có quyền\n"
 
 #: src/common/lpstat.c:255
-#, fuzzy, c-format
+#, c-format
 msgid " Printer: %s - direct connection to device '%s'\n"
-msgstr "Máy in: %s — kết nối trực tiếp tới thiết bị « %s »\n"
+msgstr " Máy in: %s — kết nối trực tiếp tới thiết bị « %s »\n"
 
 #: src/common/lpstat.c:383
 #, c-format
@@ -1508,26 +1485,28 @@ msgid ""
 "%s not accepting requests since %s -\n"
 "\tunknown reason\n"
 msgstr ""
+"%s không chấp nhận yêu cầu kể từ %s -\n"
+"\tkhông biết sao\n"
 
 #: src/common/lpstat.c:385
 #, c-format
 msgid "%s accepting requests since %s\n"
-msgstr ""
+msgstr "%s chấp nhận yêu cầu kể từ %s\n"
 
 #: src/common/lpstat.c:393
 #, c-format
 msgid "printer %s unknown state. disabled since %s. available\n"
-msgstr ""
+msgstr "máy in %s tình trạng không rõ. tắt từ %s. sẵn sàng\n"
 
 #: src/common/lpstat.c:394
 #, c-format
 msgid "printer %s unknown state. enabled since %s. available\n"
-msgstr ""
+msgstr "máy in %s tình trạng không rõ. bật từ %s. sẵn sàng\n"
 
 #: src/common/lpstat.c:400
 #, c-format
 msgid "\tDescription: %s@%s\n"
-msgstr ""
+msgstr "\tMô tả: %s@%s\n"
 
 #: src/common/lpr.c:157
 msgid "nothing to print"
@@ -1666,8 +1645,7 @@ msgid ""
 " -y mode     - (passed as -Z mode)\n"
 " --          - end of options, files follow\n"
 " filename '-'  reads from STDIN\n"
-" PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default "
-"printer.\n"
+" PRINTER, LPDEST, NGPRINTER, NPRINTER environment variables set default printer.\n"
 msgstr ""
 "Cách sử dụng: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d máy_in@[máy]]\n"
 "  [-f tên_dạng] [-H quản_lý_đặc_biệt]\n"
@@ -1705,8 +1683,7 @@ msgstr ""
 " -y chế_độ\t— (được gửi như « -Z chế_độ »)\n"
 " --\t\t\t— kết thúc các tùy chọn, các tập tin theo sau\n"
 " tên tập tin « - » thì đọc từ thiết bị nhâp chuẩn STDIN\n"
-" Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc "
-"định.\n"
+" Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc định.\n"
 
 #: src/common/lpr.c:704
 #, c-format
@@ -1742,15 +1719,11 @@ msgid ""
 " -w width    - width to use\n"
 " --          - end of options, files follow\n"
 " filename '-'  reads from STDIN\n"
-" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default "
-"printer.\n"
+" PRINTER, LPDEST, NPRINTER, NGPRINTER environment variables set default printer.\n"
 msgstr ""
-"Usage: %s [-Pmáy_in[@máy]] [-A] [-B] [-Chạng] [-Fđịnh_dạng] [-G] [-"
-"Jthông_tin]\n"
-"   [-(K|#)số_bản_sao] [-Q] [-Rtên_tài_khoản]  [-Ttựa]  [-Ungười_dùng[@máy]] "
-"[-V]\n"
-"   [-Ztùy_chọn] [-b] [-m địa_chỉ_thư] [-h] [-i thụt_lề] [-l] [-w rộng ] [-"
-"r]\n"
+"Usage: %s [-Pmáy_in[@máy]] [-A] [-B] [-Chạng] [-Fđịnh_dạng] [-G] [-Jthông_tin]\n"
+"   [-(K|#)số_bản_sao] [-Q] [-Rtên_tài_khoản]  [-Ttựa]  [-Ungười_dùng[@máy]] [-V]\n"
+"   [-Ztùy_chọn] [-b] [-m địa_chỉ_thư] [-h] [-i thụt_lề] [-l] [-w rộng ] [-r]\n"
 "   [-Dtùy_chọn_gỡ_lỗi ] [--] [ tên_tập_tin ...  ]\n"
 "\n"
 " -A\t\t\t— dùng sự xác thực ghi rõ bởi biến môi trường AUTH\n"
@@ -1781,14 +1754,11 @@ msgstr ""
 " -w rộng\t\t— độ rộng cần dùng\n"
 " --\t\t\t— kết thúc các tùy chọn, các tập tin theo sau\n"
 " tên tập tin « - » thì đọc từ thiết bị nhâp chuẩn STDIN\n"
-" Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc "
-"định.\n"
+" Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc định.\n"
 
 #: src/common/lpr.c:801
 msgid "Priority (first letter of Class) not 'A' (lowest) to 'Z' (highest)"
-msgstr ""
-"Độ ưu tiên (chữ đầu của Hạng) không phải « A » (thấp nhất) đến « Z » (cao "
-"nhất)"
+msgstr "Độ ưu tiên (chữ đầu của Hạng) không phải « A » (thấp nhất) đến « Z » (cao nhất)"
 
 #: src/common/lpr.c:825 src/common/lpr.c:830
 msgid "(STDIN)"
@@ -1801,8 +1771,7 @@ msgstr "-U (tên người dùng) chỉ có thể được dùng bởi người c
 #: src/common/lpr.c:895
 #, c-format
 msgid "Get_local_host: '%s' FQDN name not found!"
-msgstr ""
-"Get_local_host: không tìm thấy tên miền có khả năng đầy đủ (FQDN) « %s »."
+msgstr "Get_local_host: không tìm thấy tên miền có khả năng đầy đủ (FQDN) « %s »."
 
 #: src/common/lpr.c:922
 #, c-format
@@ -1825,15 +1794,11 @@ msgstr "xác thực xung đột với tùy chọn « -k »"
 
 #: src/common/lpr.c:1002
 msgid "send_block_format configuration option conficts with -k option"
-msgstr ""
-"tùy chọn cấu hình « send_block_format » (gửi định dạng khối) cung đột với "
-"tùy chọn « -k »"
+msgstr "tùy chọn cấu hình « send_block_format » (gửi định dạng khối) cung đột với tùy chọn « -k »"
 
 #: src/common/lpr.c:1005
 msgid "send_data_first configuration option conficts with -k option"
-msgstr ""
-"tùy chọn cấu hình « send_data_first » (gửi dữ liệu trước) cung đột với tùy "
-"chọn « -k »"
+msgstr "tùy chọn cấu hình « send_data_first » (gửi dữ liệu trước) cung đột với tùy chọn « -k »"
 
 #: src/common/lpr.c:1008
 msgid "multiple copies conficts with -k option"
@@ -1849,9 +1814,7 @@ msgstr "Make_temp_fd bị lỗi"
 
 #: src/common/lpr.c:1101
 msgid "You have closed STDIN! cannot pipe from a closed connection"
-msgstr ""
-"Bạn đã đóng thiết bị nhập chuẩn STDIN. Không thể gửi dữ liệu cho ống dẫn từ "
-"sự kết nối bị đóng"
+msgstr "Bạn đã đóng thiết bị nhập chuẩn STDIN. Không thể gửi dữ liệu cho ống dẫn từ sự kết nối bị đóng"
 
 #: src/common/lpr.c:1108
 msgid "Copy_STDIN: write to temp file failed"
@@ -1881,12 +1844,8 @@ msgid "cannot read it"
 msgstr "không thể đọc nó"
 
 #: src/common/lpr.c:1242
-msgid ""
-"unprintable characters at start of file, check your LANG environment "
-"variable as well as the input file"
-msgstr ""
-"gặp ký tự không thể in ở đầu tập tin: hãy kiểm tra lại biến môi trường ngôn "
-"ngữ LANG, cũng như tập tin nhập vào"
+msgid "unprintable characters at start of file, check your LANG environment variable as well as the input file"
+msgstr "gặp ký tự không thể in ở đầu tập tin: hãy kiểm tra lại biến môi trường ngôn ngữ LANG, cũng như tập tin nhập vào"
 
 #: src/common/lpr.c:1249
 #, c-format
@@ -2016,22 +1975,20 @@ msgstr "không có khả năng hỗ trợ mạng cho thao tác « %s »"
 
 #: src/common/getopt.c:89
 msgid "--X option form illegal\n"
-msgstr ""
+msgstr "Tùy chọn --X có dạng cấm\n"
 
 #: src/common/getopt.c:100
 #, c-format
 msgid "%s: Illegal option '%c'\n"
-msgstr ""
+msgstr "%s: tùy chọn cấm « %c »\n"
 
 #: src/common/getopt.c:122
-#, fuzzy, c-format
+#, c-format
 msgid "%s: missing argument for '%c'\n"
-msgstr "tùy chọn « %c » thiếu đối số"
+msgstr "%s: thiếu đối số cho « %c »\n"
 
 #~ msgid "\n"
 #~ msgstr "\n"
 
 #~ msgid "authentication requested (-A) and no AUTH environment variable"
-#~ msgstr ""
-#~ "yêu cầu xác thực (tùy chọn -A) nhưng chưa đặt biến môi trường xác thực "
-#~ "AUTH"
+#~ msgstr "yêu cầu xác thực (tùy chọn -A) nhưng chưa đặt biến môi trường xác thực AUTH"
