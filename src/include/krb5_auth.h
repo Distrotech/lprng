@@ -4,13 +4,14 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: krb5_auth.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
 
 #ifndef _KRB5_AUTH_H
 #define _KRB5_AUTH_H 1
+
+#include "user_auth.h"
 
 /* PROTOTYPES */
 int server_krb5_status( int sock, char *err, int errlen, char *file );
@@ -30,7 +31,7 @@ int Krb5_receive( int *sock,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile );
+	struct security *security, char *tempfile, SECURE_WORKER_PROC do_secure_work);
 int Krb5_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,
