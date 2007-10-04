@@ -8,11 +8,10 @@
  ***************************************************************************/
 
 #include "lp.h"
-#include "patchlevel.h"
 /**** ENDINCLUDE ****/
 
 const char *Copyright[] = {
- PATCHLEVEL
+ PACKAGE_NAME "-" PACKAGE_VERSION
 #if defined(KERBEROS)
  ", Kerberos5"
 #endif

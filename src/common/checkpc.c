@@ -10,7 +10,6 @@
 #include "lp.h"
 #include "getopt.h"
 #include "checkpc.h"
-#include "patchlevel.h"
 #include "getprinter.h"
 #include "getqueue.h"
 #include "initialize.h"
