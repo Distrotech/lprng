@@ -317,6 +317,7 @@ int Do_secure_work( char *jobsize, int from_server,
 	if( (status = Check_secure_perms( header_info, from_server, error, sizeof(error))) ){
 		goto error;
 	}
+	DEBUGFC(DRECV1)Dump_line_list("Do_secure_work - header after check", header_info );
 
 
 	buffer[0] = 0;
@@ -328,7 +329,7 @@ int Do_secure_work( char *jobsize, int from_server,
 					tempfile, Errormsg(errno));
 			goto error;
 		}
-		status = Scan_block_file( fd, error, sizeof(error) );
+		status = Scan_block_file( fd, error, sizeof(error), header_info );
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
 			SNPRINTF( error, sizeof(error))

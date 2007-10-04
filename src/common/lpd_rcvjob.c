@@ -638,7 +638,7 @@ int Receive_block_job( int *sock, char *input )
 		goto error;
 	}
 
-	if( Scan_block_file( temp_fd, error, errlen-4 ) ){
+	if( Scan_block_file( temp_fd, error, errlen-4, 0 ) ){
 		ack = ACK_FAIL;
 		goto error;
 	}
@@ -689,7 +689,7 @@ int Receive_block_job( int *sock, char *input )
 
 
 /***************************************************************************
- * Scan_block_file( int fd, struct control_file *cfp )
+ * int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info )
  *  we scan the block file, getting the various portions
  *
  * Generate the compressed data files - this has the format
@@ -697,6 +697,7 @@ int Receive_block_job( int *sock, char *input )
  *    [count control file bytes]
  *    \4count dfname\n
  *    [count data file bytes]
+ * The header_info contains authentication information
  *
  *  We extract the various sections and find the offsets.
  *  Note that the various name fields will be the original
@@ -705,7 +706,7 @@ int Receive_block_job( int *sock, char *input )
  *          0 on success
  ***************************************************************************/
 
-int Scan_block_file( int fd, char *error, int errlen )
+int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info )
 {
 	char line[LINEBUFFER];
 	char buffer[LARGEBUFFER];
@@ -832,7 +833,7 @@ int Scan_block_file( int fd, char *error, int errlen )
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 						goto error;
 					}
 					Set_str_value(&job.info,INCOMING_TIME,0);
@@ -868,7 +869,7 @@ int Scan_block_file( int fd, char *error, int errlen )
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 						goto error;
 					}
 					Set_str_value(&job.info,INCOMING_TIME,0);
@@ -900,7 +901,7 @@ int Scan_block_file( int fd, char *error, int errlen )
 			}
 			if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 		} else {
-			if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+			if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 				goto error;
 			}
 			Set_str_value(&job.info,INCOMING_TIME,0);
@@ -1046,11 +1047,18 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
 	}
 
-	if( header_info && User_is_authuser_DYN ){
-		char *s = Find_str_value(header_info,AUTHUSER);
-		if( !ISNULL(s) ){
-			Set_str_value( &job->info,LOGNAME,s);
-			DEBUGF(DRECV1)("Check_for_missing_files: setting user to authuser '%s'", s );
+	if( header_info ){
+		char *s;
+		s = Find_str_value(header_info,AUTH); if( !ISNULL(s) ) Set_str_value( &job->info,AUTH,s);
+		s = Find_str_value(header_info,AUTHCA); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHCA,s);
+		s = Find_str_value(header_info,AUTHFROM); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHFROM,s);
+		s = Find_str_value(header_info,AUTHTYPE); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHTYPE,s);
+		if( User_is_authuser_DYN ){
+			s = Find_str_value(header_info,AUTHUSER);
+			if( !ISNULL(s) ){
+				Set_str_value( &job->info,LOGNAME,s);
+				DEBUGF(DRECV1)("Check_for_missing_files: setting user to authuser '%s'", s );
+			}
 		}
 	}
 
