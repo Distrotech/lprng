@@ -1222,24 +1222,6 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 		dnl we check for the library we need to use
 		dnl courtesy of mandrake linux and friends.
 		dnl  Christian Zoffoli <czoffoli@linux-mandrake.com>
-dnl X		SAVELIBS=$LIBS
-dnl X		found=
-dnl X		if test "$found" = "" ; then
-dnl X			LIBS=" -lcrypto -lcom_err $SAVELIBS"
-dnl X			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
-dnl X			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
-dnl X		fi;
-dnl X		if test "$found" = "" ; then
-dnl X			LIBS=" -lk5crypto -lcom_err $SAVELIBS"
-dnl X			AC_CHECKING(for krb5_des_string_to_key in $LIBS, )
-dnl X			AC_TRY_LINK_FUNC(krb5_des_string_to_key,found="yes")
-dnl X		fi;
-dnl X		if test "$found" = "" ; then
-dnl X			echo "Kerberos 5 encryption support library not found."
-dnl X			echo " You may need to use:"
-dnl X			echo "  configure 'CPPFLAGS=-I/usr/local/include' 'LDFLAGS=-L/usr/local/lib'"
-dnl X			exit 1
-dnl X		fi
 
 		SAVELIBS=$LIBS
 
@@ -1247,23 +1229,23 @@ dnl X		fi
 		if test "$found" "!=" "yes" ; then
 			found=yes
 			LIBS=" -lkrb5 -lcrypto -lcom_err $SAVELIBS"
-			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
+			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
-			AC_TRY_LINK_FUNC(krb5_read_message,,found="no")
 		fi;
 		if test "$found" "!=" "yes" ; then
 			found=yes
 			LIBS=" -lkrb5 -lk5crypto -lcom_err $SAVELIBS"
-			AC_CHECKING(for krb5_init_context and krb5_read_message in $LIBS )
+			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
-			AC_TRY_LINK_FUNC(krb5_read_message,,found="no")
 		fi;
 		if test "$found" "!=" "yes" ; then
-			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context or krb5_read_message )
+			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context or )
 			  AC_MSG_WARN(use configure --disable-kerberos or check your Kerberos 5 installation)
 			  exit 1
         fi
 		AC_MSG_RESULT(found in $LIBS)
+
+		AC_CHECK_FUNC(krb5_read_message,AC_DEFINE_UNQUOTED(HAVE_KRB5_READ_MESSAGE,1,[have krb5_read_message]),[AC_MSG_WARN(Kerberos 5 library does not have krb5_read_message)])
 
 		if test "$MIT_KERBEROS4" != "" ; then
 			SAVELIBS=$LIBS

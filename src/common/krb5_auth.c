@@ -29,8 +29,11 @@
  * or to use an older version of Kerberos
  */
 # define KRB5_DEPRECATED 1
+# define KRB5_PRIVATE 1
 # include <krb5.h>
-# include <com_err.h>
+# if defined(HAVE_COM_ERR_H)
+#  include <com_err.h>
+# endif
 
 # undef FREE_KRB_DATA
 # if defined(HAVE_KRB5_FREE_DATA_CONTENTS)
@@ -47,17 +50,81 @@
 #  endif
 # endif
 
-#if !defined(KRB5_PROTOTYPE)
-#define KRB5_PROTOTYPE(X) X
-#endif
- extern krb5_error_code krb5_read_message 
-	KRB5_PROTOTYPE((krb5_context,
-		   krb5_pointer, 
-		   krb5_data *));
- extern krb5_error_code krb5_write_message 
-	KRB5_PROTOTYPE((krb5_context,
-		   krb5_pointer, 
-		   krb5_data *));
+# ifdef HAVE_KRB5_READ_MESSAGE
+#  define read_message krb5_read_message
+#  define write_message krb5_write_message
+# else
+static int net_read( int fd, char *buf, int len )
+{
+  int remaining = len;
+  while (remaining) {
+    int r;
+    r = read(fd, buf, remaining);
+    if (r <= 0)
+      return (r);
+    remaining -=r;
+  }
+  return (len);
+}
+
+static krb5_error_code read_message( krb5_context context, krb5_pointer fdp, krb5_data *inbuf )
+{
+	krb5_int32	len;
+	int		len2, ilen;
+	char		*buf = NULL;
+	int		fd = *( (int *) fdp);
+
+	if ((len2 = net_read( fd, (char *)&len, 4)) != 4)
+		return((len2 < 0) ? errno : ECONNABORTED);
+	len = ntohl(len);
+
+	if ((len & (signed) VALID_UINT_BITS) != len)  /* Overflow size_t??? */
+		return ENOMEM;
+
+	inbuf->length = ilen = (int) len;
+	if (ilen) {
+		/*
+		 * We may want to include a sanity check here someday....
+		 */
+		buf = malloc_or_die(  ilen, __FILE__,__LINE__ );
+		if ((len2 = net_read( fd, buf, ilen)) != ilen) {
+			free(buf);
+			return((len2 < 0) ? errno : ECONNABORTED);
+		}
+	}
+	inbuf->data = buf;
+	return(0);
+}
+
+static int net_write( int fd, const char * buf, int len )
+{
+  int written;
+  int total_len = len;
+  while (len >0) {
+    written = write(fd, buf, len);
+    if (written <= 0)
+      return (written);
+    len -= written;
+  }
+  return (total_len);
+}
+
+static krb5_error_code write_message( krb5_context context, krb5_pointer fdp, krb5_data *outbuf )
+{
+	krb5_int32	len;
+	int		fd = *( (int *) fdp);
+
+	len = htonl(outbuf->length);
+	if (net_write( fd, (char *)&len, 4) < 0) {
+		return(errno);
+	}
+	if (outbuf->length && (net_write(fd, outbuf->data, outbuf->length) < 0)) {
+		return(errno);
+	}
+	return(0);
+}
+# endif
+
 /*
  * server_krb5_auth(
  *  char *keytabfile,	server key tab file - /etc/lpr.keytab
@@ -82,7 +149,7 @@
  static krb5_principal server = 0;
  static krb5_ticket * ticket = 0;
 
- int server_krb5_auth( char *keytabfile, char *service, char *server_principal, int sock,
+static int server_krb5_auth( char *keytabfile, char *service, char *server_principal, int sock,
 	char **auth, char *err, int errlen, char *file )
 {
 	int retval = 0;
@@ -178,8 +245,8 @@
 	}
 	if( auth ) *auth = safestrdup( cname,__FILE__,__LINE__);
 	DEBUG1( "server_krb5_auth: client '%s'", cname );
-    /* initialize the initial vector */
-    if((retval = krb5_auth_con_initivector(context, auth_context))){
+	/* initialize the initial vector */
+	if((retval = krb5_auth_con_initivector(context, auth_context))){
 		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
 			"krb5_auth_con_initvector failed: %s",
 			Is_server?"on server":"on client",
@@ -212,7 +279,7 @@
 		retval = 1;
 		goto done;
 	}
-	while( (retval = krb5_read_message(context,&sock,&inbuf)) == 0 ){
+	while( (retval = read_message(context,&sock,&inbuf)) == 0 ){
 		if(DEBUGL5){
 			char small[16];
 			memcpy(small,inbuf.data,sizeof(small)-1);
@@ -304,9 +371,9 @@ int server_krb5_status( int sock, char *err, int errlen, char *file )
 			goto done;
 		}
 		DEBUG4("server_krb5_status: encoded length '%d'", outbuf.length );
-		if((retval= krb5_write_message(context,&sock,&outbuf))){
+		if((retval= write_message(context,&sock,&outbuf))){
 			SNPRINTF( err, errlen) "%s server_krb5_status failed - "
-				"krb5_write_message failed: %s",
+				"write_message failed: %s",
 				Is_server?"on server":"on client",
 				error_message(retval));
 			retval = 1;
@@ -660,8 +727,8 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 	} else {
 		DEBUG1("client_krb5_auth: sequence number %d", rep_ret->seq_number );
 	}
-    /* initialize the initial vector */
-    if((retval = krb5_auth_con_initivector(context, auth_context))){
+	/* initialize the initial vector */
+	if((retval = krb5_auth_con_initivector(context, auth_context))){
 		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
 			"krb5_auth_con_initvector failed: %s",
 			Is_server?"on server":"on client",
@@ -698,9 +765,9 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 				error_message(retval));
 			goto done;
 		}
-		if((retval = krb5_write_message(context, (void *)&sock, &outbuf))){
+		if((retval = write_message(context, (void *)&sock, &outbuf))){
 			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
-				"krb5_write_message failed: %s",
+				"write_message failed: %s",
 				Is_server?"on server":"on client",
 				error_message(retval));
 			goto done;
@@ -737,7 +804,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
 		retval = 1;
 		goto done;
 	}
-	while((retval = krb5_read_message( context,&sock,&inbuf))==0){
+	while((retval = read_message( context,&sock,&inbuf))==0){
 		if((retval = krb5_rd_priv(context, auth_context, &inbuf,
 			&outbuf, NULL))){
 			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
