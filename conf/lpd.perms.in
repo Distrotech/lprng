@@ -15,8 +15,6 @@
 ##                     lpd.perms file
 ##                   Patrick Powell <papowell@lprng.com>
 ##
-## VERSION=3.8.28
-##
 ## Access control to the LPRng facilities is controlled by entries
 ## in a set of lpd.perms files.  The common location for these files
 ## are: /etc/lpd.perms,  /usr/etc/lpd.perms, and  /var/spool/lpd/lpd.perms.
