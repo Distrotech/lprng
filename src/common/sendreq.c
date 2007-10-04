@@ -160,7 +160,7 @@ int Send_request(
 				transfer_timeout,
 				errormsg, sizeof(errormsg),
 				security, &info );
-		DEBUG1("Send_request: connect status %d, error  '%s'", status, errormsg ); 
+		DEBUG1("Send_request: connect status %d, error '%s'", status, errormsg ); 
 		if( status ) goto error;
 	}
 	/* now send the command line */
