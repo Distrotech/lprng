@@ -2,9 +2,13 @@ The following is a list of the systems that LPRng has been ported to.
 In addition,  there are a large number of others that it works on,
 but have not been reported.
 
+FreeBSD:
+     Baseline and development system
+     4.X - 4.11 (Baseline)
+     5.X - 5.3 (Baseline)
 Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
      Solaris/SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4
-     Solaris 2.5, 2.5.1, 2.6, 2.7, 2.8
+     Solaris 2.5, 2.5.1, 2.6, 2.7, 2.8, 2.9
 BSDI (BSD/OS): BSDI 2.0.0, 2.0.1, 2.1.0, 3.0, 3.1,
    4.0, 4.1, 4.1.1
 HPUX: 8.2, 9.4, 10.X, 11.X
@@ -23,7 +27,6 @@ DEC:     ULTRIX, DEC Alpha
 AIX:     1.06
     See LPRng Refernce Manual for detailed instructions
 	Note: use GCC
-FreeBSD: 2.0.5, 2.x, 3.x, 4.x, 5.x
 
 POSIX Compatible Systems:
    If your system is POSIX compatible,  then there should

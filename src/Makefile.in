@@ -65,6 +65,8 @@ exec_prefix=@exec_prefix@
 bindir=@bindir@
 # for admin type of binaries
 sbindir=@sbindir@
+# for common information
+datadir=@datadir@
 # for the filters
 libexecdir=@libexecdir@
 # for the configuration stuff
@@ -192,7 +194,7 @@ LPSTAT_OBJS= lpstat.o
 LPRM_OBJS= lprm.o
 LPC_OBJS= lpc.o
 CHECKPC_OBJS = checkpc.o
-LPF_OBJS = lpf.o plp_snprintf.o
+LPF_OBJS = lpf.o plp_snprintf.o copyright.o
 MONITOR_OBJS= monitor.o getopt.o
 LPBANNER_OBJS= lpbanner.o plp_snprintf.o
 
@@ -232,6 +234,7 @@ defs.h: Makefile
 	echo "#define " CLEAR \"@CLEAR@\" >>$@
 	echo "#define " USERID \"@USERID@\" >>$@
 	echo "#define " GROUPID \"@GROUPID@\" >>$@
+	echo "#define " DATADIR \"@datadir@\" >>$@
 	echo "#define " LOCALEDIR \"@LOCALEDIR@\" >>$@
 	echo "#define " DONE_JOBS \"@DONE_JOBS@\" >>$@
 	echo "#define " DONE_JOBS_MAX_AGE \"@DONE_JOBS_MAX_AGE@\" >>$@
@@ -281,8 +284,8 @@ lpc: $(LPC_OBJS) liblpr.la
 	$(LINK) ${LPC_OBJS} liblpr.la $(LIBS)
 checkpc: $(CHECKPC_OBJS) liblpr.la
 	$(LINK) ${CHECKPC_OBJS} liblpr.la $(LIBS)
-lpf: $(LPF_OBJS) liblpr.la
-	$(LINK) ${LPF_OBJS} $(LIBS)
+lpf: $(LPF_OBJS)
+	$(LINK) ${LPF_OBJS}  $(LIBS)
 lpbanner: $(LPBANNER_OBJS) liblpr.la
 	$(LINK) ${LPBANNER_OBJS} $(LIBS)
 monitor: $(MONITOR_OBJS) liblpr.la
@@ -365,6 +368,22 @@ install: all
 	cd ${DESTDIR}${bindir}; rm -f cancel; ln -s lprm  cancel; echo " SYMLINK `pwd`/cancel"
 
 uninstall:
+	-rm -f ${DESTDIR)$(libdir)/liblpr.la
+	-rm -f ${DESTDIR}${bindir}/lpq
+	-rm -f ${DESTDIR}${bindir}/lprm
+	-rm -f ${DESTDIR}${bindir}/lpr
+	-rm -f ${DESTDIR}${bindir}/lpstat
+	-rm -f ${DESTDIR}${sbindir}/lpc
+	-rm -f ${DESTDIR}${LPD_DIR}/lpd
+	-rm -f ${DESTDIR}${FILTER_DIR}/lpf
+	-rm -f ${DESTDIR}${FILTER_DIR}/lpbanner
+	-rm -f ${DESTDIR}${FILTER_DIR}/pclbanner
+	-rm -f ${DESTDIR}${FILTER_DIR}/psbanner
+	-rm -f ${DESTDIR}${sbindir}/checkpc
+	-rm -f ${DESTDIR}${sbindir}/lprng_certs
+	-rm -f ${DESTDIR}${sbindir}/lprng_index_certs
+	-cd ${DESTDIR}${bindir}; rm -f lp;
+	-cd ${DESTDIR}${bindir}; rm -f cancel;
 
 ###########################################################################
 

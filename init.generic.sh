@@ -16,7 +16,13 @@ case "$1" in
 			$0 start
             ;;
     stop  )
-		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+		pid=
+		if [ -f "$LOCKFILE" ] ; then
+			pid=`cat $LOCKFILE`;
+		fi
+		if [ "$pid" != '' ] ; then
+			kill -INT $pid >/dev/null 2>&1
+		fi
             ;;
     start )
             echo -n ' printer';

@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpc.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
+"$Id: lpc.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 
 /***************************************************************************
@@ -71,6 +71,7 @@
 #include "getopt.h"
 #include "patchlevel.h"
 #include "errorcodes.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -509,6 +510,10 @@ void use_msg(void)
 		} else {
 			FPRINTF( STDERR, "%s", _(s) );
 		}
+	}
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	}
 }
 void usage(void)

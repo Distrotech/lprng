@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: getprinter.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
+ * $Id: getprinter.h,v 1.4 2005/04/14 20:05:20 papowell Exp $
  ***************************************************************************/
 
 

@@ -42,6 +42,7 @@ fix () {
 		${INSTALL} -m 644 $p.sample $p;
 	fi;
 }
+hold=${DESTDIR}${DATADIR}
 echo "Installing configuration files"
 init=${DESTDIR}/etc/rc.d/init.d/lpd
 if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
@@ -52,24 +53,13 @@ elif [ -d /lib/lsb ] ; then
 else
 	f=init.linux
 fi
-if [ "X$MAKEINSTALL" = "XYES" ] ; then
-	fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
-	fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
-	fix printcap "${DESTDIR}${PRINTCAP_PATH}"
-	fix $f `dirname ${DESTDIR}${LPD_CONF_PATH}`/lpd
-	if [ "$INIT" != "no" ] ; then
-		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		${INSTALL} -m 755 $f $init;
-	fi;
-else
-	fix "${LPD_PERMS_PATH}" "${DESTDIR}${LPD_PERMS_PATH}"
-	fix "${LPD_CONF_PATH}" "${DESTDIR}${LPD_CONF_PATH}"
-	fix "${PRINTCAP_PATH}" "${DESTDIR}${PRINTCAP_PATH}"
-	fix $f `dirname ${DESTDIR}${LPD_CONF_PATH}`/lpd
-	${INSTALL} -m 755 $f `dirname ${DESTDIR}${LPD_CONF_PATH}`/lpd
-fi
+fix $hold/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
+fix $hold/lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
+fix $hold/printcap "${DESTDIR}${PRINTCAP_PATH}"
+rm -f $init
+fix $hold/$f $init
 
-if [ "X$MAKEPACKAGE" != "XYES" -a "$INIT" != no ] ; then
+if [ "X$STARTSERVER" != "X" ] ; then
     echo "Running startup scripts"
     if [ ! -f $init ] ; then
         echo "Missing $init";

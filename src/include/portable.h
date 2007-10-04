@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: portable.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
+ * $Id: portable.h,v 1.4 2005/04/14 20:05:20 papowell Exp $
  ***************************************************************************/
 
 #ifndef _PLP_PORTABLE_H
@@ -263,7 +263,9 @@ LPRng requires ANSI Standard C compiler
   extern int dup2 ();
   extern int execve ();
   extern uid_t geteuid (), getegid ();
+#if !defined(_AIX51)
   extern int setgid (), getgid ();
+#endif
 #endif
 
 
@@ -513,12 +515,21 @@ typedef union wait		plp_status_t;
 # ifndef WTERMSIG
 #  define WTERMSIG(x)	((x) & 0x7f)
 # endif
+# if defined(_AIX52)
+#  undef  WTERMSIG
+#  define WTERMSIG(__x)    (WIFSIGNALED(__x) ? (int)((((unsigned int)__x) >> 16) & 0xff) : -1)
+# endif
 # ifndef WCOREDUMP
 #  define WCOREDUMP(x)	((x) & 0x80)
 # endif
-# ifndef WEXITSTATUS
-#  define WEXITSTATUS(x)	((((unsigned) x) >> 8) & 0xff)
+# if !defined(WEXITSTATUS) 
+#  define WEXITSTATUS(x)	(((x) >> 8) & 0xff)
 # endif
+# if defined(_AIX52)
+#  undef  WEXITSTATUS
+#  define WEXITSTATUS(__x) (WIFEXITED(__x) ? (int)((((unsigned int)__x) >> 8) & 0xff) : -1)
+# endif
+
 # ifndef WIFSIGNALED
 #  define WIFSIGNALED(x)	(WTERMSIG (x) != 0)
 # endif
@@ -812,7 +823,9 @@ extern int openlog( const char *ident, int logopt, int facility );
 #ifdef IS_AIX32
 extern int seteuid(uid_t);
 extern int setruid(uid_t);
+#if !defined(_AIX51) && !defined(_AIX52)
 extern int setenv(char *, char *, int);
+#endif
 #endif
 
 

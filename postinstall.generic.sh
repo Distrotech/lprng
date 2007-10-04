@@ -44,21 +44,19 @@ fix () {
 		${INSTALL} -m 644 $p.sample $p;
 	fi;
 }
-if [ "X$MAKEINSTALL" = "XYES" ] ; then
-	if [ -f lpd.perms ] ; then fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}" ; fi;
-	if [ -f lpd.conf ] ; then fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}" ; fi;
-	if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}" ; fi;
-	if [ -f init.generic ] ; then
-		${INSTALL} -m755 init.generic ` dirname ${DESTDIR}${LPD_CONF_PATH} `/lpd.init ;
-	fi;
-	if [ "$INIT" != "no" ] ; then
+
+hold=${DESTDIR}${DATADIR}
+fix $hold/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}" ; fi;
+fix $hold/lpd.conf "${DESTDIR}${LPD_CONF_PATH}" ; fi;
+fix $hold/printcap "${DESTDIR}${PRINTCAP_PATH}" ; fi;
+${INSTALL} -m755 init.generic ` dirname ${DESTDIR}${LPD_CONF_PATH} `/lpd.init ;
+if [ -n "$STARTSERVER" ] ; then
 		echo "Stopping LPD"
 		kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
 		sleep 2;
 		echo "Checking printcap"
 		${SBINDIR}/checkpc -f
-		echo "Starting LPD"
+		echo "Starting LPD using ` dirname ${DESTDIR}${LPD_CONF_PATH} `/lpd.init start ;
 		` dirname ${DESTDIR}${LPD_CONF_PATH} `/lpd.init start ;
-	fi
 fi
 exit 0

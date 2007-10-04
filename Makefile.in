@@ -8,7 +8,7 @@
 ###########################################################################
 # MODULE: Makefile.in
 # PURPOSE: top level Makefile for LPD Software
-# $Id: Makefile.in,v 1.74 2004/09/24 20:19:52 papowell Exp $
+# $Id: Makefile.in,v 1.4 2005/04/14 20:05:14 papowell Exp $
 ########################################################################## 
 
 #**************###########**************
@@ -35,6 +35,9 @@ libexecdir=@libexecdir@
 sysconfdir=@sysconfdir@
 # for the man pages
 mandir=@mandir@
+# data dir for locale information
+datadir=@datadir@
+DATADIR="${datadir}/LPRng"
 # top build directory
 top_builddir=.
 
@@ -60,18 +63,17 @@ LIBTOOL=@LIBTOOL@
 
 DIRS= UTILS src po man
 INSTALLDIRS= UTILS src po man
-FILES=./postinstall ./preremove ./postremove ./lpd.conf
+FILES=./postinstall ./preremove ./postremove ./lprng.sh ./lpd.conf
 ALLDIRS= ${DIRS} ${SRC}/TESTSUPPORT ${SRC}/DOCS
 
 ###############################################################################
 
 all: ${DIRS} ${FILES}
 
-SCRIPTS=init.freebsd init.linux init.redhat init.linuxsb init.solaris ltmain postinstall.freebsd postinstall.generic postinstall.linux postinstall.solaris postremove.generic postremove.solaris preinstall.solaris preremove.freebsd preremove.generic preremove.linux preremove.solaris
+SCRIPTS=init.freebsd init.linux init.redhat init.linuxsb init.solaris postinstall.freebsd postinstall.generic postinstall.linux postinstall.solaris postremove.generic postremove.solaris preinstall.solaris preremove.freebsd preremove.generic preremove.linux preremove.solaris find_old_programs
 
 $(SCRIPTS): header
-	cat header ${SRC}/$@.sh >$@
-	chmod 755 $@;
+	@ echo $@; cat header ${SRC}/$@.sh >$@; chmod 755 $@;
 
 header: Makefile
 	@echo "#!@SHELL@" >$@
@@ -82,6 +84,7 @@ header: Makefile
 	@echo LPD_CONF_PATH=$(LPD_CONF_PATH) >>$@
 	@echo PRINTCAP_PATH=$(PRINTCAP_PATH) >>$@
 	@echo SYSCONFDIR=$(sysconfdir) >>$@
+	@echo DATADIR=$(DATADIR) >>$@
 	@echo SBINDIR=$(sbindir) >>$@
 	@echo FILTER_DIR=$(FILTER_DIR) >>$@
 	@echo LOCKFILE=$(LOCKFILE) >>$@
@@ -91,24 +94,23 @@ header: Makefile
 	@echo "INIT=$(INIT)" >>$@
 	@echo "MANDIR=$(mandir)" >>$@
 
-./postinstall: $(SCRIPTS) Makefile
+./lprng.sh ./preremove ./postremove ./preinstall ./postinstall: $(SCRIPTS) Makefile
+	@ preinstall=preinstall.generic; \
+	postinstall=postinstall.generic; \
+	preremove=preremove.generic; \
+	postremove=postremove.generic; \
+	init=init.generic; \
 	OSNAME=@OSNAME@; case "@OSNAME@" in \
-	 *linux* ) OSNAME=linux;; \
-	 *freebsd* ) OSNAME=freebsd;; \
-	 *solaris* ) OSNAME=solaris;; \
-	esac; \
-	if test -f postinstall.$${OSNAME} ; then s=postinstall.$${OSNAME} ; else s=postinstall.generic; fi; \
-	echo POSTINSTALL "'$$s'"; cp $$s postinstall;
-
-./preremove: $(SCRIPTS) Makefile
-	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) OSNAME=linux;; esac; \
-	if test -f preremove.$${OSNAME} ; then s=preremove.$${OSNAME} ; else s=preremove.generic; fi; \
-	echo PREREMOVE "'$$s'"; cp $$s preremove;
-
-./postremove: $(SCRIPTS) Makefile
-	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) OSNAME=linux;; esac; \
-	if test -f postremove.$${OSNAME} ; then s=postremove.$${OSNAME} ; else s=postremove.generic; fi; \
-	echo POSTREMOVE "'$$s'"; cp $$s postremove;
+	 *linux* ) OSNAME=linux;; *freebsd* ) OSNAME=freebsd;; \
+	 *solaris* ) OSNAME=solaris;; esac; \
+	if test -f init.$${OSNAME} ; then init=init.$${OSNAME}; fi; \
+	echo INIT "'$$init'"; cp $$init lprng.sh; \
+	if test -f postinstall.$${OSNAME} ; then postinstall=postinstall.$${OSNAME} ;  fi; \
+	echo POSTINSTALL "'$$postinstall'"; cp $$postinstall postinstall; \
+	if test -f preremove.$${OSNAME} ; then preremove=preremove.$${OSNAME}; fi; \
+	echo PREREMOVE "'$$preremove'"; cp $$preremove preremove; \
+	if test -f postremove.$${OSNAME} ; then postremove=postremove.$${OSNAME} ; fi; \
+	echo POSTREMOVE "'$$postremove'"; cp $$postremove postremove;
 
 # define default target
 .PHONY: all warn TAGS clean uninstall install  info dvi check \
@@ -118,16 +120,6 @@ MAKETARGET=all
 
 ###############################################################################
 $(ALLDIRS):
-	if [ "$@" = po ] ; then \
-	    for i in po/Makefile* ; do \
-		if [ -f "$$i" ] ; then \
-		    if grep '^mkinstalldirs.*=.*case' $$i ; then \
-			echo "fixing broken $$i which causes wrong path to mkinstalldirs to be used"; \
-			perl -spi -e 's:^mkinstalldirs\s*=\s*.*:mkinstalldirs = \$$(SHELL) \$$(MKINSTALLDIRS):' $$i; \
-		    fi \
-		fi \
-	    done \
-	fi
 	if [ "$@" != po -o "$(USE_NLS)" != "no" ] ; then \
 		cd $@; $(MAKE) localedir=${LOCALEDIR} \
 			DESTDIR=$(DESTDIR) $(MAKETARGET) ; \
@@ -138,14 +130,19 @@ TAGS clean::
 
 clean::
 	-rm -f header lpd.conf $(FILES) $(SCRIPTS) postinstall preremove postremove a.out
-	-rm -f *.bak ? ?.* core *.old *~ po/*~
+	-rm -f *.bak ? ?.* core *.old *~ po/*~ lprng.sh
 
 install: all
+	if [ ! -d ${DATADIR} ] ; then ${SRC}/mkinstalldirs ${DATADIR}; fi
+	for i in lpd.perms lpd.conf printcap lprng.sh postinstall ; do \
+		${INSTALL} $$i ${DATADIR}/$$i.sample; \
+	done
+	OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) \
+		for i in init.linux init.linuxsb init.redhat ; do \
+		${INSTALL} $$i ${DATADIR}/$$i.sample; \
+		done; ;; esac
 	$(MAKE) MAKETARGET=$@ DESTDIR=$(DESTDIR) $(INSTALLDIRS)
-
-	if [ "${POSTINSTALL}" != "NO" -a "${POSTINSTALL}" != "no" ] ; then \
-		MAKEINSTALL=YES DESTDIR=$(DESTDIR) $(SHELL) postinstall ; \
-	fi;
+	MAKEINSTALL=YES DESTDIR=$(DESTDIR) $(SHELL) postinstall
 	@echo "";
 
 info dvi check:
@@ -168,8 +165,22 @@ realclean mostlyclean distclean: clean
 	rm -f `find . -type f -name '*.in' -print | sed -e 's/\.in$$//' -e /configure/d `
 
 ###############################################################################
+
 uninstall:
-	echo "you must uninstall by hand"
+	-cd src; ${MAKE} uninstall
+	-cd man; ${MAKE} uninstall
+	-for i in lpd.perms lpd.conf printcap lprng.sh postinstall ; do \
+		rm -f ${DATADIR}/$$i.sample; \
+	done
+	-OSNAME=@OSNAME@; case "@OSNAME@" in *linux* ) \
+		for i in init.linux init.linuxsb init.redhat ; do \
+		rm -f ${DATADIR}/$$i.sample; \
+		done; ;; esac
+	-rmdir ${DATADIR} || true
+	-rm -f @LPD_PERMS_PATH@.sample
+	-rm -f @LPD_CONF_PATH@.sample
+	-rm -f @PRINTCAP_PATH@.sample
+	@echo "You must uninstall the configuration and other files by hand"
 
 ci: cifiles
 	for i in $(ALLDIRS); do \
@@ -219,7 +230,7 @@ update:
 	sed -e 's/"/\\"/g' -e 's/.*/"&",/' LICENSE >src/include/license.h
 	sed -e 's/"/\\"/g' -e 's/.*/"&",/' COPYRIGHT >src/include/copyright.h
 	for i in VERSION ./src/include/patchlevel.h configure.in ; do \
-		rcs -l $$i; chmod +w $$i; \
+		if [ -f RCS/$$i ] ; then rcs -l $$i; chmod +w $$i; fi \
 	done;
 	if [ -x /bin/pwd ] ; then DIR=`/bin/pwd`; fi ; \
 	if [ -x /usr/bin/pwd ] ; then DIR=`/usr/bin/pwd`; fi ; \
@@ -257,7 +268,7 @@ update:
 ###############################################################################
 
 tar: distclean
-	chmod a+x STANDARD_configuration configure
+	chmod a+x *_configuration configure
 	rm -f */Makefile Makefile
 	chmod 755 `find . -name install-sh -print`
 	chmod 755 `find . -name mkinstalldirs -print`
@@ -271,10 +282,9 @@ tar: distclean
 		md5 $${DIR}.tgz | pgp -fast -u papowell@lprng > $${DIR}.tgz.md5
 	@echo ""
 
-configure: configure.in
-	autoconf
-	autoheader
-	chmod a+x STANDARD_configuration configure
+configure:
+	sh CREATE_CONFIGURE
+	chmod a+x KERBEROS_configuration STANDARD_configuration
 
 dist: update ci distclean tar send
 redist: ci distclean tar send

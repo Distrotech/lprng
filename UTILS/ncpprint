@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: ncpprint,v 1.74 2004/09/24 20:19:56 papowell Exp $
+# $Id: ncpprint,v 1.4 2005/04/14 20:05:17 papowell Exp $
 # This script is an input filter for printcap printing on a unix machine. It
 # uses the nprint program to print the file to the specified ncp-based 
 # server and queue.

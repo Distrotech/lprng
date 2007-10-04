@@ -485,7 +485,7 @@
  
  
  static char *const _id = "plp_snprintf V2000.08.18 Copyright Patrick Powell 1988-2000 "
- "$Id: plp_snprintf.c,v 1.74 2004/09/24 20:19:58 papowell Exp $"
+ "$Id: plp_snprintf.c,v 1.4 2005/04/14 20:05:19 papowell Exp $"
  " LOCAL REVISIONS: <NONE>";
 
 /* varargs declarations: */

@@ -4,7 +4,7 @@
  * Copyright 1988-1999, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: user_auth.c,v 1.43 2004/09/24 20:19:59 papowell Exp $
+ * $Id: user_auth.c,v 1.4 2005/04/14 20:05:19 papowell Exp $
  ***************************************************************************/
 
 /*
@@ -1802,7 +1802,8 @@ int Pgp_receive( int *sock, int transfer_timeout,
 # if defined(MIT_KERBEROS4)
 	{ "kerberos4", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
 # endif
-	{ "kerberos*", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
+	{ "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
+	{ "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt },
 #endif
 
 	{ "test",      "test",     0,              0,           Test_send, 0, Test_receive },
@@ -1816,3 +1817,15 @@ int Pgp_receive( int *sock, int transfer_timeout,
 		0,0,
 		0,0}
 };
+
+char *ShowSecuritySupported( char *str, int maxlen )
+{
+	int i, len;
+	char *name;
+	str[0] = 0;
+	for( len = i = 0; (name = SecuritySupported[i].name); ++i ){
+		SNPRINTF( str+len,maxlen-len) "%s%s",len?",":"",name );
+		len += strlen(str+len);
+	}
+	return( str );
+}

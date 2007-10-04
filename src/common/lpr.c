@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpr.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpr.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -24,6 +24,7 @@
 #include "patchlevel.h"
 #include "printjob.h"
 #include "sendjob.h"
+#include "user_auth.h"
 #include "lpd_jobs.h"
 
 /**** ENDINCLUDE ****/
@@ -35,6 +36,12 @@
 #include "lpr.h"
 
 /**** ENDINCLUDE ****/
+
+#if defined(KLPRPDE)
+#include <krb5.h>
+#include "krb5_auth.h"
+ void klpr_init(int *argc, char *argv[], char *arg_buffer, int arg_buffer_len);
+#endif
 
 /***************************************************************************
  * main()
@@ -58,14 +65,16 @@ int main(int argc, char *argv[], char *envp[])
 {
 	off_t job_size;
 	char *s, *t, buffer[SMALLBUFFER], *send_to_pr = 0;
+#if defined(KLPRPDE)
+	char argbuffer[1024];
+#endif
 	struct job prjob;
 	struct line_list opts, newargs;
 	int attempt = 0;
 	int n;
 
-#ifndef NODEBUG
+
 	Debug = 0;
-#endif
 
 	/* set signal handlers */
 	Is_lpr = 1;
@@ -87,6 +96,34 @@ int main(int argc, char *argv[], char *envp[])
 	Setup_configuration();
 	Job_number = DbgTest;
 
+#if defined(KLPRPDE)
+	/* if invoked by CUPS for initialization, argv[0] will be '/usr/libexec/cups/backend/klpr' */
+	/* if invoked by CUPS for printing, argv[0] will be 'klpr://server/printer' */
+	if( (s = argv[0]) ){
+		DEBUG1("lpr: name '%s'", argv[0]);
+		int klpr = 0;
+		if( !safestrncmp(argv[0], "klpr:", 5) ){
+			klpr++;
+		} else {
+			if( (t = strrchr(s,'/')) ){
+				++t;
+			} else {
+				t = s;
+			}
+			DEBUG1("lpr: name '%s'", t);
+			if( !safestrcmp(t, "klpr") ){
+				klpr++;
+			}
+		}
+		if ( klpr ) {
+			DEBUG1("lpr: using klpr");
+			klpr_init( &argc, argv, argbuffer, sizeof(argbuffer) );
+			DEBUG1("lpr: credentials '%s'", gCCacheStr);
+			Auth_JOB = 1;
+			setenv( "AUTH", KLPR_AUTH, 0 );
+		}
+	}
+#endif
 
 	/* scan the input arguments, setting up values */
 	Get_parms(argc, argv);      /* scan input args */
@@ -761,6 +798,10 @@ void usage(void)
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDERR, "%s\n", Version );
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
+	}
 	exit(1);
 }
 
@@ -1445,3 +1486,162 @@ void Check_dup(int option, int *value)
 {
 	*value = 1;
 }
+
+#if defined(KLPRPDE)
+/*
+  This code was extracted from
+      Kerberized Printing 1.01 GM
+  http://www.ncsu.edu/mac/software/klprpde.html
+
+  Authors: Hua Ying Ling - Code, design, and implementation.
+  Everette Gray Allen - Concept, direction, testing and documentation.
+
+  The copyrights and licenses are covered under my original license terms.
+  Copyrights and other information added to the Licenes text file.
+  Changes have been hand added where necessary
+  Note: the authors of this code appear not to have added their names,
+   times, dates, etc., to the documention.  But it is on their web site
+   page.
+
+  Thanks folks!  I appreciate the efforts.
+   Patrick Powell, 30 Jan 2005
+ */
+
+#include <cups/cups.h>
+
+/* init parameters from CUPS options */
+void InitParameters(int argc, char *argv[])
+{
+    const char * cache = 0;
+    int n = 0;
+    cups_option_t *options = 0; 
+
+    n = cupsParseOptions(argv[5], 0, &options);    
+    cache= cupsGetOption("edu.ncsu.print.customSetting.KLPR", n, options);
+	DEBUG1("InitParameters: cache '%s'", cache );
+
+	gCCacheStr = 0;
+    if( cache ){
+		gCCacheStr = safestrdup(cache,__FILE__,__LINE__);
+	}
+}
+
+/* converts CUPS backend arguments to LPR acceptable arguments
+ * the original arguments are OVERWRITTEN
+ * should check to see if these really are CUPS back arguments
+ *  and the proper ENV variables are set,
+ *  otherwise it leaves the arguments alone
+ */
+void klpr_init(int *argc, char *argv[], char *arg_buffer, int arg_buffer_len)
+{
+    char *hostname; /* Hostname */
+    char *resource; /* Resource info (printer name) */
+    int arglen = 0;
+    int c;
+    int newargc = 0;
+    char * user;
+    const char * cache = 0;
+    int n = 0;
+    cups_option_t *options = 0; 
+    char *cupsuser;
+    
+    char *uri = getenv("DEVICE_URI");
+    int numArgs = *argc;
+    
+    /* CUPS backends are required to print usage */
+    if(numArgs == 0 || numArgs == 1) {
+        Write_fd_str(1, "network klpr \"Unknown\" \"Kerberized LPD/LPR Host or Printer\"\n");
+        exit(0);
+    }
+
+    /* Here's what the command line should now look like:
+     *   argv[0] job user title copies options [filename]
+     * if invoked by CUPS for initialization, argv[0] will be '/usr/libexec/cups/backend/klpr'
+     * if invoked by CUPS for printing, argv[0] will be 'klpr://server/printer'
+     * Test using:
+     * setenv DEVICE_URI klpr://rcc2@irene.cit.cornell.edu/k-ccc1
+     * ./klpr debug joeuser 'job title' 1 options
+     */
+
+    /* if these conditions are not met, then it's probably
+     * not running in a CUPS environment,
+     * return without touching the arguments
+     */
+    if(uri == NULL || numArgs < 4){
+        return;
+    }
+
+    /* Grab the Kerberos credentials cache */
+    /* Skip this section if debugging */
+    if ( !safestrcmp(argv[1], "debug") ) {
+		Debug = 1;
+    }
+    if ( ! Debug ) {
+		n = cupsParseOptions(argv[5], 0, &options);    
+		cache= cupsGetOption("edu.ncsu.print.customSetting.KLPR", n, options);
+		DEBUG1("klpr_init: cache '%s'", cache );
+
+		gCCacheStr = 0;
+		if( cache ){
+			gCCacheStr = safestrdup(cache,__FILE__,__LINE__);
+		}
+    }
+
+    /* rcc: The user name should be coming from argv[2] rather than from
+       the device URI */
+    cupsuser = argv[2];
+
+    /* get the hostname from the URI:
+     *    method://user@hostname/printer
+     */
+    hostname = strpbrk(uri,":/");
+    while( !ISNULL(hostname) && (c = cval(hostname)) && (c == ':' || c == '/') ) ++hostname;
+    if( (user = safestrchr(hostname,'@')) ){
+		hostname = user+1;
+    }
+    if( ISNULL(hostname) ){
+		Errorcode = JABORT;
+		FATAL(LOG_ERR) _("kpr_init: no hostname, bad uri '%s'"), uri);
+	}
+    resource = strpbrk(hostname,"/");
+    if( resource ) *resource++ = 0;
+    if( ISNULL(resource) ){
+      Errorcode = JABORT;
+      FATAL(LOG_ERR) _("ConvertToLPROptions: no resource, bad uri '%s'"), uri);
+    }
+
+    /* put converted arguments into the arguments array */
+    argv[newargc++] = "lpr";
+    
+    /* set lpr printer option
+     * format: -P%s@%s, queue name, print server
+     * ex: -Phlb-219-2@uni20ps.unity.ncsu.edu , queue name: hlb-219-2, print server: uni20ps.unity.ncsu.edu
+     */
+    SNPRINTF(arg_buffer+arglen, arg_buffer_len-arglen)  "-P%s@%s", resource, hostname );
+    argv[newargc++] = arg_buffer+arglen;
+    arglen += strlen(arg_buffer+arglen)+1;
+    
+    /*
+     * set user option, otherwise lpr tries to print as current user
+     * which is root if you're running as the CUPS backend        
+     * format: -U%s, userName
+     */
+    user = arg_buffer+arglen;
+    SNPRINTF(arg_buffer+arglen, arg_buffer_len-arglen) "-U" );
+    arglen += strlen(arg_buffer+arglen);
+    if ( ! Debug ) {
+      if( GetKerberosUser_from_gCCacheStr(arg_buffer+arglen,arg_buffer_len-arglen) ){
+        Errorcode = JABORT;
+        FATAL(LOG_ERR) "ConvertToLPROptions: %s", arg_buffer+arglen);
+      }
+    }
+    arglen += strlen(arg_buffer+arglen)+1;
+
+    argv[newargc++] = user;
+    argv[newargc] = 0;
+    *argc = newargc;
+    DEBUG1("klpr_init: argv[0] '%s'", argv[0] );
+    DEBUG1("klpr_init: argv[1] '%s'", argv[1] );
+    DEBUG1("klpr_init: argv[2] '%s'", argv[2] );
+}
+#endif

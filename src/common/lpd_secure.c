@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_secure.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpd_secure.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -322,6 +322,7 @@ int Do_secure_work( char *jobsize, int from_server,
 	if( (status = Check_secure_perms( header_info, from_server, error, sizeof(error))) ){
 		goto error;
 	}
+	DEBUGFC(DRECV1)Dump_line_list("Do_secure_work - header after check", header_info );
 
 
 	buffer[0] = 0;

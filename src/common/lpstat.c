@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpstat.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpstat.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -51,6 +51,7 @@
 #include "linksupport.h"
 #include "patchlevel.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -616,6 +617,10 @@ void usage(void)
 	char **sptr, *s;
 	for( sptr= lpstat_msg; (s = *sptr); ++sptr ){
 			FPRINTF( STDERR, s, Name );
+	}
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );

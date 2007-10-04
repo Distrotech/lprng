@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: linelist.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
+"$Id: linelist.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 #include "lp.h"
 #include "errorcodes.h"
@@ -3832,7 +3832,10 @@ void Do_work( char *name, struct line_list *args )
 	Mail_fd = Find_flag_value(args, MAIL_FD);
 	Lpd_request = Find_flag_value(args, LPD_REQUEST);
 	/* undo the non-blocking IO */
-	if( Lpd_request > 0 ) Set_block_io( Lpd_request );
+	if( Lpd_request > 0 ){
+		/* undo the non-blocking IO */
+		Set_block_io( Lpd_request );
+	}
 	Debug= Find_flag_value( args, DEBUG );
 	DbgFlag= Find_flag_value( args, DEBUGFV );
 #ifdef DMALLOC

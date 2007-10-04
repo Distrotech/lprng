@@ -57,7 +57,13 @@ case "$1" in
             RETVAL=$?
             [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/lprng
         else
-            kill -INT `ps ${PSHOWALL} | awk '/lpd/{ print $1;}'` >/dev/null 2>&1
+			pid=
+			if [ -f "$LOCKFILE" ] ; then
+				pid=`cat $LOCKFILE`;
+			fi
+			if [ "$pid" != '' ] ; then
+				kill -INT $pid >/dev/null 2>&1
+			fi
             RETVAL=0
 		fi
         echo

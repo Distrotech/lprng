@@ -1,19 +1,27 @@
                LPRng Installation
           Patrick Powell <papowell@lprng.com>
-       Last Updated Sun Aug 19 14:49:25 PDT 2001
+        Updated Sat May  7 07:21:54 PDT 2005
 
   SUPER EXPRESS INSTALLATION FOR TERMINALLY IMPATIENT SYSADMINS
 
 READ THE NEXT COUPLE OF PARAGRAPHS:
 
 To put files and executables in the most common 'STANDARD locations' 
+and/or replace your current LPR and/or CUPS printing environment:
 
+   tar zxvf LPRng-<version>.tgz
+   cd  LPRng-<version>.tgz
    sh STANDARD_configuration
-   make clean; make all; make install;
-   checkpc -f
+   make clean; make all; make STARTSERVER=YES install;
 
-The "STANDARD_configuration" script will run configure and set the most common
-configuration for UNIX/LINUX systems:
+   (Note: STARTSERVER=YES will cause the following script
+   to run:
+       checkpc -f   # fixes up printcaps
+       lpd
+   The exact details vary from system to system)
+
+The "STANDARD_configuration" script will run configure and set up
+the most common configuration for UNIX/LINUX systems:
 
   - /etc/printcap, /etc/lpd/lpd.conf, /etc/lpd/lpd.perms configuration files.
     (Note: the new suggested file system hierarchy puts configuration files
@@ -24,7 +32,6 @@ configuration for UNIX/LINUX systems:
     or libraries from /usr/local/lib
   - no Kerberos support
 
-
    Here is the contents of the STANDARD_configuration file:
     #!/bin/sh
 	set -x
@@ -33,14 +40,6 @@ configuration for UNIX/LINUX systems:
 	fi
 	sh ./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared \
 	 --disable-kerberos --enable-ssl --enable-force_localhost \
-
-  You can simply do:
-     sh STANDARD_configuration
-     make clean all
-     (as root):
-       make install
-       checkpc -f
-
 
 USING CONFIGURE DEFAULTS DIRECTORIES
  

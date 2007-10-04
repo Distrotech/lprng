@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: printjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: printjob.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -17,6 +17,8 @@
 #include "getqueue.h"
 #include "child.h"
 #include "fileopen.h"
+#include "lpd_jobs.h"
+#include "printjob.h"
 /**** ENDINCLUDE ****/
 #if defined(HAVE_TCDRAIN)
 #  if defined(HAVE_TERMIOS_H)
@@ -181,6 +183,11 @@ int Print_job( int output, int status_device, struct job *job,
 	/* now we have a banner, is it at start or end? */
 	DEBUG2("Print_job: do_banner %d, :hl=%d, :bs=%s, :be=%s, banner_name '%s'",
 			do_banner, Banner_last_DYN, Banner_start_DYN, Banner_end_DYN, banner_name );
+	if( do_banner && Generate_banner_DYN ){
+		Add_banner_to_job( job );
+		do_banner = 0;
+		Outlen = 0;
+	}
 	if( do_banner && !Banner_last_DYN ){
 		Print_banner( banner_name, Banner_start_DYN, job );
 	}

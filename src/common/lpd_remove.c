@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_remove.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpd_remove.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -213,17 +213,18 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	DEBUGFC(DLPRM3)Dump_line_list("Get_queue_remove - tokens", tokens );
 	fd = -1;
 	for( count = 0; count < Sort_order.count; ++count ){
+		int incoming;
 		Free_job(&job);
 		if( fd > 0 ) close(fd); fd = -1;
 		Get_job_ticket_file(&fd, &job, Sort_order.list[count] );
-
 		DEBUGFC(DLPRM3)Dump_job("Get_queue_remove - info",&job);
-        if( tokens->count && Patselect( tokens, &job.info, 0) ){
+
+		if( tokens->count && Patselect( tokens, &job.info, 0) ){
 			continue;
         }
 
 		/* get everything for the job now */
-		/* Setup_cf_info( &job, 0 ); */
+
 		identifier = Find_str_value(&job.info,IDENTIFIER);
 		if( !identifier ) identifier = Find_str_value(&job.info,XXCFTRANSFERNAME);
 
@@ -252,9 +253,19 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			}
 		}
 
+		/*
+		 * we now check for the incoming jobs
+		 */
+		incoming = Find_flag_value(&job.info,INCOMING_TIME);
+		pid = Find_flag_value(&job.info,INCOMING_PID);
+		if( incoming && pid && !kill(pid,SIGINT) ){
+			DEBUGF(DLPRM4)("Get_queue_remove: removing incoming job '%s'", identifier );
+			SNPRINTF( msg, sizeof(msg)) _("  removing incoming job '%s'\n"), identifier );
+		} else {
+			DEBUGF(DLPRM4)("Get_queue_remove: removing '%s'", identifier );
+			SNPRINTF( msg, sizeof(msg)) _("  dequeued '%s'\n"), identifier );
+		}
 		/* log this to the world */
-		DEBUGF(DLPRM4)("Get_queue_remove: removing '%s'", identifier );
-		SNPRINTF( msg, sizeof(msg)) _("  dequeued '%s'\n"), identifier );
 		Write_fd_str( *sock, msg );
 
 		setmessage( &job, "LPRM", "start" );

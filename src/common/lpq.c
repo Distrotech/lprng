@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpq.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpq.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -102,6 +102,7 @@
 #include "linksupport.h"
 #include "patchlevel.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -157,7 +158,7 @@ int main(int argc, char *argv[], char *envp[])
 	Setup_configuration();
 	Get_parms(argc, argv );      /* scan input args */
 	if( Auth && !getenv("AUTH") ){
-		FPRINTF(STDERR,_("authentication requested (-A) and no AUTH environment variable"));
+		FPRINTF(STDERR,_("authentication requested (-A) and no AUTH environment variable or default auth type"));
 		usage();
 	}
 
@@ -561,6 +562,7 @@ void Get_parms(int argc, char *argv[] )
 void usage(void)
 {
 	char *s;
+	char buffer[128];
 	int i;
 	for( i = 0; (s = lpq_msg[i]); ++i ){
 		if( i == 0 ){
@@ -569,6 +571,8 @@ void usage(void)
 			FPRINTF( STDERR, "%s", _(s) );
 		}
 	}
+	
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);

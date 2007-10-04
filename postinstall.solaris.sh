@@ -39,26 +39,18 @@ fix () {
 	fi;
 }
 echo "Installing configuration files"
+hold=${DESTDIR}${DATADIR}
 init=${DESTDIR}/etc/init.d/lprng
 if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
-if [ -f lpd.perms ] ; then fix lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"; fi;
-if [ -f lpd.conf ] ; then fix lpd.conf "${DESTDIR}${LPD_CONF_PATH}"; fi;
-if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}"; fi;
-if [ -f printcap ] ; then fix printcap "${DESTDIR}${PRINTCAP_PATH}"; fi;
-fix "${DESTDIR}${LPD_PERMS_PATH}" "${DESTDIR}${LPD_PERMS_PATH}"
-fix "${DESTDIR}${LPD_CONF_PATH}" "${DESTDIR}${LPD_CONF_PATH}"
-fix "${DESTDIR}${PRINTCAP_PATH}" "${DESTDIR}${PRINTCAP_PATH}"
-if [ -f init.solaris ] ; then
-	${INSTALL} -m 755 init.solaris `dirname ${DESTDIR}${LPD_CONF_PATH}`/lprng
-fi
+rm -f $init;
+fix $hold/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}";
+fix $hold/lpd.conf "${DESTDIR}${LPD_CONF_PATH}";
+fix $hold/printcap "${DESTDIR}${PRINTCAP_PATH}";
+fix $hold/lprng.sh $init
+chmod 755 $init
 #
 # Now we reconfigure the printer 
 #
-if [ "$INIT" != no ] ; then
-	if [ -f init.solaris ] ; then
-		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		${INSTALL} -m 755 init.solaris $init
-	fi
 	for i in rc2.d/S80lprng rc1.d/K39lprng \
 		rc0.d/K39lprng rcS.d/K39lprng ; do
 		s=${DESTDIR}/etc/$i;
@@ -67,7 +59,7 @@ if [ "$INIT" != no ] ; then
 		echo ln -s $init $s;
 		ln -s $init $s;
 	done
-	if [ "$MAKEPACKAGE" != "YES" ]; then
+	if [ "$STARTSERVER" != "" ]; then
 		if grep '^printer' /etc/inetd.conf >/dev/null; then
 			echo "Removing printer service from inetd.conf"
 			${INSTALL} -m 644 /etc/inetd.conf /etc/inetd.conf.orig
@@ -92,5 +84,4 @@ if [ "$INIT" != no ] ; then
 		echo "Starting lprng lpd server"
 		sh $init start
 	fi;
-fi;
 exit 0

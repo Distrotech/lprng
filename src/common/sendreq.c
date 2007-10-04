@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: sendreq.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
+"$Id: sendreq.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 #include "lp.h"
@@ -165,7 +165,7 @@ int Send_request(
 				transfer_timeout,
 				errormsg, sizeof(errormsg),
 				security, &info );
-		DEBUG1("Send_request: connect status %d, error  '%s'", status, errormsg ); 
+		DEBUG1("Send_request: connect status %d, error '%s'", status, errormsg ); 
 		if( status ) goto error;
 	}
 	/* now send the command line */

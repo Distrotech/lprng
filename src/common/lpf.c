@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpf.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpf.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -84,13 +84,13 @@
  * -Tdebug - increment debug level
  * -Tcrlf  - turn LF to CRLF translation off
  *
- *	The functions logerr(), and logerr_die() can be used to report
+ *	The functions mylogerr(), and mylogerr_die() can be used to report
  *	status. The variable errorcode can be set by the user before calling
  *	these functions, and will be the exit value of the program. Its default
  *	value will be 2 (abort status).
- *	logerr() reports a message, appends information indicated by errno
+ *	mylogerr() reports a message, appends information indicated by errno
  *	(see perror(2) for details), and then returns.
- *	logerr_die() will call logerr(), and then will exit with errorcode
+ *	mylogerr_die() will call mylogerr(), and then will exit with errorcode
  *	status.
  *
  * DEBUGGING:  a simple minded debugging version can be enabled by
@@ -98,6 +98,7 @@
  */
 
 #include "portable.h"
+#include "lp.h"
 
 /* VARARGS3 */
 #ifdef HAVE_STDARGS
@@ -187,16 +188,20 @@ int  accounting_fd;
 int crlf;	/* change lf to CRLF */
 
 void getargs( int argc, char *argv[], char *envp[] );
-void logerr( char *msg, ... );
-void logerr_die( char *msg, ... );
+void mylogerr( char *msg, ... );
+void mylogerr_die( char *msg, ... );
 extern void banner( void );
 extern void doaccnt( void );
 extern void filter_pgm( char * );
 int of_filter;
+char *Name = "???";
 
 int main( int argc, char *argv[], char *envp[] )
 {
 
+	if( argc ){
+		Name = argv[0];
+	}
 	/* check to see if you have the accounting fd */
 	accounting_fd = dup(3);
 	/* if this works, then you have one */
@@ -309,9 +314,9 @@ const char * Errormsg ( int err )
 }
 
 #ifdef HAVE_STDARGS
-void logerr(char *msg, ...)
+void mylogerr(char *msg, ...)
 #else
-void logerr( va_alist ) va_dcl
+void mylogerr( va_alist ) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -334,9 +339,9 @@ void logerr( va_alist ) va_dcl
 }
 
 #ifdef HAVE_STDARGS
-void logerr_die(char *msg, ...)
+void mylogerr_die(char *msg, ...)
 #else
-void logerr_die( va_alist ) va_dcl
+void mylogerr_die( va_alist ) va_dcl
 #endif
 {
 #ifndef HAVE_STDARGS
@@ -391,7 +396,24 @@ void doaccnt(void)
 			c = write( accounting_fd, &buffer[l], len-l );
 		}
 		if( c < 0 ){
-			logerr( "bad write to accounting file" );
+			mylogerr( "bad write to accounting file" );
+		}
+	}
+}
+
+void Printlist( char **m, int fd )
+{
+	char msg[SMALLBUFFER];
+	if( m ){
+		if( *m ){
+			SNPRINTF( msg,sizeof(msg)) _(*m), Name );
+			Write_fd_str(fd, msg);
+			Write_fd_str(fd,"\n");
+			++m;
+		}
+		for( ; *m; ++m ){
+			SNPRINTF( msg,sizeof(msg)) "%s\n", _(*m) );
+			Write_fd_str(fd, msg);
 		}
 	}
 }
@@ -462,6 +484,11 @@ void getargs( int argc, char *argv[], char *envp[] )
 			case 'w': width = atoi( optargv ); break; 
 			case 'x': xwidth = atoi( optargv ); break; 
 			case 'y': ylength = atoi( optargv ); break;
+			case 'V':
+				fprintf( stdout, Version );
+				Printlist( Copyright, 2 );
+				exit(1);
+				break;
 			default: break;
 		}
 	}
@@ -597,7 +624,7 @@ void filter_pgm(char *stop)
 		lastc = c;
 	}
 	if( ferror( stdin ) ){
-		logerr( "error on STDIN");
+		mylogerr( "error on STDIN");
 	}
 	for( i = 0; i < state; ++i ){
 		putchar( stop[i] );
@@ -624,7 +651,7 @@ char *Time_str(int shortform, time_t t)
 	tv.tv_usec = 0;
 	if( t == 0 ){
 		if( gettimeofday( &tv, 0 ) == -1 ){
-			logerr_die( "Time_str: gettimeofday failed");
+			mylogerr_die( "Time_str: gettimeofday failed");
 		}
 		t = tv.tv_sec;
 	}

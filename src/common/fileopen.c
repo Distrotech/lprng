@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: fileopen.c,v 1.74 2004/09/24 20:19:57 papowell Exp $";
+"$Id: fileopen.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -134,7 +134,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 			err = errno;
 			DEBUG3( "Checkwrite: after F_SETFL value now '0x%x'",
 				fcntl( fd, F_GETFL, 0 ) );
-			if( mask == -1 && err != ENODEV ){
+			if( mask == -1 && err != ENODEV && err != ENOTTY ){
 				errno = err;
 				LOGERR(LOG_ERR) "Checkwrite: fcntl F_SETFL of '%s' failed",
 					file );

@@ -1,26 +1,89 @@
 #!/bin/sh
-M4PATH=/usr/local/share/aclocal
-export M4PATH
+_V_=
+while [ "$*" ] ; do
+	case "$1" in
+	-v ) _V_=YES;;
+	-x ) set -x;;
+	* ) cat >&2 <<EOF
+use: $0 [-x][-v]
+  generate configure and massage some settings
+  -x turn on tracing
+  -v verbose
+EOF
+		exit 1;
+	esac
+	shift;
+done
+
+#M4PATH=/usr/local/share/aclocal
+#export M4PATH
 set -e
 rm -f aclocal.m4 libtool config.cache config.status
-aclocal
-grep 'libtool.m4 - Configure' aclocal.m4 || {
-cat /usr/local/share/aclocal/libtool14.m4 >>aclocal.m4
+#aclocal259 || aclocal
+#grep 'libtool.m4 - Configure' aclocal.m4 || {
+#cat /usr/local/share/aclocal/libtool14.m4 >>aclocal.m4
+#}
+gettextize --force --copy 2>&1 | tee add_files
+#cat add_files
+perl -e '
+use FileHandle;
+while( <> ){
+	if( /please add the files/i../from the/i ){
+		next if (/please add the files/i );
+		if (/from the (.*) directory/i ){
+			$dir = $1;
+			next
+		}
+		chomp;
+		$f .= $_;
+	}
 }
-autoconf
+if( !$dir ){
+	$dir = ".";
+}
+foreach my $file (split " ", $f ){
+	my $fn ="$dir/$file";
+	my $fd = new FileHandle( "<$fn");
+	die "cannot open $fn" unless(  $fd );
+	while( <$fd> ){ print $_; }
+}
+' add_files >aclocal.m4
+libtoolize --force --copy 2>&1 |tee add_files || libtoolize --force --copy 2>&1 |tee add_files || exit 1
+perl -e '
+use FileHandle;
+while( <> ){
+	if( /add the contents of (.*) to /i ){
+		$f .= " $1 ";
+	}
+}
+$f =~ s/[\`'"'"']//g;
+foreach my $file (split " ", $f ){
+	my $fn ="$file";
+	my $fd = new FileHandle( "<$fn");
+	die "cannot open $fn" unless(  $fd );
+	while( <$fd> ){ print $_; }
+}
+' add_files >>aclocal.m4
+cat acinclude.m4 >>aclocal.m4
+#if [ -f aclocal.m4 ] ; then
+#	perl -spi.bak -e '
+#		if(/--disable-nls.*Native/){s/--disable/--enable/; s/do not //;}
+#		s/, USE_NLS=yes/, USE_NLS=no/; ' aclocal.m4
+#fi
+autoconf259 || autoconf || exit 1
+autoheader259 || autoheader || exit 1
 #autoreconf --force --install
-gettextize --force --copy </dev/null
-rm -f po/Makevars
-mv po/Makevars.template po/Makevars
-echo "" >/dev/tty; libtoolize14 --force --copy
-grep 'SED=' ltmain.sh || {
- (	head -1 ltmain.sh ; echo "SED=sed"; cat ltmain.sh ) >ltmain
-	rm -f ltmain.sh
-	mv ltmain ltmain.sh
-}
-
-perl -spi.bak -e '
-	if(/--disable-nls.*Native/){s/--disable/--enable/; s/do not //;}
-	s/, USE_NLS=yes/, USE_NLS=no/; ' aclocal.m4
-autoconf
-autoheader
+#rm -f po/Makevars
+#mv po/Makevars.template po/Makevars
+#echo "" >/dev/tty; libtoolize14 --force --copy
+#grep 'SED=' ltmain.sh || {
+# (	head -1 ltmain.sh ; echo "SED=sed"; cat ltmain.sh ) >ltmain
+#	rm -f ltmain.sh
+#	mv ltmain ltmain.sh
+#}
+#autoconf259 || autoconf
+#autoheader259 || autoconf
+if [ -d po ] ; then
+	chmod a+x mkinstalldirs
+	cp mkinstalldirs po;
+fi

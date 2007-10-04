@@ -1,0 +1,180 @@
+       klprPDE - CUPS to LPRng + Kerberos Authentication
+Copyright 2004, NC State University
+Refer to the installer license dialog for license information.
+
+           Modified by Patrick Powell
+          Mon Jan 31 15:58:30 PST 2005
+
+Introduction
+
+The klprPDE package is a Printer Dialog Extension(PDE) and cups
+backend which implements printing to a kerberized LPRng print server.
+The PDE runs in user space at print time and loads whenever the
+standard Apple print dialog is called to get and cache a kerberos
+ticket for the print server(s). The cups klpr backend is a version
+of the LPRng lpr client which takes cups arguments and reads the
+cached kerberos service tickets.
+
+This free software is released free under a BSD type license.
+
+This note is a modified version of the original note
+on the http://www.ncsu.edu/mac/software/klprpde.html site.
+
+klprPDE Authors: 
+Hua Ying Ling - Code, design, and implementation.
+Everette Gray Allen - Concept, direction, testing and documentation.
+Email: help@ncsu.edu
+
+Warranty:
+                NO WARRANTY
+
+  BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
+TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
+PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+REPAIR OR CORRECTION.
+
+  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
+TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
+YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
+PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+Credits:
+
+The authors wrote the printer dialog extension in this package.
+The cups backend was modifed from work done by the following folks:
+Patrick Powell wrote LPRng.  See http://www.lprng.org/. Our cups
+backend is a version of the lpr command line tool from LPRng version
+3.8.12 modified to accept cups style options and a path to the
+ticket cache file.  Sam Hartman wrote the modifications of LPRng
+version 3.8.12 to make it work with the MacOS X kerberos model. The
+source distribution contains his modifications with his permission.
+
+In addition, Rick Cochran at Cornell CIT has provided testing,
+review and debugging for this code.
+
+Requirements:
+
+MacOS X 10.3.  klprPDE will not work on earlier versions of MacOS
+X due to a known bug in kerberos credential caching.
+There is no version for MacOS 9 or 10.0/1 since cups is not available
+in those OS versions.  There never will be a port to any other
+operating system.  It is possible to use the klprPDE derivative of
+our work from Reed University on other versions of MacOS X.  See:
+http://www.reed.edu/~nobles/reed/osx_klpr.html
+
+Note that this version may work with later versions of MaxOS X,
+as long as the CUPS PDE interface does not change and the Kerberos
+library support is present.
+
+(From the original notice:)
+#  Download
+#      Binary Installer - http://www.ncsu.edu/mac/downloads/klprPDE.zip
+#      Source - http://www.ncsu.edu/mac/downloads/klprPDE.src.zip
+#      License - http://www.ncsu.edu/mac/software/license.html
+
+Installation:
+  a) configure LPRng with: 
+       configure --enable-kerberos --enable-klprpde
+     OPTIONAL:
+      --with-klpr_auth=kerberos   - use original kerberos authentication
+      --with-klpr_auth=k5conn     - use k5conn authentication
+     OPTIONAL:
+       --disable-require_configfiles - client programs require lpd.conf, printcap
+  b) compile and install using:
+       make install
+  c) copy or make a symbolic link to lpr:
+      ln -s /usr/local/bin/lpr /usr/libexec/cups/backend/klpr
+    OR
+      cp /usr/local/bin/lpr /usr/libexec/cups/backend/klpr
+  d)  Install klprPDE.plugin in /Library/Printers/PPD Plugins/klprPDE.plugin
+    (copy the directory and files:
+      cp -r klprPDE.plugin '/Library/Printers/PPD Plugins/klprPDE.plugin'
+    OR
+      mv klprPDE.plugin '/Library/Printers/PPD Plugins/klprPDE.plugin'
+
+Configuration:
+
+The configuration files are at:
+  /Library/Printers/PPD Plugins/klprPDE.plugin/Contents/Resources/Settings.strings
+
+There is no GUI interface to edit this files.  Edit the file with
+a text editor like TextEdit, BBEdit, pico, vi, emacs, etc.  Text
+enclosed in /* */ is ignored (C style comments) for Settings.strings
+only.  Settings.strings is within the klprPDE bundle and should
+look like this:
+
+FILE:
+  /Library/Printers/PPD Plugins/klprPDE.plugin/Contents/Resources/Settings.strings
+
+CONTENTS:
+
+/*====== These strings are CASE SENSITIVE ========*/
+
+/* these strings are matched in this order
+- print server  (the hostname of the print server)
+- printer type
+- service name
+    at least one of these must match the printer or job settings
+    or the PDE will not load
+*/
+
+/*
+  if the hostname of the print server matches the first string
+  then the use the second string as the service name*/
+  Example:
+  "net-print.cit.cornell.edu" = "lpr/net-print.cit.cornell.edu@CIT.CORNELL.EDU";
+  "page3.cit.cornell.edu" = "lpr/page3.cit.cornell.edu@CIT.CORNELL.EDU";
+  "irene.cit.cornell.edu" = "lpr/irene.cit.cornell.edu@CIT.CORNELL.EDU";
+*/
+
+
+/*
+  if the printer type matches the first string
+  then use the second string as the service name
+  By default, the printer type is 'klpr'
+  Example:
+   "klpr" = "lpr/printservername.whatever.dom@REALM.WHATEVER.DOM";
+*/
+
+/*
+  Match 'Service Name' - the default name for the service
+  Example:
+    "Service Name" = "lpr/printservername.whatever.dom@REALM.WHATEVER.DOM";
+*/
+
+=====
+
+The lpd.conf file does not have to be present.
+
+Server Configuration:
+
+The server should accept connections without any problems.  If you want to
+enforce Kerberos authentication:
+
+ACCEPT SERVICE=R AUTH=kerberos,k5conn
+REJECT SERVICE=R
+
+
+Known Issues
+
+1) There is no preference interface.  Preference changes must be
+made by editing /Library/Printers/PPD
+Plugins/klprPDE.plugin/Contents/Resources/Settings.strings
+with a text editor like BBEdit, pico, vi,
+emacs, etc.
+
+2) Applications with custom print dialogs like some major Adobe
+apps. will never load Apple's default print dialog which means the
+PDE code will never execute.  The work-around is to use the Printer
+button in the custom dialogs to get the standard Apple print dialog
+so the PDE to run.

@@ -4,7 +4,7 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lp.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
+ * $Id: lp.h,v 1.4 2005/04/14 20:05:20 papowell Exp $
  ***************************************************************************/
 
 
@@ -63,6 +63,7 @@ EXTERN int Opterr DEFINE(=1); /* Zero disables errors msgs */
 EXTERN char *Optarg;		/* Pointer to option argument */
 EXTERN char *Name;			/* Name of program */
 
+
 extern char *Copyright[];	/* Copyright info */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
@@ -84,6 +85,12 @@ EXTERN uid_t DaemonUID;    /* Daemon UID */
 EXTERN uid_t UID_root;     /* UID is root */
 EXTERN gid_t DaemonGID;    /* Daemon GID */
 EXTERN int Max_fd DEFINE(=4);	   /* Maximum FD opened */
+
+/*****************************************************************
+ * Kerberized CUPS Backend support
+ *****************************************************************/
+EXTERN char *gCCacheStr;
+
 
 extern void Max_open(int fd);
 
@@ -292,6 +299,7 @@ EXTERN int   Discard_large_jobs_DYN;  /* discard jobs that exceed max job size *
 EXTERN int   Done_jobs_DYN;        /* keep the last NN done jobs */
 EXTERN int   Done_jobs_max_age_DYN; /* keep the done jobs for at least max age seconds */
 EXTERN int Direct_DYN;		/* allow LPR to send jobs to a socket */
+EXTERN int Discard_zero_length_jobs_DYN;		/* discard zero length jobs */
 EXTERN int Exit_linger_timeout_DYN;	/* we set this timeout on all of the sockets */
 EXTERN int FF_on_close_DYN; /* print a form feed when device is closed */
 EXTERN int FF_on_open_DYN; /* print a form feed when device is opened */

@@ -1,6 +1,7 @@
                  LPRng - An Enhanced Printer Spooler
                Patrick Powell <papowell@lprng.com>
 				Updated Thu Apr 13 04:29:06 PDT 2000
+                Updated Sat May  7 07:18:44 PDT 2005
 
 The following is a guide to the documentation and LPRng files,
 and the order you might want to read it in.  Files marked with +
@@ -8,14 +9,18 @@ should (must?) be read in order to succesfully install LPRng.
 
 Patrick Powell
 
-+ README          - this file (and please read all of it!)
++ README - this file (and please read at least the first
+           part of it).
 
-+ INSTALL         - installation instructions
++ INSTALL - installation instructions
+    Read the section for 'Terminally Impatient Sysadmins'
+    for a highly compressed set of instructions that will
+    work for most users.
 
-+ DOCS/LPRng-Refernece.html, DOCS/LPRng-Refernece.pdf,
+ DOCS/LPRng-Refernece.html, DOCS/LPRng-Reference.pdf,
    the LPRng Reference Manual
 
-+ PrintingCookbook - a set of 'printing recipes' or setups and
+ PrintingCookbook - a set of 'printing recipes' or setups and
      procedures that are commonly encountered.
 
 OVERVIEW

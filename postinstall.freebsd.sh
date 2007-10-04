@@ -25,7 +25,8 @@ fix () {
         echo "$v is a filter '$p'" 
         return 0
     fi
-    echo "Putting $p in $d, using $v.sample"
+	n=`basename $p`
+    echo "Putting $n in $d, using $v.sample"
     if [ ! -d "$d" ] ; then
         echo "Directory $d does not exist!"
         mkdir -p $d
@@ -50,15 +51,19 @@ fix () {
     fi;
 }
 
+cnf=${DESTDIR}/etc/rc.conf
 startserver(){
-	cnf=${DESTDIR}/etc/rc.conf
-	if [ -f ${cnf} ] ; then
-		if grep lprng ${cnf} ; then
-			: # no changes
-		else
-			echo 'lprng_enable="YES"' >> ${cnf}
-		fi
-	fi
+	perl -spi -e '
+s/^/#/ if /^lpd_enable/;
+s/#// if /^#lprng_enable/;
+if( /^lprng_enable=/ ){
+	s/=.*/=\"YES\"/;
+	$found = 1;
+}
+END {
+	print "lprng_enable=\"YES\"\n" if not $found;
+}
+' ${cnf};
 	echo "Stopping LPD"
 	killall lpd || true
 	sleep 2;
@@ -68,90 +73,33 @@ startserver(){
 	# restart the server
 	echo "Restarting server"
 	sh $init start || true
-	echo "Done"
 }
 
-# we use the /usr/local/etc/rc.d method to start
+if [ -f ${cnf} ] ; then
+	if grep lprng ${cnf} >/dev/null ; then
+		: # no changes
+	else
+		cat <<EOF >>${cnf}
+#to enable LPRng, set lpd_enable="NO" and lprng_enable="YES"
+lprng_enable="YES"
+EOF
+	fi
+fi
+
+
+hold=${DESTDIR}${DATADIR}
+echo "Setting up configuration files path for installation" ${hold}
+fix ${hold}/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
+fix ${hold}/lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
+fix ${hold}/printcap "${DESTDIR}${PRINTCAP_PATH}"
+
 init=${DESTDIR}/usr/local/etc/rc.d/lprng.sh
 if [ -n "${INIT}" ] ; then init=${DESTDIR}${INIT}; fi
-
-# we have to take them from one place and put in another
-if [ "X$MAKEPACKAGE" = "XYES" ] ; then
-    hold=${DESTDIR}${SYSCONFDIR}/lpd
-    echo "Setting up configuration files path for package" ${hold}
-    # we put files into the destination
-    if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
-    ${INSTALL} lpd.perms ${hold}/lpd.perms.sample
-    ${INSTALL} lpd.conf ${hold}/lpd.conf.sample
-    ${INSTALL} printcap ${hold}/printcap.sample
-	${INSTALL} init.freebsd ${hold}/lprng.sh.sample
-	exit 0
+rm -f $init;
+fix ${hold}/lprng.sh $init;
+chmod 755 $init;
+if [ -n "$STARTSERVER" ] ; then
+	startserver;
 fi
 
-if [ "X$MAKEINSTALL" = XYES ] ; then
-    hold=${DESTDIR}${SYSCONFDIR}/lpd
-    echo "Setting up configuration files path for installation" ${hold}
-	# we have the port pre-install operation
-	if [ "$MANDIR" = "/usr/man" -a ! -d ${DESTDIR}/usr/man ] ; then
-		# we have the dreaded standard installation
-		# try to make a symbolic link to 
-		echo "Creating symbolic link from /usr/man to /usr/share/man"
-		v=`ln -s ${DESTDIR}/usr/share/man ${DESTDIR}/usr/man`;
-	fi
-    if [ ! -d ${hold} ] ; then mkdir -p ${hold} ; fi;
-    ${INSTALL} lpd.perms ${hold}/lpd.perms.sample
-    ${INSTALL} lpd.conf ${hold}/lpd.conf.sample
-    ${INSTALL} printcap ${hold}/printcap.sample
-	${INSTALL} init.freebsd ${hold}/lprng.sh.sample
-
-    fix ${hold}/lpd.perms "${DESTDIR}${LPD_PERMS_PATH}"
-    fix ${hold}/lpd.conf "${DESTDIR}${LPD_CONF_PATH}"
-    fix ${hold}/printcap "${DESTDIR}${PRINTCAP_PATH}"
-    if [ "$INIT" != no ] ; then
-		echo "Setting up init script $init using init.freebsd"
-		if [ ! -d `dirname $init` ] ; then mkdir -p `dirname $init ` ; fi;
-		rm -f $init
-		${INSTALL} -m 755 init.freebsd $init
-		startserver;
-	fi
-
-	exit 0
-fi
-
-# run from a package
-if [ "X$2" = "XPOST-INSTALL" ] ; then
-    # when doing an install from a package we get the file from the hold locations
-    hold=etc/lpd
-	echo "Installing configuration files from `pwd` - $hold - `ls $hold`"
-    if [ -f ${hold}/lpd.perms.sample ] ; then
-        fix ${hold}/lpd.perms "${LPD_PERMS_PATH}"
-        fix ${hold}/lpd.conf "${LPD_CONF_PATH}"
-        fix ${hold}/printcap "${PRINTCAP_PATH}"
-		echo "Setting up init script $init.sample using ${hold}/lprng.sh.sample"
-		${INSTALL} -c -m 755 ${hold}/lprng.sh.sample $init.sample;
-		if [ "$INIT" != no ] ; then
-			echo "Setting up init script $init using $init.sample"
-			${INSTALL} -c -m 755 $init.sample $init;
-			startserver;
-		fi
-    else
-        echo "WARNING: configuration files missing from package! CWD " `pwd`
-		echo "Contents"
-		ls
-		echo "Hold $hold"
-		ls $hold
-        exit 1
-    fi
-	exit 0;
-fi
-if [ "X$2" = "XPRE-INSTALL" ] ; then
-	# we have the port pre-install operation
-	if [ "$MANDIR" = "/usr/man" -a ! -d /usr/man ] ; then
-		# we have the dreaded standard installation
-		# try to make a symbolic link to 
-		echo "Creating symbolic link from /usr/man to /usr/share/man"
-		v=`ln -s /usr/share/man /usr/man`;
-	fi
-	exit 0
-fi
 exit 0

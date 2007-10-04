@@ -11,7 +11,7 @@ export LDFLAGS CPPFLAGS
 
 sh ./configure --prefix=/usr --sysconfdir=/etc $mandir --disable-shared \
  --enable-ssl --enable-force_localhost \
- --enable-kerberos --enable-mit_kerberos4 \
+ --enable-kerberos --enable-mit_kerberos4 -enable-klprpde \
      LDFLAGS="$LDFLAGS" CPPFLAGS="$CPPFLAGS" \
 
 #

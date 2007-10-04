@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lpd_rcvjob.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lpd_rcvjob.c,v 1.4 2005/04/14 20:05:18 papowell Exp $";
 
 
 #include "lp.h"
@@ -113,7 +113,7 @@ int Receive_job( int *sock, char *input )
 	int temp_fd = -1;				/* used for file opening and locking */
 	int filetype;				/* type of file - control or data */
 	int fd;						/* for log file */
-	int job_ticket_fd = -1;				/* job ticket file */
+	int job_in_progress = 0;	/* job in progress */
 	int db, dbf, rlen;
 	int fifo_fd = -1;			/* fifo lock file */
 	struct line_list files, info, l;
@@ -353,10 +353,10 @@ int Receive_job( int *sock, char *input )
 		if( filetype == CONTROL_FILE ){
 			DEBUGF(DRECV2)("Receive_job: receiving new control file, old job.info.count %d, old files.count %d",
 				job.info.count, files.count );
-			if( job_ticket_fd > 0 ){
+			if( job_in_progress ){
 				/* we received another control file, finish this job up */
 				if( !discarding_large_job ){
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, 0, -1) ){
 						goto error;
 					}
 				} else {
@@ -366,55 +366,65 @@ int Receive_job( int *sock, char *input )
 					Set_str_value(&job.info,ERROR,error);
 					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 					Set_str_value(&job.info,INCOMING_TIME,0);
+					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
-					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
+					if( (status = Set_job_ticket_file( &job, 0, -1 )) ){
 						SNPRINTF( error,errlen)
 							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
-					discarding_large_job = 0;
 				}
-				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
+				discarding_large_job = 0;
 				jobsize = 0;
+				job_in_progress = 0;
 			}
 
 			Free_job(&job);
 			Set_str_value(&job.info,OPENNAME,tempfile);
 
-			job_ticket_fd = Setup_temporary_job_ticket_file( &job, filename, 1, 0, error, errlen );
-			if( job_ticket_fd < 0 ){
-				goto error;
-			}
-			if( files.count ){
-				/* we have datafiles, FOLLOWED by a control file */
-				if( !discarding_large_job ){
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
-						goto error;
-					}
-				} else {
-					SNPRINTF( error, errlen)
-						_("size %0.3fK exceeds %dK"),
-						jobsize/1024, Max_job_size_DYN );
-					Set_str_value(&job.info,ERROR,error);
-					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
-					Set_str_value(&job.info,INCOMING_TIME,0);
-					error[0] = 0;
-					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
-						SNPRINTF( error,errlen)
-							_("Error setting up job ticket file - %s"),
-							Errormsg( errno ) );
-						goto error;
-					}
-					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
-					discarding_large_job = 0;
+			{
+				int job_ticket_fd = Setup_temporary_job_ticket_file( &job, filename, 1, 0, error, errlen );
+				if( job_ticket_fd < 0 ){
+					goto error;
 				}
+				if( files.count ){
+					/* we have datafiles, FOLLOWED by a control file */
+					if( !discarding_large_job ){
+						if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+							goto error;
+						}
+					} else {
+						SNPRINTF( error, errlen)
+							_("size %0.3fK exceeds %dK"),
+							jobsize/1024, Max_job_size_DYN );
+						Set_str_value(&job.info,ERROR,error);
+						Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+						Set_str_value(&job.info,INCOMING_TIME,0);
+						Set_str_value(&job.info,INCOMING_PID,0);
+						error[0] = 0;
+						if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
+							SNPRINTF( error,errlen)
+								_("Error setting up job ticket file - %s"),
+								Errormsg( errno ) );
+							goto error;
+						}
+						if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
+					}
+					Free_line_list(&files);
+					discarding_large_job = 0;
+					job_in_progress = 0;
+					jobsize = 0;
+					Free_job(&job);
+				} else {
+					job_in_progress = 1;
+				}
+				/*
+				 * we do not want to lock the hold file while there is an incoming job
+				 */
 				close( job_ticket_fd ); job_ticket_fd = -1;
-				Free_line_list(&files);
-				jobsize = 0;
-				Free_job(&job);
 			}
 		} else {
 			Set_casekey_str_value(&files,filename,tempfile);
@@ -425,20 +435,28 @@ int Receive_job( int *sock, char *input )
 
 	DEBUGF(DRECV2)("Receive_job: eof on transfer, job.info.count %d, files.count %d",
 		job.info.count, files.count );
-	if( job_ticket_fd > 0 ){
-		if( !discarding_large_job ){
-			if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
-				goto error;
-			}
-		} else {
+	if( !discarding_large_job ){
+		/*
+		 * if we get just a control file and no data file, then we have a sender
+		 * problem.  We will NOT log this
+		 */
+		if( job.info.count && !files.count ){
+			/* we will not log this */ ;
+		} else if( files.count && Check_for_missing_files(&job, &files, error, errlen, 0, -1) ){
+			goto error;
+		}
+	} else {
+		char *f = Find_str_value( &job.info,HF_NAME );
+		if( !ISNULL(f) ){
 			SNPRINTF( error, errlen)
 				_("size %0.3fK exceeds %dK"),
 				jobsize/1024, Max_job_size_DYN );
 			Set_str_value(&job.info,ERROR,error);
 			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 			Set_str_value(&job.info,INCOMING_TIME,0);
+			Set_str_value(&job.info,INCOMING_PID,0);
 			error[0] = 0;
-			if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
+			if( (status = Set_job_ticket_file( &job, 0, -1 )) ){
 				SNPRINTF( error,errlen)
 					_("Error setting up job ticket file - %s"),
 					Errormsg( errno ) );
@@ -451,7 +469,6 @@ int Receive_job( int *sock, char *input )
 
  error:
 
-	if( job_ticket_fd > 0 ) close(job_ticket_fd); job_ticket_fd = -1;
 	if( temp_fd > 0 ) close(temp_fd); temp_fd = -1;
 	if( fifo_fd > 0 ) close(fifo_fd); fifo_fd = -1;
 
@@ -694,7 +711,7 @@ int Receive_block_job( int *sock, char *input )
 
 
 /***************************************************************************
- * Scan_block_file( int fd, struct control_file *cfp )
+ * int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_info )
  *  we scan the block file, getting the various portions
  *
  * Generate the compressed data files - this has the format
@@ -702,6 +719,7 @@ int Receive_block_job( int *sock, char *input )
  *    [count control file bytes]
  *    \4count dfname\n
  *    [count data file bytes]
+ * The header_info contains authentication information
  *
  *  We extract the various sections and find the offsets.
  *  Note that the various name fields will be the original
@@ -828,6 +846,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 						jobsize/1024, Max_job_size_DYN );
 					Set_str_value(&job.info,ERROR,error);
 					Set_str_value(&job.info,INCOMING_TIME,0);
+					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
 					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
@@ -837,10 +856,9 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 						goto error;
 					}
-					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
 				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
@@ -864,6 +882,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					Set_str_value(&job.info,ERROR,error);
 					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 					Set_str_value(&job.info,INCOMING_TIME,0);
+					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
 					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 						SNPRINTF( error,errlen)
@@ -873,16 +892,19 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					}
 					if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 				} else {
-					if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+					if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 						goto error;
 					}
-					Set_str_value(&job.info,INCOMING_TIME,0);
 				}
-				close( job_ticket_fd ); job_ticket_fd = -1;
 				Free_line_list(&files);
 				jobsize = 0;
 				Free_job(&job);
 			}
+			/*
+			 * we close the job_ticket_fd file so that we do not lock the hold file while
+			 * the incoming job is arriving.
+			 */
+			close( job_ticket_fd ); job_ticket_fd = -1;
 		} else {
 			Set_str_value(&files,filename,tempfile);
 		}
@@ -896,6 +918,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			Set_str_value(&job.info,ERROR,error);
 			Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 			Set_str_value(&job.info,INCOMING_TIME,0);
+			Set_str_value(&job.info,INCOMING_PID,0);
 			error[0] = 0;
 			if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
 				SNPRINTF( error,errlen)
@@ -905,10 +928,9 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			}
 			if( Lpq_status_file_DYN ){ unlink(Lpq_status_file_DYN); }
 		} else {
-			if( Check_for_missing_files(&job, &files, error, errlen, 0, job_ticket_fd) ){
+			if( Check_for_missing_files(&job, &files, error, errlen, header_info, job_ticket_fd) ){
 				goto error;
 			}
-			Set_str_value(&job.info,INCOMING_TIME,0);
 		}
 	}
 
@@ -917,7 +939,6 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		Remove_tempfiles();
 		Remove_job( &job );
 	}
-	Set_str_value(&job.info,INCOMING_TIME,0);
 	if( job_ticket_fd > 0 ) close(job_ticket_fd); job_ticket_fd = -1;
 	if( tempfd > 0 ) close(tempfd); tempfd = -1;
 	Free_line_list(&l);
@@ -1051,11 +1072,19 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
 	}
 
-	if( header_info && User_is_authuser_DYN ){
-		char *s = Find_str_value(header_info,AUTHUSER);
-		if( !ISNULL(s) ){
-			Set_str_value( &job->info,LOGNAME,s);
-			DEBUGF(DRECV1)("Check_for_missing_files: setting user to authuser '%s'", s );
+	if( header_info ){
+		char *s;
+		s = Find_str_value(header_info,AUTH); if( !ISNULL(s) ) Set_str_value( &job->info,AUTH,s);
+		s = Find_str_value(header_info,AUTHCA); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHCA,s);
+		s = Find_str_value(header_info,AUTHFROM); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHFROM,s);
+		s = Find_str_value(header_info,AUTHTYPE); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHTYPE,s);
+		s = Find_str_value(header_info,AUTHUSER); if( !ISNULL(s) ) Set_str_value( &job->info,AUTHUSER,s);
+		if( User_is_authuser_DYN ){
+			s = Find_str_value(header_info,AUTHUSER);
+			if( !ISNULL(s) ){
+				Set_str_value( &job->info,LOGNAME,s);
+				DEBUGF(DRECV1)("Check_for_missing_files: setting user to authuser '%s'", s );
+			}
 		}
 	}
 
@@ -1268,6 +1297,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 	Set_str_value(&job->info,HPFORMAT,0);
 	Set_str_value(&job->info,INCOMING_TIME,0);
+	Set_str_value(&job->info,INCOMING_PID,0);
 
 	if( !ISNULL(Incoming_control_filter_DYN) ){
 		Generate_control_file( job );
@@ -1304,7 +1334,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 	if( (status = Set_job_ticket_file( job, 0, holdfile_fd )) ){
 		SNPRINTF( error,errlen)
-			_("Error setting up job ticket file - %s"),
+			_("Check_for_missing_files: error setting up job ticket file - %s"),
 			Errormsg( errno ) );
 		goto error;
 	}
@@ -1376,6 +1406,7 @@ int Setup_temporary_job_ticket_file( struct job *job, char *filename,
 	
 	/* mark as incoming */
 	Set_flag_value(&job->info,INCOMING_TIME,time((void *)0) );
+	Set_flag_value(&job->info,INCOMING_PID,getpid() );
 	/* write status */
 	if( Set_job_ticket_file( job, 0, fd ) ){
 		SNPRINTF( error,errlen)
@@ -1415,8 +1446,9 @@ int Find_non_colliding_job_number( struct job *job )
 		DEBUGF(DRECV1)("Find_non_colliding_job_number: trying %s", hold_file );
 		job_ticket_fd = Checkwrite(hold_file, &statb,
 			O_RDWR|O_CREAT, 0, 0 );
-		/* if the job ticket file locked or is non-zero, we skip to a new one */
-		if( job_ticket_fd < 0 || Do_lock( job_ticket_fd, 0 ) < 0 || statb.st_size ){
+		/* if the job ticket file locked skip to a new one */
+		if( job_ticket_fd < 0 || Do_lock( job_ticket_fd, 0 ) < 0 
+			|| statb.st_size ){
 			close( job_ticket_fd );
 			job_ticket_fd = -1;
 			hold_file[0] = 0;
@@ -1429,7 +1461,7 @@ int Find_non_colliding_job_number( struct job *job )
 			Set_str_value(&job->info,HF_NAME,hold_file);
 		}
 	}
-	DEBUGF(DRECV1)("Find_non_colliding_job_number: fd %d", hold_file );
+	DEBUGF(DRECV1)("Find_non_colliding_job_number: job_ticket_fd %d", job_ticket_fd );
 	return( job_ticket_fd );
 }
 

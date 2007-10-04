@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: lprm.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
+"$Id: lprm.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 /***************************************************************************
@@ -101,6 +101,7 @@
 #include "linksupport.h"
 #include "patchlevel.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -390,6 +391,10 @@ void usage(void)
 		pr_msg(lprm_msg);
 	} else {
 		pr_msg(clean_msg);
+	}
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );

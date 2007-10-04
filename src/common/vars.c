@@ -8,7 +8,7 @@
  ***************************************************************************/
 
  static char *const _id =
-"$Id: vars.c,v 1.74 2004/09/24 20:19:59 papowell Exp $";
+"$Id: vars.c,v 1.4 2005/04/14 20:05:19 papowell Exp $";
 
 
 /* force local definitions */
@@ -208,6 +208,8 @@ struct keywords Pc_var_list[] = {
    /* discard jobs that exceed max job size */
 { "discard_large_jobs", 0, FLAG_K, &Discard_large_jobs_DYN,0,0,"=1"},
    /* keep the last NN done jobs for status purposes */
+{ "discard_zero_length_jobs", 0, FLAG_K, &Discard_zero_length_jobs_DYN,0,0,"=0"},
+   /* do not print zero length jobs */
 { "done_jobs", 0, INTEGER_K, &Done_jobs_DYN,0,0,"=" DONE_JOBS},
    /* keep done jobs for at most max age seconds */
 { "done_jobs_max_age", 0, INTEGER_K, &Done_jobs_max_age_DYN,0,0,"=" DONE_JOBS_MAX_AGE},
@@ -350,7 +352,7 @@ struct keywords Pc_var_list[] = {
    /* mail to this operator on error */
 { "mail_operator_on_error", 0, STRING_K, &Mail_operator_on_error_DYN,0,0,0},
    /* maximum accounting file size in Kbytes; 0 means no limit on size */
-{ "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=1000"},
+{ "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=0"},
    /* maximum interval between connection attempts */
 { "max_connect_interval", 0, INTEGER_K, &Max_connect_interval_DYN,0,0,"=60"},
    /* maximum number of datafiles */
