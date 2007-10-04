@@ -95,7 +95,6 @@
 #include "getqueue.h"
 #include "initialize.h"
 #include "linksupport.h"
-#include "patchlevel.h"
 #include "sendreq.h"
 
 /**** ENDINCLUDE ****/

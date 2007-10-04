@@ -17,7 +17,6 @@
 #include "gethostinfo.h"
 #include "initialize.h"
 #include "linksupport.h"
-#include "patchlevel.h"
 #include "printjob.h"
 #include "sendjob.h"
 #include "openprinter.h"

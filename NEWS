@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------
-Version LPRng-3.8.29 - not yet released
+Version LPRng-3.8.A - not yet released
 ---------------------------------------------------------------------
 
 This is the first release not done by Patrick Powell but
@@ -33,7 +33,7 @@ replaced, local functions declared static, moving some code around
 to not have to link all lpd code in all other binaries...
 
 ---------------------------------------------------------------------
-Changes in versions before LPRng-3.8.29 can
+Changes in versions until LPRng-3.8.28 can
 be found in the file CHANGES.
 If that file did not come with your LPRng, you should be able to download
 it from: http://lprng.cvs.sourceforge.net/*checkout*/lprng/lprng/CHANGES

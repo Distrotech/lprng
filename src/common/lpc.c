@@ -64,7 +64,6 @@
 #include "child.h"
 #include "control.h"
 #include "getopt.h"
-#include "patchlevel.h"
 #include "errorcodes.h"
 
 /**** ENDINCLUDE ****/
