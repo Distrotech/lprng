@@ -62,6 +62,7 @@ EXTERN int Opterr DEFINE(=1); /* Zero disables errors msgs */
 EXTERN char *Optarg;		/* Pointer to option argument */
 EXTERN const char *Name;	/* Name of program */
 
+
 extern const char *Copyright[];	/* Copyright info */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
