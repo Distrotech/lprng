@@ -130,7 +130,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 			err = errno;
 			DEBUG3( "Checkwrite: after F_SETFL value now '0x%x'",
 				fcntl( fd, F_GETFL, 0 ) );
-			if( mask == -1 && err != ENODEV ){
+			if( mask == -1 && err != ENODEV && err != ENOTTY ){
 				errno = err;
 				LOGERR(LOG_ERR) "Checkwrite: fcntl F_SETFL of '%s' failed",
 					file );
