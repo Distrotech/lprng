@@ -96,6 +96,7 @@
 #include "initialize.h"
 #include "linksupport.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -381,6 +382,10 @@ _(" usage: %s [-A] [-Ddebuglevel] (jobid|user|'all')* [printer]\n"
 "    'clean all all'  removes all your jobs on all printers\n"
 "  Note: clean removes only jobs for which you have removal permission\n"),
 			Name );
+	}
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );

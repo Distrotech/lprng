@@ -19,6 +19,7 @@
 #include "proctitle.h"
 #include "lockfile.h"
 #include "lpd_worker.h"
+#include "user_auth.h"
 
 /* force local definitions */
 #undef EXTERN
@@ -486,6 +487,7 @@ int main(int argc, char *argv[], char *envp[])
 			int forced_start = 0;
 			elapsed_time = this_time - server_started_time;
 			/* find the first entry WITHOUT a '.' as first character */
+			if(DEBUGL1)Dump_line_list("lpd: Servers_line_list", &Servers_line_list );
 			for( forced_start = doit = 0; !forced_start && doit < Servers_line_list.count; ++doit ){
 				server_to_start = Servers_line_list.list[doit];
 				if( server_to_start && cval(server_to_start) != '.' ){
@@ -852,6 +854,7 @@ int Read_server_status( int fd )
 			break;
 		}
 		buffer[status] = 0;
+		DEBUG1( "Read_server_status: read status %d '%s'", status, buffer );
 		/* we split up read line and record information */
 		Split(&l,buffer,Whitespace,0,0,0,0,0,0);
 		if(DEBUGL1)Dump_line_list("Read_server_status - input", &l );
@@ -911,7 +914,10 @@ _("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destin
 " -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"
 " -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"
 " -R port     - remote LPD server port (lpd_port)\n"), Name );
-
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
+	}
 	Parse_debug("=",-1);
 	FPRINTF( STDERR, "%s\n", Version );
 	exit(1);
