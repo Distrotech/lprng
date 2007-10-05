@@ -996,8 +996,8 @@ int Do_queue_jobs( char *name, int subserver )
 		}
 
 		/* first, we see if there is no work and no server active */
-		DEBUG1("Do_queue_jobs: fd %d, job_to_do %d, use_subserver %d, working %d",
-			fd, job_to_do, use_subserver, working );
+		DEBUG1("Do_queue_jobs: job_to_do %d, use_subserver %d, working %d",
+			job_to_do, use_subserver, working );
 
 		if( job_to_do < 0 && !working && chooser_did_not_find_server == 0 ){
 			DEBUG1("Do_queue_jobs: nothing to do");
@@ -1052,13 +1052,15 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(&job.info,DESTINATION,buffer);
 		}
 
+		DEBUG1("Do_queue_jobs: setting %s SERVER %d", id, getpid() );
 		Set_decimal_value(&job.info,SERVER,getpid());
 		Set_flag_value(&job.info,START_TIME,time((void *)0));
 
 		sp = (void *)servers.list[use_subserver];
 
 		pr = Find_str_value(sp,PRINTER);
-		DEBUG1("Do_queue_jobs: starting job '%s' on '%s'", id, pr );
+		DEBUG1("Do_queue_jobs: starting job '%s' on '%s', use_subserver %d",
+			id, pr, use_subserver );
 
 		if( Set_job_ticket_file( &job, 0, fd ) ){
 			/* you cannot update job ticket file!! */
@@ -1247,9 +1249,9 @@ int Do_queue_jobs( char *name, int subserver )
 
 int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 {
-	int status, tempfd, n;
+	int status, tempfd, n, fd;
 	double job_size;
-	char buffer[SMALLBUFFER], *s, *tempfile, *oldid, *newid, *old_lp_value;
+	char buffer[SMALLBUFFER], *s, *tempfile, *oldid, *newid, *old_lp_value, *hf_name;
 	struct line_list *lp, *firstfile;
 	struct job jcopy;
 	struct stat statb;
@@ -1265,26 +1267,33 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 
 	Setup_user_reporting(job);
 
-	if( Accounting_remote_DYN && Accounting_file_DYN ){
-		if( Accounting_start_DYN ){
-			status = Do_accounting( 0,
+	if( Accounting_remote_DYN && Accounting_file_DYN && Accounting_start_DYN ){
+		status = Do_accounting( 0,
 				Accounting_start_DYN, job, Connect_interval_DYN );
-		}
 		DEBUG1("Remote_job: accounting status %s", Server_status(status) );
 		if( status ){
-			SNPRINTF(buffer,sizeof(buffer))
-				"accounting check failed '%s'", Server_status(status));
-				SETSTATUS(job)"%s", buffer );
-			switch(status){
-			case JFAIL: break;
-			case JHOLD: /* Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); */ break;
-			case JREMOVE: /* Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); */ break;
-			default:
-					Set_str_value(&job->info,ERROR,buffer);
-					Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
-					Set_job_ticket_file(job, 0, 0 );
-					break;
+			/*
+			 * special case when job has been removed while attempting to print
+			 */
+			fd = -1;
+			hf_name = Find_str_value(&job->info,HF_NAME);
+			safestrncpy(buffer,hf_name);
+			Get_job_ticket_file( &fd, job, buffer );
+			if( job->info.count ){
+				switch(status){
+				case JHOLD: Set_flag_value(&job->info,HOLD_TIME,time((void *)0)); break;
+				case JREMOVE: Set_flag_value(&job->info,REMOVE_TIME,time((void *)0)); break;
+				default:
+						SNPRINTF(buffer,sizeof(buffer))
+							"accounting check failed '%s'", Server_status(status));
+						SETSTATUS(job)"%s", buffer );
+						Set_str_value(&job->info,ERROR,buffer);
+						Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
+						break;
+				}
+				Set_job_ticket_file(job, 0, fd );
 			}
+			close(fd);
 			goto exit;
 		}
 	}
@@ -1369,7 +1378,18 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 	buffer[0] = 0;
 
 	if(DEBUGL2)Dump_job("Remote_job - final jcopy value", &jcopy );
+
  done:
+	fd = -1;
+	hf_name = Find_str_value(&job->info,HF_NAME);
+	safestrncpy(buffer,hf_name);
+	Get_job_ticket_file( &fd, job, buffer );
+	if( job->info.count == 0 ){
+		/*
+		 * you have removed the job!
+		 */
+		goto exit;
+	}
 	s = 0;
 	if( status ){
 		s = Find_str_value(&jcopy.info,ERROR);
@@ -1418,7 +1438,8 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 
 	Set_str_value(&job->info,PRSTATUS,Server_status(status));
 
-	Set_job_ticket_file(job, 0, 0 );
+	Set_job_ticket_file(job, 0, fd );
+	close(fd); fd = -1;
 
 	if( Accounting_remote_DYN && Accounting_file_DYN  ){
 		if( Accounting_end_DYN ){
@@ -2736,9 +2757,15 @@ int Remove_done_jobs( void )
 		done = Find_flag_value(&job.info,DONE_TIME);
 		error = Find_flag_value(&job.info,ERROR_TIME);
 		incoming = Find_flag_value(&job.info,INCOMING_TIME);
+		pid = Find_flag_value(&job.info,INCOMING_PID);
 		remove = Find_flag_value(&job.info,REMOVE_TIME);
 		DEBUG3("Remove_done_jobs: remove 0x%x, done 0x%x, error 0x%x, incoming 0x%x",
 			remove, done, error, incoming );
+		if( incoming && pid && kill( pid, 0 ) ){
+			/* we have a stale incoming job */
+			Remove_job( &job );
+			continue;
+		}
 		if( !(remove || (error && !Save_on_error_DYN)) ) continue;
 		if( last_remove != remove ){
 			remove_count = 0;

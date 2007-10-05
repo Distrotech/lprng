@@ -616,6 +616,10 @@ int Do_job_ticket_file( int action, int *sock,
 		Free_job(&job);
 		Get_job_ticket_file( &fd, &job, Sort_order.list[i] );
 		DEBUGFC(DCTRL2)Dump_job("Do_job_ticket_file - getting info",&job);
+		if( Find_flag_value(&job.info,INCOMING_TIME) ){
+			DEBUGF(DCTRL2)("Do_job_ticket_file: incoming job");
+			continue;
+		}
 		identifier = Find_str_value(&job.info,IDENTIFIER);
 		if( identifier == 0 ) identifier = Find_str_value(&job.info,XXCFTRANSFERNAME);
 		if( identifier == 0 ) continue;
