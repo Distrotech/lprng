@@ -46,6 +46,7 @@
 #include "initialize.h"
 #include "linksupport.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -93,6 +94,10 @@ static void usage(void)
 " -Tdbgflags debug flags\n"
 "    * - long status format produced\n", Name);
 
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
+	}
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);

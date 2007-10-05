@@ -97,6 +97,7 @@
 #include "initialize.h"
 #include "linksupport.h"
 #include "sendreq.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -114,6 +115,7 @@
 
 static void usage(void)
 {
+	char buffer[128];
 	FPRINTF( STDERR, _("usage: %s [-aAclV] [-Ddebuglevel] [-Pprinter] [-tsleeptime]\n"
 "  -A           - use authentication specified by AUTH environment variable\n"
 "  -a           - all printers\n"
@@ -129,6 +131,7 @@ static void usage(void)
 "  -V           - print version information\n"
 "  -v           - print in key: value format\n"), Name );
 
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
 	exit(1);

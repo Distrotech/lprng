@@ -131,5 +131,6 @@ int Pgp_receive( int *sock, int transfer_timeout,
 	struct line_list *header_info,
 	struct security *security, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work);
+char *ShowSecuritySupported( char *str, int maxlen );
 
 #endif

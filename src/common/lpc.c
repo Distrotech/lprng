@@ -65,6 +65,7 @@
 #include "control.h"
 #include "getopt.h"
 #include "errorcodes.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -442,6 +443,10 @@ void Get_parms(int argc, char *argv[] )
 			}
 			Printlist( Copyright, 2 );
 		}
+	}
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
 	}
 }
 

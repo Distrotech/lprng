@@ -1810,3 +1810,15 @@ int Pgp_receive( int *sock, int transfer_timeout,
 		0,0,
 		0,0}
 };
+
+char *ShowSecuritySupported( char *str, int maxlen )
+{
+	int i, len;
+	const char *name;
+	str[0] = 0;
+	for( len = i = 0; (name = SecuritySupported[i].name); ++i ){
+		SNPRINTF( str+len,maxlen-len) "%s%s",len?",":"",name );
+		len += strlen(str+len);
+	}
+	return( str );
+}

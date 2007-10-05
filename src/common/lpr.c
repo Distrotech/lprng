@@ -19,7 +19,7 @@
 #include "linksupport.h"
 #include "printjob.h"
 #include "sendjob.h"
-#include "openprinter.h"
+#include "user_auth.h"
 
 /**** ENDINCLUDE ****/
 
@@ -734,6 +734,10 @@ _("Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"
 	}
 	Parse_debug("=",-1);
 	FPRINTF( STDERR, "%s\n", Version );
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
+	}
 	exit(1);
 }
 
