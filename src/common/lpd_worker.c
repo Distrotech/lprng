@@ -162,7 +162,10 @@ static void Do_work( const char *name, struct line_list *args )
 	Mail_fd = Find_flag_value(args, MAIL_FD);
 	Lpd_request = Find_flag_value(args, LPD_REQUEST);
 	/* undo the non-blocking IO */
-	if( Lpd_request > 0 ) Set_block_io( Lpd_request );
+	if( Lpd_request > 0 ){
+		/* undo the non-blocking IO */
+		Set_block_io( Lpd_request );
+	}
 	Debug= Find_flag_value( args, DEBUG );
 	DbgFlag= Find_flag_value( args, DEBUGFV );
 #ifdef DMALLOC

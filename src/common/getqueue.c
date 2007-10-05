@@ -650,10 +650,12 @@ char *Make_job_ticket_image( struct job *job )
  * Write a job ticket file
  */
 
-int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd )
+int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int opened_fd )
 {
 	char *job_ticket_name, *tempfile, *outstr;
 	int status;
+	int fd = opened_fd;
+	struct stat statb;
 
 	status = 0;
 	outstr = 0;
@@ -667,19 +669,15 @@ int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd )
 		Errorcode = JABORT;
 		FATAL(LOG_ERR)"Set_job_ticket_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
 	}
-	if( !fd ){
-		fd = Make_temp_fd( &tempfile );
-		if( Write_fd_str(fd, outstr) < 0 ){
-			LOGERR(LOG_INFO)"Set_job_ticket_file: write to '%s' failed", tempfile );
-			status = 1;
+	if( opened_fd <= 0 ){
+		if( (fd = Checkwrite( job_ticket_name, &statb, O_RDWR, 0, 0 )) < 0 ){
+			LOGERR(LOG_INFO)"Set_job_ticket_file: cannot open '%s'", job_ticket_name );
+		} else if( Do_lock(fd, 1 ) ){
+			LOGERR(LOG_INFO)"Set_job_ticket_file: cannot lcok '%s'", job_ticket_name );
+			close(fd); fd = -1;
 		}
-		close(fd);
-		if( status == 0 && rename( tempfile, job_ticket_name ) == -1 ){
-			LOGERR(LOG_INFO)"Set_job_ticket_file: rename '%s' to '%s' failed",
-				tempfile, job_ticket_name );
-			status = 1;
-		}
-	} else {
+	}
+	if( fd > 0 ){
 		if( lseek( fd, 0, SEEK_SET ) == -1 ){
 			LOGERR_DIE(LOG_ERR) "Set_job_ticket_file: lseek failed" );
 		}
@@ -690,7 +688,9 @@ int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd )
 			LOGERR(LOG_INFO)"Set_job_ticket_file: write to '%s' failed", job_ticket_name );
 			status = 1;
 		}
-		/* close(fd); */
+		if( opened_fd <= 0 ){
+			close(fd); fd = -1;
+		}
 	}
 
 	if( Lpq_status_file_DYN ){
@@ -723,24 +723,29 @@ void Get_job_ticket_file( int *lock_fd, struct job *job, char *job_ticket_name )
 {
 	char *s;
 	struct stat statb;
-	int fd;
+	int fd = -1;
 	if( (s = safestrchr(job_ticket_name, '=')) ){
 		job_ticket_name = s+1;
 	}
 	DEBUG1("Get_job_ticket_file: checking on '%s'", job_ticket_name );
-
-	if( (fd = Checkwrite( job_ticket_name, &statb, O_RDWR, 0, 0 )) > 0
-		&& !Do_lock(fd, 1 ) ){
+	if( lock_fd ) fd  = *lock_fd;
+	if( fd <= 0 ){
+		if( (fd = Checkwrite( job_ticket_name, &statb, O_RDWR, 0, 0 )) > 0
+			&& !Do_lock(fd, 1 ) ){
+			Get_fd_image_and_split( fd, 0, 0,
+				&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
+			if( lock_fd ){
+				*lock_fd = fd;
+				fd = -1;
+			}
+		}
+		if( fd > 0 ) close(fd);
+		fd = -1;
+	} else {
 		Get_fd_image_and_split( fd, 0, 0,
 			&job->info, Line_ends, 1, Option_value_sep,1,1,1,0);
-		if( lock_fd ){
-			*lock_fd = fd;
-			fd = -1;
-		}
 	}
-	if( fd > 0 ) close(fd);
-	fd = -1;
-	if( &job->info.count ) {
+	if( job->info.count ) {
 		struct line_list cf_line_list, *datafile;
 		int i;
 		char *s;
@@ -762,7 +767,7 @@ void Get_job_ticket_file( int *lock_fd, struct job *job, char *job_ticket_name )
 		}
 		Free_line_list( &cf_line_list );
 	}
-	if(DEBUGL4)Dump_job("Get_job_ticket_file",job);
+	if(DEBUGL2)Dump_job("Get_job_ticket_file",job);
 }
 
 /*
@@ -1442,7 +1447,12 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 	if( job->info.count == 0 ){
 		SNPRINTF(buffer,sizeof(buffer)) "removed" );
 	} else if( Find_flag_value(&job->info,INCOMING_TIME) ){
-		SNPRINTF(buffer,sizeof(buffer)) "incoming" );
+		int pid = Find_flag_value(&job->info,INCOMING_PID);
+		if( !pid || kill( pid, 0 ) ){
+			SNPRINTF(buffer,sizeof(buffer)) "incoming (orphan)" );
+		} else {
+			SNPRINTF(buffer,sizeof(buffer)) "incoming" );
+		}
 	} else if( (error = Find_flag_value(&job->info,ERROR_TIME)) ){
 		SNPRINTF(buffer,sizeof(buffer)) "error" );
 	} else if( Find_flag_value(&job->info,HOLD_TIME) ){
@@ -1730,10 +1740,13 @@ char *Fix_datafile_infox( struct job *job, const char *number, const char *suffi
 	 * of the job datafile
 	 */
 	for( linecount = 0; linecount < job->datafiles.count; ++linecount ){
+		char *openname;
 		lp = (void *)job->datafiles.list[linecount];
 		transfername = Find_str_value(lp,OTRANSFERNAME);
 		if( ! transfername ) transfername = Find_str_value(lp,DFTRANSFERNAME);
 		Set_str_value(lp,NTRANSFERNAME,transfername);
+		openname = Find_str_value(lp,OPENNAME);
+		if( ISNULL(openname) ) Set_str_value(lp,OPENNAME,transfername);
 		if( !(s = Find_casekey_str_value(&outfiles,transfername,Hash_value_sep)) ){
 			/* we add the entry */
 			offset = count % 52;
