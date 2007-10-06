@@ -362,7 +362,7 @@ int Do_queue_jobs( char *name, int subserver )
 	int master = 0;		/* this is the master */
 	int opened_logfile = 0;	/* we have not opened the log file */
 	int lock_fd;	/* fd for files */
-	char buffer[SMALLBUFFER], *savename = 0, errmsg[SMALLBUFFER];
+	char buffer[SMALLBUFFER], *savename = 0, errmsg[SMALLBUFFER], *save_move_dest;
 	char *path, *s, *id, *tempfile, *transfername, *openname,
 		*new_dest, *move_dest, *pr, *hf_name, *forwarding;
 	struct stat statb;
@@ -774,7 +774,7 @@ int Do_queue_jobs( char *name, int subserver )
 			destinations = Find_flag_value(&job.info,DESTINATIONS);
 			if( !destinations ){
 				move_dest = new_dest = Find_str_value(&job.info,MOVE);
-				if( !new_dest ) new_dest = Frwarding(&Spool_control);
+				if( !new_dest ) move_dest = new_dest = Frwarding(&Spool_control);
 			} else {
 				all_done = 0;
 				for( j = 0; !new_dest && j < destinations; ++j ){
@@ -814,7 +814,7 @@ int Do_queue_jobs( char *name, int subserver )
 
 			DEBUG3("Do_queue_jobs: new_dest '%s', printable %d, master %d, destinations %d, destination %d",
 				new_dest, printable, master, destinations, destination );
-			if( new_dest ){
+			if( move_dest ){
 				sp = (void *)servers.list[0];
 				/* we will start a process up to do move */
 				use_subserver = 0;
@@ -996,8 +996,8 @@ int Do_queue_jobs( char *name, int subserver )
 		}
 
 		/* first, we see if there is no work and no server active */
-		DEBUG1("Do_queue_jobs: job_to_do %d, use_subserver %d, working %d",
-			job_to_do, use_subserver, working );
+		DEBUG1("Do_queue_jobs: job_to_do %d, use_subserver %d, working %d, move_dest %s",
+			job_to_do, use_subserver, working, move_dest );
 
 		if( job_to_do < 0 && !working && chooser_did_not_find_server == 0 ){
 			DEBUG1("Do_queue_jobs: nothing to do");
@@ -1059,8 +1059,8 @@ int Do_queue_jobs( char *name, int subserver )
 		sp = (void *)servers.list[use_subserver];
 
 		pr = Find_str_value(sp,PRINTER);
-		DEBUG1("Do_queue_jobs: starting job '%s' on '%s', use_subserver %d",
-			id, pr, use_subserver );
+		DEBUG1("Do_queue_jobs: starting job '%s' on '%s', use_subserver %d, move_dest '%s'",
+			id, pr, use_subserver, move_dest );
 
 		if( Set_job_ticket_file( &job, 0, fd ) ){
 			/* you cannot update job ticket file!! */
@@ -1102,6 +1102,8 @@ int Do_queue_jobs( char *name, int subserver )
 			static struct line_list new_sp; /* we are going to set a pointer to this */
 			Init_line_list(&new_sp);
 			savename = safestrdup(Printer_DYN,__FILE__,__LINE__);
+			save_move_dest = safestrdup(move_dest,__FILE__,__LINE__);
+			move_dest = save_move_dest;
 			/*
 			 * is it a remote printer?
 			 */
@@ -1145,7 +1147,7 @@ int Do_queue_jobs( char *name, int subserver )
 				Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
 				Set_job_ticket_file(&job, 0, fd );
 			} else {
-				/* we found to find the destination directory */
+				/* we have found the destination directory, reset to original */
 				Set_str_value(&new_sp,PRINTER,Printer_DYN);
 				Set_str_value(&new_sp,SPOOLDIR,Spool_dir_DYN);
 				if( Setup_printer( savename, errmsg, errlen, 1 ) ){
@@ -1177,10 +1179,13 @@ int Do_queue_jobs( char *name, int subserver )
 			}
 			if( fd > 0 ) close(fd); fd = -1;
 			if(savename) free(savename); savename = 0;
+			if(save_move_dest) free(save_move_dest); save_move_dest = 0;
+			move_dest = 0;
 			Free_line_list(&new_sp);
 			jobs_printed = 1;
 			continue;
-		} else if( !Find_flag_value(sp,SERVER) ){
+		} else {
+			/* if( !Find_flag_value(sp,SERVER) ) */
 			Free_line_list(&tinfo);
 			hf_name = Find_str_value(&job.info,HF_NAME);
 			id = Find_str_value(&job.info,IDENTIFIER);
@@ -1858,9 +1863,13 @@ void Update_status( int fd, struct job *job, int status )
 		if(DEBUGL1)Dump_job("Update_status - no ID", job );
 		return;
 	}
+	destinations = Find_flag_value(&job->info,DESTINATIONS);
+	DEBUG1("Update_status: id '%s', destinations %d", id, destinations );
 
-	if( (destinations = Find_flag_value(&job->info,DESTINATIONS)) ){
+	if( destinations ){
 		did = Find_str_value(&job->info,DESTINATION );
+		DEBUG1("Update_status: id '%s', destinations %d, DESTINATION '%s'",
+			id, destinations, did );
 		if( !Get_destination_by_name( job, did ) ){
 			destination = &job->destination;
 			did = Find_str_value(destination,IDENTIFIER);
