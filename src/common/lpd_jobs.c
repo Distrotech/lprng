@@ -769,6 +769,27 @@ int Do_queue_jobs( char *name, int subserver )
 				}
 				continue;
 			}
+			{
+				double jobsize = Find_double_value(&job.info,SIZE);
+				if( jobsize == 0 && Discard_zero_length_jobs_DYN ){
+					Set_str_value(&job.info,ERROR,"not printing zero length job");
+					Set_nz_flag_value(&job.info,ERROR_TIME,time(0));
+					if( Set_job_ticket_file( &job, 0, fd ) ){
+						/* you cannot update job ticket file!! */
+						setstatus( &job, _("cannot update job ticket file for '%s'"),
+							id);
+						FATAL(LOG_ERR)
+							_("Do_queue_jobs: cannot update job ticket file for '%s'"), 
+							id);
+					}
+					if( !(Save_on_error_DYN || Done_jobs_DYN || Done_jobs_max_age_DYN) ){
+						setstatus( &job, _("removing job '%s' - no permissions"), id);
+						Remove_job( &job );
+						free( Sort_order.list[job_index] ); Sort_order.list[job_index] = 0;
+					}
+					continue;
+				}
+			}
 
 			/* get destination information */
 			destinations = Find_flag_value(&job.info,DESTINATIONS);

@@ -284,6 +284,7 @@ EXTERN int   Discard_large_jobs_DYN;  /* discard jobs that exceed max job size *
 EXTERN int   Done_jobs_DYN;        /* keep the last NN done jobs */
 EXTERN int   Done_jobs_max_age_DYN; /* keep the done jobs for at least max age seconds */
 EXTERN int Direct_DYN;		/* allow LPR to send jobs to a socket */
+EXTERN int Discard_zero_length_jobs_DYN;		/* discard zero length jobs */
 EXTERN int Exit_linger_timeout_DYN;	/* we set this timeout on all of the sockets */
 EXTERN int FF_on_close_DYN; /* print a form feed when device is closed */
 EXTERN int FF_on_open_DYN; /* print a form feed when device is opened */
