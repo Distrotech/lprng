@@ -203,6 +203,8 @@ struct keywords Pc_var_list[] = {
    /* discard jobs that exceed max job size */
 { "discard_large_jobs", 0, FLAG_K, &Discard_large_jobs_DYN,0,0,"=1"},
    /* keep the last NN done jobs for status purposes */
+{ "discard_zero_length_jobs", 0, FLAG_K, &Discard_zero_length_jobs_DYN,0,0,"=0"},
+   /* do not print zero length jobs */
 { "done_jobs", 0, INTEGER_K, &Done_jobs_DYN,0,0,"=" DONE_JOBS},
    /* keep done jobs for at most max age seconds */
 { "done_jobs_max_age", 0, INTEGER_K, &Done_jobs_max_age_DYN,0,0,"=" DONE_JOBS_MAX_AGE},

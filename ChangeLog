@@ -1,3 +1,4 @@
+2007-10-09 brl add discard_zero_length_jobs from 3.8.32
 2007-10-06 brl add forwarding and routing fixes from 3.8.32 (perhaps rather .30)
 2007-10-05 brl print list of supported authentications, taken from 3.8.32
 2007-10-05 brl add new file locking strategy from 3.8.32 (perhaps rather .29)
