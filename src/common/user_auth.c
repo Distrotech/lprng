@@ -1796,7 +1796,8 @@ int Pgp_receive( int *sock, int transfer_timeout,
 # if defined(MIT_KERBEROS4)
 	{ "kerberos4", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
 # endif
-	{ "kerberos*", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
+	{ "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
+	{ "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt },
 #endif
 
 	{ "test",      "test",     0,              0,           Test_send, 0, Test_receive },

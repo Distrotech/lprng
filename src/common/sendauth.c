@@ -349,12 +349,11 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 
 	Set_str_value(info,DESTINATION,destination);
 
-	DEBUG1("Fix_send_auth: pr '%s', key '%s', from '%s',"
-		" destination '%s'",
-		RemotePrinter_DYN,key, from, tag);
+	DEBUG1("Fix_send_auth: pr '%s', key '%s', from '%s', name '%s', tag '%s'",
+		RemotePrinter_DYN,key, from, security->name, tag);
 	SNPRINTF( buffer, sizeof(buffer))
 		"%c%s %s %s %s",
-		REQ_SECURE,RemotePrinter_DYN,key, from, tag );
+		REQ_SECURE,RemotePrinter_DYN,key, from, security->name );
 	Set_str_value(info,CMD,buffer);
 	DEBUG1("Fix_send_auth: sending '%s'", buffer );
 
