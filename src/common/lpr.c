@@ -20,6 +20,7 @@
 #include "printjob.h"
 #include "sendjob.h"
 #include "user_auth.h"
+#include "openprinter.h"
 
 /**** ENDINCLUDE ****/
 
