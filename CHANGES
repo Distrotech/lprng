@@ -1,7 +1,126 @@
-This file lists the changes up to version 3.8.28, which
-was (as of this writing) the last version published by
-Patrick Powell. The changes after that can be found
-in the ChangeLog and NEWS files.
+This file documents the history of the original LPRng from Patrick Powell.
+While this version of lprng was originally based uppon 3.8.28, most of the
+changes in 3.8.32 are included. (3.8.29, 3.8.30 and 3.8.31 were never
+publically released up to the time of this writing to all of my knowledge,
+so things may be attributed to .32 that were actually earlier in other parts
+of the documentation). Things documented here but not included in this version
+is the support as CUPS-backend server and the corresponding PDEs for that
+and changes to the build or install scripts (as those are replaced anyway).
+Additional changes not done by Patrick Powell can be found in the ChangeLog
+and NEWS files.
+
+Version LPRng-3.8.32 - Thu Sep 6 15:07:19 PDT 2007
+  added: discard_zero_length_jobs flag
+   zero length jobs are now discarded rather than trying
+   to be printed.  However, sometimes zero length jobs are
+   actually MEANT to be printed as the various filters will
+   expand the zero length job into content.  This is the way
+   to put the name of a file you want printed from an archive
+   into an option line/flag and then have the back end print
+   it.  Ugly,  but it works.
+   
+Version LPRng-3.8.31 - Fri Feb 16 17:33:35 PST 2007
+  postinstall.freebsd: /etc/rc.conf is not truncated
+
+Version LPRng-3.8.30 - Thu Sep 21 11:53:39 PDT 2006
+  Fixed: If job was forwarded to queue, or redirected to queue, then queue
+    would not start printing.
+
+  Fixed: If job with multiple copies (lpr -Kxxx) was forwarded to queue or redirected to queue,
+    then forwarded then only a single file copy was printed.
+
+  Fixed: If the 'router' or 'chooser' was used, then only 1 copy of file was sent
+    to destination queue, and job may unexpected die.
+
+Version LPRng-3.8.29 - Fri Jan 28 11:05:58 PST 2005
+
+  ATHENTICATION: added k5conn (kerberos 5) method.
+    This is identical to the kerberos method,  but does not do encrypted data transfer.
+
+  BUG FIXES:
+    The authentication information is now saved in the control file.
+
+  The status of incoming jobs is now displayed with the LPQ command.  Unfortunately,
+    the incoming job size is displayed as 0 until the entire job file arrives.
+
+  The file locking strategy has been modified once more, due to dealing with problems
+    of HUGE incoming jobs that would cause all the LPD/LPRM/... facilities to lock.
+    This required the 'Get_hold_file_info' and 'Set_hold_file_info' usage to change.
+   - job reception: the hold file is created and then modified when all
+     of the job files have been received.
+   - job deletion  - you can remove an incoming job.  The incoming process
+     is killed as well.  If you have 'multiple retries' enabled for job transfer,
+     then the job will be sent again.  Such is life.
+   - job printing - the job file remains locked until the 'lpd' server
+     decides what to do with it.  This is usually a VERY short period,
+     but if a process needs to be run to determine the destination of the
+     job,  it may remain locked until the process has completed.
+ 
+  Apple OS-X - LPR+kerberos as backend for CUPS server
+
+    Added support for the using LPR+kerberos authentication with CUPS
+    backend on Apple OS X.  See the README.kprPDE file for the gory details.
+    Basically,  OS-X has a 'Printer Driver' set up that specifies the capabilties
+    of a printer as well as the 'driver' or 'transport program' which will handle
+    the transfer of the print job to the remote printer.  If compiled with the
+    correct flags,  when lpr is invoked as 'klpr',  it will assume that it is
+    being used by OS-X as a 'transport program' and take the necessary steps
+    to obtain the user Kerberos credentials and then forward the print job
+    to the LPD server.
+
+    Note that much of this code is totally dependent on the OS-X system,
+    and I (Patrick Powell) do not have access to details of how it is supported
+    or implemented.  The code was supplied by Rich Cochran of Cornell,
+    and has been added to the LPRng system at his and others request.
+
+    If the PDE support changes on OS-X, then it will be necessary to
+    redo this support.  Note that the PDE files are BINARY,  and contain
+    compiled and executable code.
+
+  Kerberos, Red Hat Enterprise Linux
+    The 'com_err.h' file has been removed from some versions
+    of RHEL.  Configure now checks to see if it is found.
+    This may break if com_err.h is not in one of the 'standard'
+    locations, or is in a subdirectory such as /usr/kerberos/include,
+    or some other permutation.
+
+  Updated preinstall, postinstall, preremove, postremove, to be more
+    compatible with package systems such as the FreeBSD 'ports' and
+    rpms.
+
+  Major Installation Change:  If you want to have the LPRng install
+    run a script that stops your current LPD installation, or your
+    current CUPS installation, you will need to use:
+     make STARTSERVER=YES install
+
+   New Directory:
+    The /usr/local/share/LPRng/ or ($datadir)/LPRng directory will
+    now be used for holding sample versions of configuration files.
+    During the install process these will then be moved to the
+    appropriate destinations by the 'postinstall' scripts.  By doing
+    this, you can now generate FreeBSD ports/packages that will
+    have a 'constant' set of locations for files,  but then can
+    move them or copy them to system specific destinations.  This
+    solves a nasty set of problems with FreeBSD ports/packages,
+    which have a 'fixed' pkg-plist file,  but also allows you to
+    specify the destinations of printcap, lpd.conf, and do forth.
+    Files:
+      printcap.sample lpd.conf.sample lpd.perms.sample lprng.sh.sample
+      (startup script), postinstall
+   New Installation Assistance File:
+     /usr/local/share/LPRng/postinstall
+     This can be used to set the sample versions of configuration
+     files to their destinations.  In addition, you can also
+     run a set of commands that will attempt to replace your
+     current LPD system with the LPRng system:
+      Bourne/bash shells:
+        STARTSERVER=YES postinstall
+      Others:
+        env STARTSERVER=YES postinstall
+     If you are building a package for mass distribution,  then
+     after installing the package on a host you can run this script:
+      pkg_add LPRng-<version>.tar
+      env STARTSERVER=yes /usr/local/share/LPRng/postinstall
 
 Version LPRng-3.8.28 - Fri Jul 23 09:01:55 PDT 2004
 
