@@ -13,6 +13,7 @@
 #include "getqueue.h"
 #include "child.h"
 #include "fileopen.h"
+#include "printjob.h"
 /**** ENDINCLUDE ****/
 #if defined(HAVE_TCDRAIN)
 #  if defined(HAVE_TERMIOS_H)
@@ -184,6 +185,11 @@ int Print_job( int output, int status_device, struct job *job,
 	/* now we have a banner, is it at start or end? */
 	DEBUG2("Print_job: do_banner %d, :hl=%d, :bs=%s, :be=%s, banner_name '%s'",
 			do_banner, Banner_last_DYN, Banner_start_DYN, Banner_end_DYN, banner_name );
+	if( do_banner && Generate_banner_DYN ){
+		Add_banner_to_job( job );
+		do_banner = 0;
+		Outlen = 0;
+	}
 	if( do_banner && !Banner_last_DYN ){
 		Print_banner( banner_name, Banner_start_DYN, job );
 	}
@@ -1153,4 +1159,70 @@ int Wait_for_pid( int of_pid, const char *name, int suspend, int timeout )
 		Server_status(return_code), Decode_status(&ps_status) );
 	errno = err;
 	return( return_code );
+}
+
+/* moved here from lpd_jobs.c as it is now called also here and lpd_jobs.c
+ * is only linked into the server, not the clients - brl*/
+
+void Add_banner_to_job( struct job *job )
+{
+	const char *banner_name;
+	char *tempfile;
+	struct line_list *lp;
+	int tempfd;
+
+	Errorcode = 0;
+    banner_name = Find_str_value(&job->info, BNRNAME );
+    if( banner_name == 0 ){
+        banner_name = Find_str_value( &job->info,LOGNAME);
+	}
+	if( banner_name == 0 ) banner_name = "ANONYMOUS";
+	Set_str_value(&job->info,BNRNAME,banner_name);
+    banner_name = Find_str_value(&job->info, BNRNAME );
+	DEBUG1("Add_banner_to_job: banner name '%s'", banner_name );
+	if( !Banner_last_DYN ){
+		DEBUG1("Add_banner_to_job: banner at start");
+		Init_buf(&Outbuf, &Outmax, &Outlen );
+		Print_banner( banner_name, Banner_start_DYN, job );
+        tempfd = Make_temp_fd(&tempfile);
+		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
+			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			Errorcode = JABORT;
+			return;
+		}
+		close(tempfd);
+		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
+		memset(lp,0,sizeof(lp[0]));
+		Check_max(&job->datafiles,1);
+		memmove( &job->datafiles.list[1], &job->datafiles.list[0],
+			job->datafiles.count * sizeof(job->datafiles.list[0]) );
+		job->datafiles.list[0] = (void *)lp;
+		++job->datafiles.count;
+
+		Set_str_value(lp,OPENNAME,tempfile);
+		Set_str_value(lp,DFTRANSFERNAME,tempfile);
+		Set_str_value(lp,"N","BANNER");
+		Set_str_value(lp,FORMAT,"f");
+	}
+	if( Banner_last_DYN || Banner_end_DYN) {
+		Init_buf(&Outbuf, &Outmax, &Outlen );
+		Print_banner( banner_name, Banner_end_DYN, job );
+        tempfd = Make_temp_fd(&tempfile);
+		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
+			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			Errorcode = JABORT;
+			return;
+		}
+		close(tempfd);
+		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
+		memset(lp,0,sizeof(lp[0]));
+		Check_max(&job->datafiles,1);
+		job->datafiles.list[job->datafiles.count] = (void *)lp;
+		++job->datafiles.count;
+		Set_str_value(lp,OPENNAME,tempfile);
+		Set_str_value(lp,DFTRANSFERNAME,tempfile);
+		Set_str_value(lp,"N","BANNER");
+		Set_str_value(lp,FORMAT,"f");
+	}
+	if(DEBUGL3)Dump_job("Add_banner_to_job", job);
 }
