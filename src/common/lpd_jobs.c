@@ -129,8 +129,6 @@
  * 
  ***************************************************************************/
 
-static void Add_banner_to_job( struct job *job );
-
 /*
  * Signal handler to set flags and terminate system calls
  *  NOTE: use 'volatile' so that the &*()()&* optimizing compilers
@@ -2447,69 +2445,6 @@ void Service_worker( struct line_list *args )
 		Errorcode = Local_job( &job, id );
 	}
 	cleanup(0);
-}
-
-static void Add_banner_to_job( struct job *job )
-{
-	const char *banner_name;
-	char *tempfile;
-	struct line_list *lp;
-	int tempfd;
-
-	Errorcode = 0;
-    banner_name = Find_str_value(&job->info, BNRNAME );
-    if( banner_name == 0 ){
-        banner_name = Find_str_value( &job->info,LOGNAME);
-	}
-	if( banner_name == 0 ) banner_name = "ANONYMOUS";
-	Set_str_value(&job->info,BNRNAME,banner_name);
-    banner_name = Find_str_value(&job->info, BNRNAME );
-	DEBUG1("Add_banner_to_job: banner name '%s'", banner_name );
-	if( !Banner_last_DYN ){
-		DEBUG1("Add_banner_to_job: banner at start");
-		Init_buf(&Outbuf, &Outmax, &Outlen );
-		Print_banner( banner_name, Banner_start_DYN, job );
-        tempfd = Make_temp_fd(&tempfile);
-		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
-			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
-			Errorcode = JABORT;
-			return;
-		}
-		close(tempfd);
-		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
-		memset(lp,0,sizeof(lp[0]));
-		Check_max(&job->datafiles,1);
-		memmove( &job->datafiles.list[1], &job->datafiles.list[0],
-			job->datafiles.count * sizeof(job->datafiles.list[0]) );
-		job->datafiles.list[0] = (void *)lp;
-		++job->datafiles.count;
-
-		Set_str_value(lp,OPENNAME,tempfile);
-		Set_str_value(lp,DFTRANSFERNAME,tempfile);
-		Set_str_value(lp,"N","BANNER");
-		Set_str_value(lp,FORMAT,"f");
-	}
-	if( Banner_last_DYN || Banner_end_DYN) {
-		Init_buf(&Outbuf, &Outmax, &Outlen );
-		Print_banner( banner_name, Banner_end_DYN, job );
-        tempfd = Make_temp_fd(&tempfile);
-		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
-			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
-			Errorcode = JABORT;
-			return;
-		}
-		close(tempfd);
-		lp = malloc_or_die(sizeof(lp[0]),__FILE__,__LINE__);
-		memset(lp,0,sizeof(lp[0]));
-		Check_max(&job->datafiles,1);
-		job->datafiles.list[job->datafiles.count] = (void *)lp;
-		++job->datafiles.count;
-		Set_str_value(lp,OPENNAME,tempfile);
-		Set_str_value(lp,DFTRANSFERNAME,tempfile);
-		Set_str_value(lp,"N","BANNER");
-		Set_str_value(lp,FORMAT,"f");
-	}
-	if(DEBUGL3)Dump_job("Add_banner_to_job", job);
 }
 
 /*
