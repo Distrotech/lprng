@@ -1494,7 +1494,7 @@ double Space_avail( const char *pathname )
 	int fd;
     char *format;
 #endif
-	char buf[1024];
+	char buf[10240];
     VA_LOCAL_DECL
 
     VA_START (format);
