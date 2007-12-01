@@ -347,7 +347,7 @@ struct keywords Pc_var_list[] = {
    /* mail to this operator on error */
 { "mail_operator_on_error", 0, STRING_K, &Mail_operator_on_error_DYN,0,0,0},
    /* maximum accounting file size in Kbytes; 0 means no limit on size */
-{ "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=1000"},
+{ "max_accounting_file_size", 0, INTEGER_K, &Max_accounting_file_size_DYN,0,0,"=0"},
    /* maximum interval between connection attempts */
 { "max_connect_interval", 0, INTEGER_K, &Max_connect_interval_DYN,0,0,"=60"},
    /* maximum number of datafiles */
