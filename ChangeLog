@@ -1,4 +1,5 @@
-2007-10-26 wh/brl (re)generate banner before printing (taked modified from 3.8.32 or earlier)
+2007-11-01 brl remove default maximum size of accounting files (taken from 3.8.32 or earlier)
+2007-10-26 wh/brl (re)generate banner before printing (taken modified from 3.8.32 or earlier)
 2007-10-21 brl add new _AIX51 and _AIX52 conditionals from 3.8.32
 2007-10-11 brl add k5conn method from 3.8.32 (perhaps rather .29)
 2007-10-09 brl add discard_zero_length_jobs from 3.8.32
