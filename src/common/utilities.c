@@ -1354,7 +1354,7 @@ int Set_full_group( int euid, int gid )
 			safestrncpy(user,pw->pw_name);
 			if( safestrlen(user) != safestrlen(pw->pw_name) ){
 				FATAL(LOG_ERR) "Set_full_group: CONFIGURATION BOTCH! safestrlen of user name '%s' = %d larger than buffer size %d",
-					pw->pw_name, safestrlen(pw->pw_name), sizeof(user) );
+					pw->pw_name, (int)safestrlen(pw->pw_name), (int)sizeof(user) );
 			}
 			if( initgroups(user, pw->pw_gid ) == -1 ){
 				err = errno;
