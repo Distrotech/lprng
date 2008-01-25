@@ -89,10 +89,10 @@ void *malloc_or_die( size_t size, const char *file, int line )
 #endif
     if( p == 0 ){
         LOGERR_DIE(LOG_INFO) "malloc of %d failed, file '%s', line %d",
-			size, file, line );
+			(int)size, file, line );
     }
 	DEBUG6("malloc_or_die: size %d, addr 0x%lx, file '%s', line %d",
-		size,  Cast_ptr_to_long(p), file, line );
+		(int)size,  Cast_ptr_to_long(p), file, line );
     return( p );
 }
 
@@ -110,11 +110,11 @@ void *realloc_or_die( void *p, size_t size, const char *file, int line )
 	}
     if( p == 0 ){
         LOGERR(LOG_INFO) "realloc of 0x%lx, new size %d failed, file '%s', line %d",
-			Cast_ptr_to_long(orig), size, file, line );
+			Cast_ptr_to_long(orig), (int)size, file, line );
 		abort();
     }
 	DEBUG6("realloc_or_die: size %d, orig 0x%lx, addr 0x%lx, file '%s', line %d",
-		size, Cast_ptr_to_long(orig), Cast_ptr_to_long(p), file, line );
+		(int)size, Cast_ptr_to_long(orig), Cast_ptr_to_long(p), file, line );
     return( p );
 }
 
@@ -354,7 +354,7 @@ void Check_max( struct line_list *l, int incr )
 			__FILE__,__LINE__)) ){
 			Errorcode = JFAIL;
 			LOGERR(LOG_INFO) "Check_max: realloc %d failed",
-				l->max*sizeof(char*) );
+				(int)(l->max*sizeof(char*)) );
 		}
 	}
 }
