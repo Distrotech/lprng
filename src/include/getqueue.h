@@ -170,9 +170,7 @@ int Get_file_image_and_split( const char *file,
 	char **return_image );
 void Check_for_hold( struct job *job, struct line_list *spool_control );
 int Get_hold_class( struct line_list *info, struct line_list *sq );
-void Append_Z_value( struct job *job, char *s );
 int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_cf_file );
-void Set_job_ticket_datafile_info( struct job *job );
 char *Make_job_ticket_image( struct job *job );
 int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int fd );
 void Get_job_ticket_file( int *lock_fd, struct job *job, char *job_ticket_name );
@@ -191,7 +189,6 @@ int Read_pid( int fd, char *str, int len );
 int Write_pid( int fd, int pid, char *str );
 int Patselect( struct line_list *token, struct line_list *cf, int starting );
 int Check_format( int type, const char *name, struct job *job );
-char *Find_start(char *str, const char *key );
 char *Frwarding(struct line_list *l);
 int Pr_disabled(struct line_list *l);
 int Sp_disabled(struct line_list *l);
@@ -215,12 +212,9 @@ int Get_destination_by_name( struct job *job, char *name );
 int Trim_status_file( int status_fd, char *file, int max, int min );
 char *Fix_datafile_infox( struct job *job, const char *number, const char *suffix,
 	const char *xlate_format, int update_df_names );
-int ordercomp(  const void *left, const void *right, const void *orderp);
 void Fix_control( struct job *job, char *filter, char *xlate_format,
 	int update_df_names );
 void Init_buf(char **buf, int *max, int *len);
 void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len );
 void Put_buf_str( const char *s, char **buf, int *max, int *len );
-void Free_buf(char **buf, int *max, int *len);
-
 #endif

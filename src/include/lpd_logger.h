@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: lpd_logger.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -14,7 +13,6 @@
 
 /* PROTOTYPES */
 int Start_logger( int log_fd );
-int Dump_queue_status(int outfd);
 void Logger( struct line_list *args );
 
 #endif

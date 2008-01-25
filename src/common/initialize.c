@@ -30,6 +30,8 @@
 #endif
 
 
+static char *Get_user_information( void );
+
 /***************************************************************************
  * general initialization.
  * This should NOT do any network operations
@@ -291,7 +293,7 @@ void Setup_configuration()
  * OUTPUT: dynamic alloc string
  *  - returns user name
  */
-char *Get_user_information( void )
+static char *Get_user_information( void )
 {
 	char *name = 0;
 	char uid_msg[32];

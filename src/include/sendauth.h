@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: sendauth.h,v 1.74 2004/09/24 20:20:00 papowell Exp $
  ***************************************************************************/
 
 
@@ -18,6 +17,5 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
 	struct security *security, struct line_list *info );
 struct security *Fix_send_auth( char *name, struct line_list *info,
 	struct job *job, char *error, int errlen );
-void Put_in_auth( int tempfd, const char *key, char *value );
 
 #endif

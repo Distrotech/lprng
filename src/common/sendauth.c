@@ -51,6 +51,8 @@
  *      wait for an ACK
  ***************************************************************************/
 
+static void Put_in_auth( int tempfd, const char *key, char *value );
+
 /*
  * Send_auth_transfer
  *  1. we send the command line and wait for ACK of 0

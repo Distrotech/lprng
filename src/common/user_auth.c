@@ -106,7 +106,7 @@
     expect to get back NULL or error message
  */
 
-int Test_connect( struct job *job UNUSED, int *sock,
+static int Test_connect( struct job *job UNUSED, int *sock,
 	int transfer_timeout,
 	char *errmsg, int errlen,
 	struct security *security UNUSED, struct line_list *info )
@@ -132,7 +132,7 @@ int Test_connect( struct job *job UNUSED, int *sock,
 	return( status );
 }
 
-int Test_accept( int *sock, int transfer_timeout,
+static int Test_accept( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize UNUSED, int from_server UNUSED,
 	char *authtype UNUSED, char *errmsg, int errlen,
 	struct line_list *info, struct line_list *header_info,
@@ -184,7 +184,7 @@ int Test_accept( int *sock, int transfer_timeout,
  *
  **************************************************************/
 
-int Test_send( int *sock,
+static int Test_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *errmsg, int errlen,
@@ -252,7 +252,7 @@ int Test_send( int *sock,
 	return(status);
 }
 
-int Test_receive( int *sock, int transfer_timeout,
+static int Test_receive( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -263,16 +263,6 @@ int Test_receive( int *sock, int transfer_timeout,
 	int tempfd, status, n;
 	char buffer[LARGEBUFFER];
 	struct stat statb;
-
-#if 0
-	/* this shows how to create a temporary file for private use
-	 * it gets unlinked safely.
-	 */
-	char *pgpfile
-    pgpfile = safestrdup2(tempfile,".pgp",__FILE__,__LINE__); 
-    Check_max(&Tempfiles,1);
-    Tempfiles.list[Tempfiles.count++] = pgpfile;
-#endif
 
 	tempfd = -1;
 
@@ -496,7 +486,7 @@ static int md5key( const char *keyfile, char *name, char *key, int keysize, char
  *
  **************************************************************/
 
-int md5_send( int *sock, int transfer_timeout, char *tempfile,
+static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
 	struct security *security UNUSED, struct line_list *info )
 {
@@ -735,7 +725,7 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 }
 
 
-int md5_receive( int *sock, int transfer_timeout,
+static int md5_receive( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
 	struct line_list *info,
 	char *errmsg, int errlen,
@@ -1023,7 +1013,7 @@ int md5_receive( int *sock, int transfer_timeout,
  * Pgp encode and decode a file
  ***************************************************************************/
 
-int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen )
+static int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen )
 {
 	char *s, *t;
 	int pgppassfd = -1;
@@ -1096,7 +1086,7 @@ int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int 
 	return(pgppassfd);
 }
 
-int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
+static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_to_id, struct line_list *from_info,
 	int *pgp_exit_code, int *not_a_ciphertext )
@@ -1278,7 +1268,7 @@ int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, cha
 	return( status );
 }
 
-int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
+static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
 	struct line_list *pgp_info, char *buffer, int bufflen,
 	char *error, int errlen, char *esc_from_id, char *esc_to_id,
 	int *pgp_exit_code )
@@ -1482,7 +1472,7 @@ int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, cha
  *  Keyrings must contain keys for users.
  *************************************************************/
 
-int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
+static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
 	struct security *security UNUSED, struct line_list *info )
 {
@@ -1640,7 +1630,7 @@ int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	return(status);
 }
 
-int Pgp_receive( int *sock, int transfer_timeout,
+static int Pgp_receive( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
 	struct line_list *info,
 	char *errmsg, int errlen,

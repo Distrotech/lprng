@@ -7,10 +7,6 @@
  *
  ***************************************************************************/
 
- static char *const _id =
-"$Id: lpd_remove.c,v 1.74 2004/09/24 20:19:58 papowell Exp $";
-
-
 #include "lp.h"
 #include "lpd_remove.h"
 #include "getqueue.h"
@@ -23,6 +19,11 @@
 #include "fileopen.h"
 #include "sendreq.h"
 /**** ENDINCLUDE ****/
+
+static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
+	struct line_list *done_list );
+static void Get_local_or_remote_remove( char *user, int *sock,
+	struct line_list *tokens, struct line_list *done_list );
 
 /***************************************************************************
  * Commentary:
@@ -123,7 +124,7 @@ int Job_remove( int *sock, char *input )
  *  - find and remove the spool queue entries
  ***************************************************************************/
 
-void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
+static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	struct line_list *done_list )
 {
 	char msg[SMALLBUFFER], header[SMALLBUFFER];
@@ -398,7 +399,7 @@ void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	return;
 }
 
-void Get_local_or_remote_remove( char *user, int *sock,
+static void Get_local_or_remote_remove( char *user, int *sock,
 	struct line_list *tokens, struct line_list *done_list )
 {
 	char msg[LARGEBUFFER];

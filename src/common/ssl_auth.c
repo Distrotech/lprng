@@ -67,6 +67,24 @@
 */  
 
 
+static char *Set_ERR_str( char *header, char *errmsg, int errlen );
+static int SSL_Initialize_ctx(
+	SSL_CTX **ctx_ret,
+	char *errmsg, int errlen );
+static void Destroy_ctx(SSL_CTX *ctx);
+static void Get_cert_info( SSL *ssl, struct line_list *info );
+static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
+	struct line_list *info, char *errmsg, int errlen );
+static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
+	struct line_list *info, char *errmsg, int errlen );
+static int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
+	char *errmsg, int errlen );
+static int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
+	char *errmsg, int errlen );
+static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
+	char *errmsg, int errlen );
+static int Close_SSL_connection( int sock, SSL *ssl );
+static const char * Error_SSL_name( int i );
 
 /*
  * The callback for getting a password for the 
@@ -109,7 +127,7 @@
  *  - generate the SSL error message 
  */
 
-char *Set_ERR_str( char *header, char *errmsg, int errlen )
+static char *Set_ERR_str( char *header, char *errmsg, int errlen )
 {
 	unsigned long e;
 	errmsg[0] = 0;
@@ -165,7 +183,7 @@ char *Set_ERR_str( char *header, char *errmsg, int errlen )
  * SSL_Initialize_ctx - initialize SSL context
  */
 
-int SSL_Initialize_ctx(
+static int SSL_Initialize_ctx(
 	SSL_CTX **ctx_ret,
 	char *errmsg, int errlen )
 {
@@ -318,7 +336,7 @@ int SSL_Initialize_ctx(
     return 0;
 }
      
-void Destroy_ctx(SSL_CTX *ctx)
+static void Destroy_ctx(SSL_CTX *ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -327,7 +345,7 @@ void Destroy_ctx(SSL_CTX *ctx)
  * get peer certificate information
  */
 
-void Get_cert_info( SSL *ssl, struct line_list *info )
+static void Get_cert_info( SSL *ssl, struct line_list *info )
 {
 	X509 *peer;
 	STACK_OF(X509) *sk;
@@ -382,7 +400,7 @@ void Get_cert_info( SSL *ssl, struct line_list *info )
  *    and writes
  */
 
-int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
+static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 	struct line_list *info, char *errmsg, int errlen )
 {
 	SSL *ssl = 0;
@@ -456,7 +474,7 @@ int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
  */
 
 
-int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
+static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
 	struct line_list *info, char *errmsg, int errlen )
 {
 	SSL *ssl = 0;
@@ -563,7 +581,7 @@ int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
  *         != 0 if failure
  */
 
-int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
+static int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
 	char *errmsg, int errlen )
 {
 	int done = 0, n = 0;
@@ -602,7 +620,7 @@ int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
  *           -1 - error
  *           1  - EOF
  */
-int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
+static int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
 	char *errmsg, int errlen )
 {
 	int n, ret, status = 0, done = 0;
@@ -644,7 +662,7 @@ int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
  *           1  - EOF
  *  *len = number of bytes read
  */
-int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
+static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
 	char *errmsg, int errlen )
 {
 	char buffer[SMALLBUFFER];
@@ -676,7 +694,7 @@ int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
  * close and kill off the SSL connection with undue violence
  */
 
-int Close_SSL_connection( int sock, SSL *ssl )
+static int Close_SSL_connection( int sock, SSL *ssl )
 {
 	int ret;
 	BIO *bio = 0;
@@ -702,7 +720,7 @@ int Close_SSL_connection( int sock, SSL *ssl )
 	return( status );
 }
 
-const char * Error_SSL_name( int i )
+static const char * Error_SSL_name( int i )
 {
 	char *s = "Unknown";
 	switch(i){

@@ -43,6 +43,10 @@
  * 
  ***************************************************************************/
 
+static int Do_secure_work( char *jobsize, int from_server,
+	char *tempfile, struct line_list *header_info );
+static struct security *Fix_receive_auth( char *name, struct line_list *info );
+
 /*************************************************************************
  * Receive_secure() - receive a secure transfer
  *************************************************************************/
@@ -248,7 +252,7 @@ int Receive_secure( int *sock, char *input )
 	cleanup(0);
 }
 
-int Do_secure_work( char *jobsize, int from_server,
+static int Do_secure_work( char *jobsize, int from_server,
 	char *tempfile, struct line_list *header_info )
 {
 	int n, len, linecount = 0, done = 0, fd, status = 0;
@@ -375,7 +379,7 @@ int Do_secure_work( char *jobsize, int from_server,
  * void Fix_auth() - get the Use_auth_DYN value for the remote printer
  ***************************************************************************/
 
-struct security *Fix_receive_auth( char *name, struct line_list *info )
+static struct security *Fix_receive_auth( char *name, struct line_list *info )
 {
 	struct security *s;
 

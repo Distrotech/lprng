@@ -55,11 +55,18 @@
 {0,0,0,0,0,0,0}
 };
 
+static int match_host( struct line_list *list, struct host_information *host,
+	int invert );
+static int match_range( struct line_list *list, int port, int invert );
+static int match_char( struct line_list *list, int value, int invert );
+static int match_group( struct line_list *list, const char *str, int invert );
+static int ingroup( char *group, const char *user );
+
 const char *perm_str( int n )
 {
 	return(Get_keystr(n,permwords));
 }
-int perm_val( char *s )
+static int perm_val( char *s )
 {
 	if( !s )return(0);
 	if( safestrlen(s) == 1 && isupper(cval(s)) ){
@@ -466,7 +473,7 @@ int match( struct line_list *list, const char *str, int invert )
  *    if both are null, then match succeeds
  ***************************************************************************/
 
-int match_host( struct line_list *list, struct host_information *host,
+static int match_host( struct line_list *list, struct host_information *host,
 	int invert )
 {
  	int result = Match_ipaddr_value(list,host);
@@ -481,7 +488,7 @@ int match_host( struct line_list *list, struct host_information *host,
  * entry has the format:  number     number-number
  ***************************************************************************/
 
-int portmatch( char *val, int port )
+static int portmatch( char *val, int port )
 {
 	int low, high, err;
 	char *end;
@@ -518,7 +525,7 @@ int portmatch( char *val, int port )
 	return( result );
 }
 
-int match_range( struct line_list *list, int port, int invert )
+static int match_range( struct line_list *list, int port, int invert )
 {
 	int result = 1;
 	int i;
@@ -541,7 +548,7 @@ int match_range( struct line_list *list, int port, int invert )
  * entry has the format:  string
  ***************************************************************************/
 
-int match_char( struct line_list *list, int value, int invert )
+static int match_char( struct line_list *list, int value, int invert )
 {
 	int result = 1;
 	int i;
@@ -569,7 +576,7 @@ int match_char( struct line_list *list, int value, int invert )
  *    check to see if user is in group
  ***************************************************************************/
 
-int match_group( struct line_list *list, const char *str, int invert )
+static int match_group( struct line_list *list, const char *str, int invert )
 {
  	int result = 1;
  	int i;
@@ -594,7 +601,7 @@ int match_group( struct line_list *list, const char *str, int invert )
  *  wildcard (*) in group name, and then scan only if we need to
  ***************************************************************************/
 
-int ingroup( char *group, const char *user )
+static int ingroup( char *group, const char *user )
 {
 	struct group *grent;
 	struct passwd *pwent;

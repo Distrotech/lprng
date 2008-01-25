@@ -14,13 +14,6 @@
 #include "user_auth.h"
 
 /* PROTOTYPES */
-int server_krb5_status( int sock, char *err, int errlen, char *file, int use_crypt_transfer );
-int client_krb5_auth( char *keytabfile, char *service, char *host,
-	char *server_principal,
-	int options, char *life, char *renew_time,
-	int sock, char *err, int errlen, char *file, int use_crypt_transfer );
-int remote_principal_krb5( char *service, char *host, char *err, int errlen );
-char *krb4_err_str( int err );
 int Send_krb4_auth( struct job *job, int *sock,
 	int connect_timeout, char *errmsg, int errlen,
 	struct security *security, struct line_list *info );

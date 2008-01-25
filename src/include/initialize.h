@@ -14,6 +14,5 @@
 /* PROTOTYPES */
 void Initialize(int argc,  char *argv[], char *envp[], int debugchar );
 void Setup_configuration( void );
-char *Get_user_information( void );
 
 #endif

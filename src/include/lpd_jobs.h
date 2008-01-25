@@ -12,28 +12,9 @@
 #define _LPD_JOBS_H_ 1
 
 /* PROTOTYPES */
-void Update_spool_info( struct line_list *sp );
-int cmp_server( const void *left, const void *right, const void *p );
-void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time );
-void Get_subserver_info( struct line_list *order,
-	char *list, char *old_order);
-char *Make_temp_copy( char *srcfile, char *destdir );
 int Do_queue_jobs( char *name, int subserver );
-int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id );
-int Local_job( struct job *job, char *id );
-int Fork_subserver( struct line_list *server_info, int use_subserver,
-	struct line_list *parms );
-void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *servers
-	/*, struct line_list *order */ );
-int Decode_transfer_failure( int attempt, struct job *job );
-void Update_status( int fd, struct job *job, int status );
-int Check_print_perms( struct job *job );
-void Setup_user_reporting( struct job *job );
 void Service_worker( struct line_list *args );
-void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
 void Service_queue( struct line_list *args );
 int Remove_done_jobs( void );
-int Move_job(int fd, struct job *job, struct line_list *sp,
-	char *errmsg, int errlen );
 
 #endif

@@ -33,8 +33,11 @@
 #define MAXHOSTNAMELEN 256
 #endif
 
+/* prototypes of forward-declarations */
+static char *Fixup_fqdn( const char *shorthost, struct host_information *info,
+	struct hostent *host_ent );
 
-void Clear_host_information( struct host_information *info )
+static void Clear_host_information( struct host_information *info )
 {
 	Free_line_list( &info->host_names );
 	Free_line_list( &info->h_addr_list );
@@ -55,7 +58,7 @@ void Clear_all_host_information(void)
  * void Check_for_dns_hack( struct hostent *h_ent )
  * Check to see that you do not have some whacko type returned by DNS
  ***************************************************************************/
-void Check_for_dns_hack( struct hostent *h_ent )
+static void Check_for_dns_hack( struct hostent *h_ent )
 {
 	int count = 1;
 	switch( h_ent->h_addrtype ){
@@ -116,7 +119,7 @@ char *Find_fqdn( struct host_information *info, const char *shorthost )
 	return( Fixup_fqdn( shorthost, info, host_ent) );
 }
 
-char *Fixup_fqdn( const char *shorthost, struct host_information *info,
+static char *Fixup_fqdn( const char *shorthost, struct host_information *info,
 	struct hostent *host_ent )
 {
 	char **list, *s, *fqdn = 0;
@@ -319,7 +322,7 @@ void Get_local_host( void )
  * 2. if not found, we have problems
  ***************************************************************************/
  
-char *Get_hostinfo_byaddr( struct host_information *info,
+static char *Get_hostinfo_byaddr( struct host_information *info,
 	struct sockaddr *sinaddr, int addr_only )
 {
 	struct hostent *host_ent = 0;
@@ -467,7 +470,7 @@ void Dump_host_information( const char *title,  struct host_information *info )
  *		form address and mask from string
  *      with the format:  IPADDR/MASK, mask is x.x.x.x or n (length)
  ***************************************************************************/
-void form_addr_and_mask(char *v, char *addr,char *mask,
+static void form_addr_and_mask(char *v, char *addr,char *mask,
 	int addrlen, int family )
 {
 	int result = 1;
@@ -536,7 +539,7 @@ void form_addr_and_mask(char *v, char *addr,char *mask,
  * do a masked string compare
  */
 
-int cmp_ip_addr( char *h, char *a, char *m, int len )
+static int cmp_ip_addr( char *h, char *a, char *m, int len )
 {
     int match = 0, i;
 

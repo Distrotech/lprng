@@ -45,6 +45,14 @@
 #endif
 
 /**** ENDINCLUDE ****/
+
+/* prototypes of functions only used internally */
+static void Append_Z_value( struct job *job, char *s );
+static void Set_job_ticket_datafile_info( struct job *job );
+static char *Find_start(char *str, const char *key );
+static int ordercomp(  const void *left, const void *right, const void *orderp);
+static void Free_buf(char **buf, int *max, int *len);
+
 /*
  * We make the following assumption:
  *   a job consists of a job ticket file and a set of data files.

@@ -345,7 +345,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 }
 
 
-int server_krb5_status( int sock, char *err, int errlen, char *file, int use_crypt_transfer )
+static int server_krb5_status( int sock, char *err, int errlen, char *file, int use_crypt_transfer )
 {
 	int fd = -1;
 	int retval = 0;
@@ -440,7 +440,7 @@ int server_krb5_status( int sock, char *err, int errlen, char *file, int use_cry
  extern krb5_error_code krb5_tgt_gen( krb5_context context, krb5_ccache ccache,
 	krb5_principal server, krb5_data *outbuf, int opt );
 
-int client_krb5_auth( char *keytabfile, char *service, char *host,
+static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	char *server_principal,
 	int options, char *life, char *renew_time,
 	int sock, char *err, int errlen, char *file, int use_crypt_transfer )
@@ -915,7 +915,7 @@ int client_krb5_auth( char *keytabfile, char *service, char *host,
  *  char *buffer, int bufferlen - buffer for credentials
  *  get the principal name of the remote service
  */ 
-int remote_principal_krb5( char *service, char *host, char *err, int errlen )
+static int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 {
 	krb5_context context = 0;
 	krb5_principal server = 0;
@@ -1222,7 +1222,7 @@ int remote_principal_krb5( char *service, char *host, char *err, int errlen )
 	{0,0}
 	};
 
-char *krb4_err_str( int err )
+static char *krb4_err_str( int err )
 {
 	int i;
 	char *s = 0;

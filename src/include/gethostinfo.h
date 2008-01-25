@@ -4,7 +4,6 @@
  * Copyright 1988-2003, Patrick Powell, San Diego, CA
  *     papowell@lprng.com
  * See LICENSE for conditions of use.
- * $Id: gethostinfo.h,v 1.74 2004/09/24 20:19:59 papowell Exp $
  ***************************************************************************/
 
 
@@ -46,23 +45,14 @@ EXTERN struct host_information LookupHost_IP;	/* for lookup */
 EXTERN struct host_information PermHost_IP;		/* for permission lookup */
 
 /* PROTOTYPES */
-void Clear_host_information( struct host_information *info );
 void Clear_all_host_information(void);
-void Check_for_dns_hack( struct hostent *h_ent );
 char *Find_fqdn( struct host_information *info, const char *shorthost );
-char *Fixup_fqdn( const char *shorthost, struct host_information *info,
-	struct hostent *host_ent );
 void Get_local_host( void );
-char *Get_hostinfo_byaddr( struct host_information *info,
-	struct sockaddr *sinaddr, int addr_only );
 char *Get_remote_hostbyaddr( struct host_information *info,
 	struct sockaddr *sinaddr, int force_ip_addr_use );
 int Same_host( struct host_information *host,
 	struct host_information *remote );
 void Dump_host_information( const char *title,  struct host_information *info );
-void form_addr_and_mask(char *v, char *addr,char *mask,
-	int addrlen, int family );
-int cmp_ip_addr( char *h, char *a, char *m, int len );
 int Match_ipaddr_value( struct line_list *list, struct host_information *host );
 
 #endif
