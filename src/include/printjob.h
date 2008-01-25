@@ -14,11 +14,6 @@
 /* PROTOTYPES */
 int Print_job( int output, int status_device, struct job *job,
 	int send_job_rw_timeout, int poll_for_status, char *user_filter );
-void Print_banner( const char *name, char *pgm, struct job *job );
-int Write_outbuf_to_OF( struct job *job, const char *title,
-	int of_fd, char *buffer, int outlen,
-	int of_error, char *msg, int msgmax,
-	int timeout, int poll_for_status, char *status_file );
 int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 	int of_error, char *msg, int msgmax,
 	int timeout, int suspend, int max_wait, char *status_file );

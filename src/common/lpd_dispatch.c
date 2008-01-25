@@ -29,6 +29,8 @@
 #include "krb5_auth.h"
 #include "lpd_dispatch.h"
 
+static void Service_lpd( int talk, const char *from_addr );
+
 void Dispatch_input(int *talk, char *input, const char *from_addr )
 {
 	switch( input[0] ){
@@ -306,7 +308,7 @@ void Service_connection( struct line_list *args )
 	Service_lpd( talk, from_addr );
 }
 
-void Service_lpd( int talk, const char *from_addr )
+static void Service_lpd( int talk, const char *from_addr )
 {
 	char input[LINEBUFFER];
 	int status;

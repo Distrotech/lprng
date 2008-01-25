@@ -43,6 +43,16 @@
 
 
 /**** ENDINCLUDE ****/
+static int Fork_subserver( struct line_list *server_info, int use_subserver,
+	struct line_list *parms );
+static void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *servers
+	/*, struct line_list *order */ );
+static void Update_status( int fd, struct job *job, int status );
+static int Check_print_perms( struct job *job );
+static void Setup_user_reporting( struct job *job );
+static void Filter_files_in_job( struct job *job, int outfd, char *user_filter );
+static int Move_job(int fd, struct job *job, struct line_list *sp,
+	char *errmsg, int errlen );
 
 /***************************************************************************
  * Commentary:
@@ -158,7 +168,7 @@
  ***************************************************************************/
 
 
-void Update_spool_info( struct line_list *sp )
+static void Update_spool_info( struct line_list *sp )
 {
 	struct line_list info;
 	char *sc;
@@ -183,7 +193,7 @@ void Update_spool_info( struct line_list *sp )
 	Free_line_list(&info);
 }
 
-int cmp_server( const void *left, const void *right, const void *p )
+static int cmp_server( const void *left, const void *right, const void *p )
 {   
     struct line_list *l, *r;
 	int tr, tl;
@@ -199,7 +209,7 @@ int cmp_server( const void *left, const void *right, const void *p )
 }
 
 
-void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time )
+static void Get_subserver_pc( char *printer, struct line_list *subserver_info, int done_time )
 {
 	int printable, held, move, err, done;
 	char *path;
@@ -262,7 +272,7 @@ static void Dump_subserver_info( const char *title, struct line_list *l)
  *  hack up the server information list into a list of servers
  ***************************************************************************/
 
-void Get_subserver_info( struct line_list *order,
+static void Get_subserver_info( struct line_list *order,
 	char *list, char *old_order)
 {
 	struct line_list server_order, server, *pl;
@@ -304,7 +314,7 @@ void Get_subserver_info( struct line_list *order,
  * Make_temp_copy - make a temporary copy in the directory
  ***************************************************************************/
 
-char *Make_temp_copy( char *srcfile, char *destdir )
+static char *Make_temp_copy( char *srcfile, char *destdir )
 {
 	char buffer[LARGEBUFFER];
 	char *path = 0;
@@ -1271,7 +1281,7 @@ int Do_queue_jobs( char *name, int subserver )
  *
  ***************************************************************************/
 
-int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
+static int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
 {
 	int status, tempfd, n, fd;
 	double job_size;
@@ -1480,7 +1490,7 @@ int Remote_job( struct job *job, int lpd_bounce, char *move_dest, char *id )
  * Send a job to a local printer.
  ***************************************************************************/
 
-int Local_job( struct job *job, char *id )
+static int Local_job( struct job *job, char *id )
 {
 	int status, fd, status_fd, pid, poll_for_status;
 	char *old_lp_value;
@@ -1586,7 +1596,7 @@ int Local_job( struct job *job, char *id )
 	return( status );
 }
 
-int Fork_subserver( struct line_list *server_info, int use_subserver,
+static int Fork_subserver( struct line_list *server_info, int use_subserver,
 	struct line_list *parms )
 {
 	char *pr;
@@ -1630,7 +1640,7 @@ int Fork_subserver( struct line_list *server_info, int use_subserver,
  *  return the process table entry
  ***************************************************************************/
 
-void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *servers
+static void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *servers
 	/*, struct line_list *order */ )
 {
 	pid_t pid;
@@ -1787,7 +1797,7 @@ void Wait_for_subserver( int timeout, int pid_to_wait_for, struct line_list *ser
 	{ 0,0,0,0,0,0,0 }
 };
 
-int Decode_transfer_failure( int attempt, struct job *job )
+static int Decode_transfer_failure( int attempt, struct job *job )
 {
 	struct keywords *key;
 	int result, n, len, c;
@@ -1865,7 +1875,7 @@ int Decode_transfer_failure( int attempt, struct job *job )
 	return( result );
 }
 
-void Update_status( int fd, struct job *job, int status )
+static void Update_status( int fd, struct job *job, int status )
 {
 	char buffer[SMALLBUFFER];
 	char *id, *did, *strv, *hf_name;
@@ -2210,7 +2220,7 @@ void Update_status( int fd, struct job *job, int status )
  *  check the printing permissions
  ***************************************************************************/
 
-int Check_print_perms( struct job *job )
+static int Check_print_perms( struct job *job )
 {
 	char *s;
 	int permission;
@@ -2242,7 +2252,7 @@ int Check_print_perms( struct job *job )
 }
 
 
-void Setup_user_reporting( struct job *job )
+static void Setup_user_reporting( struct job *job )
 {
 	char *host = Find_str_value(&job->info,MAILNAME);
 	char *port = 0, *s;
@@ -2450,7 +2460,7 @@ void Service_worker( struct line_list *args )
 /*
  * Filter all the files in the print job
  */
-void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
+static void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 {
 	struct line_list *datafile;
 	char *tempfile, *openname, *s, *filter, *id, *old_lp_value;
@@ -2789,7 +2799,7 @@ int Remove_done_jobs( void )
  *  appears to sent directly to the spool queue.
  */
 
-int Move_job(int fd, struct job *job, struct line_list *sp,
+static int Move_job(int fd, struct job *job, struct line_list *sp,
 	char *errmsg, int errlen )
 {
 	/* we set up a copy of the job descriptor to use to make

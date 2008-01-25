@@ -81,56 +81,6 @@ struct security {
 extern struct security SecuritySupported[];
 
 /* PROTOTYPES */
-int Test_connect( struct job *job, int *sock,
-	int transfer_timeout,
-	char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
-int Test_accept( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	char *errmsg, int errlen,
-	struct line_list *info, struct line_list *header_info,
-	struct security *security );
-int Test_send( int *sock,
-	int transfer_timeout,
-	char *tempfile,
-	char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
-int Test_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security, char *tempfile,
-	SECURE_WORKER_PROC do_secure_work);
-int md5_send( int *sock, int transfer_timeout, char *tempfile,
-	char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
-int md5_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security, char *tempfile,
-	SECURE_WORKER_PROC do_secure_work);
-int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *error, int errlen );
-int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
-	struct line_list *pgp_info, char *buffer, int bufflen,
-	char *error, int errlen, char *esc_to_id, struct line_list *from_info,
-	int *pgp_exit_code, int *not_a_ciphertext );
-int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfile, char *pgpfile,
-	struct line_list *pgp_info, char *buffer, int bufflen,
-	char *error, int errlen, char *esc_from_id, char *esc_to_id,
-	int *pgp_exit_code );
-int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
-	char *error, int errlen,
-	struct security *security, struct line_list *info );
-int Pgp_receive( int *sock, int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security, char *tempfile,
-	SECURE_WORKER_PROC do_secure_work);
 char *ShowSecuritySupported( char *str, int maxlen );
 
 #endif

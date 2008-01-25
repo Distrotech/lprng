@@ -16,24 +16,6 @@
 
 
 /* PROTOTYPES */
-char *Set_ERR_str( char *header, char *errmsg, int errlen );
-int SSL_Initialize_ctx(
-	SSL_CTX **ctx_ret,
-	char *errmsg, int errlen );
-void Destroy_ctx(SSL_CTX *ctx);
-void Get_cert_info( SSL *ssl, struct line_list *info );
-int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
-	struct line_list *info, char *errmsg, int errlen );
-int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
-	struct line_list *info, char *errmsg, int errlen );
-int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
-	char *errmsg, int errlen );
-int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
-	char *errmsg, int errlen );
-int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
-	char *errmsg, int errlen );
-int Close_SSL_connection( int sock, SSL *ssl );
-const char * Error_SSL_name( int i );
 int Ssl_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,

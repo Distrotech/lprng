@@ -1,3 +1,4 @@
+2008-01-25 brl make some more functions static as only used within the same .c
 2007-11-01 brl increase savefprintf buffer, so multi-line messages fit in
 2007-11-01 brl remove default maximum size of accounting files (taken from 3.8.32 or earlier)
 2007-10-26 wh/brl (re)generate banner before printing (taken modified from 3.8.32 or earlier)

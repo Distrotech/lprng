@@ -72,6 +72,8 @@
 #define SIZEW 6
 #define TIMEW 8
 
+static void Print_status_info( int *sock, char *file,
+	char *prefix, int status_lines, int max_size );
 
 int Job_status( int *sock, char *input )
 {
@@ -1254,7 +1256,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	return;
 }
 
-void Print_status_info( int *sock, char *file,
+static void Print_status_info( int *sock, char *file,
 	char *prefix, int status_lines, int max_size )
 {
 	char *image;

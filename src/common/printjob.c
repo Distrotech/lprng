@@ -73,6 +73,11 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 	int output, char **outbuf, int *outmax, int *outlen,
 	struct job *job, const char *id, int terminate_of,
 	char *msgbuffer, int msglen );
+static void Print_banner( const char *name, char *pgm, struct job *job );
+static int Write_outbuf_to_OF( struct job *job, const char *title,
+	int of_fd, char *buffer, int outlen,
+	int of_error, char *msg, int msgmax,
+	int timeout, int poll_for_status, char *status_file );
 
 
  
@@ -753,7 +758,7 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
  * check for a small or large banner as necessary
  */
 
-void Print_banner( const char *name, char *pgm, struct job *job )
+static void Print_banner( const char *name, char *pgm, struct job *job )
 {
 	char buffer[LARGEBUFFER];
 	int len, n;
@@ -850,7 +855,7 @@ void Print_banner( const char *name, char *pgm, struct job *job )
  *     JRDERR     -  (-1 originally) - error reading or writing
  */
 
-int Write_outbuf_to_OF( struct job *job, const char *title,
+static int Write_outbuf_to_OF( struct job *job, const char *title,
 	int of_fd, char *buffer, int outlen,
 	int of_error, char *msg, int msgmax,
 	int timeout, int poll_for_status, char *status_file )

@@ -178,7 +178,7 @@ int Link_setreuse( int sock )
 	return( status );
 }
 
-int Link_setkeepalive( int sock )
+static int Link_setkeepalive( int sock )
 {
 	int status = 0;
 #ifdef SO_KEEPALIVE
@@ -213,7 +213,7 @@ int connect_timeout( int timeout,
 	return( status );
 }
 
-int getconnection ( char *xhostname,
+static int getconnection ( char *xhostname,
 	int timeout, int connection_type, struct sockaddr *bindto, char *unix_socket_path,
 	char *errmsg, int errlen )
 {
@@ -1206,7 +1206,7 @@ int Link_line_read(char *host, int *sock, int timeout,
  *            LINK errorcode otherwise
  ***************************************************************************/
 
-int Link_line_peek(char *host, int *sock, int timeout,
+static int Link_line_peek(char *host, int *sock, int timeout,
 	  char *buf, int *count )
 {
 	int err = 0;	/* ACME Integer, Inc. */

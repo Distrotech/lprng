@@ -37,6 +37,26 @@
    USED by topq, hold, release
 
  ***************************************************************************/
+static void Do_printer_work( char *user, int action, int *sock,
+	struct line_list *tokens, char *error, int errorlen );
+static void Do_queue_control( char *user, int action, int *sock,
+	struct line_list *tokens, char *error, int errorlen );
+static int Do_job_ticket_file( int action, int *sock,
+	struct line_list *tokens, char *error, int errorlen, char *option );
+static int Do_control_lpq( char *user, int action,
+	struct line_list *tokens );
+static int Do_control_status( int *sock,
+	char *error, int errorlen );
+static int Do_control_redirect( int *sock,
+	struct line_list *tokens, char *error, int errorlen );
+static int Do_control_class( int *sock,
+	struct line_list *tokens, char *error, int errorlen );
+static int Do_control_debug( int *sock,
+	struct line_list *tokens, char *error, int errorlen );
+static int Do_control_printcap( int *sock );
+static int Do_control_ppd( int *sock );
+static int Do_control_defaultq( int *sock );
+
 
  static char status_header[] = "%-18s %8s %8s %4s %7s %7s %8s %s%s";
 
@@ -196,7 +216,7 @@ int Job_control( int *sock, char *input )
 	return(0);
 }
 
-void Do_printer_work( char *user, int action, int *sock,
+static void Do_printer_work( char *user, int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	int i;
@@ -233,7 +253,7 @@ void Do_printer_work( char *user, int action, int *sock,
  *   printer user printer p1 p2 p3 -> p1 p2 p3
  ***************************************************************************/
 
-void Do_queue_control( char *user, int action, int *sock,
+static void Do_queue_control( char *user, int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char *start, *end;
@@ -577,7 +597,7 @@ void Do_queue_control( char *user, int action, int *sock,
  * 3. update the job ticket file for the control file
  ***************************************************************************/
 
-int Do_job_ticket_file( int action, int *sock,
+static int Do_job_ticket_file( int action, int *sock,
 	struct line_list *tokens, char *error, int errorlen, char *option )
 {
 	int i, permission, err, fd;		/* ACME! Nothing but the best */
@@ -753,7 +773,7 @@ int Do_job_ticket_file( int action, int *sock,
  *  forward an OP_LPQ or OP_LPRM
  ***************************************************************************/
 
-int Do_control_lpq( char *user, int action,
+static int Do_control_lpq( char *user, int action,
 	struct line_list *tokens )
 {
 	char msg[LINEBUFFER];			/* message field */
@@ -794,7 +814,7 @@ int Do_control_lpq( char *user, int action,
  *  report current status
  ***************************************************************************/
 
-int Do_control_status( int *sock,
+static int Do_control_status( int *sock,
 	char *error, int errorlen )
 {
 	char msg[SMALLBUFFER];			/* message field */
@@ -891,7 +911,7 @@ int Do_control_status( int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_redirect( int *sock,
+static int Do_control_redirect( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char *s;
@@ -944,7 +964,7 @@ int Do_control_redirect( int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_class( int *sock,
+static int Do_control_class( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char forward[LINEBUFFER];
@@ -1000,7 +1020,7 @@ int Do_control_class( int *sock,
  * 4. if option = printer@host, specify name
  ***************************************************************************/
 
-int Do_control_debug( int *sock,
+static int Do_control_debug( int *sock,
 	struct line_list *tokens, char *error, int errorlen )
 {
 	char debugging[LINEBUFFER];
@@ -1056,7 +1076,7 @@ int Do_control_debug( int *sock,
  * 3. if option = HUP, send signal
  ***************************************************************************/
 
-int Do_control_printcap( int *sock )
+static int Do_control_printcap( int *sock )
 {
 	char *printcap = 0, *s, *t, *w;
 
@@ -1086,7 +1106,7 @@ int Do_control_printcap( int *sock )
  * 2. if no ppdfile, write nothint
  ***************************************************************************/
 
-int Do_control_ppd( int *sock )
+static int Do_control_ppd( int *sock )
 {
 	char *file = Ppd_file_DYN;
 	char buffer[LARGEBUFFER];
@@ -1114,7 +1134,7 @@ int Do_control_ppd( int *sock )
 	return(0);
 }
 
-int Do_control_defaultq( int *sock )
+static int Do_control_defaultq( int *sock )
 {
 	char msg [LINEBUFFER];
 

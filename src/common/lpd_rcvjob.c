@@ -25,6 +25,12 @@
 #include "lpd_jobs.h"
 /**** ENDINCLUDE ****/
 
+static int Read_one_line( int timeout, int fd, char *buffer, int maxlen );
+static int Get_route( struct job *job, char *error, int errlen );
+static int Do_incoming_control_filter( struct job *job, char *error, int errlen );
+static void Generate_control_file( struct job *job );
+static int Find_non_colliding_job_number( struct job *job );
+
 /***************************************************************************
  * Commentary:
  * Patrick Powell Mon Apr 17 05:43:48 PDT 1995
@@ -950,7 +956,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
  *          n = # chars read
  *          Note: buffer terminated by 0
  ***************************************************************************/
-int Read_one_line( int timeout, int fd, char *buffer, int maxlen )
+static int Read_one_line( int timeout, int fd, char *buffer, int maxlen )
 {
 	int len, status;
 	len = status = 0;
@@ -979,7 +985,7 @@ int Check_space( double jobsize, int min_space, char *pathname )
 	return( ok );
 }
 
-int Do_perm_check( struct job *job, char *error, int errlen )
+static int Do_perm_check( struct job *job, char *error, int errlen )
 {
 	int permission = 0;			/* permission */
 	char *s;
@@ -1421,7 +1427,7 @@ int Setup_temporary_job_ticket_file( struct job *job, char *filename,
  * Side effects: sets up control file fields;
  ***************************************************************************/
 
-int Find_non_colliding_job_number( struct job *job )
+static int Find_non_colliding_job_number( struct job *job )
 {
 	int job_ticket_fd = -1;			/* job job ticket file fd */
 	struct stat statb;			/* for status */
@@ -1468,7 +1474,7 @@ int Find_non_colliding_job_number( struct job *job )
  *  - it changes values by putting in Xnewvalue
  */
 
-int Do_incoming_control_filter( struct job *job, char *error, int errlen )
+static int Do_incoming_control_filter( struct job *job, char *error, int errlen )
 {
 	int intempfd, tempfd, i;
 	char *cf;
@@ -1580,7 +1586,7 @@ int Do_incoming_control_filter( struct job *job, char *error, int errlen )
  *   EOF
  */
 
-int Get_route( struct job *job, char *error, int errlen )
+static int Get_route( struct job *job, char *error, int errlen )
 {
 
 	int intempfd, tempfd, i, count;
@@ -1716,7 +1722,7 @@ int Get_route( struct job *job, char *error, int errlen )
  *  Use the X= lines and the DATAFILES entry
  */
 
-void Generate_control_file( struct job *job )
+static void Generate_control_file( struct job *job )
 {
 	/* generate the control file */
 	int i;

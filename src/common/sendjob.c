@@ -68,6 +68,11 @@
  * 	RETURNS: 0 if successful, non-zero if not
  **************************************************************************/
 
+static int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_timeout,
+	int block_fd );
+static int Send_data_files( int *sock, struct job *job, struct job *logjob,
+	int transfer_timeout, int block_fd, char *final_filter );
+
 int Send_job( struct job *job, struct job *logjob,
 	int connect_timeout_len, int connect_interval, int max_connect_interval,
 	int transfer_timeout, char *final_filter )
@@ -320,7 +325,7 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 	return(status);
 }
 
-int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_timeout,
+static int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_timeout,
 	int block_fd )
 {
 	char msg[SMALLBUFFER];
@@ -424,7 +429,7 @@ int Send_control( int *sock, struct job *job, struct job *logjob, int transfer_t
 }
 
 
-int Send_data_files( int *sock, struct job *job, struct job *logjob,
+static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 	int transfer_timeout, int block_fd, char *final_filter )
 {
 	int count, fd, err, status = 0, ack;

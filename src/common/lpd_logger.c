@@ -63,7 +63,7 @@ int Start_logger( int log_fd )
 	return(pid);
 }
 
-int Dump_queue_status(int outfd)
+static int Dump_queue_status(int outfd)
 {
 	int i, count, fd;
 	char *s, *sp, *pr;
