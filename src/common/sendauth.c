@@ -258,7 +258,7 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 {
 	struct security *security = 0;
 	char buffer[SMALLBUFFER], *from, *client, *destination;
-	const char *tag, *key;
+	const char *tag, *server_tag, *key;
 
 	if( name == 0 ){
 		if( Is_server ){
@@ -299,6 +299,7 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	if(DEBUGL1)Dump_line_list("Fix_send_auth: found info", info );
 
 	if( !(tag = security->config_tag) ) tag = security->name;
+	if( !(server_tag = security->server_tag) ) server_tag = tag;
 	if( Is_server ){
 		/* forwarding */
 		key = "F";
@@ -352,10 +353,10 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	Set_str_value(info,DESTINATION,destination);
 
 	DEBUG1("Fix_send_auth: pr '%s', key '%s', from '%s', name '%s', tag '%s'",
-		RemotePrinter_DYN,key, from, security->name, tag);
+		RemotePrinter_DYN,key, from, server_tag, tag);
 	SNPRINTF( buffer, sizeof(buffer))
 		"%c%s %s %s %s",
-		REQ_SECURE,RemotePrinter_DYN,key, from, security->name );
+		REQ_SECURE,RemotePrinter_DYN,key, from, server_tag );
 	Set_str_value(info,CMD,buffer);
 	DEBUG1("Fix_send_auth: sending '%s'", buffer );
 
