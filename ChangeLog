@@ -1,3 +1,4 @@
+2008-01-27 brl new server_tag in user_auth, so kerberos5 in config works again
 2008-01-25 brl cast size_t to int before giving it to %d in error messages
 2008-01-25 brl make some more functions static as only used within the same .c
 2007-11-01 brl increase savefprintf buffer, so multi-line messages fit in

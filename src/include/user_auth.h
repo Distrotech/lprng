@@ -69,6 +69,7 @@ typedef int (*RCV_DONE_PROC)( int *sock,
 
 struct security {
 	const char *name;				/* authentication name */
+	const char *server_tag;		/* send this tag to server */
 	const char *config_tag;		/* use this tag for configuration information */
 	int auth_flags;				/* flags */
 #define IP_SOCKET_ONLY	1 /* use TCP/IP socket only */

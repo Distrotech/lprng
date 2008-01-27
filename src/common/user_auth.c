@@ -1778,26 +1778,26 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 
 
  struct security SecuritySupported[] = {
-	/* name, config_name, flags,
+	/* name, server_name, config_name, flags,
         client  connect, send, send_done
 		server  accept, receive, receive_done
 	*/
 #if defined(KERBEROS)
 # if defined(MIT_KERBEROS4)
-	{ "kerberos4", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
+	{ "kerberos4", "kerberos", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
 # endif
-	{ "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
-	{ "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt },
+	{ "kerberos*", "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
+	{ "k5conn", "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt },
 #endif
 
-	{ "test",      "test",     0,              0,           Test_send, 0, Test_receive },
-	{ "md5",       "md5",      0,              0,           md5_send, 0, md5_receive },
-	{ "pgp",       "pgp",      0,              0,           Pgp_send, 0, Pgp_receive },
+	{ "test",      "test",	"test",     0,              0,           Test_send, 0, Test_receive },
+	{ "md5",       "md5",	"md5",      0,              0,           md5_send, 0, md5_receive },
+	{ "pgp",       "pgp",	"pgp",      0,              0,           Pgp_send, 0, Pgp_receive },
 #ifdef SSL_ENABLE
-	{ "ssl",      "ssl",       0,              0,           Ssl_send, 0, Ssl_receive },
+	{ "ssl",      "ssl",	"ssl",       0,              0,           Ssl_send, 0, Ssl_receive },
 #endif
 
-	{0,0,0,
+	{0,0,0,0,
 		0,0,
 		0,0}
 };
