@@ -104,12 +104,3 @@ int Globmatch( const char *pattern, const char *str )
 	DEBUG4("Globmatch: '%s' to '%s' result %d", pattern, str, result );
 	return( result );
 }
-
-static int Globmatch_list( struct line_list *l, const char *str )
-{
-	int result = 1, i;
-	for( i = 0; result && i < l->count; ++i ){
-		result = Globmatch(l->list[i],str);
-	}
-	return( result );
-}

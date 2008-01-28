@@ -908,6 +908,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	return(retval);
 }
 
+#if 0
 /*
  * remote_principal_krb5(
  *  char * service		-service, usually "lpr"
@@ -948,6 +949,7 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	DEBUG1( "remote_principal_krb5: retval %d, result: '%s'",retval, err );
 	return(retval);
 }
+#endif
 
 /*
  * Initialize a credentials cache.

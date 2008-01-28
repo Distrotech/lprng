@@ -101,6 +101,7 @@
  *
  **************************************************************/
 
+#if 0
 /*
   Test_connect: send the validation information  
     expect to get back NULL or error message
@@ -168,6 +169,7 @@ static int Test_accept( int *sock, int transfer_timeout,
  error:
 	return( status );
 }
+#endif
 
 /**************************************************************
  *Test_send:
