@@ -49,9 +49,7 @@
 /* prototypes of functions only used internally */
 static void Append_Z_value( struct job *job, char *s );
 static void Set_job_ticket_datafile_info( struct job *job );
-static char *Find_start(char *str, const char *key );
 static int ordercomp(  const void *left, const void *right, const void *orderp);
-static void Free_buf(char **buf, int *max, int *len);
 
 /*
  * We make the following assumption:
@@ -1302,14 +1300,6 @@ int Check_format( int type, const char *name, struct job *job )
 	return( msg[0] != 0 );
 }
 
-char *Find_start(char *str, const char *key )
-{
-	int n = safestrlen(key);
-	while( (str = strstr(str,key)) && str[n] != '=' );
-	if( str ) str += (n+1);
-	return( str );
-}
-
 char *Frwarding(struct line_list *l)
 {
 	return( Find_str_value(l,FORWARDING) );
@@ -2163,11 +2153,4 @@ void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len )
 void Put_buf_str( const char *s, char **buf, int *max, int *len )
 {
 	if( s && *s ) Put_buf_len( s, safestrlen(s), buf, max, len );
-}
-
-void Free_buf(char **buf, int *max, int *len)
-{
-	if( *buf ) free(*buf); *buf = 0;
-	*len = 0;
-	*max = 0;
 }
