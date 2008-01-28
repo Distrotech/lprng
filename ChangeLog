@@ -1,3 +1,4 @@
+2008-01-28 brl only link programs needing it to kerberos and/or ssl libraries
 2008-01-28 brl remove or "#if 0"-comment some unused functions
 2008-01-27 brl new server_tag in user_auth, so kerberos5 in config works again
 2008-01-25 brl cast size_t to int before giving it to %d in error messages

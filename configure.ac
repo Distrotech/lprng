@@ -1057,6 +1057,7 @@ if test "$SSL_ENABLE" != ""; then
 	fi
 fi
 
+SSL_LDADD=""
 if test "$SSL_ENABLE" != ""; then
 	ac_found_openssl_lib_dir="no"
 	AC_MSG_CHECKING(for OpenSSL libraries)
@@ -1073,10 +1074,11 @@ if test "$SSL_ENABLE" != ""; then
 		dnl actually ontain the right functions
 		save_LIBS=$LIBS
 		save_LDFLAGS=$LDFLAGS
-		LIBS="-lssl -lcrypto $LIBS"
+		SSL_LDADD="-lssl -lcrypto"
 		if test "X$dir" != "X/usr/lib" ; then
-			LDFLAGS="$LDFLAGS -L$dir "
+			SSL_LDADD="-L$dir $SSL_LDADD"
 		fi
+		LDFLAGS="$LDFLAGS $SSL_LDADD"
 		AC_TRY_LINK_FUNC(SSL_load_error_strings,ac_linked_libssl="true",
 			ac_linked_libssl="false");
 		AC_TRY_LINK_FUNC(RC4_set_key,ac_linked_libcrypto="true",
@@ -1088,6 +1090,7 @@ if test "$SSL_ENABLE" != ""; then
 		fi
 		LIBS=$save_LIBS
 		LDFLAGS=$save_LDFLAGS
+		SSL_LDADD=""
 		fi
 	done
 	if test "$ac_found_openssl_lib_dir" != "no"; then
@@ -1100,7 +1103,7 @@ if test "$SSL_ENABLE" != ""; then
 		SSL_ENABLE=""
 	fi
 fi
-
+AC_SUBST(SSL_LDADD)
 test "$SSL_ENABLE" != "" && AC_DEFINE(SSL_ENABLE,1,[ssl enabled])
 
 
@@ -1175,6 +1178,10 @@ dnl ---------------- START OF KERBEROS -----------------------------------------
 
 dnl Kerberos stuff again
 
+KRB_LIBS=""
+SAVELIBS="$LIBS"
+
+
 if test -n "$KERBEROS" ; then
 	echo "Kerberos checks with CFLAGS '$CFLAGS', CPPFLAGS '$CPPFLAGS',  LDFLAGS '$LDFLAGS"
 	if test -d /usr/kerberos/include; then
@@ -1223,17 +1230,17 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 		dnl courtesy of mandrake linux and friends.
 		dnl  Christian Zoffoli <czoffoli@linux-mandrake.com>
 
-		SAVELIBS=$LIBS
-
 		found=no
 		if test "$found" "!=" "yes" ; then
 			found=yes
 			LIBS=" -lkrb5 -lcrypto -lcom_err $SAVELIBS"
+			KRB_LIBS="-lkrb5 -lcrypto -lcom_err"
 			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
 		fi;
 		if test "$found" "!=" "yes" ; then
 			found=yes
+			KRB_LIBS="-lkrb5 -lk5crypto -lcom_err"
 			LIBS=" -lkrb5 -lk5crypto -lcom_err $SAVELIBS"
 			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
@@ -1322,7 +1329,9 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 		AC_DEFINE_UNQUOTED(HAVE_KRB_AUTH_DEF,1,[have krb_sendauth defined])
 	fi
 
+	LIBS="$SAVELIBS"
 fi;
+AC_SUBST(KRB_LIBS)
 
 dnl ----------------------------------------------------------------------------
 dnl ---------------- END OF KERBEROS -----------------------------------------
