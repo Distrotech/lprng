@@ -48,6 +48,7 @@ COMMON_SOURCES = common/child.c \
 	common/sendreq.c common/ssl_auth.c \
 	common/user_auth.c common/utilities.c vars.c \
 	common/md5.c
+COMMON_LDADD = $(SSL_LDADD) $(KRB_LIBS)
 SEND_SOURCES = common/openprinter.c common/stty.c
 
 lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
@@ -56,15 +57,23 @@ lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
 	common/lpd_secure.c common/lpd_status.c \
 	common/permission.c common/accounting.c common/controlword.c \
 	$(SEND_SOURCES) $(COMMON_SOURCES)
+lpd_LDADD = $(COMMON_LDADD)
 lpr_SOURCES = common/lpr.c $(SEND_SOURCES) $(COMMON_SOURCES)
+lpr_LDADD = $(COMMON_LDADD)
 lpq_SOURCES = common/lpq.c $(COMMON_SOURCES)
+lpq_LDADD = $(COMMON_LDADD)
 lpstat_SOURCES = common/lpstat.c $(COMMON_SOURCES)
+lpstat_LDADD = $(COMMON_LDADD)
 lprm_SOURCES = common/lprm.c $(COMMON_SOURCES)
+lprm_LDADD = $(COMMON_LDADD)
 lpc_SOURCES = common/lpc.c common/controlword.c $(COMMON_SOURCES)
+lpc_LDADD = $(COMMON_LDADD)
 checkpc_SOURCES = common/checkpc.c  common/stty.c $(COMMON_SOURCES)
+checkpc_LDADD = $(COMMON_LDADD)
 lpf_SOURCES = common/lpf.c common/plp_snprintf.c
 lpbanner_SOURCES = common/lpbanner.c common/plp_snprintf.c
 monitor_SOURCES = common/monitor.c $(COMMON_SOURCES)
+monitor_LDADD = $(COMMON_LDADD)
 # sserver_SOURCES = AUTHENTICATE/sserver.c
 # sclient_SOURCES = AUTHENTICATE/sclient.c
 
