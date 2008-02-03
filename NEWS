@@ -25,6 +25,8 @@ things should work just as before, with the following exceptions:
 
 There is a new configure option --disable-remote to change the default
 to not listen via tcp and not accepting requests from remote hosts.
+(Also without --disable-remote, lpd_listen_port defaults to 515 and
+not lpd_port).
 
 Otherwise a lot of cleanup has happened. Many compiler warnings
 quieted, prototypes added, format strings synced with format

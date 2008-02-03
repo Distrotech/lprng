@@ -69,7 +69,7 @@ ENABLE_BOOLEAN(remote,
 "yes",
 [listen for remote connections by default  : $v],
 [NOREMOTE="#"
-LPD_LISTEN_PORT=0
+LPD_LISTEN_PORT='"=515"'
 ],[NOREMOTE=""
 LPD_LISTEN_PORT='"=off"'
 ])

@@ -221,7 +221,8 @@
 ## 
 
 ##  If you want to have connections only from programs on
-##  the local host,  then uncomment the next line:
+##  the local host, either set lpd_listen_port in lpd.conf to off,
+##  uncomment the next line, or both:
 @NOREMOTE@REJECT NOT SERVER 
 
 ## You can make sure that connections come from a privileged port.
