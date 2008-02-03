@@ -312,7 +312,7 @@ struct keywords Pc_var_list[] = {
 { "lpd_bounce", 0, FLAG_K, &Lpd_bounce_DYN,0,0,0},
    /* force a poll operation */
 { "lpd_force_poll", 0, FLAG_K, &Force_poll_DYN,0,0,0},
-   /* lpd server listen port port, "off" does not open port */
+   /* lpd server listen port, "off" does not open remote port, usual port is 515. */
 { "lpd_listen_port", 0, STRING_K, &Lpd_listen_port_DYN,0,0,LPD_LISTEN_PORT},
    /*  lpd pathname for server use */
 { "lpd_path", 0,  STRING_K,  &Lpd_path_DYN,0,0,0},

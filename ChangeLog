@@ -1,3 +1,4 @@
+2008-02-03 brl explicitly set lpd_listen_port and document it better in sample config
 2008-02-03 brl add --enable-lpd.conf.local to include that file in default lpd.conf
 2008-01-28 brl only link programs needing it to kerberos and/or ssl libraries
 2008-01-28 brl remove or "#if 0"-comment some unused functions
