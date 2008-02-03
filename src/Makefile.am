@@ -89,11 +89,9 @@ vars.$(OBJEXT): ../config.h
 ./lpd.conf: vars.c ../config.h
 	set -e; \
 	rm -f $@ ; \
-	echo "# lpd.conf" > $@ ; \
-	echo "# VERSION=$(VERSION)" >> $@ ; \
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 		$(AM_CPPFLAGS) $(CPPFLAGS) $(PATHDEFINES) -C vars.c \
-	 | $(SHELL) ../UTILS/make_lpd_conf >> $@ \
+	 | $(SHELL) ../UTILS/make_lpd_conf '$(VERSION)' '$(LPD_CONF_PATH).local' >> $@ \
 	 || rm $@
 
 %: %.sh Makefile

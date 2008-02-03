@@ -76,6 +76,15 @@ LPD_LISTEN_PORT='"=off"'
 AC_SUBST(NOREMOTE)
 AC_DEFINE_UNQUOTED(LPD_LISTEN_PORT, $LPD_LISTEN_PORT,[default value for lpd_listen_port (0 means default port ("=515"), "=off" means to not listen at all])
 
+ENABLE_BOOLEAN(lpd.conf.local,
+[  --enable-lpd.conf.local           include lpd.conf.local in lpd.conf],
+"no",
+[include lpd.conf.local in lpd.conf        : $v],
+[INCLUDELPDCONFLOCAL=""
+],[INCLUDELPDCONFLOCAL="# "
+])
+AC_SUBST(INCLUDELPDCONFLOCAL)
+
 dnl check to see if force_localhost is suppressed
 ENABLE_BOOLEAN(force_localhost,
 [  --disable-force_localhost         disable force_localhost default],
