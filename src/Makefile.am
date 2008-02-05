@@ -90,7 +90,7 @@ vars.$(OBJEXT): ../config.h
 	set -e; \
 	rm -f $@ ; \
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-		$(AM_CPPFLAGS) $(CPPFLAGS) $(PATHDEFINES) -C vars.c \
+		$(AM_CPPFLAGS) $(CPPFLAGS) $(PATHDEFINES) -C $(srcdir)/vars.c \
 	 | $(SHELL) ../UTILS/make_lpd_conf '$(VERSION)' '$(LPD_CONF_PATH).local' >> $@ \
 	 || rm $@
 
