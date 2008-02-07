@@ -1,3 +1,4 @@
+2008-02-05 brl make form_addr_and_mask more robust
 2008-02-03 brl explicitly set lpd_listen_port and document it better in sample config
 2008-02-03 brl add --enable-lpd.conf.local to include that file in default lpd.conf
 2008-01-28 brl only link programs needing it to kerberos and/or ssl libraries
