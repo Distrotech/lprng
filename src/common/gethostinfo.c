@@ -470,32 +470,50 @@ void Dump_host_information( const char *title,  struct host_information *info )
  *		form address and mask from string
  *      with the format:  IPADDR/MASK, mask is x.x.x.x or n (length)
  ***************************************************************************/
-static void form_addr_and_mask(char *v, char *addr,char *mask,
+static int form_addr_and_mask(char *v, char *addr,char *mask,
 	int addrlen, int family )
 {
-	int result = 1;
 	char *s, *t;
+	unsigned char *p;
 	int i, m, bytecount, bitcount;
 	char buffer[SMALLBUFFER];
 
-	if( v == 0 ) return;
-	
+	if( v == 0 ) return 0;
+
 	DEBUG5("form_addr_and_mask: '%s'", v );
 	if( 4*addrlen+1 >= (int)(sizeof(buffer)) ){
 		FATAL(LOG_ERR)"form_addr_and_mask: addrlen too large - hacker attack?");
 	}
 	memset( addr, 0, addrlen );
 	memset( mask, ~0, addrlen );
-	if( (s = safestrchr( v, '/' )) ) *s = 0;
-	inet_pton(family, v, addr );
+	/* be paranoid, only allow / in ipv4 and ipv6 addresses */
+	if( family == AF_INET
+#if defined(IPV6)
+			|| family == AF_INET6
+#endif
+			)
+		s = safestrchr( v, '/' );
+	else
+		s = NULL;
+	if( s ) *s = 0;
+	if( inet_pton(family, v, addr ) <= 0 ) {
+		DEBUG1("form_addr_and_mask: failed to parse '%s'", v );
+		if( s )
+			*s++ = '/';
+		return 0;
+	}
 	if( s ){
 		*s++ = '/';
 		t = 0;
 		m = strtol( s, &t, 0 );
 		if( t == 0 || *t ){
-			result = inet_pton(family, s, mask );
+			/* Not a number, so must be a mask: */
+			if( inet_pton(family, s, mask ) <= 0 ) {
+				DEBUG1("form_addr_and_mask: failed to parse mask '%s' of '%s'", s, v );
+				return 0;
+			}
 		} else if( m >= 0 ){
-			memset( mask, 0, addrlen );
+			/* set as many bits as specified by number */
 			bytecount = m/8;
 			bitcount = m & 0x7;
 			DEBUG6("form_addr_and_mask: m '%s' %d, bytecount %d, bitcount %d",
@@ -504,27 +522,19 @@ static void form_addr_and_mask(char *v, char *addr,char *mask,
 				bytecount = addrlen;
 				bitcount = 0;
 			}
-			t = buffer;
-			*t = 0;
+			p = (unsigned char*)mask;
 			for( i = 0; i < bytecount; ++i ){
-				if( buffer[0] ) *t++ = '.';
-				strcpy(t,"255");
-				t += safestrlen(t);
+				*p++ = 0xFF;
 			}
 			if( bitcount && i < addrlen ){
-				if( buffer[0] ) *t++ = '.';
-				SNPRINTF(t,6) "%d", (~((1<<(8-bitcount))-1))&0xFF);
-				t += safestrlen(t);
+				*p++ = (~((1<<(8-bitcount))-1))&0xFF;
 				++i;
 			}
 			for( ; i < addrlen; ++i ){
-				if( buffer[0] ) *t++ = '.';
-				strcpy(t,"0");
-				t += safestrlen(t);
+				*p++ = 0x00;
 			}
-			DEBUG6("form_addr_and_mask: len %d '%s'", m, buffer );
-			result = inet_pton(family, buffer, mask );
-		}
+		} else
+			return 0;
 	}
 	if(DEBUGL5){
 		LOGDEBUG("form_addr_and_mask: addr '%s'",
@@ -532,6 +542,7 @@ static void form_addr_and_mask(char *v, char *addr,char *mask,
 		LOGDEBUG("form_addr_and_mask: mask '%s'",
 			inet_ntop( family, mask, buffer, sizeof(buffer) ) );
 	}
+	return 1;
 }
 
 /*
@@ -539,7 +550,7 @@ static void form_addr_and_mask(char *v, char *addr,char *mask,
  * do a masked string compare
  */
 
-static int cmp_ip_addr( char *h, char *a, char *m, int len )
+static int cmp_ip_addr( const char *h, const char *a, const char *m, int len )
 {
     int match = 0, i;
 
@@ -608,12 +619,13 @@ int Match_ipaddr_value( struct line_list *list, struct host_information *host )
 			if( result ){
 				DEBUGF(DDB2)("Match_ipaddr_value: mask '%s'",
 					str );
-				form_addr_and_mask(str,addr,mask,host->h_length,
-					host->h_addrtype );
-				for( j = 0; result && j < host->h_addr_list.count; ++j ){
-					char *v;
-					v = host->h_addr_list.list[j];
-					result = cmp_ip_addr( v, addr, mask, host->h_length );
+				if( form_addr_and_mask(str,addr,mask,host->h_length,
+						host->h_addrtype ) ){
+					for( j = 0; result && j < host->h_addr_list.count; ++j ){
+						const char *v;
+						v = host->h_addr_list.list[j];
+						result = cmp_ip_addr( v, addr, mask, host->h_length );
+					}
 				}
 			}
 		DEBUGF(DDB2)("Match_ipaddr_value: checked '%s', result %d",
@@ -624,5 +636,8 @@ int Match_ipaddr_value( struct line_list *list, struct host_information *host )
 	DEBUGF(DDB2)("Match_ipaddr_value: result %d", result );
 	if(addr) free(addr); addr = 0;
 	if(mask) free(mask); mask = 0;
-	return( result );
+	if( result )
+		return 1;
+	else
+		return 0;
 }
