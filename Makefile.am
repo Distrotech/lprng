@@ -8,7 +8,7 @@ MAINTAINERCLEANFILES = configure Makefile.in \
 		       config.rpath config.guess config.sub \
 		       aclocal.m4 config.h.in \
 		       depcomp install-sh ltmain.sh missing mkinstalldirs
-EXTRA_DIST = ABOUT-NLS.LPRng CHANGES \
+EXTRA_DIST = ABOUT-NLS.LPRng CHANGES autogen.sh\
              KERBEROS_configuration STANDARD_configuration MIT_configure \
 	     CONTRIBUTORS COPYRIGHT LICENSE README.SSL.SECURITY
 
