@@ -444,10 +444,6 @@ void Get_parms(int argc, char *argv[] )
 			Printlist( Copyright, 2 );
 		}
 	}
-	{
-	char buffer[128];
-	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
-	}
 }
 
 static void use_msg(void)
@@ -504,5 +500,9 @@ void usage(void)
 	use_msg();
 	Parse_debug("=",-1);
 	FPRINTF( STDOUT, "%s\n", Version );
+	{
+	char buffer[128];
+	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
+	}
 	exit(1);
 }
