@@ -44,6 +44,8 @@ messages.
 The
 .IR syslog (8)
 facility is used to log critical messages as well.
+Please note that you need to create the file by yourself, a 'touch' is sufficient.
+This is needed for security reasons.
 .TP
 .B \-F
 Under normal operation, the LPD server will run in
@@ -80,7 +82,7 @@ Note that the lpd server needs only run on systems where actual printing
 or spooling is taking place.
 .IR lpr (1)
 and other related programs transfer files using network facilities to the
-.I lpd .
+.IR lpd .
 .PP
 When started,
 .I lpd
