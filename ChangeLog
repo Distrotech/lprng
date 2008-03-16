@@ -1,3 +1,4 @@
+2008-03-16 brl adopt lpd.n's description of filter expansion to reality
 2008-02-24 wh  document that lpd's -L argument has to exist already
 2008-02-22 brl move lpc's print of supported authentications to usage()
 2008-02-22 brl move lpc's print of supported authentications to usage()
