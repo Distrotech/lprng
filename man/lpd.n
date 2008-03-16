@@ -1,4 +1,4 @@
-.TH LPD 8 2007-02-22 "LPRng" "lpd daemon"
+.TH LPD 8 2008-03-14 "LPRng" "lpd daemon"
 
 .hy 0
 .de NP
@@ -1250,12 +1250,14 @@ and should only be used as a last resort for specific problems.
 .IP 4. 5
 The options for the filter command line will be replaced by appropriate
 values.
-Option specifications have the form $[0| ][-][']X.
+Option specifications have the form $[0| ][-]X.
+." Option specifications have the form $[0| ][-][']X.
 The default option expansion has the form $X -> -X'value';
 the form $0X or $(space)X adds a space after the -X, i.e.- $0X -> -X 'value';
-the form $-X suppresses the -X, i.e. - $-X -> 'value';
-and the form $'X' suppresses the quotes around the value.
-Note that the 0,-, and ' can be combined. For example, $-'X -> value.
+the form $-X suppresses the -X, i.e. - $-X -> value.
+." the form $-X suppresses the -X, i.e. - $-X -> 'value';
+." and the form $'X suppresses the quotes around the value.
+." Note that the 0,-, and ' can be combined. For example, $-'X -> value.
 The options will be expanded as follows:
 .RS
 .sp
