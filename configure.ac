@@ -1095,6 +1095,8 @@ if test "$SSL_ENABLE" != ""; then
 		if test "$ac_linked_libssl" != "false" -a \
 			"$ac_linked_libcrypto" != "false"; then
 				ac_found_openssl_lib_dir=$dir
+				LIBS=$save_LIBS
+				LDFLAGS=$save_LDFLAGS
 				break
 		fi
 		LIBS=$save_LIBS
