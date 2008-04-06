@@ -1081,7 +1081,7 @@ int Do_queue_jobs( char *name, int subserver )
 			Set_str_value(&job.info,DESTINATION,buffer);
 		}
 
-		DEBUG1("Do_queue_jobs: setting %s SERVER %d", id, getpid() );
+		DEBUG1("Do_queue_jobs: setting %s SERVER %d", id, (int)getpid() );
 		Set_decimal_value(&job.info,SERVER,getpid());
 		Set_flag_value(&job.info,START_TIME,time((void *)0));
 
