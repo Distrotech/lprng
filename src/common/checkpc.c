@@ -937,9 +937,9 @@ int Check_spool_dir( char *path )
 		int euid = geteuid();
 
 		To_euid_root();
-		SNPRINTF( cmd, sizeof(cmd)) "%s -R %ld %s", CHOWN, (long)DaemonUID, path );
+		plp_snprintf( cmd, sizeof(cmd), "%s -R %ld %s", CHOWN, (long)DaemonUID, path );
 		system( cmd );
-		SNPRINTF( cmd, sizeof(cmd)) "%s -R %ld %s", CHGRP, (long)DaemonGID, path );
+		plp_snprintf( cmd, sizeof(cmd), "%s -R %ld %s", CHGRP, (long)DaemonGID, path );
 		system( cmd );
 		To_euid(euid);
 	}
@@ -1216,8 +1216,8 @@ void Test_port(int ruid, int euid, char *serial_line )
 			FPRINTF( STDERR, "fork failed - %s", Errormsg(errno) );
 		} else if( pid == 0 ){
 			/* default for status */
-			SNPRINTF( t1, sizeof(t1)) "/tmp/t1XXX%ld", (long)getpid() );
-			SNPRINTF( t2, sizeof(t2)) "/tmp/t2XXX%ld", (long)getpid() );
+			plp_snprintf( t1, sizeof(t1), "/tmp/t1XXX%ld", (long)getpid() );
+			plp_snprintf( t2, sizeof(t2), "/tmp/t2XXX%ld", (long)getpid() );
 			diffcmd = "diff -c %s %s 1>&2";
 			ttyfd = 1;	/*STDOUT is reported */
 			sttycmd = "stty -a 2>%s";	/* on STDERR */
@@ -1244,9 +1244,9 @@ void Test_port(int ruid, int euid, char *serial_line )
 				}
 				close( fd );
 			}
-			SNPRINTF( stty, sizeof(stty)) sttycmd, t1 );
-			SNPRINTF( diff, sizeof(diff)) diffcmd, t1, t2 );
-			SNPRINTF( cmd, sizeof(cmd)) "%s; cat %s 1>&2", stty, t1 );
+			plp_snprintf( stty, sizeof(stty), sttycmd, t1 );
+			plp_snprintf( diff, sizeof(diff), diffcmd, t1, t2 );
+			plp_snprintf( cmd, sizeof(cmd), "%s; cat %s 1>&2", stty, t1 );
 			FPRINTF( STDERR,
 			"Status before stty, using '%s', on fd %d->%d\n",
 				cmd, fd, ttyfd );
@@ -1255,8 +1255,8 @@ void Test_port(int ruid, int euid, char *serial_line )
 			Stty_command_DYN = "9600 -even odd echo";
 			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command_DYN );
 			Do_stty( ttyfd );
-			SNPRINTF( stty, sizeof(stty)) sttycmd, t2 );
-			SNPRINTF( cmd, sizeof(cmd))
+			plp_snprintf( stty, sizeof(stty), sttycmd, t2 );
+			plp_snprintf( cmd, sizeof(cmd),
 				"%s; %s", stty, diff );
 			FPRINTF( STDERR, "Doing '%s'\n", cmd );
 			i = system( cmd );
@@ -1270,7 +1270,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 			Stty_command_DYN = "300 -even -odd -echo cbreak";
 			FPRINTF( STDERR, "Trying 'stty %s'\n", Stty_command_DYN );
 			Do_stty( ttyfd );
-			SNPRINTF( stty, sizeof(stty)) sttycmd, serial_line, t2 );
+			plp_snprintf( stty, sizeof(stty), sttycmd, serial_line, t2 );
 			FPRINTF( STDERR, "Doing '%s'\n", cmd );
 			i = system( cmd );
 			FPRINTF( STDERR, "\n\n" );
@@ -1313,7 +1313,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	/*
 	 * check out Lockf
 	 */
-	SNPRINTF( line, sizeof(line)) "/tmp/XX%ldXX", (long)getpid() );
+	plp_snprintf( line, sizeof(line), "/tmp/XX%ldXX", (long)getpid() );
 	FPRINTF( STDERR, "Checking Lockf '%s'\n", line );
 	if( (fd = Checkwrite(line, &statb, O_RDWR, 1, 0 )) < 0) {
 		err = errno;
@@ -1327,7 +1327,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 			"Mother could not lock '%s', in correct result\n", line );
 		exit(0);
 	}
-	SNPRINTF( cmd, sizeof(cmd)) "ls -l %s", line );
+	plp_snprintf( cmd, sizeof(cmd), "ls -l %s", line );
 	i = system( cmd );
 	if( (pid = fork()) < 0 ){
 		FPRINTF( STDERR, "fork failed!\n");

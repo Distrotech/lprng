@@ -121,12 +121,12 @@ static int Test_connect( struct job *job UNUSED, int *sock,
 		secure, safestrlen(secure), &ack );
 	DEBUG3("Test_connect: status '%s'", Link_err_str(status) );
 	if( status ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Test_connect: error '%s'", Link_err_str(status) );
 		status = JFAIL;
 	}
 	if( ack ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Test_connect: ack '%d'", ack );
 		status = JFAIL;
 	}
@@ -150,7 +150,7 @@ static int Test_accept( int *sock, int transfer_timeout,
 		transfer_timeout,input,&len);
 	if( len >= 0 ) input[len] = 0;
 	if( status ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s' READ from %s@%s",
 			Link_err_str(status), RemotePrinter_DYN, RemoteHost_DYN );
 		goto error;
@@ -159,7 +159,7 @@ static int Test_accept( int *sock, int transfer_timeout,
 		status, len, input );
 	if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		"", 1, 0 )) ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s' ACK to %s@%s",
 			Link_err_str(status), RemotePrinter_DYN, RemoteHost_DYN );
 		goto error;
@@ -200,7 +200,7 @@ static int Test_send( int *sock,
 	if(DEBUGL1)Dump_line_list("Test_send: info", info );
 	DEBUG1("Test_send: sending on socket %d", *sock );
 	if( (tempfd = Checkread(tempfile,&statb)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Test_send: open '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		status = JABORT;
@@ -211,14 +211,14 @@ static int Test_send( int *sock,
 		buffer[len] = 0;
 		DEBUG4("Test_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"Test_send: write to socket failed - %s", Errormsg(errno) );
 			status = JABORT;
 			goto error;
 		}
 	}
 	if( len < 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Test_send: read from '%s' failed - %s", tempfile, Errormsg(errno) );
 		status = JABORT;
 		goto error;
@@ -230,7 +230,7 @@ static int Test_send( int *sock,
 	DEBUG1("Test_send: sent file" );
 
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Test_send: open '%s' for write failed - %s",
 			tempfile, Errormsg(errno) );
 		status = JABORT;
@@ -242,7 +242,7 @@ static int Test_send( int *sock,
 		buffer[len] = 0;
 		DEBUG4("Test_send: socket information '%s'", buffer);
 		if( write(tempfd,buffer,len) != len ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"Test_send: write to '%s' failed - %s", tempfile, Errormsg(errno) );
 			status = JABORT;
 			goto error;
@@ -273,7 +273,7 @@ static int Test_receive( int *sock, int transfer_timeout,
 	/* do validation and then write 0 */
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Test_receive: ACK 0 write error - %s",
+		plp_snprintf( errmsg, errlen, "Test_receive: ACK 0 write error - %s",
 			Errormsg(errno) );
 		goto error;
 	}
@@ -281,7 +281,7 @@ static int Test_receive( int *sock, int transfer_timeout,
 	/* open a file for the output */
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Test_receive: reopen of '%s' for write failed",
+		logerr_die(LOG_INFO, "Test_receive: reopen of '%s' for write failed",
 			tempfile );
 	}
 
@@ -317,7 +317,7 @@ static int Test_receive( int *sock, int transfer_timeout,
 	DEBUGF(DRECV1)("Test_receive: doing reply" );
 	if( (tempfd = Checkread(tempfile,&statb)) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Test_receive: reopen of '%s' for write failed",
+		logerr_die(LOG_INFO, "Test_receive: reopen of '%s' for write failed",
 			tempfile );
 	}
 
@@ -424,7 +424,7 @@ static char *hexstr( const unsigned char *str, int len, char *outbuf, int outlen
 	int i, j;
 	for( i = 0; i < len && 2*(i+1) < outlen ; ++i ){
 		j = ((unsigned char *)str)[i];
-		SNPRINTF(&outbuf[2*i],4)"%02x",j);
+		plp_snprintf(&outbuf[2*i],4, "%02x",j);
 	}
 	if( outlen > 0 ) outbuf[2*i] = 0;
 	return( outbuf );
@@ -449,7 +449,7 @@ static int md5key( const char *keyfile, char *name, char *key, int keysize, char
 	/* read in the key from the key file */
 	keyvalue = Find_exists_value( &keys, name,Hash_value_sep );
 	if( keyvalue == 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5key: no key for '%s' in '%s'", name, keyfile );
 		goto error;
 	}
@@ -512,14 +512,14 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		/* we get the value of the MD5KEYFILE variable */
 		keyfile = getenv("MD5KEYFILE");
 		if( keyfile == 0 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: no MD5KEYFILE environment variable" );
 			goto error;
 		}
 	} else {
 		keyfile = Find_exists_value( info, "server_keyfile",Hash_value_sep );
 		if( keyfile == 0 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: no md5_server_keyfile entry" );
 			goto error;
 		}
@@ -527,7 +527,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 
 	dest = Find_str_value( info, DESTINATION );
 	if( dest == 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_send: no '%s' value in info", DESTINATION );
 		goto error;
 	}
@@ -539,7 +539,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		*s++ = 0;
 		while( (isspace(cval(s))) ) ++s;
 		if( *s == 0 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: no '%s' value in keyfile", dest );
 			goto error;
 		}
@@ -548,7 +548,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		s = keybuffer;
 		dest = Find_str_value( info, FROM );
 		if( !dest ){
-			SNPRINTF(errmsg,errlen)
+			plp_snprintf(errmsg,errlen,
 				"md5_send: no '%s' value in info", FROM );
 			goto error;
 		}
@@ -562,18 +562,18 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	len = sizeof(buffer);
 	if( (n = Link_line_read(ShortRemote_FQDN,sock,
 		transfer_timeout,buffer,&len)) ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_send: error reading challenge - '%s'", Link_err_str(n) );
 		goto error;
 	} else if( len == 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_send: zero length challenge");
 		goto error;
 	}
 	DEBUG1("md5_send: challenge '%s'", buffer );
 	n = safestrlen(buffer);
 	if( n == 0 || n % 2 || n/2 > KEY_LENGTH ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_send: bad challenge length '%d'", safestrlen(buffer) );
 		goto error;
 	}
@@ -604,7 +604,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	DEBUG1("md5_send: opening tempfile '%s'", tempfile );
 
 	if( (tempfd = Checkread(tempfile,&statb)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_send: open '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		status = JABORT;
@@ -626,7 +626,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	DEBUG1("md5_send: challenge^destkey^idkey^filehash '%s'", 
 		hexstr( challenge, KEY_LENGTH, buffer, sizeof(buffer) ));
 
-	SNPRINTF( smallbuffer, sizeof(smallbuffer)) "%s", dest );
+	plp_snprintf( smallbuffer, sizeof(smallbuffer), "%s", dest );
 
 	/* now we xor the buffer with the key */
 	len = safestrlen(smallbuffer);
@@ -645,7 +645,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	/* return the response to the server */
 	hexstr( response, KEY_LENGTH, buffer, sizeof(buffer) );
 	n = safestrlen(smallbuffer);
-	SNPRINTF(smallbuffer+n, sizeof(smallbuffer)-n-1) " %s", buffer );
+	plp_snprintf(smallbuffer+n, sizeof(smallbuffer)-n-1, " %s", buffer );
 	DEBUG1("md5_send: sending response '%s'", smallbuffer );
 	safestrncat(smallbuffer,"\n");
 	ack = 0;
@@ -653,7 +653,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		smallbuffer, safestrlen(smallbuffer), &ack )) || ack ){
 		/* keep the other end dest trying to read */
 		if( (s = strchr(smallbuffer,'\n')) ) *s = 0;
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s'\n sending str '%s' to %s@%s",
 			Link_err_str(n), smallbuffer,
 			RemotePrinter_DYN, RemoteHost_DYN );
@@ -661,7 +661,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	}
 
 	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"md5_send: seek failed - '%s'", Errormsg(errno) );
 		goto error;
 	}
@@ -671,14 +671,14 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		buffer[len] = 0;
 		DEBUG4("md5_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: write to socket failed - %s", Errormsg(errno) );
 			status = JABORT;
 			goto error;
 		}
 	}
 	if( len < 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_send: read dest '%s' failed - %s", tempfile, Errormsg(errno) );
 		status = JABORT;
 		goto error;
@@ -690,7 +690,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	DEBUG1("md5_send: sent file" );
 
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_send: open '%s' for write failed - %s",
 			tempfile, Errormsg(errno) );
 		status = JABORT;
@@ -703,7 +703,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		DEBUG4("md5_send: response byte '%d'", n);
 		status = n;
 		if( isprint(n) && write(tempfd,buffer,1) != 1 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: write to '%s' failed - %s", tempfile, Errormsg(errno) );
 			status = JABORT;
 			goto error;
@@ -713,7 +713,7 @@ static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 		buffer[len] = 0;
 		DEBUG4("md5_send: socket information '%s'", buffer);
 		if( write(tempfd,buffer,len) != len ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_send: write to '%s' failed - %s", tempfile, Errormsg(errno) );
 			status = JABORT;
 			goto error;
@@ -755,13 +755,13 @@ static int md5_receive( int *sock, int transfer_timeout,
 	/* do validation and then write 0 */
 
 	if( !Is_server ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_receive: not server" );
 		goto error;
 	} else {
 		keyfile = Find_exists_value( info, "server_keyfile",Hash_value_sep );
 		if( keyfile == 0 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_receive: no md5_server_keyfile entry" );
 			goto error;
 		}
@@ -770,7 +770,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 	DEBUGF(DRECV1)("md5_receive: sending ACK" );
 	if( (n = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 		"", 1, 0 )) ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s' ACK to %s@%s",
 			Link_err_str(n), RemotePrinter_DYN, RemoteHost_DYN );
 		goto error;
@@ -792,7 +792,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 		buffer, safestrlen(buffer), 0 )) ){
 		/* keep the other end dest trying to read */
 		if( (s = strchr(buffer,'\n')) ) *s = 0;
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s' sending str '%s' to %s@%s",
 			Link_err_str(n), buffer,
 			RemotePrinter_DYN, RemoteHost_DYN );
@@ -804,15 +804,15 @@ static int md5_receive( int *sock, int transfer_timeout,
 	len = sizeof(input)-1;
 	if( (n = Link_line_read(ShortRemote_FQDN,sock,
 		transfer_timeout,input,&len) )){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_receive: error reading challenge - '%s'", Link_err_str(n) );
 		goto error;
 	} else if( len == 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_receive: zero length response");
 		goto error;
 	} else if( len >= (int)sizeof( input) -2 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_receive: response too long");
 		goto error;
 	}
@@ -823,18 +823,18 @@ static int md5_receive( int *sock, int transfer_timeout,
 	if( s ){
 		hash = s;
 		if( strpbrk(hash,Whitespace) ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_receive: malformed response" );
 			goto error;
 		}
 		n = safestrlen(hash);
 		if( n == 0 || n%2 ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 			"md5_receive: bad response hash length '%d'", n );
 			goto error;
 		}
 	} else {
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_receive: no 'hash' in response" );
 		goto error;
 	}
@@ -860,7 +860,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 
 	if((n = Link_send( RemoteHost_DYN, sock, transfer_timeout, "", 1, 0 )) ){
 		/* keep the other end dest trying to read */
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 			"error '%s' sending ACK to %s@%s",
 			Link_err_str(n),
 			RemotePrinter_DYN, RemoteHost_DYN );
@@ -871,7 +871,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 
 	/* open a file for the output */
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_receive: reopen of '%s' for write failed",
 			tempfile );
 	}
@@ -881,7 +881,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 		buffer[n] = 0;
 		DEBUGF(DRECV4)("md5_receive: remote read '%d' '%s'", n, buffer );
 		if( write( tempfd,buffer,n ) != n ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"md5_receive: bad write to '%s' - '%s'",
 				tempfile, Errormsg(errno) );
 			goto error;
@@ -889,7 +889,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 	}
 
 	if( n < 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_receive: bad read '%d' reading file ", n );
 		goto error;
 	}
@@ -899,7 +899,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 	DEBUG1("md5_receive: opening tempfile '%s'", tempfile );
 
 	if( (tempfd = Checkread(tempfile,&statb)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"md5_receive: open '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		goto error;
@@ -962,7 +962,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 	DEBUGF(DRECV1)("md5_receive: sent hash '%s'", hash );
 
 	if( strcmp( buffer, hash ) ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 		"md5_receive: bad response value");
 		goto error;
 	}
@@ -974,7 +974,7 @@ static int md5_receive( int *sock, int transfer_timeout,
 
 	/* we now have the encoded output */
 	if( (tempfd = Checkread(tempfile,&statb)) < 0 ){
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"md5_receive: reopen of '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		goto error;
@@ -988,14 +988,14 @@ static int md5_receive( int *sock, int transfer_timeout,
 			buffer[n] = 0;
 			DEBUGF(DRECV4)("md5_receive: sending '%d' '%s'", n, buffer );
 			if( write( *sock,buffer,n ) != n ){
-				SNPRINTF( errmsg, errlen)
+				plp_snprintf( errmsg, errlen,
 					"md5_receive: bad write to socket - '%s'",
 					Errormsg(errno) );
 				goto error;
 			}
 		}
 		if( n < 0 ){
-			SNPRINTF( errmsg, errlen)
+			plp_snprintf( errmsg, errlen,
 				"md5_receive: read '%s' failed - %s",
 				tempfile, Errormsg(errno) );
 			goto error;
@@ -1075,11 +1075,11 @@ static int Pgp_get_pgppassfd( char **pgppass, struct line_list *info, char *erro
 		char *server_passphrasefile = Find_str_value(info,"server_passphrasefile");
 		if(DEBUGL1)Dump_line_list("Pgp_get_pgppassfd: info - need server_passphrasefile", info);
 		if( !server_passphrasefile ){
-			SNPRINTF(error,errlen)
+			plp_snprintf(error,errlen,
 				"Pgp_get_pgppassfd: on server, no 'pgp_server_passphrasefile' value\n" );
 		} else if( (pgppassfd =
 			Checkread(server_passphrasefile,&statb)) < 0 ){
-				SNPRINTF(error,errlen)
+				plp_snprintf(error,errlen,
 					"Pgp_get_pgppassfd: on server, cannot open '%s' - '%s'\n",
 					server_passphrasefile, Errormsg(errno) );
 		}
@@ -1107,7 +1107,7 @@ static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfi
 	error[0] = 0;
 	status = 0;
 	if( ISNULL(Pgp_path_DYN) ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 		"Pgp_decode: on %s, missing pgp_path info",
 			Is_server?"server":"client"
 			); 
@@ -1129,7 +1129,7 @@ static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfi
 	Set_str_value(&env,"PGPPASSFD",0);
 	if( Is_server ){
 		if( pgppassfd <= 0 ){
-			SNPRINTF(error, errlen) "Pgp_decode: on %s, no server key file!",
+			plp_snprintf(error, errlen, "Pgp_decode: on %s, no server key file!",
 				Is_server?"server":"client"
 				);
 			status = JFAIL;
@@ -1150,7 +1150,7 @@ static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfi
 	/* run the PGP decoder */
 	if( pipe(error_fd) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Pgp_decode: on %s, pipe() failed",
+		logerr_die(LOG_INFO, "Pgp_decode: on %s, pipe() failed",
 			Is_server?"server":"client"
 			 );
 	}
@@ -1166,7 +1166,7 @@ static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfi
 
 	/* now we run the PGP code */
 
-	SNPRINTF(buffer,bufflen)
+	plp_snprintf(buffer,bufflen,
 		"%s +force +batch %s -u '$%%%s' -o '%s'",
 		Pgp_path_DYN, pgpfile, esc_to_id, tempfile ); 
 
@@ -1218,21 +1218,21 @@ static int Pgp_decode(int transfer_timeout, struct line_list *info, char *tempfi
 			pid, n, Errormsg(err) );
 		if( err == EINTR ) continue; 
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Pgp_decode: on %s, waitpid(%d) failed",
+		logerr_die(LOG_ERR, "Pgp_decode: on %s, waitpid(%d) failed",
 			Is_server?"server":"client",
 			pid);
 	} 
 	DEBUG1("Pgp_decode: pgp pid %d exit status '%s'",
 		pid, Decode_status(&procstatus) );
 	if( WIFEXITED(procstatus) && (n = WEXITSTATUS(procstatus)) ){
-		SNPRINTF(error,errlen)"Pgp_decode: on %s, exit status %d",
+		plp_snprintf(error,errlen, "Pgp_decode: on %s, exit status %d",
 			Is_server?"server":"client",
 			n);
 		DEBUG1("Pgp_decode: pgp exited with status %d on host %s", n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
 		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
 			s = pgp_info->list[i];
-			SNPRINTF(error+n, errlen-n)"\n %s",s);
+			plp_snprintf(error+n, errlen-n, "\n %s",s);
 			if( !*not_a_ciphertext ){
 				*not_a_ciphertext = (strstr(s, "not a ciphertext") != 0);
 			}
@@ -1285,7 +1285,7 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 	*pgp_exit_code = 0;
 	status = 0;
 	if( ISNULL(Pgp_path_DYN) ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 		"Pgp_encode: missing pgp_path info"); 
 		status = JFAIL;
 		goto error;
@@ -1308,7 +1308,7 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 	Set_str_value(&env,"PGPPASSFD",0);
 	if( Is_server ){
 		if( pgppassfd <= 0 ){
-			SNPRINTF(error, errlen) "Pgp_encode: no server key file!");
+			plp_snprintf(error, errlen, "Pgp_encode: no server key file!");
 			status = JFAIL;
 			goto error;
 		}
@@ -1330,7 +1330,7 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 
 	if( pipe(error_fd) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Pgp_encode: pipe() failed" );
+		logerr_die(LOG_INFO, "Pgp_encode: pipe() failed" );
 	}
 	Max_open(error_fd[0]); Max_open(error_fd[1]);
 	Check_max(&files,10);
@@ -1346,13 +1346,13 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 
 	/* now we run the PGP code */
 
-	SNPRINTF(buffer,bufflen)
+	plp_snprintf(buffer,bufflen,
 		"$- %s +armorlines=0 +verbose=0 +force +batch -sea '%s' '$%%%s' -u '$%%%s' -o %s",
 		Pgp_path_DYN, tempfile, esc_to_id, esc_from_id, pgpfile );
 
 	if( (pid = Make_passthrough(buffer, 0, &files, 0, &env )) < 0 ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO) "Pgp_encode: fork failed");
+		logerr_die(LOG_INFO, "Pgp_encode: fork failed");
 	}
 
 	DEBUG1("Pgp_encode: pgp pid %d", pid );
@@ -1398,26 +1398,26 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 			pid, n, Errormsg(err), Decode_status(&procstatus));
 		if( err == EINTR ) continue; 
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Pgp_encode: waitpid(%d) failed", pid);
+		logerr_die(LOG_ERR, "Pgp_encode: waitpid(%d) failed", pid);
 	} 
 	DEBUG1("Pgp_encode: pgp pid %d exit status '%s'",
 		pid, Decode_status(&procstatus) );
 	if(DEBUGL1)Dump_line_list("Pgp_encode: pgp_info", pgp_info);
 	if( WIFEXITED(procstatus) && (n = WEXITSTATUS(procstatus)) ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Pgp_encode: on %s, pgp exited with status %d on host %s",
 			Is_server?"server":"client",
 			n, FQDNHost_FQDN );
 		*pgp_exit_code = n;
 		for( i = 0; (n = safestrlen(error)) < errlen - 2 && i < pgp_info->count; ++i ){
 			s = pgp_info->list[i];
-			SNPRINTF(error+n, errlen-n)"\n %s",s);
+			plp_snprintf(error+n, errlen-n, "\n %s",s);
 		}
 		status = JFAIL;
 		goto error;
 	} else if( WIFSIGNALED(procstatus) ){
 		n = WTERMSIG(procstatus);
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 		"Pgp_encode: on %s, pgp died with signal %d, '%s'",
 			Is_server?"server":"client",
 			n, Sigstr(n));
@@ -1517,20 +1517,20 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	Free_line_list(&pgp_info);
 
 	if( (tempfd = Checkread(pgpfile,&statb)) < 0 ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Pgp_send: cannot open '%s' - %s", pgpfile, Errormsg(errno) );
 		goto error;
 	}
 
 	DEBUG1("Pgp_send: encrypted file size '%0.0f'", (double)(statb.st_size) );
-	SNPRINTF(buffer,sizeof(buffer))"%0.0f\n",(double)(statb.st_size) );
+	plp_snprintf(buffer,sizeof(buffer), "%0.0f\n",(double)(statb.st_size) );
 	Write_fd_str(*sock,buffer);
 
 	while( (len = Read_fd_len_timeout( transfer_timeout, tempfd, buffer, sizeof(buffer)-1 )) > 0 ){
 		buffer[len] = 0;
 		DEBUG4("Pgp_send: file information '%s'", buffer );
 		if( write( *sock, buffer, len) != len ){
-			SNPRINTF(error,errlen)
+			plp_snprintf(error,errlen,
 			"Pgp_send: write to socket failed - %s", Errormsg(errno) );
 			goto error;
 		}
@@ -1541,7 +1541,7 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	/* we close the writing side */
 	shutdown( *sock, 1 );
 	if( (tempfd = Checkwrite(pgpfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Pgp_send: open '%s' for write failed - %s", pgpfile, Errormsg(errno));
 		goto error;
 	}
@@ -1551,7 +1551,7 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 		buffer[n] = 0;
 		DEBUG4("Pgp_send: read '%s'", buffer);
 		if( write(tempfd,buffer,n) != n ){
-			SNPRINTF(error,errlen)
+			plp_snprintf(error,errlen,
 			"Pgp_send: write '%s' failed - %s", tempfile, Errormsg(errno) );
 			goto error;
 		}
@@ -1571,12 +1571,12 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 		if( not_a_ciphertext ){
 			DEBUG2("Pgp_send: not a ciphertext" );
 			if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-				SNPRINTF(error,errlen)
+				plp_snprintf(error,errlen,
 				"Pgp_send: open '%s' for write failed - %s",
 					tempfile, Errormsg(errno));
 			}
 			if( (fd = Checkread(pgpfile,&statb)) < 0){
-				SNPRINTF(error,errlen)
+				plp_snprintf(error,errlen,
 				"Pgp_send: open '%s' for write failed - %s",
 					pgpfile, Errormsg(errno));
 			}
@@ -1595,7 +1595,7 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 					for( t = buffer; *t; ++t ){
 						if( !isprint(cval(t)) ) *t = ' ';
 					}
-					SNPRINTF(error,errlen)"  %s\n", buffer);
+					plp_snprintf(error,errlen, "  %s\n", buffer);
 					Write_fd_str(tempfd, error );
 					DEBUG2("Pgp_send: wrote '%s'", error );
 					memmove(buffer,s,safestrlen(s)+1);
@@ -1615,13 +1615,13 @@ static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 		char *s, *end;
 		DEBUG2("Pgp_send: writing error to file '%s'", error );
 		if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-			SNPRINTF(error,errlen)
+			plp_snprintf(error,errlen,
 			"Pgp_send: open '%s' for write failed - %s",
 				tempfile, Errormsg(errno));
 		}
 		for( s = error; !ISNULL(s); s = end ){
 			if( (end = strchr( error, '\n')) ) *end++ = 0;
-			SNPRINTF(buffer,sizeof(buffer)) "%s\n", s);
+			plp_snprintf(buffer,sizeof(buffer), "%s\n", s);
 			Write_fd_str(tempfd, buffer );
 			DEBUG2("Pgp_send: wrote '%s'", buffer );
 		}
@@ -1661,14 +1661,14 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 
 	if( id == 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Pgp_receive: %s has no pgp_id or auth_id value",
+		plp_snprintf( errmsg, errlen, "Pgp_receive: %s has no pgp_id or auth_id value",
 			Is_server?"server":"client");
 		goto error;
 	}
 
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Pgp_receive: ACK 0 write error - %s",
+		plp_snprintf( errmsg, errlen, "Pgp_receive: ACK 0 write error - %s",
 			Errormsg(errno) );
 		goto error;
 	}
@@ -1676,7 +1676,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 
 	if( (tempfd = Checkwrite(pgpfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 		status = JFAIL;
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"Pgp_receive: reopen of '%s' for write failed - %s",
 			pgpfile, Errormsg(errno) );
 		goto error;
@@ -1690,7 +1690,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 		if( isspace(cval(buffer)) ) break;
 		if( write( tempfd,buffer,1 ) != 1 ){
 			status = JFAIL;
-			SNPRINTF( errmsg, errlen)
+			plp_snprintf( errmsg, errlen,
 				"Pgp_receive: bad write to '%s' - '%s'",
 				tempfile, Errormsg(errno) );
 			goto error;
@@ -1702,7 +1702,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 		DEBUGF(DRECV4)("Pgp_receive: remote read '%d' '%s'", n, buffer );
 		if( write( tempfd,buffer,n ) != n ){
 			status = JFAIL;
-			SNPRINTF( errmsg, errlen)
+			plp_snprintf( errmsg, errlen,
 				"Pgp_receive: bad write to '%s' - '%s'",
 				tempfile, Errormsg(errno) );
 			goto error;
@@ -1710,7 +1710,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	}
 	if( n < 0 ){
 		status = JFAIL;
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"Pgp_receive: bad read from socket - '%s'",
 			Errormsg(errno) );
 		goto error;
@@ -1728,7 +1728,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	from = Find_str_value(header_info,FROM);
 	if( from == 0 ){
 		status = JFAIL;
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"Pgp_receive: no 'from' information" );
 		goto error;
 	}
@@ -1744,7 +1744,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	/* we now have the encoded output */
 	if( (tempfd = Checkread(pgpfile,&statb)) < 0 ){
 		status = JFAIL;
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"Pgp_receive: reopen of '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		goto error;
@@ -1757,7 +1757,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 		DEBUGF(DRECV4)("Pgp_receive: sending '%d' '%s'", n, buffer );
 		if( write( *sock,buffer,n ) != n ){
 			status = JFAIL;
-			SNPRINTF( errmsg, errlen)
+			plp_snprintf( errmsg, errlen,
 				"Pgp_receive: bad write to socket - '%s'",
 				Errormsg(errno) );
 			goto error;
@@ -1765,7 +1765,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	}
 	if( n < 0 ){
 		status = JFAIL;
-		SNPRINTF( errmsg, errlen)
+		plp_snprintf( errmsg, errlen,
 			"Pgp_receive: read '%s' failed - %s",
 			tempfile, Errormsg(errno) );
 		goto error;
@@ -1810,7 +1810,7 @@ char *ShowSecuritySupported( char *str, int maxlen )
 	const char *name;
 	str[0] = 0;
 	for( len = i = 0; (name = SecuritySupported[i].name); ++i ){
-		SNPRINTF( str+len,maxlen-len) "%s%s",len?",":"",name );
+		plp_snprintf( str+len,maxlen-len, "%s%s",len?",":"",name );
 		len += strlen(str+len);
 	}
 	return( str );

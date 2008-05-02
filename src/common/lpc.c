@@ -98,8 +98,8 @@ int main(int argc, char *argv[], char *envp[])
 #if 0
 	DEBUG1("%s",5);
 	LOGDEBUG("%s",5);
-	FATAL(LOGINFO)"%s",5);
-	LOGERR(LOGINFO)"%s",5);
+	fatal(LOGINFO, "%s",5);
+	logerr(LOGINFO, "%s",5);
 #endif
 	/* set signal handlers */
 	(void) plp_signal (SIGHUP, cleanup_HUP);
@@ -238,14 +238,14 @@ void doaction( struct line_list *args )
 		Fix_Rm_Rp_info(0,0);
 	}
 	if( ISNULL(RemotePrinter_DYN) ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - cannot get status from device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 		return;
 	}
 	if( Direct_DYN && Lp_device_DYN ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - direct connection to device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
@@ -325,7 +325,7 @@ void doaction( struct line_list *args )
 		pid_t pid, result;
 		plp_status_t status;
 		if( args->count == 1 && Printer_DYN ){
-			SNPRINTF(msg,sizeof(msg)) "-P%s", Printer_DYN );
+			plp_snprintf(msg,sizeof(msg), "-P%s", Printer_DYN );
 			Add_line_list(args,msg,0,0,0);
 			Check_max(args,1);
 			args->list[args->count] = 0;
@@ -333,7 +333,7 @@ void doaction( struct line_list *args )
 			s = args->list[1];
 			if( safestrcasecmp(s,"all")
 			  || safestrcasecmp(s,_("all")) ){
-				SNPRINTF(msg,sizeof(msg)) "-P%s", s );
+				plp_snprintf(msg,sizeof(msg), "-P%s", s );
 			} else {
 				strcpy(msg, "-a" );
 			}
@@ -358,7 +358,7 @@ void doaction( struct line_list *args )
 				(long)pid, (long)result, Errormsg(err) );
 			if( err == EINTR ) continue; 
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("doaction: waitpid(%ld) failed"), (long)pid);
+			logerr_die(LOG_ERR, _("doaction: waitpid(%ld) failed"), (long)pid);
 		} 
 		DEBUG1("lpc: system pid %ld, exit status %s",
 			(long)result, Decode_status( &status ) );

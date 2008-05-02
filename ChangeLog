@@ -1,3 +1,4 @@
+2008-05-02 brl/wh replace macros with unbalanced parentheses
 2008-03-29 brl really only link programs needing it to ssl libraries
 2008-03-16 brl adopt lpd.n's description of filter expansion to reality
 2008-02-24 wh  document that lpd's -L argument has to exist already

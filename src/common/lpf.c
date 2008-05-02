@@ -257,7 +257,7 @@ static int Write_fd_str( int fd, const char *msg )
     VA_SHIFT (format, char *);
 
 	buf[0] = 0;
-	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	(void) plp_vsnprintf(buf, sizeof(buf), format, ap);
 	Write_fd_str(fd,buf);
 }
 
@@ -274,7 +274,7 @@ static const char * Errormsg ( int err )
 		return "No Error";
 	} else {
 		static char msgbuf[32];     /* holds "errno=%d". */
-		(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
+		(void) plp_snprintf(msgbuf, sizeof(msgbuf), "errno=%d", err);
 		return msgbuf;
 	}
 }
@@ -296,11 +296,11 @@ static void logerr( va_alist ) va_dcl
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
 
-	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	(void)plp_snprintf(buf,sizeof(buf), "%s: ", name);
 	n = strlen(buf);
-	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	(void)plp_vsnprintf(buf+n,sizeof(buf)-n, msg, ap);
 	n = strlen(buf);
-	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
+	(void)plp_snprintf(buf+n,sizeof(buf)-n, "- %s\n", Errormsg(err) );
 	Write_fd_str(2,buf);
 	VA_END;
 }
@@ -321,11 +321,11 @@ static void logerr_die( va_alist ) va_dcl
 	VA_START(msg);
 	VA_SHIFT(msg, char *);
 
-	(void)SNPRINTF(buf,sizeof(buf)) "%s: ", name);
+	(void)plp_snprintf(buf,sizeof(buf), "%s: ", name);
 	n = strlen(buf);
-	(void)VSNPRINTF(buf+n,sizeof(buf)-n) msg, ap);
+	(void)plp_vsnprintf(buf+n,sizeof(buf)-n, msg, ap);
 	n = strlen(buf);
-	(void)SNPRINTF(buf+n,sizeof(buf)-n) "- %s\n", Errormsg(err) );
+	(void)plp_snprintf(buf+n,sizeof(buf)-n, "- %s\n", Errormsg(err) );
 	Write_fd_str(2,buf);
 	VA_END;
 	exit(errorcode);
@@ -342,7 +342,7 @@ static void doaccnt(void)
 	FILE *f;
 	int l, len, c;
 
-	SNPRINTF(buffer, sizeof(buffer)) "%s\t%s\t%s\t%7d\t%s\t%s\n",
+	plp_snprintf(buffer, sizeof(buffer), "%s\t%s\t%s\t%7d\t%s\t%s\n",
 		login? login: "NULL",
 		host? host: "NULL",
 		printer? printer: "NULL",
@@ -596,7 +596,7 @@ static char *lpf_time_str(void)
 		logerr_die( "Time_str: gettimeofday failed");
 	}
 	tmptr = localtime( &tv.tv_sec );
-	SNPRINTF( buffer, sizeof(buffer))
+	plp_snprintf( buffer, sizeof(buffer),
 		"%d-%02d-%02d-%02d:%02d:%02d.%03d",
 		tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
 		tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,

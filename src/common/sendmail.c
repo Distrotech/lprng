@@ -60,51 +60,51 @@ void Sendmail_to_user( int retval, struct job *job )
 
 	msg[0] = 0;
 	if( mailname ){
-		SNPRINTF( msg, sizeof(msg)) "'%s'", mailname );
-		SNPRINTF( buffer, sizeof(buffer)) "To: %s\n", mailname );
+		plp_snprintf( msg, sizeof(msg), "'%s'", mailname );
+		plp_snprintf( buffer, sizeof(buffer), "To: %s\n", mailname );
 		if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 	}
 	if( opname ){
 		n = safestrlen(msg);
-		SNPRINTF( msg+n, sizeof(msg)-n) "%s'%s'",n?" and ":"", opname );
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf( msg+n, sizeof(msg)-n, "%s'%s'",n?" and ":"", opname );
+		plp_snprintf(buffer,sizeof(buffer),
 		"%s: %s\n", mailname?"CC":"To", opname );
 		if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 	}
 	setstatus( job, "sending mail to %s", msg );
-	SNPRINTF(buffer,sizeof(buffer))
+	plp_snprintf(buffer,sizeof(buffer),
 		"From: %s@%s\n",
 		Mail_from_DYN ? Mail_from_DYN : Printer_DYN, FQDNHost_FQDN );
 	if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 
-	SNPRINTF(buffer,sizeof(buffer))
+	plp_snprintf(buffer,sizeof(buffer),
 		"Subject: %s@%s job %s\n\n",
 		Printer_DYN, FQDNHost_FQDN, id );
 	if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 
 	/* now do the message */
-	SNPRINTF(buffer,sizeof(buffer))
+	plp_snprintf(buffer,sizeof(buffer),
 		_("printer %s job %s"), Printer_DYN, id );
 	if( Write_fd_str( tempfd, buffer ) < 0 ) goto wr_error;
 
 	switch( retval) {
 	case JSUCC:
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 		_(" was successful.\n"));
 		break;
 
 	case JFAIL:
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 		_(" failed, and retry count was exceeded.\n") );
 		break;
 
 	case JABORT:
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 		_(" failed and could not be retried.\n") );
 		break;
 
 	default:
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 		_(" died a horrible death.\n"));
 		break;
 	}
@@ -126,16 +126,16 @@ void Sendmail_to_user( int retval, struct job *job )
 	}
 	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Sendmail_to_user: seek failed");
+		logerr_die(LOG_ERR, "Sendmail_to_user: seek failed");
 	}
 	n = Filter_file( Send_job_rw_timeout_DYN, tempfd, -1, "MAIL", Sendmail_DYN, 0, job, 0, 0 );
 	if( n ){
 		Errorcode = JABORT;
-		LOGERR(LOG_ERR) "Sendmail_to_user: '%s' failed '%s'", Sendmail_DYN, Server_status(n) );
+		logerr(LOG_ERR, "Sendmail_to_user: '%s' failed '%s'", Sendmail_DYN, Server_status(n) );
 	}
 	return;
 
  wr_error:
 	Errorcode = JABORT;
-	LOGERR_DIE(LOG_ERR) "Sendmail_to_user: write failed");
+	logerr_die(LOG_ERR, "Sendmail_to_user: write failed");
 }

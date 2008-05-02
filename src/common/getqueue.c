@@ -83,7 +83,7 @@ int Scan_queue( struct line_list *spool_control,
 	Free_line_list(sort_order);
 
 	if( !(dir = opendir( "." )) ){
-		LOGERR(LOG_INFO)"Scan_queue: cannot open '.'" );
+		logerr(LOG_INFO, "Scan_queue: cannot open '.'" );
 		return( 1 );
 	}
 
@@ -172,7 +172,7 @@ char *Get_fd_image( int fd, off_t maxsize )
 
 	if( lseek(fd, 0, SEEK_SET) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Get_fd_image: lseek failed" );
+		logerr_die(LOG_INFO, "Get_fd_image: lseek failed" );
 	}
 	if( maxsize && fstat(fd, &statb) == 0
 		&& maxsize< statb.st_size/1024 ){
@@ -187,7 +187,7 @@ char *Get_fd_image( int fd, off_t maxsize )
 		s[len] = 0;
 	}
 	if(DEBUGL3){
-		SNPRINTF(buffer,32)"%s",s);
+		plp_snprintf(buffer,32, "%s",s);
 		logDebug("Get_fd_image: len %d '%s'", s?safestrlen(s):0, buffer );
 	}
 	return(s);
@@ -428,7 +428,7 @@ int Set_job_ticket_from_cf_info( struct job *job, char *cf_file_image, int read_
 			s, hpformat );
 		if( s &&  Get_file_image_and_split(s,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
 				DEBUG3("Set_job_ticket_from_cf_info: missing or empty control file '%s'", s );
-				SNPRINTF(buffer,sizeof(buffer))
+				plp_snprintf(buffer,sizeof(buffer),
 					"no control file %s - %s", s, Errormsg(errno) );
 				Set_str_value(&job->info,ERROR,buffer);
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
@@ -673,25 +673,25 @@ int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int open
 	DEBUG4("Set_job_ticket_file: '%s'", outstr );
 	if( !(job_ticket_name = Find_str_value(&job->info,HF_NAME)) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Set_job_ticket_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
+		fatal(LOG_ERR, "Set_job_ticket_file: LOGIC ERROR- no HF_NAME in job information - %s", outstr);
 	}
 	if( opened_fd <= 0 ){
 		if( (fd = Checkwrite( job_ticket_name, &statb, O_RDWR, 0, 0 )) < 0 ){
-			LOGERR(LOG_INFO)"Set_job_ticket_file: cannot open '%s'", job_ticket_name );
+			logerr(LOG_INFO, "Set_job_ticket_file: cannot open '%s'", job_ticket_name );
 		} else if( Do_lock(fd, 1 ) ){
-			LOGERR(LOG_INFO)"Set_job_ticket_file: cannot lcok '%s'", job_ticket_name );
+			logerr(LOG_INFO, "Set_job_ticket_file: cannot lcok '%s'", job_ticket_name );
 			close(fd); fd = -1;
 		}
 	}
 	if( fd > 0 ){
 		if( lseek( fd, 0, SEEK_SET ) == -1 ){
-			LOGERR_DIE(LOG_ERR) "Set_job_ticket_file: lseek failed" );
+			logerr_die(LOG_ERR, "Set_job_ticket_file: lseek failed" );
 		}
 		if( ftruncate( fd, 0 ) ){
-			LOGERR_DIE(LOG_ERR) "Set_job_ticket_file: ftruncate failed" );
+			logerr_die(LOG_ERR, "Set_job_ticket_file: ftruncate failed" );
 		}
 		if( Write_fd_str(fd, outstr) < 0 ){
-			LOGERR(LOG_INFO)"Set_job_ticket_file: write to '%s' failed", job_ticket_name );
+			logerr(LOG_INFO, "Set_job_ticket_file: write to '%s' failed", job_ticket_name );
 			status = 1;
 		}
 		if( opened_fd <= 0 ){
@@ -811,13 +811,13 @@ void Set_spool_control( struct line_list *perm_check, const char *file,
 	s = Join_line_list(info,"\n");
 	if( Write_fd_str(fd, s) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Set_spool_control: cannot write tempfile '%s'",
+		logerr_die(LOG_INFO, "Set_spool_control: cannot write tempfile '%s'",
 			tempfile );
 	}
 	close(fd);
 	if( rename( tempfile, file ) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Set_spool_control: rename of '%s' to '%s' failed",
+		logerr_die(LOG_INFO, "Set_spool_control: rename of '%s' to '%s' failed",
 			tempfile, file );
 	}
 	/* force and update of the cached status */
@@ -855,7 +855,7 @@ void intval( const char *key, struct line_list *list, struct job *job )
 {
 	int i = Find_flag_value(list,key);
 	int len = safestrlen(job->sort_key);
-	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	plp_snprintf(job->sort_key+len,sizeof(job->sort_key)-len,
     "|%s.0x%08x",key,i&0xffffffff);
 	DEBUG5("intval: '%s'", job->sort_key );
 }
@@ -864,7 +864,7 @@ void revintval( const char *key, struct line_list *list, struct job *job )
 {
 	int i = Find_flag_value(list,key);
 	int len = safestrlen(job->sort_key);
-	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	plp_snprintf(job->sort_key+len,sizeof(job->sort_key)-len,
 	"|%s.0x%08x",key,(~i)&0xffffffff);
 	DEBUG5("revintval: '%s'", job->sort_key );
 }
@@ -873,7 +873,7 @@ void strzval( const char *key, struct line_list *list, struct job *job )
 {
 	char *s = Find_str_value(list,key);
 	int len = safestrlen(job->sort_key);
-	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	plp_snprintf(job->sort_key+len,sizeof(job->sort_key)-len,
 	"|%s.%d",key,s!=0);
 	DEBUG5("strzval: '%s'", job->sort_key );
 }
@@ -882,7 +882,7 @@ void strnzval( const char *key, struct line_list *list, struct job *job )
 {
 	char *s = Find_str_value(list,key);
 	int len = safestrlen(job->sort_key);
-	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	plp_snprintf(job->sort_key+len,sizeof(job->sort_key)-len,
 	"|%s.%d",key,(s==0 || *s == 0));
 	DEBUG5("strnzval: '%s'", job->sort_key );
 }
@@ -897,7 +897,7 @@ void strval( const char *key, struct line_list *list, struct job *job,
 	if(s) c = cval(s);
 	if( reverse ) c = -c;
 	c = 0xFF & (-c);
-	SNPRINTF(job->sort_key+len,sizeof(job->sort_key)-len)
+	plp_snprintf(job->sort_key+len,sizeof(job->sort_key)-len,
 	"|%s.%02x",key,c);
 	DEBUG5("strval: '%s'", job->sort_key );
 }
@@ -916,7 +916,7 @@ void Make_sort_key( struct job *job )
 		ORDER_ROUTINE( &job );
 #else
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Make_sort_key: order_routine requested and ORDER_ROUTINE undefined");
+		fatal(LOG_ERR, "Make_sort_key: order_routine requested and ORDER_ROUTINE undefined");
 #endif
 	} else {
 		/* first key is REMOVE_TIME - remove jobs come last */
@@ -973,7 +973,7 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 	safestrncpy(name,prname);
 	if( error ) error[0] = 0;
 	if( (s = Is_clean_name( name )) ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 			"printer '%s' has illegal char at '%s' in name", name, s );
 		status = 1;
 		goto error;
@@ -987,7 +987,7 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 	Fix_Rm_Rp_info(0,0);
 
 	if( Spool_dir_DYN == 0 || *Spool_dir_DYN == 0 || stat(Spool_dir_DYN, &statb) ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 "spool queue for '%s' does not exist on server %s\n"
 "check for correct printer name or you may need to run\n"
 "'checkpc -f' to create queue",
@@ -997,7 +997,7 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 	}
 
 	if( chdir( Spool_dir_DYN ) < 0 ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 			"printer '%s', chdir to '%s' failed '%s'",
 				name, Spool_dir_DYN, Errormsg( errno ) );
 		status = 2;
@@ -1040,7 +1040,7 @@ int Read_pid( int fd, char *str, int len )
 	int n;
 
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
-		LOGERR_DIE(LOG_ERR) "Read_pid: lseek failed" );
+		logerr_die(LOG_ERR, "Read_pid: lseek failed" );
 	}
 
 	if( str == 0 ){
@@ -1049,7 +1049,7 @@ int Read_pid( int fd, char *str, int len )
 	}
 	str[0] = 0;
 	if( (n = ok_read( fd, str, len-1 ) ) < 0 ){
-		LOGERR_DIE(LOG_ERR) "Read_pid: read failed" );
+		logerr_die(LOG_ERR, "Read_pid: read failed" );
 	}
 	str[n] = 0;
 	n = atoi( str );
@@ -1066,22 +1066,22 @@ int Write_pid( int fd, int pid, char *str )
 	char line[LINEBUFFER];
 
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
-		LOGERR(LOG_ERR) "Write_pid: lseek failed" );
+		logerr(LOG_ERR, "Write_pid: lseek failed" );
 		return -1;
 	}
 	if( ftruncate( fd, 0 ) ){
-		LOGERR(LOG_ERR) "Write_pid: ftruncate failed" );
+		logerr(LOG_ERR, "Write_pid: ftruncate failed" );
 		return -1;
 	}
 
 	if( str == 0 ){
-		SNPRINTF( line, sizeof(line)) "%d\n", pid );
+		plp_snprintf( line, sizeof(line), "%d\n", pid );
 	} else {
-		SNPRINTF( line, sizeof(line)) "%s\n", str );
+		plp_snprintf( line, sizeof(line), "%s\n", str );
 	}
 	DEBUG3( "Write_pid: pid %d, str '%s'", pid, str );
 	if( Write_fd_str( fd, line ) < 0 ){
-		LOGERR(LOG_ERR) "Write_pid: write failed" );
+		logerr(LOG_ERR, "Write_pid: write failed" );
 		return -1;
 	}
 	return 0;
@@ -1182,7 +1182,7 @@ int Check_format( int type, const char *name, struct job *job )
 	switch( type ){
 	case DATA_FILE:
 		if( n != 'd' ){
-			SNPRINTF(msg, sizeof(msg))
+			plp_snprintf(msg, sizeof(msg),
 				"data file does not start with 'd' - '%s'",
 				name );
 			goto error;
@@ -1190,14 +1190,14 @@ int Check_format( int type, const char *name, struct job *job )
 		break;
 	case CONTROL_FILE:
 		if( n != 'c' ){
-			SNPRINTF(msg, sizeof(msg))
+			plp_snprintf(msg, sizeof(msg),
 				"control file does not start with 'c' - '%s'",
 				name );
 			goto error;
 		}
 		break;
 	default:
-		SNPRINTF(msg, sizeof(msg))
+		plp_snprintf(msg, sizeof(msg),
 			"bad file type '%c' - '%s' ", type,
 			name );
 		goto error;
@@ -1208,19 +1208,19 @@ int Check_format( int type, const char *name, struct job *job )
 		/* HP format */
 		hpformat = 1;
 	} else if( n != 'f' ){
-		SNPRINTF(msg, sizeof(msg))
+		plp_snprintf(msg, sizeof(msg),
 			"second letter must be f not '%c' - '%s' ", n, name );
 		goto error;
 	} else {
 		n = cval(name+2);
 		if( !isalpha( n ) ){
-			SNPRINTF(msg, sizeof(msg))
+			plp_snprintf(msg, sizeof(msg),
 				"third letter must be letter not '%c' - '%s' ", n, name );
 			goto error;
 		}
     }
 	if( type == CONTROL_FILE ){
-		SNPRINTF(msg,sizeof(msg))"%c",n);
+		plp_snprintf(msg,sizeof(msg), "%c",n);
 		Set_str_value(&job->info,PRIORITY,msg);
 		msg[0] = 0;
 	}
@@ -1268,7 +1268,7 @@ int Check_format( int type, const char *name, struct job *job )
 	if( Find_str_value( &job->info,NUMBER) ){
 		c = Find_decimal_value( &job->info,NUMBER);
 		if( c != n ){
-			SNPRINTF(msg, sizeof(msg))
+			plp_snprintf(msg, sizeof(msg),
 				"job numbers differ '%s', old %d and new %d",
 					name, c, n );
 			goto error;
@@ -1279,7 +1279,7 @@ int Check_format( int type, const char *name, struct job *job )
 	Clean_name(t);
 	if( (s = Find_str_value( &job->info,FILE_HOSTNAME)) ){
 		if( safestrcasecmp(s,t) ){
-			SNPRINTF(msg, sizeof(msg))
+			plp_snprintf(msg, sizeof(msg),
 				"bad hostname '%s' - '%s' ", t, name );
 			goto error;
 		}
@@ -1373,7 +1373,7 @@ char *Fix_job_number( struct job *job, int n )
 		len = 6;
 		max = 1000000;
 	}
-	SNPRINTF(buffer,sizeof(buffer))"%0*d",len, n % max );
+	plp_snprintf(buffer,sizeof(buffer), "%0*d",len, n % max );
 	Set_str_value(&job->info,NUMBER,buffer);
 	return( Find_str_value(&job->info,NUMBER) );
 }
@@ -1400,7 +1400,7 @@ char *Make_identifier( struct job *job )
 			host = "unknown";
 		}
 		n = Find_decimal_value( &job->info,NUMBER );
-		SNPRINTF(number,sizeof(number))"%d",n);
+		plp_snprintf(number,sizeof(number), "%d",n);
 		if( (s = safestrchr( host, '.' )) ) *s = 0;
 		id = safestrdup5(user,"@",host,"+",number,__FILE__,__LINE__);
 		if( s ) *s = '.';
@@ -1420,7 +1420,7 @@ void Dump_job( const char *title, struct job *job )
 	LOGDEBUG("  datafiles - count %d", job->datafiles.count );
 	for( i = 0; i < job->datafiles.count; ++i ){
 		char buffer[SMALLBUFFER];
-		SNPRINTF(buffer,sizeof(buffer))"  datafile[%d]", i );
+		plp_snprintf(buffer,sizeof(buffer), "  datafile[%d]", i );
 		lp = (void *)job->datafiles.list[i];
 		Dump_line_list_sub(buffer,lp);
 	}
@@ -1443,21 +1443,21 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 
 	buffer[0] = 0;
 	if( job->info.count == 0 ){
-		SNPRINTF(buffer,sizeof(buffer)) "removed" );
+		plp_snprintf(buffer,sizeof(buffer), "removed" );
 	} else if( Find_flag_value(&job->info,INCOMING_TIME) ){
 		int pid = Find_flag_value(&job->info,INCOMING_PID);
 		if( !pid || kill( pid, 0 ) ){
-			SNPRINTF(buffer,sizeof(buffer)) "incoming (orphan)" );
+			plp_snprintf(buffer,sizeof(buffer), "incoming (orphan)" );
 		} else {
-			SNPRINTF(buffer,sizeof(buffer)) "incoming" );
+			plp_snprintf(buffer,sizeof(buffer), "incoming" );
 		}
 	} else if( (error = Find_flag_value(&job->info,ERROR_TIME)) ){
-		SNPRINTF(buffer,sizeof(buffer)) "error" );
+		plp_snprintf(buffer,sizeof(buffer), "error" );
 	} else if( Find_flag_value(&job->info,HOLD_TIME) ){
-		SNPRINTF(buffer,sizeof(buffer)) "hold" );
+		plp_snprintf(buffer,sizeof(buffer), "hold" );
 		held = 1;
 	} else if( (done = Find_flag_value(&job->info,DONE_TIME)) ){
-		SNPRINTF(buffer,sizeof(buffer)) "done" );
+		plp_snprintf(buffer,sizeof(buffer), "done" );
 	} else if( (n = Find_flag_value(&job->info,SERVER))
 		&& kill( n, 0 ) == 0 ){
 		int delta;
@@ -1473,22 +1473,22 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 		}
 		delta = now - last_change;
 		if( Stalled_time_DYN && delta > Stalled_time_DYN ){
-			SNPRINTF( buffer, sizeof(buffer))
+			plp_snprintf( buffer, sizeof(buffer),
 				"stalled(%dsec)", delta );
 		} else {
 			n = Find_flag_value(&job->info,ATTEMPT);
-			SNPRINTF(buffer,sizeof(buffer)) "active" );
+			plp_snprintf(buffer,sizeof(buffer), "active" );
 			if( n > 0 ){
-				SNPRINTF( buffer, sizeof(buffer))
+				plp_snprintf( buffer, sizeof(buffer),
 					"active(attempt-%d)", n+1 );
 			}
 		}
 		printable = 1;
 	} else if((s = Find_str_value(&job->info,MOVE)) ){
-		SNPRINTF(buffer,sizeof(buffer)) "moved->%s", s );
+		plp_snprintf(buffer,sizeof(buffer), "moved->%s", s );
 		move = 1;
 	} else if( Get_hold_class(&job->info, spool_control ) ){
-		SNPRINTF(buffer,sizeof(buffer)) "holdclass" );
+		plp_snprintf(buffer,sizeof(buffer), "holdclass" );
 		held = 1;
 	} else {
 		printable = 1;
@@ -1500,34 +1500,34 @@ void Job_printable( struct job *job, struct line_list *spool_control,
 			if(DEBUGL4)Dump_job("Job_destination_printable - job",job);
 			destbuffer[0] = 0;
 			if( Find_flag_value(&job->destination,ERROR_TIME) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "error" );
+				plp_snprintf(destbuffer,sizeof(destbuffer), "error" );
 			} else if( Find_flag_value(&job->destination,HOLD_TIME) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "hold" );
+				plp_snprintf(destbuffer,sizeof(destbuffer), "hold" );
 				held += 1;
 			} else if( Find_flag_value(&job->destination,DONE_TIME) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "done" );
+				plp_snprintf(destbuffer,sizeof(destbuffer), "done" );
 			} else if( (n = Find_flag_value(&job->destination,SERVER))
 				&& kill( n, 0 ) == 0 ){
 				int delta;
 				n = Find_flag_value(&job->destination,START_TIME);
 				delta = time((void *)0) - n;
 				if( Stalled_time_DYN && delta > Stalled_time_DYN ){
-					SNPRINTF( destbuffer, sizeof(destbuffer))
+					plp_snprintf( destbuffer, sizeof(destbuffer),
 						"stalled(%dsec)", delta );
 				} else {
 					n = Find_flag_value(&job->destination,ATTEMPT);
-					SNPRINTF(destbuffer,sizeof(destbuffer)) "active" );
+					plp_snprintf(destbuffer,sizeof(destbuffer), "active" );
 					if( n > 0 ){
-						SNPRINTF( destbuffer, sizeof(destbuffer))
+						plp_snprintf( destbuffer, sizeof(destbuffer),
 							"active(attempt-%d)", n+1 );
 					}
 				}
 				printable += 1;
 			} else if((s = Find_str_value(&job->destination,MOVE)) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "moved->%s", s );
+				plp_snprintf(destbuffer,sizeof(destbuffer), "moved->%s", s );
 				move += 1;
 			} else if( Get_hold_class(&job->destination, spool_control ) ){
-				SNPRINTF(destbuffer,sizeof(destbuffer)) "holdclass" );
+				plp_snprintf(destbuffer,sizeof(destbuffer), "holdclass" );
 				held += 1;
 			} else {
 				printable += 1;
@@ -1587,7 +1587,7 @@ void Update_destination( struct job *job )
 	char *s, *t, buffer[SMALLBUFFER];
 	int id;
 	id = Find_flag_value(&job->destination,DESTINATION);
-	SNPRINTF(buffer,sizeof(buffer))"DEST%d",id);
+	plp_snprintf(buffer,sizeof(buffer), "DEST%d",id);
 	s = Join_line_list(&job->destination,"\n");
 	t = Escape(s,1);
 	Set_str_value(&job->info,buffer,t);
@@ -1608,7 +1608,7 @@ int Get_destination( struct job *job, int n )
 	char *s;
 	int result = 1;
 
-	SNPRINTF(buffer,sizeof(buffer)) "DEST%d", n );
+	plp_snprintf(buffer,sizeof(buffer), "DEST%d", n );
 
 	Free_line_list(&job->destination);
 	if( (s = Find_str_value(&job->info,buffer)) ){
@@ -1685,7 +1685,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 			while( (count = ok_read( status, buffer, sizeof(buffer) ) ) > 0 ){
 				if( write( tempfd, buffer, count) < 0 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_ERR) "Trim_status_file: cannot write tempfile" );
+					logerr_die(LOG_ERR, "Trim_status_file: cannot write tempfile" );
 				}
 			}
 			lseek( tempfd, 0, SEEK_SET );
@@ -1694,7 +1694,7 @@ int Trim_status_file( int status_fd, char *file, int max, int min )
 			while( (count = ok_read( tempfd, buffer, sizeof(buffer) ) ) > 0 ){
 				if( write( status, buffer, count) < 0 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_ERR) "Trim_status_file: cannot write tempfile" );
+					logerr_die(LOG_ERR, "Trim_status_file: cannot write tempfile" );
 				}
 			}
 			unlink(tempfile);
@@ -1751,9 +1751,9 @@ char *Fix_datafile_infox( struct job *job, const char *number, const char *suffi
 			group = count / 52;
 			++count;
 			if( (group >= 52) ){
-				FATAL(LOG_INFO)"Fix_datafile_info: too many data files");
+				fatal(LOG_INFO, "Fix_datafile_info: too many data files");
 			}
-			SNPRINTF(prefix,sizeof(prefix))"d%c%c",
+			plp_snprintf(prefix,sizeof(prefix), "d%c%c",
 			("fghijklmnopqrstuvwxyzabcde" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" )[group],
 			("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz")[offset] );
 			s = safestrdup3(prefix,number,suffix,__FILE__,__LINE__);
@@ -1977,7 +1977,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 		cccc = Find_flag_value(&job->destination,COPIES);
 		n = Find_flag_value(&job->destination,COPY_DONE);
 		if( cccc > 1 ){
-			SNPRINTF(buffer,sizeof(buffer))"C%d",n+1);
+			plp_snprintf(buffer,sizeof(buffer), "C%d",n+1);
 			s = safestrdup2(s,buffer,__FILE__,__LINE__);
 			Set_str_value(&controlfile,IDENTIFIER,s);
 			if(s) free(s); s = 0;
@@ -2049,7 +2049,7 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 		controlfile.count, sizeof( char *), ordercomp, order );
 	if( n ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Fix_control: Mergesort failed" );
+		logerr_die(LOG_ERR, "Fix_control: Mergesort failed" );
 	}
 
 	if(DEBUGL3) Dump_job( "Fix_control: after sorting", job );
@@ -2082,27 +2082,27 @@ void Fix_control( struct job *job, char *filter, char *xlate_format,
 		s = Find_str_value(&job->info,CF_OUT_IMAGE );
 		if( Write_fd_str( tempfc, s ) < 0 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Fix_control: write to tempfile failed" );
+			logerr_die(LOG_INFO, "Fix_control: write to tempfile failed" );
 		}
 		if( lseek( tempfc, 0, SEEK_SET ) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Fix_control: lseek failed" );
+			logerr_die(LOG_INFO, "Fix_control: lseek failed" );
 		}
 		if( (n = Filter_file( Send_query_rw_timeout_DYN, tempfc, tempfd, "CONTROL_FILTER",
 			filter, Filter_options_DYN, job, 0, 1 )) ){
 			Errorcode = n;
-			LOGERR_DIE(LOG_ERR) "Fix_control: control filter failed with status '%s'",
+			logerr_die(LOG_ERR, "Fix_control: control filter failed with status '%s'",
 				Server_status(n) );
 		}
 		s = 0;
 		if( n < 0 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Fix_control: read from tempfd failed" );
+			logerr_die(LOG_INFO, "Fix_control: read from tempfd failed" );
 		}
 		s = Get_fd_image( tempfd, 0 );
 		if( s == 0 || *s == 0 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Fix_control: zero length control filter output" );
+			logerr_die(LOG_INFO, "Fix_control: zero length control filter output" );
 		}
 		DEBUG4("Fix_control: control filter output '%s'", s);
 		Set_str_value(&job->info,CF_OUT_IMAGE,s);
@@ -2142,7 +2142,7 @@ void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len )
 		Cast_ptr_to_long(*buf), *max, *len);
 		if( !*buf ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO)"Put_buf_len: realloc %d failed", *len );
+			logerr_die(LOG_INFO, "Put_buf_len: realloc %d failed", *len );
 		}
 	}
 	memcpy( *buf+*len, s, cnt );

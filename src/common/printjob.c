@@ -218,7 +218,7 @@ int Print_job( int output, int status_device, struct job *job,
 			send_job_rw_timeout, poll_for_status, Status_file_DYN );
 		if( n ){
 			Errorcode = JFAIL;
-			SETSTATUS(job)"LP device write error '%s'", Server_status(n));
+			setstatus(job, "LP device write error '%s'", Server_status(n));
 			goto exit;
 		}
 	}
@@ -249,7 +249,7 @@ int Print_job( int output, int status_device, struct job *job,
 		/*
 		 * now we check to see if there is an input filter
 		 */
-		SNPRINTF(filter_name,sizeof(filter_name))"%s","if");
+		plp_snprintf(filter_name,sizeof(filter_name), "%s","if");
 		filter_name[0] = cval(format);
 		filter = user_filter;
 		switch( cval(format) ){
@@ -258,7 +258,7 @@ int Print_job( int output, int status_device, struct job *job,
 				if( !filter ) filter = IF_Filter_DYN;
 				break;
 			case 'a': case 'i': case 'o': case 's':
-				SETSTATUS(job)"bad data file format '%c', using 'f' format", cval(format) );
+				setstatus(job, "bad data file format '%c', using 'f' format", cval(format) );
 				filter_name[0] = 'i';
 				if( !filter ) filter = IF_Filter_DYN;
 				format = "f";
@@ -282,13 +282,13 @@ int Print_job( int output, int status_device, struct job *job,
 			} else {
 				if( !(s = strchr(filter,'/')) ) s = filter;
 			}
-			SNPRINTF(msg, sizeof(msg)) "%s", s );
+			plp_snprintf(msg, sizeof(msg), "%s", s );
 			if( (t = strpbrk(msg,Whitespace)) ) *t = 0;
 			if( (t = strrchr(msg,'/')) ) memmove(msg,t+1,strlen(t+1)+1);
 		} else {
-			SNPRINTF(msg, sizeof(msg)) "%s", "none - passthrough" );
+			plp_snprintf(msg, sizeof(msg), "%s", "none - passthrough" );
 		}
-		SNPRINTF(filter_title,sizeof(filter_title))"%s filter '%s'",
+		plp_snprintf(filter_title,sizeof(filter_title), "%s filter '%s'",
 			filter_name, msg );
 
 		if( fd >= 0 ) close(fd); fd = -1;
@@ -297,17 +297,17 @@ int Print_job( int output, int status_device, struct job *job,
 			DEBUG3("Print_job: taking file from STDIN" );
 		} else if( (fd = Checkread( openname, &statb )) < 0 ){
 			Errorcode = JFAIL;
-			LOGMSG( LOG_ERR) "Print_job: job '%s', cannot open data file '%s'",
+			logmsg( LOG_ERR, "Print_job: job '%s', cannot open data file '%s'",
 				id, openname );
 			goto end_of_job;
 		}
-		SETSTATUS(job)"processing '%s', size %0.0f, format '%s', %s",
+		setstatus(job, "processing '%s', size %0.0f, format '%s', %s",
 			transfername, (double)statb.st_size, format, filter_title );
 		if( cval(format) == 'p' ){
 			DEBUG3("Print_job: using 'p' formatter '%s'", Pr_program_DYN );
-			SETSTATUS(job)"format 'p' pretty printer '%s'", Pr_program_DYN);
+			setstatus(job, "format 'p' pretty printer '%s'", Pr_program_DYN);
 			if( Pr_program_DYN == 0 ){
-				SETSTATUS(job)"no 'p' format filter available" );
+				setstatus(job, "no 'p' format filter available" );
 				Errorcode = JABORT;
 				goto end_of_job;
 			}
@@ -316,38 +316,38 @@ int Print_job( int output, int status_device, struct job *job,
 				Pr_program_DYN, 0, job, 0, 1 );
 			if( n ){
 				Errorcode = JABORT;
-				LOGERR(LOG_INFO)"Print_job:  could not make '%s' process",
+				logerr(LOG_INFO, "Print_job:  could not make '%s' process",
 					Pr_program_DYN );
 				goto end_of_job;
 			}
 			if( tempfd != fd ){
 				if( dup2(tempfd,fd) == -1 ){
 					Errorcode = JABORT;
-					LOGERR(LOG_INFO)"Print_job:  dup2(%d,%d) failed", tempfd, fd );
+					logerr(LOG_INFO, "Print_job:  dup2(%d,%d) failed", tempfd, fd );
 				}
 				close(tempfd);
 			}
 			if( fstat(fd, &statb ) == -1 ){
 				Errorcode = JABORT;
-				LOGERR(LOG_INFO)"Print_job: fstat() failed");
+				logerr(LOG_INFO, "Print_job: fstat() failed");
 			}
-			SETSTATUS(job)"data file '%s', size now %0.0f",
+			setstatus(job, "data file '%s', size now %0.0f",
 				transfername, (double)statb.st_size );
 		}
 		for( copy = 0; copy < copies; ++copy ){
 			if( fd && lseek(fd,0,SEEK_SET) == -1 ){
 				Errorcode = JABORT;
-				LOGERR(LOG_INFO)"Print_job:  lseek tempfd failed");
+				logerr(LOG_INFO, "Print_job:  lseek tempfd failed");
 				goto end_of_job;
 			}
 			if( fstat(fd, &statb ) == -1 ){
 				Errorcode = JABORT;
-				LOGERR(LOG_INFO)"Print_job: fstat() failed");
+				logerr(LOG_INFO, "Print_job: fstat() failed");
 			}
 			DEBUG1("Print_job: copy %d, data file '%s', size now %0.0f", copy,
 				transfername, (double)statb.st_size );
 			if( copies > 1 ){
-				SETSTATUS(job)"doing copy %d of %d", copy+1, copies );
+				setstatus(job, "doing copy %d of %d", copy+1, copies );
 			}
 			if(DEBUGL5){
 				LOGDEBUG("Print_job: doing '%s' open fd's", openname);
@@ -357,7 +357,7 @@ int Print_job( int output, int status_device, struct job *job,
 			Init_buf(&Outbuf, &Outmax, &Outlen );
 			if( files_printed++ && (!No_FF_separator_DYN || FF_separator_DYN) && FF_str ){
 				/* FF separator -> of_fd; */
-				SETSTATUS(job)"printing '%s' FF separator ",id);
+				setstatus(job, "printing '%s' FF separator ",id);
 				Put_buf_str( FF_str, &Outbuf, &Outmax, &Outlen );
 			}
 			/* do we have output for the OF device/filter ? */
@@ -379,7 +379,7 @@ int Print_job( int output, int status_device, struct job *job,
 						send_job_rw_timeout, poll_for_status, Status_file_DYN );
 					if( n ){
 						Errorcode = n;
-						SETSTATUS(job)"error writing to device '%s'",
+						setstatus(job, "error writing to device '%s'",
 							Server_status(n));
 						goto end_of_job;
 					}
@@ -398,7 +398,7 @@ int Print_job( int output, int status_device, struct job *job,
 					if_error[1] = Checkwrite( Status_file_DYN, &statb, O_WRONLY|O_APPEND, 0, 0 );
 				} else if( pipe( if_error ) == -1 ){
 					Errorcode = JFAIL;
-					LOGERR(LOG_INFO)"Print_job: pipe() failed");
+					logerr(LOG_INFO, "Print_job: pipe() failed");
 					goto end_of_job;
 				}
 				Max_open(if_error[0]); Max_open(if_error[1]);
@@ -415,7 +415,7 @@ int Print_job( int output, int status_device, struct job *job,
 				files.list[files.count++] = Cast_int_to_voidstar(if_error[1]);	/* stderr */
 				if( (pid = Make_passthrough( filter, s, &files, job, 0 )) < 0 ){
 					Errorcode = JFAIL;
-					LOGERR(LOG_INFO)"Print_job:  could not make %s process",
+					logerr(LOG_INFO, "Print_job:  could not make %s process",
 						filter_title );
 					goto end_of_job;
 				}
@@ -424,7 +424,7 @@ int Print_job( int output, int status_device, struct job *job,
 
 				if( (close(if_error[1]) == -1 ) ){
 					Errorcode = JFAIL;
-					LOGERR_DIE(LOG_INFO)"Print_job: X5 close(%d) failed",
+					logerr_die(LOG_INFO, "Print_job: X5 close(%d) failed",
 						if_error[1]);
 				}
 				if_error[1] = -1;
@@ -436,11 +436,11 @@ int Print_job( int output, int status_device, struct job *job,
 						if_error[0], filtermsgbuffer, sizeof(filtermsgbuffer)-1,
 						send_job_rw_timeout, 0, 0, Status_file_DYN );
 					if( filtermsgbuffer[0] ){
-						SETSTATUS(job) "%s filter msg - '%s'", filter_title, filtermsgbuffer );
+						setstatus(job, "%s filter msg - '%s'", filter_title, filtermsgbuffer );
 					}
 					if( n ){
 						Errorcode = n;
-						SETSTATUS(job)"%s filter problems, error '%s'",
+						setstatus(job, "%s filter problems, error '%s'",
 							filter_title, Server_status(n));
 						goto end_of_job;
 					}
@@ -467,11 +467,11 @@ int Print_job( int output, int status_device, struct job *job,
 							}
 						default:
 							Errorcode = n;
-							SETSTATUS(job)"%s filter exit status '%s'",
+							setstatus(job, "%s filter exit status '%s'",
 								filter_title, Server_status(n));
 							goto end_of_job;
 					}
-					SETSTATUS(job) "%s filter finished", filter_title );
+					setstatus(job, "%s filter finished", filter_title );
 					break;
 				}
 			} else {
@@ -486,13 +486,13 @@ int Print_job( int output, int status_device, struct job *job,
 						send_job_rw_timeout, poll_for_status, Status_file_DYN );
 					if( n ){
 						Errorcode = JFAIL;
-						SETSTATUS(job)"error '%s'", Server_status(n));
+						setstatus(job, "error '%s'", Server_status(n));
 						goto end_of_job;
 					}
 				}
 				if( Outlen < 0 ){
 					Errorcode = JFAIL;
-					SETSTATUS(job)"error reading file '%s'", Errormsg(errno));
+					setstatus(job, "error reading file '%s'", Errormsg(errno));
 					goto end_of_job;
 				}
 				Outlen = 0;
@@ -545,21 +545,21 @@ int Print_job( int output, int status_device, struct job *job,
 				send_job_rw_timeout, poll_for_status, Status_file_DYN );
 			if( n && Errorcode == 0 ){
 				Errorcode = JFAIL;
-				SETSTATUS(job)"LP device write error '%s'", Errormsg(errno));
+				setstatus(job, "LP device write error '%s'", Errormsg(errno));
 				goto exit;
 			}
 		}
 		if( msgbuffer[0] ){
-			SETSTATUS(job) "%s filter msg - '%s'", "LP", msgbuffer );
+			setstatus(job, "%s filter msg - '%s'", "LP", msgbuffer );
 		}
 	}
 	Init_buf(&Outbuf, &Outmax, &Outlen );
 #ifdef HAVE_TCDRAIN
 	if( isatty( output ) && tcdrain( output ) == -1 ){
-		LOGERR_DIE(LOG_INFO)"Print_job: tcdrain failed");
+		logerr_die(LOG_INFO, "Print_job: tcdrain failed");
 	}
 #endif
-	SETSTATUS(job)"printing finished");
+	setstatus(job, "printing finished");
 
  exit:
 	Init_buf(&Outbuf, &Outmax, &Outlen );
@@ -609,15 +609,15 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 		of_fd[0] = of_fd[1] = of_error[0] = of_error[1] = -1;
 		*of_stdin = *of_stderr = -1;
 		if( !(s = strchr( OF_Filter_DYN, '/' )) ) s = OF_Filter_DYN;
-		SNPRINTF( msg, sizeof(msg)) "%s", s );
+		plp_snprintf( msg, sizeof(msg), "%s", s );
 		if( (s = strpbrk( msg, Whitespace )) ) *s = 0;
 		if( (s = strrchr( msg, '/')) ){
 			memmove( msg, s+1, safestrlen(s)+1 );
 		}
-		SETSTATUS(job)"printing '%s' starting OF '%s'", id, msg );
+		setstatus(job, "printing '%s' starting OF '%s'", id, msg );
 		if( pipe( of_fd ) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO)"Run_OF_filter: pipe() failed");
+			logerr(LOG_INFO, "Run_OF_filter: pipe() failed");
 			goto exit;
 		}
 		Max_open(of_fd[0]); Max_open(of_fd[1]);
@@ -628,7 +628,7 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 			of_error[1] = Checkwrite( Status_file_DYN, &statb, O_WRONLY|O_APPEND, 0, 0 );
 		} else if( pipe( of_error ) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO)"Run_OF_filter: pipe() failed");
+			logerr(LOG_INFO, "Run_OF_filter: pipe() failed");
 			goto exit;
 		}
 		Max_open(of_error[0]); Max_open(of_error[1]);
@@ -650,7 +650,7 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 		files.list[files.count++] = Cast_int_to_voidstar(of_error[1]);	/* stderr */
 		if( (*of_pid = Make_passthrough( OF_Filter_DYN, s,&files, job, 0 ))<0){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO)"Run_OF_filter: could not create OF process");
+			logerr(LOG_INFO, "Run_OF_filter: could not create OF process");
 			goto exit;
 		}
 		files.count = 0;
@@ -659,13 +659,13 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 		DEBUG3("Run_OF_filter: OF pid %d", *of_pid );
 		if( of_fd[0] > 0 &&  (close( of_fd[0] ) == -1 ) ){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO)"Run_OF_filter: X0 close(%d) failed", of_fd[0]);
+			logerr(LOG_INFO, "Run_OF_filter: X0 close(%d) failed", of_fd[0]);
 			goto exit;
 		}
 		of_fd[0] = -1;
 		if( of_error[1] > 0 && (close( of_error[1] ) == -1 ) ){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO)"Run_OF_filter: X1 close(%d) failed", of_error[1]);
+			logerr(LOG_INFO, "Run_OF_filter: X1 close(%d) failed", of_error[1]);
 			goto exit;
 		}
 		of_error[1] = -1;
@@ -691,10 +691,10 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 		}
 		if( n != JSUSP ){
 			Errorcode = n;
-			SETSTATUS(job)"OF filter problems, error '%s'", Server_status(n));
+			setstatus(job, "OF filter problems, error '%s'", Server_status(n));
 			goto exit;
 		}
-		SETSTATUS(job)"OF filter suspended" );
+		setstatus(job, "OF filter suspended" );
 	} else {
 		DEBUG3("Run_OF_filter: end OF pid '%d'", *of_pid );
 		n = Write_outbuf_to_OF(job,"OF",*of_stdin,
@@ -703,7 +703,7 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 			send_job_rw_timeout, 0, Status_file_DYN );
 		if( n ){
 			Errorcode = n;
-			SETSTATUS(job)"OF filter problems, error '%s'", Server_status(n));
+			setstatus(job, "OF filter problems, error '%s'", Server_status(n));
 			goto exit;
 		}
 		close( *of_stdin );
@@ -713,7 +713,7 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 			send_job_rw_timeout, 0, 0, Status_file_DYN );
 		if( n ){
 			Errorcode = n;
-			SETSTATUS(job)"OF filter problems, error '%s'", Server_status(n));
+			setstatus(job, "OF filter problems, error '%s'", Server_status(n));
 			goto exit;
 		}
 		close( *of_stderr );
@@ -739,11 +739,11 @@ static int Run_OF_filter( int send_job_rw_timeout, int *of_pid, int *of_stdin, i
 					}
 				default:
 					Errorcode = n;
-					SETSTATUS(job)"%s filter exit status '%s'",
+					setstatus(job, "%s filter exit status '%s'",
 						"OF", Server_status(n));
 					goto exit;
 			}
-			SETSTATUS(job) "%s filter finished", "OF" );
+			setstatus(job, "%s filter finished", "OF" );
 			break;
 		}
 		*of_pid = -1;
@@ -788,21 +788,21 @@ static void Print_banner( const char *name, char *pgm, struct job *job )
 
  	if( pgm ){
 		/* we now need to create a banner */
-		SETSTATUS(job)"creating banner");
+		setstatus(job, "creating banner");
 
 		tempfd = Make_temp_fd(0);
 		n = Filter_file( Send_job_rw_timeout_DYN, -1, tempfd, "BANNER",
 			pgm, Filter_options_DYN, job, 0, 1 );
 		if( n ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO)
+			logerr_die(LOG_INFO,
 			"Print_banner: banner pgr '%s' exit status '%s'",
 			pgm, Server_status(n));
 		}
 
 		if( lseek(tempfd,0,SEEK_SET) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO)"Print_banner: fseek(%d) failed", tempfd);
+			logerr_die(LOG_INFO, "Print_banner: fseek(%d) failed", tempfd);
 		}
 		len = Outlen;
 		while( (n = ok_read(tempfd, buffer, sizeof(buffer))) > 0 ){
@@ -810,14 +810,14 @@ static void Print_banner( const char *name, char *pgm, struct job *job )
 		}
 		if( (close(tempfd) == -1 ) ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO)"Print_banner: Xa close(%d) failed",
+			logerr_die(LOG_INFO, "Print_banner: Xa close(%d) failed",
 				tempfd);
 		}
 		DEBUG4("Print_banner: BANNER '%s'", Outbuf+len);
 	} else {
 		struct line_list l;
 		Init_line_list(&l);
-		SETSTATUS(job)"inserting short banner line");
+		setstatus(job, "inserting short banner line");
 		Add_line_list(&l,Banner_line_DYN,0,0,0);
 		Fix_dollars(&l,job,1,Filter_options_DYN);
 		bl = safestrdup2(l.list[0],"\n",__FILE__,__LINE__);
@@ -874,11 +874,11 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 	if( outlen == 0 ) return return_status;
 	if( of_fd >= 0 && fstat( of_fd, &statb ) ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO) "Write_outbuf_to_OF: %s, of_fd %d closed!",
+		logerr_die(LOG_INFO, "Write_outbuf_to_OF: %s, of_fd %d closed!",
 		title, of_fd );
 	}
 	if( of_error > 0 && fstat( of_error, &statb ) ){
-		LOGERR(LOG_INFO) "Write_outbuf_to_OF: %s, of_error %d closed!",
+		logerr(LOG_INFO, "Write_outbuf_to_OF: %s, of_error %d closed!",
 			title, of_error );
 		of_error = -1;
 	}
@@ -891,7 +891,7 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 		do {
 			msglen = safestrlen(msg);
 			if( msglen >= msgmax ){
-				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+				setstatus(job, "%s filter msg - '%s'", title, msg );
 				msg[0] = 0;
 				msglen = 0;
 			}
@@ -905,7 +905,7 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 				msg[msglen] = 0;
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
-					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+					setstatus(job, "%s filter msg - '%s'", title, msg );
 					memmove(msg,s,safestrlen(s)+1);
 				}
 			}
@@ -935,7 +935,7 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 		}
 		msglen = safestrlen(msg);
 		if( msglen >= msgmax ){
-			SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+			setstatus(job, "%s filter msg - '%s'", title, msg );
 			msg[0] = 0;
 			msglen = 0;
 		}
@@ -946,7 +946,7 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 		DEBUG4("Write_outbuf_to_OF: return_status %d, count %d, '%s'",
 			return_status, count, msg);
 		if( DEBUGL4 ){
-			char smb[32]; SNPRINTF(smb,sizeof(smb))"%s",msg);
+			char smb[32]; plp_snprintf(smb,sizeof(smb), "%s",msg);
 			logDebug("Write_outbuf_to_OF: writing '%s...'", smb );
 		}
 		if( count > 0 ){
@@ -955,7 +955,7 @@ static int Write_outbuf_to_OF( struct job *job, const char *title,
 			s = msg;
 			while( (s = safestrchr(msg,'\n')) ){
 				*s++ = 0;
-				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+				setstatus(job, "%s filter msg - '%s'", title, msg );
 				memmove(msg,s,safestrlen(s)+1);
 			}
 		}
@@ -993,7 +993,7 @@ int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 
 	if( fstat( of_error, &statb ) ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO) "Get_status_from_OF: %s, of_error %d closed!",
+		logerr_die(LOG_INFO, "Get_status_from_OF: %s, of_error %d closed!",
 			title, of_error );
 	}
 
@@ -1043,7 +1043,7 @@ int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 			do{
 				msglen = safestrlen(msg);
 				if( msglen >= msgmax ){
-					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+					setstatus(job, "%s filter msg - '%s'", title, msg );
 					msg[0] = 0;
 					msglen = 0;
 				}
@@ -1054,7 +1054,7 @@ int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 				if( count > 0 ){
 					while( (s = safestrchr(msg,'\n')) ){
 						*s++ = 0;
-						SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+						setstatus(job, "%s filter msg - '%s'", title, msg );
 						memmove(msg,s,safestrlen(s)+1);
 					}
 				}
@@ -1065,7 +1065,7 @@ int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 				of_error, left );
 			msglen = safestrlen(msg);
 			if( msglen >= msgmax ){
-				SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+				setstatus(job, "%s filter msg - '%s'", title, msg );
 				msg[0] = 0;
 				msglen = 0;
 			}
@@ -1077,7 +1077,7 @@ int Get_status_from_OF( struct job *job, const char *title, int of_pid,
 				s = msg;
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
-					SETSTATUS(job) "%s filter msg - '%s'", title, msg );
+					setstatus(job, "%s filter msg - '%s'", title, msg );
 					memmove(msg,s,safestrlen(s)+1);
 				}
 			} else if( count == 0 ){
@@ -1142,13 +1142,13 @@ int Wait_for_pid( int of_pid, const char *name, int suspend, int timeout )
 		} else if( WIFSIGNALED(ps_status) ){
 			int n;
 			n = WTERMSIG(ps_status);
-			LOGMSG(LOG_INFO)
+			logmsg(LOG_INFO,
 				"Wait_for_pid: %s filter died with signal '%s'",name,
 				Sigstr(n));
 			return_code = JSIGNAL;
 		} else {
 			return_code = JABORT;
-			LOGMSG(LOG_INFO)
+			logmsg(LOG_INFO,
 				"Wait_for_pid: %s filter did strange things",name);
 		}
 	} else if( pid < 0 ){
@@ -1191,7 +1191,7 @@ void Add_banner_to_job( struct job *job )
 		Print_banner( banner_name, Banner_start_DYN, job );
         tempfd = Make_temp_fd(&tempfile);
 		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
-			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			logerr(LOG_INFO, "Add_banner_to_job: write to '%s' failed", tempfile );
 			Errorcode = JABORT;
 			return;
 		}
@@ -1214,7 +1214,7 @@ void Add_banner_to_job( struct job *job )
 		Print_banner( banner_name, Banner_end_DYN, job );
         tempfd = Make_temp_fd(&tempfile);
 		if( Write_fd_len( tempfd, Outbuf, Outlen ) < 0 ){
-			LOGERR(LOG_INFO)"Add_banner_to_job: write to '%s' failed", tempfile );
+			logerr(LOG_INFO, "Add_banner_to_job: write to '%s' failed", tempfile );
 			Errorcode = JABORT;
 			return;
 		}

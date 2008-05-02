@@ -155,7 +155,7 @@ int main(int argc, char *argv[], char *envp[])
 	DEBUG1("Get_parms: UID_root %ld, OriginalRUID %ld", (long)UID_root, (long)OriginalRUID);
 
 	if( UID_root && (OriginalRUID != ROOTUID) ){
-		FATAL(LOG_ERR) "lpd installed SETUID root and started by user %ld! Possible hacker attack", (long)OriginalRUID);
+		fatal(LOG_ERR, "lpd installed SETUID root and started by user %ld! Possible hacker attack", (long)OriginalRUID);
 	}
 
 	Setup_configuration();
@@ -169,13 +169,13 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if( Lockfile_DYN == 0 ){
-		LOGERR_DIE(LOG_INFO) _("No LPD lockfile specified!") );
+		logerr_die(LOG_INFO, _("No LPD lockfile specified!") );
 	}
 
 	/* chdir to the root directory */
 	if( chdir( "/" ) == -1 ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "cannot chdir to /");
+		logerr_die(LOG_ERR, "cannot chdir to /");
 	}
 	pid = Get_lpd_pid();
 #if defined(__CYGWIN__)
@@ -256,7 +256,7 @@ int main(int argc, char *argv[], char *envp[])
 	 * you put the child in its separate process group as well
 	 */
 	if( (pid = dofork(1)) < 0 ){
-		LOGERR_DIE(LOG_ERR) _("lpd: main() dofork failed") );
+		logerr_die(LOG_ERR, _("lpd: main() dofork failed") );
 	} else if( pid ){
 		if( Foreground_LPD ){
 			while( (pid = plp_waitpid( pid, &status, 0)) > 0 ){
@@ -301,7 +301,7 @@ int main(int argc, char *argv[], char *envp[])
 
 	/* establish the pipes for low level processes to use */
 	if( pipe( request_pipe ) == -1 ){
-		LOGERR_DIE(LOG_ERR) _("lpd: pipe call failed") );
+		logerr_die(LOG_ERR, _("lpd: pipe call failed") );
 	}
 	Max_open(request_pipe[0]); Max_open(request_pipe[1]);
 	DEBUG2( "lpd: fd request_pipe(%d,%d)",request_pipe[0],request_pipe[1]);
@@ -312,14 +312,14 @@ int main(int argc, char *argv[], char *envp[])
 	logger_process_pid = -1;
 	if( Logger_destination_DYN ){
 		if( pipe( status_pipe ) == -1 ){
-			LOGERR_DIE(LOG_ERR) _("lpd: pipe call failed") );
+			logerr_die(LOG_ERR, _("lpd: pipe call failed") );
 		}
 		Max_open(status_pipe[0]); Max_open(status_pipe[1]);
 		Logger_fd = status_pipe[1];
 		DEBUG2( "lpd: fd status_pipe(%d,%d)",status_pipe[0],status_pipe[1]);
 		logger_process_pid = Start_logger( status_pipe[0] );
 		if( logger_process_pid < 0 ){
-			LOGERR_DIE(LOG_ERR) _("lpd: cannot start initial logger process") );
+			logerr_die(LOG_ERR, _("lpd: cannot start initial logger process") );
 		}
 	}
 
@@ -356,7 +356,7 @@ int main(int argc, char *argv[], char *envp[])
 	{
 		extern int dmalloc_outfile_fd;
 		char buffer[128];
-		SNPRINTF(buffer,sizeof(buffer)) "lpd: LOOP START - sbrk 0x%lx\n", (long)malloc_area );
+		plp_snprintf(buffer,sizeof(buffer), "lpd: LOOP START - sbrk 0x%lx\n", (long)malloc_area );
 		Write_fd_str(dmalloc_outfile_fd, buffer );
 		dmalloc_log_unfreed();
 	}
@@ -377,7 +377,7 @@ int main(int argc, char *argv[], char *envp[])
 			if( n > 1024 ){
 				extern int dmalloc_outfile_fd;
 				char buffer[128];
-				SNPRINTF(buffer,sizeof(buffer)) "lpd: LOOP sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+				plp_snprintf(buffer,sizeof(buffer), "lpd: LOOP sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
 				Write_fd_str(dmalloc_outfile_fd, buffer );
 				dmalloc_log_unfreed();
 				DEBUG1( "lpd: LOOP sbrk reports 0x%lx, or %d more memory", (long)s, n );
@@ -506,7 +506,7 @@ int main(int argc, char *argv[], char *envp[])
 				if( n > 1024 ){
 					extern int dmalloc_outfile_fd;
 					char buffer[128];
-					SNPRINTF(buffer,sizeof(buffer)) "lpd: BEFORE POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+					plp_snprintf(buffer,sizeof(buffer), "lpd: BEFORE POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
 					Write_fd_str(dmalloc_outfile_fd, buffer );
 					dmalloc_log_unfreed();
 					DEBUG1( "lpd: BEFORE POLL SERVICE sbrk reports 0x%lx, or %d more memory", (long)s, n );
@@ -572,7 +572,7 @@ int main(int argc, char *argv[], char *envp[])
 				if( n > 1024 ){
 					extern int dmalloc_outfile_fd;
 					char buffer[128];
-					SNPRINTF(buffer,sizeof(buffer)) "lpd: AFTER POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+					plp_snprintf(buffer,sizeof(buffer), "lpd: AFTER POLL SERVICE sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
 					Write_fd_str(dmalloc_outfile_fd, buffer );
 					dmalloc_log_unfreed();
 					DEBUG1( "lpd: AFTER POLL SERVICE sbrk reports 0x%lx, or %d more memory", (long)s, n );
@@ -670,7 +670,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( fd_available < 0 ){
 			if( err != EINTR ){
 				errno = err;
-				LOGERR_DIE(LOG_ERR) _("lpd: select error!"));
+				logerr_die(LOG_ERR, _("lpd: select error!"));
 				break;
 			}
 			continue;
@@ -695,7 +695,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("lpd: Lpd_request pipe EOF! cannot happen") );
+			logerr_die(LOG_ERR, _("lpd: Lpd_request pipe EOF! cannot happen") );
 		}
 		if( start_fd > 0 && FD_ISSET( start_fd, &readfds ) ){
 			start_fd = Read_server_status( start_fd );
@@ -720,26 +720,26 @@ static void Setup_log(char *logfile )
 
 	close(0); close(1);
 	if (open("/dev/null", O_RDONLY, 0) != 0) {
-	    LOGERR_DIE(LOG_ERR) _("Setup_log: open /dev/null failed"));
+	    logerr_die(LOG_ERR, _("Setup_log: open /dev/null failed"));
 	}
 	if (open("/dev/null", O_WRONLY, 0) != 1) {
-	    LOGERR_DIE(LOG_ERR) _("Setup_log: open /dev/null failed"));
+	    logerr_die(LOG_ERR, _("Setup_log: open /dev/null failed"));
 	}
 
     /*
      * open logfile; if it is "-", use STDERR; if Foreground is set, use stderr
      */
 	if( fstat(2,&statb) == -1 && dup2(1,2) == -1 ){
-		LOGERR_DIE(LOG_ERR) _("Setup_log: dup2(%d,%d) failed"), 1, 2);
+		logerr_die(LOG_ERR, _("Setup_log: dup2(%d,%d) failed"), 1, 2);
 	}
     if( logfile == 0 ){
 		if( !Foreground_LPD && dup2(1,2) == -1 ){
-			LOGERR_DIE(LOG_ERR) _("Setup_log: dup2(%d,%d) failed"), 1, 2);
+			logerr_die(LOG_ERR, _("Setup_log: dup2(%d,%d) failed"), 1, 2);
 		}
 	} else if( safestrcmp(logfile, "-") ){
 		close(2);
 		if( Checkwrite(logfile, &statb, O_WRONLY|O_APPEND, 0, 0) != 2) {
-			LOGERR_DIE(LOG_ERR) _("Setup_log: open %s failed"), logfile );
+			logerr_die(LOG_ERR, _("Setup_log: open %s failed"), logfile );
 		}
 	}
 }
@@ -783,7 +783,7 @@ static void Set_lpd_pid(int lockfd)
 {
 	/* we write our PID */
 	if( ftruncate( lockfd, 0 ) ){
-		LOGERR_DIE(LOG_ERR) _("lpd: Cannot truncate lock file") );
+		logerr_die(LOG_ERR, _("lpd: Cannot truncate lock file") );
 	}
 	Server_pid = getpid();
 	DEBUG1( "lpd: writing lockfile fd %d with pid '%d'",lockfd,Server_pid );
@@ -801,7 +801,7 @@ int Lock_lpd_pid(void)
 	To_euid_root();
 	lockfd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 	if( lockfd < 0 ){
-		LOGERR_DIE(LOG_ERR) _("lpd: Cannot open lock file '%s'"), path );
+		logerr_die(LOG_ERR, _("lpd: Cannot open lock file '%s'"), path );
 	}
 #if !defined(__CYGWIN__)
 	fchown( lockfd, DaemonUID, DaemonGID );
@@ -882,7 +882,7 @@ int Read_server_status( int fd )
 		if( n > 1024 ){
 			extern int dmalloc_outfile_fd;
 			char buffer[128];
-			SNPRINTF(buffer,sizeof(buffer)) "lpd: READ_SERVER_STATSUS sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
+			plp_snprintf(buffer,sizeof(buffer), "lpd: READ_SERVER_STATSUS sbrk reports 0x%lx, or %d more memory\n", (long)s, n );
 			Write_fd_str(dmalloc_outfile_fd, buffer );
 			dmalloc_log_unfreed();
 			DEBUG1( "lpd: READ_SERVER_STATUS sbrk reports 0x%lx, or %d more memory", (long)s, n );
@@ -993,7 +993,7 @@ static void Accept_connection( int sock, int lpd_socket )
 
 		pid = Start_worker( "server", &args, newsock );
 		if( pid < 0 ){
-			LOGERR(LOG_INFO) _("lpd: fork() failed") );
+			logerr(LOG_INFO, _("lpd: fork() failed") );
 			if( lpd_socket ){
 				safefprintf(newsock, "\002%s\n", _("Server load too high"));
 			}
@@ -1004,7 +1004,7 @@ static void Accept_connection( int sock, int lpd_socket )
 		Free_line_list(&args);
 	} else {
 		errno = err;
-		LOGERR(LOG_INFO) _("lpd: accept on listening socket failed") );
+		logerr(LOG_INFO, _("lpd: accept on listening socket failed") );
 	}
 }
 
@@ -1023,7 +1023,7 @@ static int Start_all( int first_scan, int *start_fd )
 
 	DEBUG1( "Start_all: first_scan %d", first_scan );
 	if( pipe(p) == -1 ){
-		LOGERR_DIE(LOG_INFO) _("Start_all: pipe failed!") );
+		logerr_die(LOG_INFO, _("Start_all: pipe failed!") );
 	}
 	Max_open(p[0]); Max_open(p[1]);
 	DEBUG1( "Start_all: fd pipe(%d,%d)",p[0],p[1]);
@@ -1071,6 +1071,6 @@ static void Fork_error( int last_fork_pid_value )
 {
 	DEBUG1("Fork_error: %d", last_fork_pid_value );
 	if( last_fork_pid_value < 0 ){
-		LOGMSG(LOG_CRIT)"LPD: fork failed! LPD not accepting any requests");
+		logmsg(LOG_CRIT, "LPD: fork failed! LPD not accepting any requests");
 	}
 }

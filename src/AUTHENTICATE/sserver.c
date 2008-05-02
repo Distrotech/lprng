@@ -136,13 +136,13 @@ main(int argc, char *argv[])
 			FPRINTF( STDOUT, "server_krb5_auth error '%s'\n", err );
 			goto done;
 		}
-		SNPRINTF(buffer,sizeof(buffer))"client '%s'", client );
+		plp_snprintf(buffer,sizeof(buffer), "client '%s'", client );
 		FPRINTF(STDOUT,"%s\n",buffer);
 		fd = Checkread( file, &statb );
 		DEBUG1( "main: opened for write '%s', fd %d, size %ld",
 			file, fd, (long)(statb.st_size) );
 		if( fd < 0 ){
-			SNPRINTF( err, sizeof(err))
+			plp_snprintf( err, sizeof(err),
 				"file open failed: %s", Errormsg(errno));
 			goto done;      
 		}
@@ -153,12 +153,12 @@ main(int argc, char *argv[])
 		close(fd);
 		fd = Checkwrite( file, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 		if( fd < 0 ){
-			SNPRINTF( err, sizeof(err))
+			plp_snprintf( err, sizeof(err),
 				"main: could not open for writing '%s' - '%s'", file,
 					Errormsg(errno) );
 			goto done;
 		}
-		SNPRINTF(buffer,sizeof(buffer))"credentials '%s'\n", client );
+		plp_snprintf(buffer,sizeof(buffer), "credentials '%s'\n", client );
 		Write_fd_str(fd,buffer);
 		close(fd);
 		if( server_krb5_status( acc, err, sizeof(err), file ) ){
@@ -191,7 +191,7 @@ void setstatus (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}
@@ -221,7 +221,7 @@ void setmessage (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}

@@ -233,7 +233,7 @@ static void Show_status(char **argv)
 	Fix_Rm_Rp_info(0,0);
 
 	if( ISNULL(RemotePrinter_DYN) ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - cannot get status from device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
@@ -242,20 +242,20 @@ static void Show_status(char **argv)
 
 	if( Displayformat != REQ_DSHORT
 		&& safestrcasecmp(Printer_DYN, RemotePrinter_DYN) ){
-		SNPRINTF( msg, sizeof(msg)) _("Printer: %s is %s@%s\n"),
+		plp_snprintf( msg, sizeof(msg), _("Printer: %s is %s@%s\n"),
 			Printer_DYN, RemotePrinter_DYN, RemoteHost_DYN );
 		DEBUG1("Show_status: '%s'",msg);
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 	}
 	if( Check_for_rg_group( Logname_DYN ) ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - cannot use printer, not in privileged group\n"),
 			Printer_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 		return;
 	}
 	if( Direct_DYN && Lp_device_DYN ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - direct connection to device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
@@ -473,14 +473,14 @@ static void Term_clear(void)
 		execl(CLEAR,CLEAR,(char*)NULL);
 		exit(1);
 	} else if( pid < 0 ){
-		LOGERR_DIE(LOG_ERR) _("fork() failed") );
+		logerr_die(LOG_ERR, _("fork() failed") );
 	}
 	while( (n = plp_waitpid(pid,&procstatus,0)) != pid ){
 		int err = errno;
 		DEBUG1("Filterprintcap: waitpid(%d) returned %d, err '%s'",
 			pid, n, Errormsg(err) );
 		if( err == EINTR ) continue; 
-		LOGERR(LOG_ERR) _("Term_clear: waitpid(%d) failed"), pid);
+		logerr(LOG_ERR, _("Term_clear: waitpid(%d) failed"), pid);
 		exit(1);
 	}
 #else
@@ -576,10 +576,10 @@ static void Get_parms(int argc, char *argv[] )
 
 	cmd[0] = format;
 	cmd[1] = 0;
-	SNPRINTF(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN);
+	plp_snprintf(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN, ;
 	for( i = 0; options[i]; ++i ){
 		n = safestrlen(cmd);
-		SNPRINTF(cmd+n,sizeof(cmd)-n," %s",options[i] );
+		plp_snprintf(cmd+n,sizeof(cmd)-n," %s",options[i] , ;
 	}
 	Perm_check.remoteuser = "papowell";
 	Perm_check.user = "papowell";

@@ -69,7 +69,7 @@ int Job_remove( int *sock, char *input )
 	/* check printername for characters, underscore, digits */
 
 	if( tokens.count < 2 ){
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			_("missing user or printer name"));
 		goto error;
 	}
@@ -77,7 +77,7 @@ int Job_remove( int *sock, char *input )
 
 	DEBUGF(DLPRM1)("Job_remove: checking '%s'", name );
 	if( (s = Is_clean_name( name )) ){
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			_("printer '%s' has illegal character at '%s' in name"), name, s );
 		goto error;
 	}
@@ -107,7 +107,7 @@ int Job_remove( int *sock, char *input )
 	goto done;
 
  error:
-	LOGMSG( LOG_INFO) _("Job_remove: error '%s'"), error );
+	logmsg( LOG_INFO, _("Job_remove: error '%s'"), error );
 	DEBUGF(DLPRM2)("Job_remove: error msg '%s'", error );
 	safestrncat(error,"\n");
 	if( Write_fd_str( *sock, error ) < 0 ) cleanup(0);
@@ -201,7 +201,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
 	if( control_perm != P_ACCEPT ) control_perm = 0;
 
-	SNPRINTF( msg, sizeof(msg)) _("Printer %s@%s:\n"),
+	plp_snprintf( msg, sizeof(msg), _("Printer %s@%s:\n"),
 		Printer_DYN, ShortHost_FQDN );
 	Write_fd_str( *sock, msg );
 
@@ -230,7 +230,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		if( !identifier ) identifier = Find_str_value(&job.info,XXCFTRANSFERNAME);
 
 		DEBUGF(DLPRM3)("Get_queue_remove: matched '%s'", identifier );
-		SNPRINTF( msg, sizeof(msg)) _("  checking perms '%s'\n"),
+		plp_snprintf( msg, sizeof(msg), _("  checking perms '%s'\n"),
 			identifier );
 		Write_fd_str( *sock, msg );
 
@@ -247,7 +247,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			Perm_check.service = 'M';
 			permission = Perms_check( &Perm_line_list, &Perm_check, &job, 1 );
 			if( permission == P_REJECT ){
-				SNPRINTF( msg, sizeof(msg)) _("  no permissions '%s'\n"),
+				plp_snprintf( msg, sizeof(msg), _("  no permissions '%s'\n"),
 					identifier );
 				Write_fd_str( *sock, msg );
 				continue;
@@ -261,10 +261,10 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		pid = Find_flag_value(&job.info,INCOMING_PID);
 		if( incoming && pid && !kill(pid,SIGINT) ){
 			DEBUGF(DLPRM4)("Get_queue_remove: removing incoming job '%s'", identifier );
-			SNPRINTF( msg, sizeof(msg)) _("  removing incoming job '%s'\n"), identifier );
+			plp_snprintf( msg, sizeof(msg), _("  removing incoming job '%s'\n"), identifier );
 		} else {
 			DEBUGF(DLPRM4)("Get_queue_remove: removing '%s'", identifier );
-			SNPRINTF( msg, sizeof(msg)) _("  dequeued '%s'\n"), identifier );
+			plp_snprintf( msg, sizeof(msg), _("  dequeued '%s'\n"), identifier );
 		}
 		/* log this to the world */
 		Write_fd_str( *sock, msg );
@@ -272,7 +272,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		setmessage( &job, "LPRM", "start" );
 		if( Remove_job( &job ) ){
 			setmessage( &job, "LPRM", "fail" );
-			SNPRINTF( msg, sizeof(msg))
+			plp_snprintf( msg, sizeof(msg),
 				_("error: could not remove '%s'"), identifier ); 
 			Write_fd_str( *sock, msg );
 			goto error;
@@ -351,7 +351,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 				Set_DYN(&Printer_DYN,RemotePrinter_DYN);
 				Get_queue_remove( user, sock, tokens, done_list );
 			} else {
-				SNPRINTF(msg,sizeof(msg))"Error: loop in printcap- %s@%s -> %s@%s\n",
+				plp_snprintf(msg,sizeof(msg), "Error: loop in printcap- %s@%s -> %s@%s\n",
 					Printer_DYN, FQDNHost_FQDN, RemotePrinter_DYN, RemoteHost_DYN );
 				Write_fd_str(*sock, msg );
 			}
@@ -385,7 +385,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 
  error:
 	DEBUGF(DLPRM2)("Get_queue_remove: error msg '%s'", msg );
-	SNPRINTF(header, sizeof(header)) "Printer: %s", Printer_DYN );
+	plp_snprintf(header, sizeof(header), "Printer: %s", Printer_DYN );
 	safestrncpy( header, _(" ERROR: ") );
 	safestrncat( header, msg );
 	safestrncat( header, "\n" );
@@ -450,7 +450,7 @@ int Remove_file( char *openname )
 	if( openname && stat( openname, &statb ) == 0 ){
 		DEBUGF(DLPRM3)("Remove_file: removing '%s'", openname );
 		if( unlink( openname ) || stat( openname, &statb ) == 0 ){
-			LOGERR(LOG_INFO) "Remove_file: unlink did not remove '%s'",
+			logerr(LOG_INFO, "Remove_file: unlink did not remove '%s'",
 				openname);
 			fail |= 1;
 		}

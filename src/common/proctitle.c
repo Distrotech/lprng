@@ -313,7 +313,7 @@
     /* print the argument string */
     VA_START (fmt);
     VA_SHIFT (fmt, char *);
-    (void) VSNPRINTF(buf, sizeof(buf)) fmt, ap);
+    (void) plp_vsnprintf(buf, sizeof(buf), fmt, ap);
     VA_END;
 
 	i = safestrlen(buf);

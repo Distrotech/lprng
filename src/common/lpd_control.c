@@ -83,7 +83,7 @@ int Job_control( int *sock, char *input )
 
 	tokencount = tokens.count;
 	if( tokencount < 3 ){
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			_("bad control command '%s'"), input );
 		goto error;
 	}
@@ -98,7 +98,7 @@ int Job_control( int *sock, char *input )
 	}
 
 	if( (s = Is_clean_name( name )) ){
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			_("printer '%s' has illegal char at '%s' in name"), name, s );
 		goto error;
 	}
@@ -110,7 +110,7 @@ int Job_control( int *sock, char *input )
 	lpc_command = tokens.list[2];
 	action = Get_controlword( lpc_command );
 	if( action == 0 ){
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			_("%s: unknown control request '%s'"), Printer_DYN, lpc_command );
 		goto error;
 	}
@@ -137,7 +137,7 @@ int Job_control( int *sock, char *input )
 		case OP_REREAD:
 			if( permission == P_REJECT ){ goto noperm; }
 			DEBUGF(DCTRL1)( "Job_control: sending pid %d SIGHUP", Server_pid );
-			SNPRINTF( error, sizeof(error)) "lpd server pid %d on %s, sending SIGHUP\n",
+			plp_snprintf( error, sizeof(error), "lpd server pid %d on %s, sending SIGHUP\n",
 				Server_pid, FQDNHost_FQDN );
 			(void)kill(Server_pid,SIGHUP);
 			if( Write_fd_str( *sock, error ) < 0 ) cleanup(0);
@@ -146,7 +146,7 @@ int Job_control( int *sock, char *input )
 		case OP_LPD:
 			if( permission == P_REJECT ){ goto noperm; }
 			DEBUGF(DCTRL1)( "Job_control: lpd pid %d", Server_pid );
-			SNPRINTF( error, sizeof(error)) "lpd server pid %d on %s\n",
+			plp_snprintf( error, sizeof(error), "lpd server pid %d on %s\n",
 				Server_pid, FQDNHost_FQDN );
 			if( Write_fd_str( *sock, error ) < 0 ) cleanup(0);
 			error[0] = 0;
@@ -159,7 +159,7 @@ int Job_control( int *sock, char *input )
 		case OP_STATUS:
 			/* we put out a space at the start to make PCNFSD happy */
 			if( permission == P_REJECT ){ goto noperm; }
-			SNPRINTF( error, sizeof(error)) status_header,
+			plp_snprintf( error, sizeof(error), status_header,
 				" Printer", "Printing", "Spooling", "Jobs",
 				"Server", "Subserver", "Redirect", "Status/(Debug)","" );
 			safestrncat(error,"\n");
@@ -191,7 +191,7 @@ int Job_control( int *sock, char *input )
 		case OP_MOVE:
 			/* we have Nprinter user move jobid* target */
 			if( tokencount < 5 ){
-				SNPRINTF( error, sizeof(error))
+				plp_snprintf( error, sizeof(error),
 					_("Use: move printer (user|jobid)* target") );
 				goto error;
 			}
@@ -202,7 +202,7 @@ int Job_control( int *sock, char *input )
 	goto done;
 
  noperm:
-	SNPRINTF( error, sizeof(error))
+	plp_snprintf( error, sizeof(error),
 		_("no permission to control server") );
  error:
 	Name = "Job_control";
@@ -274,7 +274,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 	change = 0;
 
 	if( action != OP_STATUS ){
-		SNPRINTF(msg,sizeof(msg))"Printer: %s@%s\n",
+		plp_snprintf(msg,sizeof(msg), "Printer: %s@%s\n",
 			Printer_DYN,ShortHost_FQDN);
 		Write_fd_str(*sock,msg);
 	}
@@ -457,7 +457,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 		break;
 		
 	default:
-		SNPRINTF( error, errorlen) _("not implemented yet") );
+		plp_snprintf( error, errorlen, _("not implemented yet") );
 		goto error;
 	}
 
@@ -486,10 +486,10 @@ static void Do_queue_control( char *user, int action, int *sock,
 				kill( serverpid, SIGQUIT );
 			}
 			if( kill( serverpid, signal_server ) ){
-				SNPRINTF(msg,sizeof(msg))_("server process PID %ld exited\n"),
+				plp_snprintf(msg,sizeof(msg), _("server process PID %ld exited\n"),
 					(long)serverpid );
 			} else {
-				SNPRINTF(msg,sizeof(msg))_("kill server process PID %ld with %s\n"),
+				plp_snprintf(msg,sizeof(msg), _("kill server process PID %ld with %s\n"),
 					(long)serverpid, Sigstr(signal_server) );
 			}
 			Write_fd_str(*sock,msg);
@@ -516,7 +516,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 	}
 	if( Action ){
 		setmessage( 0, ACTION, "%s", Action );
-		SNPRINTF( line, sizeof(line)) "%s@%s: %s\n",
+		plp_snprintf( line, sizeof(line), "%s@%s: %s\n",
 			Printer_DYN, FQDNHost_FQDN, Action );
 		if( Write_fd_str( *sock, line ) < 0 ) cleanup(0);
 	}
@@ -532,7 +532,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 			if( serverpid == 0 || kill( serverpid, signal_server ) ){
 				serverpid = 0;
 			} else {
-				SNPRINTF(msg,sizeof(msg))_(
+				plp_snprintf(msg,sizeof(msg), _(
 				"WARNING: the main load balance server may have exited before\n"
 				"it could be informed that there were new jobs.\n"
                 "Please use 'lpc start %s' to start the server\n"),
@@ -564,21 +564,21 @@ static void Do_queue_control( char *user, int action, int *sock,
 	case OP_REDIRECT:
 	case OP_MOVE:
 	case OP_CLASS:
-		SNPRINTF( line, sizeof(line)) "%s\n", Printer_DYN );
+		plp_snprintf( line, sizeof(line), "%s\n", Printer_DYN );
 		DEBUGF(DCTRL3)("Do_queue_control: sending '%s' to LPD", line );
 		if( Write_fd_str( Lpd_request, line ) < 0 ){
-			LOGERR_DIE(LOG_ERR) _("Do_queue_control: write to fd '%d' failed"),
+			logerr_die(LOG_ERR, _("Do_queue_control: write to fd '%d' failed"),
 				Lpd_request );
 		}
 	}
 	goto done;
 
  noperm:
-	SNPRINTF( error, sizeof(error)) "no permission");
+	plp_snprintf( error, sizeof(error), "no permission");
  error:
 	DEBUGF(DCTRL2)("Do_queue_control: error msg '%s'", error );
 	if( (i = safestrlen(error)) ){
-		SNPRINTF( msg, sizeof(msg)) "%s@%s: %s\n",
+		plp_snprintf( msg, sizeof(msg), "%s@%s: %s\n",
 			Printer_DYN, ShortHost_FQDN, error );
 		if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
 	}
@@ -615,7 +615,7 @@ static int Do_job_ticket_file( int action, int *sock,
 	if( Scan_queue( &Spool_control, &Sort_order,
 			0,0,0,0,0,0,0,0) ){
 		err = errno;
-		SNPRINTF(error, errorlen)
+		plp_snprintf(error, errorlen,
 			"Do_job_ticket_file: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(err) );
 			return(1);
@@ -655,7 +655,7 @@ static int Do_job_ticket_file( int action, int *sock,
 		DEBUGF(DCTRL1)( "Do_job_ticket_file: id '%s', user '%s', host '%s', permission %s",
 			identifier, Perm_check.user, s, perm_str(permission) );
 		if( permission == P_REJECT ){
-			SNPRINTF( msg, sizeof(msg))
+			plp_snprintf( msg, sizeof(msg),
 				_("%s: no permission '%s'\n"),
 				Printer_DYN, identifier );
 			if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
@@ -740,7 +740,7 @@ static int Do_job_ticket_file( int action, int *sock,
 		if( update_dest ){
 			Update_destination( &job );
 		}
-		SNPRINTF( msg, sizeof(msg)) _("%s: selected '%s'\n"),
+		plp_snprintf( msg, sizeof(msg), _("%s: selected '%s'\n"),
 			Printer_DYN, identifier );
 		if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
 		Set_str_value(&job.info,ERROR,0 );
@@ -749,7 +749,7 @@ static int Do_job_ticket_file( int action, int *sock,
 		Perm_check_to_list(&l, &Perm_check );
 		if( Set_job_ticket_file(&job,&l,fd) ){
 			setmessage( &job, TRACE, "LPC failed" );
-			SNPRINTF( msg, sizeof(msg))
+			plp_snprintf( msg, sizeof(msg),
 				_("%s: cannot set hold file '%s'\n"),
 				Printer_DYN, identifier );
 			if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
@@ -786,7 +786,7 @@ static int Do_control_lpq( char *user, int action,
 	case OP_LPRM: i = REQ_REMOVE; break;
 	}
 
-	SNPRINTF( msg, sizeof(msg)) "%c%s", i, Printer_DYN );
+	plp_snprintf( msg, sizeof(msg), "%c%s", i, Printer_DYN );
 	switch( action ){
 		case OP_LPRM: 
 			safestrncat( msg, " " );
@@ -835,7 +835,7 @@ static int Do_control_status( int *sock,
 	Get_spool_control( Queue_control_file_DYN, &Spool_control );
 	if( Scan_queue( &Spool_control, &Sort_order, &printable,
 			&held, &move,1,&err,&done,0,0) ){
-		SNPRINTF( error, errorlen)
+		plp_snprintf( error, errorlen,
 			"Do_control_status: cannot read '%s' - '%s'",
 			Spool_dir_DYN, Errormsg(errno) );
 		return(1);
@@ -852,44 +852,44 @@ static int Do_control_status( int *sock,
 	unspoolerpid = Server_active( Queue_unspooler_file_DYN );
 	DEBUGF(DCTRL4)("Get_queue_status: unspoolerpid %d", unspoolerpid );
 
-	SNPRINTF( pr, sizeof(pr)) "%s@%s", Printer_DYN,
+	plp_snprintf( pr, sizeof(pr), "%s@%s", Printer_DYN,
 		Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 	pr_status[0] = 0;
 	if( Hld_all(&Spool_control) ){
 		len = safestrlen(pr_status);
-		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" holdall") );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, _(" holdall") );
 	}
 	if( (s = Clsses(&Spool_control)) ){
 		len = safestrlen(pr_status);
-		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" class=%s"),s );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, _(" class=%s"),s );
 	}
 	if( Auto_hold_DYN ){
 		len = safestrlen(pr_status);
-		SNPRINTF( pr_status+len, sizeof(pr_status)-len) _(" autohold") );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, _(" autohold") );
 	}
 	if( pr_status[0] ){
 		len = safestrlen(pr_status);
-		SNPRINTF( pr_status+len, sizeof(pr_status)-len) ")" );
+		plp_snprintf( pr_status+len, sizeof(pr_status)-len, ")" );
 		pr_status[0] = '(';
 		
 	}
-	SNPRINTF( count, sizeof(count)) "%d", printable );
+	plp_snprintf( count, sizeof(count), "%d", printable );
 	strcpy( server, "none" );
 	strcpy( spooler, "none" );
-	if( serverpid ) SNPRINTF( server, sizeof(server))"%d",serverpid );
-	if( unspoolerpid ) SNPRINTF( spooler, sizeof(spooler))"%d",unspoolerpid );
-	if( Server_names_DYN ) SNPRINTF( spooler, sizeof(spooler))"%s",Server_names_DYN );
+	if( serverpid ) plp_snprintf( server, sizeof(server), "%d",serverpid );
+	if( unspoolerpid ) plp_snprintf( spooler, sizeof(spooler), "%d",unspoolerpid );
+	if( Server_names_DYN ) plp_snprintf( spooler, sizeof(spooler), "%s",Server_names_DYN );
 
 	forward[0] = 0;
 	if( (s = Frwarding(&Spool_control)) ){
-		SNPRINTF( forward, sizeof( forward )) "%s", s );
+		plp_snprintf( forward, sizeof( forward ), "%s", s );
 	}
 
 	debugstr[0] = 0;
 	if( (s = Cntrol_debug(&Spool_control)) ){
-		SNPRINTF( debugstr, sizeof(debugstr)) "(%s)", s );
+		plp_snprintf( debugstr, sizeof(debugstr), "(%s)", s );
 	}
-	SNPRINTF( msg, sizeof(msg))
+	plp_snprintf( msg, sizeof(msg),
 		status_header,
 		pr,
 		Pr_disabled(&Spool_control)?"disabled":(Pr_aborted(&Spool_control)?"aborted":"enabled"),
@@ -936,16 +936,16 @@ static int Do_control_redirect( int *sock,
 		break;
 
 	default:
-		SNPRINTF( error, errorlen)
+		plp_snprintf( error, errorlen,
 			_("wrong number arguments, %d"), tokens->count );
 		goto error;
 	}
 
 	s = Frwarding(&Spool_control);
 	if( s ){
-		SNPRINTF( msg, sizeof(msg)) _("forwarding to '%s'\n"), s );
+		plp_snprintf( msg, sizeof(msg), _("forwarding to '%s'\n"), s );
 	} else {
-		SNPRINTF( msg, sizeof(msg)) _("forwarding off\n") );
+		plp_snprintf( msg, sizeof(msg), _("forwarding off\n") );
 	}
 
 	if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
@@ -991,7 +991,7 @@ static int Do_control_class( int *sock,
 		break;
 
 	default:
-		SNPRINTF( error, errorlen)
+		plp_snprintf( error, errorlen,
 			_("wrong number arguments, %d"), tokens->count );
 		goto error;
 	}
@@ -999,10 +999,10 @@ static int Do_control_class( int *sock,
 	s = Find_str_value(&Spool_control,CLASS);
 
 	if( s ){
-		SNPRINTF( forward, sizeof(forward)) _("classes printed '%s'\n"),
+		plp_snprintf( forward, sizeof(forward), _("classes printed '%s'\n"),
 			s );
 	} else {
-		SNPRINTF( forward, sizeof(forward)) _("all classes printed\n") );
+		plp_snprintf( forward, sizeof(forward), _("all classes printed\n") );
 	}
 
 	if( Write_fd_str( *sock, forward ) < 0 ) cleanup(0);
@@ -1046,16 +1046,16 @@ static int Do_control_debug( int *sock,
 		break;
 
 	default:
-		SNPRINTF( error, errorlen)
+		plp_snprintf( error, errorlen,
 			_("wrong number arguments, %d"), tokens->count );
 		goto error;
 	}
 
 	if( (s = Cntrol_debug(&Spool_control)) ){
-		SNPRINTF( debugging, sizeof(debugging))
+		plp_snprintf( debugging, sizeof(debugging),
 			_("debugging override set to '%s'"), s );
 	} else {
-		SNPRINTF( debugging, sizeof(debugging)) _("debugging override off") );
+		plp_snprintf( debugging, sizeof(debugging), _("debugging override off") );
 	}
 
 	if( debugging[0] ){
@@ -1117,7 +1117,7 @@ static int Do_control_ppd( int *sock )
 
 	if( !ISNULL(file) ){
 		if( (fd = Checkread( file, &statb )) < 0 ){
-			SNPRINTF(buffer, sizeof(buffer)) "%s: cannot open '%s' - '%s'\n",
+			plp_snprintf(buffer, sizeof(buffer), "%s: cannot open '%s' - '%s'\n",
 				Printer_DYN, file, Errormsg(errno) );
 			Write_fd_str( *sock, buffer );
 		} else {
@@ -1125,7 +1125,7 @@ static int Do_control_ppd( int *sock )
 				if( Write_fd_len( *sock, buffer, count ) < 0 ) cleanup(0);
 			}
 			if( count < 0 ){
-				SNPRINTF(buffer, sizeof(buffer)) "%s: error reading '%s' - '%s'\n",
+				plp_snprintf(buffer, sizeof(buffer), "%s: error reading '%s' - '%s'\n",
 					Printer_DYN, file, Errormsg(errno) );
 				if( Write_fd_str( *sock, buffer ) < 0 ) cleanup(0);
 			}
@@ -1141,7 +1141,7 @@ static int Do_control_defaultq( int *sock )
 	Printer_DYN = 0;
 	/* get the default queue */
 	Get_printer();
-	SNPRINTF( msg, sizeof(msg)) "%s\n", Printer_DYN );
+	plp_snprintf( msg, sizeof(msg), "%s\n", Printer_DYN );
 	if ( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
 
 	return(0);

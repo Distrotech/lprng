@@ -32,18 +32,18 @@ char *Time_str(int shortform, time_t t)
 	if( t == 0 ){
 		if( gettimeofday( &tv, 0 ) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_ERR)"Time_str: gettimeofday failed");
+			logerr_die(LOG_ERR, "Time_str: gettimeofday failed");
 		}
 		t = tv.tv_sec;
 	}
 	tmptr = localtime( &t );
 	if( shortform && Full_time_DYN == 0 ){
-		SNPRINTF( buffer, sizeof(buffer))
+		plp_snprintf( buffer, sizeof(buffer),
 			"%02d:%02d:%02d.%03d",
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
 			(int)(tv.tv_usec/1000) );
 	} else {
-		SNPRINTF( buffer, sizeof(buffer))
+		plp_snprintf( buffer, sizeof(buffer),
 			"%d-%02d-%02d-%02d:%02d:%02d.%03d",
 			tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday,
 			tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec,
@@ -77,7 +77,7 @@ char *Pretty_time( time_t t )
 	if( t == 0 ){
 		if( gettimeofday( &tv, 0 ) == -1 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_ERR)"Time_str: gettimeofday failed");
+			logerr_die(LOG_ERR, "Time_str: gettimeofday failed");
 		}
 		t = tv.tv_sec;
 	}
@@ -310,7 +310,7 @@ void plp_block_all_signals ( plp_block_mask *oblock )
 
 	(void) sigfillset (&block); /* block all signals */
 	if (sigprocmask (SIG_SETMASK, &block, oblock) < 0)
-		LOGERR_DIE(LOG_ERR) "plp_block_all_signals: sigprocmask failed");
+		logerr_die(LOG_ERR, "plp_block_all_signals: sigprocmask failed");
 #else
 	*oblock = sigblock( ~0 ); /* block all signals */
 #endif
@@ -324,7 +324,7 @@ void plp_unblock_all_signals ( plp_block_mask *oblock )
 
 	(void) sigemptyset (&block); /* block all signals */
 	if (sigprocmask (SIG_SETMASK, &block, oblock) < 0)
-		LOGERR_DIE(LOG_ERR) "plp_unblock_all_signals: sigprocmask failed");
+		logerr_die(LOG_ERR, "plp_unblock_all_signals: sigprocmask failed");
 #else
 	*oblock = sigblock( 0 ); /* unblock all signals */
 #endif
@@ -334,7 +334,7 @@ void plp_set_signal_mask ( plp_block_mask *in, plp_block_mask *out )
 {
 #ifdef HAVE_SIGPROCMASK
 	if (sigprocmask (SIG_SETMASK, in, out ) < 0)
-		LOGERR_DIE(LOG_ERR) "plp_set_signal_mask: sigprocmask failed");
+		logerr_die(LOG_ERR, "plp_set_signal_mask: sigprocmask failed");
 #else
 	sigset_t block;
 	if( in ) block = sigsetmask( *in );
@@ -351,7 +351,7 @@ void plp_unblock_one_signal ( int sig, plp_block_mask *oblock )
 	(void) sigemptyset (&block); /* clear out signals */
 	(void) sigaddset (&block, sig ); /* clear out signals */
 	if (sigprocmask (SIG_UNBLOCK, &block, oblock ) < 0)
-		LOGERR_DIE(LOG_ERR) "plp_unblock_one_signal: sigprocmask failed");
+		logerr_die(LOG_ERR, "plp_unblock_one_signal: sigprocmask failed");
 #else
 	*oblock = sigblock( 0 );
 	(void) sigsetmask (*oblock & ~ sigmask(sig) );
@@ -366,7 +366,7 @@ void plp_block_one_signal( int sig, plp_block_mask *oblock )
 	(void) sigemptyset (&block); /* clear out signals */
 	(void) sigaddset (&block, sig ); /* clear out signals */
 	if (sigprocmask (SIG_BLOCK, &block, oblock ) < 0)
-		LOGERR_DIE(LOG_ERR) "plp_block_one_signal: sigprocmask failed");
+		logerr_die(LOG_ERR, "plp_block_one_signal: sigprocmask failed");
 #else
 	*oblock = sigblock( sigmask( sig ) );
 #endif
@@ -527,7 +527,7 @@ int Get_max_servers( void )
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NPROC)
 	struct rlimit pcount;
 	if( getrlimit(RLIMIT_NPROC, &pcount) == -1 ){
-		FATAL(LOG_ERR) "Get_max_servers: getrlimit failed" );
+		fatal(LOG_ERR, "Get_max_servers: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
 #ifdef RLIMIT_INFINITY
@@ -541,7 +541,7 @@ int Get_max_servers( void )
 #else
 # if defined(HAVE_SYSCONF) && defined(_SC_CHILD_MAX)
 	if( n == 0 && (n = sysconf(_SC_CHILD_MAX)) < 0 ){
-		FATAL(LOG_ERR) "Get_max_servers: sysconf failed" );
+		fatal(LOG_ERR, "Get_max_servers: sysconf failed" );
 	}
 	DEBUG1("Get_max_servers: sysconf returns %d", n );
 # else
@@ -578,14 +578,14 @@ int Get_max_fd( void )
 #if defined(HAVE_GETRLIMIT) && defined(RLIMIT_NOFILE)
 	struct rlimit pcount;
 	if( getrlimit(RLIMIT_NOFILE, &pcount) == -1 ){
-		FATAL(LOG_ERR) "Get_max_fd: getrlimit failed" );
+		fatal(LOG_ERR, "Get_max_fd: getrlimit failed" );
 	}
 	n = pcount.rlim_cur;
 	DEBUG4("Get_max_fd: getrlimit returns %d", n );
 #else
 # if defined(HAVE_SYSCONF) && defined(_SC_OPEN_MAX)
 	if( n == 0 && (n = sysconf(_SC_OPEN_MAX)) < 0 ){
-		FATAL(LOG_ERR) "Get_max_servers: sysconf failed" );
+		fatal(LOG_ERR, "Get_max_servers: sysconf failed" );
 	}
 	DEBUG4("Get_max_fd: sysconf returns %d", n );
 # else
@@ -616,9 +616,9 @@ char *Brk_check_size( void )
 	char *s = sbrk(0);
 	int   v = s - Top_of_mem;
 	if( Top_of_mem == 0 ){
-		SNPRINTF(b, sizeof(b)) "BRK: initial value 0x%lx", Cast_ptr_to_long(s) );
+		plp_snprintf(b, sizeof(b), "BRK: initial value 0x%lx", Cast_ptr_to_long(s) );
 	} else {
-		SNPRINTF(b, sizeof(b)) "BRK: new value 0x%lx, increment %d", Cast_ptr_to_long(s), v );
+		plp_snprintf(b, sizeof(b), "BRK: new value 0x%lx, increment %d", Cast_ptr_to_long(s), v );
 	}
 	Top_of_mem = s;
 	return(b);
@@ -739,23 +739,23 @@ int Read_write_timeout(
 	if( readfd  > 0 ){
 		if( fstat( readfd, &statb ) ){
 			Errorcode = JABORT;
-			FATAL(LOG_ERR) "Read_write_timeout: readfd %d closed", readfd );
+			fatal(LOG_ERR, "Read_write_timeout: readfd %d closed", readfd );
 		}
 		Set_nonblock_io( readfd );
 	} else {
 		Errorcode = JABORT;
-		FATAL(LOG_ERR) "Read_write_timeout: no readfd %d", readfd );
+		fatal(LOG_ERR, "Read_write_timeout: no readfd %d", readfd );
 	}
 	if( writefd  > 0 ){
 		if( fstat( writefd, &statb ) ){
 			Errorcode = JABORT;
-			FATAL(LOG_ERR) "Read_write_timeout: writefd %d closed",
+			fatal(LOG_ERR, "Read_write_timeout: writefd %d closed",
 				writefd );
 		}
 		Set_nonblock_io( writefd );
 	} else {
 		Errorcode = JABORT;
-		FATAL(LOG_ERR) "Read_write_timeout: no write %d", writefd );
+		fatal(LOG_ERR, "Read_write_timeout: no write %d", writefd );
 	}
 
 	while(!done){
@@ -793,7 +793,7 @@ int Read_write_timeout(
 			m, Errormsg(err) );
 		if( m < 0 ){
 			if( err != EINTR ){
-				LOGERR(LOG_INFO)"Read_write_timeout: select returned %d, errno '%s'",
+				logerr(LOG_INFO, "Read_write_timeout: select returned %d, errno '%s'",
 				m, Errormsg(err) );
 				retval = JTIMEOUT;
 				done = 1;
@@ -1070,12 +1070,12 @@ void Setup_uid(void)
 					setuid( (uid_t)ROOTUID ) || setreuid( ROOTUID, OriginalRUID )
 #				endif
 				){
-				FATAL(LOG_ERR)
+				fatal(LOG_ERR,
 					"Setup_uid: RUID/EUID Start %ld/%ld seteuid failed",
 					(long)OriginalRUID, (long)OriginalEUID);
 			}
 			if( getuid() != ROOTUID ){
-				FATAL(LOG_ERR)
+				fatal(LOG_ERR,
 				"Setup_uid: IMPOSSIBLE! RUID/EUID Start %ld/%ld, now %ld/%ld",
 					(long)OriginalRUID, (long)OriginalEUID,
 					(long)getuid(), (long)geteuid() );
@@ -1108,17 +1108,17 @@ void Setup_uid(void)
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( ROOTUID ) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"seteuid_wrapper: setuid() failed!!");
 		}
 #if defined(HAVE_SETEUID)
 		if( seteuid( to ) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"seteuid_wrapper: seteuid() failed!!");
 		}
 #else
 		if( setreuid( ROOTUID, to) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"seteuid_wrapper: setreuid() failed!!");
 		}
 #endif
@@ -1148,22 +1148,22 @@ void Setup_uid(void)
 	if( UID_root ){
 		/* be brutal: set both to root */
 		if( setuid( ROOTUID ) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"setruid_wrapper: setuid() failed!!");
 		}
 #if defined(HAVE_SETRUID)
 		if( setruid( to ) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"setruid_wrapper: setruid() failed!!");
 		}
 #elif defined(HAVE_SETREUID)
 		if( setreuid( to, ROOTUID) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"setruid_wrapper: setreuid() failed!!");
 		}
 #elif defined(__CYGWIN__)
 		if( seteuid( to ) ){
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 			"setruid_wrapper: seteuid() failed!!");
 		}
 #else
@@ -1203,7 +1203,7 @@ int To_user(void)
 {
 	if( To_daemon_called ){
 		Errorcode = JABORT;
-		LOGMSG(LOG_ERR) "To_user: LOGIC ERROR! To_daemon has been called");
+		logmsg(LOG_ERR, "To_user: LOGIC ERROR! To_daemon has been called");
 		abort();
 	}
 	/* Set_full_group( OriginalRUID, OriginalRGID ); */
@@ -1229,10 +1229,10 @@ int setuid_wrapper(uid_t to)
 	if( UID_root ){
 		/* Note: you MUST use setuid() to force saved_setuid correctly */
 		if( setuid( (uid_t)ROOTUID ) ){
-			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(ROOTUID) failed!!");
+			logerr_die(LOG_ERR, "setuid_wrapper: setuid(ROOTUID) failed!!");
 		}
 		if( setuid( to ) ){
-			LOGERR_DIE(LOG_ERR) "setuid_wrapper: setuid(%ld) failed!!", (long)to);
+			logerr_die(LOG_ERR, "setuid_wrapper: setuid(%ld) failed!!", (long)to);
 		}
 		if( to ) UID_root = 0;
 	}
@@ -1353,12 +1353,12 @@ int Set_full_group( int euid, int gid )
 			char user[256];
 			safestrncpy(user,pw->pw_name);
 			if( safestrlen(user) != safestrlen(pw->pw_name) ){
-				FATAL(LOG_ERR) "Set_full_group: CONFIGURATION BOTCH! safestrlen of user name '%s' = %d larger than buffer size %d",
+				fatal(LOG_ERR, "Set_full_group: CONFIGURATION BOTCH! safestrlen of user name '%s' = %d larger than buffer size %d",
 					pw->pw_name, (int)safestrlen(pw->pw_name), (int)sizeof(user) );
 			}
 			if( initgroups(user, pw->pw_gid ) == -1 ){
 				err = errno;
-				LOGERR_DIE(LOG_ERR) "Set_full_group: initgroups failed '%s'",
+				logerr_die(LOG_ERR, "Set_full_group: initgroups failed '%s'",
 					Errormsg( err ) );
 			}
 		} else
@@ -1366,14 +1366,14 @@ int Set_full_group( int euid, int gid )
 #if defined(HAVE_SETGROUPS)
 			if( setgroups(0,0) == -1 ){
 				err = errno;
-				LOGERR_DIE(LOG_ERR) "Set_full_group: setgroups failed '%s'",
+				logerr_die(LOG_ERR, "Set_full_group: setgroups failed '%s'",
 					Errormsg( err ) );
 			}
 #endif
 		status = setgid( gid );
 		if( status < 0 ){
 			err = errno;
-			LOGERR_DIE(LOG_ERR) "Set_full_group: setgid '%d' failed '%s'",
+			logerr_die(LOG_ERR, "Set_full_group: setgid '%d' failed '%s'",
 				gid, Errormsg( err ) );
 		}
 	}
@@ -1501,6 +1501,6 @@ double Space_avail( const char *pathname )
     VA_SHIFT (fd, int);
     VA_SHIFT (format, char *);
 
-	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	(void) plp_vsnprintf(buf, sizeof(buf), format, ap);
 	return Write_fd_str( fd, buf );
 }

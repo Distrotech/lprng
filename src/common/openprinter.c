@@ -54,7 +54,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	time( &tm );
 	tm_str[0] = 0;
 	if( lp_device == 0 ){
-		FATAL(LOG_ERR) "Printer_open: printer '%s' missing lp_device value",
+		fatal(LOG_ERR, "Printer_open: printer '%s' missing lp_device value",
 			Printer_DYN );
 	}
 
@@ -68,11 +68,11 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 		switch( c ){
 		case '|':
 #if !defined(HAVE_SOCKETPAIR)
-			FATAL(LOG_ERR)"Printer_open: requires socketpair() system call for output device to be filter");
+			fatal(LOG_ERR, "Printer_open: requires socketpair() system call for output device to be filter");
 #else
 			if( socketpair( AF_UNIX, SOCK_STREAM, 0, in ) == -1 ){
 				Errorcode = JFAIL;
-				LOGERR_DIE(LOG_INFO)"Printer_open: socketpair() for filter input failed");
+				logerr_die(LOG_INFO, "Printer_open: socketpair() for filter input failed");
 			}
 #endif
 			Max_open(in[0]); Max_open(in[1]);
@@ -86,7 +86,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			if( (pid = Make_passthrough( lp_device, Filter_options_DYN, &args,
 					job, 0 )) < 0 ){
 				Errorcode = JFAIL;
-				LOGERR_DIE(LOG_INFO)
+				logerr_die(LOG_INFO,
 					"Printer_open: could not create LP_FILTER process");
 			}
 			args.count = 0;
@@ -96,7 +96,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 			device_fd = in[1];
 			*status_fd = in[1];
 			if( (close( in[0] ) == -1 ) ){
-				LOGERR_DIE(LOG_INFO)"Printer_open: close(%d) failed", in[0]);
+				logerr_die(LOG_INFO, "Printer_open: close(%d) failed", in[0]);
 			}
 			break;
 
@@ -141,11 +141,11 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 				host = lp_device;
 			} else {
 				Errorcode = JABORT;
-				FATAL(LOG_ERR) "Printer_open: printer '%s', bad 'lp' entry '%s'", 
+				fatal(LOG_ERR, "Printer_open: printer '%s', bad 'lp' entry '%s'",
 					Printer_DYN, lp_device );
 			}
 			DEBUG1( "Printer_open: doing link open '%s'", lp_device );
-			SETSTATUS(job)"opening TCP/IP connection to %s", host );
+			setstatus(job, "opening TCP/IP connection to %s", host );
 			*status_fd = device_fd = Link_open( host, connect_tmout, 0, 0, errmsg, errlen );
             err = errno;
 			break;
@@ -173,12 +173,12 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 	if( device_fd >= 0 ){
 		int fd = *status_fd;
 		if( fstat( fd, &statb ) < 0 ) {
-			LOGERR_DIE(LOG_INFO)"Printer_open: fstat() on status_fd %d failed", fd);
+			logerr_die(LOG_INFO, "Printer_open: fstat() on status_fd %d failed", fd);
 		}
 		/* we can only read status from a device, fifo, or socket */
 		if( (mask = fcntl( fd, F_GETFL, 0 )) == -1 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) "Printer_open: cannot fcntl fd %d", fd );
+			logerr_die(LOG_ERR, "Printer_open: cannot fcntl fd %d", fd );
 		}
 		DEBUG2( "Printer_open: status_fd %d fcntl 0%o", fd, mask );
 		mask &= O_ACCMODE;
@@ -191,7 +191,7 @@ int Printer_open( char *lp_device, int *status_fd, struct job *job,
 				*status_fd = -1;
 			} else {
 				Errorcode = JABORT;
-				FATAL(LOG_ERR) "Printer_open: LOGIC ERROR: status_fd %d WRITE ONLY", fd );
+				fatal(LOG_ERR, "Printer_open: LOGIC ERROR: status_fd %d WRITE ONLY", fd );
 			}
 			break;
 		}

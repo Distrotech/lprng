@@ -230,7 +230,7 @@ void Do_removal(char **argv)
 	Fix_Rm_Rp_info(0,0);
 
 	if( ISNULL(RemotePrinter_DYN) ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - cannot remove jobs from device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
@@ -242,14 +242,14 @@ void Do_removal(char **argv)
 		Set_DYN(&Auth_DYN, getenv("AUTH"));
 	}
 	if( Check_for_rg_group( Logname_DYN ) ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - not in privileged group\n"),
 			Printer_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);
 		return;
 	}
 	if( Direct_DYN && Lp_device_DYN ){
-		SNPRINTF( msg, sizeof(msg))
+		plp_snprintf( msg, sizeof(msg),
 			_("Printer: %s - direct connection to device '%s'\n"),
 			Printer_DYN, Lp_device_DYN );
 		if(  Write_fd_str( 1, msg ) < 0 ) cleanup(0);

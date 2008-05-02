@@ -136,11 +136,11 @@ int Receive_job( int *sock, char *input )
 
 	DEBUGFC(DRECV1)Dump_line_list("Receive_job: input", &info );
 	if( info.count != 1 ){
-		SNPRINTF( error, errlen) _("bad command line") );
+		plp_snprintf( error, errlen, _("bad command line") );
 		goto error;
 	}
 	if( Is_clean_name( info.list[0] ) ){
-		SNPRINTF( error, errlen) _("bad printer name") );
+		plp_snprintf( error, errlen, _("bad printer name") );
 		goto error;
 	}
 
@@ -148,7 +148,7 @@ int Receive_job( int *sock, char *input )
 
 	if( Setup_printer( info.list[0], error, errlen, 0 ) ){
 		if( error[0] == 0 ){
-			SNPRINTF( error, errlen) _("%s: cannot set up print queue"), Printer_DYN );
+			plp_snprintf( error, errlen, _("%s: cannot set up print queue"), Printer_DYN );
 		}
 		goto error;
 	}
@@ -183,7 +183,7 @@ int Receive_job( int *sock, char *input )
 	DEBUGF(DRECV1)("Receive_job: spooling_disabled %d",
 		Sp_disabled(&Spool_control) );
 	if( Sp_disabled(&Spool_control) ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 			_("%s: spooling disabled"), Printer_DYN );
 		ack = ACK_RETRY;	/* retry */
 		goto error;
@@ -194,7 +194,7 @@ int Receive_job( int *sock, char *input )
 
 	status = Link_send( ShortRemote_FQDN, sock, Send_job_rw_timeout_DYN, "", 1, 0 );
 	if( status ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 			_("%s: Receive_job: sending ACK 0 failed"), Printer_DYN );
 		goto error;
 	}
@@ -207,12 +207,12 @@ int Receive_job( int *sock, char *input )
 		fifo_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( fifo_fd < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("Receive_job: cannot open lockfile '%s'"),
+			logerr_die(LOG_ERR, _("Receive_job: cannot open lockfile '%s'"),
 				path ); 
 		}
 		if( Do_lock( fifo_fd, 1 ) < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) _("Receive_job: cannot lock lockfile '%s'"),
+			logerr_die(LOG_ERR, _("Receive_job: cannot lock lockfile '%s'"),
 				path ); 
 		}
 		if(path) free(path); path = 0;
@@ -251,7 +251,7 @@ int Receive_job( int *sock, char *input )
 			   It occasionally resends the queue selection cmd.
 			   Darian Davis DD 03JUL2000 */
 			status = 0;
-			LOGMSG(LOG_ERR) _("Recovering from incorrect job submission"));
+			logmsg(LOG_ERR, _("Recovering from incorrect job submission"));
 			continue;
 		}
 		if( filename ){
@@ -264,7 +264,7 @@ int Receive_job( int *sock, char *input )
 			|| filename == 0 || *filename == 0
 			|| (file_len == 0 && filetype != DATA_FILE) ){
 			ack = ACK_STOP_Q;
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 			_("%s: Receive_job - bad control line '%s', len %0.0f, name '%s'"),
 				Printer_DYN, line, file_len, filename );
 			goto error;
@@ -285,14 +285,14 @@ int Receive_job( int *sock, char *input )
 			if( Discard_large_jobs_DYN ){
 				discarding_large_job = 1;
 			} else {
-				SNPRINTF( error, errlen)
+				plp_snprintf( error, errlen,
 					_("size %0.3fK exceeds %dK"),
 					jobsize/1024, Max_job_size_DYN );
 				ack = ACK_RETRY;
 				goto error;
 			}
 		} else if( !Check_space( read_len, Minfree_DYN, Spool_dir_DYN ) ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("%s: insufficient file space"), Printer_DYN );
 			ack = ACK_RETRY;
 			goto error;
@@ -307,7 +307,7 @@ int Receive_job( int *sock, char *input )
 		DEBUGF(DRECV2)("Receive_job: sending 0 ACK to transfer '%s', length %0.0f", filename, file_len );
 		status = Link_send( ShortRemote_FQDN, sock, Send_job_rw_timeout_DYN, "", 1, 0 );
 		if( status ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("%s: sending ACK 0 for '%s' failed"), Printer_DYN, filename );
 			ack = ACK_RETRY;
 			goto error;
@@ -341,7 +341,7 @@ int Receive_job( int *sock, char *input )
 		if( status 
 			|| (file_len == 0 && read_len == 0)
 			|| (file_len != 0 && file_len != read_len) ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("%s: transfer of '%s' from '%s' failed"), Printer_DYN,
 				filename, ShortRemote_FQDN );
 			ack = ACK_RETRY;
@@ -362,7 +362,7 @@ int Receive_job( int *sock, char *input )
 						goto error;
 					}
 				} else {
-					SNPRINTF( error, errlen)
+					plp_snprintf( error, errlen,
 						_("size %0.3fK exceeds %dK"),
 						jobsize/1024, Max_job_size_DYN );
 					Set_str_value(&job.info,ERROR,error);
@@ -371,7 +371,7 @@ int Receive_job( int *sock, char *input )
 					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
 					if( (status = Set_job_ticket_file( &job, 0, -1 )) ){
-						SNPRINTF( error,errlen)
+						plp_snprintf( error,errlen,
 							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
@@ -399,7 +399,7 @@ int Receive_job( int *sock, char *input )
 							goto error;
 						}
 					} else {
-						SNPRINTF( error, errlen)
+						plp_snprintf( error, errlen,
 							_("size %0.3fK exceeds %dK"),
 							jobsize/1024, Max_job_size_DYN );
 						Set_str_value(&job.info,ERROR,error);
@@ -408,7 +408,7 @@ int Receive_job( int *sock, char *input )
 						Set_str_value(&job.info,INCOMING_PID,0);
 						error[0] = 0;
 						if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
-							SNPRINTF( error,errlen)
+							plp_snprintf( error,errlen,
 								_("Error setting up job ticket file - %s"),
 								Errormsg( errno ) );
 							goto error;
@@ -450,7 +450,7 @@ int Receive_job( int *sock, char *input )
 	} else {
 		char *f = Find_str_value( &job.info,HF_NAME );
 		if( !ISNULL(f) ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("size %0.3fK exceeds %dK"),
 				jobsize/1024, Max_job_size_DYN );
 			Set_str_value(&job.info,ERROR,error);
@@ -459,7 +459,7 @@ int Receive_job( int *sock, char *input )
 			Set_str_value(&job.info,INCOMING_PID,0);
 			error[0] = 0;
 			if( (status = Set_job_ticket_file( &job, 0, -1 )) ){
-				SNPRINTF( error,errlen)
+				plp_snprintf( error,errlen,
 					_("Error setting up job ticket file - %s"),
 					Errormsg( errno ) );
 				goto error;
@@ -482,7 +482,7 @@ int Receive_job( int *sock, char *input )
 		if( !ISNULL(s) ) unlink(s);
 		if( ack == 0 ) ack = ACK_FAIL;
 		buffer[0] = ack;
-		SNPRINTF(buffer+1,sizeof(buffer)-1) "%s\n",error);
+		plp_snprintf(buffer+1,sizeof(buffer)-1, "%s\n",error);
 		DEBUGF(DRECV1)("Receive_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
 			Send_job_rw_timeout_DYN, buffer, safestrlen(buffer), 0 );
@@ -499,10 +499,10 @@ int Receive_job( int *sock, char *input )
 		s = Server_queue_name_DYN;
 		if( !s ) s = Printer_DYN;
 
-		SNPRINTF( line, sizeof(line)) "%s\n", s );
+		plp_snprintf( line, sizeof(line), "%s\n", s );
 		DEBUGF(DRECV1)("Receive_jobs: Lpd_request fd %d, starting '%s'", Lpd_request, line );
 		if( Write_fd_str( Lpd_request, line ) < 0 ){
-			LOGERR_DIE(LOG_ERR) _("Receive_jobs: write to fd '%d' failed"),
+			logerr_die(LOG_ERR, _("Receive_jobs: write to fd '%d' failed"),
 				Lpd_request );
 		}
 	}
@@ -556,18 +556,18 @@ int Receive_block_job( int *sock, char *input )
 	DEBUGFC(DRECV1)Dump_line_list("Receive_block_job: input", &l );
 
 	if( l.count != 2 ){
-		SNPRINTF( error, errlen-4) _("bad command line") );
+		plp_snprintf( error, errlen-4, _("bad command line") );
 		goto error;
 	}
 	if( Is_clean_name( l.list[0] ) ){
-		SNPRINTF( error, errlen-4) _("bad printer name") );
+		plp_snprintf( error, errlen-4, _("bad printer name") );
 		goto error;
 	}
 	setproctitle( "lpd RECVB '%s'", l.list[0] );
 
 	if( Setup_printer( l.list[0], error, errlen-4, 0 ) ){
 		if( error[0] == 0 ){
-			SNPRINTF( error, errlen-4) _("%s: cannot set up printer"), Printer_DYN );
+			plp_snprintf( error, errlen-4, _("%s: cannot set up printer"), Printer_DYN );
 		}
 		goto error;
 	}
@@ -598,7 +598,7 @@ int Receive_block_job( int *sock, char *input )
 	DEBUGF(DRECV1)("Receive_block_job: debug '%s', Debug %d, DbgFlag 0x%x", s, Debug, DbgFlag );
 	DEBUGF(DRECV1)("Receive_block_job: spooling_disabled %d", Sp_disabled(&Spool_control) );
 	if( Sp_disabled(&Spool_control) ){
-		SNPRINTF( error, errlen-4)
+		plp_snprintf( error, errlen-4,
 			_("%s: spooling disabled"), Printer_DYN );
 		ack = ACK_RETRY;	/* retry */
 		goto error;
@@ -613,14 +613,14 @@ int Receive_block_job( int *sock, char *input )
 		if( Discard_large_jobs_DYN ){
 			discarding_large_job = 1;
 		} else {
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("size %0.3fK exceeds %dK"),
 				read_len/1024, Max_job_size_DYN );
 			ack = ACK_RETRY;
 			goto error;
 		}
 	} else if( !Check_space( read_len, Minfree_DYN, Spool_dir_DYN ) ){
-		SNPRINTF( error, errlen-4)
+		plp_snprintf( error, errlen-4,
 			_("%s: insufficient file space"), Printer_DYN );
 		ack = ACK_RETRY;
 		goto error;
@@ -634,7 +634,7 @@ int Receive_block_job( int *sock, char *input )
 
 	status = Link_send( ShortRemote_FQDN, sock, Send_job_rw_timeout_DYN, "",1, 0 );
 	if( status ){
-		SNPRINTF( error, errlen-4)
+		plp_snprintf( error, errlen-4,
 			_("%s: Receive_block_job: sending ACK 0 failed"), Printer_DYN );
 		goto error;
 	}
@@ -645,7 +645,7 @@ int Receive_block_job( int *sock, char *input )
 		Send_job_rw_timeout_DYN, 0, temp_fd, &read_len, &ack );
 	DEBUGF(DRECV4)("Receive_block_job: received %0.0f bytes ", read_len );
 	if( status ){
-		SNPRINTF( error, errlen-4)
+		plp_snprintf( error, errlen-4,
 			_("%s: transfer of '%s' from '%s' failed"), Printer_DYN,
 			tempfile, ShortRemote_FQDN );
 		ack = ACK_FAIL;
@@ -655,7 +655,7 @@ int Receive_block_job( int *sock, char *input )
 	/* extract jobs */
 
 	if( lseek( temp_fd, 0, SEEK_SET ) == -1 ){
-		SNPRINTF( error, errlen-4)	
+		plp_snprintf( error, errlen-4, 	
 			_("Receive_block_job: lseek failed '%s'"), Errormsg(errno) );
 		ack = ACK_FAIL;
 		goto error;
@@ -672,7 +672,7 @@ int Receive_block_job( int *sock, char *input )
 	DEBUGF(DRECV2)("Receive_block_job: sending 0 ACK" );
 	status = Link_send( ShortRemote_FQDN, sock, Send_job_rw_timeout_DYN, "",1, 0 );
 	if( status ){
-		SNPRINTF( error, errlen-4)
+		plp_snprintf( error, errlen-4,
 			_("%s: sending ACK 0 for '%s' failed"), Printer_DYN, tempfile );
 		ack = ACK_RETRY;
 		goto error;
@@ -687,7 +687,7 @@ int Receive_block_job( int *sock, char *input )
 	if( error[0] ){
 		if( ack != 0 ) ack = ACK_FAIL;
 		buffer[0] = ack;
-		SNPRINTF(buffer+1,sizeof(buffer)-1)"%s\n",error);
+		plp_snprintf(buffer+1,sizeof(buffer)-1, "%s\n",error);
 		/* LOG( LOG_INFO) "Receive_block_job: error '%s'", error ); */
 		DEBUGF(DRECV1)("Receive_block_job: sending ACK %d, msg '%s'", ack, error );
 		(void)Link_send( ShortRemote_FQDN, sock,
@@ -700,10 +700,10 @@ int Receive_block_job( int *sock, char *input )
 		s = Server_queue_name_DYN;
 		if( !s ) s = Printer_DYN;
 
-		SNPRINTF( buffer, sizeof(buffer)) "%s\n", s );
+		plp_snprintf( buffer, sizeof(buffer), "%s\n", s );
 		DEBUGF(DRECV1)("Receive_block_jobs: Lpd_request fd %d, starting '%s'", Lpd_request, buffer );
 		if( Write_fd_str( Lpd_request, buffer ) < 0 ){
-			LOGERR_DIE(LOG_ERR) _("Receive_block_jobs: write to fd '%d' failed"),
+			logerr_die(LOG_ERR, _("Receive_block_jobs: write to fd '%d' failed"),
 				Lpd_request );
 		}
 	}
@@ -748,7 +748,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 
 	if( fstat( fd, &statb) < 0 ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO)"Scan_block_file: fstat failed");
+		logerr_die(LOG_INFO, "Scan_block_file: fstat failed");
 	}
 	DEBUGF(DRECV2)("Scan_block_file: starting, file size '%0.0f'",
 		(double)(statb.st_size) );
@@ -768,7 +768,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		Free_line_list(&info);
 		startpos = lseek( fd, 0, SEEK_CUR );
 		if( startpos == -1 ){
-			SNPRINTF( error, errlen)	
+			plp_snprintf( error, errlen, 	
 				_("Scan_block_file: lseek failed '%s'"), Errormsg(errno) );
 			status = 1;
 			goto error;
@@ -783,7 +783,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		Clean_meta(line+1);
 		Split(&info,line+1,Whitespace,0,0,0,0,0,0);
 		if( info.count != 2 ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 			_("bad length information '%s'"), line+1 );
 			status = 1;
 			goto error;
@@ -795,7 +795,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 		jobsize += read_len;
 		if( Max_job_size_DYN > 0 && (jobsize/1024) > (0.0+Max_job_size_DYN) ){
 			if( Discard_large_jobs_DYN ){
-				SNPRINTF( error, errlen)
+				plp_snprintf( error, errlen,
 					_("size %0.3fK exceeds %dK"),
 					jobsize/1024, Max_job_size_DYN );
 				discarding_large_job = 1;
@@ -815,19 +815,19 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			DEBUGF(DRECV2)("Scan_block_file: len %d, reading %d, got count %d",
 				len, n, count );
 			if( count < 0 ){
-				SNPRINTF( error, errlen)	
+				plp_snprintf( error, errlen, 	
 					_("Scan_block_file: read failed '%s'"), Errormsg(errno) );
 				status = 1;
 				goto error;
 			} else if( count == 0 ){
-				SNPRINTF( error, errlen)	
+				plp_snprintf( error, errlen, 	
 					_("Scan_block_file: read unexecpted EOF") );
 				status = 1;
 				goto error;
 			}
 			n = write(tempfd,buffer,count);
 			if( n != count ){
-				SNPRINTF( error, errlen)	
+				plp_snprintf( error, errlen, 	
 					_("Scan_block_file: lseek failed '%s'"), Errormsg(errno) );
 				status = 1;
 				goto error;
@@ -842,7 +842,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			if( job.info.count ){
 				/* we received another control file, finish this job up */
 				if( discarding_large_job ){
-					SNPRINTF( error, errlen)
+					plp_snprintf( error, errlen,
 						_("size %0.3fK exceeds %dK"),
 						jobsize/1024, Max_job_size_DYN );
 					Set_str_value(&job.info,ERROR,error);
@@ -850,7 +850,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
 					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
-						SNPRINTF( error,errlen)
+						plp_snprintf( error,errlen,
 							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
@@ -877,7 +877,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					followed (possibly) by another control file */
 				/* we receive another control file */
 				if( discarding_large_job ){
-					SNPRINTF( error, errlen)
+					plp_snprintf( error, errlen,
 						_("size %0.3fK exceeds %dK"),
 						jobsize/1024, Max_job_size_DYN );
 					Set_str_value(&job.info,ERROR,error);
@@ -886,7 +886,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 					Set_str_value(&job.info,INCOMING_PID,0);
 					error[0] = 0;
 					if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
-						SNPRINTF( error,errlen)
+						plp_snprintf( error,errlen,
 							_("Error setting up job ticket file - %s"),
 							Errormsg( errno ) );
 						goto error;
@@ -913,7 +913,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 
 	if( files.count ){
 		if( discarding_large_job ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				_("size %0.3fK exceeds %dK"),
 				jobsize/1024, Max_job_size_DYN );
 			Set_str_value(&job.info,ERROR,error);
@@ -922,7 +922,7 @@ int Scan_block_file( int fd, char *error, int errlen, struct line_list *header_i
 			Set_str_value(&job.info,INCOMING_PID,0);
 			error[0] = 0;
 			if( (status = Set_job_ticket_file( &job, 0, job_ticket_fd )) ){
-				SNPRINTF( error,errlen)
+				plp_snprintf( error,errlen,
 					_("Error setting up job ticket file - %s"),
 					Errormsg( errno ) );
 				goto error;
@@ -1013,7 +1013,7 @@ static int Do_perm_check( struct job *job, char *error, int errlen )
 
 	if( (permission = Perms_check( &Perm_line_list, &Perm_check, job, 1 ))
 			== P_REJECT ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 			_("%s: no permission to print"), Printer_DYN );
 	}
 	Perm_check.user = 0;
@@ -1052,7 +1052,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 	if( gettimeofday( &start_time, 0 ) ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO) "Check_for_missing_files: gettimeofday failed");
+		logerr_die(LOG_INFO, "Check_for_missing_files: gettimeofday failed");
 	}
 
 	DEBUGF(DRECV1)("Check_for_missing_files: start time 0x%x usec 0x%x",
@@ -1267,12 +1267,12 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 				Set_str_value(lp,OPENNAME,openname);
 				Set_casekey_str_value(&datafiles,transfername,openname);
 			} else {
-				SNPRINTF(error,errlen)"missing data file '%s'",transfername);
+				plp_snprintf(error,errlen, "missing data file '%s'",transfername);
 				status = 1;
 				goto error;
 			}
 			if( (status = stat( openname, &statb )) ){
-					SNPRINTF( error, errlen) "stat() '%s' error - %s",
+					plp_snprintf( error, errlen, "stat() '%s' error - %s",
 					openname, Errormsg(errno) );
 				goto error;
 			}
@@ -1286,7 +1286,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 		if(DEBUGL1)Dump_line_list("Check_for_missing_files- found", &datafiles );
 		if( files->count != datafiles.count ){
-			SNPRINTF(error,errlen)"too many data files");
+			plp_snprintf(error,errlen, "too many data files");
 			status = 1;
 			goto error;
 		}
@@ -1324,7 +1324,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		DEBUGF(DRECV1)("Check_for_missing_files: renaming '%s' to '%s'",
 			openname, transfername );
 		if( (status = rename(openname,transfername)) ){
-			SNPRINTF( error,errlen)
+			plp_snprintf( error,errlen,
 				"error renaming '%s' to '%s' - %s",
 				openname, transfername, Errormsg( errno ) );
 		}
@@ -1333,7 +1333,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 
 
 	if( (status = Set_job_ticket_file( job, 0, holdfile_fd )) ){
-		SNPRINTF( error,errlen)
+		plp_snprintf( error,errlen,
 			_("Error setting up job ticket file - %s"),
 			Errormsg( errno ) );
 		goto error;
@@ -1344,7 +1344,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 	transfername = Find_str_value(&job->info,HF_NAME);
 	if( !transfername ) transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	if( status ){
-		LOGMSG(LOG_INFO) "Check_for_missing_files: FAILED '%s' %s",
+		logmsg(LOG_INFO, "Check_for_missing_files: FAILED '%s' %s",
 			transfername?transfername:"???", error);
 		/* we need to unlink the data files */
 		openname = Find_str_value(&job->info,OPENNAME);
@@ -1360,7 +1360,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		if( openname ) unlink(openname);
 	} else {
 		/*
-		LOGMSG(LOG_INFO) "Check_for_missing_files: SUCCESS '%s'", transfername);
+		logmsg(LOG_INFO, "Check_for_missing_files: SUCCESS '%s'", transfername);
 		*/
 		setmessage( job, "STATE", "CREATE" );
 	}
@@ -1391,7 +1391,7 @@ int Setup_temporary_job_ticket_file( struct job *job, char *filename,
 	}
 
 	if( (fd = Find_non_colliding_job_number( job )) < 0 ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Maximum number of jobs in queue. Delete some and retry");
 		goto error;
 	}
@@ -1409,7 +1409,7 @@ int Setup_temporary_job_ticket_file( struct job *job, char *filename,
 	Set_flag_value(&job->info,INCOMING_PID,getpid() );
 	/* write status */
 	if( Set_job_ticket_file( job, 0, fd ) ){
-		SNPRINTF( error,errlen)
+		plp_snprintf( error,errlen,
 			_("Error setting up job ticket file - %s"),
 			Errormsg( errno ) );
 		close(fd); fd = -1;
@@ -1442,7 +1442,7 @@ static int Find_non_colliding_job_number( struct job *job )
 	if( Long_number_DYN ) max = 1000000;
 	while( job_ticket_fd < 0 ){
 		number = Fix_job_number(job,n);
-		SNPRINTF(hold_file,sizeof(hold_file))"hfA%s",number);
+		plp_snprintf(hold_file,sizeof(hold_file), "hfA%s",number);
 		DEBUGF(DRECV1)("Find_non_colliding_job_number: trying %s", hold_file );
 		job_ticket_fd = Checkwrite(hold_file, &statb,
 			O_RDWR|O_CREAT, 0, 0 );
@@ -1496,7 +1496,7 @@ static int Do_incoming_control_filter( struct job *job, char *error, int errlen 
 	cf = Find_str_value(&job->info,CF_OUT_IMAGE);
 	Write_fd_str(intempfd,cf);
 	if( lseek( intempfd, 0, SEEK_SET ) == -1 ){
-		SNPRINTF( error, errlen-4)	
+		plp_snprintf( error, errlen-4, 	
 			_("Do_incoming_control_filter: lseek failed '%s'"), Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
@@ -1515,19 +1515,19 @@ static int Do_incoming_control_filter( struct job *job, char *error, int errlen 
 			goto error;
 			break;
 		default:
-			SNPRINTF(error,errlen)"Do_incoming_control_filter: incoming control filter '%s' failed '%s'",
+			plp_snprintf(error,errlen, "Do_incoming_control_filter: incoming control filter '%s' failed '%s'",
 				Incoming_control_filter_DYN, Server_status(errorcode) );
 			errorcode = JFAIL;
 			goto error;
 	}
 	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
-		SNPRINTF( error, errlen-4)	
+		plp_snprintf( error, errlen-4, 	
 			_("Do_incoming_control_filter: lseek failed '%s'"), Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
 	}
 	if( Get_fd_image_and_split(tempfd,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Do_incoming_control_filter: split failed - %s", Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
@@ -1609,7 +1609,7 @@ static int Get_route( struct job *job, char *error, int errlen )
 	cf = Find_str_value(&job->info,CF_OUT_IMAGE);
 	Write_fd_str(intempfd,cf);
 	if( lseek( intempfd, 0, SEEK_SET ) == -1 ){
-		SNPRINTF( error, errlen-4)	
+		plp_snprintf( error, errlen-4, 	
 			_("Get_route: lseek failed '%s'"), Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
@@ -1627,13 +1627,13 @@ static int Get_route( struct job *job, char *error, int errlen )
 			goto error;
 			break;
 		default:
-			SNPRINTF(error,errlen)"Get_route: incoming control filter '%s' failed '%s'",
+			plp_snprintf(error,errlen, "Get_route: incoming control filter '%s' failed '%s'",
 				Incoming_control_filter_DYN, Server_status(errorcode) );
 			errorcode = JFAIL;
 			goto error;
 	}
 	if( Get_fd_image_and_split(tempfd,0,0, &cf_line_list, Line_ends,0,0,0,0,0,0) ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Get_route: split failed - %s", Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
@@ -1643,7 +1643,7 @@ static int Get_route( struct job *job, char *error, int errlen )
 	count = 0;
 	id = Find_str_value(&job->info,IDENTIFIER);
 	if( ISNULL(id) ){
-		SNPRINTF(error,errlen)
+		plp_snprintf(error,errlen,
 			"Get_route: split failed - %s", Errormsg(errno) );
 		errorcode = JFAIL;
 		goto error;
@@ -1676,7 +1676,7 @@ static int Get_route( struct job *job, char *error, int errlen )
 				if( n < 0 ){
 					Set_flag_value(&job->destination,COPIES,0);
 				}
-				SNPRINTF(buffer,sizeof(buffer))".%d",count+1);
+				plp_snprintf(buffer,sizeof(buffer), ".%d",count+1);
 				s = safestrdup2(id,buffer,__FILE__,__LINE__);
 				Set_str_value(&job->destination,IDENTIFIER,s);
 				if(s) free(s);
@@ -1696,7 +1696,7 @@ static int Get_route( struct job *job, char *error, int errlen )
 		if( n < 0 ){
 			Set_flag_value(&job->destination,COPIES,0);
 		}
-		SNPRINTF(buffer,sizeof(buffer))".%d",count+1);
+		plp_snprintf(buffer,sizeof(buffer), ".%d",count+1);
 		s = safestrdup2(id,buffer,__FILE__,__LINE__);
 		Set_str_value(&job->destination,IDENTIFIER,s);
 		if(s) free(s);

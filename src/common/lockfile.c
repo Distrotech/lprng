@@ -172,7 +172,7 @@ int LockDevice(int fd, int block )
 		err = errno;
         if( lock < 0) {
 			lock = -1;
-			LOGERR(LOG_INFO) "LockDevice: TIOCEXCL failed");
+			logerr(LOG_INFO, "LockDevice: TIOCEXCL failed");
 		} else {
 			lock = 0;
 		}

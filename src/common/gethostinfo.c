@@ -70,7 +70,7 @@ static void Check_for_dns_hack( struct hostent *h_ent )
 #endif
 	}
 	if( count ){
-		FATAL(LOG_ALERT)
+		fatal(LOG_ALERT,
 		"Check_for_dns_hack: HACKER ALERT! DNS address length wrong, prot %d len %d",
 			h_ent->h_addrtype, h_ent->h_length );
 	}
@@ -94,12 +94,12 @@ char *Find_fqdn( struct host_information *info, const char *shorthost )
 	Clear_host_information( info );
 
 	if( shorthost == 0 || *shorthost == 0 ){
-		LOGMSG( LOG_ALERT) "Find_fqdn: called with '%s', HACKER ALERT",
+		logmsg( LOG_ALERT, "Find_fqdn: called with '%s', HACKER ALERT",
 			shorthost );
 		return(0);
 	}
 	if( safestrlen(shorthost) > 64 ){
-		FATAL(LOG_ALERT) "Find_fqdn: hostname too long, HACKER ALERT '%s'",
+		fatal(LOG_ALERT, "Find_fqdn: hostname too long, HACKER ALERT '%s'",
 			shorthost );
 	}
 #if defined(HAVE_GETHOSTBYNAME2)
@@ -181,7 +181,7 @@ static char *Fixup_fqdn( const char *shorthost, struct host_information *info,
 			host_ent = gethostbyname( shorthost );
 #endif
 			if( host_ent == 0 ){
-				FATAL(LOG_ERR) "Fixup_fqdn: 2nd search failed for host '%s'",
+				fatal(LOG_ERR, "Fixup_fqdn: 2nd search failed for host '%s'",
 					shorthost );
 			}
 			/* sigh... */
@@ -300,19 +300,19 @@ void Get_local_host( void )
 	host[0] = 0;
 	if( gethostname (host, sizeof(host)) < 0 
 		|| host[0] == 0 ) {
-		FATAL(LOG_ERR) "Get_local_fqdn: no host name" );
+		fatal(LOG_ERR, "Get_local_fqdn: no host name" );
 	}
 	fqdn = Find_fqdn( &Host_IP, host );
 	DEBUG3("Get_local_host: fqdn=%s", fqdn);
 	if( fqdn == 0 ){
-		FATAL(LOG_ERR) "Get_local_host: hostname '%s' bad", host );
+		fatal(LOG_ERR, "Get_local_host: hostname '%s' bad", host );
 	}
 	Set_DYN( &FQDNHost_FQDN, Host_IP.fqdn );
 	Set_DYN( &ShortHost_FQDN, Host_IP.shorthost );
 	DEBUG1("Get_local_host: ShortHost_FQDN=%s, FQDNHost_FQDN=%s",
 		ShortHost_FQDN, FQDNHost_FQDN);
     if( Find_fqdn( &Localhost_IP, LOCALHOST) == 0 ){
-        FATAL(LOG_ERR) "Get_local_host: 'localhost' IP address not available!");
+        fatal(LOG_ERR, "Get_local_host: 'localhost' IP address not available!");
     }
 }
 
@@ -345,7 +345,7 @@ static char *Get_hostinfo_byaddr( struct host_information *info,
 		len = sizeof( ((struct sockaddr_in6 *)sinaddr)->sin6_addr );
 #endif
 	} else {
-		FATAL(LOG_ERR) "Get_remote_hostbyaddr: bad family '%d'",
+		fatal(LOG_ERR, "Get_remote_hostbyaddr: bad family '%d'",
 			sinaddr->sa_family);
 	}
 	if( !addr_only ){
@@ -415,10 +415,10 @@ int Same_host( struct host_information *host,
 						int n;
 						ls[0] = 0; rs[0] = 0;
 						for( n = 0; n < l1; ++n ){
-							SNPRINTF( ls + safestrlen(ls), 3) "%02x", h1[n] );
+							plp_snprintf( ls + safestrlen(ls), 3, "%02x", h1[n] );
 						}
 						for( n = 0; n < l1; ++n ){
-							SNPRINTF( rs + safestrlen(rs), 3) "%02x", h2[n] );
+							plp_snprintf( rs + safestrlen(rs), 3, "%02x", h2[n] );
 						}
 						LOGDEBUG("Same_host: comparing %s to %s, result %d",
 							ls, rs, result );
@@ -453,11 +453,11 @@ void Dump_host_information( const char *title,  struct host_information *info )
 		for( i = 0; i < info->h_addr_list.count; ++i ){
 			char msg[64];
 			int len;
-			SNPRINTF( msg, sizeof(msg)) "    [%d] 0x", i );
+			plp_snprintf( msg, sizeof(msg), "    [%d] 0x", i );
 			s = info->h_addr_list.list[i];
 			for( j = 0; j < info->h_length; ++j ){
 				len = safestrlen( msg );
-				SNPRINTF( msg+len, sizeof(msg)-len) "%02x",((unsigned char *)s)[j] );
+				plp_snprintf( msg+len, sizeof(msg)-len, "%02x",((unsigned char *)s)[j] );
 			}
 			LOGDEBUG( "%s", msg );
 		}
@@ -482,7 +482,7 @@ static int form_addr_and_mask(char *v, char *addr,char *mask,
 
 	DEBUG5("form_addr_and_mask: '%s'", v );
 	if( 4*addrlen+1 >= (int)(sizeof(buffer)) ){
-		FATAL(LOG_ERR)"form_addr_and_mask: addrlen too large - hacker attack?");
+		fatal(LOG_ERR, "form_addr_and_mask: addrlen too large - hacker attack?");
 	}
 	memset( addr, 0, addrlen );
 	memset( mask, ~0, addrlen );

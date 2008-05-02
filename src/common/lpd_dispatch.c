@@ -35,7 +35,7 @@ void Dispatch_input(int *talk, char *input, const char *from_addr )
 {
 	switch( input[0] ){
 		default:
-			FATAL(LOG_INFO)
+			fatal(LOG_INFO,
 				_("Dispatch_input: bad request line '%s' from %s"), input, from_addr );
 			break;
 		case REQ_START:
@@ -133,7 +133,7 @@ void Service_all( struct line_list *args )
 				pr = Printer_DYN;;
 			}
 			DEBUG1("Service_all: starting '%s'", pr );
-			SNPRINTF(buffer,sizeof(buffer))".%s\n",pr );
+			plp_snprintf(buffer,sizeof(buffer), ".%s\n",pr );
 			if( Write_fd_str(reportfd,buffer) < 0 ) cleanup(0);
 		}
 	}
@@ -168,7 +168,7 @@ void Service_connection( struct line_list *args )
 
 	if( !(talk = Find_flag_value(args,INPUT)) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Service_connection: no talk fd"); 
+		fatal(LOG_ERR, "Service_connection: no talk fd");
 	}
 
 	DEBUG1("Service_connection: listening fd %d", talk );
@@ -182,7 +182,7 @@ void Service_connection( struct line_list *args )
 		socklen_t len;
 		len = sizeof( sinaddr );
 		if( getpeername( talk, &sinaddr, &len ) ){
-			LOGERR_DIE(LOG_DEBUG) _("Service_connection: getpeername failed") );
+			logerr_die(LOG_DEBUG, _("Service_connection: getpeername failed") );
 		}
 	}
 
@@ -229,18 +229,18 @@ void Service_connection( struct line_list *args )
 			addr = &(((struct sockaddr_in6 *)&sinaddr)->sin6_addr);
 #endif
 		} else {
-			FATAL(LOG_INFO) _("Service_connection: BAD LocalHost_IP value"));
+			fatal(LOG_INFO, _("Service_connection: BAD LocalHost_IP value"));
 			addr = 0;
 		}
 		s = Localhost_IP.h_addr_list.list[0];
 		memmove(addr,s,len);
 	} else {
-		FATAL(LOG_INFO) _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
+		fatal(LOG_INFO, _("Service_connection: bad protocol family '%d'"), sinaddr.sa_family );
 	}
 	inet_ntop_sockaddr( &sinaddr, from_addr, sizeof(from_addr) );
 	{
 		int len = strlen(from_addr);
-		SNPRINTF(from_addr+len,sizeof(from_addr)-len)" port %d", ntohs(port));
+		plp_snprintf(from_addr+len,sizeof(from_addr)-len, " port %d", ntohs(port));
 	}
 
 	DEBUG2("Service_connection: socket %d, from %s", talk, from_addr );
@@ -288,7 +288,7 @@ void Service_connection( struct line_list *args )
 		Clear_timeout();
 
 		if( status <= 0 ){
-			LOGERR_DIE(LOG_DEBUG) _("Service_connection: peek of length %d failed"), my_len );
+			logerr_die(LOG_DEBUG, _("Service_connection: peek of length %d failed"), my_len );
 		}
 		DEBUG1("Service_connection: status %d 0x%02x%02x%02x%02x (%c%c%c%c)", status,
 			cval(input+0), cval(input+1), cval(input+2), cval(input+3),
@@ -329,11 +329,11 @@ static void Service_lpd( int talk, const char *from_addr )
 		cleanup(0);
 	}
 	if( status ){
-		LOGERR_DIE(LOG_DEBUG) _("Service_connection: cannot read request from %s in %d seconds"),
+		logerr_die(LOG_DEBUG, _("Service_connection: cannot read request from %s in %d seconds"),
 			from_addr, timeout );
 	}
 	if( len < 2 ){
-		FATAL(LOG_INFO) _("Service_connection: short request line '%s', from '%s'"),
+		fatal(LOG_INFO, _("Service_connection: short request line '%s', from '%s'"),
 			input, from_addr );
 	}
 	Dispatch_input(&talk,input,from_addr);

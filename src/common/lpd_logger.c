@@ -192,7 +192,7 @@ void Logger( struct line_list *args )
 	/* OK, we try to open a connection to the logger */
 	if( !(s = safestrchr( host, '%')) ){
 		int len = strlen(host);
-		SNPRINTF(host+len, sizeof(host)-len) "%%2001" );
+		plp_snprintf(host+len, sizeof(host)-len, "%%2001" );
 	}
 
 	readfd = Find_flag_value(args,INPUT);
@@ -221,21 +221,21 @@ void Logger( struct line_list *args )
 				DEBUGF(DLOG2)("Logger: queue status '%s'", outbuffer );
 			} else if( m < 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_INFO)"Logger: read error %s", tempfile);
+				logerr_die(LOG_INFO, "Logger: read error %s", tempfile);
 			}
 			if( m < (int)sizeof(inbuffer)-1 ){
 				/* we can truncate the files */
 				if( lseek( status_fd, 0, SEEK_SET) == -1 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_INFO) "Logger: lseek failed write file '%s'", tempfile);
+					logerr_die(LOG_INFO, "Logger: lseek failed write file '%s'", tempfile);
 				}
 				if( lseek( input_fd, 0, SEEK_SET) == -1 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_INFO) "Logger: lseek failed read file '%s'", tempfile);
+					logerr_die(LOG_INFO, "Logger: lseek failed read file '%s'", tempfile);
 				}
 				if( ftruncate( status_fd, 0 ) ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_INFO) "Logger: ftruncate failed file '%s'", tempfile);
+					logerr_die(LOG_INFO, "Logger: ftruncate failed file '%s'", tempfile);
 				}
 				input_read = 0;
 			}
@@ -264,20 +264,20 @@ void Logger( struct line_list *args )
 					Set_nonblock_io( writefd );
 					if( lseek( status_fd, 0, SEEK_SET) == -1 ){
 						Errorcode = JABORT;
-						LOGERR_DIE(LOG_INFO) "Logger: lseek failed write file '%s'", tempfile);
+						logerr_die(LOG_INFO, "Logger: lseek failed write file '%s'", tempfile);
 					}
 					if( lseek( input_fd, 0, SEEK_SET) == -1 ){
 						Errorcode = JABORT;
-						LOGERR_DIE(LOG_INFO) "Logger: lseek failed read file '%s'", tempfile);
+						logerr_die(LOG_INFO, "Logger: lseek failed read file '%s'", tempfile);
 					}
 					if( ftruncate( status_fd, 0 ) ){
 						Errorcode = JABORT;
-						LOGERR_DIE(LOG_INFO) "Logger: ftruncate failed file '%s'", tempfile);
+						logerr_die(LOG_INFO, "Logger: ftruncate failed file '%s'", tempfile);
 					}
 					if( Dump_queue_status(status_fd) ){
 						DEBUGF(DLOG2)("Logger: Dump_queue_status failed - %s", Errormsg(errno) );
 						Errorcode = JABORT;
-						LOGERR_DIE(LOG_INFO) "Logger: cannot write file '%s'", tempfile);
+						logerr_die(LOG_INFO, "Logger: cannot write file '%s'", tempfile);
 					}
 					input_read = 1;
 					/* we try again */
@@ -326,7 +326,7 @@ void Logger( struct line_list *args )
 		if( m < 0 ){
 			if( err != EINTR ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_INFO)"Logger: select error");
+				logerr_die(LOG_INFO, "Logger: select error");
 			}
 		} else if( m > 0 ){
 			if( writefd >=0 && FD_ISSET( writefd, &readfds ) ){
@@ -344,7 +344,7 @@ void Logger( struct line_list *args )
 				DEBUGF(DLOG2)("Logger: read count %d '%s'", m, inbuffer );
 				if( m > 0 && writefd >= 0 ){
 					if( Write_fd_len( status_fd, inbuffer, m ) ){
-						LOGERR_DIE(LOG_INFO)"Logger: write error on tempfile fd %d", status_fd);
+						logerr_die(LOG_INFO, "Logger: write error on tempfile fd %d", status_fd);
 					}
 					input_read = 1;
 				} else if( m == 0 ) {
@@ -355,7 +355,7 @@ void Logger( struct line_list *args )
 					readfd = -1;
 				} else if( m < 0 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_INFO)"Logger: read error on input fd %d", readfd);
+					logerr_die(LOG_INFO, "Logger: read error on input fd %d", readfd);
 				}
 			}
 			if( writefd >=0 && FD_ISSET( writefd, &writefds ) && outlen ){
@@ -365,7 +365,7 @@ void Logger( struct line_list *args )
 				DEBUGF(DLOG2)("Logger: last write %d", m );
 				if( m < 0 ){
 					/* we have EOF on the file descriptor */
-					LOGERR(LOG_INFO) "Logger: error writing on writefd fd %d", writefd );
+					logerr(LOG_INFO, "Logger: error writing on writefd fd %d", writefd );
 					close( writefd );
 					writefd = -2;
 				} else if( m > 0 ){
