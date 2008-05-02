@@ -658,7 +658,7 @@ char *Make_job_ticket_image( struct job *job )
 
 int Set_job_ticket_file( struct job *job, struct line_list *perm_check, int opened_fd )
 {
-	char *job_ticket_name, *tempfile, *outstr;
+	char *job_ticket_name, *outstr;
 	int status;
 	int fd = opened_fd;
 	struct stat statb;

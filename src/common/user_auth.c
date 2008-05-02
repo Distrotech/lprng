@@ -255,7 +255,7 @@ static int Test_send( int *sock,
 }
 
 static int Test_receive( int *sock, int transfer_timeout,
-	char *user UNUSED, char *jobsize, int from_server, char *authtype,
+	char *user UNUSED, char *jobsize, int from_server,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
