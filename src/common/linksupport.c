@@ -259,13 +259,13 @@ static int getconnection ( char *xhostname,
 		dest_sin.sin_family = LookupHost_IP.h_addrtype;
 		if( LookupHost_IP.h_length > (int)sizeof( dest_sin.sin_addr ) ){
 			Errorcode = JABORT;
-			FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
+			fatal(LOG_ALERT, "getconnection: addresslength outsize value");
 		}
 		memcpy( &dest_sin.sin_addr,
 			LookupHost_IP.h_addr_list.list[address_count],
 			LookupHost_IP.h_length );
 	} else if( inet_pton( AF_Protocol(), hostname, &dest_sin.sin_addr ) != 1 ){
-		(void) SNPRINTF (errmsg, errlen) "getconnection: cannot get address for '%s'", hostname );
+		(void) plp_snprintf(errmsg, errlen, "getconnection: cannot get address for '%s'", hostname );
 		DEBUGF(DNW2)("getconnection: cannot get address for '%s'", hostname );
 		return( LINK_OPEN_FAIL );
 	}
@@ -300,7 +300,7 @@ static int getconnection ( char *xhostname,
 		Max_open(sock);
 		if( sock < 0 ){
 			errno = err;
-			LOGERR_DIE(LOG_DEBUG) "getconnection: UNIX domain socket call failed");
+			logerr_die(LOG_DEBUG, "getconnection: UNIX domain socket call failed");
 		}
 		DEBUGF(DNW2) ("getconnection: unix domain socket %d", sock);
 		/*
@@ -337,10 +337,10 @@ static int getconnection ( char *xhostname,
 	if( ISNULL(dest_port) ) dest_port = Lpd_port_DYN;
 	dest_sin.sin_port = Link_dest_port_num(dest_port);
 	if( dest_sin.sin_port == 0 ){
-		(void) SNPRINTF (errmsg, errlen)
+		(void) plp_snprintf(errmsg, errlen,
 		"getconnection: using illegal port '%s' for connection to '%s'!\n",
 			dest_port, hostname );
-		LOGMSG(LOG_INFO)
+		logmsg(LOG_INFO,
 		"getconnection: using illegal port '%s' for connection to '%s'!\n",
 			dest_port, hostname );
 		return( JABORT );
@@ -447,7 +447,7 @@ static int getconnection ( char *xhostname,
 	Max_open(sock);
 	if( sock < 0 ){
 		errno = err;
-		LOGERR_DIE(LOG_DEBUG) "getconnection: socket call failed");
+		logerr_die(LOG_DEBUG, "getconnection: socket call failed");
 	}
 	DEBUGF(DNW2) ("getconnection: socket %d", sock);
 
@@ -488,7 +488,7 @@ static int getconnection ( char *xhostname,
 				DEBUGF(DNW2) ("getconnection: sock %d, reuse status %d",
 					sock, status );
 				if( status < 0 ){
-					LOGERR(LOG_ERR) "getconnection: set SO_REUSEADDR failed" );
+					logerr(LOG_ERR, "getconnection: set SO_REUSEADDR failed" );
 				}
 			}
 			if( status >= 0 ){
@@ -511,14 +511,14 @@ static int getconnection ( char *xhostname,
 				if( UID_root ) (void)To_euid( euid );
 				plp_set_signal_mask( &oblock, 0 );
 				if( status < 0 ){
-					LOGERR(LOG_ERR) "getconnection: set SO_KEEPALIVE failed" );
+					logerr(LOG_ERR, "getconnection: set SO_KEEPALIVE failed" );
 				}
 			}
 		} while( ++port_number && status < 0 && ++port_count < range );
 		if( status < 0 ){
 			close( sock );
 			sock = LINK_OPEN_FAIL;
-			LOGERR(LOG_DEBUG) "getconnection: cannot bind to port");
+			logerr(LOG_DEBUG, "getconnection: cannot bind to port");
 			return( sock );
 		}
 	}
@@ -576,7 +576,7 @@ static int getconnection ( char *xhostname,
 		socklen_t len;
 		len = sizeof( src_sin );
 		if( getsockname( sock, (struct sockaddr *)&src_sin, &len ) < 0 ){
-			LOGERR_DIE(LOG_ERR)"getconnnection: getsockname failed" );
+			logerr_die(LOG_ERR, "getconnnection: getsockname failed" );
 		}
 		DEBUGF(DNW1)( "getconnection: sock %d, src ip %s, port %d", sock,
 			inet_ntoa( src_sin.sin_addr ), ntohs( src_sin.sin_port ) );
@@ -658,7 +658,7 @@ int Link_listen( char *port_name )
 				LookupHost_IP.fqdn, LookupHost_IP.h_addr_list.count );
 			sinaddr.sin_family = LookupHost_IP.h_addrtype;
 			if( LookupHost_IP.h_length > (int)sizeof( sinaddr.sin_addr ) ){
-				FATAL(LOG_ALERT) "getconnection: addresslength outsize value");
+				fatal(LOG_ALERT, "getconnection: addresslength outsize value");
 			}
 			/* use the first address in the list */
 			memcpy( &sinaddr.sin_addr,
@@ -667,7 +667,7 @@ int Link_listen( char *port_name )
 		} else if( inet_pton( AF_Protocol(), port_name, &sinaddr.sin_addr ) != 1 ){
 			*s = '%';
 			Errorcode = JABORT;
-			FATAL(LOG_ERR) "Link_listen: bad lpd_port value, cannot resolve IP address '%s'",
+			fatal(LOG_ERR, "Link_listen: bad lpd_port value, cannot resolve IP address '%s'",
 				port_name );
 		}
 		sinaddr.sin_port = Link_dest_port_num(s+1);
@@ -705,7 +705,7 @@ int Link_listen( char *port_name )
 	status = listen(sock, 64 );	/* backlog of 10 is inadequate */
 	err = errno;
 	if( status ){
-		LOGERR_DIE(LOG_ERR) "Link_listen: listen failed");
+		logerr_die(LOG_ERR, "Link_listen: listen failed");
 		(void)close( sock );
 		sock = -1;
 		err = errno;
@@ -751,7 +751,7 @@ int Unix_link_listen( char *unix_socket_path )
 	Max_open(sock);
 	if( sock < 0 ){
 		errno = err;
-		LOGERR_DIE(LOG_DEBUG) "Unix_link_listen: UNIX domain socket call failed");
+		logerr_die(LOG_DEBUG, "Unix_link_listen: UNIX domain socket call failed");
 	}
 
 	omask = umask(0);
@@ -775,7 +775,7 @@ int Unix_link_listen( char *unix_socket_path )
 	err = errno;
 	if( UID_root ) (void)To_euid( euid );
 	if( status ){
-		LOGERR_DIE(LOG_ERR) "Unix_link_listen: listen failed");
+		logerr_die(LOG_ERR, "Unix_link_listen: listen failed");
 		(void)close( sock );
 		sock = -1;
 		err = errno;
@@ -968,7 +968,7 @@ int Link_send( char *host, int *sock, int timeout,
 				FD_SET_FIX((fd_set *))0,
 				FD_SET_FIX((fd_set *))0, &delay );
 			if( i > 0 ){
-				LOGMSG( LOG_ERR)
+				logmsg( LOG_ERR,
 				"Link_send: PROTOCOL ERROR - pending input from '%s' after ACK received",
 				host );
 			}
@@ -1060,7 +1060,7 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 			FD_SET_FIX((fd_set *))0,
 			FD_SET_FIX((fd_set *))0, &delay );
 		if( i != 0 ){
-			LOGMSG( LOG_ERR)
+			logmsg( LOG_ERR,
 			"Link_copy: PROTOCOL ERROR - pending input from '%s' after transfer",
 			host );
 		}
@@ -1087,7 +1087,7 @@ int Link_dest_port_num( char *port )
 	if( port == 0 ) port = Lpd_port_DYN;
 	if( port == 0 ){
 		Errorcode = JABORT;
-		FATAL( LOG_ERR)
+		fatal( LOG_ERR,
 			"Link_dest_port_num: LOGIC ERROR! no port number!");
 	}
 	if( (s = strchr(port, '%')) ) port = s+1;
@@ -1405,7 +1405,7 @@ const char *Link_err_str (int n)
 	s = link_err[i].str;
 	if( s == 0 ){
 		s = buf;
-		(void) SNPRINTF (buf, sizeof(buf)) "link error %d", n);
+		(void) plp_snprintf(buf, sizeof(buf), "link error %d", n);
 	}
     return(s);
 }
@@ -1429,7 +1429,7 @@ const char *Ack_err_str (int n)
 	s = ack_err[i].str;
 	if( s == 0 ){
 		s = buf;
-		(void) SNPRINTF (buf, sizeof(buf)) "ack error %d", n);
+		(void) plp_snprintf(buf, sizeof(buf), "ack error %d", n);
 	}
     return(s);
 }
@@ -1463,7 +1463,7 @@ int AF_Protocol(void)
  int inet_pton( int family, const char *strptr, void *addr )
 {
 	if( family != AF_INET ){
-		FATAL(LOG_ERR) "inet_pton: bad family '%d'", family );
+		fatal(LOG_ERR, "inet_pton: bad family '%d'", family );
 	}
 #if defined(HAVE_INET_ATON)
 	return( inet_aton( strptr, addr ) );
@@ -1497,7 +1497,7 @@ int AF_Protocol(void)
 {
 	char *s;
 	if( family != AF_INET ){
-		FATAL(LOG_ERR) "inet_ntop: bad family '%d'", family );
+		fatal(LOG_ERR, "inet_ntop: bad family '%d'", family );
 	}
 	s = inet_ntoa(((struct in_addr *)addr)[0]);
 	mystrncpy( str, s, len );
@@ -1535,10 +1535,10 @@ const char *inet_ntop_sockaddr( struct sockaddr *addr,
 		|| addr->sa_family == AF_UNIX 
 #endif
 		){
-		SNPRINTF (str, len) "%s", Unix_socket_path_DYN );
+		plp_snprintf(str, len, "%s", Unix_socket_path_DYN );
 		return( str );
 	} else {
-		FATAL(LOG_ERR) "inet_ntop_sockaddr: bad family '%d'",
+		fatal(LOG_ERR, "inet_ntop_sockaddr: bad family '%d'",
 			addr->sa_family );
 	}
 	return( inet_ntop( addr->sa_family, a, str, len ) );

@@ -162,14 +162,14 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	DEBUG1("server_krb5_auth: keytab '%s', service '%s', principal '%s', sock %d, file '%s'",
 		keytabfile, service, server_principal, sock, file );
 	if( !keytabfile ){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"no server keytab file",
 			Is_server?"on server":"on client" );
 		retval = 1;
 		goto done;
 	}
 	if( (fd = Checkread(keytabfile,&statb)) == -1 ){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"cannot open server keytab file '%s' - %s",
 			Is_server?"on server":"on client",
 			keytabfile,
@@ -180,14 +180,14 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	close(fd);
 	err[0] = 0;
 	if ((retval = krb5_init_context(&context))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_init_context failed - '%s' ",
 			Is_server?"on server":"on client",
 			error_message(retval) );
 		goto done;
 	}
 	if( keytab == 0 && (retval = krb5_kt_resolve(context, keytabfile, &keytab) ) ){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_kt_resolve failed - file %s '%s'",
 			Is_server?"on server":"on client",
 			keytabfile,
@@ -196,7 +196,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	}
 	if(server_principal){
 		if ((retval = krb5_parse_name(context,server_principal, &server))){
-			SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"when parsing name '%s'"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -206,7 +206,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	} else {
 		if ((retval = krb5_sname_to_principal(context, NULL, service,
 						 KRB5_NT_SRV_HST, &server))){
-			SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 				"krb5_sname_to_principal failed - service %s '%s'",
 				Is_server?"on server":"on client",
 				service, error_message(retval));
@@ -214,7 +214,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 		}
 	}
 	if((retval = krb5_unparse_name(context, server, &cname))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_unparse_name failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -227,7 +227,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 				   0,   /* no flags */
 				   keytab,  /* default keytab is NULL */
 				   &ticket))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_recvauth '%s' failed '%s'",
 			Is_server?"on server":"on client",
 			cname, error_message(retval));
@@ -237,7 +237,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	/* Get client name */
 	if((retval = krb5_unparse_name(context, 
 		ticket->enc_part2->client, &cname))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_unparse_name failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -247,7 +247,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	DEBUG1( "server_krb5_auth: client '%s'", cname );
 	/* initialize the initial vector */
 	if((retval = krb5_auth_con_initivector(context, auth_context))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_auth_con_initvector failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -259,7 +259,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	if((retval = krb5_auth_con_genaddrs(context, auth_context, sock,
 		KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR |
 			KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR))){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"krb5_auth_con_genaddr failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -272,7 +272,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 	fd = Checkwrite( file, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 	DEBUG1( "server_krb5_auth: opened for write '%s', fd %d", file, fd );
 	if( fd < 0 ){
-		SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 			"file open failed: %s",
 			Is_server?"on server":"on client",
 			Errormsg(errno));
@@ -290,7 +290,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 			}
 			if((retval = krb5_rd_priv(context,auth_context,
 				&inbuf,&outbuf,NULL))){
-				SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 					"krb5_rd_priv failed: %s",
 					Is_server?"on server":"on client",
 					error_message(retval));
@@ -299,7 +299,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 			}
 			status = Write_fd_len( fd, outbuf.data, outbuf.length );
 			if( status < 0 ){
-				SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 					"write to file failed: %s",
 					Is_server?"on server":"on client",
 					Errormsg(errno));
@@ -315,7 +315,7 @@ static int server_krb5_auth( char *keytabfile, char *service, char *server_princ
 		char buffer[SMALLBUFFER];
 		while( (retval = ok_read( sock, buffer, sizeof(buffer))) > 0 ){
 			if( Write_fd_len( fd, buffer, retval ) < 0 ){
-				SNPRINTF( err, errlen) "%s server_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_auth failed - "
 					"write to file failed: %s",
 					Is_server?"on server":"on client",
 					Errormsg(errno));
@@ -359,7 +359,7 @@ static int server_krb5_status( int sock, char *err, int errlen, char *file, int 
 
 	fd = Checkread( file, &statb );
 	if( fd < 0 ){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"file open failed: %s", Errormsg(errno));
 		retval = 1;
 		goto done;
@@ -374,7 +374,7 @@ static int server_krb5_status( int sock, char *err, int errlen, char *file, int 
 			DEBUG4("server_krb5_status: sending '%s'", buffer );
 			if((retval = krb5_mk_priv(context,auth_context,
 				&inbuf,&outbuf,NULL))){
-				SNPRINTF( err, errlen) "%s server_krb5_status failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_status failed - "
 					"krb5_mk_priv failed: %s",
 					Is_server?"on server":"on client",
 					error_message(retval));
@@ -383,7 +383,7 @@ static int server_krb5_status( int sock, char *err, int errlen, char *file, int 
 			}
 			DEBUG4("server_krb5_status: encoded length '%d'", outbuf.length );
 			if((retval= write_message(context,&sock,&outbuf))){
-				SNPRINTF( err, errlen) "%s server_krb5_status failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_status failed - "
 					"write_message failed: %s",
 					Is_server?"on server":"on client",
 					error_message(retval));
@@ -394,7 +394,7 @@ static int server_krb5_status( int sock, char *err, int errlen, char *file, int 
 			memset((char *)&outbuf, 0, sizeof(outbuf));
 		} else {
 			if( Write_fd_len( sock, buffer, retval ) < 0 ){
-				SNPRINTF( err, errlen) "%s server_krb5_status failed - "
+				plp_snprintf( err, errlen, "%s server_krb5_status failed - "
 					"write_message failed: %s",
 					Is_server?"on server":"on client",
 					Errormsg(errno));
@@ -482,7 +482,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	options |= KRB5_DEFAULT_OPTIONS;
 
 	if ((retval = krb5_init_context(&context))){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"%s krb5_init_context failed - '%s' ",
 			Is_server?"on server":"on client",
 			error_message(retval) );
@@ -490,7 +490,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 #if 0
 	if (!valid_cksumtype(CKSUMTYPE_CRC32)) {
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"valid_cksumtype CKSUMTYPE_CRC32 - %s",
 			error_message(KRB5_PROG_SUMTYPE_NOSUPP) );
 		retval = 1;
@@ -502,7 +502,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 
 	if(server_principal){
 		if ((retval = krb5_parse_name(context,server_principal, &server))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"when parsing name '%s'"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -519,7 +519,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			retval = krb5_sname_to_principal(context, NULL, service,
 							 KRB5_NT_SRV_HST, &server);
 		if (retval) {
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"when parsing service/host '%s'/'%s'"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -529,7 +529,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 
 	if((retval = krb5_unparse_name(context, server, &sname))){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			" krb5_unparse_name of 'server' failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -542,7 +542,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	if( keytabfile ){
 		if ((retval = krb5_sname_to_principal(context, NULL, service, 
 			 KRB5_NT_SRV_HST, &client))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"when parsing name '%s'"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -551,7 +551,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		}
 		if(cname)free(cname); cname = 0;
 		if((retval = krb5_unparse_name(context, client, &cname))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"krb5_unparse_name of 'me' failed: %s",
 				Is_server?"on server":"on client",
 				error_message(retval));
@@ -560,7 +560,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		DEBUG1("client_krb5_auth: client '%s'", cname );
 		my_creds.client = client;
 		if((retval = krb5_kt_resolve(context, keytabfile, &keytab))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			 "resolving keytab '%s'"
 			" '%s' - ",
 			Is_server?"on server":"on client",
@@ -568,7 +568,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			goto done;
 		}
 		if ((retval = krb5_timeofday(context, &now))) {
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			 "getting time of day"
 			" - '%s'",
 			Is_server?"on server":"on client",
@@ -576,7 +576,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			goto done;
 		}
 		if( life && (retval = krb5_string_to_deltat(life, &lifetime)) ){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"bad lifetime value '%s'"
 			" '%s' - ",
 			Is_server?"on server":"on client",
@@ -586,7 +586,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		if( renew_time ){
 			options |= KDC_OPT_RENEWABLE;
 			if( (retval = krb5_string_to_deltat(renew_time, &rlife))){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"bad renew time value '%s'"
 				" '%s' - ",
 				Is_server?"on server":"on client",
@@ -595,7 +595,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			}
 		}
 		if((retval = krb5_cc_default(context, &ccdef))) {
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"while getting default ccache"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -616,7 +616,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			/* stripped down version of krb5_mk_req */
 			if( (retval = krb5_tgt_gen(context,
 				ccdef, server, &outbuf, VALIDATE))) {
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"validating tgt"
 				" - %s",
 				Is_server?"on server":"on client",
@@ -629,7 +629,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			/* stripped down version of krb5_mk_req */
 			if( (retval = krb5_tgt_gen(context,
 				ccdef, server, &outbuf, RENEW))) {
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"renewing tgt"
 				" - %s",
 				Is_server?"on server":"on client",
@@ -640,7 +640,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 
 		if((retval = krb5_get_in_tkt_with_keytab(context, options, addrs,
 					0, 0, keytab, 0, &my_creds, 0))){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"while getting initial credentials"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -649,7 +649,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		}
 		/* update the credentials */
 		if( (retval = krb5_cc_initialize (context, ccdef, client)) ){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"when initializing cache"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -657,7 +657,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			goto done;
 		}
 		if( (retval = krb5_cc_store_cred(context, ccdef, &my_creds))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"while storing credentials"
 			" - %s",
 			Is_server?"on server":"on client",
@@ -672,13 +672,13 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			To_ruid( OriginalRUID );
 		}
 		if((retval = krb5_cc_default(context, &ccdef))){
-			SNPRINTF( err, errlen) "%s krb5_cc_default failed - %s",
+			plp_snprintf( err, errlen, "%s krb5_cc_default failed - %s",
 				Is_server?"on server":"on client",
 				error_message( retval ) );
 			goto done;
 		}
 		if((retval = krb5_cc_get_principal(context, ccdef, &client))){
-			SNPRINTF( err, errlen) "%s krb5_cc_get_principal failed - %s",
+			plp_snprintf( err, errlen, "%s krb5_cc_get_principal failed - %s",
 				Is_server?"on server":"on client",
 				error_message( retval ) );
 			goto done;
@@ -690,7 +690,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		}
 		if(cname)free(cname); cname = 0;
 		if((retval = krb5_unparse_name(context, client, &cname))){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"krb5_unparse_name of 'me' failed: %s",
 				Is_server?"on server":"on client",
 				error_message(retval));
@@ -704,7 +704,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	cksum_data.length = safestrlen(host);
 
 	if((retval = krb5_auth_con_init(context, &auth_context))){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"krb5_auth_con_init failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -714,7 +714,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	if((retval = krb5_auth_con_genaddrs(context, auth_context, sock,
 		KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR |
 		KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR))){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"krb5_auth_con_genaddr failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -730,19 +730,19 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 
 	if (retval){
 		if( err_ret == 0 ){
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"krb5_sendauth failed - %s",
 				Is_server?"on server":"on client",
 				error_message( retval ) );
 		} else {
-			SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+			plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 				"krb5_sendauth - mutual authentication failed - %*s",
 				Is_server?"on server":"on client",
 				err_ret->text.length, err_ret->text.data);
 		}
 		goto done;
 	} else if (rep_ret == 0) {
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"krb5_sendauth - did not do mutual authentication",
 			Is_server?"on server":"on client" );
 		retval = 1;
@@ -752,7 +752,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 	/* initialize the initial vector */
 	if((retval = krb5_auth_con_initivector(context, auth_context))){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"krb5_auth_con_initvector failed: %s",
 			Is_server?"on server":"on client",
 			error_message(retval));
@@ -767,7 +767,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 
 	fd = Checkread( file, &statb );
 	if( fd < 0 ){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"%s client_krb5_auth: could not open for reading '%s' - '%s'",
 			Is_server?"on server":"on client",
 			file,
@@ -782,14 +782,14 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			inbuf.length = len;
 			if((retval = krb5_mk_priv(context, auth_context, &inbuf,
 				&outbuf, NULL))){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"krb5_mk_priv failed: %s",
 					Is_server?"on server":"on client",
 					error_message(retval));
 				goto done;
 			}
 			if((retval = write_message(context, (void *)&sock, &outbuf))){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"write_message failed: %s",
 					Is_server?"on server":"on client",
 					error_message(retval));
@@ -799,7 +799,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 			FREE_KRB_DATA(context,outbuf,.data);
 		} else {
 			if(Write_fd_len(sock, buffer,len) < 0 ){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"write_message failed: %s",
 					Is_server?"on server":"on client",
 					Errormsg(errno));
@@ -808,7 +808,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		}
 	}
 	if( len < 0 ){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"client_krb5_auth: file read failed '%s' - '%s'", file,
 			Is_server?"on server":"on client",
 			Errormsg(errno) );
@@ -819,7 +819,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	fd = -1;
 	DEBUG1( "client_krb5_auth: file copy finished %s", file );
 	if( shutdown(sock, 1) == -1 ){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"shutdown failed '%s'",
 			Is_server?"on server":"on client",
 			Errormsg(errno) );
@@ -828,7 +828,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 	fd = Checkwrite( file, &statb, O_WRONLY|O_TRUNC, 1, 0 );
 	if( fd < 0 ){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"%s client_krb5_auth: could not open for writing '%s' - '%s'",
 			Is_server?"on server":"on client",
 			file,
@@ -840,7 +840,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 		while((retval = read_message( context,&sock,&inbuf))==0){
 			if((retval = krb5_rd_priv(context, auth_context, &inbuf,
 				&outbuf, NULL))){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"krb5_rd_priv failed - %s",
 					Is_server?"on server":"on client",
 					Errormsg(errno) );
@@ -848,7 +848,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 				goto done;
 			}
 			if(Write_fd_len(fd,outbuf.data,outbuf.length) < 0){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"write to '%s' failed - %s",
 					Is_server?"on server":"on client",
 					file, Errormsg(errno) );
@@ -861,7 +861,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	} else {
 		while( (retval = ok_read( sock, buffer, sizeof(buffer))) > 0 ){
 			if(Write_fd_len(fd,buffer,retval) < 0){
-				SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+				plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 					"write to '%s' failed - %s",
 					Is_server?"on server":"on client",
 					file, Errormsg(errno) );
@@ -874,7 +874,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	fd = Checkread( file, &statb );
 	err[0] = 0;
 	if( fd < 0 ){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"%s client_krb5_auth: could not open for reading '%s' - '%s'",
 				Is_server?"on server":"on client",
 				file,
@@ -884,7 +884,7 @@ static int client_krb5_auth( char *keytabfile, char *service, char *host,
 	}
 	DEBUG1( "client_krb5_auth: reopened for read %s, fd %d, size %0.0f", file, fd, (double)statb.st_size );
 	if( dup2(fd,sock) == -1){
-		SNPRINTF( err, errlen) "%s client_krb5_auth failed - "
+		plp_snprintf( err, errlen, "%s client_krb5_auth failed - "
 			"dup2(%d,%d) failed - '%s'",
 			Is_server?"on server":"on client",
 			fd, sock, Errormsg(errno) );
@@ -926,18 +926,18 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	DEBUG1("remote_principal_krb5: service '%s', host '%s'",
 		service, host );
 	if ((retval = krb5_init_context(&context))){
-		SNPRINTF( err, errlen) "%s '%s'",
+		plp_snprintf( err, errlen, "%s '%s'",
 			"krb5_init_context failed - '%s' ", error_message(retval) );
 		goto done;
 	}
 	if((retval = krb5_sname_to_principal(context, host, service,
 			 KRB5_NT_SRV_HST, &server))){
-		SNPRINTF( err, errlen) "krb5_sname_to_principal %s/%s failed - %s",
+		plp_snprintf( err, errlen, "krb5_sname_to_principal %s/%s failed - %s",
 			service, host, error_message(retval) );
 		goto done;
 	}
 	if((retval = krb5_unparse_name(context, server, &cname))){
-		SNPRINTF( err, errlen)
+		plp_snprintf( err, errlen,
 			"krb5_unparse_name failed - %s", error_message(retval));
 		goto done;
 	}
@@ -1043,13 +1043,13 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	if ((net_len <= 0) || (net_len > ENCBUFFERSIZE )) {
 		/* preposterous length; assume out-of-sync; only
 		   recourse is to close connection, so return 0 */
-		SNPRINTF( err, errlen) "des_read: "
+		plp_snprintf( err, errlen, "des_read: "
 			"read size problem");
 		return(-1);
 	}
 	if ((cc = Read_fd_len_timeout( transfer_timeout, fd, desinbuf.data, net_len)) != net_len) {
 		/* pipe must have closed, return 0 */
-		SNPRINTF( err, errlen) "des_read: "
+		plp_snprintf( err, errlen, "des_read: "
 		"Read error: length received %d != expected %d.",
 				(int)cc, (int)net_len);
 		return(-1);
@@ -1057,7 +1057,7 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	/* decrypt info */
 	if((cc = krb5_decrypt(context, desinbuf.data, (krb5_pointer) storage,
 						  net_len, eblock, 0))){
-		SNPRINTF( err, errlen) "des_read: "
+		plp_snprintf( err, errlen, "des_read: "
 			"Cannot decrypt data from network - %s", error_message(cc) );
 		return(-1);
 	}
@@ -1092,7 +1092,7 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	}
 	desoutbuf.length = krb5_encrypt_size(len, eblock->crypto_entry);
 	if (desoutbuf.length > ENCBUFFERSIZE ){
-		SNPRINTF( err, errlen) "des_write: "
+		plp_snprintf( err, errlen, "des_write: "
 		"Write size problem - wanted %d", desoutbuf.length);
 		return(-1);
 	}
@@ -1101,7 +1101,7 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 					   len,
 					   eblock,
 					   0))){
-		SNPRINTF( err, errlen) "des_write: "
+		plp_snprintf( err, errlen, "des_write: "
 		"Write encrypt problem. - %s", error_message(cc));
 		return(-1);
 	}
@@ -1111,12 +1111,12 @@ static int remote_principal_krb5( char *service, char *host, char *err, int errl
 	len_buf[2] = (len & 0xff00) >> 8;
 	len_buf[3] = (len & 0xff);
 	if( Write_fd_len(fd, len_buf, 4) < 0 ){
-		SNPRINTF( err, errlen) "des_write: "
+		plp_snprintf( err, errlen, "des_write: "
 		"Could not write len_buf - %s", Errormsg( errno ));
 		return(-1);
 	}
 	if(Write_fd_len(fd, desoutbuf.data,desoutbuf.length) < 0 ){
-		SNPRINTF( err, errlen) "des_write: "
+		plp_snprintf( err, errlen, "des_write: "
 		"Could not write data - %s", Errormsg(errno));
 		return(-1);
 	}
@@ -1231,7 +1231,7 @@ static char *krb4_err_str( int err )
 	for( i = 0; (s = krb4_errs[i].code) && err != krb4_errs[i].err; ++i );
 	if( s == 0 ){
 		static char msg[24];
-		SNPRINTF(msg,sizeof(msg))"UNKNOWN %d", err );
+		plp_snprintf(msg,sizeof(msg), "UNKNOWN %d", err );
 		s = msg;
 	}
 	return(s);
@@ -1266,19 +1266,19 @@ int Send_krb4_auth( struct job *job, int *sock,
 	}
 	if( !safestrchr( host, '.' ) ){
 		if( !(host = Find_fqdn(&LookupHost_IP, host)) ){
-			SETSTATUS(job) "cannot find FQDN for '%s'", host );
+			setstatus(job, "cannot find FQDN for '%s'", host );
 			return JFAIL;
 		}
 	}
 	DEBUG1("Send_krb4_auth: FQND host '%s'", host );
-	SETSTATUS(job) "sending krb4 auth to %s@%s",
+	setstatus(job, "sending krb4 auth to %s@%s",
 		RemotePrinter_DYN, host);
-	SNPRINTF(line, sizeof(line)) "%c%s\n", REQ_K4AUTH, RemotePrinter_DYN);
+	plp_snprintf(line, sizeof(line), "%c%s\n", REQ_K4AUTH, RemotePrinter_DYN);
 	status = Link_send(host, sock, connect_timeout, line,
 		safestrlen(line), &ack);
 	DEBUG1("Send_krb4_auth: krb4 auth request ACK status %d, ack %d", status, ack );
 	if( status ){
-		SETSTATUS(job) "Printer %s@%s does not support krb4 authentication",
+		setstatus(job, "Printer %s@%s does not support krb4 authentication",
 			RemotePrinter_DYN, host);
 		shutdown(*sock,1);
 		return JFAIL;
@@ -1290,7 +1290,7 @@ int Send_krb4_auth( struct job *job, int *sock,
 	DEBUG1("Send_krb4_auth: krb_sendauth status %d, '%s'",
 		status, krb4_err_str(status) );
 	if( status != KSUCCESS ){
-		SNPRINTF(errmsg, errlen) "krb4 authentication failed to %s@%s - %s",
+		plp_snprintf(errmsg, errlen, "krb4 authentication failed to %s@%s - %s",
 			RemotePrinter_DYN, host, krb4_err_str(status));
 		shutdown(*sock,1);
 		return JFAIL;
@@ -1303,12 +1303,12 @@ int Send_krb4_auth( struct job *job, int *sock,
 		status = LINK_ACK_FAIL;
 	}
 	if(status){
-		SNPRINTF(errmsg, errlen) "cannot read status from %s@%s - %s",
+		plp_snprintf(errmsg, errlen, "cannot read status from %s@%s - %s",
 			RemotePrinter_DYN, host, krb4_err_str(status));
 		shutdown(*sock,1);
 		return JFAIL;
 	} else {
-		SETSTATUS(job)"krb4 authentication succeeded to %s@%s",
+		setstatus(job, "krb4 authentication succeeded to %s@%s",
 			RemotePrinter_DYN, host);
 	}
 	return(status);
@@ -1370,7 +1370,7 @@ int Receive_k4auth( int *sock, char *input )
 	memset(&k4data, 0, sizeof(k4data));
 	if (getpeername(*sock, (struct sockaddr *) &faddr, &sin_len) <0) {
 	  	status = JFAIL;
-		SNPRINTF( error_msg, sizeof(error_msg)) 
+		plp_snprintf( error_msg, sizeof(error_msg),
 			      "Receive_k4auth: couldn't get peername" );
 		goto error;
 	}
@@ -1380,7 +1380,7 @@ int Receive_k4auth( int *sock, char *input )
 			Send_query_rw_timeout_DYN,"",1,0 );
 	if( status ){
 		ack = ACK_FAIL;
-		SNPRINTF( error_msg, sizeof(error_msg))
+		plp_snprintf( error_msg, sizeof(error_msg),
 			      "Receive_k4auth: sending ACK 0 failed" );
 		goto error;
 	}
@@ -1404,7 +1404,7 @@ int Receive_k4auth( int *sock, char *input )
 	if (k4error != KSUCCESS) {
 		/* erroring out here if the auth failed. */
 	  	status = JFAIL;
-		SNPRINTF( error_msg, sizeof(error_msg))
+		plp_snprintf( error_msg, sizeof(error_msg),
 		    "kerberos 4 receive authentication failed - '%s'",
 			krb_err_txt[k4error] );
 	  	goto error;
@@ -1417,10 +1417,10 @@ int Receive_k4auth( int *sock, char *input )
 	/* Okay, we got auth.  Note it. */
 
 	if (k4instance[0]) {
-		SNPRINTF( k4name, sizeof(k4name)) "%s.%s@%s", k4principal,
+		plp_snprintf( k4name, sizeof(k4name), "%s.%s@%s", k4principal,
 			      k4instance, k4realm );
 	} else {
-		SNPRINTF( k4name, sizeof(k4name)) "%s@%s", k4principal, k4realm );
+		plp_snprintf( k4name, sizeof(k4name), "%s@%s", k4principal, k4realm );
 	}
 	DEBUG1("Receive_k4auth: auth for %s", k4name);
 	Perm_check.authtype = "kerberos4";
@@ -1437,7 +1437,7 @@ int Receive_k4auth( int *sock, char *input )
 			Send_query_rw_timeout_DYN,"",1,0 );
 	if( status ){
 		ack = ACK_FAIL;
-		SNPRINTF(error_msg, sizeof(error_msg))
+		plp_snprintf(error_msg, sizeof(error_msg),
 			     "Receive_k4auth: sending ACK 0 failed" );
 		goto error;
 	}
@@ -1452,10 +1452,10 @@ int Receive_k4auth( int *sock, char *input )
 		cleanup(0);
     }
     if( status ){
-        LOGERR_DIE(LOG_DEBUG) "Receive_k4auth: cannot read request" );
+        logerr_die(LOG_DEBUG, "Receive_k4auth: cannot read request" );
     }
     if( len < 3 ){
-        FATAL(LOG_INFO) "Receive_k4auth: bad request line '%s'", cmd );
+        fatal(LOG_INFO, "Receive_k4auth: bad request line '%s'", cmd );
     }
 	Free_line_list(&values);
     Dispatch_input(sock,cmd,ShortRemote_FQDN);
@@ -1509,25 +1509,25 @@ static int Krb5_receive_work( int *sock,
 	}
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Krb5_receive_work: ACK 0 write errmsg - %s",
+		plp_snprintf( errmsg, errlen, "Krb5_receive_work: ACK 0 write errmsg - %s",
 			Errormsg(errno) );
 	} else if( (status = server_krb5_auth( keytab, service, principal, *sock,
 		&from, errmsg, errlen, tempfile, use_crypt_transfer )) ){
 		if( errmsg[0] == 0 ){
-			SNPRINTF( errmsg, errlen) "Krb5_receive_work: server_krb5_auth failed - no reason given" );
+			plp_snprintf( errmsg, errlen, "Krb5_receive_work: server_krb5_auth failed - no reason given" );
 		}
 	} else {
 		DEBUGF(DRECV1)("Krb5_receive_work: from '%s'", from );
 		Set_str_value( header_info, FROM, from );
 		status = do_secure_work( jobsize, from_server, tempfile, header_info );
 		if( server_krb5_status( *sock, errmsg, errlen, tempfile, use_crypt_transfer ) ){
-			SNPRINTF( errmsg, errlen) "Krb5_receive_work: status send failed - '%s'",
+			plp_snprintf( errmsg, errlen, "Krb5_receive_work: status send failed - '%s'",
 				errmsg );
 		}
 	}
 #if 0
 	if( *errmsg ){
-		LOGMSG(LOG_INFO)"%s", errmsg );
+		logmsg(LOG_INFO, "%s", errmsg );
 	}
 #endif
 	if( from ) free(from); from = 0;
@@ -1599,13 +1599,13 @@ static int Krb5_send_work( int *sock,
 	life = renew = 0;
 	if( Is_server ){
 		if( !(keyfile = Find_str_value(info,"keytab")) ){
-			SNPRINTF( error, errlen) "no server keytab file" );
+			plp_snprintf( error, errlen, "no server keytab file" );
 			status = JFAIL;
 			goto error;
 		}
 		DEBUG1("Krb5_send_work: keyfile '%s'", keyfile );
 		if( (fd = Checkread(keyfile,&statb)) == -1 ){
-			SNPRINTF( error, errlen)
+			plp_snprintf( error, errlen,
 				"cannot open server keytab file - %s",
 				Errormsg(errno) );
 			status = JFAIL;
@@ -1631,7 +1631,7 @@ static int Krb5_send_work( int *sock,
 	DEBUG1("Krb5_send_work: client_krb5_auth returned '%d' - error '%s'",
 		status, error );
 	if( status && error[0] == 0 ){
-		SNPRINTF( error, errlen)
+		plp_snprintf( error, errlen,
 		"krb5 authenticated transfer to remote host failed");
 	}
 #if 0
@@ -1642,7 +1642,7 @@ static int Krb5_send_work( int *sock,
 			error[0] = ' ';
 		}
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
-			SNPRINTF(error,errlen)
+			plp_snprintf(error,errlen,
 			"Krb5_send_work: open '%s' for write failed - %s",
 				tempfile, Errormsg(errno));
 		}

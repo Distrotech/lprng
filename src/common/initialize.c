@@ -89,13 +89,13 @@ void Initialize(int argc,  char *argv[], char *envp[], int debugchar )
 		functions,  as they may open a socket and leave it open.
 	*/
 	if( (fd = open( "/dev/null", O_RDWR, 0600 )) < 0 ){
-		LOGERR_DIE(LOG_CRIT) "Initialize: cannot open '/dev/null'" );
+		logerr_die(LOG_CRIT, "Initialize: cannot open '/dev/null'" );
 	}
 	Max_open(fd);
 	DEBUG1("Initialize: /dev/null fd %d", fd );
 	if( Is_server ) while( fd < 5 ){
 		if( (fd = dup(fd)) < 0 ){
-			LOGERR_DIE(LOG_CRIT) "Initialize: main cannot dup '/dev/null'" );
+			logerr_die(LOG_CRIT, "Initialize: main cannot dup '/dev/null'" );
 		}
 		Max_open(fd);
 	}
@@ -166,7 +166,7 @@ void Setup_configuration()
 		dmalloc_outfile_fd = open( dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		Max_open(dmalloc_outfile_fd);
 	}
-	SNPRINTF(buffer,sizeof(buffer))"*** Setup_configuration: pid %d\n", getpid() );
+	plp_snprintf(buffer,sizeof(buffer), "*** Setup_configuration: pid %d\n", getpid() );
 	Write_fd_str(dmalloc_outfile_fd,buffer);
 	DEBUG1("Setup_configuration: dmalloc_outfile fd %d", dmalloc_outfile_fd);
 #endif
@@ -308,7 +308,7 @@ static char *Get_user_information( void )
 	if( name == 0 ) name = getenv( "LOGNAME" );
 	if( name == 0 ) name = getenv( "USER" );
 	if( name == 0 ){
-		SNPRINTF( uid_msg, sizeof(uid_msg)) "UID_%ld", (long)uid );
+		plp_snprintf( uid_msg, sizeof(uid_msg), "UID_%ld", (long)uid );
 		name = uid_msg;
 	}
 	name = safestrdup(name,__FILE__,__LINE__);

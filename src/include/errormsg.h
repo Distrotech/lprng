@@ -9,10 +9,6 @@
 #ifndef _ERRORMSG_H_
 #define _ERRORMSG_H_ 1
 
-#define LOGMSG(X) logmsg(X,
-#define FATAL(X) fatal(X,
-#define LOGERR(X) logerr(X,
-#define LOGERR_DIE(X) logerr_die(X,
 #define LOGDEBUG logDebug
 #define DIEMSG Diemsg
 #define WARNMSG Warnmsg

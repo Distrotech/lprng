@@ -861,9 +861,6 @@ extern int innetgr(const char *netgroup,
 # define PRINTF safeprintf
 # define STDOUT 1
 # define STDERR 2
-# define SNPRINTF(X,Y) plp_snprintf(X,Y,
-# define VSNPRINTF(X,Y) plp_vsnprintf(X,Y,
-# define SETSTATUS(X) setstatus(X,
 
 #ifdef __GNUC__
 # define PRINTFATTR(fmtofs,dotsofs) __attribute__ ((format (printf, fmtofs, dotsofs)))

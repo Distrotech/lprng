@@ -628,10 +628,10 @@ void Get_parms(int argc, char *argv[] )
 
 	cmd[0] = format;
 	cmd[1] = 0;
-	SNPRINTF(cmd+1, sizeof(cmd)-1, RemotePrinter_DYN);
+	plp_snprintf(cmd+1, sizeof(cmd)-1, RemotePrinter_DYN, ;
 	for( i = 0; options[i]; ++i ){
 		n = safestrlen(cmd);
-		SNPRINTF(cmd+n,sizeof(cmd)-n," %s",options[i] );
+		plp_snprintf(cmd+n,sizeof(cmd)-n," %s",options[i] , ;
 	}
 	Perm_check.remoteuser = "papowell";
 	Perm_check.user = "papowell";

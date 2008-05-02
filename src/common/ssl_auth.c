@@ -104,7 +104,7 @@ static const char * Error_SSL_name( int i );
 	DEBUG1("Password_callback: returning '%s'", password_value);
 	if( safestrlen( password_value ) >= len ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR) "Passwd_callback: password len %d longer then max len %d",
+		fatal(LOG_ERR, "Passwd_callback: password len %d longer then max len %d",
 			safestrlen(password_value), len );
 	}
 	mystrncpy(pass,password_value,len);
@@ -140,7 +140,7 @@ static char *Set_ERR_str( char *header, char *errmsg, int errlen )
 		ERR_error_string_n( e, errmsg+n, errlen -n );
 		if( ERR_peek_error() ){
 			n = strlen(errmsg);
-			SNPRINTF(errmsg+n,errlen-n) "\n");
+			plp_snprintf(errmsg+n,errlen-n, "\n");
 		}
 	}
 	return( errmsg );
@@ -159,7 +159,7 @@ static char *Set_ERR_str( char *header, char *errmsg, int errlen )
 	struct stat statb;
 	if( env ) s = getenv(env);
 	if( !s ){
-		SNPRINTF(buf,maxlen) "%s/%s", homedir, file );
+		plp_snprintf(buf,maxlen, "%s/%s", homedir, file );
 		s = buf;
 		while( s && (s = strchr(s,'/')) ){
 			if( cval(s+1) == '/' ){
@@ -172,7 +172,7 @@ static char *Set_ERR_str( char *header, char *errmsg, int errlen )
 	}
 	if( s && stat(s,&statb) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)
+		fatal(LOG_ERR,
 			"getuservals: cannot stat '%s' - %s",
 			s, Errormsg(errno) );
 	}
@@ -223,12 +223,12 @@ static int SSL_Initialize_ctx(
 		if( file ){
 			if( (fd = Checkread( file, &statb )) < 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot open server_password_file '%s'",
+				logerr_die(LOG_ERR, "SSL_initialize: cannot open server_password_file '%s'",
 					file );
 			}
 			if( (n = ok_read(fd, password_value, sizeof(password_value)-1)) < 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot read server_password_file '%s'",
+				logerr_die(LOG_ERR, "SSL_initialize: cannot read server_password_file '%s'",
 					file );
 			}
 			password_value[n] = 0;
@@ -236,7 +236,7 @@ static int SSL_Initialize_ctx(
 			n = strlen(password_value);
 			if( n == 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "SSL_initialize: zero length server_password_file '%s'",
+				logerr_die(LOG_ERR, "SSL_initialize: zero length server_password_file '%s'",
 					file );
 			}
 		}
@@ -244,7 +244,7 @@ static int SSL_Initialize_ctx(
 		struct passwd *pw;
 		char *homedir;
 		if( (pw = getpwuid( getuid())) == 0 ){
-			LOGERR_DIE(LOG_INFO) "setup_envp: getpwuid(%d) failed", getuid());
+			logerr_die(LOG_INFO, "setup_envp: getpwuid(%d) failed", getuid());
 		}
 		homedir = pw->pw_dir;
 		mycert = getuservals("LPR_SSL_FILE",homedir, ".lpr/client.crt", certbuf,sizeof(certbuf));
@@ -254,7 +254,7 @@ static int SSL_Initialize_ctx(
 		if( fd > 0 ){
 			if( (n = ok_read(fd, password_value, sizeof(password_value)-1)) < 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "SSL_initialize: cannot read server_password_file '%s'",
+				logerr_die(LOG_ERR, "SSL_initialize: cannot read server_password_file '%s'",
 					file );
 			}
 			password_value[n] = 0;
@@ -271,13 +271,13 @@ static int SSL_Initialize_ctx(
 	if( certpath && stat(certpath,&statb) ) cp = 0;
 	if( certfile && stat(certfile,&statb) ) cf = 0;
 	if( cf == 0 && cp == 0 ){
-		SNPRINTF( errmsg,errlen)
+		plp_snprintf( errmsg,errlen,
 			"SSL_initialize: Missing both CA file '%s' and CA path '%s'", certfile, certpath );
 		return -1;
 	}
 	if( !SSL_CTX_load_verify_locations(ctx, cf, cp) ){
 		DEBUG1("SSL_Initialize_ctx: verify locations failed");
-		SNPRINTF( header,sizeof(header))
+		plp_snprintf( header,sizeof(header),
 			"SSL_initialize: Bad CA file '%s' or CA path '%s'", cf, cp );
 		Set_ERR_str( header, errmsg, errlen );
 		return(-1);
@@ -299,19 +299,19 @@ static int SSL_Initialize_ctx(
     SSL_CTX_set_default_passwd_cb(ctx, Password_callback);
 	if( (cp = mycert) && stat(mycert,&statb) ) cp = 0;
 	if( Is_server && !cp ){
-		SNPRINTF( errmsg,errlen)
+		plp_snprintf( errmsg,errlen,
 			"SSL_initialize: Missing cert file '%s'", mycert );
 		return -1;
 	}
 	if( cp ){
 		if( !SSL_CTX_use_certificate_chain_file(ctx, mycert) ){
-			SNPRINTF( header,sizeof(header))
+			plp_snprintf( header,sizeof(header),
 				"SSL_initialize: can't read certificate file '%s'", mycert );
 			Set_ERR_str( header, errmsg, errlen );
 			return(-1);
 		}
 		if( !SSL_CTX_use_PrivateKey_file(ctx, mycert, SSL_FILETYPE_PEM) ){
-			SNPRINTF( header,sizeof(header))
+			plp_snprintf( header,sizeof(header),
 				"SSL_initialize: can't read private key in '%s'", mycert );
 			Set_ERR_str( header, errmsg, errlen );
 			return(-1);
@@ -436,7 +436,7 @@ static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 		case SSL_ERROR_NONE:
 			break;
 		default:
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 		 	"SSL_connect failed, err %d, SSL_get_error %d",
 				ret, SSL_get_error(ssl, ret) );
 			Set_ERR_str( buffer, errmsg, errlen );
@@ -452,7 +452,7 @@ static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 		X509_verify_cert_error_string(verify_result) );
 
 	if( verify_result != X509_V_OK ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 		 	"SSL_connect failed, peer certificat not verified: '%s'",
 				X509_verify_cert_error_string(verify_result) );
 		status = -1;
@@ -527,7 +527,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 			wait_for_read = wait_for_write = 0;
 			n = select( sock+1,&readfds, &writefds, &exceptfds, tm );
 			if( n == 0 ){
-				SNPRINTF(errmsg, errlen)
+				plp_snprintf(errmsg, errlen,
 				"Accept_SSL_connection: timeout");
 				status = -1;
 				goto done;
@@ -542,7 +542,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 			case SSL_ERROR_WANT_READ: wait_for_read = 1; break;
 			case SSL_ERROR_WANT_WRITE: wait_for_write = 1; break;
 			default:
-			SNPRINTF(buffer,sizeof(buffer))
+			plp_snprintf(buffer,sizeof(buffer),
 				"SSL_accept failed, err %d, SSL_get_error %d '%s'",
 					ret, n, Error_SSL_name(n) );
 				Set_ERR_str( buffer, errmsg, errlen );
@@ -558,7 +558,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 		X509_verify_cert_error_string(verify_result) );
 
 	if( verify_result != X509_V_OK ){
-		SNPRINTF(errmsg,errlen)
+		plp_snprintf(errmsg,errlen,
 		 	"SSL_connect failed, peer certificat not verified: '%s'",
 				X509_verify_cert_error_string(verify_result) );
 		status = -1;
@@ -601,7 +601,7 @@ static int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
 			case SSL_ERROR_WANT_WRITE:
 				break;
 			default:
-				SNPRINTF(buffer,sizeof(buffer))
+				plp_snprintf(buffer,sizeof(buffer),
 					"SSL_write failed, err %d, SSL_get_error %d",
 					n, SSL_get_error(ssl, n) );
 				Set_ERR_str( buffer, errmsg, errlen );
@@ -644,7 +644,7 @@ static int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
 				break;
 			default:
 				done = status = -1;
-				SNPRINTF(buffer,sizeof(buffer))
+				plp_snprintf(buffer,sizeof(buffer),
 					"SSL_read failed, err %d, SSL_get_error %d",
 					ret, SSL_get_error(ssl, ret) );
 				Set_ERR_str( buffer, errmsg, errlen );
@@ -680,7 +680,7 @@ static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
 			break;
 		default:
 			status = -1;
-			SNPRINTF(buffer,sizeof(buffer))
+			plp_snprintf(buffer,sizeof(buffer),
 				"SSL_read failed, err %d, SSL_get_error %d",
 				ret, SSL_get_error(ssl, ret) );
 			Set_ERR_str( buffer, errmsg, errlen );
@@ -712,7 +712,7 @@ static int Close_SSL_connection( int sock, SSL *ssl )
 				ret, SSL_get_error(ssl, ret) );
 		}
 		if( ret != 1 ){
-			SNPRINTF(buffer,sizeof(buffer))
+			plp_snprintf(buffer,sizeof(buffer),
 				"SSL_shutdown failed, err %d, SSL_get_error %d",
 				ret, SSL_get_error(ssl, ret) );
 		}
@@ -765,14 +765,14 @@ int Ssl_send( int *sock,
 	}
 
 	if( (tempfd = Checkread(tempfile,&statb)) < 0){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Ssl_send: open '%s' for read failed - %s",
 			tempfile, Errormsg(errno) );
 		status = JABORT;
 		goto t_error;
 	}
 	size = statb.st_size;
-	SNPRINTF(buffer,sizeof(buffer)) "%0.0f\n", size );
+	plp_snprintf(buffer,sizeof(buffer), "%0.0f\n", size );
 	DEBUG1("Ssl_send: writing '%s'", buffer );
 	if( Write_SSL_connection( transfer_timeout, ssl, buffer, strlen(buffer), errmsg, errlen) ){
 		status = JFAIL;
@@ -789,7 +789,7 @@ int Ssl_send( int *sock,
 		}
 	}
 	if( len < 0 ){
-		SNPRINTF(errmsg, errlen)
+		plp_snprintf(errmsg, errlen,
 			"Ssl_send: read from '%s' failed - %s", tempfile, Errormsg(errno) );
 		status = JFAIL;
 		goto t_error;
@@ -798,7 +798,7 @@ int Ssl_send( int *sock,
 	close(tempfd); tempfd = -1;
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)
+		fatal(LOG_ERR,
 			"Ssl_send: open '%s' for write failed - %s",
 			tempfile, Errormsg(errno) );
 	}
@@ -824,7 +824,7 @@ int Ssl_send( int *sock,
 		buffer[len] = 0;
 		DEBUG1("Ssl_send: rcvd %d bytes '%s'", len, buffer);
 		if( write(tempfd,buffer,len) != len ){
-			SNPRINTF(errmsg, errlen)
+			plp_snprintf(errmsg, errlen,
 				"Ssl_send: write to '%s' failed - %s", tempfile, Errormsg(errno) );
 			status = JABORT;
 			goto error;
@@ -840,7 +840,7 @@ int Ssl_send( int *sock,
 	close(tempfd); tempfd = -1;
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0){
 		Errorcode = JFAIL;
-		FATAL(LOG_ERR)
+		fatal(LOG_ERR,
 			"Ssl_send: open '%s' for write failed - %s",
 			tempfile, Errormsg(errno) );
 	}
@@ -882,7 +882,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	tempfd = -1;
 	if( Write_fd_len( *sock, "", 1 ) < 0 ){
 		status = JABORT;
-		SNPRINTF( errmsg, errlen) "Ssl_receive: ACK 0 write error - %s",
+		plp_snprintf( errmsg, errlen, "Ssl_receive: ACK 0 write error - %s",
 			Errormsg(errno) );
 		goto error;
 	}
@@ -900,7 +900,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	/* open a file for the output */
 	if( (tempfd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Ssl_receive: open of '%s' for write failed",
+		logerr_die(LOG_INFO, "Ssl_receive: open of '%s' for write failed",
 			tempfile );
 	}
 
@@ -922,7 +922,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 		DEBUGF(DRECV1)("Ssl_receive: rcvd '%d' '%s'", len, buffer );
 		if( write( tempfd,buffer,len ) != len ){
 			status = JFAIL;
-			LOGERR_DIE(LOG_ERR)
+			logerr_die(LOG_ERR,
 				"Ssl_receive: bad write to '%s' - '%s'",
 					tempfile, Errormsg(errno) );
 		}
@@ -944,11 +944,11 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	DEBUGF(DRECV1)("Ssl_receive: doing reply" );
 	if( (tempfd = Checkread(tempfile,&statb)) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Ssl_receive: reopen of '%s' for write failed",
+		logerr_die(LOG_INFO, "Ssl_receive: reopen of '%s' for write failed",
 			tempfile );
 	}
 	size = statb.st_size;
-	SNPRINTF(buffer,sizeof(buffer)) "%0.0f\n", size );
+	plp_snprintf(buffer,sizeof(buffer), "%0.0f\n", size );
 	DEBUG1("Ssl_receive: writing '%s'", buffer );
 	if( Write_SSL_connection( transfer_timeout, ssl, buffer, strlen(buffer), errmsg, errlen) ){
 		status = JFAIL;
@@ -965,7 +965,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 	}
 	if( n < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Ssl_receive: read of '%s'",
+		logerr_die(LOG_INFO, "Ssl_receive: read of '%s'",
 			tempfile );
 	}
 	DEBUGF(DRECV1)("Ssl_receive: reply done" );
@@ -974,7 +974,7 @@ int Ssl_receive( int *sock, int transfer_timeout,
 
  error:
 
-	FATAL(LOG_ERR) "Ssl_receive: %s", errmsg );
+	fatal(LOG_ERR, "Ssl_receive: %s", errmsg );
 	return(status);
 }
 

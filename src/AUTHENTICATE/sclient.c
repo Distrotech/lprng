@@ -130,15 +130,15 @@ char *argv[];
 	}
 	fflush(STDOUT);
 	fflush(STDERR);
-	SNPRINTF(msg, sizeof(msg))"starting read from %d\n", sock );
+	plp_snprintf(msg, sizeof(msg), "starting read from %d\n", sock );
 	write(1,msg, safestrlen(msg) );
 	while( (c = read( sock, buffer, sizeof(buffer) ) ) > 0 ){
 		buffer[c] = 0;
-		SNPRINTF(msg, sizeof(msg))
+		plp_snprintf(msg, sizeof(msg),
 			"read %d from fd %d '%s'\n", c, sock, buffer );
 		write( 1, msg, safestrlen(msg) );
 	}
-	SNPRINTF(msg, sizeof(msg))
+	plp_snprintf(msg, sizeof(msg),
 		"last read status %d from fd %d\n", c, sock );
 	write( 1, msg, safestrlen(msg) );
     return(0);
@@ -164,7 +164,7 @@ void setstatus (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}
@@ -194,7 +194,7 @@ void setmessage (va_alist) va_dcl
 
 	msg[0] = 0;
 	if( Verbose ){
-		(void) VSNPRINTF( msg, sizeof(msg)-2) fmt, ap);
+		(void) plp_vsnprintf( msg, sizeof(msg)-2, fmt, ap);
 		strcat( msg,"\n" );
 		if( Write_fd_str( 2, msg ) < 0 ) cleanup(0);
 	}

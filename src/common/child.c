@@ -157,14 +157,14 @@ pid_t dofork( int new_process_group )
 # endif
 #endif
 		if( i < 0 ){
-			LOGERR_DIE(LOG_ERR) "dofork: %s failed", s );
+			logerr_die(LOG_ERR, "dofork: %s failed", s );
 		}
 #ifdef TIOCNOTTY
 		/* BSD: non-zero process group id, so it cannot get control terminal */
 		/* you MUST be able to turn off the control terminal this way */
 		if ((i = open ("/dev/tty", O_RDWR, 0600 )) >= 0) {
 			if( ioctl (i, TIOCNOTTY, (void *)0 ) < 0 ){
-				LOGERR_DIE(LOG_ERR) "dofork: TIOCNOTTY failed" );
+				logerr_die(LOG_ERR, "dofork: TIOCNOTTY failed" );
 			}
 			(void)close(i);
 		}
@@ -238,7 +238,7 @@ void Max_open( int fd )
 	if( fd > 0 ){
 #if 0
 		if( fd > Max_fd+10 ){
-			FATAL(LOG_ERR) "Max_open: fd %d and old Max_fd %d", fd, Max_fd);
+			fatal(LOG_ERR, "Max_open: fd %d and old Max_fd %d", fd, Max_fd);
 		}
 #endif
 		if( fd > Max_fd ) Max_fd = fd;
@@ -308,7 +308,7 @@ static void Dump_unfreed_mem(const char *title)
 {
 	char buffer[SMALLBUFFER];
 	buffer[0] = 0;
-	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %ld\n",
+	plp_snprintf(buffer,sizeof(buffer), "*** Dump_unfreed_mem: %s, pid %ld\n",
 		title, (long)getpid() );
 #if defined(DMALLOC)
 	{
@@ -319,7 +319,7 @@ static void Dump_unfreed_mem(const char *title)
 		dmalloc_outfile_fd = open( dmalloc_logpath,  O_WRONLY | O_CREAT | O_TRUNC, 0666);
 		Max_open( dmalloc_outfile_fd );
 	}
-	SNPRINTF(buffer,sizeof(buffer))"*** Dump_unfreed_mem: %s, pid %ld\n",
+	plp_snprintf(buffer,sizeof(buffer), "*** Dump_unfreed_mem: %s, pid %ld\n",
 		title, (long)getpid() );
 	Write_fd_str(dmalloc_outfile_fd, buffer );
 	if(Outbuf) free(Outbuf); Outbuf = 0;

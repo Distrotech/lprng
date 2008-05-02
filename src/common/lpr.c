@@ -154,18 +154,18 @@ int main(int argc, char *argv[], char *envp[])
 	if( job_size == 0 ){
 		Free_job(&prjob);
 		Errorcode = 1;
-		FATAL(LOG_INFO)_("nothing to print"));
+		fatal(LOG_INFO, _("nothing to print"));
 	}
 
 	if( Check_for_rg_group( Logname_DYN ) ){
 		Errorcode = 1;
-		FATAL(LOG_INFO)_("cannot use printer - not in privileged group\n") );
+		fatal(LOG_INFO, _("cannot use printer - not in privileged group\n") );
 	}
 
 	if( Remote_support_DYN ) uppercase( Remote_support_DYN );
 	if( safestrchr( Remote_support_DYN, 'R' ) == 0 ){
 		Errorcode = 1;
-		FATAL(LOG_INFO) _("no remote support for %s@%s"),
+		fatal(LOG_INFO, _("no remote support for %s@%s"),
 			RemotePrinter_DYN,RemoteHost_DYN );
 	}
 
@@ -176,7 +176,7 @@ int main(int argc, char *argv[], char *envp[])
 	n = Find_flag_value( &prjob.info,DATAFILE_COUNT);
 	if( Max_datafiles_DYN > 0 && n > Max_datafiles_DYN ){
 		Errorcode = 1;
-		FATAL(LOG_INFO) _("%d data files and maximum allowed %d"),
+		fatal(LOG_INFO, _("%d data files and maximum allowed %d"),
 					n, Max_datafiles_DYN );
 	}
 
@@ -218,7 +218,7 @@ int main(int argc, char *argv[], char *envp[])
 		tempfd = Checkread( tempfile, &statb );
 		if( tempfd < 0 ){
 			Errorcode = JABORT;
-			FATAL(LOG_INFO) _("Cannot open file '%s', %s"), tempfile, Errormsg( errno ) );
+			fatal(LOG_INFO, _("Cannot open file '%s', %s"), tempfile, Errormsg( errno ) );
 		}
 		close(tempfd);
 		DEBUG2("lpr: jobs size now %0.0f", (double)(statb.st_size));
@@ -246,7 +246,7 @@ int main(int argc, char *argv[], char *envp[])
 		int fd, pid, status_fd, poll_for_status;
 		char *id;
 
-		SETSTATUS(&prjob)"destination '%s'", send_to_pr );
+		setstatus(&prjob, "destination '%s'", send_to_pr );
 		Errorcode = 0;
 		fd = pid = status_fd = poll_for_status = 0;
 		fd = Printer_open(send_to_pr, &status_fd, &prjob,
@@ -260,7 +260,7 @@ int main(int argc, char *argv[], char *envp[])
 			goto exit;
 		}
 		id = Find_str_value(&prjob.info,IDENTIFIER);
-		SETSTATUS(&prjob)"transferring job '%s'", id );
+		setstatus(&prjob, "transferring job '%s'", id );
 		/* Print_job( output_device, status_device, job, timeout, poll_for_status, filter ) */
 		Set_str_value( &PC_entry_line_list, LP, s );
 		Errorcode = Print_job( fd, status_fd, &prjob, Send_job_rw_timeout_DYN, poll_for_status, User_filter_JOB );
@@ -280,7 +280,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( fd > 0 ) close( fd ); fd = -1;
 		if( status_fd > 0 ) close( status_fd ); status_fd = -1;
 		if( pid > 0 ){
-			SETSTATUS(&prjob)"waiting for printer filter to exit");
+			setstatus(&prjob, "waiting for printer filter to exit");
 			Errorcode = Wait_for_pid( pid, "LP", 0, Send_job_rw_timeout_DYN );
 		}
 		DEBUG1("lpr: status %s", Server_status(Errorcode) );
@@ -291,11 +291,11 @@ int main(int argc, char *argv[], char *envp[])
 			if( Errorcode ){
 				if(DEBUGL1)Dump_job("lpr - after error",&prjob);
 				buffer[0] = 0;
-				SNPRINTF(buffer,sizeof(buffer))
+				plp_snprintf(buffer,sizeof(buffer),
 					_("Status Information, attempt %d:\n"), attempt);
 				if( Lpr_send_try_DYN ){
 					n = strlen(buffer)-2;
-					SNPRINTF(buffer+n,sizeof(buffer)-n)
+					plp_snprintf(buffer+n,sizeof(buffer)-n,
 					_(" of %d:\n"), Lpr_send_try_DYN);
 				}
 				Write_fd_str(2,buffer);
@@ -308,7 +308,7 @@ int main(int argc, char *argv[], char *envp[])
 				n = Connect_interval_DYN + Connect_grace_DYN;
 				if( n > 0 ){
 					buffer[0] = 0;
-					SNPRINTF(buffer,sizeof(buffer))
+					plp_snprintf(buffer,sizeof(buffer),
 						_("Waiting %d seconds before retry\n"), n);
 					Write_fd_str(2,buffer);
 					plp_sleep( n );
@@ -328,11 +328,11 @@ int main(int argc, char *argv[], char *envp[])
 		Errorcode = 1;
 		if(DEBUGL1)Dump_job("lpr - after error",&prjob);
 		buffer[0] = 0;
-		SNPRINTF(buffer,sizeof(buffer))
+		plp_snprintf(buffer,sizeof(buffer),
 			_("Status Information, attempt %d:\n"), attempt);
 		if( Lpr_send_try_DYN ){
 			n = strlen(buffer)-2;
-			SNPRINTF(buffer+n,sizeof(buffer)-n)
+			plp_snprintf(buffer+n,sizeof(buffer)-n,
 			_(" of %d:\n"), Lpr_send_try_DYN);
 		}
 		s = Join_line_list(&Status_lines,"\n ");
@@ -348,10 +348,10 @@ int main(int argc, char *argv[], char *envp[])
 		char msg[SMALLBUFFER];
 		id = Find_str_value(&prjob.info,IDENTIFIER);
 		if( id ){
-			SNPRINTF(msg,sizeof(msg)-1)_("request id is %s\n"), id );
+			plp_snprintf(msg,sizeof(msg)-1, _("request id is %s\n"), id );
 		} else {
 			n = Find_decimal_value(&prjob.info,NUMBER);
-			SNPRINTF(msg,sizeof(msg)-1)_("request id is %d\n"), n );
+			plp_snprintf(msg,sizeof(msg)-1, _("request id is %d\n"), n );
 		}
 		Write_fd_str(1, msg );
 	}
@@ -371,7 +371,7 @@ int main(int argc, char *argv[], char *envp[])
 	}
 
 	if( Job_number ){
-		SNPRINTF(buffer,sizeof(buffer))_("Done %d\n"), Job_number);
+		plp_snprintf(buffer,sizeof(buffer), _("Done %d\n"), Job_number);
 		Write_fd_str(1,buffer);
 		++Job_number;
 		goto again;
@@ -804,7 +804,7 @@ static int Make_job( struct job *job )
 		_("Priority (first letter of Class) not 'A' (lowest) to 'Z' (highest)") );
 	}
 
-	SNPRINTF(nstr,sizeof(nstr))"%c",Priority_JOB);
+	plp_snprintf(nstr,sizeof(nstr), "%c",Priority_JOB);
 	Set_str_value(&job->info,PRIORITY,nstr);
 
 	/* fix up the Classname_JOB 'C' option */
@@ -813,7 +813,7 @@ static int Make_job( struct job *job )
 		if( Backwards_compatible_DYN ){
 			Classname_JOB = ShortHost_FQDN;
 		} else {
-			SNPRINTF(nstr,sizeof(nstr))"%c",Priority_JOB);
+			plp_snprintf(nstr,sizeof(nstr), "%c",Priority_JOB);
 			Classname_JOB = nstr;
 		}
 	}
@@ -895,7 +895,7 @@ static int Make_job( struct job *job )
 			}
 			if( (s = Find_fqdn( &LookupHost_IP, originate_hostname )) == 0 ){
 				Errorcode = JABORT;
-				FATAL(LOG_ERR) _("Get_local_host: '%s' FQDN name not found!"), originate_hostname );
+				fatal(LOG_ERR, _("Get_local_host: '%s' FQDN name not found!"), originate_hostname );
 			} else {
 				originate_hostname = s;
 			}
@@ -925,7 +925,7 @@ static int Make_job( struct job *job )
 		DIEMSG( _("Bad format specification '%c'"), Format_JOB );
 	}
 
-	SNPRINTF(nstr,sizeof(nstr))"%c",Format_JOB);
+	plp_snprintf(nstr,sizeof(nstr), "%c",Format_JOB);
 	Set_str_value(&job->info,FORMAT,nstr);
 	/* check to see how many files you want to print- limit of 52 */
 	if( Max_datafiles_DYN > 0 && Files.count > Max_datafiles_DYN ){
@@ -1023,7 +1023,7 @@ static int Make_job( struct job *job )
 			job->datafiles.list[job->datafiles.count++] = (void *) lp;
 			Set_str_value(lp,"N","(STDIN)");
 			Set_flag_value(lp,COPIES,1);
-			SNPRINTF(nstr,sizeof(nstr))"%c",Format_JOB);
+			plp_snprintf(nstr,sizeof(nstr), "%c",Format_JOB);
 			Set_str_value(lp,FORMAT,nstr);
 			Set_double_value(lp,SIZE,0 );
 			Set_str_value(lp,OPENNAME,"-");
@@ -1099,7 +1099,7 @@ static double Copy_STDIN( struct job *job )
 	fd = Make_temp_fd( &tempfile );
 
 	if( fd < 0 ){
-		LOGERR_DIE(LOG_INFO) _("Make_temp_fd failed") );
+		logerr_die(LOG_INFO, _("Make_temp_fd failed") );
 	} else if( fd == 0 ){
 		DIEMSG( _("You have closed STDIN! cannot pipe from a closed connection"));
 	}
@@ -1108,12 +1108,12 @@ static double Copy_STDIN( struct job *job )
 	while( (count = ok_read( 0, buffer, sizeof(buffer))) > 0 ){
 		if( write( fd, buffer, count ) < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_INFO) _("Copy_STDIN: write to temp file failed"));
+			logerr_die(LOG_INFO, _("Copy_STDIN: write to temp file failed"));
 		}
 	}
 	if( fstat( fd, &statb ) != 0 ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_INFO) _("Copy_STDIN: stat of temp fd '%d' failed"), fd);
+		logerr_die(LOG_INFO, _("Copy_STDIN: stat of temp fd '%d' failed"), fd);
 	}
 	printable = Check_lpr_printable( tempfile, fd, &statb, Format_JOB );
 	if( printable ){
@@ -1126,7 +1126,7 @@ static double Copy_STDIN( struct job *job )
 		Set_str_value(lp,OPENNAME,tempfile);
 		Set_str_value(lp,DFTRANSFERNAME,tempfile);
 		Set_flag_value(lp,COPIES,1);
-		SNPRINTF(buffer,sizeof(buffer))"%c",Format_JOB);
+		plp_snprintf(buffer,sizeof(buffer), "%c",Format_JOB);
 		Set_str_value(lp,FORMAT,buffer);
 		Set_double_value(lp,SIZE,size);
 	} else {
@@ -1169,7 +1169,7 @@ static double Check_files( struct job *job )
 		if( User_filter_JOB == 0 ){
 			if( fstat( fd, &statb ) != 0 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_INFO) _("Check_files: stat of temp fd '%d' failed"), fd);
+				logerr_die(LOG_INFO, _("Check_files: stat of temp fd '%d' failed"), fd);
 			}
 			printable = Check_lpr_printable( s, fd, &statb, Format_JOB );
 		}
@@ -1186,7 +1186,7 @@ static double Check_files( struct job *job )
 			Set_str_value(lp,"N",cs);
 			free(cs);
 			Set_flag_value(lp,COPIES,1);
-			SNPRINTF(buffer,sizeof(buffer))"%c",Format_JOB);
+			plp_snprintf(buffer,sizeof(buffer), "%c",Format_JOB);
 			Set_str_value(lp,FORMAT,buffer);
 			size = size + statb.st_size;
 			Set_double_value(lp,SIZE,(double)(statb.st_size) );

@@ -48,7 +48,7 @@ int Checkread( const char *file, struct stat *statb )
 
     if( status >= 0 && fstat( fd, statb ) < 0 ) {
 		err = errno;
-        LOGERR(LOG_ERR)
+        logerr(LOG_ERR,
 		"Checkread: fstat of '%s' failed, possible security problem", file);
         status = -1;
     }
@@ -120,7 +120,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 		/* turn off nonblocking */
 		mask = fcntl( fd, F_GETFL, 0 );
 		if( mask == -1 ){
-			LOGERR(LOG_ERR) "Checkwrite: fcntl F_GETFL of '%s' failed", file);
+			logerr(LOG_ERR, "Checkwrite: fcntl F_GETFL of '%s' failed", file);
 			status = -1;
 		} else if( mask & NONBLOCK ){
 			DEBUG3( "Checkwrite: F_GETFL value '0x%x', BLOCK 0x%x",
@@ -132,7 +132,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 				fcntl( fd, F_GETFL, 0 ) );
 			if( mask == -1 && err != ENODEV && err != ENOTTY ){
 				errno = err;
-				LOGERR(LOG_ERR) "Checkwrite: fcntl F_SETFL of '%s' failed",
+				logerr(LOG_ERR, "Checkwrite: fcntl F_SETFL of '%s' failed",
 					file );
 				status = -1;
 			}
@@ -141,7 +141,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 
     if( status >= 0 && fstat( fd, statb ) < 0 ) {
 		err = errno;
-        LOGERR_DIE(LOG_ERR) "Checkwrite: fstat of '%s' failed, possible security problem", file);
+        logerr_die(LOG_ERR, "Checkwrite: fstat of '%s' failed, possible security problem", file);
         status = -1;
     }
 
@@ -158,7 +158,7 @@ int Checkwrite( const char *file, struct stat *statb, int rw, int create,
 		Max_open(tfd);
 		err = errno;
 		if( tfd < 0 ){
-			LOGERR(LOG_ERR) "Checkwrite: dup of '%s' failed", file);
+			logerr(LOG_ERR, "Checkwrite: dup of '%s' failed", file);
 			status = -1;
 		} else {
 			close(fd);

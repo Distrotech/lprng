@@ -119,7 +119,7 @@ int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list 
 				Max_open(newfd);
 				if( newfd < 0 ){
 					Errorcode = JABORT;
-					LOGERR_DIE(LOG_INFO)"Make_lpd_call: dup failed");
+					logerr_die(LOG_INFO, "Make_lpd_call: dup failed");
 				}
 				DEBUG4("Make_lpd_call: fd [%d] = %d, dup2 -> %d",
 					i, fd, newfd );
@@ -139,7 +139,7 @@ int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list 
 		DEBUG2("Make_lpd_call: fd %d -> %d",fd, i );
 		if( dup2( fd, i ) == -1 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_INFO)"Make_lpd_call: dup2(%d,%d) failed",
+			logerr_die(LOG_INFO, "Make_lpd_call: dup2(%d,%d) failed",
 				fd, i );
 		}
 	}

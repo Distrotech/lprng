@@ -78,7 +78,7 @@ int Receive_secure( int *sock, char *input )
 	Split(&args,input+1,Whitespace,0,0,0,0,0,0);
 	DEBUGFC(DRECV1)Dump_line_list("Receive_secure - input", &args);
 	if( args.count != 5 && args.count != 4 ){
-		SNPRINTF( error+1, sizeof(error)-1)
+		plp_snprintf( error+1, sizeof(error)-1,
 			_("bad command line '%s'"), input );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		status = JFAIL;
@@ -110,7 +110,7 @@ int Receive_secure( int *sock, char *input )
 	/* set up the authentication support information */
 
 	if( Is_clean_name( printername ) ){
-		SNPRINTF( error+1, sizeof(error)-1)
+		plp_snprintf( error+1, sizeof(error)-1,
 			_("bad printer name '%s'"), input );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		status = JFAIL;
@@ -121,7 +121,7 @@ int Receive_secure( int *sock, char *input )
 
 	if( Setup_printer( printername, error+1, sizeof(error)-1, 0 ) ){
 		if( jobsize ){
-			SNPRINTF( error+1, sizeof(error)-1)
+			plp_snprintf( error+1, sizeof(error)-1,
 				_("bad printer '%s'"), printername );
 			ack = ACK_FAIL;	/* no retry, don't send again */
 			status = JFAIL;
@@ -163,14 +163,14 @@ int Receive_secure( int *sock, char *input )
 	}
 
 	if( !(security = Fix_receive_auth(authtype, &info)) ){
-		SNPRINTF( error+1, sizeof(error)-1)
+		plp_snprintf( error+1, sizeof(error)-1,
 			_("unsupported authentication '%s'"), authtype );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		status = JFAIL;
 		goto error;
 	}
 	if( !security->server_receive ){
-		SNPRINTF( error+1, sizeof(error)-1)
+		plp_snprintf( error+1, sizeof(error)-1,
 			_("no receive method supported for '%s'"), authtype );
 		ack = ACK_FAIL;	/* no retry, don't send again */
 		status = JFAIL;
@@ -185,21 +185,21 @@ int Receive_secure( int *sock, char *input )
 		DEBUGF(DRECV2)("Receive_secure: spooling_disabled %d",
 			Sp_disabled(&Spool_control) );
 		if( Sp_disabled(&Spool_control) ){
-			SNPRINTF( error+1, sizeof(error)-1)
+			plp_snprintf( error+1, sizeof(error)-1,
 				_("%s: spooling disabled"), Printer_DYN );
 			ack = ACK_RETRY;	/* retry */
 			status = JFAIL;
 			goto error;
 		}
 		if( Max_job_size_DYN > 0 && (read_len+1023)/1024 > Max_job_size_DYN ){
-			SNPRINTF( error+1, sizeof(error)-1)
+			plp_snprintf( error+1, sizeof(error)-1,
 				_("%s: job size %0.0f is larger than %d K"),
 				Printer_DYN, read_len, Max_job_size_DYN );
 			ack = ACK_RETRY;
 			status = JFAIL;
 			goto error;
 		} else if( !Check_space( read_len, Minfree_DYN, Spool_dir_DYN ) ){
-			SNPRINTF( error+1, sizeof(error)-1)
+			plp_snprintf( error+1, sizeof(error)-1,
 				_("%s: insufficient file space"), Printer_DYN );
 			ack = ACK_RETRY;
 			status = JFAIL;
@@ -264,7 +264,7 @@ static int Do_secure_work( char *jobsize, int from_server,
 	error[0] = 0;
 	if( (fd = Checkread(tempfile,&statb)) < 0 ){ 
 		status = JFAIL;
-		SNPRINTF( error, sizeof(error))
+		plp_snprintf( error, sizeof(error),
 			"Do_secure_work: reopen of '%s' failed - %s",
 				tempfile, Errormsg(errno));
 		goto error;
@@ -328,7 +328,7 @@ static int Do_secure_work( char *jobsize, int from_server,
 	if( jobsize ){
 		if( (fd = Checkread(tempfile, &statb) ) < 0 ){
 			status = JFAIL;
-			SNPRINTF( error, sizeof(error))
+			plp_snprintf( error, sizeof(error),
 				"Do_secure_work: reopen of '%s' for read failed - %s",
 					tempfile, Errormsg(errno));
 			goto error;
@@ -336,7 +336,7 @@ static int Do_secure_work( char *jobsize, int from_server,
 		status = Scan_block_file( fd, error, sizeof(error), header_info );
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
-			SNPRINTF( error, sizeof(error))
+			plp_snprintf( error, sizeof(error),
 				"Do_secure_work: reopen of '%s' for write failed - %s",
 					tempfile, Errormsg(errno));
 			goto error;
@@ -344,7 +344,7 @@ static int Do_secure_work( char *jobsize, int from_server,
 	} else {
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			status = JFAIL;
-			SNPRINTF( error, sizeof(error))
+			plp_snprintf( error, sizeof(error),
 				"Do_secure_work: reopen of '%s' for write failed - %s",
 					tempfile, Errormsg(errno));
 			goto error;
@@ -364,7 +364,7 @@ static int Do_secure_work( char *jobsize, int from_server,
 			tempfile, error );
 		if( (fd = Checkwrite(tempfile,&statb,O_WRONLY|O_TRUNC,1,0)) < 0 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Do_secure_work: reopen of '%s' for write failed",
+			logerr_die(LOG_INFO, "Do_secure_work: reopen of '%s' for write failed",
 				tempfile );
 		}
 		Write_fd_str(fd,error);
@@ -399,7 +399,7 @@ static struct security *Fix_receive_auth( char *name, struct line_list *info )
 		char buffer[64];
 		const char *str;
 		if( !(str = s->config_tag) ) str = s->name;
-		SNPRINTF(buffer,sizeof(buffer))"%s_", str );
+		plp_snprintf(buffer,sizeof(buffer), "%s_", str );
 		Find_default_tags( info, Pc_var_list, buffer );
 		Find_tags( info, &Config_line_list, buffer );
 		Find_tags( info, &PC_entry_line_list, buffer );
@@ -433,7 +433,7 @@ int Check_secure_perms( struct line_list *options, int from_server,
 	Perm_check.authfrom = Find_str_value(options,AUTHFROM);
 	Perm_check.authuser = authuser = Find_str_value(options,AUTHUSER);
 	if( !authuser ){
-		SNPRINTF( error, errlen) "Printer %s@%s: missing authentication client id",
+		plp_snprintf( error, errlen, "Printer %s@%s: missing authentication client id",
 			Printer_DYN,Report_server_as_DYN?Report_server_as_DYN:ShortHost_FQDN );
 		return( JABORT );
 	}

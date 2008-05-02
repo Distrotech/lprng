@@ -512,7 +512,7 @@ static int portmatch( char *val, int port )
 		*s = '-';
 	}
 	if( err ){
-		LOGMSG( LOG_ERR) "portmatch: bad port range '%s'", val );
+		logmsg( LOG_ERR, "portmatch: bad port range '%s'", val );
 	}
 	if( high < low ){
 		err = high;
@@ -707,7 +707,7 @@ void Perm_check_to_list( struct line_list *list, struct perm_check *check )
 	Set_str_value( list, USER, check->user );
 	Set_str_value( list, REMOTEUSER, check->remoteuser );
 	Set_str_value( list, PRINTER, check->printer );
-	SNPRINTF(buffer,sizeof(buffer))"%c",check->service);
+	plp_snprintf(buffer,sizeof(buffer), "%c",check->service);
 	Set_str_value( list, SERVICE, buffer );
 	Set_str_value( list, LPC, check->lpc );
 	if( check->host ){

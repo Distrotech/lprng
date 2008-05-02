@@ -55,7 +55,7 @@ char *Get_printer(void)
 		if( s == 0 ) s = Default_printer_DYN;
 	}
 	if( s == 0 ){
-		FATAL(LOG_ERR) "No printer name available, usage: 'lpr -Pprinter filename'" );
+		fatal(LOG_ERR, "No printer name available, usage: 'lpr -Pprinter filename'" );
 	}
 	Set_DYN(&Printer_DYN,s);
 	Expand_vars();
@@ -144,7 +144,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		Find_tags( &PC_entry_line_list, &PC_entry_line_list, "client." );
 		Set_var_list( Pc_var_list, &PC_entry_line_list);
 		if( RemoteHost_DYN && Lp_device_DYN && report_conflict ){
-			SNPRINTF(report_conflict,report_len)
+			plp_snprintf(report_conflict,report_len,
 				"conflicting printcap entries :lp=%s:rm=%s",
 				Lp_device_DYN, RemoteHost_DYN );
 		}
@@ -234,7 +234,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 	Find_tags( &PC_entry_line_list, &PC_entry_line_list, "server." );
 	Set_var_list( Pc_var_list, &PC_entry_line_list);
 	if( RemoteHost_DYN && Lp_device_DYN && report_conflict ){
-		SNPRINTF(report_conflict,report_len)
+		plp_snprintf(report_conflict,report_len,
 			"conflicting printcap entries :lp=%s:rm=%s",
 			Lp_device_DYN, RemoteHost_DYN );
 	}
@@ -255,7 +255,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		; /* we use defaults */
 	} else if( Server_names_DYN == 0 ){
 		if( report_conflict ){
-			SNPRINTF(report_conflict,report_len)
+			plp_snprintf(report_conflict,report_len,
 				"no :rm, :lp, or :sv entry" );
 		}
 	}

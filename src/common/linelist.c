@@ -88,7 +88,7 @@ void *malloc_or_die( size_t size, const char *file, int line )
     p = malloc(size);
 #endif
     if( p == 0 ){
-        LOGERR_DIE(LOG_INFO) "malloc of %d failed, file '%s', line %d",
+        logerr_die(LOG_INFO, "malloc of %d failed, file '%s', line %d",
 			(int)size, file, line );
     }
 	DEBUG6("malloc_or_die: size %d, addr 0x%lx, file '%s', line %d",
@@ -109,7 +109,7 @@ void *realloc_or_die( void *p, size_t size, const char *file, int line )
 #endif
 	}
     if( p == 0 ){
-        LOGERR(LOG_INFO) "realloc of 0x%lx, new size %d failed, file '%s', line %d",
+        logerr(LOG_INFO, "realloc of 0x%lx, new size %d failed, file '%s', line %d",
 			Cast_ptr_to_long(orig), (int)size, file, line );
 		abort();
     }
@@ -353,7 +353,7 @@ void Check_max( struct line_list *l, int incr )
 		if( !(l->list = realloc_or_die( l->list, l->max*sizeof(char *),
 			__FILE__,__LINE__)) ){
 			Errorcode = JFAIL;
-			LOGERR(LOG_INFO) "Check_max: realloc %d failed",
+			logerr(LOG_INFO, "Check_max: realloc %d failed",
 				(int)(l->max*sizeof(char*)) );
 		}
 	}
@@ -378,7 +378,7 @@ char *Add_line_list( struct line_list *l, const char *instr,
 	if(DEBUGL5){
 		char b[48];
 		int n;
-		SNPRINTF( b,sizeof(b)-8)"%s",instr );
+		plp_snprintf( b,sizeof(b)-8, "%s",instr );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Add_line_list: '%s', sep '%s', sort %d, uniq %d",
 			b, sep, sort, uniq );
@@ -435,7 +435,7 @@ static void Add_casekey_line_list( struct line_list *l, char *str,
 	if(DEBUGL5){
 		char b[40];
 		int n;
-		SNPRINTF( b,sizeof(b)-8)"%s",str );
+		plp_snprintf( b,sizeof(b)-8, "%s",str );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Add_casekey_line_list: '%s', sep '%s', sort 1, uniq 1",
 			b, sep );
@@ -517,7 +517,7 @@ void Split( struct line_list *l, const char *str, const char *sep,
 	if(DEBUGL5){
 		char b[40];
 		int n;
-		SNPRINTF( b,sizeof(b)-8)"%s",str );
+		plp_snprintf( b,sizeof(b)-8, "%s",str );
 		if( (n = safestrlen(b)) > (int)sizeof(b)-10 ) strcpy( b+n,"..." );
 		LOGDEBUG("Split: str 0x%lx '%s', sep '%s', escape '%s', sort %d, keysep '%s', uniq %d, trim %d",
 			Cast_ptr_to_long(str), b, sep, escape, sort, keysep, uniq, trim );
@@ -937,7 +937,7 @@ void Set_str_value( struct line_list *l, const char *key, const char *value )
 	if( key == 0 ) return;
 	if(DEBUGL6){
 		char buffer[16];
-		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
+		plp_snprintf(buffer,sizeof(buffer)-5, "%s",value);
 		buffer[12] = 0;
 		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
 		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
@@ -963,7 +963,7 @@ void Set_casekey_str_value( struct line_list *l, const char *key, const char *va
 	if( key == 0 ) return;
 	if(DEBUGL6){
 		char buffer[16];
-		SNPRINTF(buffer,sizeof(buffer)-5)"%s",value);
+		plp_snprintf(buffer,sizeof(buffer)-5, "%s",value);
 		buffer[12] = 0;
 		if( value && safestrlen(value) > 12 ) strcat(buffer,"...");
 		LOGDEBUG("Set_str_value: '%s'= 0x%lx '%s'", key,
@@ -987,7 +987,7 @@ void Set_flag_value( struct line_list *l, const char *key, long value )
 {
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
-	SNPRINTF(buffer,sizeof(buffer))"%s=0x%lx",key,value);
+	plp_snprintf(buffer,sizeof(buffer), "%s=0x%lx",key,value);
 	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 
@@ -1012,7 +1012,7 @@ void Set_double_value( struct line_list *l, const char *key, double value )
 {
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
-	SNPRINTF(buffer,sizeof(buffer))"%s=%0.0f",key,value);
+	plp_snprintf(buffer,sizeof(buffer), "%s=%0.0f",key,value);
 	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 
@@ -1025,7 +1025,7 @@ void Set_decimal_value( struct line_list *l, const char *key, long value )
 {
 	char buffer[SMALLBUFFER];
 	if( key == 0 ) return;
-	SNPRINTF(buffer,sizeof(buffer))"%s=%ld",key,value);
+	plp_snprintf(buffer,sizeof(buffer), "%s=%ld",key,value);
 	Add_line_list(l,buffer,Hash_value_sep,1,1);
 }
 /*
@@ -1272,7 +1272,7 @@ void Read_file_list( int required, struct line_list *model, char *str,
 		str, doinclude, depth, maxdepth, keysep );
 	if( depth > maxdepth ){
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR)
+		logerr_die(LOG_ERR,
 			"Read_file_list: recursion depth %d exceeds maxdepth %d for file '%s'",
 			depth, maxdepth, str );
 	}
@@ -1282,7 +1282,7 @@ void Read_file_list( int required, struct line_list *model, char *str,
 		if( stat( l.list[i], &statb ) == -1 ){
 			if( required || depth ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR)
+				logerr_die(LOG_ERR,
 					"Read_file_list: cannot stat required or included file '%s'",
 					l.list[i] );
 			}
@@ -1362,7 +1362,7 @@ void Read_fd_and_split( struct line_list *list, int fd,
 		len = size+count+1;
 		if( (sv = realloc_or_die( sv, len,__FILE__,__LINE__)) == 0 ){
 			Errorcode = JFAIL;
-			LOGERR_DIE(LOG_INFO) "Read_fd_and_split: realloc %d failed", len );
+			logerr_die(LOG_INFO, "Read_fd_and_split: realloc %d failed", len );
 		}
 		memmove( sv+size, buffer, count );
 		size += count;
@@ -1384,7 +1384,7 @@ static void Read_file_and_split( struct line_list *list, char *file,
 	DEBUG3("Read_file_and_split: '%s', trim %d, nocomment %d",
 		file, trim, nocomment );
 	if( (fd = Checkread( file, &statb )) < 0 ){
-		LOGERR_DIE(LOG_INFO)
+		logerr_die(LOG_INFO,
 		"Read_file_and_split: cannot open '%s' - '%s'",
 			file, Errormsg(errno) );
 	}
@@ -1432,7 +1432,7 @@ static int  Build_pc_names( struct line_list *names, struct line_list *order,
 			WARNMSG(
 			"no name for printcap entry '%s'", str );
 		} else {
-			LOGMSG(LOG_INFO)
+			logmsg(LOG_INFO,
 			"no name for printcap entry '%s'", str );
 		}
 	} else {
@@ -1466,7 +1466,7 @@ static int  Build_pc_names( struct line_list *names, struct line_list *order,
 				"bad printcap name '%s', has '%c' character",
 				l.list[0], *s );
 			} else {
-				LOGMSG(LOG_INFO)
+				logmsg(LOG_INFO,
 				"bad printcap name '%s', has '%c' character",
 				l.list[0], *s );
 			}
@@ -1500,7 +1500,7 @@ static int  Build_pc_names( struct line_list *names, struct line_list *order,
 			}
 			if( safestrlen(str) > len ){
 				Errorcode = JABORT;
-				FATAL(LOG_ERR) "Build_pc_names: LINE GREW! fatal error");
+				fatal(LOG_ERR, "Build_pc_names: LINE GREW! fatal error");
 			}
 			DEBUG4("Build_pc_names: end '%s'", str );
 		}
@@ -1605,7 +1605,7 @@ char *Select_pc_info( const char *id,
 	DEBUG1("Select_pc_info: looking for '%s', depth %d", id, depth );
 	if( depth > 5 ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)"Select_pc_info: printcap tc recursion depth %d", depth );
+		fatal(LOG_ERR, "Select_pc_info: printcap tc recursion depth %d", depth );
 	}
 	if(DEBUGL4)Dump_line_list("Select_pc_info- names", names );
 	if(DEBUGL4)Dump_line_list("Select_pc_info- order", order );
@@ -1683,7 +1683,7 @@ static void Find_pc_info( char *name,
 	if( Find_first_key(input,name,Printcap_sep,&start)
 		|| Find_last_key(input,name,Printcap_sep,&end) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR)
+		fatal(LOG_ERR,
 			"Find_pc_info: name '%s' in names and not in input list",
 			name );
 	}
@@ -1735,7 +1735,7 @@ static void Find_pc_info( char *name,
 			s = tc.list[j];
 			DEBUG4("Find_pc_info: tc entry '%s'", s );
 			if( !Select_pc_info( s, info, 0, names, order, input, depth+1, wildcard ) ){
-				FATAL(LOG_ERR)
+				fatal(LOG_ERR,
 				"Find_pc_info: tc entry '%s' not found", s);
 			}
 		}
@@ -2090,7 +2090,7 @@ static void Setup_env_for_process( struct line_list *env, struct job *job )
 
 	Init_line_list(&env_names);
 	if( (pw = getpwuid( getuid())) == 0 ){
-		LOGERR_DIE(LOG_INFO) "setup_envp: getpwuid(%ld) failed", (long)getuid());
+		logerr_die(LOG_INFO, "setup_envp: getpwuid(%ld) failed", (long)getuid());
 	}
 	Set_str_value(env,"PRINTER",Printer_DYN);
 	Set_str_value(env,"USER",pw->pw_name);
@@ -2182,7 +2182,7 @@ void Getprintcap_pathlist( int required,
 				/*marker*/0,/*doinclude*/1,/*nocomment*/1,/*depth*/0,/*maxdepth*/4);
 			break;
 		default:
-			FATAL(LOG_ERR)
+			fatal(LOG_ERR,
 				"Getprintcap_pathlist: entry not filter or absolute pathname '%s'",
 				path );
 		}
@@ -2215,26 +2215,26 @@ void Filterprintcap( struct line_list *raw, struct line_list *filters,
 		if( Write_fd_str( intempfd, str) < 0
 			|| Write_fd_str( intempfd,"\n") < 0 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) "Filterprintcap: Write_fd_str failed");
+			logerr_die(LOG_ERR, "Filterprintcap: Write_fd_str failed");
 		}
 		for( count = 0; count < filters->count; ++count ){
 			filter = filters->list[count];
 			DEBUG2("Filterprintcap: filter '%s'", filter );
 			if( lseek(intempfd,0,SEEK_SET) == -1 ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "Filterprintcap: lseek intempfd failed");
+				logerr_die(LOG_ERR, "Filterprintcap: lseek intempfd failed");
 			}
 			n = Filter_file(Send_query_rw_timeout_DYN, intempfd, outtempfd, "PC_FILTER",
 				filter, Filter_options_DYN, 0,
 				0, 0 );
 			if( n ){
 				Errorcode = JABORT;
-				LOGERR_DIE(LOG_ERR) "Filterprintcap: filter '%s' failed", filter);
+				logerr_die(LOG_ERR, "Filterprintcap: filter '%s' failed", filter);
 			}
 		}
 		if( lseek(outtempfd,0,SEEK_SET) == -1 ){
 			Errorcode = JABORT;
-			LOGERR_DIE(LOG_ERR) "Filterprintcap: lseek outtempfd failed");
+			logerr_die(LOG_ERR, "Filterprintcap: lseek outtempfd failed");
 		}
 		Read_fd_and_split( raw,outtempfd,Line_ends,0,0,0,1,1);
 		/* do not worry if these fail */
@@ -2365,7 +2365,7 @@ static char *Init_tempfile( void )
 	if( (s = safestrrchr(dir,'/')) && s[1] == 0 ) *s = 0;
 	if( dir == 0 || stat( dir, &statb ) != 0
 		|| !S_ISDIR(statb.st_mode) ){
-		FATAL(LOG_ERR) "Init_tempfile: bad tempdir '%s'", dir );
+		fatal(LOG_ERR, "Init_tempfile: bad tempdir '%s'", dir );
 	}
 	DEBUG3("Init_tempfile: temp file '%s'", dir );
 	return( dir );
@@ -2377,11 +2377,11 @@ int Make_temp_fd_in_dir( char **temppath, char *dir )
 	struct stat statb;
 	char pathname[MAXPATHLEN];
 
-	SNPRINTF(pathname,sizeof(pathname))"%s/temp%02dXXXXXX",dir,Tempfiles.count );
+	plp_snprintf(pathname,sizeof(pathname), "%s/temp%02dXXXXXX",dir,Tempfiles.count );
 	tempfd = mkstemp( pathname );
 	if( tempfd == -1 ){
 		Errorcode = JFAIL;
-		FATAL(LOG_INFO)"Make_temp_fd_in_dir: cannot create tempfile '%s'", pathname );
+		fatal(LOG_INFO, "Make_temp_fd_in_dir: cannot create tempfile '%s'", pathname );
 	}
 	Add_line_list(&Tempfiles,pathname,0,0,0);
 	if( temppath ){
@@ -2389,12 +2389,12 @@ int Make_temp_fd_in_dir( char **temppath, char *dir )
 	}
 	if( fchmod(tempfd,(Is_server?Spool_file_perms_DYN:0) | 0600 ) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Make_temp_fd_in_dir: chmod '%s' to 0%o failed ",
+		logerr_die(LOG_INFO, "Make_temp_fd_in_dir: chmod '%s' to 0%o failed ",
 			pathname, Spool_file_perms_DYN );
 	}
 	if( stat(pathname,&statb) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Make_temp_fd_in_dir: stat '%s' failed ", pathname );
+		logerr_die(LOG_INFO, "Make_temp_fd_in_dir: stat '%s' failed ", pathname );
 	}
 	DEBUG1("Make_temp_fd_in_dir: fd %d, name '%s'", tempfd, pathname );
 	return( tempfd );
@@ -2565,11 +2565,11 @@ int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 
 	c = cmd.list[0][0];
 	if( c != '/' ){
-		FATAL(LOG_ERR)"Make_passthrough: bad filter - not absolute path name'%s'",
+		fatal(LOG_ERR, "Make_passthrough: bad filter - not absolute path name'%s'",
 			cmd.list[0] );
 	}
 	if( (pid = dofork(0)) == -1 ){
-		LOGERR_DIE(LOG_ERR)"Make_passthrough: fork failed");
+		logerr_die(LOG_ERR, "Make_passthrough: fork failed");
 	} else if( pid == 0 ){
 		for( i = 0; i < passfd->count; ++i ){
 			fd = Cast_ptr_to_int(passfd->list[i]);
@@ -2580,7 +2580,7 @@ int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 					Max_open(newfd);
 					if( newfd < 0 ){
 						Errorcode = JABORT;
-						LOGERR_DIE(LOG_INFO)"Make_passthrough: dup failed");
+						logerr_die(LOG_INFO, "Make_passthrough: dup failed");
 					}
 					DEBUG4("Make_passthrough: fd [%d] = %d, dup2 -> %d",
 						i, fd, newfd );
@@ -2609,7 +2609,7 @@ int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 		for( i = 0; i < passfd->count; ++i ){
 			fd = Cast_ptr_to_int(passfd->list[i]);
 			if( dup2(fd,i) == -1 ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"Make_passthrough: pid %ld, dup2(%d,%d) failed", (long)getpid(), fd, i );
 				Write_fd_str(2,error);
 				exit(JFAIL);
@@ -2617,7 +2617,7 @@ int Make_passthrough( char *line, const char *flags, struct line_list *passfd,
 		}
 		close_on_exec(passfd->count);
 		execve(cmd.list[0],cmd.list,env.list);
-		SNPRINTF(error,sizeof(error))
+		plp_snprintf(error,sizeof(error),
 			"Make_passthrough: pid %ld, execve '%s' failed - '%s'\n", (long)getpid(),
 			cmd.list[0], Errormsg(errno) );
 		Write_fd_str(2,error);
@@ -2662,20 +2662,20 @@ int Filter_file( int timeout, int input_fd, int output_fd, const char *error_hea
 	innull_fd = input_fd;
 	if( innull_fd < 0 && (innull_fd = open("/dev/null", O_RDWR )) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: open /dev/null failed");
+		logerr_die(LOG_INFO, "Filter_file: open /dev/null failed");
 	}
 	Max_open(innull_fd);
 
 	outnull_fd = output_fd;
 	if( outnull_fd < 0 && (outnull_fd = open("/dev/null", O_RDWR )) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: open /dev/null failed");
+		logerr_die(LOG_INFO, "Filter_file: open /dev/null failed");
 	}
 	Max_open(outnull_fd);
 
 	if( pipe( of_error ) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: pipe() failed");
+		logerr_die(LOG_INFO, "Filter_file: pipe() failed");
 	}
 	Max_open(of_error[0]); Max_open(of_error[1]);
 	DEBUG3("Filter_file: fd of_error[%d,%d]", of_error[0], of_error[1] );
@@ -2686,7 +2686,7 @@ int Filter_file( int timeout, int input_fd, int output_fd, const char *error_hea
 	files.list[files.count++] = Cast_int_to_voidstar(of_error[1]);	/* stderr */
 	if( (pid = Make_passthrough( pgm, filter_options, &files, job, env )) < 0 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: could not create process '%s'", pgm);
+		logerr_die(LOG_INFO, "Filter_file: could not create process '%s'", pgm);
 	}
 	files.count = 0;
 	Free_line_list(&files);
@@ -2695,7 +2695,7 @@ int Filter_file( int timeout, int input_fd, int output_fd, const char *error_hea
 	if( output_fd < 0 ) close(outnull_fd); outnull_fd = -1;
 	if( (close(of_error[1]) == -1 ) ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: X8 close(%d) failed",
+		logerr_die(LOG_INFO, "Filter_file: X8 close(%d) failed",
 			of_error[1]);
 	}
 	of_error[1] = -1;
@@ -2706,17 +2706,17 @@ int Filter_file( int timeout, int input_fd, int output_fd, const char *error_hea
 		buffer[n+len] = 0;
 		while( (s = safestrchr(buffer,'\n')) ){
 			*s++ = 0;
-			SETSTATUS(job)"%s: %s", error_header, buffer );
+			setstatus(job, "%s: %s", error_header, buffer );
 			memmove(buffer,s,safestrlen(s)+1);
 		}
 		len = safestrlen(buffer);
 	}
 	if( buffer[0] ){
-		SETSTATUS(job)"%s: %s", error_header, buffer );
+		setstatus(job, "%s: %s", error_header, buffer );
 	}
 	if( (close(of_error[0]) == -1 ) ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: X8 close(%d) failed",
+		logerr_die(LOG_INFO, "Filter_file: X8 close(%d) failed",
 			of_error[0]);
 	}
 	of_error[0] = -1;
@@ -2726,20 +2726,20 @@ int Filter_file( int timeout, int input_fd, int output_fd, const char *error_hea
 			pid, n, Errormsg(err) );
 		if( err == EINTR ) continue; 
 		Errorcode = JABORT;
-		LOGERR_DIE(LOG_ERR) "Filter_file: waitpid(%d) failed", pid);
+		logerr_die(LOG_ERR, "Filter_file: waitpid(%d) failed", pid);
 	} 
 	DEBUG1("Filter_file: pid %d, exit status '%s'", pid, Decode_status(&status) );
 	n = 0;
 	if( WIFSIGNALED(status) ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO)"Filter_file: pgm '%s' died with signal %d, '%s'",
+		logerr_die(LOG_INFO, "Filter_file: pgm '%s' died with signal %d, '%s'",
 			pgm, n, Sigstr(n));
 	}
 	n = WEXITSTATUS(status);
 	if( n > 0 && n < 32 ) n+=(JFAIL-1);
 	DEBUG1("Filter_file: final status '%s'", Server_status(n) );
 	if( verbose ){
-		SETSTATUS(job)"Filter_file: pgm '%s' exited with status '%s'", pgm, Server_status(n));
+		setstatus(job, "Filter_file: pgm '%s' exited with status '%s'", pgm, Server_status(n));
 	}
 	return( n );
 }
@@ -2859,7 +2859,7 @@ void Dump_default_parms( int fd, const char *title, struct keywords *k )
 	int n;
 
 	if( title ){
-		SNPRINTF(buffer,sizeof(buffer))"%s\n", title );
+		plp_snprintf(buffer,sizeof(buffer), "%s\n", title );
 		Write_fd_str(fd, buffer);
 	}
 	for( ; k &&  k->keyword; ++k ){
@@ -2872,14 +2872,14 @@ void Dump_default_parms( int fd, const char *title, struct keywords *k )
 				if( cval(def) == '=' ) ++def;
 				n = strtol(def,0,0);
 			}
-			SNPRINTF(buffer,sizeof(buffer))" :%s%s\n", key, n?"":"@");
+			plp_snprintf(buffer,sizeof(buffer), " :%s%s\n", key, n?"":"@");
 			break;
 		case INTEGER_K:
 			if( def ){
 				if( cval(def) == '=' ) ++def;
 				n = strtol(def,0,0);
 			}
-			SNPRINTF(buffer,sizeof(buffer))" :%s=%d\n", key, n);
+			plp_snprintf(buffer,sizeof(buffer), " :%s=%d\n", key, n);
 			break;
 		case STRING_K:
 			if( def ){
@@ -2887,10 +2887,10 @@ void Dump_default_parms( int fd, const char *title, struct keywords *k )
 			} else {
 				def = "";
 			}
-			SNPRINTF(buffer,sizeof(buffer))" :%s=%s\n", key, def);
+			plp_snprintf(buffer,sizeof(buffer), " :%s=%s\n", key, def);
 			break;
 		default:
-			SNPRINTF(buffer,sizeof(buffer))"# %s UNKNOWN\n", key);
+			plp_snprintf(buffer,sizeof(buffer), "# %s UNKNOWN\n", key);
 		}
 		Write_fd_str(fd, buffer);
 	}
@@ -2936,7 +2936,7 @@ void Fix_Z_opts( struct job *job )
 		DEBUG4("Fix_Z_opts: prefix_options fixed '%s'", s);
 		n = safestrlen(s);
 		if( n < 2 ){
-			FATAL(LOG_ERR) "Fix_Z_opts: not enough letters '%s'", s );
+			fatal(LOG_ERR, "Fix_Z_opts: not enough letters '%s'", s );
 		}
 		/* find the starting values */
 		str = 0;
@@ -3182,7 +3182,7 @@ void Fix_dollars( struct line_list *l, struct job *job, int nosplit, const char 
 			tag[0] = 0;
 			switch( kind ){
 			case INTEGER_K:
-				SNPRINTF(buffer,sizeof(buffer))"%d", n );
+				plp_snprintf(buffer,sizeof(buffer), "%d", n );
 				str = buffer;
 				break;
 			}
@@ -3318,7 +3318,7 @@ char *Escape( const char *str, int level )
 		if( c == ' ' ){
 			s[i++] = '?';
 		} else if( !isalnum( c ) ){
-			SNPRINTF(s+i,4)"%%%02x",c);
+			plp_snprintf(s+i,4, "%%%02x",c);
 			/* we encode the % as %25 and move the other stuff over */
 			for( k = 1; k < level; ++k ){
 				/* we move the stuff after the % two positions */

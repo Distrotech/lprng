@@ -40,7 +40,7 @@ const char * Errormsg ( int err )
 		return "No Error";
 	} else {
 		static char msgbuf[32];     /* holds "errno=%d". */
-		(void) SNPRINTF (msgbuf, sizeof(msgbuf)) "errno=%d", err);
+		(void) plp_snprintf(msgbuf, sizeof(msgbuf), "errno=%d", err);
 		return msgbuf;
 	}
 }
@@ -74,7 +74,7 @@ const char * Errormsg ( int err )
 		}
     }
 	/* SAFE USE of SNPRINTF */
-    (void) SNPRINTF (b, sizeof(b)) "<BAD LOG FLAG %d>", kind);
+    (void) plp_snprintf(b, sizeof(b), "<BAD LOG FLAG %d>", kind);
     return (b);
 }
 
@@ -86,7 +86,7 @@ const char * Errormsg ( int err )
 
 	/* we get rid of first set of problems - stupid characters */
 	char buffer[SMALLBUFFER];
-	SNPRINTF(buffer,sizeof(buffer)-1)"%s",msg);
+	plp_snprintf(buffer,sizeof(buffer)-1, "%s",msg);
 	msg = buffer;
 
 #ifndef HAVE_SYSLOG_H
@@ -155,23 +155,23 @@ const char * Errormsg ( int err )
 			use_syslog(kind, log_buf);
 		}
 		n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-		(void) SNPRINTF( s, n) "%s", Time_str(0,0) );
+		(void) plp_snprintf( s, n, "%s", Time_str(0,0) );
 		if (ShortHost_FQDN ) {
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) SNPRINTF( s, n) " %s", ShortHost_FQDN );
+			(void) plp_snprintf( s, n, " %s", ShortHost_FQDN );
 		}
 		if(Debug || DbgFlag){
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) SNPRINTF(s, n) " [%ld]", (long)getpid());
+			(void) plp_snprintf(s, n, " [%ld]", (long)getpid());
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			if(Name) (void) SNPRINTF(s, n) " %s", Name);
+			if(Name) (void) plp_snprintf(s, n, " %s", Name);
 			n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-			(void) SNPRINTF(s, n) " %s", putlogmsg(kind) );
+			(void) plp_snprintf(s, n, " %s", putlogmsg(kind) );
 		}
 		n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-		(void) SNPRINTF(s, n) " %s", log_buf );
+		(void) plp_snprintf(s, n, " %s", log_buf );
 	} else {
-		(void) SNPRINTF(stamp_buf, sizeof(stamp_buf)) "%s", log_buf );
+		(void) plp_snprintf(stamp_buf, sizeof(stamp_buf), "%s", log_buf );
 	}
 
 	if( safestrlen(stamp_buf) > (int)sizeof(stamp_buf) - 8 ){
@@ -179,7 +179,7 @@ const char * Errormsg ( int err )
 		strcpy(stamp_buf+safestrlen(stamp_buf),"...");
 	}
 	n = safestrlen(stamp_buf); s = stamp_buf+n; n = sizeof(stamp_buf)-n;
-	(void) SNPRINTF(s, n) "\n" );
+	(void) plp_snprintf(s, n, "\n" );
 
 
     /* use writes here: on HP/UX, using f p rintf really screws up. */
@@ -199,7 +199,7 @@ const char * Errormsg ( int err )
 {
 	log_buf[0] = 0;
     if( Printer_DYN ){
-		SNPRINTF( log_buf, len-4) "%s: ", Printer_DYN );
+		plp_snprintf( log_buf, len-4, "%s: ", Printer_DYN );
 	}
 }
 
@@ -228,7 +228,7 @@ const char * Errormsg ( int err )
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
-		(void) VSNPRINTF(s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		log_backend (kind,log_buf);
 		in_log = 0;
 	}
@@ -260,7 +260,7 @@ const char * Errormsg ( int err )
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
-		(void) VSNPRINTF(s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		log_backend (kind, log_buf);
 		in_log = 0;
 	}
@@ -294,9 +294,9 @@ const char * Errormsg ( int err )
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf)-4);
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
-		(void) VSNPRINTF(s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n-4;
-		if( err ) (void) SNPRINTF (s, n) " - %s", Errormsg (err));
+		if( err ) (void) plp_snprintf(s, n, " - %s", Errormsg (err));
 		log_backend (kind, log_buf);
 		in_log = 0;
 	}
@@ -330,10 +330,10 @@ const char * Errormsg ( int err )
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) VSNPRINTF (s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		if( err ) (void) SNPRINTF(s, n) " (errno %d)", err);
-		if( err ) (void) SNPRINTF(s, n) " - %s", Errormsg (err));
+		if( err ) (void) plp_snprintf(s, n, " (errno %d)", err);
+		if( err ) (void) plp_snprintf(s, n, " - %s", Errormsg (err));
 		log_backend (kind, log_buf);
 		in_log = 0;
 	}
@@ -368,12 +368,12 @@ const char * Errormsg ( int err )
 		++in_log;
 		buffer[0] = 0;
 		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
-		(void) SNPRINTF(s, n) "Fatal error - ");
+		(void) plp_snprintf(s, n, "Fatal error - ");
 
 		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
-		(void) VSNPRINTF (s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		n = safestrlen(buffer); s = buffer + n; n = sizeof(buffer) - n;
-		(void) SNPRINTF (s, n) "\n" );
+		(void) plp_snprintf(s, n, "\n" );
 
 		/* ignore error, we are dying anyways */
 		Write_fd_str( 2, buffer );
@@ -412,11 +412,11 @@ const char * Errormsg ( int err )
 	++in_log;
 	buffer[0] = 0;
 	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) SNPRINTF(s, n) "Warning - ");
+    (void) plp_snprintf(s, n, "Warning - ");
 	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) VSNPRINTF (s, n) msg, ap);
+    (void) plp_vsnprintf(s, n, msg, ap);
 	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) SNPRINTF(s, n) "\n");
+    (void) plp_snprintf(s, n, "\n");
 
 	Write_fd_str( 2, buffer );
 	in_log = 0;
@@ -453,9 +453,9 @@ const char * Errormsg ( int err )
 	++in_log;
 	buffer[0] = 0;
 	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) VSNPRINTF (s, n) msg, ap);
+    (void) plp_vsnprintf(s, n, msg, ap);
 	n = safestrlen(buffer); s = buffer+n; n = sizeof(buffer)-n;
-    (void) SNPRINTF(s, n) "\n");
+    (void) plp_snprintf(s, n, "\n");
 
 	Write_fd_str( 2, buffer );
 	in_log = 0;
@@ -487,7 +487,7 @@ const char * Errormsg ( int err )
 		++in_log;
 		prefix_printer(log_buf, sizeof(log_buf));
 		n = safestrlen(log_buf); s = log_buf+n; n = sizeof(log_buf)-n;
-		(void) VSNPRINTF(s, n) msg, ap);
+		(void) plp_vsnprintf(s, n, msg, ap);
 		log_backend(LOG_DEBUG, log_buf);
 		in_log = 0;
 	}
@@ -655,7 +655,7 @@ const char *Sigstr (int n)
 	}
 	if( s == 0 ){
 		s = buf;
-		(void) SNPRINTF (buf, sizeof(buf)) "signal %d", n);
+		(void) plp_snprintf(buf, sizeof(buf), "signal %d", n);
 	}
     return(s);
 }
@@ -674,16 +674,16 @@ const char *Decode_status (plp_status_t *status)
     if (WIFEXITED (*status)) {
 		n = WEXITSTATUS(*status);
 		if( n > 0 && n < 32 ) n += JFAIL-1;
-		(void) SNPRINTF (msg, sizeof(msg))
+		(void) plp_snprintf(msg, sizeof(msg),
 		"exit status %d (%s)", WEXITSTATUS(*status),
 				 Server_status(n) );
     } else if (WIFSTOPPED (*status)) {
 		(void) strcpy(msg, "stopped");
     } else {
-		(void) SNPRINTF (msg, sizeof(msg)) "died%s",
+		(void) plp_snprintf(msg, sizeof(msg), "died%s",
 			WCOREDUMP (*status) ? " and dumped core" : "");
 		if (WTERMSIG (*status)) {
-			(void) SNPRINTF(msg + safestrlen (msg), sizeof(msg)-safestrlen(msg))
+			(void) plp_snprintf(msg + safestrlen (msg), sizeof(msg)-safestrlen(msg),
 				 ", %s", Sigstr ((int) WTERMSIG (*status)));
 		}
     }
@@ -724,7 +724,7 @@ const char *Server_status( int d )
 	for( i = 0; (s = statname[i].str) && statname[i].value != d; ++i );
 	if( s == 0 ){
 		s = msg;
-		SNPRINTF( msg, sizeof(msg)) "UNKNOWN STATUS '%d'", d );
+		plp_snprintf( msg, sizeof(msg), "UNKNOWN STATUS '%d'", d );
 	}
 	return(s);
 }
@@ -754,11 +754,11 @@ const char *Server_status( int d )
 	if( Doing_cleanup || fmt == 0 || *fmt == 0 || insetstatus ) return;
 
 	insetstatus = 1;
-	(void) VSNPRINTF( msg_b, sizeof(msg_b)-4) fmt, ap);
+	(void) plp_vsnprintf( msg_b, sizeof(msg_b)-4, fmt, ap);
 	DEBUG1("setstatus: msg '%s'", msg_b);
 	if( !Is_server ){
 		if( Verbose || !Is_lpr ){
-			(void) VSNPRINTF(msg_b, sizeof(msg_b)-2) fmt, ap);
+			(void) plp_vsnprintf(msg_b, sizeof(msg_b)-2, fmt, ap);
 			strcat( msg_b,"\n" );
 			if( Write_fd_str( 2, msg_b ) < 0 ) cleanup(0);
 		} else {
@@ -805,7 +805,7 @@ const char *Server_status( int d )
     VA_SHIFT (fmt, char *);
 
 	if( Doing_cleanup ) return;
-	(void) VSNPRINTF( msg_b, sizeof(msg_b)-4) fmt, ap);
+	(void) plp_vsnprintf( msg_b, sizeof(msg_b)-4, fmt, ap);
 	DEBUG1("setmessage: msg '%s'", msg_b);
 	if( Is_server ){
 		send_to_logger( -1, -1, job, header, msg_b );
@@ -835,7 +835,7 @@ const char *Server_status( int d )
 	Init_line_list(&l);
 	if(DEBUGL4){
 		char buffer[32];
-		SNPRINTF(buffer,sizeof(buffer)-5)"%s", msg_b );
+		plp_snprintf(buffer,sizeof(buffer)-5, "%s", msg_b );
 		if( msg_b ) safestrncat( buffer,"...");
 		LOGDEBUG("send_to_logger: Logger_fd fd %d, send_to_status_fd %d, send_to_mail fd %d, header '%s', body '%s'",
 			Logger_fd, send_to_status_fd, send_to_mail_fd, header, buffer );
@@ -852,7 +852,7 @@ const char *Server_status( int d )
 	Set_str_value(&l,UPDATE_TIME,(tstr=Time_str(0,0)));
 	Set_decimal_value(&l,PROCESS,(pid=getpid()));
 
-	SNPRINTF( out_b, sizeof(out_b)) "%s at %s ## %s=%s %s=%d %s=%d\n",
+	plp_snprintf( out_b, sizeof(out_b), "%s at %s ## %s=%s %s=%d %s=%d\n",
 		msg_b, tstr, IDENTIFIER, id, NUMBER, num, PROCESS, pid );
 
 	if( send_to_status_fd > 0 && Write_fd_str( send_to_status_fd, out_b ) < 0 ){

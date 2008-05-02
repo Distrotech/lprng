@@ -110,7 +110,7 @@ int Send_request(
 		}
 		DEBUG1("Send_request: no remote support for %c - '%s' operation", class, m );
 		if( !Is_server ){
-			SNPRINTF(errormsg,sizeof(errormsg))
+			plp_snprintf(errormsg,sizeof(errormsg),
 			_("no network support for '%s' operation"), m);
 		}
 		status = 0;
@@ -133,16 +133,16 @@ int Send_request(
 		&real_host, connnect_timeout, 0, Unix_socket_path_DYN , errmsg, sizeof(errmsg) );
 	err = errno;
 	if( sock < 0 ){
-		SNPRINTF( errormsg, sizeof(errormsg)-2)
+		plp_snprintf( errormsg, sizeof(errormsg)-2,
 			"cannot open connection - %s",
 			errmsg[0]?errmsg:( err?Errormsg(err):"bad or missing hostname" ) );
 		if( !Is_server ){
 			int v = safestrlen(errormsg);
-			SNPRINTF( errormsg+v, sizeof(errormsg)-v)
+			plp_snprintf( errormsg+v, sizeof(errormsg)-v,
 			"\nMake sure the remote host supports the LPD protocol");
 			if( geteuid() && getuid() ){
 				v = safestrlen(errormsg);
-				SNPRINTF( errormsg+v, sizeof(errormsg)-v)
+				plp_snprintf( errormsg+v, sizeof(errormsg)-v,
 				"\nand accepts connections from this host and from non-privileged (>1023) ports");
 			}
 		}
@@ -171,7 +171,7 @@ int Send_request(
 		status = Link_send( RemoteHost_DYN, &sock, transfer_timeout,
 			cmd, safestrlen(cmd), 0 );
 		if( status ){
-			SNPRINTF(errormsg,sizeof(errormsg))"%s",Link_err_str(status));
+			plp_snprintf(errormsg,sizeof(errormsg), "%s",Link_err_str(status));
 			close(sock); sock = -1;
 			goto error;
 		}
@@ -180,7 +180,7 @@ int Send_request(
  error:
 	if( status || errormsg[0] ){
 		char line[SMALLBUFFER];
-		SNPRINTF( line,sizeof(line)) "Printer '%s@%s' - ",
+		plp_snprintf( line,sizeof(line), "Printer '%s@%s' - ",
 			RemotePrinter_DYN, RemoteHost_DYN );
 		if( Write_fd_str( output, line ) < 0 
 			|| Write_fd_str( output, errormsg ) < 0 

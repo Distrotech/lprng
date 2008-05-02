@@ -1460,13 +1460,13 @@ static int breaksize = 3;	/* numbers of rows in break */
 {
 	time_t tmp;
 	time(&tmp);
-	(void) SNPRINTF( bline, sizeof(bline)) "User:  %s@%s (%s)", login, host, bnrname);
+	(void) plp_snprintf( bline, sizeof(bline), "User:  %s@%s (%s)", login, host, bnrname);
 	Out_line();
 	strftime(bline,sizeof(bline),"Date: %b %d %H:%M:%S", localtime(&tmp));
 	Out_line();
-	(void) SNPRINTF( bline, sizeof(bline)) "Job:   %s", job );
+	(void) plp_snprintf( bline, sizeof(bline), "Job:   %s", job );
 	Out_line();
-	(void) SNPRINTF( bline, sizeof(bline)) "Class: %s", class );
+	(void) plp_snprintf( bline, sizeof(bline), "Class: %s", class );
 	Out_line();
 }
 
@@ -1705,7 +1705,7 @@ static void do_char( const struct font *font, const struct glyph *glyph,
     VA_SHIFT (format, char *);
 
 	buf[0] = 0;
-	(void) VSNPRINTF (buf, sizeof(buf)) format, ap);
+	(void) plp_vsnprintf(buf, sizeof(buf), format, ap);
 	write(fd, buf, strlen(buf));
 }
 

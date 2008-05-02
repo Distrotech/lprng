@@ -120,7 +120,7 @@ int Send_job( struct job *job, struct job *logjob,
 		goto error;
 	}
 
-	SETSTATUS(logjob)
+	setstatus(logjob,
 	"sending job '%s' to %s@%s",
 		id, RemotePrinter_DYN, RemoteHost_DYN );
 
@@ -128,7 +128,7 @@ int Send_job( struct job *job, struct job *logjob,
 	error[0] = 0;
 	Set_str_value(&job->info,ERROR,0);
 	Set_flag_value(&job->info,ERROR_TIME,0);
-	SETSTATUS(logjob) "connecting to '%s', attempt %d",
+	setstatus(logjob, "connecting to '%s', attempt %d",
 		RemoteHost_DYN, errcount+1 );
 	if( (Is_server || errcount) && Network_connect_grace_DYN > 0 ){
 		plp_sleep( Network_connect_grace_DYN );
@@ -147,15 +147,15 @@ int Send_job( struct job *job, struct job *logjob,
 		status = LINK_OPEN_FAIL;
 		msg[0] = 0;
 		if( !Is_server ){
-			SNPRINTF( msg, sizeof(msg))
+			plp_snprintf( msg, sizeof(msg),
 			"\nMake sure the remote host supports the LPD protocol");
 			if( geteuid() && getuid() ){
 				int v = safestrlen(msg);
-				SNPRINTF( msg+v, sizeof(msg)-v)
+				plp_snprintf( msg+v, sizeof(msg)-v,
 				"\nand accepts connections from this host and from non-privileged (>1023) ports");
 			}
 		}
-		SNPRINTF( error, sizeof(error)-2)
+		plp_snprintf( error, sizeof(error)-2,
 			"cannot open connection to %s - %s%s", RemoteHost_DYN,
 				errmsg[0]?errmsg:(err?Errormsg(err):"bad or missing hostname?"), msg );
 		if( Is_server && Retry_NOLINK_DYN ){
@@ -165,20 +165,20 @@ int Send_job( struct job *job, struct job *logjob,
 					n = max_connect_interval;
 				}
 				if( n > 0 ){
-					SETSTATUS(logjob)
+					setstatus(logjob,
 					_("sleeping %d secs before retry, starting sleep"),n );
 					plp_sleep( n );
 				}
 			}
 			goto retry_connect;
 		}
-		SETSTATUS(logjob) error );
+		setstatus(logjob, error );
 		goto error;
 	}
 	save_host = safestrdup(RemoteHost_DYN,__FILE__,__LINE__);
 	Set_DYN(&RemoteHost_DYN, real_host );
 	if( real_host ) free( real_host );
-	SETSTATUS(logjob) "connected to '%s'", RemoteHost_DYN );
+	setstatus(logjob, "connected to '%s'", RemoteHost_DYN );
 
 	if( security && security->client_connect ){
 		status = security->client_connect( job, &sock,
@@ -199,7 +199,7 @@ int Send_job( struct job *job, struct job *logjob,
 		status, error );
 	if( status ) goto error;
 
-	SETSTATUS(logjob) "done job '%s' transfer to %s@%s",
+	setstatus(logjob, "done job '%s' transfer to %s@%s",
 		id, RemotePrinter_DYN, RemoteHost_DYN );
 
  error:
@@ -207,7 +207,7 @@ int Send_job( struct job *job, struct job *logjob,
 	if( sock >= 0 ) sock = Shutdown_or_close(sock);
 	if( status ){
 		if( (s = Find_str_value(&job->info,ERROR )) ){
-			SETSTATUS(logjob) "job '%s' transfer to %s@%s failed\n  %s",
+			setstatus(logjob, "job '%s' transfer to %s@%s failed\n  %s",
 				id, RemotePrinter_DYN, RemoteHost_DYN, s );
 			Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 		}
@@ -223,13 +223,13 @@ int Send_job( struct job *job, struct job *logjob,
 				DEBUG2("Send_job: read %d, '%s'", n, msg);
 				while( (s = safestrchr(msg,'\n')) ){
 					*s++ = 0;
-					SETSTATUS(logjob) "error msg: '%s'", msg );
+					setstatus(logjob, "error msg: '%s'", msg );
 					memmove(msg,s,safestrlen(s)+1);
 				}
 				len = safestrlen(msg);
 			}
 			DEBUG2("Send_job: read %d, '%s'", n, msg);
-			if( len ) SETSTATUS(logjob) "error msg: '%s'", msg );
+			if( len ) setstatus(logjob, "error msg: '%s'", msg );
 		}
 	}
 	if( sock >= 0 ) close(sock); sock = -1;
@@ -287,9 +287,9 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 	transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
 	
 	if( !block_fd ){
-		SETSTATUS(logjob) "requesting printer %s@%s",
+		setstatus(logjob, "requesting printer %s@%s",
 			RemotePrinter_DYN, RemoteHost_DYN );
-		SNPRINTF( line, sizeof(line)) "%c%s\n",
+		plp_snprintf( line, sizeof(line), "%c%s\n",
 			REQ_RECV, RemotePrinter_DYN );
 		ack = 0;
 		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
@@ -297,12 +297,12 @@ int Send_normal( int *sock, struct job *job, struct job *logjob,
 			char *v;
 			if( (v = safestrchr(line,'\n')) ) *v = 0;
 			if( ack ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"error '%s' with ack '%s'\n  sending str '%s' to %s@%s",
 					Link_err_str(status), Ack_err_str(ack), line,
 					RemotePrinter_DYN, RemoteHost_DYN );
 			} else {
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"error '%s'\n  sending str '%s' to %s@%s",
 					Link_err_str(status), line,
 					RemotePrinter_DYN, RemoteHost_DYN );
@@ -338,7 +338,7 @@ static int Send_control( int *sock, struct job *job, struct job *logjob, int tra
 
 	if( !(cf = Find_str_value(&job->info,CF_OUT_IMAGE)) ){
 		Errorcode = JABORT;
-		FATAL(LOG_ERR) "Send_control: LOGIC ERROR! missing CF_OUT_IMAGE");
+		fatal(LOG_ERR, "Send_control: LOGIC ERROR! missing CF_OUT_IMAGE");
 	}
 	size = safestrlen(cf);
 	transfername = Find_str_value(&job->info,XXCFTRANSFERNAME);
@@ -346,26 +346,26 @@ static int Send_control( int *sock, struct job *job, struct job *logjob, int tra
 	DEBUG3( "Send_control: '%s' is %d bytes, sock %d, block_fd %d, cf '%s'",
 		transfername, size, *sock, block_fd, cf );
 	if( !block_fd ){
-		SETSTATUS(logjob) "sending control file '%s' to %s@%s",
+		setstatus(logjob, "sending control file '%s' to %s@%s",
 		transfername, RemotePrinter_DYN, RemoteHost_DYN );
 	}
 
 	ack = 0;
 	errno = 0;
 	error[0] = 0;
-	SNPRINTF( msg, sizeof(msg)) "%c%d %s\n",
+	plp_snprintf( msg, sizeof(msg), "%c%d %s\n",
 		CONTROL_FILE, size, transfername);
 	if( !block_fd ){
 		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 			msg, safestrlen(msg), &ack )) ){
 			if( (s = safestrchr(msg,'\n')) ) *s = 0;
 			if( ack ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 				"error '%s' with ack '%s'\n  sending str '%s' to %s@%s",
 				Link_err_str(status), Ack_err_str(ack), msg,
 				RemotePrinter_DYN, RemoteHost_DYN );
 			} else {
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 				"error '%s'\n  sending str '%s' to %s@%s",
 				Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 			}
@@ -390,12 +390,12 @@ static int Send_control( int *sock, struct job *job, struct job *logjob, int tra
 		if( (status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
 			cf,size+1,&ack )) ){
 			if( ack ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 				"error '%s' with ack '%s'\n  sending control file '%s' to %s@%s",
 				Link_err_str(status), Ack_err_str(ack), transfername,
 				RemotePrinter_DYN, RemoteHost_DYN );
 			} else {
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"error '%s'\n  sending control file '%s' to %s@%s",
 					Link_err_str(status), transfername,
 					RemotePrinter_DYN, RemoteHost_DYN );
@@ -406,7 +406,7 @@ static int Send_control( int *sock, struct job *job, struct job *logjob, int tra
 			goto error;
 		}
 		DEBUG3( "Send_control: control file '%s' sent", transfername );
-		SETSTATUS(logjob) "completed sending '%s' to %s@%s",
+		setstatus(logjob, "completed sending '%s' to %s@%s",
 			transfername, RemotePrinter_DYN, RemoteHost_DYN );
 	} else {
 		if( Write_fd_str( block_fd, cf ) < 0 ){
@@ -418,7 +418,7 @@ static int Send_control( int *sock, struct job *job, struct job *logjob, int tra
 
  write_error:
 	err = errno;
-	SNPRINTF(error,sizeof(error))
+	plp_snprintf(error,sizeof(error),
 		"job '%s' write to temporary file failed '%s'",
 		transfername, Errormsg( err ) );
 	Set_str_value(&job->info,ERROR,error);
@@ -465,14 +465,14 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 			fd = Checkread( openname, &statb );
 			if( fd < 0 ){
 				status = JFAILNORETRY;
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"cannot open '%s' - '%s'", openname, Errormsg(errno) );
 				Set_str_value(&job->info,ERROR,error);
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
 			if( statb.st_size == 0 ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 				"zero length file '%s'", transfername );
 				status = JABORT;
 				Set_str_value(&job->info,ERROR,error);
@@ -490,10 +490,10 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 		/*
 		 * send the data file name line
 		 */
-		SNPRINTF( msg, sizeof(msg)) "%c%0.0f %s\n",
+		plp_snprintf( msg, sizeof(msg), "%c%0.0f %s\n",
 				DATA_FILE, size, transfername );
 		if( block_fd == 0 ){
-			SETSTATUS(logjob) "sending data file '%s' to %s@%s", transfername,
+			setstatus(logjob, "sending data file '%s' to %s@%s", transfername,
 				RemotePrinter_DYN, RemoteHost_DYN );
 			DEBUG3("Send_data_files: data file msg '%s'", msg );
 			errno = 0;
@@ -501,12 +501,12 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				msg, safestrlen(msg), &ack )) ){
 				if( (s = safestrchr(msg,'\n')) ) *s = 0;
 				if( ack ){
-					SNPRINTF(error,sizeof(error))
+					plp_snprintf(error,sizeof(error),
 					"error '%s' with ack '%s'\n  sending str '%s' to %s@%s",
 					Link_err_str(status), Ack_err_str(ack), msg,
 					RemotePrinter_DYN, RemoteHost_DYN );
 				} else {
-					SNPRINTF(error,sizeof(error))
+					plp_snprintf(error,sizeof(error),
 					"error '%s'\n  sending str '%s' to %s@%s",
 					Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 				}
@@ -538,12 +538,12 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				|| ( fd !=0 && (status = Link_send( RemoteHost_DYN,sock,
 					transfer_timeout,"",1,&ack )) ) ){
 				if( ack ){
-					SNPRINTF(error,sizeof(error))
+					plp_snprintf(error,sizeof(error),
 					"error '%s' with ack '%s'\n  sending data file '%s' to %s@%s",
 					Link_err_str(status), Ack_err_str(ack), transfername,
 					RemotePrinter_DYN, RemoteHost_DYN );
 				} else {
-					SNPRINTF(error,sizeof(error))
+					plp_snprintf(error,sizeof(error),
 					"error '%s'\n  sending data file '%s' to %s@%s",
 					Link_err_str(status), transfername,
 					RemotePrinter_DYN, RemoteHost_DYN );
@@ -552,7 +552,7 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 				goto error;
 			}
-			SETSTATUS(logjob) "completed sending '%s' to %s@%s",
+			setstatus(logjob, "completed sending '%s' to %s@%s",
 				transfername, RemotePrinter_DYN, RemoteHost_DYN );
 		} else {
 			double total;
@@ -571,7 +571,7 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 				total += len;
 			}
 			if( total != size ){
-				SNPRINTF(error,sizeof(error))
+				plp_snprintf(error,sizeof(error),
 					"job '%s' did not copy all of '%s'",
 					id, transfername );
 				status = JFAIL;
@@ -586,7 +586,7 @@ static int Send_data_files( int *sock, struct job *job, struct job *logjob,
 
  write_error:
 	err = errno;
-	SNPRINTF(error,sizeof(error))
+	plp_snprintf(error,sizeof(error),
 		"job '%s' write to temporary file failed '%s'",
 		id, Errormsg( err ) );
 	Set_str_value(&job->info,ERROR,error);
@@ -649,20 +649,20 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 	/* rewind the file */
 	if( lseek( tempfd, 0, SEEK_SET ) == -1 ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Send_files: lseek tempfd failed" );
+		logerr_die(LOG_INFO, "Send_files: lseek tempfd failed" );
 	}
 	/* now we have the copy, we need to send the control message */
 	if( fstat( tempfd, &statb ) ){
 		Errorcode = JFAIL;
-		LOGERR_DIE(LOG_INFO) "Send_files: fstat tempfd failed" );
+		logerr_die(LOG_INFO, "Send_files: fstat tempfd failed" );
 	}
 	size = statb.st_size;
 
 	/* now we know the size */
 	DEBUG3("Send_block: size %0.0f", size );
-	SETSTATUS(logjob) "sending job '%s' to %s@%s, block transfer",
+	setstatus(logjob, "sending job '%s' to %s@%s, block transfer",
 		id, RemotePrinter_DYN, RemoteHost_DYN );
-	SNPRINTF( msg, sizeof(msg)) "%c%s %0.0f\n",
+	plp_snprintf( msg, sizeof(msg), "%c%s %0.0f\n",
 		REQ_BLOCK, RemotePrinter_DYN, size );
 	DEBUG3("Send_block: sending '%s'", msg );
 	status = Link_send( RemoteHost_DYN, sock, transfer_timeout,
@@ -672,12 +672,12 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 		char *v;
 		if( (v = safestrchr(msg,'\n')) ) *v = 0;
 		if( ack ){
-			SNPRINTF(error,sizeof(error))
+			plp_snprintf(error,sizeof(error),
 			"error '%s' with ack '%s'\n  sending str '%s' to %s@%s",
 			Link_err_str(status), Ack_err_str(ack), msg,
 			RemotePrinter_DYN, RemoteHost_DYN );
 		} else {
-			SNPRINTF(error,sizeof(error))
+			plp_snprintf(error,sizeof(error),
 			"error '%s'\n  sending str '%s' to %s@%s",
 			Link_err_str(status), msg, RemotePrinter_DYN, RemoteHost_DYN );
 		}
@@ -700,12 +700,12 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 		char *v;
 		if( (v = safestrchr(msg,'\n')) ) *v = 0;
 		if( ack ){
-			SNPRINTF(error,sizeof(error))
+			plp_snprintf(error,sizeof(error),
 				"error '%s' with ack '%s'\n  sending block file '%s' to %s@%s",
 				Link_err_str(status), Ack_err_str(ack), id,
 				RemotePrinter_DYN, RemoteHost_DYN );
 		} else {
-			SNPRINTF(error,sizeof(error))
+			plp_snprintf(error,sizeof(error),
 				"error '%s'\n  sending block file '%s' to %s@%s",
 				Link_err_str(status), id, RemotePrinter_DYN, RemoteHost_DYN );
 		}
@@ -713,7 +713,7 @@ int Send_block( int *sock, struct job *job, struct job *logjob, int transfer_tim
 		Set_nz_flag_value(&job->info,ERROR_TIME,time(0));
 		return(status);
 	} else {
-		SETSTATUS(logjob) "completed sending '%s' to %s@%s",
+		setstatus(logjob, "completed sending '%s' to %s@%s",
 			id, RemotePrinter_DYN, RemoteHost_DYN );
 	}
 	close( tempfd ); tempfd = -1;
