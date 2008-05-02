@@ -1,8 +1,8 @@
-AC_INIT(LPRng,3.8.A,lprng-devel@lists.sf.net)
+AC_INIT(LPRng,3.8.B~snapshot,lprng-devel@lists.sf.net)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_SRCDIR(src/common/lpr.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(LPRng,3.8.A)
+AM_INIT_AUTOMAKE(LPRng,3.8.B~snapshot)
 
 AM_MAINTAINER_MODE
 
