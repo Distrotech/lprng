@@ -556,36 +556,3 @@ static void Get_parms(int argc, char *argv[] )
 		}
 	}
 }
-
-#if 0
-
-#include "permission.h"
-#include "lpd_status.h"
-/* int Send_request( */
-	int class,					/* 'Q'= LPQ, 'C'= LPC, M = lprm */
-	int format,					/* X for option */
-	char **options,				/* options to send */
-	int connect_timeout,		/* timeout on connection */
-	int transfer_timeout,		/* timeout on transfer */
-	int output					/* output on this FD */
-	)
-{
-	int i, n;
-	int socket = 1;
-	char cmd[SMALLBUFFER];
-
-	cmd[0] = format;
-	cmd[1] = 0;
-	plp_snprintf(cmd+1, sizeof(cmd)-1, "%s", RemotePrinter_DYN, ;
-	for( i = 0; options[i]; ++i ){
-		n = safestrlen(cmd);
-		plp_snprintf(cmd+n,sizeof(cmd)-n," %s",options[i] , ;
-	}
-	Perm_check.remoteuser = "papowell";
-	Perm_check.user = "papowell";
-	Is_server = 1;
-	Job_status(&socket,cmd);
-	return(-1);
-}
-*/
-#endif
