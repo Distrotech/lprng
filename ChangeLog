@@ -1,3 +1,4 @@
+2008-05-03 brl use AS_HELP_STRING and newstyle AM_INIT_AUTOMAKE in configure.ac
 2008-05-02 brl/wh replace macros with unbalanced parentheses
 2008-03-29 brl really only link programs needing it to ssl libraries
 2008-03-16 brl adopt lpd.n's description of filter expansion to reality

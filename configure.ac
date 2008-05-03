@@ -2,7 +2,7 @@ AC_INIT(LPRng,3.8.B~snapshot,lprng-devel@lists.sf.net)
 AC_CANONICAL_SYSTEM
 AC_CONFIG_SRCDIR(src/common/lpr.c)
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(LPRng,3.8.B~snapshot)
+AM_INIT_AUTOMAKE([foreign])
 
 AM_MAINTAINER_MODE
 
@@ -42,7 +42,7 @@ AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH",[pgp path])
 
 dnl dnl check to see if setuid is suppressed
 dnl AC_ARG_ENABLE( setuid,
-dnl [  --disable-setuid                  do not install client executables setuid root],
+dnl AS_HELP_STRING([--disable-setuid],[do not install client executables setuid root]),
 dnl [
 dnl if test "$enableval" = "yes" ; then
 dnl 	PERMS=SUID_ROOT_PERMS
@@ -57,7 +57,7 @@ dnl AC_SUBST(PERMS)
 
 dnl check to see if priv ports required
 ENABLE_BOOLEAN(priv_ports,
-[  --enable-priv_ports               require connections from privileged ports],
+[--enable-priv_ports],[require connections from privileged ports],
 "no",
 [require connections from priviledged ports: $v],
 [PRIV_PORTS=""],[PRIV_PORTS="#"])
@@ -65,7 +65,7 @@ AC_SUBST(PRIV_PORTS)
 
 dnl check if only accept from local host
 ENABLE_BOOLEAN(remote,
-[  --disable-remote                  do not accept remote jobs by default],
+[--disable-remote],[do not accept remote jobs by default],
 "yes",
 [listen for remote connections by default  : $v],
 [NOREMOTE="#"
@@ -77,7 +77,7 @@ AC_SUBST(NOREMOTE)
 AC_DEFINE_UNQUOTED(LPD_LISTEN_PORT, $LPD_LISTEN_PORT,[default value for lpd_listen_port (0 means default port ("=515"), "=off" means to not listen at all])
 
 ENABLE_BOOLEAN(lpd.conf.local,
-[  --enable-lpd.conf.local           include lpd.conf.local in lpd.conf],
+[--enable-lpd.conf.local],[include lpd.conf.local in lpd.conf],
 "no",
 [include lpd.conf.local in lpd.conf        : $v],
 [INCLUDELPDCONFLOCAL=""
@@ -87,7 +87,7 @@ AC_SUBST(INCLUDELPDCONFLOCAL)
 
 dnl check to see if force_localhost is suppressed
 ENABLE_BOOLEAN(force_localhost,
-[  --disable-force_localhost         disable force_localhost default],
+[--disable-force_localhost],[disable force_localhost default],
 "yes",
 [force_localhost is default                : $v],
 [FORCE_LOCALHOST=1],[FORCE_LOCALHOST=0])
@@ -95,7 +95,7 @@ AC_DEFINE_UNQUOTED(FORCE_LOCALHOST,"$FORCE_LOCALHOST",[Force Localhost (force_lo
 
 dnl check to see if clients require lpd.conf and printcap
 ENABLE_BOOLEAN(require_configfiles,
-[  --disable-require_configfiles     client programs require lpd.conf, printcap],
+[--disable-require_configfiles],[client programs require lpd.conf, printcap],
 "yes",
 [client programs require lpd.conf, printcap: $v],
 [REQUIRE_CONFIGFILES=1], [REQUIRE_CONFIGFILES=0])
@@ -104,7 +104,7 @@ AC_DEFINE_UNQUOTED(REQUIRE_CONFIGFILES, "$REQUIRE_CONFIGFILES",[require configfi
 dnl check to see if kerberos is disabled
 AH_TEMPLATE(KERBEROS,[enable Kerberos support])
 ENABLE_BOOLEAN(kerberos,
-[  --enable-kerberos                 enable kerberos support],
+[--enable-kerberos],[enable kerberos support],
 "no",
 [enable kerberos support                   : $v],
 [KERBEROS=1;
@@ -115,7 +115,7 @@ AC_SUBST(KERBEROS)
 dnl check to see if MIT Kerberos 4 support is enabled
 AH_TEMPLATE(MIT_KERBEROS4,[enable MIT Kerberos 4 support])
 ENABLE_BOOLEAN(mit_kerberos4,
-[  --enable-mit_kerberos4            enable MIT Kerberos 4 support],
+[--enable-mit_kerberos4],[enable MIT Kerberos 4 support],
 "no",
 [enable MIT kerberos 4 support             : $v],
 [MIT_KERBEROS4=1;
@@ -125,18 +125,18 @@ AC_SUBST(MIT_KERBEROS4)
 
 dnl find kerberos libraries
 ENABLE_BOOLEAN(kerberos_checks,
-[  --disable-kerberos_checks         disable kerberos library location and checking for support],
+[--disable-kerberos_checks],[disable kerberos library location and checking for support],
 "yes",
 [locate Kerberos libraries and check       : $v],
 [KERBEROS_CHECKS=1],[KERBEROS_CHECKS=""])
 
 WITH_DIR(lpddir,
-[  --with-lpddir=DIR                 lpd executable directory (default \${sbindir})],
+[--with-lpddir=DIR],[lpd executable directory (default ${sbindir})],
 [lpdbindir],['${sbindir}'],
 [directory to place lpd executable into    : $lpdbindir])
 
 AC_ARG_WITH(config_subdir,
-[  --with-config_subdir=SUBDIR configuration subdirectory (default 'lpd')],
+AS_HELP_STRING([--with-config_subdir=SUBDIR],[configuration subdirectory (default 'lpd')]),
 CONFIGSUBDIR=$withval,CONFIGSUBDIR=lpd
 )
 configdir=\${sysconfdir}/${CONFIGSUBDIR}
@@ -144,58 +144,58 @@ AC_MSG_NOTICE([configuration directory          configdir= $configdir])
 AC_SUBST(configdir)
 
 WITH_DIR(lpd_conf_path,
-[  --with-lpd_conf_path=PATH         path of lpd.conf (default: \${configdir}/lpd.conf)],
+[--with-lpd_conf_path=PATH],[path of lpd.conf (default: ${configdir}/lpd.conf)],
 [LPD_CONF_PATH],['${configdir}/lpd.conf'],
 [lpd.conf location                         : $LPD_CONF_PATH])
 AC_SUBST(LPD_CONF_PATH)
 
 WITH_DIR(lpd_perms_path,
-[  --with-lpd_perms_path=PATH        path of lpd.perms (default: \${configdir}/lpd.perms)],
+[--with-lpd_perms_path=PATH],[path of lpd.perms (default: ${configdir}/lpd.perms)],
 [LPD_PERMS_PATH],['${configdir}/lpd.perms'],
 [lpd.perms location                        : $LPD_PERMS_PATH])
 AC_SUBST(LPD_PERMS_PATH)
 
 WITH_DIR(printcap_path,
-[  --with-printcap_path=PATH         path of printcap (default \${sysconfdir}/printcap)],
+[--with-printcap_path=PATH],[path of printcap (default ${sysconfdir}/printcap)],
 [PRINTCAP_PATH],['${sysconfdir}/printcap'],
 [printcap location                         : $PRINTCAP_PATH])
 AC_SUBST(PRINTCAP_PATH)
 
 WITH_DIR(lpd_printcap_path,
-[  --with-lpd_printcap_path=PATH     path of lpd_printcap (default \${configdir}/lpd_printcap)],
+[--with-lpd_printcap_path=PATH],[path of lpd_printcap (default ${configdir}/lpd_printcap)],
 [LPD_PRINTCAP_PATH],['${configdir}/lpd_printcap'],
 [lpd_printcap location                     : $LPD_PRINTCAP_PATH])
 
 WITH_DIR(localedir,
-[  --with-localedir=PATH   specify locale information directory],
+[--with-localedir=PATH],[specify locale information directory],
 [localedir],['${datadir}/locale'],
 [locale information directory is           : $localedir])
 AC_SUBST(localedir)
 
 WITH_DIR(unix_socket_path,
-[  --with-unix_socket_path=DIR       unix socket path (default /var/run/lprng)],
+[--with-unix_socket_path=DIR],[unix socket path (default /var/run/lprng)],
 [UNIXSOCKETPATH],[/var/run/lprng],
 [unix socket path is                       : $UNIXSOCKETPATH])
 
 WITH_DIR(lockfile,
-[  --with-lockfile=PATH              lockfile PATH, default /var/run/lpd ],
+[--with-lockfile=PATH],[lockfile PATH, default /var/run/lpd ],
 [LOCKFILE],['/var/run/lpd'],
 [lockfile directory                        : $LOCKFILE])
 
 WITH_DIR(spooldir,
-[  --with-spooldir=PATH              default spool directory, default /var/spool/lpd ],
+[--with-spooldir=PATH],[default spool directory, default /var/spool/lpd ],
 [SD_DEFAULT],['/var/spool/lpd'],
 [default spool directory (:sd=SPOOLDIR/%P) : $SD_DEFAULT])
 
 WITH_DIR(filterdir,
-[  --with-filterdir=DIR              filter directory (default \${libexecdir}/filters)],
+[--with-filterdir=DIR],[filter directory (default ${libexecdir}/filters)],
 [filterdir],['${libexecdir}/filters'],
 [filter directory                filterdir = $filterdir])
 
 dnl  FILTER_LD_PATH (LD_LIBRARY_PATH for filters) value
 dnl
 AC_ARG_WITH(ld_library_path,
-[  --with-ld_library_path=PATH        FILTER_LD_PATH value, default empty (for Solaris you might need /lib:/usr/lib:/usr/local/lib) ],
+AS_HELP_STRING([--with-ld_library_path=PATH],[FILTER_LD_PATH value, default empty (for Solaris you might need /lib:/usr/lib:/usr/local/lib)]),
 FILTER_LD_PATH="$withval",
 FILTER_LD_PATH=""
 )
@@ -206,7 +206,7 @@ AC_DEFINE_UNQUOTED(FILTER_LD_PATH, "$FILTER_LD_PATH",[default LD_LIBRARY_PATH fo
 dnl  filter PATH value
 dnl
 AC_ARG_WITH(filter-path,
-[  --with-filter-path=PATH           filter PATH value, default /bin:/usr/bin:/usr/local/bin ],
+AS_HELP_STRING([--with-filter-path=PATH],[filter PATH value, default /bin:/usr/bin:/usr/local/bin ]),
 FILTER_PATH="$withval",
 FILTER_PATH="/bin:/usr/bin:/usr/local/bin"
 )
@@ -217,7 +217,7 @@ AC_DEFINE_UNQUOTED(FILTER_PATH, "$FILTER_PATH",[default PATH for filters])
 dnl  user name
 dnl
 AC_ARG_WITH(userid,
-[  --with-userid=NAME                run LPRng software as this userid, default daemon ],
+AS_HELP_STRING([--with-userid=NAME],[run LPRng software as this userid, default daemon ]),
 USERID="$withval", USERID="daemon",
 )
 AC_MSG_NOTICE([userID to run lpd as                      : $USERID])
@@ -226,7 +226,7 @@ AC_DEFINE_UNQUOTED(USERID, "$USERID",[userid to run LPRng as, default daemon])
 dnl  group value
 dnl
 AC_ARG_WITH(groupid,
-[  --with-groupid=NAME               run LPRng software as this groupid, default daemon ],
+AS_HELP_STRING([--with-groupid=NAME],[run LPRng software as this groupid, default daemon ]),
 GROUPID="$withval", GROUPID="daemon",
 )
 AC_MSG_NOTICE([groupID to run lpd as                     : $GROUPID])
@@ -235,7 +235,7 @@ AC_DEFINE_UNQUOTED(GROUPID, "$GROUPID",[groupid to run LPRng as, default daemon]
 dnl  done_jobs value
 dnl
 AC_ARG_WITH(done_jobs,
-[  --with-done_jobs=N                retain last N job status, default 1],
+AS_HELP_STRING([--with-done_jobs=N],[retain last N job status, default 1]),
 DONE_JOBS="$withval", DONE_JOBS="1",
 )
 AC_MSG_NOTICE([number of job status to retain            : $DONE_JOBS])
@@ -244,7 +244,7 @@ AC_DEFINE_UNQUOTED(DONE_JOBS, "$DONE_JOBS",[number of jobs to retain status of])
 dnl  done_jobs_max_age value
 dnl
 AC_ARG_WITH(done_jobs_max_age,
-[  --with-done_jobs_max_age=N        retain job status N seconds, default 0 - no expiry],
+AS_HELP_STRING([--with-done_jobs_max_age=N],[retain job status N seconds, default 0 - no expiry]),
 DONE_JOBS_MAX_AGE="$withval", DONE_JOBS_MAX_AGE="0",
 )
 AC_MSG_NOTICE([max age to retain job status (0=no expiry): $DONE_JOBS_MAX_AGE])
@@ -973,7 +973,7 @@ dnl ----------------- END OF GENERAL CONFIGURATION   ---------------------------
 dnl check to see if tcp wrappers required
 AC_MSG_CHECKING(use tcp wrappers)
 AC_ARG_ENABLE( tcpwrappers,
-[  --enable-tcpwrappers             use tcp wrappers (-lwrap)],
+AS_HELP_STRING([--enable-tcpwrappers],[use tcp wrappers (-lwrap)]),
 [
 if test "$enableval" = "yes" ; then
  v=yes
@@ -1006,7 +1006,7 @@ AC_MSG_RESULT($v);dnl
 dnl check to see if ssl is disabled
 AC_MSG_CHECKING(if ssl authentication is disabled)
 AC_ARG_ENABLE( ssl,
-[  --disable-ssl                 disable ssl support],
+AS_HELP_STRING([--disable-ssl],[disable ssl support]),
 [
 if test "$enableval" = "yes" ; then
 	v=enabled;  SSL_ENABLE=1;
@@ -1034,7 +1034,7 @@ if test "$SSL_ENABLE" != ""; then
 	ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
 
 	AC_ARG_WITH(openssl,
-	[  --with-openssl=DIR          root location for OpenSSL],
+	AS_HELP_STRING([--with-openssl=DIR],[root location for OpenSSL]),
 	[
 		ac_openssl_lib_dir="$withval/lib $withval"
 		ac_openssl_inc_dir="$withval/include $withval"
@@ -1042,11 +1042,11 @@ if test "$SSL_ENABLE" != ""; then
 	)
 
 	AC_ARG_WITH(openssl-inc,
-	[  --with-openssl-inc        OpenSSL include files],
+	AS_HELP_STRING([--with-openssl-inc],[OpenSSL include files]),
 		ac_openssl_inc_dir=$withval
 	)
 	AC_ARG_WITH(openssl-lib,
-	[  --with-openssl-lib        OpenSSL library files],
+	AS_HELP_STRING([--with-openssl-lib],[OpenSSL library files]),
 		ac_openssl_lib_dir=$withval
 	)
 
@@ -1122,7 +1122,7 @@ dnl  ssl certificate authority CERT file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority CERT file)
 AC_ARG_WITH(ssl_ca_file,
-[  --with-ssl_ca_file=FILE     ssl Certificate Authority CERT file (default \${configdir}/ssl.ca/ca.crt)],
+AS_HELP_STRING([--with-ssl_ca_file=FILE],[ssl Certificate Authority CERT file (default ${configdir}/ssl.ca/ca.crt)]),
 SSL_CA_FILE=$withval,
 SSL_CA_FILE=\${configdir}/ssl.ca/ca.crt,
 )
@@ -1133,7 +1133,7 @@ dnl  ssl certificate authority private key file
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority private key file)
 AC_ARG_WITH(ssl_ca_key,
-[  --with-ssl_ca_key=KEY     ssl Certificate Authority private key file (default \${configdir}/ssl.ca/ca.key)],
+AS_HELP_STRING([--with-ssl_ca_key=KEY],[ssl Certificate Authority private key file (default ${configdir}/ssl.ca/ca.key)]),
 SSL_CA_KEY=$withval,
 SSL_CA_KEY=\${configdir}/ssl.ca/ca.key,
 )
@@ -1144,7 +1144,7 @@ dnl  ssl certificate authority certs working directory
 dnl
 AC_MSG_CHECKING(ssl Certificate Authority certs working directory)
 AC_ARG_WITH(ssl_certs_dir,
-[  --with-ssl_certs_dir=DIR     ssl Certificate Authority certs working directory (default \${configdir}/ssl.certs/)],
+AS_HELP_STRING([--with-ssl_certs_dir=DIR],[ssl Certificate Authority certs working directory (default ${configdir}/ssl.certs/)]),
 SSL_CERTS_DIR=$withval,
 SSL_CERTS_DIR=\${configdir}/ssl.certs,
 )
@@ -1155,7 +1155,7 @@ dnl  ssl certificate revocation list
 dnl
 AC_MSG_CHECKING(ssl Certificate Revocation List (CRL) file)
 AC_ARG_WITH(ssl_crl_file,
-[  --with-ssl_crl_file=PATH     ssl Certificate Revocation List File (default \${configdir}/ssl.crl/ssl.crl)],
+AS_HELP_STRING([--with-ssl_crl_file=PATH],[ssl Certificate Revocation List File (default ${configdir}/ssl.crl/ssl.crl)]),
 SSL_CRL_FILE=$withval,
 SSL_CRL_FILE=\${configdir}/ssl.crl/ssl.crl,
 )
@@ -1166,7 +1166,7 @@ dnl  ssl server certificate file
 dnl
 AC_MSG_CHECKING(ssl server certificate file)
 AC_ARG_WITH(ssl_server_cert,
-[  --with-ssl_server_cert=FILE     ssl server certificate file (default \${configdir}/ssl.server/server.crt)],
+AS_HELP_STRING([--with-ssl_server_cert=FILE],[ssl server certificate file (default ${configdir}/ssl.server/server.crt)]),
 SSL_SERVER_CERT=$withval,
 SSL_SERVER_CERT=\${configdir}/ssl.server/server.crt,
 )
@@ -1177,7 +1177,7 @@ dnl  ssl server password file for private key file
 dnl
 AC_MSG_CHECKING(ssl server password file for private key file)
 AC_ARG_WITH(ssl_server_password_file,
-[  --with-ssl_server_password_file=FILE     ssl server private key in password file (default \${configdir}/ssl.server/server.pwd)],
+AS_HELP_STRING([--with-ssl_server_password_file=FILE],[ssl server private key in password file (default ${configdir}/ssl.server/server.pwd)]),
 SSL_SERVER_PASSWORD_FILE=$withval,
 SSL_SERVER_PASSWORD_FILE=\${configdir}/ssl.server/server.pwd,
 )

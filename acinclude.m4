@@ -1,12 +1,12 @@
 define([ENABLE_BOOLEAN],[dnl
-AC_ARG_ENABLE([$1],[$2],[v="$enableval"],[v=$3])
-AC_MSG_NOTICE([$4])
-AS_IF([test "x$v" = "xyes"], [$5], [$6])
+AC_ARG_ENABLE([$1],AS_HELP_STRING([$2],[$3]),[v="$enableval"],[v=$4])
+AC_MSG_NOTICE([$5])
+AS_IF([test "x$v" = "xyes"], [$6], [$7])
 ])
 define([WITH_DIR],[dnl
-AC_ARG_WITH([$1],[$2],[$3="$withval"],[$3=$4])
-AC_MSG_NOTICE([$5])
-AC_SUBST($3)
+AC_ARG_WITH([$1],AS_HELP_STRING([$2],[$3]),[$4="$withval"],[$4=$5])
+AC_MSG_NOTICE([$6])
+AC_SUBST($4)
 ])
 dnl The following code is taken from "po.m4 serial 7 (gettext-0.14.3)"
 dnl "gettext.m4 serial 37 (gettext-0.14.4)" and "nls.m4 serial 2 (gettext-0.14.3)"
@@ -23,7 +23,7 @@ AC_DEFUN([MY_GETTEXT],
 [
 AC_MSG_CHECKING([whether NLS is requested])
 dnl Default is disabled NLS
-AC_ARG_ENABLE(nls, [  --enable-nls           use Native Language Support],
+AC_ARG_ENABLE(nls,AS_HELP_STRING([--enable-nls],[use Native Language Support]),
 	USE_NLS=$enableval, USE_NLS=no)
 AC_MSG_RESULT($USE_NLS)
 AC_SUBST(USE_NLS)
