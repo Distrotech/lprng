@@ -14,10 +14,6 @@
 # include <sys/vfs.h>
 #endif
 
-#ifdef SUNOS
-extern int statfs(const char *, struct statfs *);
-#endif
-
 # if USE_STATFS_TYPE == STATVFS
 #  define plp_statfs(path,buf) statvfs(path,buf)
 #  define plp_struct_statfs struct statvfs

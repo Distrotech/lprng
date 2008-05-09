@@ -647,17 +647,15 @@ XX ** NO VARARGS ** XX
  */
 
 #define NONBLOCK (O_NDELAY|O_NONBLOCK)
-#if defined(HPUX) && HPUX<110
-#  undef NONBLOCK
-#  define NONBLOCK (O_NONBLOCK)
-#endif
 
-/* fix for HPUX systems with no fd_set values */
-#undef FD_SET_FIX
-#if !defined(HAVE_FD_SET) && defined(HPUX)
-#  define FD_SET_FIX(X) (int *)
-#endif
-
+/* we no longer set HPUX, so this cannot be done automatically,
+ * unless knowing why it was here. is O_NDELAY not defined there?
+ * something else? 
+Hif defined(HPUX) && HPUX<110
+H  undef NONBLOCK
+H  define NONBLOCK (O_NONBLOCK)
+Hendif
+*/
 
 /*********************************************************************
  * AIX systems need this
@@ -683,9 +681,6 @@ XX ** NO VARARGS ** XX
  **********************************************************************/
 #ifdef HAVE_SELECT_H
 #include <select.h>
-#endif
-#if !defined(FD_SET_FIX)
-# define FD_SET_FIX(X) X
 #endif
 
 /**********************************************************************
@@ -736,82 +731,6 @@ const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 
 #ifndef HAVE_FLOCK_DEF
 extern int flock( int fd, int operation );
-#endif
-
-/**********************************************************************
- *  SUNOS Definitions
- **********************************************************************/
-#ifdef SUNOS
-extern int _flsbuf(int, FILE *);
-extern int _filbuf(FILE *);
-extern int accept(int s, struct sockaddr *name, int *namelen);
-extern int bind(int s, struct sockaddr *name, int namelen);
-extern int connect(int s, struct sockaddr *name, int namelen);
-extern void bzero(void *s, size_t n);
-extern void endgrent( void );
-extern int fflush( FILE *stream );
-extern int fclose( FILE *stream );
-extern int flock( int fd, int operation );
-extern int fprintf(FILE *, const char *, ...);
-extern int fputs( const char *, FILE *stream );
-extern int fstat(int fd, struct stat *buf );
-extern int fseek( FILE *stream, long offset, int ptrname );
-extern int ftruncate( int fd, off_t length );
-extern int fwrite( char *ptr, int size, int nitems, FILE *stream);
-extern int getdtablesize( void );
-extern int getpeername(int s, struct sockaddr *name, int *namelen);
-extern int getsockname(int s, struct sockaddr *name, int *namelen);
-extern int getsockopt(int s, int level, int optname, char *optval,int *optlen);
-extern int ioctl(int fd, int request, caddr_t arg );
-extern int killpg(int pgrp, int sig );
-extern int listen(int s, int backlog );
-extern int lockf(int fd, int cmd, long size );
-/*extern int lseek(int fd, off_t pos, int how ); */
-extern int lstat(const char *path, struct stat *buf );
-#define memmove(dest,src,len) bcopy(src,dest,len)
-extern void bcopy(const void *src,void *dest,size_t len);
-extern int mkstemp(char *s );
-extern int openlog( const char *ident, int logopt, int facility );
-extern int perror(const char *);
-extern int printf( const char *, ...);
-extern int rename(const char *, const char *);
-extern int select (int width, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-extern void setgrent(void);
-extern int seteuid( int euid );
-extern int setreuid( int ruid, int euid );
-extern int setsockopt(int s, int level, int optname, const char *optval,int optlen);
-extern int socket( int domain, int type, int protocol );
-extern int socketpair(int, int, int, int *);
-extern int sscanf( char *s, char *format, ... );
-extern int stat(const char *path, struct stat *buf );
-extern int strcasecmp( const char *, const char * );
-extern char *strerror( int );
-extern int strncasecmp( const char *, const char *, int n );
-extern long strtol( const char *str, char **ptr, int base );
-extern double strtod( const char *str, char **ptr );
-extern int shutdown( int sock, int how );
-extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
-extern int getrlimit(int resource, struct rlimit *rlp);
-extern char * sbrk(int incr);
-extern int fchmod(int fd, int mode);
-extern int strftime(char *buf, int bufsize, const char *fmt, struct tm *tm);
-extern void syslog(int, const char *, ...);
-extern int system( const char *str );
-extern time_t time( time_t *t );
-extern int tolower( int );
-extern int toupper( int );
-extern int tputs( const char *cp, int affcnt, int (*outc)() );
-extern int vfprintf(FILE *, const char *, ...);
-extern int vprintf(FILE *, const char *, va_list ap);
-#endif
-
-
-#ifdef SOLARIS
-extern int setreuid( uid_t ruid, uid_t euid );
-extern int mkstemp(char *s );
-#ifdef HAVE_GETDTABLESIZE
-extern int getdtablesize(void);
-#endif
 #endif
 
 #if !defined(HAVE_SYSLOG_DEF)

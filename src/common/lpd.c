@@ -640,9 +640,7 @@ int main(int argc, char *argv[], char *envp[])
 		Setup_waitpid_break();
 		errno = 0;
 		fd_available = select( max_socks,
-			FD_SET_FIX((fd_set *))&readfds,
-			FD_SET_FIX((fd_set *))0,
-			FD_SET_FIX((fd_set *))0, timeout );
+			&readfds, NULL, NULL, timeout );
 		err = errno;
 		Setup_waitpid();
 		if(DEBUGL1){
@@ -835,9 +833,7 @@ int Read_server_status( int fd )
 		FD_SET( fd, &readfds );
 		memset(&timeval,0, sizeof(timeval));
 		status = select( fd+1,
-			FD_SET_FIX((fd_set *))&readfds,
-			FD_SET_FIX((fd_set *))0,
-			FD_SET_FIX((fd_set *))0, &timeval );
+			&readfds, NULL, NULL, &timeval );
 		DEBUG1( "Read_server_status: select status %d", status);
 		if( status == 0 ){
 			break;

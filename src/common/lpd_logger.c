@@ -316,10 +316,7 @@ void Logger( struct line_list *args )
 		errno = 0;
 		DEBUGF(DLOG2)("Logger: starting select, timeout '%s', left %d",
 			tp?"yes":"no", left );
-        m = select( m,
-            FD_SET_FIX((fd_set *))&readfds,
-            FD_SET_FIX((fd_set *))&writefds,
-            FD_SET_FIX((fd_set *))0, tp );
+        m = select( m, &readfds, &writefds, NULL, tp );
 		err = errno;
 		DEBUGF(DLOG2)("Logger: select returned %d, errno '%s'",
 			m, Errormsg(err) );

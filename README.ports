@@ -1,6 +1,11 @@
-The following is a list of the systems that LPRng has been ported to.
-In addition,  there are a large number of others that it works on,
-but have not been reported.
+The new build system was tested on:
+
+Linux (Debian 4.0)
+SunOS 5.10
+
+The following is a list of the systems that LPRng had once been ported
+to. Since then quite a bit changed in the build system, and noone has
+reported any tests since:
 
 Sun Microsystems: SunOS 4.1.1, 4.1.3U, 4.1.4
      Solaris/SunOS  2.2/5.2, 2.3/5.3, 2.4/5.4
@@ -13,13 +18,22 @@ HPUX: 8.2, 9.4, 10.X, 11.X
     or
       configure CFLAGS=-Aa
     for ANSI compatibilty.
-
+    Additionally you might want to set CPPFLAGS="-D_HPUXSOURCE=1"
+    when calling configure.
+    Older versions had on HPUX<110 the value of NONBLOCK in
+    src/include/portable.h set to (O_NONBLOCK) instead of
+    (O_NDELAY|O_NONBLOCK). If you have such a machine, hints
+    on why this was needed would be nice, so we can readd this
+    without the expensive system-detection code.
 SGI:  IRIX5, IRIX6, IRIX7
 	Note: use ANSII C compiler,  gcc is preferred
+	you might want to add -DIRIX=yourversion to CPPFLAGS
+	and -DHAVE_BROKEN_TIOCEXCL=1 on irix5
 Linux:  All Linux system generated after 1998.
 	Note: should run on Linux with no problems
 DEC:     ULTRIX, DEC Alpha
 	Note: use GCC
+	adding -DAES_SOURCE might help on osf*
 AIX:     1.06
     See LPRng Refernce Manual for detailed instructions
 	Note: use GCC
@@ -33,11 +47,6 @@ POSIX Compatible Systems:
    of some functions.  Check these carefully.
 
 Note:
-  Some systems do not have prototypes for all system functions used
-  by LPRng.  See the src/include/portable.h file for help - you
-  can enable a set of default prototypes.
-
-Note:
 Some systems appear to have conflicts in function definitions in
 different include files.  This is the target SYSTEMS fault,
 not LPRng's.
@@ -49,11 +58,3 @@ get fixed in the next. This has led to the use of "configure" and
 the need to detect not only the operating system, but also the
 version of various libraries and functions.  See the #if statements
 in various files, i.e. - stty.c is a good example of insanity.
-
-If you have problems,  please contact me and I will see what can be done.
-
-Patrick Powell                 Astart Technologies
-papowell@astart.com            6741 Convoy Court
-Network and System             San Diego, CA 92111
-  Consulting                   858-874-6543 FAX 858-751-2435
-LPRng - Print Spooler (http://www.lprng.com)

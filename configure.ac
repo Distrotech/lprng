@@ -1,5 +1,4 @@
 AC_INIT(LPRng,3.8.B~snapshot,lprng-devel@lists.sf.net)
-AC_CANONICAL_SYSTEM
 AC_CONFIG_SRCDIR(src/common/lpr.c)
 AM_CONFIG_HEADER(config.h)
 AM_INIT_AUTOMAKE([foreign])
@@ -296,56 +295,7 @@ AC_CHECK_TYPES( socklen_t,,,[
 #include <sys/socket.h>
 ] )
 
-dnl ****************OS-specific code*******************
-dnl I'd like to see this removed, but that would need some
-dnl checks if everything can be done by predfined compiler
-dnl symbols.
 checklibs=
-case $target_os in
-	 *unicos* )
-		checklibs=no
-		;;
-	 *irix6* )
-		checklibs=no
-		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
-		;;
-	 *irix5* )
-		checklibs=no
-		AC_DEFINE(HAVE_BROKEN_TIOCEXCL,1,[IRIX broken TIOCEXL])
-		AC_DEFINE(SVR4,1,[SVR4])
-		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
-		;;
-	 *irix* )
-		checklibs=no
-		AC_DEFINE_UNQUOTED(IRIX,$version,[IRIX version])
-		;;
-	*solaris* )
-		AC_DEFINE(SVR4,1,[SVR4])
-		AC_DEFINE_UNQUOTED(SOLARIS,$version,[Solaris version])
-		;;
-	*hpux* )
-		AC_DEFINE(_HPUX_SOURCE,1,[_HPUX_SOURCE])
-		CPPFLAGS="$CPPFLAGS -D_HPUX_SOURCE=1"
-		CFLAGS="$CFLAGS -D_HPUX_SOURCE=1"
-		AC_DEFINE_UNQUOTED(HPUX,$version,[HPUX version])
-		;;
-	*sunos* )
-		AC_DEFINE_UNQUOTED(SUNOS,$version,[Sun OS])
-		;;
-	osf* )
-		AC_DEFINE_UNQUOTED(DECALPHA,$version,[DEC Alpha])
-		if test "$ac_cv_prog_gcc" != yes; then
-			CPPFLAGS="$CPPFLAGS -std";
-			CFLAGS="$CFLAGS -std";
-		else
-			CPPFLAGS="$CPPFLAGS -DAES_SOURCE"
-			CFLAGS="$CFLAGS -DAES_SOURCE"
-		fi
-		;;
-	*mips-sni* )
-		;;
-esac
-AC_MSG_RESULT([using CPPFLAGS=\"${CPPFLAGS}\", CFLAGS=\"${CFLAGS}\"])
 
 dnl ----------------------------------------------------------------------------
 dnl headers:
@@ -355,40 +305,18 @@ AC_CHECK_HEADERS(arpa/inet.h arpa/nameser.h assert.h com_err.h compat.h ctype.h 
 dnl ----------------------------------------------------------------------------
 dnl libraries:
 
-dnl check to see if we suppress probing for libraries
-dnl this is done by using the checklibs variable
+dnl it might be nice to put them to some SOCKETLIBS or stuff like that instead,
+dnl but given it is not needed on Linux, this will both seldom tested and
+dnl seldom be useful.
 
-if test -z "$checklibs"; then
-	dnl A/UX uses this...
-	AC_CHECK_LIB(posix, getpwent, [LIBS="$LIBS -lposix"])
+dnl A/UX uses this...
+AC_SEARCH_LIBS(getpwent, posix)
 
-	dnl use old-style shared libs if we have 'em.
-	AC_CHECK_LIB(socket_s, socket, [LIBS="$LIBS -lsocket_s"; have_socket=1], ,-lnsl)
-	if test -z "$have_socket"; then
-		AC_CHECK_LIB(socket, socket, [LIBS="$LIBS -lsocket"], , -lnsl)
-	fi
+dnl TODO: error out if not there?
 
-	AC_TRY_LINK(,[extern int gethostbyaddr; return (gethostbyaddr);],
-		have_gethost=1)
-	if test -z "$have_gethost" ; then
-		h="you need additional libs for gethostbyaddr";
-	else
-		h="no additional libs for gethostbyaddr";
-	fi
-	AC_MSG_RESULT($h)
-	if test -z "$have_gethost" ; then
-		AC_CHECK_LIB(nsl_s, gethostbyaddr, [LIBS="$LIBS -lnsl_s"; have_gethost=1])
-	fi
-	if test -z "$have_gethost"; then
-		AC_CHECK_LIB(nsl, gethostbyaddr, [LIBS="$LIBS -lnsl"; have_gethost=1])
-	fi
+AC_SEARCH_LIBS(gethostbyaddr, [nsl_s nsl net_s net])
 
-	if test -z "$have_gethost"; then
-		AC_CHECK_LIB(net_s, gethostbyaddr, [LIBS="$LIBS -lnet_s"; have_gethost=1])
-	fi
-	if test -z "$have_gethost"; then
-		AC_CHECK_LIB(net, gethostbyaddr, [LIBS="$LIBS -lnet"; have_gethost=1])
-	fi
+AC_SEARCH_LIBS(socket, [socket_s socket])
 
 	dnl BIND library may be needed,  need to force this first
 	if test -z "$no_resolv_lib"; then
@@ -397,7 +325,6 @@ if test -z "$checklibs"; then
 		AC_CHECK_LIB(resolv, inet_ntop, [LIBS="$LIBS -lresolv";name2=yes])
 	  fi;
 	fi
-fi
 
 dnl ----------------------------------------------------------------------------
 dnl function checks:
