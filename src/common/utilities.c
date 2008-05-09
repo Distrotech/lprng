@@ -483,11 +483,7 @@ int plp_usleep( int i )
 		memset( &t, 0, sizeof(t) );
 		t.tv_usec = i%1000000;
 		t.tv_sec =  i/1000000;
-		i = select( 0,
-			FD_SET_FIX((fd_set *))(0),
-			FD_SET_FIX((fd_set *))(0),
-			FD_SET_FIX((fd_set *))(0),
-			&t );
+		i = select( 0, NULL, NULL, NULL, &t );
 		DEBUG3("plp_usleep: select done, status %d", i );
 	}
 	return( i );
@@ -504,11 +500,7 @@ int plp_sleep( int i )
 	if( i > 0 ){
 		memset( &t, 0, sizeof(t) );
 		t.tv_sec = i;
-		i = select( 0,
-			FD_SET_FIX((fd_set *))(0),
-			FD_SET_FIX((fd_set *))(0),
-			FD_SET_FIX((fd_set *))(0),
-			&t );
+		i = select( 0, NULL, NULL, NULL, &t );
 		DEBUG3("plp_sleep: select done, status %d", i );
 	}
 	return( i );
@@ -784,10 +776,7 @@ int Read_write_timeout(
 		if( m <= readfd ) m = readfd+1;
 		errno = 0;
 		DEBUG4("Read_write_timeout: starting select" );
-        m = select( m,
-            FD_SET_FIX((fd_set *))&readfds,
-            FD_SET_FIX((fd_set *))&writefds,
-            FD_SET_FIX((fd_set *))0, tp );
+        m = select( m, &readfds, &writefds, NULL, tp );
 		err = errno;
 		DEBUG4("Read_write_timeout: select returned %d, errno '%s'",
 			m, Errormsg(err) );
@@ -1426,10 +1415,6 @@ void Reset_daemonuid(void)
 #endif
 #if defined(HAVE_SYS_VFS_H) && !defined(SOLARIS)
 # include <sys/vfs.h>
-#endif
-
-#ifdef SUNOS
- extern int statfs(const char *, struct statfs *);
 #endif
 
 # if USE_STATFS_TYPE == STATVFS

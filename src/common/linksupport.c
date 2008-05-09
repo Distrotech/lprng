@@ -963,10 +963,8 @@ int Link_send( char *host, int *sock, int timeout,
 			/* delay.tv_usec = 1000; */
 			FD_ZERO( &readfds );
 			FD_SET( *sock, &readfds );
-			i = select( (*sock)+1,
-				FD_SET_FIX((fd_set *))&readfds,
-				FD_SET_FIX((fd_set *))0,
-				FD_SET_FIX((fd_set *))0, &delay );
+			i = select( (*sock)+1, &readfds,
+				NULL, NULL, &delay );
 			if( i > 0 ){
 				logmsg( LOG_ERR,
 				"Link_send: PROTOCOL ERROR - pending input from '%s' after ACK received",
@@ -1055,10 +1053,7 @@ int Link_copy( char *host, int *sock, int readtimeout, int writetimeout,
 		memset( &delay,0,sizeof(delay));
 		FD_ZERO( &readfds );
 		FD_SET( *sock, &readfds );
-		i = select( *sock+1,
-			FD_SET_FIX((fd_set *))&readfds,
-			FD_SET_FIX((fd_set *))0,
-			FD_SET_FIX((fd_set *))0, &delay );
+		i = select( *sock+1, &readfds, NULL, NULL, &delay );
 		if( i != 0 ){
 			logmsg( LOG_ERR,
 			"Link_copy: PROTOCOL ERROR - pending input from '%s' after transfer",

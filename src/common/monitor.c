@@ -205,9 +205,7 @@ int main(int argc, char *argv[] )
 			}
 		}
 		if( debug ) FPRINTF(STDERR,"monitor: starting wait, max %d\n", i );
-		n = select( i,
-			FD_SET_FIX((fd_set *))&testfds,
-			FD_SET_FIX((fd_set *))0, FD_SET_FIX((fd_set *))0,
+		n = select( i, &testfds, NULL, NULL,
 			(struct timeval *)0 );
 		err = errno;
 		if( debug ) FPRINTF(STDERR,"monitor: select returned %d\n", n );
