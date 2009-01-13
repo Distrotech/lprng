@@ -675,8 +675,8 @@ void Do_stty( int fd )
 
  struct s_term_dat {
 	const char *name;
-	uint or_dat;
-	uint and_dat;
+	unsigned int or_dat;
+	unsigned int and_dat;
 };
 
 #undef FLAGS
