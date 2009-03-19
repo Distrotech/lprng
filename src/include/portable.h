@@ -715,6 +715,7 @@ const char *inet_ntop( int family, const void *addr, char *strptr, size_t len );
 #else
 # define _(Text) Text
 # define N_(Text) Text
+# define ngettext(Singular, Plural, n) ((n==1)?(Singular):(Plural))
 # define textdomain(Domain)
 # define bindtextdomain(Package, Directory)
 #endif

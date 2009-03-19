@@ -774,8 +774,9 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	/* this gives a short 1 line format with minimum info */
 	if( displayformat == REQ_DSHORT ){
 		len = safestrlen( header );
-		plp_snprintf( header+len, sizeof(header)-len, _(" %d job%s"),
-			matches, (matches == 1)?"":"s" );
+		plp_snprintf( header+len, sizeof(header)-len,
+				ngettext(" %d job", " %d jobs", matches),
+				matches);
 		if( total_held ){
 			len = safestrlen( header );
 			plp_snprintf( header+len, sizeof(header)-len, _(" (%d held)"),
@@ -990,8 +991,10 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 		safestrncpy( msg, _(" Queue: no printable jobs in queue\n") );
 	} else {
 		/* check to see if there are files and no spooler */
-		plp_snprintf( msg, sizeof(msg), _(" Queue: %d printable job%s\n"),
-			printable, printable > 1 ? "s" : "" );
+		plp_snprintf( msg, sizeof(msg),
+			ngettext(" Queue: %d printable job\n",
+				" Queue: %d printable jobs\n", printable),
+			printable);
 	}
 	if( Write_fd_str( *sock, msg ) < 0 ) cleanup(0);
 	if( held ){

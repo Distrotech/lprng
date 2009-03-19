@@ -4,18 +4,18 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 # 
 #: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:546
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2009-03-19 13:49+0100\n"
+"POT-Creation-Date: 2009-03-19 14:46+0100\n"
 "PO-Revision-Date: $Id: de.po,v 1.3 2004/09/24 20:19:55 papowell Exp $\n"
 "Last-Translator: Walter Harms <EMAIL@ADDRESS>\n"
 "Language-Team:de <de@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8-bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
 
 #: src/common/accounting.c:134
 #, c-format
@@ -464,9 +464,9 @@ msgid "server process PID %ld exited\n"
 msgstr "Serverprozess PID %ld beendet\n"
 
 #: src/common/lpd_control.c:492
-#, fuzzy, c-format
+#, c-format
 msgid "kill server process PID %ld with %s\n"
-msgstr "Erledige Serverprocess PID %ld with %s\n"
+msgstr "Erledige Serverprocess PID %ld mit %s\n"
 
 #: src/common/lpd_control.c:501
 msgid "enabled and started"
@@ -630,9 +630,9 @@ msgid "Do_queue_jobs: FORWARDING LOOP - '%s'"
 msgstr ""
 
 #: src/common/lpd_jobs.c:1096
-#, fuzzy, c-format
+#, c-format
 msgid "cannot update job ticket file '%s'"
-msgstr "Kann Datei '%s' nicht öffnen; '%s'"
+msgstr "Kann Job-Datei '%s' nicht öffnen"
 
 #: src/common/lpd_jobs.c:1098
 #, c-format
@@ -683,9 +683,9 @@ msgid "subserver pid %ld exit status '%s'"
 msgstr "Unterserver PID %ld exit status '%s'"
 
 #: src/common/lpd_jobs.c:1705
-#, fuzzy, c-format
+#, c-format
 msgid "subserver pid %ld died with signal '%s'"
-msgstr "Unterserver pid %d beendet mit Signal '%s'"
+msgstr "Unterserver pid %ld beendet mit Signal '%s'"
 
 #: src/common/lpd_jobs.c:1751
 msgid "Wait_for_subserver: Mergesort failed"
@@ -1028,9 +1028,9 @@ msgid "  no permissions '%s'\n"
 msgstr " Nicht Erlaubt '%s'\n"
 
 #: src/common/lpd_remove.c:264
-#, fuzzy, c-format
+#, c-format
 msgid "  removing incoming job '%s'\n"
-msgstr "Entferne Job '%s' - JABORT"
+msgstr " Entferne Job '%s'\n"
 
 #: src/common/lpd_remove.c:267
 #, c-format
@@ -1149,27 +1149,29 @@ msgstr ""
 msgid "%s HOLDFILE="
 msgstr ""
 
-#: src/common/lpd_status.c:777
+#: src/common/lpd_status.c:778
 #, c-format
-msgid " %d job%s"
-msgstr ""
+msgid " %d job"
+msgid_plural " %d jobs"
+msgstr[0] " %d Job"
+msgstr[1] " %d Jobs"
 
-#: src/common/lpd_status.c:781
+#: src/common/lpd_status.c:782
 #, c-format
 msgid " (%d held)"
 msgstr ""
 
-#: src/common/lpd_status.c:786
+#: src/common/lpd_status.c:787
 #, c-format
 msgid " (%d move)"
 msgstr ""
 
-#: src/common/lpd_status.c:809
+#: src/common/lpd_status.c:810
 #, c-format
 msgid " Comment: %s"
 msgstr " Kommentar: %s"
 
-#: src/common/lpd_status.c:820
+#: src/common/lpd_status.c:821
 #, c-format
 msgid ""
 "\n"
@@ -1182,19 +1184,19 @@ msgstr ""
 " Abgebrochen: %s\n"
 " Spooling: %s"
 
-#: src/common/lpd_status.c:866
+#: src/common/lpd_status.c:867
 #, c-format
 msgid ""
 "\n"
 " %s: "
 msgstr ""
 
-#: src/common/lpd_status.c:874
+#: src/common/lpd_status.c:875
 #, c-format
 msgid " (%s"
 msgstr ""
 
-#: src/common/lpd_status.c:889
+#: src/common/lpd_status.c:890
 #, c-format
 msgid ""
 "\n"
@@ -1203,17 +1205,17 @@ msgstr ""
 "\n"
 " Umgeleitet nach: %s"
 
-#: src/common/lpd_status.c:892
+#: src/common/lpd_status.c:893
 #, c-format
 msgid " (redirect %s)"
 msgstr " (Umgeleitet %s)"
 
-#: src/common/lpd_status.c:902
+#: src/common/lpd_status.c:903
 #, c-format
 msgid " (dest %s@%s)"
 msgstr " (Ziel %s@%s)"
 
-#: src/common/lpd_status.c:909
+#: src/common/lpd_status.c:910
 #, c-format
 msgid ""
 "\n"
@@ -1222,12 +1224,12 @@ msgstr ""
 "\n"
 " in Arbeit: %s"
 
-#: src/common/lpd_status.c:912
+#: src/common/lpd_status.c:913
 #, c-format
 msgid " (serving %s)"
 msgstr " (bearbeite %s)"
 
-#: src/common/lpd_status.c:919
+#: src/common/lpd_status.c:920
 #, c-format
 msgid ""
 "\n"
@@ -1236,12 +1238,12 @@ msgstr ""
 "\n"
 " Klassen: %s"
 
-#: src/common/lpd_status.c:922
+#: src/common/lpd_status.c:923
 #, c-format
 msgid " (classes %s)"
 msgstr " (Klassen %s)"
 
-#: src/common/lpd_status.c:929
+#: src/common/lpd_status.c:930
 msgid ""
 "\n"
 " Hold_all: on"
@@ -1249,11 +1251,11 @@ msgstr ""
 "\n"
 " Hold_all: ein"
 
-#: src/common/lpd_status.c:932
+#: src/common/lpd_status.c:933
 msgid " (holdall)"
 msgstr ""
 
-#: src/common/lpd_status.c:939
+#: src/common/lpd_status.c:940
 msgid ""
 "\n"
 " Auto_hold: on"
@@ -1261,11 +1263,11 @@ msgstr ""
 "\n"
 " Auto_hold: ein"
 
-#: src/common/lpd_status.c:942
+#: src/common/lpd_status.c:943
 msgid " (autohold)"
 msgstr ""
 
-#: src/common/lpd_status.c:950
+#: src/common/lpd_status.c:951
 #, c-format
 msgid ""
 "\n"
@@ -1274,49 +1276,51 @@ msgstr ""
 "\n"
 " Mitteilung: %s"
 
-#: src/common/lpd_status.c:953
+#: src/common/lpd_status.c:954
 #, c-format
 msgid " (message: %s)"
 msgstr " (Mitteilung: %s)"
 
-#: src/common/lpd_status.c:990
+#: src/common/lpd_status.c:991
 msgid " Queue: no printable jobs in queue\n"
 msgstr " Warteschlange: keine druckbaren Jobs\n"
 
-#: src/common/lpd_status.c:993
+#: src/common/lpd_status.c:995
 #, c-format
-msgid " Queue: %d printable job%s\n"
-msgstr " Warteschlange: %d druckbare Job%s\n"
+msgid " Queue: %d printable job\n"
+msgid_plural " Queue: %d printable jobs\n"
+msgstr[0] " Warteschlange: %d druckbarer Job\n"
+msgstr[1] " Warteschlange: %d druckbare Jobs\n"
 
-#: src/common/lpd_status.c:999
+#: src/common/lpd_status.c:1002
 #, c-format
 msgid " Holding: %d held jobs in queue\n"
 msgstr " Halt: halte %d  Jobs vor\n"
 
-#: src/common/lpd_status.c:1005
+#: src/common/lpd_status.c:1008
 msgid " Server: no server active"
 msgstr " Server: kein Server aktiv"
 
-#: src/common/lpd_status.c:1008
+#: src/common/lpd_status.c:1011
 #, c-format
 msgid " Server: pid %d active"
 msgstr " Server: PID %d aktiv"
 
-#: src/common/lpd_status.c:1016
+#: src/common/lpd_status.c:1019
 #, c-format
 msgid " Unspooler: pid %d active"
 msgstr " Unspooler: PID %d aktiv"
 
-#: src/common/lpd_status.c:1028
+#: src/common/lpd_status.c:1031
 #, c-format
 msgid "%s SPOOLCONTROL=\n"
 msgstr ""
 
-#: src/common/lpd_status.c:1042
+#: src/common/lpd_status.c:1045
 msgid " Status: "
 msgstr ""
 
-#: src/common/lpd_status.c:1046
+#: src/common/lpd_status.c:1049
 msgid " Filter_status: "
 msgstr "Filterstatus: "
 
