@@ -32,6 +32,7 @@ if test "$USE_NLS" = "yes"; then
         dnl If GNU gettext is available we use this. Fallback to external
 	dnl library is not yet supported, but should be easy to request by just
 	dnl adding the correct CFLAGS and LDFLAGS to ./configure
+	dnl (note that gettext and ngettext must exist)
 
         AC_CACHE_CHECK([for GNU gettext in libc], gt_cv_func_gnugettext1_libc,
          [AC_TRY_LINK([#include <libintl.h>
@@ -42,7 +43,9 @@ return * gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings],
             gt_cv_func_gnugettext1_libc=yes,
             gt_cv_func_gnugettext1_libc=no)])
 	if test "$gt_cv_func_gnugettext1_libc" = "yes" ; then
+		AC_CHECK_FUNC(ngettext,[
 		AC_DEFINE(ENABLE_NLS, 1, [Define to 1 if translation of program messages to the user's native language is requested.])
+		], [USE_NLS=no])
 	else
 		USE_NLS=no
 	fi
