@@ -448,7 +448,7 @@ order_routine	D	bool	false
 				information.
 originate_port	A	str	512 1023
 				when originating a connection, use ports in this range.
-pass_env	A	str	PGPPASS,PGPPATH
+pass_env	A	str	LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL
 				if not the LPD server, sanitize and put these variables
 				in a filter environment variable list.
 perms_path	A	str	_LPD_PERMS_PATH_
