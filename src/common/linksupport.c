@@ -195,7 +195,7 @@ static int Link_setkeepalive( int sock )
  */
 
 
-int connect_timeout( int timeout,
+static int connect_timeout( int timeout,
 	int sock, struct sockaddr *name, int namelen)
 {
 	int status = -1;
