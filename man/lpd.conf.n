@@ -474,7 +474,7 @@ Note that RFC1179 specifies that requests must
 originate from ports in the range 721-731.
 .TP
 \fBpass_env\fR
-(default: "PGPPASS,PGPPATH")
+(default: "LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL")
 Client programs such as LPR, LPC, etc., will pass these
 environment variables to any filter programs they start.
 .TP
