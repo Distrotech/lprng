@@ -23,8 +23,6 @@
 
 /* PROTOTYPES */
 int Link_setreuse( int sock );
-int connect_timeout( int timeout,
-	int sock, struct sockaddr *name, int namelen);
 void Set_linger( int sock, int n );
 int Link_listen( char *port_name );
 int Unix_link_listen( char *unix_socket_path );
