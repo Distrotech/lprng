@@ -491,10 +491,10 @@ void Get_parms(int argc, char *argv[] )
 					}
 					break;
 		case 't':
-				Check_str_dup( option, &Jobname_JOB, Optarg, M_JOBNAME);
+				Check_str_dup( option, &Jobname_JOB, Optarg);
 				break;
 		case 'X':
-				Check_str_dup( option, &User_filter_JOB, Optarg, M_JOBNAME);
+				Check_str_dup( option, &User_filter_JOB, Optarg);
 				break;
 		case 'Y': Direct_JOB = 1; break;
 		default:
@@ -509,20 +509,19 @@ void Get_parms(int argc, char *argv[] )
 		case 'A':   Auth_JOB = 1; break;
 		case 'B':   Lpr_bounce_JOB = 1; break;
 		case '1':
-		    Check_str_dup( option, &Font1_JOB, Optarg, M_FONT);
+		    Check_str_dup( option, &Font1_JOB, Optarg);
 			break;
 		case '2':
-		    Check_str_dup( option, &Font2_JOB, Optarg, M_FONT);
+		    Check_str_dup( option, &Font2_JOB, Optarg);
 			break;
 		case '3':
-		    Check_str_dup( option, &Font3_JOB, Optarg, M_FONT);
+		    Check_str_dup( option, &Font3_JOB, Optarg);
 			break;
 		case '4':
-		    Check_str_dup( option, &Font4_JOB, Optarg, M_FONT);
+		    Check_str_dup( option, &Font4_JOB, Optarg);
 			break;
 		case 'C':
-		    Check_str_dup( option, &Classname_JOB, Optarg,
-			   M_CLASSNAME);
+		    Check_str_dup( option, &Classname_JOB, Optarg);
 		    break;
 		case 'D': 	Parse_debug(Optarg,1);
 			break;
@@ -537,7 +536,7 @@ void Get_parms(int argc, char *argv[] )
 		    }
 		    break;
 		case 'J':
-		    Check_str_dup( option, &Jobname_JOB, Optarg, M_JOBNAME);
+		    Check_str_dup( option, &Jobname_JOB, Optarg);
 		    break;
 		case 'K':
 		case '#':
@@ -557,18 +556,18 @@ void Get_parms(int argc, char *argv[] )
 			Use_queuename_flag_DYN = 1;
 			break;
 		case 'R':
-		    Check_str_dup( option, &Accntname_JOB, Optarg, M_ACCNTNAME );
+		    Check_str_dup( option, &Accntname_JOB, Optarg );
 		    break;
 		case 'T':
-		    Check_str_dup( option, &Prtitle_JOB, Optarg, M_PRTITLE);
+		    Check_str_dup( option, &Prtitle_JOB, Optarg);
 		    break;
-		case 'U': Check_str_dup( option, &Username_JOB, Optarg, M_BNRNAME );
+		case 'U': Check_str_dup( option, &Username_JOB, Optarg);
 		    break;
 		case 'V':
 			++Verbose;
 		    break;
 		case 'X':
-				Check_str_dup( option, &User_filter_JOB, Optarg, M_JOBNAME);
+				Check_str_dup( option, &User_filter_JOB, Optarg);
 				break;
 		case 'Y': Direct_JOB = 1; break;
 		case 'o': /* same as Z */
@@ -589,7 +588,7 @@ void Get_parms(int argc, char *argv[] )
 		    Binary_JOB = 1;
 		    break;
 		case 'h':
-		    Check_dup( option, &No_header_JOB);
+		    No_header_JOB = 1;
 		    break;
 		case 'i':
 		    Check_int_dup( option, &Indent_JOB, Optarg, 0);
@@ -1283,20 +1282,10 @@ static void Check_int_dup (int option, int *value, char *arg, int maxvalue)
  * 2.  if not, then set it
  ***************************************************************************/
 
-static void Check_str_dup(int option, char **value, char *arg, int maxlen )
+static void Check_str_dup(int option, char **value, char *arg )
 {
 	if (arg == 0) {
 		Dienoarg (option);
 	}
 	*value = arg;
-}
-
-/***************************************************************************
- * 1.  check to see if value has been set
- * 2.  if not, then set it
- ***************************************************************************/
-
-static void Check_dup(int option, int *value)
-{
-	*value = 1;
 }
