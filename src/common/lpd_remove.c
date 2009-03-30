@@ -131,7 +131,6 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	int control_perm, permission, count, removed, status,
 		i, c = 0, pid;
 	char *s, *identifier;
-	struct stat statb;
 	struct line_list info, active_pid;
 	struct job job;
 	int fd = -1;
@@ -307,12 +306,8 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 			kill( pid, SIGCONT );
 		}
 		/* kill spooler process */
-		
-		pid = 0;
-		if( (fd = Checkread( Queue_lock_file_DYN, &statb )) >= 0 ){
-			pid = Read_pid( fd, (char *)0, 0 );
-			close( fd );
-		}
+
+		pid = Read_pid_from_file( Queue_lock_file_DYN );
 		DEBUGF(DLPRM2)("Get_queue_status: checking server pid %d", pid );
 		/* kill active spooler */
 		if( pid > 0 ){

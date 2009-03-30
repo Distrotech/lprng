@@ -1031,30 +1031,39 @@ int Setup_printer( char *prname, char *error, int errlen, int subserver )
 }
 
 /**************************************************************************
- * Read_pid( int fd, char *str, int len )
+ * Read_pid( int fd )
  *   - Read the pid from a file
  **************************************************************************/
-int Read_pid( int fd, char *str, int len )
+pid_t Read_pid( int fd )
 {
-	char line[LINEBUFFER];
-	int n;
+	char str[LINEBUFFER];
+	long n;
 
 	if( lseek( fd, 0, SEEK_SET ) == -1 ){
 		logerr_die(LOG_ERR, "Read_pid: lseek failed" );
 	}
 
-	if( str == 0 ){
-		str = line;
-		len = sizeof( line );
-	}
 	str[0] = 0;
-	if( (n = ok_read( fd, str, len-1 ) ) < 0 ){
+	if( (n = read( fd, str, sizeof(str)-1 ) ) < 0 ){
 		logerr_die(LOG_ERR, "Read_pid: read failed" );
 	}
 	str[n] = 0;
-	n = atoi( str );
-	DEBUG3( "Read_pid: %d", n );
+	n = atol( str );
+	DEBUG3( "Read_pid: %ld", n );
 	return( n );
+}
+
+pid_t Read_pid_from_file( const char *filename ) {
+	struct stat statb;
+	pid_t pid = -1;
+	int fd;
+
+	fd = Checkread( filename, &statb );
+	if( fd >= 0 ) {
+		pid = Read_pid( fd);
+		close( fd );
+	}
+	return pid;
 }
 
 /**************************************************************************
@@ -1557,10 +1566,10 @@ int Server_active( char *file )
 	int serverpid = 0;
 	int fd = Checkread( file, &statb );
 	if( fd >= 0 ){
-		serverpid = Read_pid( fd, 0, 0 );
+		serverpid = Read_pid( fd );
 		close(fd);
 		DEBUG5("Server_active: checking file %s, serverpid %d", file, serverpid );
-		if( serverpid && kill(serverpid,0) ){
+		if( serverpid > 0 && kill(serverpid,0) ){
 			serverpid = 0;
 		}
 	}
