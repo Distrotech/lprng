@@ -266,10 +266,12 @@ struct keywords Pc_var_list[] = {
 { "ignore_requested_user_priority", 0,  FLAG_K,  &Ignore_requested_user_priority_DYN,0,0,0},
    /*  incoming job control file filter */
 { "incoming_control_filter", 0,  STRING_K,  &Incoming_control_filter_DYN,0,0,0},
+#ifdef IPP_STUBS
    /* ipp server listen port port, no value or "off" does not open port */
 { "ipp_listen_port", 0, STRING_K, &Ipp_listen_port_DYN,0,0,"=off"},
    /* ipp destination port */
 { "ipp_port", 0, STRING_K, &Ipp_port_DYN,0,0,"=631"},
+#endif /* not IPP_STUBS */
    /*  Running IPV6 */
 { "ipv6", 0,  FLAG_K,  &IPV6Protocol_DYN,0,0,0},
 	/* TCP keepalive enabled */

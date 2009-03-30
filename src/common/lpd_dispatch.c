@@ -154,7 +154,10 @@ void Service_all( struct line_list *args )
 
 void Service_connection( struct line_list *args )
 {
-	char input[16], from_addr[128];
+#ifdef IPP_STUBS
+	char input[16];
+#endif /* IPP_STUBS */
+	char from_addr[128];
 	int talk;
 	int status;		/* status of operation */
 	int permission;
@@ -270,6 +273,7 @@ void Service_connection( struct line_list *args )
 		cleanup(0);
 	}
 
+#ifdef IPP_STUBS
 	memset(input,0,sizeof(input));
 
 	do {
@@ -305,6 +309,7 @@ void Service_connection( struct line_list *args )
 			Service_ssh_ipp( talk, from_addr );
 		*/
 	}
+#endif /* not IPP_STUBS */
 	Service_lpd( talk, from_addr );
 }
 

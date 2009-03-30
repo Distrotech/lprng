@@ -33,7 +33,9 @@
 #include "lpd.h"
 
  char* Lpd_listen_port_arg;	/* command line listen port value */
+#ifdef IPP_STUBS
  char* Ipp_listen_port_arg;	/* command line listen port value */
+#endif /* not IPP_STUBS */
  char* Lpd_port_arg;	/* command line port value */
  char* Lpd_socket_arg; /* command line unix socket value */
 
@@ -81,7 +83,9 @@ int main(int argc, char *argv[], char *envp[])
 	struct line_list args;
 	int first_scan = 1;
 	int unix_sock = 0;
+#ifdef IPP_STUBS
 	int ipp_sock = 0;
+#endif /* not IPP_STUBS */
 	int fd_available;
 
 	Init_line_list( &args );
@@ -214,6 +218,7 @@ int main(int argc, char *argv[], char *envp[])
 			if( sock >= max_socks ) max_socks = sock;
 		}
 
+#ifdef IPP_STUBS
 		s = Ipp_listen_port_arg;
 		if( ISNULL(s) ) s = Ipp_listen_port_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
@@ -226,6 +231,7 @@ int main(int argc, char *argv[], char *envp[])
 			if( ipp_sock >= max_socks ) max_socks = ipp_sock;
 		}
 
+#endif /* not IPP_STUBS */
 		s = Lpd_socket_arg;
 		if( ISNULL(s) ) s = Unix_socket_path_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") ){
@@ -333,7 +339,9 @@ int main(int argc, char *argv[], char *envp[])
 	FD_ZERO( &defreadfds );
 	if( sock > 0 ) FD_SET( sock, &defreadfds );
 	if( unix_sock > 0 ) FD_SET( unix_sock, &defreadfds );
+#ifdef IPP_STUBS
 	if( ipp_sock > 0 ) FD_SET( ipp_sock, &defreadfds );
+#endif /* not IPP_STUBS */
 	FD_SET( request_pipe[0], &defreadfds );
 
 	/*
@@ -612,7 +620,9 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1( "lpd: not accepting requests" );
 			if( sock > 0 ) FD_CLR( sock, &readfds );
 			if( unix_sock > 0 ) FD_CLR( unix_sock, &readfds );
+#ifdef IPP_STUBS
 			if( ipp_sock > 0 ) FD_CLR( ipp_sock, &readfds );
+#endif /* not IPP_STUBS */
 			timeval.tv_sec = 10;
 			timeout = &timeval;
 		}
@@ -686,10 +696,12 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1("lpd: accept on UNIX socket");
 			Accept_connection( unix_sock, 0 );
 		}
+#ifdef IPP_STUBS
 		if( ipp_sock > 0 && FD_ISSET( ipp_sock, &readfds ) ){
 			DEBUG1("lpd: accept on IPP socket");
 			Accept_connection( ipp_sock, 0 );
 		}
+#endif /* not IPP_STUBS */
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
 			Errorcode = JABORT;
