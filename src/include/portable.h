@@ -778,7 +778,6 @@ extern int innetgr(const char *netgroup,
 #define Cast_ptr_to_long(v) ((long)(v))
 
 # define FPRINTF safefprintf
-# define PRINTF safeprintf
 # define STDOUT 1
 # define STDERR 2
 
