@@ -458,7 +458,7 @@ int Do_queue_jobs( char *name, int subserver )
 	*/
 
 	while( Do_lock( lock_fd, 0 ) < 0 ){
-		pid = Read_pid( lock_fd, (char *)0, 0 );
+		pid = Read_pid( lock_fd );
 		DEBUG1( "Do_queue_jobs: server process '%d' may be active", pid );
 		if( pid == 0 || kill( pid, SIGUSR1 ) ){
 			plp_usleep(1000);

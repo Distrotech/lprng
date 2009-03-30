@@ -962,11 +962,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 
 	/* now check to see if there is a server and unspooler process active */
 	path = Make_pathname( Spool_dir_DYN, Queue_lock_file_DYN );
-	server_pid = 0;
-	if( (fd = Checkread( path, &statb ) ) >= 0 ){
-		server_pid = Read_pid( fd, (char *)0, 0 );
-		close( fd );
-	}
+	server_pid = Read_pid_from_file( path );
 	DEBUGF(DLPQ3)("Get_queue_status: checking server pid %d", server_pid );
 	free(path);
 	if( server_pid > 0 && kill( server_pid, 0 ) ){
@@ -975,11 +971,7 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	}
 
 	path = Make_pathname( Spool_dir_DYN, Queue_unspooler_file_DYN );
-	unspooler_pid = 0;
-	if( (fd = Checkread( path, &statb ) ) >= 0 ){
-		unspooler_pid = Read_pid( fd, (char *)0, 0 );
-		close( fd );
-	}
+	unspooler_pid = Read_pid_from_file( path );
 	if(path) free(path); path=0;
 	DEBUGF(DLPQ3)("Get_queue_status: checking unspooler pid %d", unspooler_pid );
 	if( unspooler_pid > 0 && kill( unspooler_pid, 0 ) ){
@@ -1004,14 +996,14 @@ void Get_queue_status( struct line_list *tokens, int *sock,
 	}
 
 	msg[0] = 0;
-	if( count && server_pid == 0 ){
+	if( count && server_pid <= 0 ){
 		safestrncpy(msg, _(" Server: no server active") );
-	} else if( server_pid ){
+	} else if( server_pid > 0 ){
 		len = safestrlen(msg);
 		plp_snprintf( msg+len, sizeof(msg)-len, _(" Server: pid %d active"),
 			server_pid );
 	}
-	if( unspooler_pid ){
+	if( unspooler_pid > 0 ){
 		if( msg[0] ){
 			safestrncat( msg, (displayformat == REQ_VERBOSE )?", ":"\n");
 		}

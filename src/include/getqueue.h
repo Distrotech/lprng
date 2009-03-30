@@ -185,7 +185,8 @@ void strval( const char *key, struct line_list *list, struct job *job,
 	int reverse );
 void Make_sort_key( struct job *job );
 int Setup_printer( char *prname, char *error, int errlen, int subserver );
-int Read_pid( int fd, char *str, int len );
+pid_t Read_pid( int fd);
+pid_t Read_pid_from_file( const char *filename);
 int Write_pid( int fd, int pid, char *str );
 int Patselect( struct line_list *token, struct line_list *cf, int starting );
 int Check_format( int type, const char *name, struct job *job );

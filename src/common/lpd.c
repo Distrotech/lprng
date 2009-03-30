@@ -775,16 +775,10 @@ static void Reinit(void)
 int Get_lpd_pid(void)
 {
 	int pid;
-	int lockfd;
 	char *path;
-	struct stat statb;
 
 	path = safestrdup3( Lockfile_DYN,".", Lpd_port_DYN, __FILE__, __LINE__ );
-	pid = -1;
-	lockfd = Checkread( path, &statb );
-	if( lockfd >= 0 ){
-		pid = Read_pid( lockfd, (char *)0, 0  ); 
-	}
+	pid = Read_pid_from_file( path );
 	if( path ) free(path); path = 0;
 	return(pid);
 }

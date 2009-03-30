@@ -72,10 +72,9 @@ void Dispatch_input(int *talk, char *input, const char *from_addr )
 
 void Service_all( struct line_list *args )
 {
-	int i, reportfd, fd, printable, held, move, printing_enabled,
+	int i, reportfd, printable, held, move, printing_enabled,
 		server_pid, change, error, done, do_service;
 	char buffer[SMALLBUFFER], *pr, *forwarding;
-	struct stat statb;
 	int first_scan;
 	char *remove_prefix = 0;
 	
@@ -102,10 +101,7 @@ void Service_all( struct line_list *args )
 		if( first_scan ){
 			remove_prefix = Fifo_lock_file_DYN;
 		}
-		if( (fd = Checkread( Printer_DYN, &statb ) ) > 0 ){
-			server_pid = Read_pid( fd, (char *)0, 0 );
-			close( fd );
-		}
+		server_pid = Read_pid_from_file( Printer_DYN );
 		DEBUG3("Service_all: printer '%s' checking server pid %d", Printer_DYN, server_pid );
 		if( server_pid > 0 && kill( server_pid, 0 ) == 0 ){
 			DEBUG3("Get_queue_status: server %d active", server_pid );

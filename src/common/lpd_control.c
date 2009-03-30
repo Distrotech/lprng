@@ -473,10 +473,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 	/* signal or kill off the server */
 
 	serverpid = 0;
-	if( signal_server && (fd = Checkread( Queue_lock_file_DYN, &statb ) ) >= 0 ){
-		serverpid = Read_pid( fd, (char *)0, 0 );
-		close( fd );
-		if( serverpid ){
+	if( signal_server && (serverpid = Read_pid_from_file( Queue_lock_file_DYN ) ) > 0 ){
 			if( signal_server != SIGUSR1 ){
 				killpg( serverpid, signal_server );
 				killpg( serverpid, SIGHUP );
@@ -493,7 +490,6 @@ static void Do_queue_control( char *user, int action, int *sock,
 					(long)serverpid, Sigstr(signal_server) );
 			}
 			Write_fd_str(*sock,msg);
-		}
 	}
 
 	switch( action ){
@@ -526,10 +522,9 @@ static void Do_queue_control( char *user, int action, int *sock,
 			goto error;
 		}
 		serverpid = 0;
-		if( signal_server && (fd = Checkread( Queue_lock_file_DYN, &statb ) ) >= 0 ){
-			serverpid = Read_pid( fd, (char *)0, 0 );
-			close( fd );
-			if( serverpid == 0 || kill( serverpid, signal_server ) ){
+		if( signal_server ) {
+			serverpid = Read_pid_from_file( Queue_lock_file_DYN );
+			if( serverpid <= 0 || kill( serverpid, signal_server ) ){
 				serverpid = 0;
 			} else {
 				plp_snprintf(msg,sizeof(msg), _(
@@ -554,7 +549,7 @@ static void Do_queue_control( char *user, int action, int *sock,
 			serverpid = 0;
 			break;
 	}
-	if( serverpid == 0 )switch( action ){
+	if( serverpid <= 0 )switch( action ){
 	case OP_KILL:
 	case OP_TOPQ:
 	case OP_RELEASE:
