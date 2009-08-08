@@ -10,7 +10,6 @@
 #include "lp.h"
 #include "user_auth.h"
 #include "sendjob.h"
-#include "globmatch.h"
 #include "permission.h"
 #include "getqueue.h"
 #include "errorcodes.h"
@@ -78,7 +77,7 @@ static void Put_in_auth( int tempfd, const char *key, char *value );
 
 int Send_auth_transfer( int *sock, int transfer_timeout,
 	struct job *job, struct job *logjob, char *error, int errlen, char *cmd,
-	struct security *security, struct line_list *info )
+	const struct security *security, struct line_list *info )
 {
 	struct stat statb;
 	int ack, len, n, fd;		/* ACME! The best... */
@@ -253,10 +252,10 @@ int Send_auth_transfer( int *sock, int transfer_timeout,
  * to send to the server requesting the encryption
  **************************************************************************/
 
-struct security *Fix_send_auth( char *name, struct line_list *info,
+const struct security *Fix_send_auth( char *name, struct line_list *info,
 	struct job *job, char *error, int errlen )
 {
-	struct security *security = 0;
+	const struct security *security = 0;
 	char buffer[SMALLBUFFER], *from, *client, *destination;
 	const char *tag, *server_tag, *key;
 
@@ -269,16 +268,13 @@ struct security *Fix_send_auth( char *name, struct line_list *info,
 	}
 	DEBUG1("Fix_send_auth: name '%s'", name );
 	if( name ){
-		for( security = SecuritySupported; security->name; ++security ){
-			DEBUG1("Fix_send_auth: security '%s'", security->name );
-			if( !Globmatch(security->name, name ) ) break;
-		}
-		DEBUG1("Fix_send_auth: name '%s' matches '%s'", name, security->name );
-		if( security->name == 0 ){
-			security = 0;
+		security = FindSecurity(name);
+		if( !security ){
 			plp_snprintf(error, errlen,
 				"Fix_send_auth: '%s' security not supported", name );
 			goto error;
+		} else {
+			DEBUG1("Fix_send_auth: name '%s' matches '%s'", name, security->name );
 		}
 	} else {
 		DEBUG1("Fix_send_auth: no security" );

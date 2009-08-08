@@ -83,7 +83,7 @@ int Send_job( struct job *job, struct job *logjob,
 	int status = 0, err, errcount = 0, n, len;
 	char msg[SMALLBUFFER];
 	char error[LARGEBUFFER], errmsg[SMALLBUFFER];
-	struct security *security = 0;
+	const struct security *security = 0;
 	struct line_list info;
  
 	/* fix up the control file */

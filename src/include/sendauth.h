@@ -14,8 +14,8 @@
 /* PROTOTYPES */
 int Send_auth_transfer( int *sock, int transfer_timeout,
 	struct job *job, struct job *logjob, char *error, int errlen, char *cmd,
-	struct security *security, struct line_list *info );
-struct security *Fix_send_auth( char *name, struct line_list *info,
+	const struct security *security, struct line_list *info );
+const struct security *Fix_send_auth( char *name, struct line_list *info,
 	struct job *job, char *error, int errlen );
 
 #endif

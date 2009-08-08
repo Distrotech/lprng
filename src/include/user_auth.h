@@ -19,30 +19,30 @@ struct security;
 typedef int (*CONNECT_PROC)( struct job *job, int *sock,
 	int transfer_timeout,
 	char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
+	const struct security *security, struct line_list *info );
 
 typedef int (*SEND_PROC)( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *error, int errlen,
-	struct security *security, struct line_list *info );
+	const struct security *security, struct line_list *info );
 
 typedef int (*GET_REPLY_PROC)( struct job *job, int *sock,
 	int transfer_timeout,
 	char *error, int errlen,
-	struct security *security, struct line_list *info );
+	const struct security *security, struct line_list *info );
 
 typedef int (*SEND_DONE_PROC)( struct job *job, int *sock,
 	int transfer_timeout,
 	char *error, int errlen,
-	struct security *security, struct line_list *info );
+	const struct security *security, struct line_list *info );
 
 typedef int (*ACCEPT_PROC)(
 	int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	char *error, int errlen,
 	struct line_list *info, struct line_list *header_info,
-	struct security *security );
+	const struct security *security );
 
 typedef int (*SECURE_WORKER_PROC)(
 	char *jobsize, int from_server,
@@ -54,18 +54,18 @@ typedef int (*RECEIVE_PROC)(
 	struct line_list *info,
 	char *error, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	const struct security *security, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work);
 
 typedef int (*REPLY_PROC)(
 	int *sock, char *error, int errlen,
 	struct line_list *info, struct line_list *header_info,
-	struct security *security );
+	const struct security *security );
 
 typedef int (*RCV_DONE_PROC)( int *sock,
 	char *error, int errlen,
 	struct line_list *info, struct line_list *header_info,
-	struct security *security );
+	const struct security *security );
 
 struct security {
 	const char *name;				/* authentication name */
@@ -79,32 +79,10 @@ struct security {
 	RECEIVE_PROC server_receive;	/* server to client, receive from client */
 };
 
-extern struct security SecuritySupported[];
-
 /* PROTOTYPES */
+const struct security *FindSecurity( const char *name );
 char *ShowSecuritySupported( char *str, int maxlen );
 
-int Test_send( int *sock,
-	int transfer_timeout,
-	char *tempfile,
-	char *errmsg, int errlen,
-	struct security *security UNUSED, struct line_list *info );
-int Test_receive( int *sock, int transfer_timeout,
-	char *user UNUSED, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security UNUSED, char *tempfile,
-	SECURE_WORKER_PROC do_secure_work);
-int md5_send( int *sock, int transfer_timeout, char *tempfile,
-	char *errmsg, int errlen,
-	struct security *security UNUSED, struct line_list *info );
-int md5_receive( int *sock, int transfer_timeout,
-	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security UNUSED, char *tempfile,
-	SECURE_WORKER_PROC do_secure_work);
-
+extern const struct security test_auth;
+extern const struct security md5_auth;
 #endif
