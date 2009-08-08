@@ -758,8 +758,12 @@ void Do_stty( int fd )
 #endif
 #ifdef TABDLY
 	{"TAB0", TAB0, TABDLY},
+#ifdef TAB1
 	{"TAB1", TAB1, TABDLY},
+#endif
+#ifdef TAB2
 	{"TAB2", TAB2, TABDLY},
+#endif
 	{"TAB3", TAB3, TABDLY},
 #endif
 #ifdef BSDLY
