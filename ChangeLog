@@ -1,3 +1,4 @@
+2009-08-08 brl move authentication methods to new src/auth/ directory
 2009-08-08 brl fix building on GNU/kFreeBSD (see http://bugs.debian.org/537857)
 2009-03-24 brl remove unused arguments from Read_pid and add Read_pid_from_file
 2009-03-24 brl remove Check_str_dup and Check_dup from lpr.c
