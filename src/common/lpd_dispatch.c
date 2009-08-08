@@ -152,10 +152,10 @@ void Service_connection( struct line_list *args )
 {
 #ifdef IPP_STUBS
 	char input[16];
+	int status;		/* status of operation */
 #endif /* IPP_STUBS */
 	char from_addr[128];
 	int talk;
-	int status;		/* status of operation */
 	int permission;
 	int port = 0;
 	struct sockaddr sinaddr;
