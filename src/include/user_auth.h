@@ -84,4 +84,27 @@ extern struct security SecuritySupported[];
 /* PROTOTYPES */
 char *ShowSecuritySupported( char *str, int maxlen );
 
+int Test_send( int *sock,
+	int transfer_timeout,
+	char *tempfile,
+	char *errmsg, int errlen,
+	struct security *security UNUSED, struct line_list *info );
+int Test_receive( int *sock, int transfer_timeout,
+	char *user UNUSED, char *jobsize, int from_server, char *authtype,
+	struct line_list *info,
+	char *errmsg, int errlen,
+	struct line_list *header_info,
+	struct security *security UNUSED, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
+int md5_send( int *sock, int transfer_timeout, char *tempfile,
+	char *errmsg, int errlen,
+	struct security *security UNUSED, struct line_list *info );
+int md5_receive( int *sock, int transfer_timeout,
+	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
+	struct line_list *info,
+	char *errmsg, int errlen,
+	struct line_list *header_info,
+	struct security *security UNUSED, char *tempfile,
+	SECURE_WORKER_PROC do_secure_work);
+
 #endif

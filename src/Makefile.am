@@ -41,13 +41,13 @@ COMMON_SOURCES = common/child.c \
 	common/copyright.c common/debug.c common/errormsg.c \
 	common/fileopen.c common/gethostinfo.c common/getopt.c \
 	common/getprinter.c common/getqueue.c common/globmatch.c \
-	common/initialize.c common/krb5_auth.c common/linelist.c \
+	common/initialize.c auth/krb5_auth.c common/linelist.c \
 	common/linksupport.c common/lockfile.c common/merge.c \
 	common/plp_snprintf.c common/printjob.c \
 	common/proctitle.c common/sendjob.c common/sendauth.c \
-	common/sendreq.c common/ssl_auth.c \
+	common/sendreq.c auth/ssl_auth.c \
 	common/user_auth.c common/utilities.c vars.c \
-	common/md5.c
+	common/md5.c auth/md5_auth.c auth/test_auth.c
 COMMON_LDADD = $(SSL_LDADD) $(KRB_LIBS)
 SEND_SOURCES = common/openprinter.c common/stty.c
 
