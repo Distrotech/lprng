@@ -13,34 +13,13 @@
 
 #include "user_auth.h"
 
-/* PROTOTYPES */
-int Send_krb4_auth( struct job *job, int *sock,
-	int connect_timeout, char *errmsg, int errlen,
-	struct security *security, struct line_list *info );
-int Receive_k4auth( int *sock, char *input );
-int Krb5_receive_nocrypt( int *sock,
-	int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security, char *tempfile, SECURE_WORKER_PROC do_secure_work);
-int Krb5_receive( int *sock,
-	int transfer_timeout,
-	char *user, char *jobsize, int from_server, char *authtype,
-	struct line_list *info,
-	char *errmsg, int errlen,
-	struct line_list *header_info,
-	struct security *security, char *tempfile, SECURE_WORKER_PROC do_secure_work);
-int Krb5_send_nocrypt( int *sock,
-	int transfer_timeout,
-	char *tempfile,
-	char *error, int errlen,
-	struct security *security, struct line_list *info );
-int Krb5_send( int *sock,
-	int transfer_timeout,
-	char *tempfile,
-	char *error, int errlen,
-	struct security *security, struct line_list *info );
+#if defined(KERBEROS)
+# if defined(MIT_KERBEROS4)
+extern const struct security kerberos4_auth;
+# endif
+extern const struct security kerberos5_auth;
+extern const struct security k5conn_auth;
+#endif
+
 
 #endif

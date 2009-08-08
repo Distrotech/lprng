@@ -103,11 +103,11 @@ static int Test_accept( int *sock, int transfer_timeout,
  *
  **************************************************************/
 
-int Test_send( int *sock,
+static int Test_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *errmsg, int errlen,
-	struct security *security UNUSED, struct line_list *info )
+	const struct security *security UNUSED, struct line_list *info )
 {
 	char buffer[LARGEBUFFER];
 	struct stat statb;
@@ -171,12 +171,12 @@ int Test_send( int *sock,
 	return(status);
 }
 
-int Test_receive( int *sock, int transfer_timeout,
+static int Test_receive( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security UNUSED, char *tempfile,
+	const struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	int tempfd, status, n;
@@ -259,3 +259,6 @@ int Test_receive( int *sock, int transfer_timeout,
 	if( tempfd>=0) close(tempfd); tempfd = -1;
 	return(status);
 }
+
+const struct security test_auth =
+	{ "test",      "test",	"test",     0,              0,           Test_send, 0, Test_receive };

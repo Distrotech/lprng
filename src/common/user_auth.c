@@ -37,6 +37,7 @@
 #include "lpd_secure.h"
 #include "lpd_dispatch.h"
 #include "permission.h"
+#include "globmatch.h"
 
 #ifdef SSL_ENABLE
 /* The Kerberos 5 support is MIT-specific. */
@@ -566,7 +567,7 @@ static int Pgp_encode(int transfer_timeout, struct line_list *info, char *tempfi
 
 static int Pgp_send( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
-	struct security *security UNUSED, struct line_list *info )
+	const struct security *security UNUSED, struct line_list *info )
 {
 	char *pgpfile;
 	struct line_list pgp_info;
@@ -727,7 +728,7 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security UNUSED, char *tempfile,
+	const struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	char *pgpfile;
@@ -867,31 +868,28 @@ static int Pgp_receive( int *sock, int transfer_timeout,
 	return(status);
 }
 
+static const struct security pgp_auth =
+	{ "pgp",       "pgp",	"pgp",      0,              0,           Pgp_send, 0, Pgp_receive };
 
-
- struct security SecuritySupported[] = {
+static const struct security *SecuritySupported[] = {
 	/* name, server_name, config_name, flags,
         client  connect, send, send_done
 		server  accept, receive, receive_done
 	*/
 #if defined(KERBEROS)
 # if defined(MIT_KERBEROS4)
-	{ "kerberos4", "kerberos", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 },
+	&kerberos4_auth,
 # endif
-	{ "kerberos*", "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive },
-	{ "k5conn", "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt },
+	&kerberos5_auth,
+	&k5conn_auth,
 #endif
-
-	{ "test",      "test",	"test",     0,              0,           Test_send, 0, Test_receive },
-	{ "md5",       "md5",	"md5",      0,              0,           md5_send, 0, md5_receive },
-	{ "pgp",       "pgp",	"pgp",      0,              0,           Pgp_send, 0, Pgp_receive },
+	&test_auth,
+	&md5_auth,
+	&pgp_auth,
 #ifdef SSL_ENABLE
-	{ "ssl",      "ssl",	"ssl",       0,              0,           Ssl_send, 0, Ssl_receive },
+	&ssl_auth,
 #endif
-
-	{0,0,0,0,
-		0,0,
-		0,0}
+	NULL
 };
 
 char *ShowSecuritySupported( char *str, int maxlen )
@@ -899,9 +897,20 @@ char *ShowSecuritySupported( char *str, int maxlen )
 	int i, len;
 	const char *name;
 	str[0] = 0;
-	for( len = i = 0; (name = SecuritySupported[i].name); ++i ){
+	for( len = i = 0; SecuritySupported[i] != NULL; ++i ){
+		name = SecuritySupported[i]->name;
 		plp_snprintf( str+len,maxlen-len, "%s%s",len?",":"",name );
 		len += strlen(str+len);
 	}
 	return( str );
+}
+
+const struct security *FindSecurity( const char *name ) {
+	const struct security *s, **p;
+
+	for( p = SecuritySupported ; (s = *p) != NULL ; p++ ) {
+		if( !Globmatch(s->name, name ) )
+			return s;
+	}
+	return NULL;
 }

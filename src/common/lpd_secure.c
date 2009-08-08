@@ -19,7 +19,6 @@
 #include "fileopen.h"
 #include "lpd_rcvjob.h"
 #include "child.h"
-#include "globmatch.h"
 #include "lpd_jobs.h"
 #include "krb5_auth.h"
 #include "lpd_secure.h"
@@ -45,7 +44,7 @@
 
 static int Do_secure_work( char *jobsize, int from_server,
 	char *tempfile, struct line_list *header_info );
-static struct security *Fix_receive_auth( char *name, struct line_list *info );
+static const struct security *Fix_receive_auth( char *name, struct line_list *info );
 
 /*************************************************************************
  * Receive_secure() - receive a secure transfer
@@ -63,7 +62,7 @@ int Receive_secure( int *sock, char *input )
 	struct line_list args, header_info, info;
 	struct stat statb;
 	char *tempfile = 0;
-	struct security *security = 0;
+	const struct security *security = 0;
 
 	Name = "RCVSEC";
 	memset( error, 0, sizeof(error));
@@ -379,9 +378,9 @@ static int Do_secure_work( char *jobsize, int from_server,
  * void Fix_auth() - get the Use_auth_DYN value for the remote printer
  ***************************************************************************/
 
-static struct security *Fix_receive_auth( char *name, struct line_list *info )
+static const struct security *Fix_receive_auth( char *name, struct line_list *info )
 {
-	struct security *s;
+	const struct security *s;
 
 	if( name == 0 ){
 		if( Is_server ){
@@ -391,13 +390,12 @@ static struct security *Fix_receive_auth( char *name, struct line_list *info )
 		}
 	}
 
-	for( s = SecuritySupported; s->name && Globmatch(s->name, name ); ++s );
-	DEBUG1("Fix_receive_auth: name '%s' matches '%s'", name, s->name );
-	if( s->name == 0 ){
-		s = 0;
-	} else {
+	s = FindSecurity(name);
+	if( s != NULL ){
 		char buffer[64];
 		const char *str;
+
+		DEBUG1("Fix_receive_auth: name '%s' matches '%s'", name, s->name );
 		if( !(str = s->config_tag) ) str = s->name;
 		plp_snprintf(buffer,sizeof(buffer), "%s_", str );
 		Find_default_tags( info, Pc_var_list, buffer );

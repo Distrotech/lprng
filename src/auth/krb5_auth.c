@@ -1237,7 +1237,7 @@ static char *krb4_err_str( int err )
 	return(s);
 }
 
-int Send_krb4_auth( struct job *job, int *sock,
+static int Send_krb4_auth( struct job *job, int *sock,
 	int connect_timeout, char *errmsg, int errlen,
 	struct security *security, struct line_list *info )
 {
@@ -1339,7 +1339,7 @@ int Send_krb4_auth( struct job *job, int *sock,
  *      and cleaned the dog's teeth.
  *     -papowell ("sigh...") Powell
  */
-int Receive_k4auth( int *sock, char *input )
+static int Receive_k4auth( int *sock, char *input )
 {
 	int status = 0;
 	char error_msg[LINEBUFFER];
@@ -1491,7 +1491,7 @@ static int Krb5_receive_work( int *sock,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	const struct security *security, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work, int use_crypt_transfer)
 {
 	int status = 0;
@@ -1534,13 +1534,13 @@ static int Krb5_receive_work( int *sock,
 	return(status);
 }
 
-int Krb5_receive( int *sock,
+static int Krb5_receive( int *sock,
 	int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	const struct security *security, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	DEBUG1("Krb5_receive: starting");
@@ -1550,13 +1550,13 @@ int Krb5_receive( int *sock,
 			do_secure_work, 1 );
 }
 
-int Krb5_receive_nocrypt( int *sock,
+static int Krb5_receive_nocrypt( int *sock,
 	int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security, char *tempfile,
+	const struct security *security, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	DEBUG1("Krb5_receive_nocrypt: starting");
@@ -1586,7 +1586,7 @@ static int Krb5_send_work( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *error, int errlen,
-	struct security *security, struct line_list *info, int use_crypt_transfer )
+	const struct security *security, struct line_list *info, int use_crypt_transfer )
 {
 	char *keyfile = 0;
 	int status = 0, fd = -1;
@@ -1655,20 +1655,29 @@ static int Krb5_send_work( int *sock,
 	return(status);
 }
 
-int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
+static int Krb5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
-	struct security *security, struct line_list *info )
+	const struct security *security, struct line_list *info )
 {
 	return Krb5_send_work( sock, transfer_timeout,
 	tempfile, error, errlen, security, info, 1 );
 }
 
-int Krb5_send_nocrypt( int *sock, int transfer_timeout, char *tempfile,
+static int Krb5_send_nocrypt( int *sock, int transfer_timeout, char *tempfile,
 	char *error, int errlen,
-	struct security *security, struct line_list *info )
+	const struct security *security, struct line_list *info )
 {
 	return Krb5_send_work( sock, transfer_timeout,
 	tempfile, error, errlen, security, info, 0 );
 }
+
+#if defined(MIT_KERBEROS4)
+const struct security kerberos4_auth =
+	{ "kerberos4", "kerberos", "kerberos", IP_SOCKET_ONLY, Send_krb4_auth, 0,0,0 };
+#endif
+const struct security kerberos5_auth =
+	{ "kerberos*", "kerberos", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send, 0, Krb5_receive };
+const struct security k5conn_auth =
+	{ "k5conn", "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt };
 
 #endif

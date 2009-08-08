@@ -163,9 +163,9 @@ static int md5key( const char *keyfile, char *name, char *key, int keysize, char
  *
  **************************************************************/
 
-int md5_send( int *sock, int transfer_timeout, char *tempfile,
+static int md5_send( int *sock, int transfer_timeout, char *tempfile,
 	char *errmsg, int errlen,
-	struct security *security UNUSED, struct line_list *info )
+	const struct security *security UNUSED, struct line_list *info )
 {
 	unsigned char destkey[KEY_LENGTH+1];
 	unsigned char challenge[KEY_LENGTH+1];
@@ -402,12 +402,12 @@ int md5_send( int *sock, int transfer_timeout, char *tempfile,
 }
 
 
-int md5_receive( int *sock, int transfer_timeout,
+static int md5_receive( int *sock, int transfer_timeout,
 	char *user UNUSED, char *jobsize, int from_server, char *authtype UNUSED,
 	struct line_list *info,
 	char *errmsg, int errlen,
 	struct line_list *header_info,
-	struct security *security UNUSED, char *tempfile,
+	const struct security *security UNUSED, char *tempfile,
 	SECURE_WORKER_PROC do_secure_work)
 {
 	char input[SMALLBUFFER];
@@ -685,3 +685,6 @@ int md5_receive( int *sock, int transfer_timeout,
 	return(JFAIL);
 }
 
+
+const struct security md5_auth =
+	{ "md5",       "md5",	"md5",      0,              0,           md5_send, 0, md5_receive };

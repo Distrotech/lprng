@@ -73,7 +73,7 @@ int Send_request(
 	int status = -1, sock = -1, err;
 	char *real_host = 0;
 	char *save_host = 0;
-	struct security *security = 0;
+	const struct security *security = 0;
 	struct line_list info;
 
 	Init_line_list(&info);
