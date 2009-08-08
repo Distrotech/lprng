@@ -24,7 +24,7 @@ struct line_list {
 	int max;		/* maximum number of entries */
 };
 
-typedef void (WorkerProc)( struct line_list *args );
+typedef void (WorkerProc)( struct line_list *args, int input );
 
 /*
  * data structure for job

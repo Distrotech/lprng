@@ -12,7 +12,6 @@
 #define _LPD_LOGGER_H_ 1
 
 /* PROTOTYPES */
-int Start_logger( int log_fd );
-void Logger( struct line_list *args );
+pid_t Start_logger( int log_fd );
 
 #endif

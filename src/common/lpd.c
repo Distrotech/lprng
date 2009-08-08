@@ -19,6 +19,8 @@
 #include "proctitle.h"
 #include "lockfile.h"
 #include "lpd_worker.h"
+#include "lpd_jobs.h"
+#include "lpd_dispatch.h"
 #include "user_auth.h"
 
 /* force local definitions */
@@ -67,7 +69,7 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	int sock = 0;		/* socket for listen */
-	int pid;			/* pid */
+	pid_t pid;			/* pid */
 	fd_set defreadfds, readfds;	/* for select() */
 	int max_socks = 0;		/* maximum number of sockets */
 	int lockfd;	/* the lock file descriptor */
@@ -76,10 +78,10 @@ int main(int argc, char *argv[], char *envp[])
 	time_t server_started_time;	/* time servers were started */
 	plp_status_t status;
 	int max_servers;
-	int start_fd = 0, start_pid = 0;
-	int logger_process_pid = 0;
+	int start_fd = 0;
+	pid_t start_pid = 0, logger_process_pid = 0;
 	int request_pipe[2], status_pipe[2];
-	int last_fork_pid_value;
+	pid_t last_fork_pid_value;
 	struct line_list args;
 	int first_scan = 1;
 	int unix_sock = 0;
@@ -184,8 +186,8 @@ int main(int argc, char *argv[], char *envp[])
 	pid = Get_lpd_pid();
 #if defined(__CYGWIN__)
 	if( (pid > 0) && ( kill(pid,0) || (errno != ESRCH) )) {
-		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
-  				pid );
+		DIEMSG( _("Another print spooler active, possibly lpd process '%ld'"),
+  				(long)pid );
 	}
 	lockfd = Lock_lpd_pid();
 	if( lockfd < 0 ){
@@ -197,8 +199,8 @@ int main(int argc, char *argv[], char *envp[])
 #else
 	lockfd = Lock_lpd_pid();
 	if( lockfd < 0 ){
-		DIEMSG( _("Another print spooler active, possibly lpd process '%d'"),
-  				pid );
+		DIEMSG( _("Another print spooler active, possibly lpd process '%ld'"),
+  				(long)pid );
 	}
 	Set_lpd_pid( lockfd );
 #endif
@@ -266,8 +268,8 @@ int main(int argc, char *argv[], char *envp[])
 	} else if( pid ){
 		if( Foreground_LPD ){
 			while( (pid = plp_waitpid( pid, &status, 0)) > 0 ){
-				DEBUG1( "lpd: process %d, status '%s'",
-					pid, Decode_status(&status));
+				DEBUG1( "lpd: process %ld, status '%s'",
+					(long)pid, Decode_status(&status));
 			}
 		}
 		Errorcode = 0;
@@ -400,8 +402,8 @@ int main(int argc, char *argv[], char *envp[])
 		memset(&timeval, 0, sizeof(timeval));
 		if(DEBUGL3){ int fd; fd = dup(0); LOGDEBUG("lpd: next fd %d",fd); close(fd); };
 
-		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_pid %d, start_fd %d, Started_server %d",
-			Poll_time_DYN, Force_poll_DYN, start_pid, start_fd, Started_server );
+		DEBUG2( "lpd: Poll_time %d, Force_poll %d, start_pid %ld, start_fd %d, Started_server %d",
+			Poll_time_DYN, Force_poll_DYN, (long)start_pid, start_fd, Started_server );
 
 		if(DEBUGL1)Dump_line_list("lpd - Servers_line_list",&Servers_line_list );
 
@@ -450,8 +452,8 @@ int main(int argc, char *argv[], char *envp[])
 		elapsed_time = (this_time - last_time);
 		if( Poll_time_DYN > 0 && start_pid <= 0 ){
 			int doit, scanned_queue_count;
-			DEBUG1("lpd: checking for scan, start_pid %d, start_fd %d, Poll_time_DYN %d, elapsed_time %d, Started_server %d, Force_poll %d",
-				start_fd, start_pid, Poll_time_DYN, elapsed_time, Started_server, Force_poll_DYN );
+			DEBUG1("lpd: checking for scan, start_fd %d, start_pid %ld, Poll_time_DYN %d, elapsed_time %d, Started_server %d, Force_poll %d",
+				start_fd, (long)start_pid, Poll_time_DYN, elapsed_time, Started_server, Force_poll_DYN );
 			if( elapsed_time >= Poll_time_DYN ){
 				for( scanned_queue_count = doit = 0;
 					scanned_queue_count == 0 && doit < Servers_line_list.count; ++doit ){
@@ -463,7 +465,7 @@ int main(int argc, char *argv[], char *envp[])
 					&& ( Started_server || Force_poll_DYN ) ){
 					last_fork_pid_value = start_pid = Start_all(first_scan, &start_fd );
 					Fork_error( last_fork_pid_value );
-					DEBUG1( "lpd: restarting poll, start_pid %d, start_fd %d", start_pid, start_fd);
+					DEBUG1( "lpd: restarting poll, start_pid %ld, start_fd %d", (long)start_pid, start_fd);
 					if( start_fd > 0 ){
 						first_scan = 0;
 						Started_server = 0;
@@ -549,7 +551,7 @@ int main(int argc, char *argv[], char *envp[])
 					DEBUG1("lpd: starting server '%s'", server_to_start );
 					Free_line_list(&args);
 					Set_str_value(&args,PRINTER,server_to_start);
-					last_fork_pid_value = pid = Start_worker( "queue",&args, 0 );
+					last_fork_pid_value = pid = Start_worker( "queue", Service_queue, &args, 0 );
 					Fork_error( last_fork_pid_value );
 					Free_line_list(&args);
 					if( pid > 0 ){
@@ -612,8 +614,8 @@ int main(int argc, char *argv[], char *envp[])
 		 */
 
 
-		DEBUG1("lpd: Started_server %d, last_fork_pid_value %d, active servers %d, max %d",
-			Started_server, last_fork_pid_value, Countpid(), max_servers );
+		DEBUG1("lpd: Started_server %d, last_fork_pid_value %ld, active servers %d, max %d",
+			Started_server, (long)last_fork_pid_value, Countpid(), max_servers );
 		/* do not accept incoming call if no worker available */
 		readfds = defreadfds;
 		if( Countpid() >= max_servers || last_fork_pid_value < 0 ){
@@ -690,16 +692,16 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		if( sock > 0 && FD_ISSET( sock, &readfds ) ){
 			DEBUG1("lpd: accept on LPD socket");
-			Accept_connection( sock, 0 );
+			Accept_connection( sock );
 		}
 		if( unix_sock > 0 && FD_ISSET( unix_sock, &readfds ) ){
 			DEBUG1("lpd: accept on UNIX socket");
-			Accept_connection( unix_sock, 0 );
+			Accept_connection( unix_sock );
 		}
 #ifdef IPP_STUBS
 		if( ipp_sock > 0 && FD_ISSET( ipp_sock, &readfds ) ){
 			DEBUG1("lpd: accept on IPP socket");
-			Accept_connection( ipp_sock, 0 );
+			Accept_connection( ipp_sock );
 		}
 #endif /* not IPP_STUBS */
 		if( FD_ISSET( request_pipe[0], &readfds ) 
@@ -774,7 +776,7 @@ static void Reinit(void)
 
 int Get_lpd_pid(void)
 {
-	int pid;
+	pid_t pid;
 	char *path;
 
 	path = safestrdup3( Lockfile_DYN,".", Lpd_port_DYN, __FILE__, __LINE__ );
@@ -790,7 +792,7 @@ static void Set_lpd_pid(int lockfd)
 		logerr_die(LOG_ERR, _("lpd: Cannot truncate lock file") );
 	}
 	Server_pid = getpid();
-	DEBUG1( "lpd: writing lockfile fd %d with pid '%d'",lockfd,Server_pid );
+	DEBUG1( "lpd: writing lockfile fd %d with pid '%ld'",lockfd, (long)Server_pid );
 	Write_pid( lockfd, Server_pid, (char *)0 );
 }
 
@@ -959,11 +961,12 @@ static void Get_parms(int argc, char *argv[] )
  * Accept_connection
  *   - accept the connection and fork the child to handle it
  */
-static void Accept_connection( int sock, int lpd_socket )
+static void Accept_connection( int sock )
 { 
 	struct line_list args;
 	struct sockaddr sinaddr;
-	int newsock, err, pid;
+	int newsock, err;
+	pid_t pid;
 	socklen_t len;
 	Init_line_list(&args);
 	len = sizeof( sinaddr );
@@ -993,14 +996,14 @@ static void Accept_connection( int sock, int lpd_socket )
 		}
 #endif
 
-		pid = Start_worker( "server", &args, newsock );
+		pid = Start_worker( "server", Service_connection, &args, newsock );
 		if( pid < 0 ){
 			logerr(LOG_INFO, _("lpd: fork() failed") );
-			if( lpd_socket ){
-				safefprintf(newsock, "\002%s\n", _("Server load too high"));
-			}
+			/* this was written with an impossible condition, why?
+			    safefprintf(newsock, "\002%s\n", _("Server load too high"));
+			 */
 		} else {
-			DEBUG1( "lpd: listener pid %d running", pid );
+			DEBUG1( "lpd: listener pid %ld running", (long)pid );
 		}
 		close( newsock );
 		Free_line_list(&args);
@@ -1015,12 +1018,12 @@ static void Accept_connection( int sock, int lpd_socket )
  * returns the pid of the process doing the scanning
  */
  
-static int Start_all( int first_scan, int *start_fd )
+static pid_t Start_all( int first_scan, int *start_fd )
 {
-	struct line_list args, passfd;
-	int pid, p[2];
+	struct line_list args;
+	int p[2];
+	pid_t pid;
 
-	Init_line_list(&passfd);
 	Init_line_list(&args);
 
 	DEBUG1( "Start_all: first_scan %d", first_scan );
@@ -1030,25 +1033,16 @@ static int Start_all( int first_scan, int *start_fd )
 	Max_open(p[0]); Max_open(p[1]);
 	DEBUG1( "Start_all: fd pipe(%d,%d)",p[0],p[1]);
 
-	Setup_lpd_call( &passfd, &args );
 	Set_str_value(&args,CALL,"all");
-
-	Check_max(&passfd,2);
-	Set_decimal_value(&args,INPUT,passfd.count);
-	passfd.list[passfd.count++] = Cast_int_to_voidstar(p[1]);
 	Set_decimal_value(&args,FIRST_SCAN,first_scan);
 
-	pid = Make_lpd_call( "all", &passfd, &args );
-
-	Free_line_list( &args );
-	passfd.count = 0;
-	Free_line_list(&passfd);
+	pid = Start_worker( "all", Service_all, &args, p[1]);
 	close(p[1]);
 	if( pid < 0 ){
 		close( p[0] );
 		p[0] = -1;
 	}
-	DEBUG1("Start_all: pid %d, fd %d", pid, p[0] );
+	DEBUG1("Start_all: pid %ld, fd %d", (long)pid, p[0] );
 	if( start_fd ) *start_fd = p[0];
 	return(pid);
 }
@@ -1069,9 +1063,9 @@ static void Setup_waitpid_break (void)
 	(void) plp_signal_break(SIGCHLD, sigchld_handler);
 }
 
-static void Fork_error( int last_fork_pid_value )
+static void Fork_error( pid_t last_fork_pid_value )
 {
-	DEBUG1("Fork_error: %d", last_fork_pid_value );
+	DEBUG1("Fork_error: %ld", (long)last_fork_pid_value );
 	if( last_fork_pid_value < 0 ){
 		logmsg(LOG_CRIT, "LPD: fork failed! LPD not accepting any requests");
 	}

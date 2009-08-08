@@ -9,8 +9,6 @@
 #ifndef _LPD_WORKER_H_
 #define _LPD_WORKER_H_ 1
 
-void Setup_lpd_call( struct line_list *passfd, struct line_list *args );
-int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list *args );
-int Start_worker( const char *name, struct line_list *parms, int fd );
+pid_t Start_worker( const char *name, WorkerProc *proc, struct line_list *parms, int fd );
 
 #endif

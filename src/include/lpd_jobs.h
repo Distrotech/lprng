@@ -13,8 +13,8 @@
 
 /* PROTOTYPES */
 int Do_queue_jobs( char *name, int subserver );
-void Service_worker( struct line_list *args );
-void Service_queue( struct line_list *args );
+void Service_worker( struct line_list *args, int ) NORETURN;
+void Service_queue( struct line_list *args, int ) NORETURN;
 int Remove_done_jobs( void );
 
 #endif
