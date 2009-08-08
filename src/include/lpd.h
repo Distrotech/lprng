@@ -48,7 +48,7 @@ static int Lock_lpd_pid(void);
 static int Read_server_status( int fd );
 static void usage(void);
 static void Get_parms(int argc, char *argv[] );
-static void Accept_connection( int sock, int lpd_socket );
+static void Accept_connection( int sock );
 static int Start_all( int first_scan, int *start_fd );
 plp_signal_t sigchld_handler (int signo);
 static void Setup_waitpid (void);

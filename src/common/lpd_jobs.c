@@ -1616,9 +1616,9 @@ static int Fork_subserver( struct line_list *server_info, int use_subserver,
 	DEBUG1( "Fork_subserver: starting '%s'", pr );
 	if(DEBUGL4)Dump_line_list("Fork_subserver - sp", sp );
 	if( use_subserver > 0 ){
-		pid = Start_worker( "queue",parms, 0 );
+		pid = Start_worker( "queue", Service_queue, parms, 0 );
 	} else {
-		pid = Start_worker( "printer",parms, 0 );
+		pid = Start_worker( "printer", Service_worker, parms, 0 );
 	}
 
 	if( pid > 0 ){
@@ -2294,7 +2294,7 @@ static void Setup_user_reporting( struct job *job )
 	if( host ) free(host); host = 0;
 }
 
-void Service_worker( struct line_list *args )
+void Service_worker( struct line_list *args, int param_fd UNUSED )
 {
 	int pid, unspooler_fd, destinations, attempt, n, lpd_bounce;
 	struct line_list *destination;
@@ -2682,7 +2682,7 @@ static void Filter_files_in_job( struct job *job, int outfd, char *user_filter )
 	if(DEBUGL3)Dump_job("Filter_files_in_job", job);
 }
 
-void Service_queue( struct line_list *args )
+void Service_queue( struct line_list *args, int param_fd UNUSED )
 {
 	int subserver;
 

@@ -9,88 +9,27 @@
 
 #include "lp.h"
 #include "errorcodes.h"
-#include "globmatch.h"
-#include "gethostinfo.h"
 #include "child.h"
-#include "fileopen.h"
 #include "getqueue.h"
-#include "getprinter.h"
-#include "lpd_logger.h"
-#include "lpd_dispatch.h"
-#include "lpd_jobs.h"
 #include "linelist.h"
 #include "lpd_worker.h"
 
 /* this file contains code that was formerly in linelist.c but split
  * out as it is only needed in lpd and pulls much code with it */
 
-static void Do_work( const char *name, struct line_list *args );
-
-/*
- *  Support for non-copy on write fork as for NT
- *   1. Preparation for the fork is done by calling 'Setup_lpd_call'
- *      This establishes a default setup for the new process by setting
- *      up a list of parameters and file descriptors to be passed.
- *   2. The user then adds fork/process specific options
- *   3. The fork is done by calling Make_lpd_call which actually
- *      does the fork() operation.  If the lpd_path option is set,
- *      then a -X command line flag is added and an execv() of the program
- *      is done.
- *   4.A - fork()
- *        Make_lpd_call (child) will call Do_work(),  which dispatches
- *         a call to the required function.
- *   4.B - execv()
- *        The execv'd process checks the command line parameters for -X
- *         flag and when it finds it calls Do_work() with the same parameters
- *         as would be done for the fork() version.
- */
-
-void Setup_lpd_call( struct line_list *passfd, struct line_list *args )
-{
-	Free_line_list( args );
-	Check_max(passfd, 10 );
-	passfd->count = 0;
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(0);
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(1);
-	passfd->list[passfd->count++] = Cast_int_to_voidstar(2);
-	if( Mail_fd > 0 ){
-		Set_decimal_value(args,MAIL_FD,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Mail_fd);
-	}
-	if( Status_fd > 0 ){
-		Set_decimal_value(args,STATUS_FD,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Status_fd);
-	}
-	if( Logger_fd > 0 ){
-		Set_decimal_value(args,LOGGER,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Logger_fd);
-	}
-	if( Lpd_request > 0 ){
-		Set_decimal_value(args,LPD_REQUEST,passfd->count);
-		passfd->list[passfd->count++] = Cast_int_to_voidstar(Lpd_request);
-	}
-	Set_flag_value(args,DEBUG,Debug);
-	Set_flag_value(args,DEBUGFV,DbgFlag);
-#ifdef DMALLOC
-	{
-		extern int dmalloc_outfile_fd;
-		if( dmalloc_outfile_fd > 0 ){
-			Set_decimal_value(args,DMALLOC_OUTFILE,passfd->count);
-			passfd->list[passfd->count++] = Cast_int_to_voidstar(dmalloc_outfile_fd);
-		}
-	}
-#endif
-}
+static void Do_work( const char *name, struct line_list *args, WorkerProc *proc,
+		int intern_logger, int intern_status, int intern_mail,
+		int intern_lpd_rquest, int intern_fd ) NORETURN;
 
 /*
  * Make_lpd_call - does the actual forking operation
  *  - sets up file descriptor for child, can close_on_exec()
- *  - does fork() or execve() as appropriate
+ *  - does fork() as appropriate
  *
  *  returns: pid of child or -1 if fork failed.
  */
 
-int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list *args )
+static pid_t Make_lpd_call( const char *name, WorkerProc *proc, int passfd_count, int *passfd, struct line_list *args, int intern_logger, int intern_status, int intern_mail, int intern_lpd_request, int param_fd )
 {
 	int pid, fd, i, n, newfd;
 	struct line_list env;
@@ -104,14 +43,14 @@ int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list 
 
 	if(DEBUGL2){
 		LOGDEBUG("Make_lpd_call: name '%s', lpd path '%s'", name, Lpd_path_DYN );
-		LOGDEBUG("Make_lpd_call: passfd count %d", passfd->count );
-		for( i = 0; i < passfd->count; ++i ){
-			LOGDEBUG(" [%d] %d", i, Cast_ptr_to_int(passfd->list[i]));
+		LOGDEBUG("Make_lpd_call: passfd count %d", passfd_count );
+		for( i = 0; i < passfd_count; ++i ){
+			LOGDEBUG(" [%d] %d", i, passfd[i]);
 		}
 		Dump_line_list("Make_lpd_call - args", args );
 	}
-	for( i = 0; i < passfd->count; ++i ){
-		fd = Cast_ptr_to_int(passfd->list[i]);
+	for( i = 0; i < passfd_count; ++i ){
+		fd = passfd[i];
 		if( fd < i  ){
 			/* we have fd 3 -> 4, but 3 gets wiped out */
 			do{
@@ -123,19 +62,19 @@ int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list 
 				}
 				DEBUG4("Make_lpd_call: fd [%d] = %d, dup2 -> %d",
 					i, fd, newfd );
-				passfd->list[i] = Cast_int_to_voidstar(newfd);
+				passfd[i] = newfd;
 			} while( newfd < i );
 		}
 	}
 	if(DEBUGL2){
-		LOGDEBUG("Make_lpd_call: after fixing fd count %d", passfd->count);
-		for( i = 0 ; i < passfd->count; ++i ){
-			fd = Cast_ptr_to_int(passfd->list[i]);
+		LOGDEBUG("Make_lpd_call: after fixing fd count %d", passfd_count);
+		for( i = 0 ; i < passfd_count; ++i ){
+			fd = passfd[i];
 			LOGDEBUG("  [%d]=%d",i,fd);
 		}
 	}
-	for( i = 0; i < passfd->count; ++i ){
-		fd = Cast_ptr_to_int(passfd->list[i]);
+	for( i = 0; i < passfd_count; ++i ){
+		fd = passfd[i];
 		DEBUG2("Make_lpd_call: fd %d -> %d",fd, i );
 		if( dup2( fd, i ) == -1 ){
 			Errorcode = JABORT;
@@ -145,22 +84,24 @@ int Make_lpd_call( const char *name, struct line_list *passfd, struct line_list 
 	}
 	/* close other ones to simulate close_on_exec() */
 	n = Max_fd+10;
-	for( i = passfd->count ; i < n; ++i ){
+	for( i = passfd_count ; i < n; ++i ){
 		close(i);
 	}
-	passfd->count = 0;
-	Free_line_list( passfd );
-	Do_work( name, args );
+	Do_work( name, args, proc,
+			intern_logger, intern_status, intern_mail,
+			intern_lpd_request, param_fd );
+	/* not reached: */
 	return(0);
 }
 
-static void Do_work( const char *name, struct line_list *args )
+static void Do_work( const char *name, struct line_list *args, WorkerProc *proc,
+		int intern_logger, int intern_status, int intern_mail,
+		int intern_lpd_request, int param_fd )
 {
-	WorkerProc *proc = NULL;
-	Logger_fd = Find_flag_value(args, LOGGER);
-	Status_fd = Find_flag_value(args, STATUS_FD);
-	Mail_fd = Find_flag_value(args, MAIL_FD);
-	Lpd_request = Find_flag_value(args, LPD_REQUEST);
+	Logger_fd = intern_logger;
+	Status_fd = intern_status;
+	Mail_fd = intern_mail;
+	Lpd_request = intern_lpd_request;
 	/* undo the non-blocking IO */
 	if( Lpd_request > 0 ){
 		/* undo the non-blocking IO */
@@ -171,16 +112,11 @@ static void Do_work( const char *name, struct line_list *args )
 #ifdef DMALLOC
 	{
 		extern int dmalloc_outfile_fd;
-		dmalloc_outfile_fd = Find_flag_value(args, DMALLOC_OUTFILE);
+		dmalloc_outfile_fd = intern_dmalloc;
 	}
 #endif
-	if( !safestrcasecmp(name,"logger") ) proc = Logger;
-	else if( !safestrcasecmp(name,"all") ) proc = Service_all;
-	else if( !safestrcasecmp(name,"server") ) proc = Service_connection;
-	else if( !safestrcasecmp(name,"queue") ) proc = Service_queue;
-	else if( !safestrcasecmp(name,"printer") ) proc = Service_worker;
 	DEBUG3("Do_work: '%s', proc 0x%lx ", name, Cast_ptr_to_long(proc) );
-	(proc)(args);
+	(proc)(args, param_fd);
 	cleanup(0);
 }
 
@@ -189,30 +125,63 @@ static void Do_work( const char *name, struct line_list *args )
  *   - adds an input FD
  */
 
-int Start_worker( const char *name, struct line_list *parms, int fd )
+pid_t Start_worker( const char *name, WorkerProc *proc, struct line_list *parms, int fd )
 {
-	struct line_list passfd, args;
-	int pid;
+	struct line_list args;
+	int passfd[20];
+	pid_t pid;
+	int intern_fd = 0,
+	    intern_logger = -1,
+	    intern_status = -1,
+	    intern_mail = -1,
+	    intern_lpd = -1;
+	int passfd_count = 0;
 
-	Init_line_list(&passfd);
 	Init_line_list(&args);
+	passfd[passfd_count++] = 0;
+	passfd[passfd_count++] = 1;
+	passfd[passfd_count++] = 2;
+	if( Mail_fd > 0 ){
+		intern_mail = passfd_count;
+		passfd[passfd_count++] = Mail_fd;
+	}
+	if( Status_fd > 0 ){
+		intern_status = passfd_count;
+		passfd[passfd_count++] = Status_fd;
+	}
+	if( Logger_fd > 0 ){
+		intern_logger = passfd_count;
+		passfd[passfd_count++] = Logger_fd;
+	}
+	if( Lpd_request > 0 ){
+		intern_lpd = passfd_count;
+		passfd[passfd_count++] = Lpd_request;
+	}
+	Set_flag_value(&args,DEBUG,Debug);
+	Set_flag_value(&args,DEBUGFV,DbgFlag);
+#ifdef DMALLOC
+	{
+		extern int dmalloc_outfile_fd;
+		if( dmalloc_outfile_fd > 0 ){
+			intern_dmalloc = passfd_count;
+			passfd[passfd_count++] = dmalloc_outfile_fd;
+		}
+	}
+#endif
 	if(DEBUGL1){
 		DEBUG1("Start_worker: '%s' fd %d", name, fd );
 		Dump_line_list("Start_worker - parms", parms );
 	}
-	Setup_lpd_call( &passfd, &args );
 	Merge_line_list( &args, parms, Hash_value_sep,1,1);
 	Free_line_list( parms );
 	if( fd ){
-		Check_max(&passfd,2);
-		Set_decimal_value(&args,INPUT,passfd.count);
-		passfd.list[passfd.count++] = Cast_int_to_voidstar(fd);
+		intern_fd = passfd_count;
+		passfd[passfd_count++] = fd;
 	}
 
-	pid = Make_lpd_call( name, &passfd, &args );
+	pid = Make_lpd_call( name, proc, passfd_count, passfd, &args,
+			intern_logger, intern_status, intern_mail, intern_lpd,
+			intern_fd );
 	Free_line_list( &args );
-	passfd.count = 0;
-	Free_line_list( &passfd );
-	DEBUG1("Start_worker: pid %d", pid );
 	return(pid);
 }

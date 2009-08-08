@@ -29,7 +29,7 @@
 #include "krb5_auth.h"
 #include "lpd_dispatch.h"
 
-static void Service_lpd( int talk, const char *from_addr );
+static void Service_lpd( int talk, const char *from_addr ) NORETURN;
 
 void Dispatch_input(int *talk, char *input, const char *from_addr )
 {
@@ -70,20 +70,19 @@ void Dispatch_input(int *talk, char *input, const char *from_addr )
 	}
 }
 
-void Service_all( struct line_list *args )
+void Service_all( struct line_list *args, int reportfd )
 {
-	int i, reportfd, printable, held, move, printing_enabled,
+	int i, printable, held, move, printing_enabled,
 		server_pid, change, error, done, do_service;
 	char buffer[SMALLBUFFER], *pr, *forwarding;
 	int first_scan;
 	char *remove_prefix = 0;
-	
+
 	/* we start up servers while we can */
 	Name = "SERVICEALL";
 	setproctitle( "lpd %s", Name );
 
 	first_scan = Find_flag_value(args,FIRST_SCAN);
-	reportfd = Find_flag_value(args,INPUT);
 	Free_line_list(args);
 
 	if(All_line_list.count == 0 ){
@@ -148,14 +147,13 @@ void Service_all( struct line_list *args )
  *
  ***************************************************************************/
 
-void Service_connection( struct line_list *args )
+void Service_connection( struct line_list *args, int talk )
 {
 #ifdef IPP_STUBS
 	char input[16];
 	int status;		/* status of operation */
 #endif /* IPP_STUBS */
 	char from_addr[128];
-	int talk;
 	int permission;
 	int port = 0;
 	struct sockaddr sinaddr;
@@ -165,7 +163,7 @@ void Service_connection( struct line_list *args )
 	setproctitle( "lpd %s", Name );
 	(void) plp_signal (SIGHUP, cleanup );
 
-	if( !(talk = Find_flag_value(args,INPUT)) ){
+	if( !talk ){
 		Errorcode = JABORT;
 		fatal(LOG_ERR, "Service_connection: no talk fd");
 	}

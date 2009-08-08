@@ -66,7 +66,7 @@ EXTERN const char *Name;	/* Name of program */
 extern const char *Copyright[];	/* Copyright info */
 #define Version	Copyright[0]
 EXTERN int Is_server;		/* LPD sets to non-zero */
-EXTERN int Server_pid;		/* PID of server */
+EXTERN pid_t Server_pid;		/* PID of server */
 EXTERN int Is_lpr;			/* LPR sets to non-zero */
 EXTERN int Logger_fd;		/* for logger */
 EXTERN int Mail_fd;			/* for mail */

@@ -13,7 +13,7 @@
 
 /* PROTOTYPES */
 void Dispatch_input(int *talk, char *input, const char *from_addr );
-void Service_all( struct line_list *args );
-void Service_connection( struct line_list *args );
+void Service_all( struct line_list *args, int ) NORETURN;
+void Service_connection( struct line_list *args, int ) NORETURN;
 
 #endif

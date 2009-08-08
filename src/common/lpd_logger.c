@@ -30,35 +30,25 @@
  *     kill the logger to get it to accept a new destination.
  ***************************************************************************/
 
-
+static void Logger( struct line_list *, int ) NORETURN;
 
 /*
  * Start_logger - helper function to setup logger process
  */
 
-int Start_logger( int log_fd )
+pid_t Start_logger( int log_fd )
 {
-	struct line_list args, passfd;
+	struct line_list args;
 	int fd = Logger_fd;
-	int pid;
+	pid_t pid;
 
-	Init_line_list(&passfd);
 	Init_line_list(&args);
-
-	Logger_fd = -1;
-	Setup_lpd_call( &passfd, &args );
-	Logger_fd = fd;
 
 	Set_str_value(&args,CALL,"logger");
 
-	Check_max(&passfd,2);
-	Set_decimal_value(&args,INPUT,passfd.count);
-	passfd.list[passfd.count++] = Cast_int_to_voidstar(log_fd);
-
-	pid = Make_lpd_call( "logger", &passfd, &args );
-	passfd.count = 0;
-	Free_line_list( &args );
-	Free_line_list( &passfd );
+	Logger_fd = -1;
+	pid = Start_worker( "logger", Logger, &args, log_fd);
+	Logger_fd = fd;
 	DEBUG1("Start_logger: log_fd %d, status_pid %d", log_fd, pid );
 	return(pid);
 }
@@ -158,10 +148,10 @@ static int Dump_queue_status(int outfd)
 	return(0);
 }
 
-void Logger( struct line_list *args )
+static void Logger( struct line_list *args, int readfd )
 {
 	char *s, *path, *tempfile;
-	int writefd,m, timeout, readfd;
+	int writefd,m, timeout;
 	time_t start_time, current_time;
 	int elapsed, left, err;
 	struct timeval timeval, *tp;
@@ -195,7 +185,6 @@ void Logger( struct line_list *args )
 		plp_snprintf(host+len, sizeof(host)-len, "%%2001" );
 	}
 
-	readfd = Find_flag_value(args,INPUT);
 	Free_line_list(args);
 
 	writefd = -2;
