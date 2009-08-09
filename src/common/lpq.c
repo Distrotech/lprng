@@ -293,7 +293,7 @@ static void Show_status(char **argv)
  *   string attacks by users putting codes in job names, etc.
  ***************************************************************************/
 
-int Read_status_info( char *host, int sock,
+int Read_status_info( char *host UNUSED, int sock,
 	int output, int timeout, int displayformat,
 	int status_line_count )
 {
