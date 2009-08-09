@@ -1,3 +1,4 @@
+2009-08-09 brl do not link monitor and checkpc with unneeded files
 2009-08-08 brl move security structs to the code implementing them
 2009-08-08 brl move authentication methods to new src/auth/ directory
 2009-08-08 brl fix building on GNU/kFreeBSD (see http://bugs.debian.org/537857)

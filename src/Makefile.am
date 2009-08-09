@@ -37,43 +37,43 @@ install-exec-hook:
 	ln $(DESTDIR)$(bindir)/lprm $(DESTDIR)$(bindir)/cancel
 # - think about making things suid at install time
 
-COMMON_SOURCES = common/child.c \
-	common/copyright.c common/debug.c common/errormsg.c \
-	common/fileopen.c common/gethostinfo.c common/getopt.c \
-	common/getprinter.c common/getqueue.c common/globmatch.c \
-	common/initialize.c auth/krb5_auth.c common/linelist.c \
+COMMON_SOURCES = common/child.c common/copyright.c common/debug.c \
+	common/errormsg.c common/fileopen.c common/gethostinfo.c \
+	common/getopt.c common/getprinter.c common/getqueue.c \
+	common/globmatch.c common/initialize.c common/linelist.c \
 	common/linksupport.c common/lockfile.c common/merge.c \
-	common/plp_snprintf.c common/printjob.c \
-	common/proctitle.c common/sendjob.c common/sendauth.c \
-	common/sendreq.c auth/ssl_auth.c \
-	common/user_auth.c common/utilities.c vars.c \
-	common/md5.c auth/md5_auth.c auth/test_auth.c
-COMMON_LDADD = $(SSL_LDADD) $(KRB_LIBS)
-SEND_SOURCES = common/openprinter.c common/stty.c
+	common/plp_snprintf.c common/proctitle.c common/utilities.c \
+	vars.c
+MORE_SOURCES = $(COMMON_SOURCES) \
+	common/sendauth.c common/sendjob.c common/sendreq.c \
+	common/user_auth.c common/printjob.c \
+	common/md5.c auth/md5_auth.c auth/test_auth.c \
+	auth/ssl_auth.c auth/krb5_auth.c
+SEND_SOURCES = $(MORE_SOURCES) \
+	common/openprinter.c common/stty.c
+MORE_LDADD = $(SSL_LDADD) $(KRB_LIBS)
 
 lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
 	common/lpd_control.c common/sendmail.c common/lpd_dispatch.c \
 	common/lpd_logger.c common/lpd_rcvjob.c common/lpd_remove.c \
 	common/lpd_secure.c common/lpd_status.c \
 	common/permission.c common/accounting.c common/controlword.c \
-	$(SEND_SOURCES) $(COMMON_SOURCES)
-lpd_LDADD = $(COMMON_LDADD)
-lpr_SOURCES = common/lpr.c $(SEND_SOURCES) $(COMMON_SOURCES)
-lpr_LDADD = $(COMMON_LDADD)
-lpq_SOURCES = common/lpq.c $(COMMON_SOURCES)
-lpq_LDADD = $(COMMON_LDADD)
-lpstat_SOURCES = common/lpstat.c $(COMMON_SOURCES)
-lpstat_LDADD = $(COMMON_LDADD)
-lprm_SOURCES = common/lprm.c $(COMMON_SOURCES)
-lprm_LDADD = $(COMMON_LDADD)
-lpc_SOURCES = common/lpc.c common/controlword.c $(COMMON_SOURCES)
-lpc_LDADD = $(COMMON_LDADD)
-checkpc_SOURCES = common/checkpc.c  common/stty.c $(COMMON_SOURCES)
-checkpc_LDADD = $(COMMON_LDADD)
+	$(SEND_SOURCES)
+lpd_LDADD = $(MORE_LDADD)
+lpr_SOURCES = common/lpr.c $(SEND_SOURCES)
+lpr_LDADD = $(MORE_LDADD)
+lpq_SOURCES = common/lpq.c $(MORE_SOURCES)
+lpq_LDADD = $(MORE_LDADD)
+lpstat_SOURCES = common/lpstat.c $(MORE_SOURCES)
+lpstat_LDADD = $(MORE_LDADD)
+lprm_SOURCES = common/lprm.c $(MORE_SOURCES)
+lprm_LDADD = $(MORE_LDADD)
+lpc_SOURCES = common/lpc.c common/controlword.c $(MORE_SOURCES)
+lpc_LDADD = $(MORE_LDADD)
+checkpc_SOURCES = common/checkpc.c common/stty.c $(COMMON_SOURCES)
 lpf_SOURCES = common/lpf.c common/plp_snprintf.c
 lpbanner_SOURCES = common/lpbanner.c common/plp_snprintf.c
 monitor_SOURCES = common/monitor.c $(COMMON_SOURCES)
-monitor_LDADD = $(COMMON_LDADD)
 # sserver_SOURCES = AUTHENTICATE/sserver.c
 # sclient_SOURCES = AUTHENTICATE/sclient.c
 
