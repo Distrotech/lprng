@@ -1,1 +1,1 @@
-.so man3/lpbanner.3
+.so man1/lpbanner.1
