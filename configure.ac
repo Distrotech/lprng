@@ -72,6 +72,7 @@ LPD_LISTEN_PORT='"=515"'
 ],[NOREMOTE=""
 LPD_LISTEN_PORT='"=off"'
 ])
+AC_SUBST(LPD_LISTEN_PORT)
 AC_SUBST(NOREMOTE)
 AC_DEFINE_UNQUOTED(LPD_LISTEN_PORT, $LPD_LISTEN_PORT,[default value for lpd_listen_port (0 means default port ("=515"), "=off" means to not listen at all])
 
