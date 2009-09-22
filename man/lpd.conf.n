@@ -376,8 +376,13 @@ setting longnumber to yes allows 6 digit numbers.
 If the backwards_compatible flag is set,
 only 3 digit numbers will be used.
 .TP
+\fBlpd_listen_port\fR (default: off) [ipaddr%]port
+The port that \fBlpd\fR binds to.  If the parameter is set to off then
+\fBlpd\fR does not listen to any TCP port.  See \fBlpd_port\fR for
+details of the format of the argument.
+.TP
 \fBlpd_port\fR (default: \fIprinter\fR)  [ipaddr%]port
-The port that \fBlpd\fR binds to, and that \fBlpr\fR and
+The port that \fBlpr\fR and
 the other client programs send their requests to.
 The specification has the format ipaddr%port.
 If the IP address is specified then a bind to only this address and
@@ -498,7 +503,7 @@ All valid entries in these files will be used.
 See PRINTCAP LOOKUP for details.
 .TP
 \fBperms_path\fR
-(default: /etc/lpd.perms:/usr/etc/lpd.perms:/var/spool/lpd/lpd.perms.%h)
+(default: /etc/lpd.perms:/usr/etc/lpd.perms: /var/spool/lpd/lpd.perms.%h)
 The location of the printer permissions database.
 If a file or filter does not exist, it is skipped.
 The first file or filter that exists and is readable will be used.
