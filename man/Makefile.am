@@ -21,5 +21,6 @@ EXTRA_DIST = cancel.n checkpc.n lp.n lpbanner.n lpc.n lpd.n lpd.conf.n \
 		 -e "s!_SSL_CERTS_DIR_!${SSL_CERTS_DIR}!" \
 		 -e "s!_SSL_SERVER_CERT_!${SSL_SERVER_CERT}!" \
 		 -e "s!_SSL_SERVER_PASSWORD_!${SSL_SERVER_PASSWORD}!" \
+		 -e "s!_LPD_LISTEN_PORT_!${LPD_LISTEN_PORT}!" \
 		$< > $@
 

@@ -1,3 +1,4 @@
+2009-09-22 brl put configured lpd_listen_port default in lpd.conf.5
 2009-09-22 brl apply manpage patches by cs from the Debian package
 2009-08-09 brl do not link monitor and checkpc with unneeded files
 2009-08-08 brl move security structs to the code implementing them
