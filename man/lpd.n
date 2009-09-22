@@ -162,7 +162,7 @@ M for removal (i.e.- LPRM request),
 Q for queue information (i.e.- LPRM request),
 and so forth.
 The
-.l X
+.B X
 key indicates the initial connection to the LPD spooler,
 and can be used to control connections from remote systems.
 The
@@ -820,7 +820,7 @@ seconds before trying to reconnect.
 Normally job files are forwarded to a printer without
 modification.
 The
-.b lpd_bounce
+.B lpd_bounce
 flag makes the queue a
 .I "bounce queue"
 and allows banners to be generated and
@@ -1251,13 +1251,13 @@ and should only be used as a last resort for specific problems.
 The options for the filter command line will be replaced by appropriate
 values.
 Option specifications have the form $[0| ][-]X.
-." Option specifications have the form $[0| ][-][']X.
+.\" Option specifications have the form $[0| ][-][']X.
 The default option expansion has the form $X -> -X'value';
 the form $0X or $(space)X adds a space after the -X, i.e.- $0X -> -X 'value';
 the form $-X suppresses the -X, i.e. - $-X -> value.
-." the form $-X suppresses the -X, i.e. - $-X -> 'value';
-." and the form $'X suppresses the quotes around the value.
-." Note that the 0,-, and ' can be combined. For example, $-'X -> value.
+.\" the form $-X suppresses the -X, i.e. - $-X -> 'value';
+.\" and the form $'X suppresses the quotes around the value.
+.\" Note that the 0,-, and ' can be combined. For example, $-'X -> value.
 The options will be expanded as follows:
 .RS
 .sp
