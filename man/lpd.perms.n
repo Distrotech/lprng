@@ -72,7 +72,7 @@ M for removal (i.e.- LPRM request),
 and
 Q for queue information (i.e.- LPQ request).
 The
-.l X
+.B X
 key is used when checking for connection information.
 .LP
 Initially,
