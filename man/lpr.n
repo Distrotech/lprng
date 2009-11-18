@@ -270,9 +270,11 @@ Use debug flags for extreme verbosity.
 .TP 5
 .BI \-w " width"
 Specify the page width for printing the job.
+.TP 5
 .BI \-X " path"
 User specified filter for job files.  Processing is done on
 the client host.
+.TP 5
 .B \-Y
 Make a direct connection to the printer device and do not spool.
 .TP 5
