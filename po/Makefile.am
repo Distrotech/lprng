@@ -169,7 +169,7 @@ uninstall-local: uninstall-local-@USE_NLS@
 uninstall-local-no:
 uninstall-local-yes:
 	for lang in $(LINGUAS) ; do \
-		rm -f $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(DOMAIN).mo
+		rm -f $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(DOMAIN).mo ; \
 	done
 
 MOSTLYCLEANFILES = remove-potcdate.sed stamp-poT core core.* $(DOMAIN).po $(DOMAIN).1po $(DOMAIN).2po *.new.po
