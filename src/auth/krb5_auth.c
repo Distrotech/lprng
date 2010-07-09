@@ -17,6 +17,7 @@
 #include "permission.h"
 #include "lpd_secure.h"
 #include "lpd_dispatch.h"
+#include "user_auth.h"
 #include "krb5_auth.h"
 
 #if defined(KERBEROS)
@@ -1314,4 +1315,15 @@ const struct security kerberos5_auth =
 const struct security k5conn_auth =
 	{ "k5conn", "k5conn", "kerberos", IP_SOCKET_ONLY, 0,           Krb5_send_nocrypt, 0, Krb5_receive_nocrypt };
 
+
+#ifdef WITHPLUGINS
+plugin_get_func getter_name(kerberos5);
+size_t getter_name(kerberos5)(const struct security **s, size_t max) {
+	if( max > 0 )
+		s[0] = &kerberos5_auth;
+	if( max > 1 )
+		s[1] = &k5conn_auth;
+	return 2;
+}
+#endif
 #endif

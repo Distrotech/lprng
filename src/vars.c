@@ -87,6 +87,9 @@ Put all of the variables in a separate file.
 #if !defined(SD_DEFAULT)
 #error Missing SD_DEFAULT definition
 #endif
+#if defined(WITHPLUGINS) && !defined(PLUGINDIR)
+#error Missing PLUGINDIR definition
+#endif
 
 /*
  * printcap variables used by LPD for printing
@@ -402,6 +405,10 @@ struct keywords Pc_var_list[] = {
 { "perms_path", 0, STRING_K, &Printer_perms_path_DYN,1,0,"=" LPD_PERMS_PATH },
    /*  page length (in lines) */
 { "pl", 0,  INTEGER_K,  &Page_length_DYN,0,0,"=66"},
+#ifdef WITHPLUGINS
+   /*  directory where authentication plugins reside */
+{ "pluginpath", 0,  STRING_K,  &Plugin_path_DYN,0,0,"=" PLUGINDIR},
+#endif
    /* ppd files */
 { "ppd", 0,  STRING_K,  &Ppd_file_DYN,0,0,0 },
    /*  pr program for p format */

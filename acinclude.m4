@@ -78,3 +78,71 @@ dnl Search for GNU msgmerge 0.11 or newer in the PATH.
 AM_PATH_PROG_WITH_TEST(MSGMERGE, msgmerge,
   [$ac_dir/$ac_word --update -q /dev/null /dev/null >&]AS_MESSAGE_LOG_FD[ 2>&1], :)
 ])
+define([CHECK_PLUGINS],[dnl
+AC_ARG_VAR(PLUGIN_LDFLAGS, [Additional LDFLAGS for plugins (default --shared)])
+AC_ARG_VAR(PLUGIN_CFLAGS, [Additional CFLAGS for plugins (default -fPIC)])
+AC_ARG_VAR(PLUGINUSER_LDFLAGS, [Additional LDFLAGS for a program loading plugins (default -export-dynamic)])
+AC_ARG_ENABLE([plugins],AS_HELP_STRING([--enable-plugins],[build authentication modules as plugins]),[enable_plugins=$enableval],[enable_plugins=no])
+DL_LIBS=""
+if test $enable_plugins != no ; then
+mysaved_LIBS="$LIBS"
+AC_SEARCH_LIBS(dlopen, dl, [dnl
+	if test "x$LIBS" != "x$mysaved_LIBS" ; then
+		DL_LIBS="-ldl"
+	fi
+], [dnl
+	if test $enable_plugins = default ; then
+		enable_plugins=no
+	else
+		AC_MSG_ERROR([Plugins requested with --enable-plugins but did not find dlopen])
+		enable_plugins=no
+	fi
+])
+LIBS="$mysaved_LIBS"
+fi
+if test $enable_plugins != no ; then
+if test "${PLUGIN_CFLAGS+set}" != set ; then
+	PLUGIN_CFLAGS="-fPIE"
+fi
+if test "${PLUGIN_LDFLAGS+set}" != set ; then
+	PLUGIN_LDFLAGS="--shared"
+fi
+if test "${PLUGINUSER_LDFLAGS+set}" != set ; then
+	PLUGINUSER_LDFLAGS="-export-dynamic"
+fi
+AC_CACHE_CHECK([whether dynamic plugins can be generated and work],[my_cv_sys_shared_with_callback_works],[dnl
+mysaved_LDFLAGS="$LDFLAGS"
+mysaved_CFLAGS="$CFLAGS"
+LDFLAGS="$LDFLAGS $PLUGIN_LDFLAGS"
+CFLAGS="$CFLAGS $PLUGIN_CFLAGS"
+AC_LINK_IFELSE([[int test(void);int test(void) {return callback();}]],
+[cp conftest$ac_exeext libmyXYZtest.so || AC_MSG_ERROR([Internal error, perhaps autoconf changed soem internals])
+ my_cv_sys_shared_with_callback_works=yes],
+[my_cv_sys_shared_with_callback_works=no])
+if test $my_cv_sys_shared_with_callback_works = yes ; then
+	LDFLAGS="$mysaved_LDFLAGS $PLUGINUSER_LDFLAGS -L. -lmyXYZtest"
+	CFLAGS="$mysaved_CFLAGS"
+	AC_TRY_LINK([int callback(void) { return 17; } return test();], [my_cv_sys_shared_with_callback_works=yes], [my_cv_sys_shared_works=no])
+fi
+LDFLAGS="$mysaved_LDFLAGS"
+CFLAGS="$mysaved_CFLAGS"
+rm -f libmyXYZtest.so]
+)
+if test $my_cv_sys_shared_with_callback_works = no ; then
+	if test $enable_plugins = default ; then
+		enable_plugins=no
+	else
+		AC_MSG_ERROR([Plugins requested with --enable-plugins but shared libraries cannot be created (might only work with gcc on linux yet, also make sure you have no -Wl,-z,defs or similar set)])
+		enable_plugins=no
+	fi
+fi
+fi
+AM_CONDITIONAL(WITHPLUGINS, [test $enable_plugins != no])
+if test $enable_plugins != no ; then
+	AC_DEFINE([WITHPLUGINS], 1, [Build dynamic loadable plugins])
+fi
+AC_SUBST(DL_LIBS)
+AC_SUBST(PLUGINUSER_LDFLAGS)
+AC_SUBST(PLUGIN_LDFLAGS)
+AC_SUBST(PLUGIN_CFLAGS)
+])

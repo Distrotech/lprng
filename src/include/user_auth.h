@@ -79,10 +79,19 @@ struct security {
 	RECEIVE_PROC server_receive;	/* server to client, receive from client */
 };
 
+typedef size_t (plugin_get_func)(const struct security **, size_t max);
+
+/* if anything changes, increment this to avoid old plugins getting loaded */
+#define AUTHPLUGINVERSION 0
+#define getter_name(n) get_lprng_auth_0_ ## n
+
 /* PROTOTYPES */
 const struct security *FindSecurity( const char *name );
 char *ShowSecuritySupported( char *str, int maxlen );
 
+#ifndef WITHPLUGINS
 extern const struct security test_auth;
 extern const struct security md5_auth;
+#endif
+
 #endif
