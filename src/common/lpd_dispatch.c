@@ -62,11 +62,6 @@ void Dispatch_input(int *talk, char *input, const char *from_addr )
 		case REQ_SECURE:
 			Receive_secure( talk, input );
 			break;
-#if defined(KERBEROS) && defined(MIT_KERBEROS4)
-		case REQ_K4AUTH:
-			Receive_k4auth( talk, input );
-			break;
-#endif
 	}
 }
 

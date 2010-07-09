@@ -226,7 +226,6 @@ CONFIGURATION OPTIONS
 	  --disable-force_localhost         disable force_localhost default
 	  --disable-require_configfiles     client programs require lpd.conf, printcap
 	  --enable-kerberos                 enable kerberos support
-	  --enable-mit_kerberos4            enable MIT Kerberos 4 support
 	  --disable-kerberos_checks         disable kerberos library location and checking for support
 	  --enable-nls                      use Native Language Support
 	  --enable-tcpwrappers              use tcp wrappers (-lwrap)
@@ -353,8 +352,6 @@ KERBEROS:
 
   - for Kerberos 5 only:
   ./configure --enable-kerberos
-  - for Kerberos 5 and Kerberos 4 legacy support:
-  ./configure --enable-kerberos --enable-mit_kerberos4
 
   You may need to add the following if your libraries and include files are
   not in the 'usual' places.  Replace /usr/local/lib with the directory

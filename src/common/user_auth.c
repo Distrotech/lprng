@@ -877,9 +877,6 @@ static const struct security *SecuritySupported[] = {
 		server  accept, receive, receive_done
 	*/
 #if defined(KERBEROS)
-# if defined(MIT_KERBEROS4)
-	&kerberos4_auth,
-# endif
 	&kerberos5_auth,
 	&k5conn_auth,
 #endif

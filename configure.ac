@@ -112,17 +112,6 @@ AC_DEFINE_UNQUOTED(KERBEROS,"1")],
 [KERBEROS=""])
 AC_SUBST(KERBEROS)
 
-dnl check to see if MIT Kerberos 4 support is enabled
-AH_TEMPLATE(MIT_KERBEROS4,[enable MIT Kerberos 4 support])
-ENABLE_BOOLEAN(mit_kerberos4,
-[--enable-mit_kerberos4],[enable MIT Kerberos 4 support],
-"no",
-[enable MIT kerberos 4 support             : $v],
-[MIT_KERBEROS4=1;
-AC_DEFINE_UNQUOTED(MIT_KERBEROS4,"$MIT_KERBEROS4")],
-[MIT_KERBEROS4=""])
-AC_SUBST(MIT_KERBEROS4)
-
 dnl find kerberos libraries
 ENABLE_BOOLEAN(kerberos_checks,
 [--disable-kerberos_checks],[disable kerberos library location and checking for support],
@@ -1140,18 +1129,6 @@ If you have installed kerberos in /usr/local/{lib,include} then use
 configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/lib
 ])
 	fi
-	if test "$MIT_KERBEROS4" != "" ; then
-		found=
-		if test "$found" != "yes" ; then
-			AC_CHECK_HEADERS(krb.h,found=yes)
-		fi
-		if test "$found" != "yes" ; then
-			AC_CHECK_HEADERS(kerberosIV/krb.h,found=yes)
-		fi
-		if test "$found" != "yes" ; then
-		  AC_MSG_ERROR(MIT Kerberos 4 support wanted and cannot find krb.h or kerberosIV/krb.h)
-		fi
-	fi
 
 	if test "$KERBEROS_CHECKS" = 1 ; then
 		dnl we have the Kerberos 5 package, lets try for the rest
@@ -1193,24 +1170,6 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 
 		AC_CHECK_FUNC(krb5_read_message,AC_DEFINE_UNQUOTED(HAVE_KRB5_READ_MESSAGE,1,[have krb5_read_message]),[AC_MSG_WARN(Kerberos 5 library does not have krb5_read_message)])
 
-		if test "$MIT_KERBEROS4" != "" ; then
-			SAVELIBS=$LIBS
-			found=;
-			if test "$found" = "" ; then
-				LIBS=" -lkrb4 -ldes425 $SAVELIBS"
-				AC_CHECKING(for krb_recvauth in $LIBS, )
-				AC_TRY_LINK_FUNC(krb_recvauth,found="yes")
-			fi;
-			if test "$found" = "" ; then
-				LIBS=" -lkrb4 -ldes $SAVELIBS"
-				AC_CHECKING(for krb_recvauth in $LIBS, )
-				AC_TRY_LINK_FUNC(krb_recvauth,found="yes")
-			fi;
-			if test "$found" = "" ; then
-			  AC_MSG_WARN(MIT Kerberos 4 support wanted and cannot find krb_recvauth in Kerberos 4 libraries)
-			  exit 1
-            fi
-		fi;
 	fi
 
 	AC_CHECK_FUNCS(krb5_free_data_contents)
