@@ -400,8 +400,6 @@ struct keywords Pc_var_list[] = {
 { "pc_entries_required", 0,  STRING_K,  &Pc_entries_required_DYN,0,0,"=ppd" },
    /* lpd.perms file */
 { "perms_path", 0, STRING_K, &Printer_perms_path_DYN,1,0,"=" LPD_PERMS_PATH },
-   /*  pgp path */
-{ "pgp_path", 0,  STRING_K,  &Pgp_path_DYN,0,0,"=" PGP_PATH },
    /*  page length (in lines) */
 { "pl", 0,  INTEGER_K,  &Page_length_DYN,0,0,"=66"},
    /* ppd files */

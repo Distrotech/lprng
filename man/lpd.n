@@ -1506,7 +1506,7 @@ The
 value specifies the type of authentication to be used
 for client to server authentication.
 Typical values would be
-pgp, kerberos, etc.
+kerberos, md5, etc.
 If the authentication type is not built-in,
 the client programs use the
 .I auth_client_filter
@@ -1823,22 +1823,6 @@ The lpd action can also be manipulated by using environment variables.
 .TP
 .B MD5KEYFILE
 Used for md5 signated file transmission
-.TP
-.B PGPPASS
-pgp pass phrase 
-
-.TP
-.B PGPPASSFD
-pgp pass phrase filedescriptor
-
-.TP
-.B PGPPASSFILE
-pgp pass phrase file
-
-.TP
-.B PGPPATH
-pgp binary with full path
-
 
 .SH FILES
 The files used by LPRng are set by values in the

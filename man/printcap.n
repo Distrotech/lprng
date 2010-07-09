@@ -802,7 +802,7 @@ destinations	D	str	NULL
 				a job that has been processed by a router script
 				(see README.routing)
 forward_auth	D	str	NULL
-				server to server authentication type, e.g. pgp, kerberos
+				server to server authentication type, e.g. kerberos
 force_localhost	A	bool	TRUE
 				Forces the clients programs (lpr, lpc, etc.)
 				to send all print jobs and requests to the server running
@@ -825,7 +825,7 @@ server_auth_command	D	str	NULL
 tc	A	str	NULL	reference to a printcap entry to include as part of
 				the current entry.
 use_auth	D	str	NULL
-				client to server authentication type, e.g. pgp, kerberos
+				client to server authentication type, e.g. kerberos
 user_auth_command	R	str	NULL
 				authentication command for user (client program)
 
@@ -1167,7 +1167,7 @@ printcap flag can be used to cause LPR to do bounce queue filtering
 in exactly the same manner as the server.
 This should be used with caution
 as missing filters on the client system can cause unexpected behavior.
-.SH "KERBEROS, PGP, AND OTHER AUTHENTICATION METHODS"
+.SH "KERBEROS, AND OTHER AUTHENTICATION METHODS"
 .PP
 LPRng supports built in kerberos authentication.
 To enable this, the

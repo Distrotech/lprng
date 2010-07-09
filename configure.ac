@@ -35,9 +35,6 @@ AC_DEFINE_UNQUOTED(PRUTIL, "$PRUTIL",[full path to prutil])
 AC_PATH_PROG(OPENSSL,openssl)dnl
 AC_SUBST(OPENSSL)dnl
 AC_DEFINE_UNQUOTED(OPENSSL, "$OPENSSL",[full path to openssl])
-AC_PATH_PROG(PGP_PATH,pgp)dnl
-AC_SUBST(PGP_PATH)dnl
-AC_DEFINE_UNQUOTED(PGP_PATH, "$PGP_PATH",[pgp path])
 
 dnl dnl check to see if setuid is suppressed
 dnl AC_ARG_ENABLE( setuid,

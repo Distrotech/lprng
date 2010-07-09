@@ -53,7 +53,7 @@ publically available  PCNFSD server is distributed with LPRng, and
 interfaces with the PC/DOS/Windows based NFS style print spoolers.
 
 For users that require secure and/or authenticated printing support,
-LPRng supports Kerberos V and/or PGP authentication methods.
+LPRng supports Kerberos V and/or SSL authentication methods.
 Additional authentication support is extremely simple to add.
 
 Finally, Astart Technlogies (http://www.astart.com) offers commercial
