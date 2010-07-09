@@ -15,9 +15,6 @@ const char *Copyright[] = {
 #if defined(KERBEROS)
  ", Kerberos5"
 #endif
-#if defined(MIT_KERBEROS4)
- ", MIT Kerberos4"
-#endif
 ", Copyright 1988-2003 Patrick Powell, <papowell@lprng.com>",
 
 "",

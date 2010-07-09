@@ -14,9 +14,6 @@
 #include "user_auth.h"
 
 #if defined(KERBEROS)
-# if defined(MIT_KERBEROS4)
-extern const struct security kerberos4_auth;
-# endif
 extern const struct security kerberos5_auth;
 extern const struct security k5conn_auth;
 #endif
