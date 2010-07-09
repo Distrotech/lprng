@@ -688,3 +688,12 @@ static int md5_receive( int *sock, int transfer_timeout,
 
 const struct security md5_auth =
 	{ "md5",       "md5",	"md5",      0,              0,           md5_send, 0, md5_receive };
+
+#ifdef WITHPLUGINS
+plugin_get_func getter_name(md5);
+size_t getter_name(md5)(const struct security **s, size_t max) {
+	if( max > 0 )
+		*s = &md5_auth;
+	return 1;
+}
+#endif

@@ -15,7 +15,8 @@ PATHDEFINES = "-DLOCKFILE=\"$(LOCKFILE)\"" \
 	"-DSSL_CERTS_DIR=\"$(SSL_CERTS_DIR)\"" \
 	"-DSSL_SERVER_CERT=\"$(SSL_SERVER_CERT)\"" \
 	"-DSSL_SERVER_PASSWORD_FILE=\"$(SSL_SERVER_PASSWORD_FILE)\"" \
-	"-DSD_DEFAULT=\"$(SD_DEFAULT)\""
+	"-DSD_DEFAULT=\"$(SD_DEFAULT)\"" \
+	"-DPLUGINDIR=\"$(plugindir)\""
 
 AM_CPPFLAGS = -I$(srcdir)/include "-DLOCALEDIR=\"$(localedir)\""
 
@@ -35,6 +36,13 @@ install-exec-hook:
 	rm -f $(DESTDIR)$(bindir)/lp $(DESTDIR)$(bindir)/cancel
 	ln $(DESTDIR)$(bindir)/lpr $(DESTDIR)$(bindir)/lp
 	ln $(DESTDIR)$(bindir)/lprm $(DESTDIR)$(bindir)/cancel
+if WITHPLUGINS
+if WITHKERBEROS
+	$(mkdir_p) $(DESTDIR)$(plugindir)
+	ln -sf kerberos5.so $(DESTDIR)$(plugindir)/kerberos.so
+	ln -sf kerberos5.so $(DESTDIR)$(plugindir)/k5conn.so
+endif
+endif
 # - think about making things suid at install time
 
 COMMON_SOURCES = common/child.c common/copyright.c common/debug.c \
@@ -46,12 +54,48 @@ COMMON_SOURCES = common/child.c common/copyright.c common/debug.c \
 	vars.c
 MORE_SOURCES = $(COMMON_SOURCES) \
 	common/sendauth.c common/sendjob.c common/sendreq.c \
-	common/user_auth.c common/printjob.c \
-	common/md5.c auth/md5_auth.c auth/test_auth.c \
-	auth/ssl_auth.c auth/krb5_auth.c
+	common/user_auth.c common/printjob.c
 SEND_SOURCES = $(MORE_SOURCES) \
 	common/openprinter.c common/stty.c
+
+# This is a crude hack, but better than needing libtool...
+if WITHPLUGINS
+MORE_LDADD = $(DL_LIBS)
+MORELDFLAGS = $(PLUGINUSER_LDFLAGS)
+plugin_PROGRAMS =
+if WITHKERBEROS
+plugin_PROGRAMS += kerberos5.so
+kerberos5_so_SOURCES = auth/krb5_auth.c
+kerberos5_so_LDFLAGS = $(PLUGIN_LDFLAGS)
+kerberos5_so_LDADD = $(KRB_LIBS)
+kerberor5_so_CFLAGS = $(PLUGIN_CFLAGS)
+uninstall-local:
+	if test -l $(DESTDIR)$(plugindir)/k5conn.so ; then \
+		rm $(DESTDIR)$(plugindir)/k5conn.so ; fi
+	if test -l $(DESTDIR)$(plugindir)/kerberos.so ; then \
+		rm $(DESTDIR)$(plugindir)/kerberos.so ; fi
+endif
+if WITHSSL
+plugin_PROGRAMS += ssl.so
+ssl_so_SOURCES = auth/ssl_auth.c
+ssl_so_LDFLAGS = $(PLUGIN_LDFLAGS)
+ssl_so_CFLAGS = $(PLUGIN_CFLAGS)
+ssl_so_LDADD = $(SSL_LDADD)
+endif
+plugin_PROGRAMS += md5.so
+md5_so_SOURCES = auth/md5_auth.c common/md5.c
+md5_so_LDFLAGS = $(PLUGIN_LDFLAGS)
+md5_so_CFLAGS = $(PLUGIN_CFLAGS)
+plugin_PROGRAMS += test.so
+test_so_SOURCES = auth/test_auth.c
+test_so_LDFLAGS = $(PLUGIN_LDFLAGS)
+test_so_CFLAGS = $(PLUGIN_CFLAGS)
+else
 MORE_LDADD = $(SSL_LDADD) $(KRB_LIBS)
+MORE_SOURCES += common/md5.c auth/md5_auth.c auth/test_auth.c \
+		auth/ssl_auth.c auth/krb5_auth.c
+MORELDFLAGS =
+endif
 
 lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
 	common/lpd_control.c common/sendmail.c common/lpd_dispatch.c \
@@ -60,16 +104,22 @@ lpd_SOURCES = common/lpd.c common/lpd_worker.c common/lpd_jobs.c \
 	common/permission.c common/accounting.c common/controlword.c \
 	$(SEND_SOURCES)
 lpd_LDADD = $(MORE_LDADD)
+lpd_LDFLAGS = $(MORELDFLAGS)
 lpr_SOURCES = common/lpr.c $(SEND_SOURCES)
 lpr_LDADD = $(MORE_LDADD)
+lpr_LDFLAGS = $(MORELDFLAGS)
 lpq_SOURCES = common/lpq.c $(MORE_SOURCES)
 lpq_LDADD = $(MORE_LDADD)
+lpq_LDFLAGS = $(MORELDFLAGS)
 lpstat_SOURCES = common/lpstat.c $(MORE_SOURCES)
 lpstat_LDADD = $(MORE_LDADD)
+lpstat_LDFLAGS = $(MORELDFLAGS)
 lprm_SOURCES = common/lprm.c $(MORE_SOURCES)
 lprm_LDADD = $(MORE_LDADD)
+lprm_LDFLAGS = $(MORELDFLAGS)
 lpc_SOURCES = common/lpc.c common/controlword.c $(MORE_SOURCES)
 lpc_LDADD = $(MORE_LDADD)
+lpc_LDFLAGS = $(MORELDFLAGS)
 checkpc_SOURCES = common/checkpc.c common/stty.c $(COMMON_SOURCES)
 lpf_SOURCES = common/lpf.c common/plp_snprintf.c
 lpbanner_SOURCES = common/lpbanner.c common/plp_snprintf.c

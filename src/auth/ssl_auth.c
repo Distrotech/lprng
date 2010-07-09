@@ -981,5 +981,13 @@ static int Ssl_receive( int *sock, int transfer_timeout,
 const struct security ssl_auth =
 	{ "ssl",      "ssl",	"ssl",       0,              0,           Ssl_send, 0, Ssl_receive };
 
+#ifdef WITHPLUGINS
+plugin_get_func getter_name(ssl);
+size_t getter_name(ssl)(const struct security **s, size_t max) {
+	if( max > 0 )
+		s[0] = &ssl_auth;
+	return 1;
+}
+#endif
 #endif
 

@@ -107,6 +107,7 @@ ENABLE_BOOLEAN(kerberos,
 [KERBEROS=1;
 AC_DEFINE_UNQUOTED(KERBEROS,"1")],
 [KERBEROS=""])
+AM_CONDITIONAL(WITHKERBEROS, test $v = yes)
 AC_SUBST(KERBEROS)
 
 dnl find kerberos libraries
@@ -172,6 +173,11 @@ WITH_DIR(spooldir,
 [--with-spooldir=PATH],[default spool directory, default /var/spool/lpd ],
 [SD_DEFAULT],['/var/spool/lpd'],
 [default spool directory (:sd=SPOOLDIR/%P) : $SD_DEFAULT])
+
+WITH_DIR(plugindir,
+[--with-plugindir=DIR],[dynamic loadable plugin directory (default ${libdir}/lprng/plugins)],
+[plugindir],['${libdir}/lprng/plugins'],
+[plugin directory                plugindir = $plugindir])
 
 WITH_DIR(filterdir,
 [--with-filterdir=DIR],[filter directory (default ${libexecdir}/filters)],
@@ -1029,6 +1035,7 @@ if test "$SSL_ENABLE" != ""; then
 	fi
 fi
 AC_SUBST(SSL_LDADD)
+AM_CONDITIONAL(WITHSSL, test "$SSL_ENABLE" != "")
 test "$SSL_ENABLE" != "" && AC_DEFINE(SSL_ENABLE,1,[ssl enabled])
 
 
@@ -1231,6 +1238,7 @@ AC_SUBST(KRB_LIBS)
 dnl ----------------------------------------------------------------------------
 dnl ---------------- END OF KERBEROS -----------------------------------------
 
+CHECK_PLUGINS
 
 dnl ----------------------------------------------------------------------------
 dnl ----------------- START OF OUTPUT ------------------------------------------

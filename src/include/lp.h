@@ -387,6 +387,7 @@ EXTERN int Page_x_DYN; /* page width in pixels (horizontal) */
 EXTERN int Page_y_DYN; /* page length in pixels (vertical) */
 EXTERN char* Pc_entries_required_DYN;	/* make sure these entries are in PRINTCAP_ENTRY */
 EXTERN char* Pass_env_DYN;	/* pass these environment variables */
+EXTERN char *Plugin_path_DYN; /* plugin path */
 EXTERN int Poll_time_DYN; /* force polling job queues */
 EXTERN int Poll_start_interval_DYN; /* interval between trying to start servers */
 EXTERN int Poll_servers_started_DYN; /* maximum servers to start at one time */

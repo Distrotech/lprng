@@ -262,3 +262,12 @@ static int Test_receive( int *sock, int transfer_timeout,
 
 const struct security test_auth =
 	{ "test",      "test",	"test",     0,              0,           Test_send, 0, Test_receive };
+
+#ifdef WITHPLUGINS
+plugin_get_func getter_name(test);
+size_t getter_name(test)(const struct security **s, size_t max) {
+	if( max > 0 )
+		*s = &test_auth;
+	return 1;
+}
+#endif

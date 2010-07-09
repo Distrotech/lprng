@@ -27,6 +27,9 @@
  */
 
 #include "lp.h"
+#ifdef WITHPLUGINS
+#include <dlfcn.h>
+#endif
 #include "user_auth.h"
 #include "krb5_auth.h"
 #include "errorcodes.h"
@@ -102,6 +105,7 @@
  *
  **************************************************************/
 
+#ifndef WITHPLUGINS
 static const struct security *SecuritySupported[] = {
 	/* name, server_name, config_name, flags,
         client  connect, send, send_done
@@ -118,12 +122,127 @@ static const struct security *SecuritySupported[] = {
 #endif
 	NULL
 };
+#else
+static const struct security **SecuritySupported = NULL;
+
+static int loadplugin(const char *filename, const char *realname) {
+	void *plugin;
+	char symbol[1024];
+	int count;
+	const struct security **n;
+	plugin_get_func *getter;
+	size_t got;
+
+	plugin = dlopen(filename, RTLD_NOW | RTLD_LOCAL);
+	if( plugin == NULL ) {
+		DEBUG1("%s cannot be loaded: %s", filename, dlerror());
+		return 0;
+	}
+
+	plp_snprintf(symbol, sizeof(symbol), "get_lprng_auth_%d_%s",
+			AUTHPLUGINVERSION, realname);
+	getter = dlsym(plugin, symbol);
+	if( getter == NULL ) {
+		DEBUG1("%s has no symbol named %s", filename, symbol);
+		dlclose(plugin);
+		return 0;
+	}
+	count = 0;
+	if( SecuritySupported != NULL )
+		while( SecuritySupported[count] != NULL )
+			count++;
+	n = realloc(SecuritySupported, sizeof(struct security*)*(count+10));
+	if( n == NULL ) {
+		dlclose(plugin);
+		return 0;
+	}
+	n[count] = NULL;
+	SecuritySupported = n;
+	got = getter(n + count, 9);
+	if( got < 0 || got > 9 ) {
+		n[count] = NULL;
+		dlclose(plugin);
+		return 0;
+	}
+	n[count + got] = NULL;
+	return 1;
+}
+
+static void LoadSecurityPlugin(const char *name) {
+	const char *d;
+	size_t l;
+
+	if( name == NULL )
+		return;
+	l = strlen(name);
+	d = Plugin_path_DYN;
+	if( d == NULL )
+		return;
+	while( *d != '\0' ) {
+		char *filename;
+		const char *e;
+		struct stat s;
+		int i;
+
+		e = strchr(d, ':');
+		if( e == NULL )
+			e = strchr(d, '\0');
+		filename = malloc_or_die((e-d)+l+5, __FILE__, __LINE__);
+		memcpy(filename, d, e-d);
+		filename[e-d] = '/';
+		memcpy(filename + (e-d) + 1, name, l);
+		memcpy(filename + (e-d) + 1 + l, ".so", 4);
+
+		i = lstat(filename, &s);
+		if( i == 0 && S_ISLNK(s.st_mode) ) {
+			ssize_t linklen;
+			char linkname[MAXPATHLEN];
+
+			linklen = readlink(filename, linkname, sizeof(linkname));
+			if( linklen > 0 || linklen <sizeof(linkname) ) {
+				char *realname, *ee;
+
+				linkname[linklen] = '\0';
+
+				realname = strrchr(linkname, '/');
+				if( realname == NULL )
+					realname = linkname;
+				else
+					realname++;
+				ee = strchr(realname, '.');
+				if( ee != NULL )
+					*ee = '\0';
+				if( loadplugin(filename, realname) ) {
+					free(filename);
+					return;
+				}
+
+			}
+		} else if( i == 0 && S_ISREG(s.st_mode) ) {
+			if( loadplugin(filename, name) ) {
+				free(filename);
+				return;
+			}
+		}
+		free(filename);
+		d = e;
+	}
+}
+
+#endif
 
 char *ShowSecuritySupported( char *str, int maxlen )
 {
 	int i, len;
 	const char *name;
 	str[0] = 0;
+
+#ifdef WITHPLUGINS
+	/* TODO: load all modules here? */
+	if( SecuritySupported == NULL )
+		return "";
+#endif
+
 	for( len = i = 0; SecuritySupported[i] != NULL; ++i ){
 		name = SecuritySupported[i]->name;
 		plp_snprintf( str+len,maxlen-len, "%s%s",len?",":"",name );
@@ -135,9 +254,16 @@ char *ShowSecuritySupported( char *str, int maxlen )
 const struct security *FindSecurity( const char *name ) {
 	const struct security *s, **p;
 
-	for( p = SecuritySupported ; (s = *p) != NULL ; p++ ) {
+	for( p = SecuritySupported ; p != NULL && (s = *p) != NULL ; p++ ) {
 		if( !Globmatch(s->name, name ) )
 			return s;
 	}
+#ifdef WITHPLUGINS
+	LoadSecurityPlugin(name);
+	for( p = SecuritySupported ; p != NULL && (s = *p) != NULL ; p++ ) {
+		if( !Globmatch(s->name, name ) )
+			return s;
+	}
+#endif
 	return NULL;
 }
