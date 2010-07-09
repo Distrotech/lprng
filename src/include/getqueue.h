@@ -103,7 +103,6 @@ EXTERN const char * NONEP				DEFINE( = "none" );
 EXTERN const char * NUMBER				DEFINE( = "number" );
 EXTERN const char * OPENNAME			DEFINE( = "openname" );
 EXTERN const char * ORIG_IDENTIFIER		DEFINE( = "orig_identifier" );
-EXTERN const char * PGP					DEFINE( = "pgp" );
 EXTERN const char * PORT				DEFINE( = "port" );
 EXTERN const char * PRINTABLE			DEFINE( = "printable" );
 EXTERN const char * PRINTER				DEFINE( = "printer" );

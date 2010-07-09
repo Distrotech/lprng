@@ -340,7 +340,7 @@ SECURITY WARNINGS:
 
   If you are truly paranoid then you should read the LPRng Refernece
   Manual and the Printing Cookbook sections on Authentication,  and
-  add either PGP or Kerberos authentication to your system.
+  add either SSL or Kerberos authentication to your system.
 
 KERBEROS:
 

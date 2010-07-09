@@ -231,7 +231,7 @@ KEY:
 	SV= matches if from same address as server
 	AU= value determined by server authentication operation
 		AUTH is true if authenticated transfer,
-		TYPE is set to the type of authentication (pgp, kerberos, etc)
+		TYPE is set to the type of authentication (kerberos, etc)
 		AUTHUSER is user authentication id
 		AUTHFROM is sender authentication id (can be remote server)
 		AUTHSAMEUSER matches if remote user authentication id matches original
