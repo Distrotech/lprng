@@ -1,3 +1,6 @@
+2010-07-16 brl add support for dynamically loaded authentication plugins
+2010-07-16 brl remove pgp support
+2010-07-16 brl remove kerberos4 support
 2009-11-19 os  fix layout in lpr.n for option -X and -Y
 2009-09-22 brl put configured lpd_listen_port default in lpd.conf.5
 2009-09-22 brl apply manpage patches by cs from the Debian package
