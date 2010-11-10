@@ -319,6 +319,20 @@ AC_SEARCH_LIBS(socket, [socket_s socket])
 	  fi;
 	fi
 
+	dnl password check functions
+	if test -z "$have_getspnam"; then
+	  AC_SEARCH_LIBS(getspnam, shadow)
+	  AC_CHECK_FUNCS(getpwnam_r getspnam getspnam_r, [have_getspnam=1])
+	fi
+	if test -z "$have_crypt"; then
+	  AC_SEARCH_LIBS(crypt, crypt)
+	  AC_CHECK_FUNCS(crypt, [have_crypt=1])
+	fi
+	if test -z "$have_pam"; then
+	  AC_SEARCH_LIBS(pam_authenticate, pam)
+	  AC_CHECK_FUNCS(pam_authenticate pam_acct_mgmt, [have_pam=1])
+	fi
+
 dnl ----------------------------------------------------------------------------
 dnl function checks:
 

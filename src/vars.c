@@ -269,12 +269,16 @@ struct keywords Pc_var_list[] = {
 { "ignore_requested_user_priority", 0,  FLAG_K,  &Ignore_requested_user_priority_DYN,0,0,0},
    /*  incoming job control file filter */
 { "incoming_control_filter", 0,  STRING_K,  &Incoming_control_filter_DYN,0,0,0},
-#ifdef IPP_STUBS
+  /* ipp CUPS Get-jobs first-job-id maximum jobs*/
+{ "ipp_compat_hrcount", 0, INTEGER_K, &Ipp_compat_hrcount_DYN,0,0,"=100"},
+   /* ipp CUPS Get-jobs with all-printers uri accepted */
+{ "ipp_getjobs_compat", 0, INTEGER_K, &Ipp_getjobs_compat_DYN,0,0,"=1"},
    /* ipp server listen port port, no value or "off" does not open port */
 { "ipp_listen_port", 0, STRING_K, &Ipp_listen_port_DYN,0,0,"=off"},
-   /* ipp destination port */
+   /* ipp destination port - not implemented*/
 { "ipp_port", 0, STRING_K, &Ipp_port_DYN,0,0,"=631"},
-#endif /* not IPP_STUBS */
+   /* ipp secure (https) server listen port port, no value or "off" does not open port - there is no standard, perhaps 443 */
+{ "ipps_listen_port", 0, STRING_K, &Ipps_listen_port_DYN,0,0,"=off"},
    /*  Running IPV6 */
 { "ipv6", 0,  FLAG_K,  &IPV6Protocol_DYN,0,0,0},
 	/* TCP keepalive enabled */

@@ -68,22 +68,14 @@
 
 
 static char *Set_ERR_str( char *header, char *errmsg, int errlen );
-static int SSL_Initialize_ctx(
-	SSL_CTX **ctx_ret,
-	char *errmsg, int errlen );
-static void Destroy_ctx(SSL_CTX *ctx);
+
 static void Get_cert_info( SSL *ssl, struct line_list *info );
 static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 	struct line_list *info, char *errmsg, int errlen );
-static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
-	struct line_list *info, char *errmsg, int errlen );
-static int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
-	char *errmsg, int errlen );
+
 static int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
 	char *errmsg, int errlen );
-static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
-	char *errmsg, int errlen );
-static int Close_SSL_connection( int sock, SSL *ssl );
+
 static const char * Error_SSL_name( int i );
 
 /*
@@ -183,7 +175,7 @@ static char *Set_ERR_str( char *header, char *errmsg, int errlen )
  * SSL_Initialize_ctx - initialize SSL context
  */
 
-static int SSL_Initialize_ctx(
+int SSL_Initialize_ctx(
 	SSL_CTX **ctx_ret,
 	char *errmsg, int errlen )
 {
@@ -336,7 +328,7 @@ static int SSL_Initialize_ctx(
     return 0;
 }
      
-static void Destroy_ctx(SSL_CTX *ctx)
+void Destroy_ctx(SSL_CTX *ctx)
 {
     SSL_CTX_free(ctx);
 }
@@ -474,7 +466,7 @@ static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
  */
 
 
-static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
+int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl_ret,
 	struct line_list *info, char *errmsg, int errlen )
 {
 	SSL *ssl = 0;
@@ -581,7 +573,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
  *         != 0 if failure
  */
 
-static int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
+int Write_SSL_connection( int timeout, SSL *ssl, char *buffer, int len,
 	char *errmsg, int errlen )
 {
 	int done = 0, n = 0;
@@ -662,7 +654,7 @@ static int Gets_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int len,
  *           1  - EOF
  *  *len = number of bytes read
  */
-static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
+int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
 	char *errmsg, int errlen )
 {
 	char buffer[SMALLBUFFER];
@@ -694,7 +686,7 @@ static int Read_SSL_connection( int timeout, SSL *ssl, char *inbuffer, int *len,
  * close and kill off the SSL connection with undue violence
  */
 
-static int Close_SSL_connection( int sock, SSL *ssl )
+int Close_SSL_connection( int sock, SSL *ssl )
 {
 	int ret;
 	BIO *bio = 0;
@@ -736,7 +728,7 @@ static const char * Error_SSL_name( int i )
 	return(s);
 }
 
-static int Ssl_send( int *sock,
+int Ssl_send( int *sock,
 	int transfer_timeout,
 	char *tempfile,
 	char *errmsg, int errlen,
@@ -861,7 +853,7 @@ static int Ssl_send( int *sock,
 	return(status);
 }
 
-static int Ssl_receive( int *sock, int transfer_timeout,
+int Ssl_receive( int *sock, int transfer_timeout,
 	char *user, char *jobsize, int from_server, char *authtype,
 	struct line_list *info,
 	char *errmsg, int errlen,

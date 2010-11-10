@@ -51,6 +51,8 @@
 #define P_REMOTEPORT	28	/* alias for PORT */
 #define P_UNIXSOCKET	29	/* connection via unixsocket - localhost + port 0 */
 #define P_AUTHCA		30	/* Certifying authority */
+#define P_IPP	31			/* connected to local ipp port */
+#define P_PPATH	32			/* ipp printer uri path */
 
 /*
  * First character of protocol to letter mappings
@@ -73,8 +75,10 @@ struct perm_check {
 							/* or REMOTEHOST if no control file */
 	struct host_information *remotehost;/* remote HOST name making connection */
 							/* or HOST if no control file */
+	int  localport;                 /* local port client connects to */
 	int	port;				/* port for remote connection */
 	const char *printer;			/* printer name */
+	const char *ppath;			/* printer ipp uri path */
 	/* struct sockaddr addr;	/ * IF address information */
 	int unix_socket;		/* connection via unix socket */
 	int service;			/* first character service */

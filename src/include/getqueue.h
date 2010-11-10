@@ -85,6 +85,7 @@ EXTERN const char * JOB_TIME			DEFINE( = "job_time" );
 EXTERN const char * JOB_TIME_USEC		DEFINE( = "job_time_usec" );
 EXTERN const char * KEYID				DEFINE( = "keyid" );
 EXTERN const char * LOCALHOST			DEFINE( = "localhost" );
+EXTERN const char * LOCALPORT			DEFINE( = "localport" );
 EXTERN const char * LOG					DEFINE( = "log" );
 EXTERN const char * LOGNAME				DEFINE( = "P" );
 EXTERN const char * LP					DEFINE( = "lp" );
@@ -146,11 +147,19 @@ EXTERN const char * UPDATE_TIME			DEFINE( = "update_time" );
 EXTERN const char * USER				DEFINE( = "user" );
 EXTERN const char * VALUE				DEFINE( = "value" );
 
+
+typedef int (*proc_filter_order)(struct job *job, void *param);
+
 /* PROTOTYPES */
 int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
 		int only_queue_process, int *perr, int *pdone,
 		const char *remove_prefix, const char *remove_suffix );
+int Scan_queue_proc( struct line_list *spool_control,
+	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
+		int only_queue_process, int *perr, int *pdone,
+		const char *remove_prefix, const char *remove_suffix,
+		proc_filter_order order_proc, void *param);
 char *Get_fd_image( int fd, off_t maxsize );
 char *Get_file_image( const char *file, off_t maxsize );
 int Get_fd_image_and_split( int fd,

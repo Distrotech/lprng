@@ -8,6 +8,7 @@
  ***************************************************************************/
 
 #include "lp.h"
+#include "ipp.h"
 #include "lpd_remove.h"
 #include "getqueue.h"
 #include "getprinter.h"
@@ -213,7 +214,7 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 	DEBUGFC(DLPRM3)Dump_line_list("Get_queue_remove - tokens", tokens );
 	fd = -1;
 	for( count = 0; count < Sort_order.count; ++count ){
-		int incoming;
+		int incoming, cancel;
 		Free_job(&job);
 		if( fd > 0 ) close(fd); fd = -1;
 		Get_job_ticket_file(&fd, &job, Sort_order.list[count] );
@@ -258,9 +259,18 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		 */
 		incoming = Find_flag_value(&job.info,INCOMING_TIME);
 		pid = Find_flag_value(&job.info,INCOMING_PID);
+		/*when serving also IPP, job is not removed, but state is changed to 'canceled' */
+#ifdef SSL_ENABLE
+		cancel = ((ipp_ippport > 0) || (ipp_ippsport > 0)) && (Find_flag_value(&job.info, REMOVE_TIME) == 0) ;
+#else
+		cancel = (ipp_ippport > 0) && (Find_flag_value(&job.info, REMOVE_TIME) == 0) ;
+#endif
 		if( incoming && pid && !kill(pid,SIGINT) ){
 			DEBUGF(DLPRM4)("Get_queue_remove: removing incoming job '%s'", identifier );
 			plp_snprintf( msg, sizeof(msg), _("  removing incoming job '%s'\n"), identifier );
+		} else if (cancel) {
+			DEBUGF(DLPRM4)("Get_queue_remove: canceling '%s'", identifier );
+			plp_snprintf( msg, sizeof(msg), _("  canceled '%s'\n"), identifier );
 		} else {
 			DEBUGF(DLPRM4)("Get_queue_remove: removing '%s'", identifier );
 			plp_snprintf( msg, sizeof(msg), _("  dequeued '%s'\n"), identifier );
@@ -269,7 +279,26 @@ static void Get_queue_remove( char *user, int *sock, struct line_list *tokens,
 		Write_fd_str( *sock, msg );
 
 		setmessage( &job, "LPRM", "start" );
-		if( Remove_job( &job ) ){
+		if (cancel) {
+			Set_flag_value(&job.info, ERROR_TIME, time((void *)0));
+			Set_str_value(&job.info, ERROR, "Job canceled by user");
+			Set_flag_value(&job.info, DONE_TIME, time((void *)0));
+			Set_flag_value(&job.info, REMOVE_TIME, time((void *)0));
+			struct line_list l;
+			Init_line_list(&l);
+			Perm_check_to_list(&l, &Perm_check);
+			if (Set_job_ticket_file(&job, &l, fd)) {
+				Free_line_list(&l);
+				setmessage( &job, "LPRM", "fail" );
+				plp_snprintf( msg, sizeof(msg),
+					_("error: could not cancel '%s'"), identifier );
+				Write_fd_str( *sock, msg );
+				goto error;
+			}
+			if (Server_queue_name_DYN) Set_flag_value(&Spool_control, CHANGE, 1);
+			Set_spool_control(&l, Queue_control_file_DYN, &Spool_control);
+			Free_line_list(&l);
+		}		else if( Remove_job( &job ) ){
 			setmessage( &job, "LPRM", "fail" );
 			plp_snprintf( msg, sizeof(msg),
 				_("error: could not remove '%s'"), identifier ); 

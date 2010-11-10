@@ -33,11 +33,13 @@
 #define DEFS
 
 #include "lpd.h"
+#include "ipp.h"
 
  char* Lpd_listen_port_arg;	/* command line listen port value */
-#ifdef IPP_STUBS
  char* Ipp_listen_port_arg;	/* command line listen port value */
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+ char* Ipps_listen_port_arg;	/* command line listen port value */
+#endif
  char* Lpd_port_arg;	/* command line port value */
  char* Lpd_socket_arg; /* command line unix socket value */
 
@@ -85,9 +87,10 @@ int main(int argc, char *argv[], char *envp[])
 	struct line_list args;
 	int first_scan = 1;
 	int unix_sock = 0;
-#ifdef IPP_STUBS
 	int ipp_sock = 0;
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+	int ipps_sock = 0;
+#endif
 	int fd_available;
 
 	Init_line_list( &args );
@@ -212,7 +215,7 @@ int main(int argc, char *argv[], char *envp[])
 		if( ISNULL(s) ) s = Lpd_port_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
 			sock = Link_listen(s);
-			DEBUG1("lpd: listening socket fd %d",sock);
+			DEBUG1("lpd: listening lpd socket fd %d",sock);
 			if( sock < 0 ){
 				Errorcode = 1;
 				DIEMSG("Cannot bind to lpd port '%s'", s);
@@ -220,20 +223,32 @@ int main(int argc, char *argv[], char *envp[])
 			if( sock >= max_socks ) max_socks = sock;
 		}
 
-#ifdef IPP_STUBS
 		s = Ipp_listen_port_arg;
 		if( ISNULL(s) ) s = Ipp_listen_port_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
 			ipp_sock = Link_listen(s);
-			DEBUG1("lpd: listening socket fd %d",ipp_sock);
+			DEBUG1("lpd: listening ipp socket fd %d",ipp_sock);
 			if( ipp_sock < 0 ){
 				Errorcode = 1;
-				DIEMSG("Cannot bind to lpd port '%s'", s);
+				DIEMSG("Cannot bind to ipp port '%s'", s);
 			}
 			if( ipp_sock >= max_socks ) max_socks = ipp_sock;
+			ipp_ippport = strtol(s,0,0);
 		}
-
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+		s = Ipps_listen_port_arg;
+		if( ISNULL(s) ) s = Ipps_listen_port_DYN;
+		if( !ISNULL(s) && safestrcasecmp( s,"off") && strtol(s,0,0) ){
+			ipps_sock = Link_listen(s);
+			DEBUG1("lpd: listening ipps socket fd %d",ipps_sock);
+			if( ipps_sock < 0 ){
+				Errorcode = 1;
+				DIEMSG("Cannot bind to ipps port '%s'", s);
+			}
+			if( ipps_sock >= max_socks ) max_socks = ipps_sock;
+			ipp_ippsport = strtol(s,0,0);
+		}
+#endif
 		s = Lpd_socket_arg;
 		if( ISNULL(s) ) s = Unix_socket_path_DYN;
 		if( !ISNULL(s) && safestrcasecmp( s,"off") ){
@@ -256,7 +271,19 @@ int main(int argc, char *argv[], char *envp[])
 	 *  4. if the non-blocking mode is used, then the select will
 	 *     succeed and the accept() will fail
 	 */
-	Set_nonblock_io(sock);
+	if (sock > 0) Set_nonblock_io(sock);
+	if (ipp_sock > 0) Set_nonblock_io(ipp_sock);
+#ifdef	SSL_ENABLE
+	if (ipps_sock > 0) Set_nonblock_io(ipps_sock);
+#endif
+
+	/*ensure/test some IPP-related options*/
+#ifdef	SSL_ENABLE
+	if ((ipp_sock > 0) || (ipps_sock > 0)) Ipp_check_options();
+#else
+	if (ipp_sock > 0) Ipp_check_options();
+#endif
+
 
 	/*
 	 * At this point you are the server for the LPD port
@@ -341,9 +368,10 @@ int main(int argc, char *argv[], char *envp[])
 	FD_ZERO( &defreadfds );
 	if( sock > 0 ) FD_SET( sock, &defreadfds );
 	if( unix_sock > 0 ) FD_SET( unix_sock, &defreadfds );
-#ifdef IPP_STUBS
 	if( ipp_sock > 0 ) FD_SET( ipp_sock, &defreadfds );
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+	if( ipps_sock > 0 ) FD_SET( ipps_sock, &defreadfds );
+#endif
 	FD_SET( request_pipe[0], &defreadfds );
 
 	/*
@@ -622,9 +650,10 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1( "lpd: not accepting requests" );
 			if( sock > 0 ) FD_CLR( sock, &readfds );
 			if( unix_sock > 0 ) FD_CLR( unix_sock, &readfds );
-#ifdef IPP_STUBS
 			if( ipp_sock > 0 ) FD_CLR( ipp_sock, &readfds );
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+			if( ipps_sock > 0 ) FD_CLR( ipps_sock, &readfds );
+#endif
 			timeval.tv_sec = 10;
 			timeout = &timeval;
 		}
@@ -675,6 +704,11 @@ int main(int argc, char *argv[], char *envp[])
 				Reread_config = 0;
 			}
 			Setup_configuration();
+#ifdef	SSL_ENABLE
+			if ((ipp_sock > 0) || (ipps_sock > 0)) Ipp_check_options();
+#else
+			if (ipp_sock > 0) Ipp_check_options();
+#endif
 		}
 		/* mark this as a timeout */
 		if( fd_available < 0 ){
@@ -698,12 +732,16 @@ int main(int argc, char *argv[], char *envp[])
 			DEBUG1("lpd: accept on UNIX socket");
 			Accept_connection( unix_sock );
 		}
-#ifdef IPP_STUBS
 		if( ipp_sock > 0 && FD_ISSET( ipp_sock, &readfds ) ){
 			DEBUG1("lpd: accept on IPP socket");
 			Accept_connection( ipp_sock );
 		}
-#endif /* not IPP_STUBS */
+#ifdef	SSL_ENABLE
+		if( ipps_sock > 0 && FD_ISSET( ipps_sock, &readfds ) ){
+			DEBUG1("lpd: accept on IPPS socket");
+			Accept_connection( ipps_sock );
+		}
+#endif
 		if( FD_ISSET( request_pipe[0], &readfds ) 
 			&& Read_server_status( request_pipe[0] ) == 0 ){
 			Errorcode = JABORT;
@@ -915,9 +953,14 @@ _("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destin
 " -F          - run in foreground, log to STDERR\n"
 " -L logfile  - append log information to logfile\n"
 " -V          - show version info\n"
-" -p port     - TCP/IP listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"
+" -p port     - TCP/IP lpd listen port, 'off' disables TCP/IP listening port (lpd_listen_port)\n"
 " -P path     - UNIX socket path, 'off' disables UNIX listening socket (unix_socket_path)\n"
-" -R port     - remote LPD server port (lpd_port)\n"), Name );
+" -R port     - remote LPD server port (lpd_port)\n"
+" -i port     - TCP/IP ipp listen port, 'off' disables TCP/IP listening port (Ipp_listen_port)\n"
+#ifdef	SSL_ENABLE
+" -s port     - TCP/IP ipps listen port, 'off' disables TCP/IP listening port (Ipps_listen_port)\n"
+#endif
+), Name );
 	{
 	char buffer[128];
 	FPRINTF( STDERR, "Security Supported: %s\n", ShowSecuritySupported(buffer,sizeof(buffer)) );
@@ -928,7 +971,11 @@ _("usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP destin
 }
 
 static const char LPD_optstr[] 	/* LPD options */
- = "D:FL:VX:p:P:" ;
+#ifdef	SSL_ENABLE
+= "D:FL:VX:p:P:i:s:" ;
+#else
+= "D:FL:VX:p:P:i:" ;
+#endif
 
 static void Get_parms(int argc, char *argv[] )
 {
@@ -943,6 +990,10 @@ static void Get_parms(int argc, char *argv[] )
         case 'X': Worker_LPD = Optarg; break;
 		case 'p': Lpd_listen_port_arg = Optarg; break;
 		case 'P': Lpd_socket_arg = Optarg; break;
+		case 'i': Ipp_listen_port_arg = Optarg; break;
+#ifdef	SSL_ENABLE
+		case 's': Ipps_listen_port_arg = Optarg; break;
+#endif
 		default: usage(); break;
 		}
 	}

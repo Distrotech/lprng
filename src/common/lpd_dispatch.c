@@ -28,6 +28,7 @@
 #include "lpd_secure.h"
 #include "krb5_auth.h"
 #include "lpd_dispatch.h"
+#include "ipp.h"
 
 static void Service_lpd( int talk, const char *from_addr ) NORETURN;
 
@@ -144,14 +145,14 @@ void Service_all( struct line_list *args, int reportfd )
 
 void Service_connection( struct line_list *args, int talk )
 {
-#ifdef IPP_STUBS
-	char input[16];
-	int status;		/* status of operation */
-#endif /* IPP_STUBS */
+
 	char from_addr[128];
 	int permission;
+	int localport = 0, p;
+	int unixsocket = 0;
 	int port = 0;
-	struct sockaddr sinaddr;
+	int ipp = 0;
+	struct sockaddr locaddr, sinaddr;
 
 	memset( &sinaddr, 0, sizeof(sinaddr) );
 	Name = "SERVER";
@@ -173,6 +174,9 @@ void Service_connection( struct line_list *args, int talk )
 	{
 		socklen_t len;
 		len = sizeof( sinaddr );
+		if( getsockname( talk, &locaddr, &len ) ){
+			logerr_die(LOG_DEBUG, _("Service_connection: getsockname failed") );
+                }
 		if( getpeername( talk, &sinaddr, &len ) ){
 			logerr_die(LOG_DEBUG, _("Service_connection: getpeername failed") );
 		}
@@ -194,9 +198,11 @@ void Service_connection( struct line_list *args, int talk )
 #endif
 	"");
 	if( sinaddr.sa_family == AF_INET ){
+		localport = ((struct sockaddr_in *)&locaddr)->sin_port;
 		port = ((struct sockaddr_in *)&sinaddr)->sin_port;
 #if defined(IPV6)
 	} else if( sinaddr.sa_family == AF_INET6 ){
+		localport = ((struct sockaddr_in6 * )&locaddr)->sin6_port;
 		port = ((struct sockaddr_in6 * )&sinaddr)->sin6_port;
 #endif
 	} else if( sinaddr.sa_family == 0
@@ -211,6 +217,7 @@ void Service_connection( struct line_list *args, int talk )
 		int len;
 		void *s, *addr;
 		memset( &sinaddr, 0, sizeof(sinaddr) );
+		unixsocket = 1;
 		Perm_check.unix_socket = 1;
 	 	sinaddr.sa_family = Localhost_IP.h_addrtype;
 		len = Localhost_IP.h_length;
@@ -235,13 +242,14 @@ void Service_connection( struct line_list *args, int talk )
 		plp_snprintf(from_addr+len,sizeof(from_addr)-len, " port %d", ntohs(port));
 	}
 
-	DEBUG2("Service_connection: socket %d, from %s", talk, from_addr );
+	DEBUG2("Service_connection: socket %d, local port %d, from %s", talk, ntohs(localport), from_addr );
 
 	/* get the remote name and set up the various checks */
 
 	Get_remote_hostbyaddr( &RemoteHost_IP, &sinaddr, 0 );
 	Perm_check.remotehost  =  &RemoteHost_IP;
 	Perm_check.host = &RemoteHost_IP;
+	Perm_check.localport = ntohs(localport);
 	Perm_check.port =  ntohs(port);
 
 
@@ -253,53 +261,29 @@ void Service_connection( struct line_list *args, int talk )
 		Filterprintcap( &Perm_line_list, &Perm_filters_line_list, "");
 	}
 
+	/* decide the protocol by the local port number*/
+#ifdef	SSL_ENABLE
+	ipp = !unixsocket && ((ntohs(localport) == ipp_ippport) || (ntohs(localport) == ipp_ippsport));
+#else
+	ipp = !unixsocket && (ntohs(localport) == ipp_ippport);
+#endif
+
 	Perm_check.service = 'X';
 
-	permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
-	if( permission == P_REJECT ){
+	if (ipp) {
+
+	    /*we will check permission later to proper format "Forbidden" response, even in ssl*/
+	    Service_ipp( talk, ntohs(localport), from_addr );
+
+	}  else {
+	    permission = Perms_check( &Perm_line_list, &Perm_check, 0, 0 );
+	    if ( permission == P_REJECT ){
 		DEBUG1("Service_connection: no perms on talk socket '%d' from %s", talk, from_addr );
 		safefprintf(talk, "\001%s\n", _("no connect permissions"));
 		cleanup(0);
+	    }
+	    Service_lpd( talk, from_addr );
 	}
-
-#ifdef IPP_STUBS
-	memset(input,0,sizeof(input));
-
-	do {
-		int my_len = sizeof( input ) - 1;
-		static int timeout;
-		timeout = (Send_job_rw_timeout_DYN>0)?Send_job_rw_timeout_DYN:
-					((Connect_timeout_DYN>0)?Connect_timeout_DYN:10);
-		DEBUG1( "Service_connection: doing peek for %d on fd %d, timeout %d",
-			my_len, talk, timeout );
-		if( Set_timeout() ){
-			Set_timeout_alarm( timeout );
-			status = recv( talk, input, my_len, MSG_PEEK );
-		} else {
-			status = -1;
-		}
-		Clear_timeout();
-
-		if( status <= 0 ){
-			logerr_die(LOG_DEBUG, _("Service_connection: peek of length %d failed"), my_len );
-		}
-		DEBUG1("Service_connection: status %d 0x%02x%02x%02x%02x (%c%c%c%c)", status,
-			cval(input+0), cval(input+1), cval(input+2), cval(input+3),
-			cval(input+0), cval(input+1), cval(input+2), cval(input+3));
-	} while( status < 2 );
-
-	if( isalpha(cval(input+0)) &&
-		isalpha(cval(input+1)) && isalpha(cval(input+2)) ){
-		/* 
-			Service_ipp( talk, from_addr );
-		*/
-	} else if( cval(input+0) == 0x80 ) {
-		/*
-			Service_ssh_ipp( talk, from_addr );
-		*/
-	}
-#endif /* not IPP_STUBS */
-	Service_lpd( talk, from_addr );
 }
 
 static void Service_lpd( int talk, const char *from_addr )

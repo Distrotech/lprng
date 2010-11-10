@@ -14,6 +14,7 @@
 #include "getqueue.h"
 #include "permission.h"
 #include "linksupport.h"
+#include "ipp.h"
 
 /**** ENDINCLUDE ****/
 
@@ -38,6 +39,7 @@
 {"NOT", 0, P_NOT,0,0,0,0},
 {"PORT", 0, P_PORT,0,0,0,0},
 {"PRINTER", 0, P_PRINTER,0,0,0,0},
+{"PPATH", 0, P_PPATH,0,0,0,0},
 {"REJECT", 0, P_REJECT,0,0,0,0},
 {"REMOTEGROUP", 0, P_REMOTEGROUP,0,0,0,0},
 {"REMOTEHOST", 0, P_REMOTEHOST,0,0,0,0},
@@ -51,6 +53,7 @@
 {"USER", 0, P_USER,0,0,0,0},
 {"UNIXSOCKET", 0, P_UNIXSOCKET,0,0,0,0},
 {"AUTHCA", 0, P_AUTHCA,0,0,0,0},
+{"IPP", 0, P_IPP,0,0,0,0},
 
 {0,0,0,0,0,0,0}
 };
@@ -192,6 +195,7 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					break;
 				}
 				break;
+
 			case P_REMOTEUSER:
 				m = 1;
 				switch (check->service){
@@ -291,6 +295,15 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 					break;
 				}
 				break;
+			case P_PPATH:
+				m = 1;
+				switch (check->service){
+				case 'X': break;
+				default:
+					m = match( &args, check->ppath, invert );
+					break;
+				}
+				break;
 			case P_SERVICE:
 				m = match_char( &args, check->service, invert );
 				break;
@@ -382,6 +395,15 @@ int Perms_check( struct line_list *perms, struct perm_check *check,
 				/* check succeeds if connection via unix socket */
 				m = !check->unix_socket;
 				if( invert ) m = !m;
+				break;
+
+			case P_IPP:
+#ifdef	SSL_ENABLE
+				m = !((check->localport == ipp_ippport) || (check->localport == ipp_ippsport));
+#else
+				m = !(check->localport == ipp_ippport);
+#endif
+				if (invert) m = !m;
 				break;
 
 			case P_DEFAULT:
@@ -689,10 +711,10 @@ void Dump_perm_check( const char *title,  struct perm_check *check )
 			inet_ntop_sockaddr( &check->addr, buffer, sizeof(buffer)),
 			check->port, check->unix_socket );
 */
-		LOGDEBUG( "  port %d, unix_socket %d",
-			check->port, check->unix_socket );
-		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s', authca '%s'",
-			check->authtype, check->authfrom, check->authuser, check->authca );
+		LOGDEBUG( "  port %d, unix_socket %d, localport %d",
+			check->port, check->unix_socket, check->localport);
+		LOGDEBUG( " authtype '%s', authfrom '%s', authuser '%s', authca '%s', ppath '%s'",
+			check->authtype, check->authfrom, check->authuser, check->authca, check->ppath );
 	}
 }
 

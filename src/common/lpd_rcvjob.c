@@ -201,8 +201,9 @@ int Receive_job( int *sock, char *input )
 
 	/* fifo order enforcement */
 	if( Fifo_DYN ){
-		char * path = Make_pathname( Spool_dir_DYN, Fifo_lock_file_DYN );
-		path = safestrdup3( path,"." , RemoteHost_IP.fqdn, __FILE__,__LINE__ );
+		char * p = Make_pathname( Spool_dir_DYN, Fifo_lock_file_DYN );
+		char * path = safestrdup3( p,"." , RemoteHost_IP.fqdn, __FILE__,__LINE__ );
+		if (p) free(p);
 		DEBUGF(DRECV1)( "Receive_job: checking fifo_lock file '%s'", path );
 		fifo_fd = Checkwrite( path, &statb, O_RDWR, 1, 0 );
 		if( fifo_fd < 0 ){
@@ -1071,6 +1072,7 @@ int Check_for_missing_files( struct job *job, struct line_list *files,
 		Set_str_value(&job->info,REMOTEHOST,RemoteHost_IP.fqdn);
 		Set_flag_value(&job->info,UNIXSOCKET,Perm_check.unix_socket);
 		Set_flag_value(&job->info,REMOTEPORT,Perm_check.port);
+		Set_flag_value(&job->info,LOCALPORT,Perm_check.localport);
 	}
 
 	if( header_info ){
@@ -1436,7 +1438,7 @@ static int Find_non_colliding_job_number( struct job *job )
 
 	/* we set the job number to a reasonable range */
 	job_ticket_fd = -1;
-	number = Fix_job_number(job,0);
+	number = Fix_job_number(job, 1); /*IPP job number must be greater than zero*/
 	start = n = strtol(number,0,10);
 	max = 1000;
 	if( Long_number_DYN ) max = 1000000;
@@ -1453,7 +1455,7 @@ static int Find_non_colliding_job_number( struct job *job )
 			job_ticket_fd = -1;
 			hold_file[0] = 0;
 			++n;
-			if( n > max ) n = 0;
+			if( n > max ) n = 1;
 			if( n == start ){
 				break;
 			}

@@ -59,10 +59,19 @@ static int ordercomp(  const void *left, const void *right, const void *orderp);
  *   considered as a bad job.
  */
 
-int Scan_queue( struct line_list *spool_control,
+inline int Scan_queue( struct line_list *spool_control,
 	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
 		int only_queue_process, int *perr, int *pdone,
 		const char *remove_prefix, const char *remove_suffix )
+{
+     return Scan_queue_proc( spool_control, sort_order, pprintable, pheld, pmove,
+	        only_queue_process, perr, pdone, remove_prefix, remove_suffix, 0, 0);
+}
+int Scan_queue_proc( struct line_list *spool_control,
+	struct line_list *sort_order, int *pprintable, int *pheld, int *pmove,
+		int only_queue_process, int *perr, int *pdone,
+		const char *remove_prefix, const char *remove_suffix,
+		proc_filter_order order_proc, void *param)
 {
 	DIR *dir;						/* directory */
 	struct dirent *d;				/* directory entry */
@@ -131,9 +140,24 @@ int Scan_queue( struct line_list *spool_control,
 		if( sort_order ){
 			if( !only_queue_process || (p || m || e || dn) ){
 				if(DEBUGL4)Dump_job("Scan_queue - before Make_sort_key",&job);
+				if (!order_proc) {
 				Make_sort_key( &job );
 				DEBUG5("Scan_queue: sort key '%s'",job.sort_key);
 				Set_str_value(sort_order,job.sort_key,job_ticket_name);
+				} else {
+					c = order_proc(&job, param);
+					if (c > 0) {
+						DEBUG5("Scan_queue: sort key '%s'",job.sort_key);
+						Set_str_value(sort_order,job.sort_key,job_ticket_name);
+					} else if (!c) {
+						DEBUG5("Scan_queue: sort key '%s'",job.sort_key);
+						Set_str_value(sort_order,job.sort_key,job_ticket_name);
+						DEBUG5("Scan_queue: filtering ended with file '%s'",job_ticket_name);
+						break;
+					} else {
+						DEBUG5("Scan_queue: file '%s' filtered out",job_ticket_name);
+					}
+				}
 			}
 		}
 	}

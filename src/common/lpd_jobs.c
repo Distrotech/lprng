@@ -2246,6 +2246,7 @@ static int Check_print_perms( struct job *job )
 	}
 	Perm_check.unix_socket = Find_flag_value(&job->info,UNIXSOCKET);
 	Perm_check.port = Find_flag_value(&job->info,REMOTEPORT);
+	Perm_check.localport = Find_flag_value(&job->info,LOCALPORT);
 	permission = Perms_check( &Perm_line_list,&Perm_check, job, 1 );
 	DEBUG3("Check_print_perms: permission '%s'", perm_str(permission) );
 	return( permission );

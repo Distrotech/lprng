@@ -336,12 +336,13 @@ EXTERN int Long_number_DYN; /* long job number (6 digits) */
 EXTERN char* Lp_device_DYN; /* device name or lp-pipe command to send output to */
 EXTERN int Lpd_bounce_DYN; /* force LPD to do bounce queue filtering */
 EXTERN char* Lpd_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
-#ifdef IPP_STUBS
-EXTERN char* Ipp_listen_port_DYN; /* lpd listens on this port, "off" does not open port */
+EXTERN char* Ipp_listen_port_DYN; /* ipp listens on this port, "off" does not open port */
 EXTERN char* Ipp_port_DYN; /* ipp protocol port */
-#endif /* not IPP_STUBS */
+EXTERN char* Ipps_listen_port_DYN; /* ipps listens on this port, "off" does not open port */
 EXTERN char* Lpd_path_DYN; /* LPD path for server use */
 EXTERN char* Lpd_port_DYN;	/* client/lpd connect to remote (non-local) lpd servers on this port */
+EXTERN int   Ipp_compat_hrcount_DYN;  /* Get-jobs CUPS first-job-id compatibility - maximum jobs in queue*/
+EXTERN int   Ipp_getjobs_compat_DYN;  /* Get-jobs CUPS uri compatibility */
 EXTERN char* Lpd_printcap_path_DYN;
 EXTERN int Lpr_bounce_DYN; /* allow LPR to do bounce queue filtering */
 EXTERN char* Lpq_status_file_DYN; /* cached lpq status */
