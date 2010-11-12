@@ -1074,8 +1074,6 @@ char *Iph_CUPS_ppd_uri(const char *uri)
 			s = safestrdup(mainname, __FILE__, __LINE__);
 		}
 	}
-done:
-
 	Free_line_list(&uri_parts);
 	Free_line_list(&pc_entry);
 	Free_line_list(&pc_alias);

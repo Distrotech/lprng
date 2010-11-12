@@ -494,7 +494,7 @@ static int Ipp_op_send_document(struct line_list *http_request, struct line_list
 	struct job job;
 	int printable, move, held, err, done;
 	int jobid = 0, jobstate, jticket_fd = -1;
-	char *username, *jreason;       /*job username, job state reason*/
+	char *jreason;       /* job state reason*/
 	char buf[LARGEBUFFER];        	/*see op_print_job*/
 	ssize_t cont_len;
 	ssize_t rd_len, rdb;
@@ -1964,10 +1964,14 @@ static int Ipp_op_set_job_attributes(struct line_list *http_request, struct line
 	struct ipp_attr *a;
 	char error[SMALLBUFFER];
 	int errlen = sizeof(error);
+<<<<<<< HEAD:src/common/ipp_proc.c
 	int printable, move, held, err, done, count, jobnum;
+=======
+	int printable, move, held, err, done, count;
+>>>>>>> 0318fd7... fix some compiler warnings:src/common/ipp_proc.c
 	struct job job;
 	int jobid = 0, jobstate, jticket_fd = -1;
-	char *username, *jreason;       /*job username, job state reason*/
+	char *jreason;       /* job state reason*/
 	int job_changed;                /*flag whether job update is needed*/
 	struct line_list l;             /*temporary line list*/
 	struct line_list change_attributes;
@@ -3197,7 +3201,7 @@ static int Ipp_op_get_notifications(struct line_list *http_request, struct line_
 	response.version = ipp_request->version;
 	response.request_id = ipp_request->request_id;
 	Init_line_list(&printers);
-	subscriptions = NULL;
+	subscriptions = NULL; sx = NULL;
 	events = NULL;
 
 	/*set response mandatory attributes*/

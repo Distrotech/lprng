@@ -739,7 +739,7 @@ ssize_t Http_content_length(struct line_list *headers)
 inline ssize_t Http_read_body(const struct http_conn *conn, ssize_t content_len, ssize_t *rest_len, char *buf, ssize_t count, struct line_list *headers)
 {
 
-	char c = '\0', d, *e;
+	char c = '\0', *e;
 	char chunksz[129];   /*string to hold chunk size*/
 	ssize_t rd = 0;
 	int rs;
@@ -842,7 +842,7 @@ int Http_send_status(const struct http_conn *conn, const char *version, int code
 
 int Http_send_date_header(const struct http_conn *conn)
 {
-	char *s, *r;
+	char *s;
 	int rs, len;
 	time_t t;
 
@@ -1177,7 +1177,7 @@ static int Ipp_authenticate(struct line_list *auth_info, struct line_list *http_
 	char *ppath = NULL;
 	int rs ;
 	struct line_list pc_entry, pc_alias, auths, auth_parts;
-	char *ah, *ath;
+	char *ah;
 	char buf[LINEBUFFER], brealm[LINEBUFFER];
 	struct ipp_attr *a;
 	size_t sz;
@@ -1300,7 +1300,6 @@ static int Ipp_authenticate(struct line_list *auth_info, struct line_list *http_
 		goto endproc;
 	}
 
- unauth:
 	Http_send_status(conn, HTTP_VER_11, 401, HTTPM_UNAUTHORIZED);
 	Http_send_date_header(conn);
 	Http_send_header(conn, HTTPH_SERVER, HTTPV_LPRNGS);
