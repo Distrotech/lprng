@@ -402,7 +402,7 @@ EXTERN int ipp_ssl_available DEFINE(= 0);    /* SSL available */
 void Ipp_check_options(void);
 
 /*lprng IPP service*/
-void Service_ipp (int talk, int port, const char *from_addr);
+void Service_ipp (int talk, int port, const char *from_addr) NORETURN;
 
 /*http functions*/
 ssize_t Http_content_length(struct line_list *headers);
