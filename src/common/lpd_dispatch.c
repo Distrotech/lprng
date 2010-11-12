@@ -148,7 +148,7 @@ void Service_connection( struct line_list *args, int talk )
 
 	char from_addr[128];
 	int permission;
-	int localport = 0, p;
+	int localport = 0;
 	int unixsocket = 0;
 	int port = 0;
 	int ipp = 0;
