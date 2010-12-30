@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------
+Version LPRng-3.8.B
+---------------------------------------------------------------------
+
+- new --enable-plugins to build authentication modules as dynamic
+  loadable modules
+- --enable-nls now needs ngettext availabe and uses it
+- drop support for kerberos4 and pgp authentication
+- some small bugfixes / cleanups / improvements
+
+---------------------------------------------------------------------
 Version LPRng-3.8.A
 ---------------------------------------------------------------------
 
