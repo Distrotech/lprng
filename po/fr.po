@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2009-03-19 14:46+0100\n"
+"POT-Creation-Date: 2010-12-30 19:47+0100\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -336,66 +336,66 @@ msgstr ""
 "      server (printer | all) - information sur la configuration du serveur "
 "et printcap\n"
 
-#: src/common/lpd.c:172
+#: src/common/lpd.c:178
 msgid "No LPD lockfile specified!"
 msgstr "Pas de fichier de blocage LPD spécifié!"
 
-#: src/common/lpd.c:183 src/common/lpd.c:196
+#: src/common/lpd.c:189 src/common/lpd.c:202
 #, fuzzy, c-format
-msgid "Another print spooler active, possibly lpd process '%d'"
+msgid "Another print spooler active, possibly lpd process '%ld'"
 msgstr ""
 "Un autre spouleur d'impression utilise le port TCP imprimante, peut-être le "
-"process lpd '%d'"
+"process lpd '%ld'"
 
-#: src/common/lpd.c:188
+#: src/common/lpd.c:194
 #, fuzzy, c-format
 msgid "cannot open or lock lockfile - %s"
 msgstr "ne peut mettre à jour le fichier retenu '%s'"
 
-#: src/common/lpd.c:259
+#: src/common/lpd.c:267
 msgid "lpd: main() dofork failed"
 msgstr "lpd: main() dofork a échoué"
 
-#: src/common/lpd.c:304 src/common/lpd.c:315
+#: src/common/lpd.c:312 src/common/lpd.c:323
 msgid "lpd: pipe call failed"
 msgstr "lpd: pipe call a échoué"
 
-#: src/common/lpd.c:322
+#: src/common/lpd.c:330
 msgid "lpd: cannot start initial logger process"
 msgstr ""
 
-#: src/common/lpd.c:671
+#: src/common/lpd.c:683
 msgid "lpd: select error!"
 msgstr "lpd: select erreur!"
 
-#: src/common/lpd.c:696
+#: src/common/lpd.c:710
 msgid "lpd: Lpd_request pipe EOF! cannot happen"
 msgstr "lpd: Lpd_request pipe EOF! ne doit pas arriver"
 
-#: src/common/lpd.c:721 src/common/lpd.c:724
+#: src/common/lpd.c:735 src/common/lpd.c:738
 msgid "Setup_log: open /dev/null failed"
 msgstr "Setup_log: open /dev/null a échoué"
 
-#: src/common/lpd.c:731 src/common/lpd.c:735
+#: src/common/lpd.c:745 src/common/lpd.c:749
 #, c-format
 msgid "Setup_log: dup2(%d,%d) failed"
 msgstr "Setup_log: dup2(%d,%d) a échoué"
 
-#: src/common/lpd.c:740
+#: src/common/lpd.c:754
 #, c-format
 msgid "Setup_log: open %s failed"
 msgstr "Setup_log: open %s a échoué"
 
-#: src/common/lpd.c:784
+#: src/common/lpd.c:792
 msgid "lpd: Cannot truncate lock file"
 msgstr ""
 
-#: src/common/lpd.c:802
+#: src/common/lpd.c:810
 #, fuzzy, c-format
 msgid "lpd: Cannot open lock file '%s'"
 msgstr "lpd: ne peut ouvrir '%s'"
 
-#: src/common/lpd.c:904
+#: src/common/lpd.c:912
 #, fuzzy, c-format
 msgid ""
 "usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP "
@@ -423,20 +423,16 @@ msgstr ""
 "(unix_socket_path)\n"
 " -R port     - remote LPD server port (lpd_port)\n"
 
-#: src/common/lpd.c:992
+#: src/common/lpd.c:1001
 msgid "lpd: fork() failed"
 msgstr "lpd: fork() a échoué"
 
-#: src/common/lpd.c:994
-msgid "Server load too high"
-msgstr ""
-
-#: src/common/lpd.c:1003
+#: src/common/lpd.c:1012
 #, fuzzy
 msgid "lpd: accept on listening socket failed"
 msgstr "Service_connection: accept sur un connecteur en écoute a échoué"
 
-#: src/common/lpd.c:1022
+#: src/common/lpd.c:1031
 msgid "Start_all: pipe failed!"
 msgstr "Start_all: pipe a échoué!"
 
@@ -468,73 +464,73 @@ msgstr "pas d'autorisation pour contrôler le serveur"
 msgid "not implemented yet"
 msgstr "pas encore implémenté"
 
-#: src/common/lpd_control.c:489
+#: src/common/lpd_control.c:486
 #, fuzzy, c-format
 msgid "server process PID %ld exited\n"
 msgstr "tuer le serveur de PID %ld avec %s\n"
 
-#: src/common/lpd_control.c:492
+#: src/common/lpd_control.c:489
 #, fuzzy, c-format
 msgid "kill server process PID %ld with %s\n"
 msgstr "tuer le serveur de PID %ld avec %s\n"
 
-#: src/common/lpd_control.c:501
+#: src/common/lpd_control.c:497
 msgid "enabled and started"
 msgstr "armé et démarré"
 
-#: src/common/lpd_control.c:502
+#: src/common/lpd_control.c:498
 msgid "disabled and stopped"
 msgstr "désarmé et arrété"
 
-#: src/common/lpd_control.c:503
+#: src/common/lpd_control.c:499
 msgid "stopped"
 msgstr "arrété"
 
-#: src/common/lpd_control.c:505
+#: src/common/lpd_control.c:501
 msgid "started"
 msgstr "démarré"
 
-#: src/common/lpd_control.c:506
+#: src/common/lpd_control.c:502
 msgid "disabled"
 msgstr "désarmé"
 
-#: src/common/lpd_control.c:507
+#: src/common/lpd_control.c:503
 msgid "enabled"
 msgstr "armé"
 
-#: src/common/lpd_control.c:508
+#: src/common/lpd_control.c:504
 msgid "redirected"
 msgstr "redirigé"
 
-#: src/common/lpd_control.c:509
+#: src/common/lpd_control.c:505
 msgid "holdall on"
 msgstr "retenir tous oui"
 
-#: src/common/lpd_control.c:510
+#: src/common/lpd_control.c:506
 msgid "holdall off"
 msgstr "retenir tous non"
 
-#: src/common/lpd_control.c:511
+#: src/common/lpd_control.c:507
 msgid "move done"
 msgstr "déplacé fait"
 
-#: src/common/lpd_control.c:512
+#: src/common/lpd_control.c:508
 msgid "class updated"
 msgstr "classe mise à jour"
 
-#: src/common/lpd_control.c:513
+#: src/common/lpd_control.c:509
 msgid "killed job"
 msgstr "travail tué"
 
-#: src/common/lpd_control.c:514
+#: src/common/lpd_control.c:510
 msgid "aborted job"
 msgstr "travail avorté"
 
-#: src/common/lpd_control.c:515
+#: src/common/lpd_control.c:511
 msgid "flushed status"
 msgstr "état vidé"
 
-#: src/common/lpd_control.c:536
+#: src/common/lpd_control.c:531
 #, c-format
 msgid ""
 "WARNING: the main load balance server may have exited before\n"
@@ -542,69 +538,69 @@ msgid ""
 "Please use 'lpc start %s' to start the server\n"
 msgstr ""
 
-#: src/common/lpd_control.c:570
+#: src/common/lpd_control.c:565
 #, c-format
 msgid "Do_queue_control: write to fd '%d' failed"
 msgstr "Do_queue_control: écriture sur '%d' a échoué"
 
-#: src/common/lpd_control.c:659
+#: src/common/lpd_control.c:654
 #, c-format
 msgid "%s: no permission '%s'\n"
 msgstr "%s: pas l'autorisation '%s'\n"
 
-#: src/common/lpd_control.c:743
+#: src/common/lpd_control.c:738
 #, c-format
 msgid "%s: selected '%s'\n"
 msgstr "%s: selectionné '%s'\n"
 
-#: src/common/lpd_control.c:753
+#: src/common/lpd_control.c:748
 #, c-format
 msgid "%s: cannot set hold file '%s'\n"
 msgstr "%s: ne peut positionner le fichier retenu '%s'\n"
 
-#: src/common/lpd_control.c:860
+#: src/common/lpd_control.c:855
 msgid " holdall"
 msgstr " retenir tous"
 
-#: src/common/lpd_control.c:864
+#: src/common/lpd_control.c:859
 #, c-format
 msgid " class=%s"
 msgstr " classe=%s"
 
-#: src/common/lpd_control.c:868
+#: src/common/lpd_control.c:863
 msgid " autohold"
 msgstr " retenue automatique"
 
-#: src/common/lpd_control.c:940 src/common/lpd_control.c:995
-#: src/common/lpd_control.c:1050
+#: src/common/lpd_control.c:935 src/common/lpd_control.c:990
+#: src/common/lpd_control.c:1045
 #, c-format
 msgid "wrong number arguments, %d"
 msgstr "mauvais nombre d'arguments, %d"
 
-#: src/common/lpd_control.c:946
+#: src/common/lpd_control.c:941
 #, c-format
 msgid "forwarding to '%s'\n"
 msgstr "renvoyé à '%s'\n"
 
-#: src/common/lpd_control.c:948
+#: src/common/lpd_control.c:943
 msgid "forwarding off\n"
 msgstr "renvoi non\n"
 
-#: src/common/lpd_control.c:1002
+#: src/common/lpd_control.c:997
 #, c-format
 msgid "classes printed '%s'\n"
 msgstr "classes imprimées '%s'\n"
 
-#: src/common/lpd_control.c:1005
+#: src/common/lpd_control.c:1000
 msgid "all classes printed\n"
 msgstr "toutes les classes imprimées\n"
 
-#: src/common/lpd_control.c:1056
+#: src/common/lpd_control.c:1051
 #, c-format
 msgid "debugging override set to '%s'"
 msgstr "niveau de debug surchargé positonné à '%s'"
 
-#: src/common/lpd_control.c:1058
+#: src/common/lpd_control.c:1053
 msgid "debugging override off"
 msgstr "niveau de debug surchargé non"
 
@@ -887,7 +883,7 @@ msgid "%s: cannot set up print queue"
 msgstr "%s: ne peut initialiser la file d'impression"
 
 #: src/common/lpd_rcvjob.c:187 src/common/lpd_rcvjob.c:602
-#: src/common/lpd_secure.c:189
+#: src/common/lpd_secure.c:188
 #, c-format
 msgid "%s: spooling disabled"
 msgstr "%s: spoulage désarmé"
@@ -927,7 +923,7 @@ msgid "size %0.3fK exceeds %dK"
 msgstr ""
 
 #: src/common/lpd_rcvjob.c:296 src/common/lpd_rcvjob.c:624
-#: src/common/lpd_secure.c:203
+#: src/common/lpd_secure.c:202
 #, c-format
 msgid "%s: insufficient file space"
 msgstr "%s: espace de fichier insuffisant"
@@ -1023,66 +1019,66 @@ msgstr "l'imprimante '%s' a un caractère illégal a '%s' dans le nom"
 msgid "Job_remove: error '%s'"
 msgstr "Job_remove: erreur '%s'"
 
-#: src/common/lpd_remove.c:204
+#: src/common/lpd_remove.c:203
 #, c-format
 msgid "Printer %s@%s:\n"
 msgstr "Imprimante %s@%s:\n"
 
-#: src/common/lpd_remove.c:233
+#: src/common/lpd_remove.c:232
 #, c-format
 msgid "  checking perms '%s'\n"
 msgstr "  vérification des autorisations '%s'\n"
 
-#: src/common/lpd_remove.c:250
+#: src/common/lpd_remove.c:249
 #, c-format
 msgid "  no permissions '%s'\n"
 msgstr "  pas d'autorisations '%s'\n"
 
-#: src/common/lpd_remove.c:264
+#: src/common/lpd_remove.c:263
 #, fuzzy, c-format
 msgid "  removing incoming job '%s'\n"
 msgstr "élimination du travail '%s' - ABORT"
 
-#: src/common/lpd_remove.c:267
+#: src/common/lpd_remove.c:266
 #, c-format
 msgid "  dequeued '%s'\n"
 msgstr "  enlevé de la file d'attente '%s'\n"
 
-#: src/common/lpd_remove.c:276
+#: src/common/lpd_remove.c:275
 #, c-format
 msgid "error: could not remove '%s'"
 msgstr "erreur: ne peut enlever '%s'"
 
-#: src/common/lpd_remove.c:389
+#: src/common/lpd_remove.c:384
 msgid " ERROR: "
 msgstr " ERREUR: "
 
-#: src/common/lpd_secure.c:82
+#: src/common/lpd_secure.c:81
 #, c-format
 msgid "bad command line '%s'"
 msgstr "mauvaise ligne de commande '%s'"
 
-#: src/common/lpd_secure.c:114
+#: src/common/lpd_secure.c:113
 #, c-format
 msgid "bad printer name '%s'"
 msgstr "mauvais nom d'imprimante '%s'"
 
-#: src/common/lpd_secure.c:125
+#: src/common/lpd_secure.c:124
 #, c-format
 msgid "bad printer '%s'"
 msgstr "mauvaise imprimante '%s'"
 
-#: src/common/lpd_secure.c:167
+#: src/common/lpd_secure.c:166
 #, c-format
 msgid "unsupported authentication '%s'"
 msgstr "authentification non supportée '%s'"
 
-#: src/common/lpd_secure.c:174
+#: src/common/lpd_secure.c:173
 #, c-format
 msgid "no receive method supported for '%s'"
 msgstr "pas de méthode de réception supportée pour '%s'"
 
-#: src/common/lpd_secure.c:196
+#: src/common/lpd_secure.c:195
 #, c-format
 msgid "%s: job size %0.0f is larger than %d K"
 msgstr "%s: taille du travail %0.0f plus grande que %d K"
@@ -1294,46 +1290,46 @@ msgstr ""
 msgid " (message: %s)"
 msgstr " (message: %s)"
 
-#: src/common/lpd_status.c:991
+#: src/common/lpd_status.c:983
 msgid " Queue: no printable jobs in queue\n"
 msgstr " Queue: pas de travail imprimable dans la file d'attente\n"
 
-#: src/common/lpd_status.c:995
+#: src/common/lpd_status.c:987
 #, fuzzy, c-format
 msgid " Queue: %d printable job\n"
 msgid_plural " Queue: %d printable jobs\n"
 msgstr[0] " Queue: %d travail imprimable\n"
 msgstr[1] " Queue: %d travail imprimable\n"
 
-#: src/common/lpd_status.c:1002
+#: src/common/lpd_status.c:994
 #, c-format
 msgid " Holding: %d held jobs in queue\n"
 msgstr " Holding: %d travaux retenus dans la file d'attente\n"
 
-#: src/common/lpd_status.c:1008
+#: src/common/lpd_status.c:1000
 msgid " Server: no server active"
 msgstr " Server: pas de serveur actif"
 
-#: src/common/lpd_status.c:1011
+#: src/common/lpd_status.c:1003
 #, c-format
 msgid " Server: pid %d active"
 msgstr " Server: pid %d actif"
 
-#: src/common/lpd_status.c:1019
+#: src/common/lpd_status.c:1011
 #, c-format
 msgid " Unspooler: pid %d active"
 msgstr " Unspooler: pid %d  actif"
 
-#: src/common/lpd_status.c:1031
+#: src/common/lpd_status.c:1023
 #, c-format
 msgid "%s SPOOLCONTROL=\n"
 msgstr "%s SPOOLCONTROL=\n"
 
-#: src/common/lpd_status.c:1045
+#: src/common/lpd_status.c:1037
 msgid " Status: "
 msgstr " Status: "
 
-#: src/common/lpd_status.c:1049
+#: src/common/lpd_status.c:1041
 msgid " Filter_status: "
 msgstr " Filter_status: "
 
@@ -1342,36 +1338,36 @@ msgstr " Filter_status: "
 msgid "Dispatch_input: bad request line '%s' from %s"
 msgstr "Dispatch_input: mauvaise ligne '%s' demandée %s"
 
-#: src/common/lpd_dispatch.c:185
+#: src/common/lpd_dispatch.c:177
 msgid "Service_connection: getpeername failed"
 msgstr "Service_connection: getpeername a échoué"
 
-#: src/common/lpd_dispatch.c:232
+#: src/common/lpd_dispatch.c:224
 #, fuzzy
 msgid "Service_connection: BAD LocalHost_IP value"
 msgstr "Service_connection: ne peut demander à lire"
 
-#: src/common/lpd_dispatch.c:238
+#: src/common/lpd_dispatch.c:230
 #, c-format
 msgid "Service_connection: bad protocol family '%d'"
 msgstr "Service_connection: mauvaise famille '%d' de protocole"
 
-#: src/common/lpd_dispatch.c:269
+#: src/common/lpd_dispatch.c:261
 #, fuzzy
 msgid "no connect permissions"
 msgstr "pas d'autorisations de connexion"
 
-#: src/common/lpd_dispatch.c:291
+#: src/common/lpd_dispatch.c:284
 #, c-format
 msgid "Service_connection: peek of length %d failed"
 msgstr ""
 
-#: src/common/lpd_dispatch.c:332
+#: src/common/lpd_dispatch.c:326
 #, c-format
 msgid "Service_connection: cannot read request from %s in %d seconds"
 msgstr ""
 
-#: src/common/lpd_dispatch.c:336
+#: src/common/lpd_dispatch.c:330
 #, c-format
 msgid "Service_connection: short request line '%s', from '%s'"
 msgstr ""
@@ -1513,7 +1509,7 @@ msgstr "pas de support distant pour %s@%s"
 msgid "%d data files and maximum allowed %d"
 msgstr "%d fichiers de données et maximum autorisé %d"
 
-#: src/common/lpr.c:221 src/common/lpr.c:1165
+#: src/common/lpr.c:221 src/common/lpr.c:1164
 #, c-format
 msgid "Cannot open file '%s', %s"
 msgstr "Ne peut ouvrir le fichier '%s', %s"
@@ -1559,7 +1555,7 @@ msgstr "Erreur en déliant '%s' - %s"
 msgid "Done %d\n"
 msgstr "Fait %d\n"
 
-#: src/common/lpr.c:430 src/common/lpr.c:604
+#: src/common/lpr.c:430 src/common/lpr.c:603
 msgid "USER environment variable undefined"
 msgstr "variable d'environnement USER non définie"
 
@@ -1575,30 +1571,30 @@ msgstr "pas de bannière"
 msgid "width"
 msgstr "largeur"
 
-#: src/common/lpr.c:531
+#: src/common/lpr.c:530
 #, c-format
 msgid "bad -F format string '%s'\n"
 msgstr "mauvaise chîne de format -F '%s'\n"
 
-#: src/common/lpr.c:534
+#: src/common/lpr.c:533
 #, c-format
 msgid "duplicate format specification -F%s\n"
 msgstr "spécification de format dupliquée -F%s\n"
 
-#: src/common/lpr.c:546
+#: src/common/lpr.c:545
 msgid "-Kcopies -number of copies must be greater than 0\n"
 msgstr "-Kcopies - nombre de copies doit être supérieur à 0\n"
 
-#: src/common/lpr.c:609
+#: src/common/lpr.c:608
 msgid "Missing mail name"
 msgstr "Manque nom de boîte à lettre"
 
-#: src/common/lpr.c:623
+#: src/common/lpr.c:622
 #, c-format
 msgid "duplicate format specification -%c\n"
 msgstr "spécification de format dupliquée -%c\n"
 
-#: src/common/lpr.c:667
+#: src/common/lpr.c:666
 #, fuzzy, c-format
 msgid ""
 "Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"
@@ -1675,7 +1671,7 @@ msgstr ""
 " les variables d'environnement PRINTER, LPDEST, NGPRINTER, NPRINTER "
 "positionnent l'imprimante par défaut.\n"
 
-#: src/common/lpr.c:703
+#: src/common/lpr.c:702
 #, fuzzy, c-format
 msgid ""
 "Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"
@@ -1748,98 +1744,98 @@ msgstr ""
 " variables d'environnement PRINTER, LPDEST, NPRINTER, NGPRINTER qui "
 "positionnent l'imprimante par défaut.\n"
 
-#: src/common/lpr.c:804
+#: src/common/lpr.c:803
 msgid "Priority (first letter of Class) not 'A' (lowest) to 'Z' (highest)"
 msgstr ""
 "Priorité (première lettre de Class) pas 'A' (le plus bas) à 'Z' (le plus "
 "haut)"
 
-#: src/common/lpr.c:828 src/common/lpr.c:833
+#: src/common/lpr.c:827 src/common/lpr.c:832
 msgid "(STDIN)"
 msgstr "(STDIN)"
 
-#: src/common/lpr.c:882
+#: src/common/lpr.c:881
 msgid "-U (username) can only be used by ROOT"
 msgstr "-U (username) ne peut être utilisé que par ROOT"
 
-#: src/common/lpr.c:898
+#: src/common/lpr.c:897
 #, c-format
 msgid "Get_local_host: '%s' FQDN name not found!"
 msgstr "Get_local_host: '%s' nom FQDN non trouvé!"
 
-#: src/common/lpr.c:925
+#: src/common/lpr.c:924
 #, c-format
 msgid "Bad format specification '%c'"
 msgstr "Mauvaise spécification de format '%c'"
 
-#: src/common/lpr.c:932
+#: src/common/lpr.c:931
 #, c-format
 msgid "Sorry, can only print %d files at a time, split job up"
 msgstr ""
 "Désolé, seulement %d fichiers peuvent être imprimés à la fois, revoir la "
 "division du travail"
 
-#: src/common/lpr.c:938
+#: src/common/lpr.c:937
 #, c-format
 msgid "Maximum of %d copies allowed"
 msgstr "%d copies maximum autorisées"
 
-#: src/common/lpr.c:1002
+#: src/common/lpr.c:1001
 msgid "authentication conficts with -k option"
 msgstr ""
 
-#: src/common/lpr.c:1005
+#: src/common/lpr.c:1004
 msgid "send_block_format configuration option conficts with -k option"
 msgstr ""
 
-#: src/common/lpr.c:1008
+#: src/common/lpr.c:1007
 msgid "send_data_first configuration option conficts with -k option"
 msgstr ""
 
-#: src/common/lpr.c:1011
+#: src/common/lpr.c:1010
 msgid "multiple copies conficts with -k option"
 msgstr ""
 
-#: src/common/lpr.c:1014
+#: src/common/lpr.c:1013
 msgid "files on command line conflicts with -k option"
 msgstr ""
 
-#: src/common/lpr.c:1102
+#: src/common/lpr.c:1101
 msgid "Make_temp_fd failed"
 msgstr "Make_temp_fd a échoué"
 
-#: src/common/lpr.c:1104
+#: src/common/lpr.c:1103
 msgid "You have closed STDIN! cannot pipe from a closed connection"
 msgstr "Vous avez fermé STDIN! ne peut faire pipe depuis une connexion fermée"
 
-#: src/common/lpr.c:1111
+#: src/common/lpr.c:1110
 msgid "Copy_STDIN: write to temp file failed"
 msgstr "Copy_STDIN: écriture vers le fichier temporaire a échoué"
 
-#: src/common/lpr.c:1116
+#: src/common/lpr.c:1115
 #, c-format
 msgid "Copy_STDIN: stat of temp fd '%d' failed"
 msgstr "Copy_STDIN: atteindre les données temporaire '%d' a échoué"
 
-#: src/common/lpr.c:1172
+#: src/common/lpr.c:1171
 #, fuzzy, c-format
 msgid "Check_files: stat of temp fd '%d' failed"
 msgstr "Copy_STDIN: atteindre les données temporaire '%d' a échoué"
 
-#: src/common/lpr.c:1216
+#: src/common/lpr.c:1215
 #, c-format
 msgid "cannot print '%s': %s"
 msgstr "ne peut imprimer '%s': %s"
 
-#: src/common/lpr.c:1225
+#: src/common/lpr.c:1224
 msgid "not a regular file"
 msgstr "pas un fichier régulier"
 
-#: src/common/lpr.c:1230
+#: src/common/lpr.c:1229
 msgid "cannot read it"
 msgstr "ne peut le lire"
 
-#: src/common/lpr.c:1245
+#: src/common/lpr.c:1244
 msgid ""
 "unprintable characters at start of file, check your LANG environment "
 "variable as well as the input file"
@@ -1847,17 +1843,17 @@ msgstr ""
 "cractères non-imprimables au début du fichier, vérifier votre variable LANG "
 "ainsi que le fichier d'entrée"
 
-#: src/common/lpr.c:1252
+#: src/common/lpr.c:1251
 #, c-format
 msgid "option '%c' missing argument"
 msgstr "option '%c' manque un argument"
 
-#: src/common/lpr.c:1271
+#: src/common/lpr.c:1270
 #, c-format
 msgid "option %c parameter `%s` is not positive integer value"
 msgstr "option %c paramètre `%s` n'est pas un entier positif"
 
-#: src/common/lpr.c:1275
+#: src/common/lpr.c:1274
 #, c-format
 msgid "option %c parameter `%s` is not integer value from 0 - %d"
 msgstr "option %c paramètre `%s` n'est pas une valeur entière dans 0 - %d"

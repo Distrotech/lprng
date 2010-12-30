@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.A\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2009-03-19 14:46+0100\n"
+"POT-Creation-Date: 2010-12-30 19:47+0100\n"
 "PO-Revision-Date: 2008-07-15 23:31+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -374,66 +374,66 @@ msgstr ""
 "printcap\n"
 "\t\t(_máy/trình phục vụ_)\n"
 
-#: src/common/lpd.c:172
+#: src/common/lpd.c:178
 msgid "No LPD lockfile specified!"
 msgstr "Chưa xác định tập tin khoá LPD."
 
-#: src/common/lpd.c:183 src/common/lpd.c:196
+#: src/common/lpd.c:189 src/common/lpd.c:202
 #, c-format
-msgid "Another print spooler active, possibly lpd process '%d'"
-msgstr "Bộ cuộn vào ống khác đang chạy, có thể tiến trình lpd « %d »"
+msgid "Another print spooler active, possibly lpd process '%ld'"
+msgstr "Bộ cuộn vào ống khác đang chạy, có thể tiến trình lpd « %ld »"
 
-#: src/common/lpd.c:188
+#: src/common/lpd.c:194
 #, c-format
 msgid "cannot open or lock lockfile - %s"
 msgstr "không thể mở hay khoá tập tin khoá — %s"
 
-#: src/common/lpd.c:259
+#: src/common/lpd.c:267
 msgid "lpd: main() dofork failed"
 msgstr "lpd: main() dofork bị lỗi"
 
-#: src/common/lpd.c:304 src/common/lpd.c:315
+#: src/common/lpd.c:312 src/common/lpd.c:323
 msgid "lpd: pipe call failed"
 msgstr "lpd: lỗi gọi ống dẫn"
 
-#: src/common/lpd.c:322
+#: src/common/lpd.c:330
 msgid "lpd: cannot start initial logger process"
 msgstr "lpd: không thể khởi chạy tiến trình ghi lưu đầu tiên"
 
-#: src/common/lpd.c:671
+#: src/common/lpd.c:683
 msgid "lpd: select error!"
 msgstr "lpd: lỗi chọn."
 
-#: src/common/lpd.c:696
+#: src/common/lpd.c:710
 msgid "lpd: Lpd_request pipe EOF! cannot happen"
 msgstr ""
 "lpd: gặp kết thúc tập tin khi gửi yêu cầu Lpd_request qua ống dẫn: không thể "
 "xảy ra."
 
-#: src/common/lpd.c:721 src/common/lpd.c:724
+#: src/common/lpd.c:735 src/common/lpd.c:738
 msgid "Setup_log: open /dev/null failed"
 msgstr "Setup_log: lỗi mở « /dev/null »"
 
-#: src/common/lpd.c:731 src/common/lpd.c:735
+#: src/common/lpd.c:745 src/common/lpd.c:749
 #, c-format
 msgid "Setup_log: dup2(%d,%d) failed"
 msgstr "Setup_log: dup2(%d,%d) bị lỗi"
 
-#: src/common/lpd.c:740
+#: src/common/lpd.c:754
 #, c-format
 msgid "Setup_log: open %s failed"
 msgstr "Setup_log: lỗi mở %s"
 
-#: src/common/lpd.c:784
+#: src/common/lpd.c:792
 msgid "lpd: Cannot truncate lock file"
 msgstr "lpd: không thể cắt ngắn tập tin khoá"
 
-#: src/common/lpd.c:802
+#: src/common/lpd.c:810
 #, c-format
 msgid "lpd: Cannot open lock file '%s'"
 msgstr "lpd: không thể mở tập tin khoá « %s »"
 
-#: src/common/lpd.c:904
+#: src/common/lpd.c:912
 #, c-format
 msgid ""
 "usage: %s [-FV][-D dbg][-L log][-P path][-p port][-R remote LPD TCP/IP "
@@ -464,19 +464,15 @@ msgstr ""
 "\t\t\tthêm cờ « off » (tắt) thì tắt ổ cắm lắng nghe UNIX (unix_socket_path)\n"
 " -R cổng\t\t\t— cổng trình phục vụ LPD từ xa (lpd_port)\n"
 
-#: src/common/lpd.c:992
+#: src/common/lpd.c:1001
 msgid "lpd: fork() failed"
 msgstr "lpd: fork() bị lỗi"
 
-#: src/common/lpd.c:994
-msgid "Server load too high"
-msgstr "Trọng tải quá lớn trên máy phục vụ"
-
-#: src/common/lpd.c:1003
+#: src/common/lpd.c:1012
 msgid "lpd: accept on listening socket failed"
 msgstr "lpd: lỗi chấp nhận trên ổ cắm lắng nghe"
 
-#: src/common/lpd.c:1022
+#: src/common/lpd.c:1031
 msgid "Start_all: pipe failed!"
 msgstr "Start_all: lỗi ống dẫn."
 
@@ -511,73 +507,73 @@ msgstr "không có quyển điều khiển trình phục vụ"
 msgid "not implemented yet"
 msgstr "chưa được thực hiện"
 
-#: src/common/lpd_control.c:489
+#: src/common/lpd_control.c:486
 #, c-format
 msgid "server process PID %ld exited\n"
 msgstr "tiến trình phục vụ PID %ld đã thoát\n"
 
-#: src/common/lpd_control.c:492
+#: src/common/lpd_control.c:489
 #, c-format
 msgid "kill server process PID %ld with %s\n"
 msgstr "buộc kết thúc tiến trình phục vụ PID %ld bằng %s\n"
 
-#: src/common/lpd_control.c:501
+#: src/common/lpd_control.c:497
 msgid "enabled and started"
 msgstr "đã bật và khởi chạy"
 
-#: src/common/lpd_control.c:502
+#: src/common/lpd_control.c:498
 msgid "disabled and stopped"
 msgstr "bị tắt và dừng chạy"
 
-#: src/common/lpd_control.c:503
+#: src/common/lpd_control.c:499
 msgid "stopped"
 msgstr "bị dừng chạy"
 
-#: src/common/lpd_control.c:505
+#: src/common/lpd_control.c:501
 msgid "started"
 msgstr "đã khởi chạy"
 
-#: src/common/lpd_control.c:506
+#: src/common/lpd_control.c:502
 msgid "disabled"
 msgstr "tắt"
 
-#: src/common/lpd_control.c:507
+#: src/common/lpd_control.c:503
 msgid "enabled"
 msgstr "bật"
 
-#: src/common/lpd_control.c:508
+#: src/common/lpd_control.c:504
 msgid "redirected"
 msgstr "bị chuyển hướng"
 
-#: src/common/lpd_control.c:509
+#: src/common/lpd_control.c:505
 msgid "holdall on"
 msgstr "giữ lại tất cả đã bật"
 
-#: src/common/lpd_control.c:510
+#: src/common/lpd_control.c:506
 msgid "holdall off"
 msgstr "giữ lại tất cả bị tắt"
 
-#: src/common/lpd_control.c:511
+#: src/common/lpd_control.c:507
 msgid "move done"
 msgstr "đã di chuyển"
 
-#: src/common/lpd_control.c:512
+#: src/common/lpd_control.c:508
 msgid "class updated"
 msgstr "hạng đã được cập nhật"
 
-#: src/common/lpd_control.c:513
+#: src/common/lpd_control.c:509
 msgid "killed job"
 msgstr "công việc bị giết"
 
-#: src/common/lpd_control.c:514
+#: src/common/lpd_control.c:510
 msgid "aborted job"
 msgstr "công việc bị hủy bỏ"
 
-#: src/common/lpd_control.c:515
+#: src/common/lpd_control.c:511
 msgid "flushed status"
 msgstr "trạng thái bị xoá sạch"
 
-#: src/common/lpd_control.c:536
+#: src/common/lpd_control.c:531
 #, c-format
 msgid ""
 "WARNING: the main load balance server may have exited before\n"
@@ -588,69 +584,69 @@ msgstr ""
 "đã thoát trước khi nó có thể nhận thông tin về công việc mới.\n"
 "Hãy dùng lệnh « lpc start %s » để khởi chạy lại trình phục vụ.\n"
 
-#: src/common/lpd_control.c:570
+#: src/common/lpd_control.c:565
 #, c-format
 msgid "Do_queue_control: write to fd '%d' failed"
 msgstr "Do_queue_control: lỗi ghi vào fd '%d'"
 
-#: src/common/lpd_control.c:659
+#: src/common/lpd_control.c:654
 #, c-format
 msgid "%s: no permission '%s'\n"
 msgstr "%s: không có quyền hạn « %s »\n"
 
-#: src/common/lpd_control.c:743
+#: src/common/lpd_control.c:738
 #, c-format
 msgid "%s: selected '%s'\n"
 msgstr "%s: đã chọn « %s »\n"
 
-#: src/common/lpd_control.c:753
+#: src/common/lpd_control.c:748
 #, c-format
 msgid "%s: cannot set hold file '%s'\n"
 msgstr "%s: không thể đặt tập tin giữ lại %s\n"
 
-#: src/common/lpd_control.c:860
+#: src/common/lpd_control.c:855
 msgid " holdall"
 msgstr " giữ lại tất cả"
 
-#: src/common/lpd_control.c:864
+#: src/common/lpd_control.c:859
 #, c-format
 msgid " class=%s"
 msgstr " hạng=%s"
 
-#: src/common/lpd_control.c:868
+#: src/common/lpd_control.c:863
 msgid " autohold"
 msgstr " tự động giữ lại"
 
-#: src/common/lpd_control.c:940 src/common/lpd_control.c:995
-#: src/common/lpd_control.c:1050
+#: src/common/lpd_control.c:935 src/common/lpd_control.c:990
+#: src/common/lpd_control.c:1045
 #, c-format
 msgid "wrong number arguments, %d"
 msgstr "số đối số không đúng, %d"
 
-#: src/common/lpd_control.c:946
+#: src/common/lpd_control.c:941
 #, c-format
 msgid "forwarding to '%s'\n"
 msgstr "đang chuyển tiếp tới « %s »\n"
 
-#: src/common/lpd_control.c:948
+#: src/common/lpd_control.c:943
 msgid "forwarding off\n"
 msgstr "chuyển tiếp bị tắt\n"
 
-#: src/common/lpd_control.c:1002
+#: src/common/lpd_control.c:997
 #, c-format
 msgid "classes printed '%s'\n"
 msgstr "hạng đã in « %s »\n"
 
-#: src/common/lpd_control.c:1005
+#: src/common/lpd_control.c:1000
 msgid "all classes printed\n"
 msgstr "mọi hạng đã in\n"
 
-#: src/common/lpd_control.c:1056
+#: src/common/lpd_control.c:1051
 #, c-format
 msgid "debugging override set to '%s'"
 msgstr "quyền cao hơn gỡ lỗi được đăt thành « %s »"
 
-#: src/common/lpd_control.c:1058
+#: src/common/lpd_control.c:1053
 msgid "debugging override off"
 msgstr "quyền cao hơn gỡ lỗi bị tắt"
 
@@ -933,7 +929,7 @@ msgid "%s: cannot set up print queue"
 msgstr "%s: không thể thiết lập hàng đợi in"
 
 #: src/common/lpd_rcvjob.c:187 src/common/lpd_rcvjob.c:602
-#: src/common/lpd_secure.c:189
+#: src/common/lpd_secure.c:188
 #, c-format
 msgid "%s: spooling disabled"
 msgstr "%s: khả năng cuộn vào ống bị tắt"
@@ -972,7 +968,7 @@ msgid "size %0.3fK exceeds %dK"
 msgstr "kích cỡ %0.3fK lớn hơn %dK"
 
 #: src/common/lpd_rcvjob.c:296 src/common/lpd_rcvjob.c:624
-#: src/common/lpd_secure.c:203
+#: src/common/lpd_secure.c:202
 #, c-format
 msgid "%s: insufficient file space"
 msgstr "%s: không đủ chỗ tập tin"
@@ -1068,66 +1064,66 @@ msgstr "máy in « %s » có tên chứa ký tự cấm ở « %s »"
 msgid "Job_remove: error '%s'"
 msgstr "Job_remove: lỗi « %s »"
 
-#: src/common/lpd_remove.c:204
+#: src/common/lpd_remove.c:203
 #, c-format
 msgid "Printer %s@%s:\n"
 msgstr "Máy in %s@%s:\n"
 
-#: src/common/lpd_remove.c:233
+#: src/common/lpd_remove.c:232
 #, c-format
 msgid "  checking perms '%s'\n"
 msgstr "  đang kiểm tra quyền hạn « %s »\n"
 
-#: src/common/lpd_remove.c:250
+#: src/common/lpd_remove.c:249
 #, c-format
 msgid "  no permissions '%s'\n"
 msgstr "  không có quyền « %s »\n"
 
-#: src/common/lpd_remove.c:264
+#: src/common/lpd_remove.c:263
 #, fuzzy, c-format
 msgid "  removing incoming job '%s'\n"
 msgstr "đang gỡ bỏ công việc « %s » — JABORT"
 
-#: src/common/lpd_remove.c:267
+#: src/common/lpd_remove.c:266
 #, c-format
 msgid "  dequeued '%s'\n"
 msgstr "  đã gỡ bỏ « %s » khỏi hàng đợi\n"
 
-#: src/common/lpd_remove.c:276
+#: src/common/lpd_remove.c:275
 #, c-format
 msgid "error: could not remove '%s'"
 msgstr "lỗi: không thể gỡ bỏ « %s »"
 
-#: src/common/lpd_remove.c:389
+#: src/common/lpd_remove.c:384
 msgid " ERROR: "
 msgstr " LỖI: "
 
-#: src/common/lpd_secure.c:82
+#: src/common/lpd_secure.c:81
 #, c-format
 msgid "bad command line '%s'"
 msgstr "dòng lệnh sai « %s »"
 
-#: src/common/lpd_secure.c:114
+#: src/common/lpd_secure.c:113
 #, c-format
 msgid "bad printer name '%s'"
 msgstr "tên máy in sai « %s »"
 
-#: src/common/lpd_secure.c:125
+#: src/common/lpd_secure.c:124
 #, c-format
 msgid "bad printer '%s'"
 msgstr "máy in sai « %s »"
 
-#: src/common/lpd_secure.c:167
+#: src/common/lpd_secure.c:166
 #, c-format
 msgid "unsupported authentication '%s'"
 msgstr "xác thực không được hỗ trợ « %s »"
 
-#: src/common/lpd_secure.c:174
+#: src/common/lpd_secure.c:173
 #, c-format
 msgid "no receive method supported for '%s'"
 msgstr "không có phương pháp nhận được hỗ trợ cho « %s »"
 
-#: src/common/lpd_secure.c:196
+#: src/common/lpd_secure.c:195
 #, c-format
 msgid "%s: job size %0.0f is larger than %d K"
 msgstr "%s: kích cỡ công việc %0.0f lớn hơn %d K"
@@ -1339,45 +1335,45 @@ msgstr ""
 msgid " (message: %s)"
 msgstr " (thông điệp: %s)"
 
-#: src/common/lpd_status.c:991
+#: src/common/lpd_status.c:983
 msgid " Queue: no printable jobs in queue\n"
 msgstr " Hàng đợi: không có công việc có thể in\n"
 
-#: src/common/lpd_status.c:995
+#: src/common/lpd_status.c:987
 #, fuzzy, c-format
 msgid " Queue: %d printable job\n"
 msgid_plural " Queue: %d printable jobs\n"
 msgstr[0] " Hàng đợi: %d công việc có thể in\n"
 
-#: src/common/lpd_status.c:1002
+#: src/common/lpd_status.c:994
 #, c-format
 msgid " Holding: %d held jobs in queue\n"
 msgstr " Giữ lại: %d công việc đã giữ lại trong hàng đợi\n"
 
-#: src/common/lpd_status.c:1008
+#: src/common/lpd_status.c:1000
 msgid " Server: no server active"
 msgstr " Phục vụ : không có trình phục vụ chạy"
 
-#: src/common/lpd_status.c:1011
+#: src/common/lpd_status.c:1003
 #, c-format
 msgid " Server: pid %d active"
 msgstr " Phục vụ : PID %d đang chạy"
 
-#: src/common/lpd_status.c:1019
+#: src/common/lpd_status.c:1011
 #, c-format
 msgid " Unspooler: pid %d active"
 msgstr " Bộ bỏ cuộn: PID %d đang chạy"
 
-#: src/common/lpd_status.c:1031
+#: src/common/lpd_status.c:1023
 #, c-format
 msgid "%s SPOOLCONTROL=\n"
 msgstr "%s ĐIỀU KHIỂN ỐNG CHỈ=\n"
 
-#: src/common/lpd_status.c:1045
+#: src/common/lpd_status.c:1037
 msgid " Status: "
 msgstr " Trạng thái: "
 
-#: src/common/lpd_status.c:1049
+#: src/common/lpd_status.c:1041
 msgid " Filter_status: "
 msgstr " Trạng_thái_lọc: "
 
@@ -1386,34 +1382,34 @@ msgstr " Trạng_thái_lọc: "
 msgid "Dispatch_input: bad request line '%s' from %s"
 msgstr "Dispatch_input: dòng yêu cầu sai « %s » từ « %s »"
 
-#: src/common/lpd_dispatch.c:185
+#: src/common/lpd_dispatch.c:177
 msgid "Service_connection: getpeername failed"
 msgstr "Service_connection: getpeername (lấy tên ngang hàng) bị lỗi"
 
-#: src/common/lpd_dispatch.c:232
+#: src/common/lpd_dispatch.c:224
 msgid "Service_connection: BAD LocalHost_IP value"
 msgstr "Service_connection: giá trị LocalHost_IP SAI"
 
-#: src/common/lpd_dispatch.c:238
+#: src/common/lpd_dispatch.c:230
 #, c-format
 msgid "Service_connection: bad protocol family '%d'"
 msgstr "Service_connection: họ giao thức sai « %d »"
 
-#: src/common/lpd_dispatch.c:269
+#: src/common/lpd_dispatch.c:261
 msgid "no connect permissions"
 msgstr "không có quyền kết nối"
 
-#: src/common/lpd_dispatch.c:291
+#: src/common/lpd_dispatch.c:284
 #, c-format
 msgid "Service_connection: peek of length %d failed"
 msgstr "Service_connection: hé nhìn có độ dài %d bị lỗi"
 
-#: src/common/lpd_dispatch.c:332
+#: src/common/lpd_dispatch.c:326
 #, c-format
 msgid "Service_connection: cannot read request from %s in %d seconds"
 msgstr "Service_connection: không thể đọc yêu cầu từ %s trong %d giây"
 
-#: src/common/lpd_dispatch.c:336
+#: src/common/lpd_dispatch.c:330
 #, c-format
 msgid "Service_connection: short request line '%s', from '%s'"
 msgstr "Service_connection: dòng yêu cầu ngắn « %s », từ « %s »"
@@ -1557,7 +1553,7 @@ msgstr "không có hỗ trợ từ xa cho %s@%s"
 msgid "%d data files and maximum allowed %d"
 msgstr "có %d tập tin dữ liệu còn cho phép số tối đa %d"
 
-#: src/common/lpr.c:221 src/common/lpr.c:1165
+#: src/common/lpr.c:221 src/common/lpr.c:1164
 #, c-format
 msgid "Cannot open file '%s', %s"
 msgstr "Không thể mở tập tin « %s », %s"
@@ -1601,7 +1597,7 @@ msgstr "Gặp lỗi khi hủy liên kết « %s » — %s"
 msgid "Done %d\n"
 msgstr "Hoàn tất %d\n"
 
-#: src/common/lpr.c:430 src/common/lpr.c:604
+#: src/common/lpr.c:430 src/common/lpr.c:603
 msgid "USER environment variable undefined"
 msgstr "chưa xác định biến môi trường người dùng USER"
 
@@ -1617,30 +1613,30 @@ msgstr "không băng cờ"
 msgid "width"
 msgstr "độ rộng"
 
-#: src/common/lpr.c:531
+#: src/common/lpr.c:530
 #, c-format
 msgid "bad -F format string '%s'\n"
 msgstr "gặp chuỗi định dạng -F sai %s\n"
 
-#: src/common/lpr.c:534
+#: src/common/lpr.c:533
 #, c-format
 msgid "duplicate format specification -F%s\n"
 msgstr "đặc tả định dạng trùng -F%s\n"
 
-#: src/common/lpr.c:546
+#: src/common/lpr.c:545
 msgid "-Kcopies -number of copies must be greater than 0\n"
 msgstr "-Kcopies — tổng số bản sao phải ≥0\n"
 
-#: src/common/lpr.c:609
+#: src/common/lpr.c:608
 msgid "Missing mail name"
 msgstr "Thiếu tên thư"
 
-#: src/common/lpr.c:623
+#: src/common/lpr.c:622
 #, c-format
 msgid "duplicate format specification -%c\n"
 msgstr "đặc tả định dạng trùng — %c\n"
 
-#: src/common/lpr.c:667
+#: src/common/lpr.c:666
 #, c-format
 msgid ""
 "Usage: %s [-A] [-B] [-c] [-G] [-m] [-p] [-s] [-w] [-d printer@[host]]\n"
@@ -1718,7 +1714,7 @@ msgstr ""
 " Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc "
 "định.\n"
 
-#: src/common/lpr.c:703
+#: src/common/lpr.c:702
 #, c-format
 msgid ""
 "Usage: %s [-Pprinter[@host]] [-A] [-B] [-Cclass] [-Fformat] [-G] [-Jinfo]\n"
@@ -1794,103 +1790,102 @@ msgstr ""
 " Các biến môi trường PRINTER, LPDEST, NGPRINTER, NPRINTER đặt máy in mặc "
 "định.\n"
 
-#: src/common/lpr.c:804
+#: src/common/lpr.c:803
 msgid "Priority (first letter of Class) not 'A' (lowest) to 'Z' (highest)"
 msgstr ""
-"Độ ưu tiên (chữ đầu của Hạng) không phải « A » (thấp nhất) đến « Z » (cao "
-"nhất)"
+"Độ ưu tiên (chữ đầu của Hạng) không phải « A » (thấp nhất) đến « Z » (cao nhất)"
 
-#: src/common/lpr.c:828 src/common/lpr.c:833
+#: src/common/lpr.c:827 src/common/lpr.c:832
 msgid "(STDIN)"
 msgstr "(STDIN)"
 
-#: src/common/lpr.c:882
+#: src/common/lpr.c:881
 msgid "-U (username) can only be used by ROOT"
 msgstr "-U (tên người dùng) chỉ có thể được dùng bởi người chủ (root)"
 
-#: src/common/lpr.c:898
+#: src/common/lpr.c:897
 #, c-format
 msgid "Get_local_host: '%s' FQDN name not found!"
 msgstr ""
 "Get_local_host: không tìm thấy tên miền có khả năng đầy đủ (FQDN) « %s »."
 
-#: src/common/lpr.c:925
+#: src/common/lpr.c:924
 #, c-format
 msgid "Bad format specification '%c'"
 msgstr "Đặc tả định dạng sai « %c »"
 
-#: src/common/lpr.c:932
+#: src/common/lpr.c:931
 #, c-format
 msgid "Sorry, can only print %d files at a time, split job up"
 msgstr "Tiếc là chỉ có thể in ra %d tập tin đồng thời nên chia công việc ra"
 
-#: src/common/lpr.c:938
+#: src/common/lpr.c:937
 #, c-format
 msgid "Maximum of %d copies allowed"
 msgstr "Cho phép %d bản sao tối đa"
 
-#: src/common/lpr.c:1002
+#: src/common/lpr.c:1001
 msgid "authentication conficts with -k option"
 msgstr "xác thực xung đột với tùy chọn « -k »"
 
-#: src/common/lpr.c:1005
+#: src/common/lpr.c:1004
 msgid "send_block_format configuration option conficts with -k option"
 msgstr ""
-"tùy chọn cấu hình « send_block_format » (gửi định dạng khối) cung đột với "
-"tùy chọn « -k »"
+"tùy chọn cấu hình « send_block_format » (gửi định dạng khối) cung đột với tùy "
+"chọn « -k »"
 
-#: src/common/lpr.c:1008
+#: src/common/lpr.c:1007
 msgid "send_data_first configuration option conficts with -k option"
 msgstr ""
 "tùy chọn cấu hình « send_data_first » (gửi dữ liệu trước) cung đột với tùy "
 "chọn « -k »"
 
-#: src/common/lpr.c:1011
+#: src/common/lpr.c:1010
 msgid "multiple copies conficts with -k option"
 msgstr "nhiều bản sao xung đột với tùy chọn « -k »"
 
-#: src/common/lpr.c:1014
+#: src/common/lpr.c:1013
 msgid "files on command line conflicts with -k option"
 msgstr "tập tin trên dòng lệnh xung đột với tùy chọn « -k »"
 
-#: src/common/lpr.c:1102
+#: src/common/lpr.c:1101
 msgid "Make_temp_fd failed"
 msgstr "Make_temp_fd bị lỗi"
 
-#: src/common/lpr.c:1104
+#: src/common/lpr.c:1103
 msgid "You have closed STDIN! cannot pipe from a closed connection"
 msgstr ""
 "Bạn đã đóng thiết bị nhập chuẩn STDIN. Không thể gửi dữ liệu cho ống dẫn từ "
 "sự kết nối bị đóng"
 
-#: src/common/lpr.c:1111
+#: src/common/lpr.c:1110
 msgid "Copy_STDIN: write to temp file failed"
 msgstr "Copy_STDIN: lỗi ghi vào tập tin tạm thời"
 
-#: src/common/lpr.c:1116
+#: src/common/lpr.c:1115
 #, c-format
 msgid "Copy_STDIN: stat of temp fd '%d' failed"
 msgstr "Copy_STDIN: lỗi lấy các thông tin về fd tạm thời « %d »"
 
-#: src/common/lpr.c:1172
+#: src/common/lpr.c:1171
 #, c-format
 msgid "Check_files: stat of temp fd '%d' failed"
 msgstr "Check_files: lỗi lấy các thông tin về fd tạm thời « %d »"
 
-#: src/common/lpr.c:1216
+#: src/common/lpr.c:1215
 #, c-format
 msgid "cannot print '%s': %s"
 msgstr "không thể in « %s »: %s"
 
-#: src/common/lpr.c:1225
+#: src/common/lpr.c:1224
 msgid "not a regular file"
 msgstr "không phải tập tin chuẩn"
 
-#: src/common/lpr.c:1230
+#: src/common/lpr.c:1229
 msgid "cannot read it"
 msgstr "không thể đọc nó"
 
-#: src/common/lpr.c:1245
+#: src/common/lpr.c:1244
 msgid ""
 "unprintable characters at start of file, check your LANG environment "
 "variable as well as the input file"
@@ -1898,17 +1893,17 @@ msgstr ""
 "gặp ký tự không thể in ở đầu tập tin: hãy kiểm tra lại biến môi trường ngôn "
 "ngữ LANG, cũng như tập tin nhập vào"
 
-#: src/common/lpr.c:1252
+#: src/common/lpr.c:1251
 #, c-format
 msgid "option '%c' missing argument"
 msgstr "tùy chọn « %c » thiếu đối số"
 
-#: src/common/lpr.c:1271
+#: src/common/lpr.c:1270
 #, c-format
 msgid "option %c parameter `%s` is not positive integer value"
 msgstr "tùy chọn %c tham số « %s » không phải giá trị số nguyên dương"
 
-#: src/common/lpr.c:1275
+#: src/common/lpr.c:1274
 #, c-format
 msgid "option %c parameter `%s` is not integer value from 0 - %d"
 msgstr "tùy chọn %c tham số « %s » không phải giá trị số nguyên từ 0 - %d"
