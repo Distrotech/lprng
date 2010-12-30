@@ -22,3 +22,10 @@ install-data-hook: lpd.perms printcap
 	$(INSTALL_DATA) lpd.perms $(DESTDIR)$(LPD_PERMS_PATH)$(SAMPLESUFFIX) ; \
 	$(INSTALL_DATA) $(srcdir)/printcap $(DESTDIR)$(PRINTCAP_PATH)$(SAMPLESUFFIX) ; \
 	fi
+
+# only uninstall if it is .sample, not otherwise to avoid surprises...
+uninstall-hook:
+	@if [ "$(INSTALLCONFIGEXAMPLES)" = "Yes" ] && [ "$(SAMPLESUFFIX)" = ".sample" ] ; then \
+		echo "rm -f $(DESTDIR)$(LPD_PERMS_PATH)$(SAMPLESUFFIX) $(DESTDIR)$(PRINTCAP_PATH)$(SAMPLESUFFIX)" ; \
+		rm -f "$(DESTDIR)$(LPD_PERMS_PATH)$(SAMPLESUFFIX)" "$(DESTDIR)$(PRINTCAP_PATH)$(SAMPLESUFFIX)" ; \
+	fi

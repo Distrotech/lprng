@@ -32,6 +32,14 @@ noinst_PROGRAMS = monitor
 # and may have issues hidden before because of static linking:
 # noinst_PROGRAMS = sserver sclient
 
+uninstall-hook:
+	rm -f $(DESTDIR)$(bindir)/lp $(DESTDIR)$(bindir)/cancel
+if WITHPLUGINS
+if WITHKERBEROS
+	rm -f $(DESTDIR)$(plugindir)/kerberos.so $(DESTDIR)$(plugindir)/k5conn.so
+endif
+endif
+
 install-exec-hook:
 	rm -f $(DESTDIR)$(bindir)/lp $(DESTDIR)$(bindir)/cancel
 	ln $(DESTDIR)$(bindir)/lpr $(DESTDIR)$(bindir)/lp
