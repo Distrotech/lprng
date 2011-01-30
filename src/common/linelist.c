@@ -1360,10 +1360,7 @@ void Read_fd_and_split( struct line_list *list, int fd,
 	while( (count = ok_read(fd, buffer, sizeof(buffer)-1)) > 0 ){
 		buffer[count] = 0;
 		len = size+count+1;
-		if( (sv = realloc_or_die( sv, len,__FILE__,__LINE__)) == 0 ){
-			Errorcode = JFAIL;
-			logerr_die(LOG_INFO, "Read_fd_and_split: realloc %d failed", len );
-		}
+		sv = realloc_or_die( sv, len,__FILE__,__LINE__);
 		memmove( sv+size, buffer, count );
 		size += count;
 		sv[size] = 0;
