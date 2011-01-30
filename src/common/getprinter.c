@@ -242,7 +242,7 @@ void Fix_Rm_Rp_info(char *report_conflict, int report_len )
 		Set_DYN(&RemotePrinter_DYN, Lp_device_DYN );
 		s = safestrchr( RemotePrinter_DYN, '@');
 		if( s ) *s++ = 0;
-		if( *s == 0 ) s = 0;
+		else if( *s == 0 ) s = 0;
 		Set_DYN(&RemoteHost_DYN, s );
 		if( (s = safestrchr(RemoteHost_DYN,'%')) ){
 			Set_DYN(&Unix_socket_path_DYN, 0 );
