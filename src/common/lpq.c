@@ -319,8 +319,9 @@ int Read_status_info( char *host UNUSED, int sock,
 	 */
 	if( displayformat == REQ_VERBOSE || displayformat == REQ_LPSTAT || Show_all ){
 		do{ 
-			if( (n = Read_fd_len_timeout( Send_query_rw_timeout_DYN,
-				sock, buffer, sizeof(buffer)-1)) ){
+		      n = Read_fd_len_timeout( Send_query_rw_timeout_DYN,
+					       sock, buffer, sizeof(buffer)-1);
+			if( n ){
 				buffer[n] = 0;
 				if( Write_fd_str( output, buffer ) < 0 ) return(1);
 			}
