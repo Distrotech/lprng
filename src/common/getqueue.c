@@ -2149,10 +2149,6 @@ void Put_buf_len( const char *s, int cnt, char **buf, int *max, int *len )
 		*buf = realloc_or_die( *buf, *max+1,__FILE__,__LINE__);
 		DEBUG4("Put_buf_len: update- buf 0x%lx, max %d, len %d",
 		Cast_ptr_to_long(*buf), *max, *len);
-		if( !*buf ){
-			Errorcode = JFAIL;
-			logerr_die(LOG_INFO, "Put_buf_len: realloc %d failed", *len );
-		}
 	}
 	memcpy( *buf+*len, s, cnt );
 	*len += cnt;
