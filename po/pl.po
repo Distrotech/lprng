@@ -3,12 +3,12 @@
 # This file is distributed under the same license as the LPRng package.
 # Jakub Bogusz <qboosh@pld-linux.org>, 2002-2007.
 #
-#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:546
+#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:547
 msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.29-rc4\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2010-12-30 19:47+0100\n"
+"POT-Creation-Date: 2011-02-03 19:40+0100\n"
 "PO-Revision-Date: 2007-08-08 17:40+0200\n"
 "Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -182,17 +182,17 @@ msgstr "Drukarka: %s - bezpo¶rednie po³±czenie z urz±dzeniem '%s'\n"
 msgid "Locale information directory '%s'\n"
 msgstr "Katalog z informacjami o lokalizacji '%s'\n"
 
-#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:545
+#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:546
 #, c-format
 msgid "LANG environment variable '%s'\n"
 msgstr "Zmienna ¶rodowiskowa LANG '%s'\n"
 
-#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:548
+#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:549
 #, c-format
 msgid "gettext translation information '%s'\n"
 msgstr "informacje o t³umaczeniu gettext '%s'\n"
 
-#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:550
+#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:551
 msgid "No translation available\n"
 msgstr "T³umaczenie nie dostêpne\n"
 
@@ -1416,21 +1416,21 @@ msgstr "Drukarka: %s to %s@%s\n"
 msgid "Printer: %s - cannot use printer, not in privileged group\n"
 msgstr "Drukarka: %s - nie mo¿na u¿yæ drukarki, spoza grupy uprzywilejowanej\n"
 
-#: src/common/lpq.c:368 src/common/lpq.c:373 src/common/lpq.c:383
-#: src/common/lpq.c:430 src/common/lpq.c:437
+#: src/common/lpq.c:369 src/common/lpq.c:374 src/common/lpq.c:384
+#: src/common/lpq.c:431 src/common/lpq.c:438
 msgid "Printer:"
 msgstr "Drukarka:"
 
-#: src/common/lpq.c:476
+#: src/common/lpq.c:477
 msgid "fork() failed"
 msgstr "fork() nie powiod³o siê"
 
-#: src/common/lpq.c:483
+#: src/common/lpq.c:484
 #, c-format
 msgid "Term_clear: waitpid(%d) failed"
 msgstr "Term_clear: waitpid(%d) nie powiod³o siê"
 
-#: src/common/lpq.c:509
+#: src/common/lpq.c:510
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq:  proszê u¿yæ programu LPRng lpstat\n"
 
