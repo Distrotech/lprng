@@ -1,12 +1,12 @@
 # LPRng Internationalization (i18n)
 # Template For Translation
 # <papowell@astart.com>
-#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:546
+#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:547
 msgid ""
 msgstr ""
 "Project-Id-Version: LPRng 3.8.28\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2010-12-30 19:47+0100\n"
+"POT-Creation-Date: 2011-02-03 19:40+0100\n"
 "PO-Revision-Date: 2000-08-21 18:06-0700\n"
 "Last-Translator: Patrick Powell <papowell@astart.com>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -180,17 +180,17 @@ msgstr ""
 msgid "Locale information directory '%s'\n"
 msgstr "Répertoire information de localisation '%s'\n"
 
-#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:545
+#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:546
 #, c-format
 msgid "LANG environment variable '%s'\n"
 msgstr "variable d'environnement LANG '%s'\n"
 
-#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:548
+#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:549
 #, c-format
 msgid "gettext translation information '%s'\n"
 msgstr "information de traduction pour gettext '%s'\n"
 
-#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:550
+#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:551
 msgid "No translation available\n"
 msgstr "Pas de traduction disponible\n"
 
@@ -1417,21 +1417,21 @@ msgid "Printer: %s - cannot use printer, not in privileged group\n"
 msgstr ""
 "Printer: %s - ne peut utiliser l'imprimante, pas dans un groupe privilégié\n"
 
-#: src/common/lpq.c:368 src/common/lpq.c:373 src/common/lpq.c:383
-#: src/common/lpq.c:430 src/common/lpq.c:437
+#: src/common/lpq.c:369 src/common/lpq.c:374 src/common/lpq.c:384
+#: src/common/lpq.c:431 src/common/lpq.c:438
 msgid "Printer:"
 msgstr "Printer:"
 
-#: src/common/lpq.c:476
+#: src/common/lpq.c:477
 msgid "fork() failed"
 msgstr "fork() a échoué"
 
-#: src/common/lpq.c:483
+#: src/common/lpq.c:484
 #, c-format
 msgid "Term_clear: waitpid(%d) failed"
 msgstr "Term_clear: waitpid(%d) a échoué"
 
-#: src/common/lpq.c:509
+#: src/common/lpq.c:510
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq: veuillez utiliser le programme LPRng lpstat\n"
 

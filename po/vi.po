@@ -3,12 +3,12 @@
 # This file is distributed under the same license as the lprng package.
 # Clytie Siddall <clytie@riverland.net.au>, 2007-2008.
 #
-#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:546
+#: src/common/lpc.c:270 src/common/lpc.c:435 src/common/lpq.c:547
 msgid ""
 msgstr ""
 "Project-Id-Version: lprng 3.8.A\n"
 "Report-Msgid-Bugs-To: lprng-devel@lists.sf.net\n"
-"POT-Creation-Date: 2010-12-30 19:47+0100\n"
+"POT-Creation-Date: 2011-02-03 19:40+0100\n"
 "PO-Revision-Date: 2008-07-15 23:31+0930\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -181,17 +181,17 @@ msgstr "Máy in: %s — kết nối trực tiếp tới thiết bị « %s »\n"
 msgid "Locale information directory '%s'\n"
 msgstr "Thư mục thông tin miền địa phương « %s »\n"
 
-#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:545
+#: src/common/lpc.c:269 src/common/lpc.c:434 src/common/lpq.c:546
 #, c-format
 msgid "LANG environment variable '%s'\n"
 msgstr "Biến môi trường ngôn ngữ LANG « %s »\n"
 
-#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:548
+#: src/common/lpc.c:272 src/common/lpc.c:437 src/common/lpq.c:549
 #, c-format
 msgid "gettext translation information '%s'\n"
 msgstr "Thông tin dịch gettext « %s »\n"
 
-#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:550
+#: src/common/lpc.c:274 src/common/lpc.c:439 src/common/lpq.c:551
 msgid "No translation available\n"
 msgstr "Không có sẵn bản dịch\n"
 
@@ -1459,21 +1459,21 @@ msgid "Printer: %s - cannot use printer, not in privileged group\n"
 msgstr ""
 "Máy in: %s — không thể sử dụng máy in vì không phải trong nhóm có quyền\n"
 
-#: src/common/lpq.c:368 src/common/lpq.c:373 src/common/lpq.c:383
-#: src/common/lpq.c:430 src/common/lpq.c:437
+#: src/common/lpq.c:369 src/common/lpq.c:374 src/common/lpq.c:384
+#: src/common/lpq.c:431 src/common/lpq.c:438
 msgid "Printer:"
 msgstr "Máy in:"
 
-#: src/common/lpq.c:476
+#: src/common/lpq.c:477
 msgid "fork() failed"
 msgstr "fork() (tạo tiến trình con) không thành công."
 
-#: src/common/lpq.c:483
+#: src/common/lpq.c:484
 #, c-format
 msgid "Term_clear: waitpid(%d) failed"
 msgstr "Term_clear: waitpid(%d) bị lỗi"
 
-#: src/common/lpq.c:509
+#: src/common/lpq.c:510
 msgid "lpq:  please use the LPRng lpstat program\n"
 msgstr "lpq:  hãy dùng chưng trình thống kê lpstat LPRng\n"
 
