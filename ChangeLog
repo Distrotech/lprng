@@ -1,3 +1,5 @@
+2011-02-03 brl use LPRng.pot as shipped instead of lprng.pot.
+2011-01-30 wh  remove dead code and add NULL check
 2010-07-16 brl add support for dynamically loaded authentication plugins
 2010-07-16 brl remove pgp support
 2010-07-16 brl remove kerberos4 support
