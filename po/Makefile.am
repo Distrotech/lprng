@@ -44,7 +44,7 @@ COPYRIGHT_HOLDER = Patrick Powell at al.
 # which the translators can contact you.
 MSGID_BUGS_ADDRESS = $(PACKAGE_BUGREPORT)
 
-DOMAIN = $(PACKAGE)
+DOMAIN = $(PACKAGE_NAME)
 XGETTEXT_OPTIONS = --keyword=_ --keyword=N_
 
 #######################################################################
