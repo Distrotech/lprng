@@ -1153,20 +1153,34 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 		found=no
 		if test "$found" "!=" "yes" ; then
 			found=yes
-			LIBS=" -lkrb5 -lcrypto -lcom_err $SAVELIBS"
-			KRB_LIBS="-lkrb5 -lcrypto -lcom_err"
+			KRB_LIBS="-lkrb5 -lk5crypto -lcom_err"
+			LIBS=" $KRB_LIBS $SAVELIBS"
 			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
+			AC_CHECKING(for krb5_encrypt_size in $LIBS )
+			AC_TRY_LINK_FUNC(krb5_encrypt_size,,found="no")
 		fi;
 		if test "$found" "!=" "yes" ; then
 			found=yes
-			KRB_LIBS="-lkrb5 -lk5crypto -lcom_err"
-			LIBS=" -lkrb5 -lk5crypto -lcom_err $SAVELIBS"
+			KRB_LIBS="-lkrb5 -lcrypto -lcom_err"
+			LIBS=" $KRB_LIBS $SAVELIBS"
 			AC_CHECKING(for krb5_init_context in $LIBS )
 			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
+			AC_CHECKING(for krb5_encrypt_size in $LIBS )
+			AC_TRY_LINK_FUNC(krb5_encrypt_size,,found="no")
 		fi;
 		if test "$found" "!=" "yes" ; then
-			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context or )
+			AC_PATH_PROG(KRB5CONFIG, krb5-config)
+			found=yes
+			KRB_LIBS="$($KRB5CONFIG --libs krb5)"
+			LIBS=" $KRB_LIBS $SAVELIBS"
+			AC_CHECKING(for krb5_init_context in $LIBS )
+			AC_TRY_LINK_FUNC(krb5_init_context,,found="no")
+			AC_CHECKING(for krb5_encrypt_size in $LIBS )
+			AC_TRY_LINK_FUNC(krb5_encrypt_size,,found="no")
+		fi;
+		if test "$found" "!=" "yes" ; then
+			  AC_MSG_WARN(Kerberos 5 library does not have krb5_init_context and krb5_encrypt_size or )
 			  AC_MSG_WARN(use configure --disable-kerberos or check your Kerberos 5 installation)
 			  exit 1
         fi
