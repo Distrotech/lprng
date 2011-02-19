@@ -1222,29 +1222,6 @@ configure --enable-kerberos CPPFLAGS=-I/usr/local/include LDFLAGS=-L/usr/local/l
 		AC_DEFINE_UNQUOTED(HAVE_KRB_XFREE,1,[have krb_xfree])
 	fi
 
-	AC_CACHE_CHECK(for kerberos 4 krb_sendauth definition,
-	ac_cv_decl_krb_sendauth_def,
-	[AC_TRY_COMPILE([
-	# define KRB5_DEPRECATED 1
-	#if defined(HAVE_KRB5_H)
-	#include <krb5.h>
-	#endif
-	#if defined(HAVE_KRB_H)
-	#include <krb.h>
-	#include <des.h>
-	#endif
-	#if defined(HAVE_KERBEROSIV_KRB_H)
-	#include <kerberosIV/krb.h>
-	#include <kerberosIV/des.h>
-	#endif
-	],[printf("%d",krb_sendauth(1));],
-	ac_cv_decl_krb_sendauth_def=no,
-	ac_cv_decl_krb_sendauth_def=yes)
-	])
-	if test "$ac_cv_decl_krb_sendauth_def" = yes; then
-		AC_DEFINE_UNQUOTED(HAVE_KRB_AUTH_DEF,1,[have krb_sendauth defined])
-	fi
-
 	LIBS="$SAVELIBS"
 fi;
 AC_SUBST(KRB_LIBS)
