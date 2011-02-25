@@ -67,10 +67,10 @@ The sourceforge project page for this software is:
 New versions will be available for download at:
    http://sourceforge.net/project/showfiles.php?group_id=34420&package_id=26541
 
-The CVS repository can be browsed online at:
-   http://lprng.cvs.sourceforge.net/lprng/lprng/
+The GIT repository can be browsed online at:
+   http://lprng.git.sourceforge.net/git/gitweb.cgi?p=lprng/lprng;a=summary
 and checked out via:
-   cvs -z3 -d:pserver:anonymous@lprng.cvs.sourceforge.net:/cvsroot/lprng co -P LPRng
+   git clone git://lprng.git.sourceforge.net/gitroot/lprng/lprng 
 
 The LPRng developer mailinlist is
    lprng-devel@lists.sourceforge.net

@@ -92,7 +92,7 @@ all-no:
 
 # stamp-po is a timestamp denoting the last time at which the GMOFILES have
 # been loosely updated. Its purpose is that when a developer or translator
-# checks out the package via CVS, and the $(DOMAIN).pot file is not in CVS,
+# checks out the package via git, and the $(DOMAIN).pot file is not in git,
 # "make" will update the $(DOMAIN).pot and the $(GMOFILES), but subsequent
 # invocations of "make" will do nothing. This timestamp would not be necessary
 # if updating the $(GMOFILES) would always touch them; however, the rule for

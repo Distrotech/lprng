@@ -49,4 +49,4 @@ link all lpd code in all other binaries...
 Changes in versions until LPRng-3.8.28 can
 be found in the file CHANGES.
 If that file did not come with your LPRng, you should be able to download
-it from: http://lprng.cvs.sourceforge.net/*checkout*/lprng/lprng/CHANGES
+it from: http://lprng.git.sourceforge.net/git/gitweb.cgi?p=lprng/lprng;a=blob_plain;f=CHANGES;hb=HEAD
