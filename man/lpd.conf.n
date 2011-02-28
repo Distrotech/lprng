@@ -481,7 +481,10 @@ Note that RFC1179 specifies that requests must
 originate from ports in the range 721-731.
 .TP
 \fBpass_env\fR
+.na
 (default: "LANG,LC_CTYPE,LC_NUMERIC,LC_TIME,LC_COLLATE,LC_MONETARY,LC_MESSAGES,LC_PAPER,LC_NAME,LC_ADDRESS,LC_TELEPHONE,LC_MEASUREMENT,LC_IDENTIFICATION,LC_ALL")
+.ad
+
 Client programs such as LPR, LPC, etc., will pass these
 environment variables to any filter programs they start.
 .TP
@@ -505,7 +508,10 @@ All valid entries in these files will be used.
 See PRINTCAP LOOKUP for details.
 .TP
 \fBperms_path\fR
+.na
 (default: /etc/lpd.perms:/usr/etc/lpd.perms:/var/spool/lpd/lpd.perms.%h)
+.ad
+
 The location of the printer permissions database.
 If a file or filter does not exist, it is skipped.
 The first file or filter that exists and is readable will be used.
