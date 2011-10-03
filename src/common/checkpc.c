@@ -114,7 +114,7 @@ int main( int argc, char *argv[], char *envp[] )
 	}
 
 	if( Verbose ){
-		if(Verbose)MESSAGE( Version );
+		if(Verbose)MESSAGE("%s", Version);
 	}
 
 	Initialize(argc, argv, envp, 'D' );
@@ -1436,7 +1436,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	if( (tf = popen( "ps | grep XXYYZZ | grep -v grep", "r" )) ){
 		Max_open( fileno(tf) );
 		while( fgets( line, sizeof(line), tf ) ){
-			FPRINTF( STDOUT, line );
+			FPRINTF( STDOUT, "%s", line );
 			++i;
 		}
 		fclose(tf);
@@ -1445,7 +1445,7 @@ void Test_port(int ruid, int euid, char *serial_line )
 	if( i == 0 && (tf = popen( "ps | grep XXYYZZ | grep -v grep", "r" )) ){
 		Max_open( fileno(tf) );
 		while( fgets( line, sizeof(line), tf ) ){
-			FPRINTF( STDOUT, line );
+			FPRINTF( STDOUT, "%s", line );
 			++i;
 		}
 		fclose(tf);

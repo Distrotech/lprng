@@ -172,7 +172,7 @@ int Send_job( struct job *job, struct job *logjob,
 			}
 			goto retry_connect;
 		}
-		setstatus(logjob, error );
+		setstatus(logjob, "%s", error);
 		goto error;
 	}
 	save_host = safestrdup(RemoteHost_DYN,__FILE__,__LINE__);
