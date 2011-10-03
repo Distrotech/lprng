@@ -102,7 +102,7 @@ LIBS="$mysaved_LIBS"
 fi
 if test $enable_plugins != no ; then
 if test "${PLUGIN_CFLAGS+set}" != set ; then
-	PLUGIN_CFLAGS="-fPIE"
+	PLUGIN_CFLAGS="-fPIC"
 fi
 if test "${PLUGIN_LDFLAGS+set}" != set ; then
 	PLUGIN_LDFLAGS="--shared"
