@@ -924,12 +924,14 @@ fi
 AC_MSG_RESULT($v);dnl
 
 dnl check to see if ssl is disabled
+SSL_EXPLICITLY_ENABLED=""
 AC_MSG_CHECKING(if ssl authentication is disabled)
 AC_ARG_ENABLE( ssl,
 AS_HELP_STRING([--disable-ssl],[disable ssl support]),
 [
 if test "$enableval" = "yes" ; then
 	v=enabled;  SSL_ENABLE=1;
+	SSL_EXPLICITLY_ENABLED=1;
 else
 	v=disabled; SSL_ENABLE=;
 fi
@@ -943,96 +945,21 @@ AC_MSG_RESULT($v);dnl
 dnl This does far too much by hand, try to just check for
 dnl the headers and libs...
 
-dnl Now look for OpenSSL
-ac_openssl_lib_dir=
-ac_openssl_inc_dir=
 if test "$SSL_ENABLE" != ""; then
-
-	dnl See if we can find OpenSSL
-	dnl We can compile without OpenSSL if we have to
-	ac_openssl_lib_dir="/usr/lib /usr/local /usr/local/ssl /usr/local/ssl/lib /usr/pkg"
-	ac_openssl_inc_dir="/usr/include /usr/local /usr/local/ssl /usr/pkg /usr/local/ssl/include"
-
-	AC_ARG_WITH(openssl,
-	AS_HELP_STRING([--with-openssl=DIR],[root location for OpenSSL]),
-	[
-		ac_openssl_lib_dir="$withval/lib $withval"
-		ac_openssl_inc_dir="$withval/include $withval"
-	]
-	)
-
-	AC_ARG_WITH(openssl-inc,
-	AS_HELP_STRING([--with-openssl-inc],[OpenSSL include files]),
-		ac_openssl_inc_dir=$withval
-	)
-	AC_ARG_WITH(openssl-lib,
-	AS_HELP_STRING([--with-openssl-lib],[OpenSSL library files]),
-		ac_openssl_lib_dir=$withval
-	)
-
-	ac_found_openssl_inc_dir="no"
-	AC_MSG_CHECKING(for OpenSSL include files)
-	for dir in $ac_openssl_inc_dir; do
-		if test -f $dir/openssl/ssl.h; then
-		   ac_found_openssl_inc_dir=$dir
-		   break
-		fi
-        done
-	if test "$ac_found_openssl_inc_dir" != "no"; then
-	   	echo "found in $ac_found_openssl_inc_dir"
-	else
-		echo "not found."
-		SSL_ENABLE=""
-	fi
+	AC_CHECK_HEADER([openssl/ssl.h], [true], [SSL_ENABLE=""])
 fi
 
 SSL_LDADD=""
 if test "$SSL_ENABLE" != ""; then
-	ac_found_openssl_lib_dir="no"
-	AC_MSG_CHECKING(for OpenSSL libraries)
-	for dir in $ac_openssl_lib_dir; do
-		found_ssl="false"
-		if test -f $dir/libssl.a -a -f $dir/libcrypto.a; then
-		  found_ssl="true"
-		fi
-		if test -f $dir/libssl.so -a -f $dir/libcrypto.so; then
-		  found_ssl="true"
-		fi
-		if $found_ssl != "false"; then
-		dnl Ok, we think we've found them, but check that they
-		dnl actually ontain the right functions
-		save_LIBS=$LIBS
-		save_LDFLAGS=$LDFLAGS
-		SSL_LDADD="-lssl -lcrypto"
-		if test "X$dir" != "X/usr/lib" ; then
-			SSL_LDADD="-L$dir $SSL_LDADD"
-		fi
-		LDFLAGS="$LDFLAGS $SSL_LDADD"
-		AC_TRY_LINK_FUNC(SSL_load_error_strings,ac_linked_libssl="true",
-			ac_linked_libssl="false");
-		AC_TRY_LINK_FUNC(RC4_set_key,ac_linked_libcrypto="true",
-			ac_linked_libcrypto="false");
-		if test "$ac_linked_libssl" != "false" -a \
-			"$ac_linked_libcrypto" != "false"; then
-				ac_found_openssl_lib_dir=$dir
-				LIBS=$save_LIBS
-				LDFLAGS=$save_LDFLAGS
-				break
-		fi
-		LIBS=$save_LIBS
-		LDFLAGS=$save_LDFLAGS
-		SSL_LDADD=""
-		fi
-	done
-	if test "$ac_found_openssl_lib_dir" != "no"; then
-	   	echo "found in $ac_found_openssl_lib_dir"
-		if test "X$ac_found_openssl_inc_dir" != "X/usr/include" ; then
-			CPPFLAGS="$CPPFLAGS -I$ac_found_openssl_inc_dir " ;
-		fi
-	else
-		echo "not found."
-		SSL_ENABLE=""
-	fi
+	AC_CHECK_LIB([crypto], [RC4_set_key], [true], [SSL_ENABLE=""])
+fi
+if test "$SSL_ENABLE" != ""; then
+	AC_CHECK_LIB([ssl], [SSL_load_error_strings], [true], [SSL_ENABLE=""], [-lcrypto])
+fi
+if test "$SSL_ENABLE" != ""; then
+	SSL_LDADD="-lssl -lcrypto"
+elif test "$SSL_EXPLICITLY_ENABLED" != ""; then
+	AC_MSG_ERROR([Unable to use OpenSSL])
 fi
 AC_SUBST(SSL_LDADD)
 AM_CONDITIONAL(WITHSSL, test "$SSL_ENABLE" != "")
