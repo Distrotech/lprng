@@ -2111,6 +2111,9 @@ static void Setup_env_for_process( struct line_list *env, struct job *job )
 		if(t) free(t); t = 0;
 		if(u) free(u); u = 0;
 	}
+	if( Ppd_file_DYN ){
+		Set_str_value(env, "PPD", Ppd_file_DYN);
+	}
 	if( job ){
 		if( (s = Make_job_ticket_image( job )) ){
 			Set_str_value(env, "HF", s );

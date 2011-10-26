@@ -1366,6 +1366,8 @@ the spool directory for the printer
 the control directory for the printer
 .IP PRINTCAP_ENTRY 5
 the printcap entry for the printer
+.IP PPD 5
+the content of the ppd field in printcap (if there is any)
 .IP CONTROL 5
 the control file for the print job
 .IP "pass_env environment variables" 5
