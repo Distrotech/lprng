@@ -1,3 +1,4 @@
+2011-10-26 brl fix typo breaking kerberos plugin built (except on x86_32)
 2011-10-03 brl make lprng compile with -Werror=format-security
 2011-10-03 brl fix typo: use -fPIC instead of -fPIE for plugins
 2011-02-28 brl avoid man warnings by disabling adjusting in some long lines

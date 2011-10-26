@@ -76,7 +76,7 @@ plugin_PROGRAMS += kerberos5.so
 kerberos5_so_SOURCES = auth/krb5_auth.c
 kerberos5_so_LDFLAGS = $(PLUGIN_LDFLAGS)
 kerberos5_so_LDADD = $(KRB_LIBS)
-kerberor5_so_CFLAGS = $(PLUGIN_CFLAGS)
+kerberos5_so_CFLAGS = $(PLUGIN_CFLAGS)
 uninstall-local:
 	if test -l $(DESTDIR)$(plugindir)/k5conn.so ; then \
 		rm $(DESTDIR)$(plugindir)/k5conn.so ; fi
