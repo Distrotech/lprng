@@ -2375,9 +2375,12 @@ int Make_temp_fd_in_dir( char **temppath, char *dir )
 {
 	int tempfd;
 	struct stat statb;
-	char pathname[MAXPATHLEN];
+	int len;
+	char *pathname;
 
-	plp_snprintf(pathname,sizeof(pathname), "%s/temp%02dXXXXXX",dir,Tempfiles.count );
+	len = 1 + plp_snprintf(NULL, 0, "%s/temp%02dXXXXXX",dir,Tempfiles.count );
+	pathname = malloc_or_die(len, __FILE__, __LINE__);
+	plp_snprintf(pathname, len, "%s/temp%02dXXXXXX",dir,Tempfiles.count );
 	tempfd = mkstemp( pathname );
 	if( tempfd == -1 ){
 		Errorcode = JFAIL;
@@ -2397,6 +2400,7 @@ int Make_temp_fd_in_dir( char **temppath, char *dir )
 		logerr_die(LOG_INFO, "Make_temp_fd_in_dir: stat '%s' failed ", pathname );
 	}
 	DEBUG1("Make_temp_fd_in_dir: fd %d, name '%s'", tempfd, pathname );
+	free(pathname);
 	return( tempfd );
 }
 

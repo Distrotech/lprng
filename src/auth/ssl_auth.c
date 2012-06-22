@@ -192,7 +192,7 @@ static int SSL_Initialize_ctx(
     SSL_METHOD *meth = 0;
     SSL_CTX *ctx = 0;
 	char header[SMALLBUFFER];
-	char cabuf[MAXPATHLEN], certbuf[MAXPATHLEN], pwbuf[MAXPATHLEN]; 
+	char certbuf[4096], pwbuf[4096]; 
 	struct stat statb;
 	int pid;
 	char *file, *s;

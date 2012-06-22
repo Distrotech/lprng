@@ -98,12 +98,7 @@ LPRng requires ANSI Standard C compiler
 /*************************************************************************
  * SCO OpenServer 5.0.5
  *************************************************************************/
-/* normal include files do not define MAXPATHLEN - rather PATHSIZE in 
-   sys/param.h */
 #ifdef sco
-#ifndef MAXPATHLEN
-#define MAXPATHLEN	PATHSIZE
-#endif
 /* SCO doesn't define the S_ISSOCK POSIX macro to use in testing the 
    stat.st_mode structure member  - it appears as though a socket has
    st_mode = 0020000 (same as character special) */
@@ -118,7 +113,6 @@ LPRng requires ANSI Standard C compiler
  *************************************************************************/
 
 #if defined(cray)
-#define MAXPATHLEN	1023
 #define HAVE_SIGLONGJMP	1
 
 /* configure incorrectly chooses STATVFS */

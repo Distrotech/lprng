@@ -195,11 +195,18 @@ static void LoadSecurityPlugin(const char *name) {
 
 		i = lstat(filename, &s);
 		if( i == 0 && S_ISLNK(s.st_mode) ) {
+			size_t reserved = 4096;
 			ssize_t linklen;
-			char linkname[MAXPATHLEN];
+			char *linkname = malloc_or_die(reserved,
+					__FILE__, __LINE__);
 
-			linklen = readlink(filename, linkname, sizeof(linkname));
-			if( linklen > 0 || linklen <sizeof(linkname) ) {
+			linklen = readlink(filename, linkname, reserved);
+			while( linklen >= reserved ) {
+				reserved = linklen + 1;
+				linkname = realloc_or_die(linkname, reserved,
+						__FILE__, __LINE__);
+			}
+			if( linklen > 0 && linklen < reserved ) {
 				char *realname, *ee;
 
 				linkname[linklen] = '\0';
@@ -214,10 +221,12 @@ static void LoadSecurityPlugin(const char *name) {
 					*ee = '\0';
 				if( loadplugin(filename, realname) ) {
 					free(filename);
+					free(linkname);
 					return;
 				}
 
 			}
+			free(linkname);
 		} else if( i == 0 && S_ISREG(s.st_mode) ) {
 			if( loadplugin(filename, name) ) {
 				free(filename);
