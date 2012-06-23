@@ -115,14 +115,14 @@ mysaved_LDFLAGS="$LDFLAGS"
 mysaved_CFLAGS="$CFLAGS"
 LDFLAGS="$LDFLAGS $PLUGIN_LDFLAGS"
 CFLAGS="$CFLAGS $PLUGIN_CFLAGS"
-AC_LINK_IFELSE([[int test(void);int test(void) {return callback();}]],
+AC_LINK_IFELSE([AC_LANG_SOURCE([[int test(void);int test(void) {return callback();}]])],
 [cp conftest$ac_exeext libmyXYZtest.so || AC_MSG_ERROR([Internal error, perhaps autoconf changed soem internals])
  my_cv_sys_shared_with_callback_works=yes],
 [my_cv_sys_shared_with_callback_works=no])
 if test $my_cv_sys_shared_with_callback_works = yes ; then
 	LDFLAGS="$mysaved_LDFLAGS $PLUGINUSER_LDFLAGS -L. -lmyXYZtest"
 	CFLAGS="$mysaved_CFLAGS"
-	AC_TRY_LINK([int callback(void) { return 17; } return test();], [my_cv_sys_shared_with_callback_works=yes], [my_cv_sys_shared_works=no])
+	AC_TRY_LINK([int callback(void) { return 17; } return test();], [my_cv_sys_shared_with_callback_works=yes], [my_cv_sys_shared_with_callback_works=no])
 fi
 LDFLAGS="$mysaved_LDFLAGS"
 CFLAGS="$mysaved_CFLAGS"

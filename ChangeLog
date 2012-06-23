@@ -1,3 +1,4 @@
+2012-06-23 brl fix some issues in configure check for plugins
 2012-06-22 brl get rid of MAXPATHLEN usage
 2011-10-26 brl drop --with-ssl, use autoconf macros to look for libssl
 2011-10-26 brl set PPD in print filters' environment, if printcap has ppd= set
