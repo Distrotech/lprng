@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------
+Version LPRng-3.8.C
+---------------------------------------------------------------------
+
+- some code cleanups (don't use MAXPATHLEN, don't failt with gcc's
+  -Werror=format-security, ...)
+- improve some configure checks
+- set PPD variable in filters' environment if ppd= in printcap set
+- fix some issues with --enable-plugins
+
+---------------------------------------------------------------------
 Version LPRng-3.8.B
 ---------------------------------------------------------------------
 
