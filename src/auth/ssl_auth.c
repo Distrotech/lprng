@@ -409,6 +409,7 @@ static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 	long verify_result;
 	char buffer[SMALLBUFFER];
 	int status = 0;
+	X509 *peer;
 
 	/* we get the SSL context.  No connection yet */
 	ssl = SSL_new(ctx);
@@ -447,17 +448,19 @@ static int Open_SSL_connection( int sock, SSL_CTX *ctx, SSL **ssl_ret,
 
 
 	/* now we check to see which server we talked to */
+	peer = SSL_get_peer_certificate(ssl);
 	verify_result = SSL_get_verify_result(ssl);
 	DEBUG1("Open_SSL_connection: SSL_get_verify_result '%s'",
 		X509_verify_cert_error_string(verify_result) );
 
-	if( verify_result != X509_V_OK ){
+	if(!peer || verify_result != X509_V_OK ){
 		plp_snprintf(errmsg,errlen,
 		 	"SSL_connect failed, peer certificat not verified: '%s'",
 				X509_verify_cert_error_string(verify_result) );
 		status = -1;
 		goto done;
 	}
+	X509_free( peer );
 	Get_cert_info( ssl, info );
 
  done:
@@ -484,6 +487,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 	char buffer[SMALLBUFFER];
 	int wait_for_read, wait_for_write;	/* for select */
 	int status = 0;
+	X509 *peer;
 
 	/* we get the SSL context.  No connection yet */
 	DEBUG1("Accept_SSL_connection: starting, ctx 0x%lx, sock %d", Cast_ptr_to_long(ctx), sock);
@@ -506,7 +510,7 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 		status = -1;
 		goto done;
 	}
-    SSL_set_bio(ssl,bio,bio);
+        SSL_set_bio(ssl,bio,bio);
 
 	/* if you get any sort of error, give up */
 	finished = wait_for_read = wait_for_write = 0;
@@ -553,17 +557,19 @@ static int Accept_SSL_connection( int sock, int timeout, SSL_CTX *ctx, SSL **ssl
 		}
 	}
 	/* now we check to see which server we talked to */
+	peer = SSL_get_peer_certificate(ssl);
 	verify_result = SSL_get_verify_result(ssl);
 	DEBUG1("Accept_SSL_connection: SSL_get_verify_result '%s'",
 		X509_verify_cert_error_string(verify_result) );
 
-	if( verify_result != X509_V_OK ){
+	if( !peer || verify_result != X509_V_OK ){
 		plp_snprintf(errmsg,errlen,
 		 	"SSL_connect failed, peer certificat not verified: '%s'",
 				X509_verify_cert_error_string(verify_result) );
 		status = -1;
 		goto done;
 	}
+	X509_free( peer );
 	Get_cert_info( ssl, info );
 
  done:
