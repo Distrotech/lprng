@@ -34,6 +34,39 @@
 #  include <sys/ttold.h>
 #endif
 
+/*
+ * When the child was successfully waited on, it stayed in the
+ * Process_list and henceforth the lpd tried to kill it when
+ * cleaning up. But the pid may have been assigned to another
+ * process!
+ *
+ * So what is neccessary is to walk through the process list,
+ * and remove the pid which has just exited (or have successfully
+ * been waited for, to be precise).
+ *
+ * The removal is done by replacing the record by the last one in
+ * the list and decrementing the record count.
+ *
+ * thx to Ales Novak for bug-report + fix 
+ */
+static void forget_child(pid_t pid)
+{
+	int i;
+
+	for( i = 0; i < Process_list.count; ++i ){
+		if (pid == Cast_ptr_to_int(Process_list.list[i]))
+			break;
+	}
+
+	if (i < Process_list.count) {
+		DEBUG2("forget_child: found the child with pid %d", pid);
+		Process_list.list[i] = Process_list.list[Process_list.count-1];
+		Process_list.count --;
+	} else {
+		DEBUG2("forget_child: child with pid %d not found", pid);
+	}
+}
+
 
 /*
  * Patrick Powell
@@ -51,6 +84,7 @@ pid_t plp_waitpid (pid_t pid, plp_status_t *statusPtr, int options)
 	report = waitpid(pid, statusPtr, options );
 	DEBUG2("plp_waitpid: returned %d, status %s", report,
 		Decode_status( statusPtr ) );
+	if (report > 0) forget_child(pid);
 	return report;
 }
 
