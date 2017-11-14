@@ -18,7 +18,6 @@ Makefile
 /UTILS/lpq_in_perl
 /UTILS/lpr_in_perl
 /UTILS/lprm_in_perl
-/UTILS/make_lpd_conf
 /UTILS/make_printcap_use
 /UTILS/makeinc
 /UTILS/read_conf
